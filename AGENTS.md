@@ -14,7 +14,7 @@ The product must feel like a careful hobby assistant, not a financial advisor, h
 
 ## Phase 0 Scope
 
-Use `localStorage` only. Do not add Supabase, auth, image upload, payments, scraping, external marketplace APIs, real AI calls, or the Hermes router in Phase 0.
+Use `localStorage` only. Do not add Supabase, auth, image upload, payments, scraping, external marketplace APIs, or always-on web search in the current phase.
 
 Core pages:
 
@@ -25,11 +25,16 @@ Core pages:
 - Listing Risk Checker
 - Raw vs Slab Calculator
 - Decision Journal
+- Hermes Router API route
+- AI-assisted Plan and Listing Risk actions
 
 ## Engineering Rules
 
 - Raw vs Slab calculations must use deterministic TypeScript functions.
 - Plan Generator and Listing Risk Checker may use mock structured logic, but outputs must stay schema-shaped and cautious.
+- AI calls must happen server-side only through the provider adapter. Never expose API keys to the browser.
+- Keep `AI_PROVIDER=openai` as the default. GLM/Kimi/MiMo should be added behind adapters, not directly in UI components.
+- Prefer cheap models for classification and critic steps; reserve the primary model for final plan/risk generation.
 - Use Zod schemas for app data.
 - Use React Hook Form for form state.
 - Save demo state in `localStorage`.

@@ -29,11 +29,14 @@ import {
 } from "@/lib/sample-data";
 import {
   decisionJournalEntrySchema,
+  generatedPlanSetSchema,
   goalOptions,
   gradingOptions,
+  hermesResponseSchema,
   holdingOptions,
   ipOptions,
   journalActionOptions,
+  listingRiskReportSchema,
   listingRiskInputSchema,
   marketOptions,
   planInputSchema,
@@ -42,6 +45,7 @@ import {
   userProfileSchema,
   type DecisionJournalEntry,
   type GeneratedPlanSet,
+  type HermesResponse,
   type ListingRiskInput,
   type ListingRiskReport,
   type PlanInput,
@@ -104,6 +108,10 @@ export default function Home() {
   const [rawResult, setRawResult] = useState<RawVsSlabResult>(() => calculateRawVsSlab(defaultRawVsSlabInput));
   const [journalEntries, setJournalEntries] = useState<DecisionJournalEntry[]>([]);
   const [journalFilter, setJournalFilter] = useState<DecisionJournalEntry["actionType"] | "All">("All");
+  const [aiPlanResponse, setAiPlanResponse] = useState<HermesResponse | null>(null);
+  const [aiRiskResponse, setAiRiskResponse] = useState<HermesResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState<"plan" | "risk" | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const profileForm = useForm<UserProfile>({ defaultValues: defaultProfile });
   const planForm = useForm<PlanInput>({ defaultValues: defaultPlanInput });
@@ -176,11 +184,13 @@ export default function Home() {
     const plan = generatePlan(parsed);
     setLatestPlan(plan);
     saveLatestPlan(plan);
+    setAiPlanResponse(null);
   }
 
   function handleRiskSubmit(data: ListingRiskInput) {
     const parsed = listingRiskInputSchema.parse(data);
     setRiskReport(analyzeListingRisk(parsed));
+    setAiRiskResponse(null);
   }
 
   function handleRawSubmit(data: RawVsSlabInput) {
@@ -198,6 +208,51 @@ export default function Home() {
     setJournalEntries(nextEntries);
     saveJournalEntries(nextEntries);
     journalForm.reset({ ...journalDefaults, date: new Date().toISOString().slice(0, 10) });
+  }
+
+  async function handlePlanAiSubmit(data: PlanInput) {
+    const parsed = planInputSchema.parse(data);
+    setAiLoading("plan");
+    setAiError(null);
+
+    try {
+      const response = await callHermes({
+        taskHint: "PLAN_GENERATION",
+        profile,
+        planInput: parsed,
+        journalSummary: summarizeJournal(journalEntries),
+      });
+      const plan = generatedPlanSetSchema.parse(response.result);
+      setLatestPlan(plan);
+      saveLatestPlan(plan);
+      setAiPlanResponse(response);
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : "AI plan generation failed.");
+    } finally {
+      setAiLoading(null);
+    }
+  }
+
+  async function handleRiskAiSubmit(data: ListingRiskInput) {
+    const parsed = listingRiskInputSchema.parse(data);
+    setAiLoading("risk");
+    setAiError(null);
+
+    try {
+      const response = await callHermes({
+        taskHint: "LISTING_RISK_CHECK",
+        profile,
+        listingInput: parsed,
+        journalSummary: summarizeJournal(journalEntries),
+      });
+      const report = listingRiskReportSchema.parse(response.result);
+      setRiskReport(report);
+      setAiRiskResponse(response);
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : "AI listing analysis failed.");
+    } finally {
+      setAiLoading(null);
+    }
   }
 
   return (
@@ -323,13 +378,24 @@ export default function Home() {
               <SelectField label="Willing to grade" {...planForm.register("gradingPreference")} options={gradingOptions} />
               <SelectField label="Preferred market" {...planForm.register("preferredMarket")} options={marketOptions} />
               <TextAreaField className="md:col-span-2" label="Notes" {...planForm.register("notes")} />
-              <div className="md:col-span-2">
+              <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
                 <button className="primary-button" type="submit">
                   <Sparkles className="h-4 w-4" />
-                  Generate Plan
+                  Generate Local Plan
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={aiLoading === "plan"}
+                  onClick={planForm.handleSubmit(handlePlanAiSubmit)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {aiLoading === "plan" ? "Running Hermes..." : "Generate with AI"}
                 </button>
               </div>
             </form>
+            {aiError && <AiError message={aiError} />}
+            {aiPlanResponse && <AgentTrace response={aiPlanResponse} />}
             {latestPlan && <PlanResults planSet={latestPlan} />}
           </ToolSurface>
         )}
@@ -347,13 +413,24 @@ export default function Home() {
               <InputField label="Listed price" type="number" {...riskForm.register("price", { valueAsNumber: true })} />
               <SelectField label="Marketplace" {...riskForm.register("marketplace")} options={marketOptions} />
               <SelectField label="User goal" {...riskForm.register("userGoal")} options={["Self-collection", "Grading", "Resale"]} />
-              <div className="md:col-span-2">
+              <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
                 <button className="primary-button" type="submit">
                   <AlertTriangle className="h-4 w-4" />
-                  Analyze Listing
+                  Analyze Locally
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={aiLoading === "risk"}
+                  onClick={riskForm.handleSubmit(handleRiskAiSubmit)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {aiLoading === "risk" ? "Running Hermes..." : "Analyze with AI"}
                 </button>
               </div>
             </form>
+            {aiError && <AiError message={aiError} />}
+            {aiRiskResponse && <AgentTrace response={aiRiskResponse} />}
             {riskReport && <RiskReport report={riskReport} />}
           </ToolSurface>
         )}
@@ -631,6 +708,43 @@ function RiskReport({ report }: { report: ListingRiskReport }) {
   );
 }
 
+function AgentTrace({ response }: { response: HermesResponse }) {
+  return (
+    <section className="mt-6 rounded-lg border border-[#c7d1c3] bg-[#f8faf5] p-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <Badge icon={Sparkles}>Hermes task: {response.taskType}</Badge>
+        <Badge icon={Gauge}>{response.fallbackUsed ? "Fallback used" : "AI assisted"}</Badge>
+      </div>
+      {response.warnings.length > 0 && <GroupedList title="Warnings" items={response.warnings} />}
+      <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {response.trace.map((step) => (
+          <article key={`${step.step}-${step.agent}`} className="rounded-md border border-[#d8ddcf] bg-white p-4">
+            <p className="text-xs font-semibold uppercase text-[#68756c]">{step.step}</p>
+            <h4 className="mt-1 text-base font-semibold">{step.agent}</h4>
+            <p className="mt-2 text-sm leading-6 text-[#536057]">{step.summary}</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#536057]">
+              <span className="rounded-md bg-[#eef2e7] px-2 py-1">Model: {step.model}</span>
+              {step.toolsUsed.map((tool) => (
+                <span key={tool} className="rounded-md bg-[#eef2e7] px-2 py-1">
+                  Tool: {tool}
+                </span>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AiError({ message }: { message: string }) {
+  return (
+    <div className="mt-5 rounded-md border border-[#d8a29a] bg-[#fff7f5] p-4 text-sm leading-6 text-[#81352f]">
+      <strong>AI request failed:</strong> {message}
+    </div>
+  );
+}
+
 function RawResult({ result }: { result: RawVsSlabResult }) {
   return (
     <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[0.9fr_1.1fr]">
@@ -775,6 +889,42 @@ const SelectField = ({
     </select>
   </label>
 );
+
+async function callHermes(payload: unknown): Promise<HermesResponse> {
+  const response = await fetch("/api/hermes/route", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+  const json = parseJsonResponse(text);
+
+  if (!response.ok) {
+    throw new Error(json?.error || "Hermes request failed.");
+  }
+
+  return hermesResponseSchema.parse(json);
+}
+
+function parseJsonResponse(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      error: text.slice(0, 180) || "Hermes returned a non-JSON response.",
+    };
+  }
+}
+
+function summarizeJournal(entries: DecisionJournalEntry[]) {
+  return entries
+    .slice(0, 5)
+    .map((entry) => `${entry.actionType}: ${entry.cardName}. Thesis: ${entry.thesis}. Risks: ${entry.risks}`)
+    .join("\n");
+}
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);

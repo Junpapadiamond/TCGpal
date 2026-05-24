@@ -13,6 +13,9 @@ Built features:
 - Listing Risk Checker using pasted title, description, price, and goal
 - Raw vs Slab Calculator using deterministic TypeScript math
 - Decision Journal saved to `localStorage`
+- Hermes Router server route with AI-assisted Plan and Listing Risk actions
+- Provider adapter with OpenAI default and future GLM/Kimi/MiMo extension points
+- Eval harness for routing, schema validation, deterministic math, safety language, and model-cost guards
 
 Deferred features:
 
@@ -22,8 +25,8 @@ Deferred features:
 - Vision model
 - External marketplace APIs
 - Payments
-- Hermes router
-- Real multi-agent orchestration
+- Perplexity/web search
+- Full multi-provider runtime beyond OpenAI
 
 ## Tech Stack
 
@@ -34,6 +37,20 @@ Deferred features:
 - Zod
 - Vitest
 - localStorage persistence
+- OpenAI Responses API via a server-side provider adapter
+
+## AI Setup
+
+Copy `.env.example` to `.env.local` and add your API key:
+
+```bash
+AI_PROVIDER=openai
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL_PRIMARY=gpt-5.4-mini
+OPENAI_MODEL_CHEAP=gpt-5.4-nano
+```
+
+The demo still works without an API key. In that case, Hermes returns local fallback results and shows the fallback in the agent trace.
 
 ## Getting Started
 

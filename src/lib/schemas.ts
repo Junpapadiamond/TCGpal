@@ -86,48 +86,111 @@ export const decisionJournalEntrySchema = z.object({
   createdAt: z.string(),
 });
 
+export const generatedPlanSchema = z.object({
+  title: z.string(),
+  posture: z.enum(["Conservative", "Balanced", "Aggressive"]),
+  summary: z.string(),
+  budgetSplit: z.array(z.string()).min(1),
+  buyConditions: z.array(z.string()).min(1),
+  doNotBuyConditions: z.array(z.string()).min(1),
+  sellConditions: z.array(z.string()).min(1),
+  risks: z.array(z.string()).min(1),
+  nextActions: z.array(z.string()).min(1),
+});
+
+export const generatedPlanSetSchema = z.object({
+  input: planInputSchema,
+  generatedAt: z.string(),
+  plans: z.array(generatedPlanSchema).length(3),
+});
+
+export const listingRiskReportSchema = z.object({
+  score: z.enum(["Low", "Medium", "Medium-High", "High"]),
+  confidence: z.enum(["Low", "Medium-low", "Medium", "High"]),
+  missingInfo: z.array(z.string()),
+  keyRisks: z.array(z.string()).min(1),
+  sellerQuestions: z.array(z.string()).min(1),
+  suitability: z.string(),
+  cautiousSummary: z.string(),
+});
+
+export const rawVsSlabResultSchema = z.object({
+  psa10NetValue: z.number(),
+  psa9NetValue: z.number(),
+  otherNetValue: z.number(),
+  expectedProfit: z.number(),
+  worstCaseOutcome: z.number(),
+  breakEvenPsa10Probability: z.number().nullable(),
+  recommendation: z.string(),
+  explanation: z.string(),
+  assumptions: z.array(z.string()),
+});
+
+export const hermesTaskTypeSchema = z.enum([
+  "PLAN_GENERATION",
+  "LISTING_RISK_CHECK",
+  "RAW_VS_SLAB_EXPLAIN",
+  "JOURNAL_DRAFT",
+]);
+
+export const agentTraceStepSchema = z.object({
+  step: z.string(),
+  agent: z.string(),
+  model: z.string(),
+  summary: z.string(),
+  toolsUsed: z.array(z.string()).default([]),
+});
+
+export const criticResultSchema = z.object({
+  passed: z.boolean(),
+  flags: z.array(z.string()),
+  rewrittenSummary: z.string().optional(),
+});
+
+export const journalDraftSchema = z.object({
+  cardName: z.string(),
+  actionType: z.enum(journalActionOptions),
+  thesis: z.string(),
+  buyCondition: z.string(),
+  sellCondition: z.string(),
+  stopCondition: z.string(),
+  risks: z.string(),
+  missingInfo: z.string(),
+  reviewPrompt: z.string(),
+});
+
+export const hermesRequestSchema = z.object({
+  taskHint: hermesTaskTypeSchema.optional(),
+  profile: userProfileSchema.optional(),
+  planInput: planInputSchema.optional(),
+  listingInput: listingRiskInputSchema.optional(),
+  rawInput: rawVsSlabInputSchema.optional(),
+  rawResult: rawVsSlabResultSchema.optional(),
+  journalSummary: z.string().default(""),
+});
+
+export const hermesResponseSchema = z.object({
+  taskType: hermesTaskTypeSchema,
+  result: z.union([generatedPlanSetSchema, listingRiskReportSchema, rawVsSlabResultSchema, journalDraftSchema]),
+  trace: z.array(agentTraceStepSchema),
+  warnings: z.array(z.string()),
+  fallbackUsed: z.boolean(),
+});
+
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type PlanInput = z.infer<typeof planInputSchema>;
 export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;
 export type DecisionJournalEntry = z.infer<typeof decisionJournalEntrySchema>;
-
-export type GeneratedPlan = {
-  title: string;
-  posture: "Conservative" | "Balanced" | "Aggressive";
-  summary: string;
-  budgetSplit: string[];
-  buyConditions: string[];
-  doNotBuyConditions: string[];
-  sellConditions: string[];
-  risks: string[];
-  nextActions: string[];
-};
-
-export type GeneratedPlanSet = {
-  input: PlanInput;
-  generatedAt: string;
-  plans: GeneratedPlan[];
-};
-
-export type ListingRiskReport = {
-  score: "Low" | "Medium" | "Medium-High" | "High";
-  confidence: "Low" | "Medium-low" | "Medium" | "High";
-  missingInfo: string[];
-  keyRisks: string[];
-  sellerQuestions: string[];
-  suitability: string;
-  cautiousSummary: string;
-};
-
-export type RawVsSlabResult = {
-  psa10NetValue: number;
-  psa9NetValue: number;
-  otherNetValue: number;
-  expectedProfit: number;
-  worstCaseOutcome: number;
-  breakEvenPsa10Probability: number | null;
-  recommendation: string;
-  explanation: string;
-  assumptions: string[];
-};
+export type GeneratedPlan = z.infer<typeof generatedPlanSchema>;
+export type GeneratedPlanSet = z.infer<typeof generatedPlanSetSchema>;
+export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
+export type RawVsSlabResult = z.infer<typeof rawVsSlabResultSchema>;
+export type HermesTaskType = z.infer<typeof hermesTaskTypeSchema>;
+export type AgentTraceStep = z.infer<typeof agentTraceStepSchema>;
+export type CriticResult = z.infer<typeof criticResultSchema>;
+export type JournalDraft = z.infer<typeof journalDraftSchema>;
+export type HermesRequest = z.infer<typeof hermesRequestSchema>;
+export type HermesResponse = z.infer<typeof hermesResponseSchema>;
+export type AiPlanResult = GeneratedPlanSet;
+export type AiListingRiskResult = ListingRiskReport;
