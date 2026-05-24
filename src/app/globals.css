@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f7f3;
+  --foreground: #17211c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.primary-button {
+  border: 1px solid #153f38;
+  background: #153f38;
+  color: #ffffff;
+}
+
+.primary-button:hover {
+  background: #1f695d;
+  transform: translateY(-1px);
+}
+
+.secondary-button {
+  border: 1px solid #c7d1c3;
+  background: #ffffff;
+  color: #17211c;
+}
+
+.secondary-button:hover {
+  border-color: #859387;
+  background: #f8faf5;
+}
+
+.nav-button {
+  display: inline-flex;
+  min-height: 40px;
+  shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  padding: 0.55rem 0.75rem;
+  color: #536057;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.nav-button:hover {
+  border-color: #d8ddcf;
+  background: #ffffff;
+  color: #17211c;
+}
+
+.nav-button-active {
+  border-color: #153f38;
+  background: #153f38;
+  color: #ffffff;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.field span {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #68756c;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cfd8ca;
+  border-radius: 0.375rem;
+  background: #fbfcf8;
+  color: #17211c;
+  outline: none;
+  padding: 0.75rem 0.85rem;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #1f695d;
+  box-shadow: 0 0 0 3px rgba(31, 105, 93, 0.14);
+}
