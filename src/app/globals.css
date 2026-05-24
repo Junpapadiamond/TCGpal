@@ -113,6 +113,8 @@ button:disabled {
 
 .choice-card {
   display: flex;
+  position: relative;
+  width: 100%;
   min-height: 64px;
   align-items: center;
   justify-content: space-between;
@@ -121,7 +123,7 @@ button:disabled {
   border-radius: 0.5rem;
   background: #fbfcf8;
   color: #17211c;
-  padding: 1rem;
+  padding: 1rem 3rem 1rem 1rem;
   font-weight: 800;
   text-align: left;
   transition:
@@ -141,6 +143,20 @@ button:disabled {
   border-color: #153f38;
   background: #eef7f2;
   box-shadow: inset 0 0 0 1px #153f38;
+}
+
+.choice-check {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  display: grid;
+  height: 1.5rem;
+  width: 1.5rem;
+  transform: translateY(-50%);
+  place-items: center;
+  border-radius: 999px;
+  background: #153f38;
+  color: #ffffff;
 }
 
 .form-grid {

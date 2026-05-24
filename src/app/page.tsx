@@ -692,7 +692,11 @@ function FirstRunExperience({
                   return (
                     <button key={tcg} className={`choice-card ${active ? "choice-card-active" : ""}`} onClick={() => onToggleTcg(tcg)}>
                       <span>{tcg}</span>
-                      {active && <Check className="h-4 w-4" />}
+                      {active && (
+                        <span className="choice-check" aria-hidden="true">
+                          <Check className="h-4 w-4" />
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -717,7 +721,11 @@ function FirstRunExperience({
                       <span className="block text-base">{playerType}</span>
                       <span className="mt-1 block text-sm font-medium leading-6 text-[#536057]">{personaDescription(playerType)}</span>
                     </span>
-                    {profile.playerType === playerType && <Check className="h-4 w-4 shrink-0" />}
+                    {profile.playerType === playerType && (
+                      <span className="choice-check" aria-hidden="true">
+                        <Check className="h-4 w-4" />
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -744,7 +752,11 @@ function FirstRunExperience({
                     onClick={() => onSelectBudget(budgetRange)}
                   >
                     <span>{budgetRange}</span>
-                    {profile.budgetRange === budgetRange && <Check className="h-4 w-4" />}
+                    {profile.budgetRange === budgetRange && (
+                      <span className="choice-check" aria-hidden="true">
+                        <Check className="h-4 w-4" />
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
