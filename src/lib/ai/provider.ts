@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { zodTextFormat } from "openai/helpers/zod";
 import type { AiConfig, AiModelRole } from "@/lib/ai/config";
 import { getModelForStep } from "@/lib/ai/config";
 
@@ -53,6 +54,9 @@ class OpenAiResponsesProvider implements AiProvider {
       },
       body: JSON.stringify({
         model,
+        text: {
+          format: zodTextFormat(schema, schemaName),
+        },
         input: [
           {
             role: "system",

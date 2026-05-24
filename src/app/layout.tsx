@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CardPlan AI",
-  description: "A cautious planning layer for TCG collectors and small sellers.",
+  title: "TCGpal",
+  description: "A cautious card decision layer for TCG collectors and small sellers.",
 };
 
 export default function RootLayout({

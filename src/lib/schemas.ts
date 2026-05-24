@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const ipOptions = ["One Piece", "Pokemon", "Yu-Gi-Oh", "Sports Cards", "Other"] as const;
+export const favoriteTcgOptions = ["Pokemon", "One Piece", "Yu-Gi-Oh", "League / Riot TCG", "Other"] as const;
+export const playerTypeOptions = ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"] as const;
+export const budgetRangeOptions = ["$50", "$150", "$300", "$1000+", "Talk about it later"] as const;
 export const goalOptions = [
   "Collection",
   "Collection + resale",
@@ -12,6 +15,9 @@ export const riskOptions = ["Low", "Medium", "High"] as const;
 export const holdingOptions = ["Short-term", "3-6 months", "1 year+", "Long-term collection"] as const;
 export const gradingOptions = ["No", "Maybe", "Yes"] as const;
 export const marketOptions = ["eBay", "TCGplayer", "Cardmarket", "Mercari", "Local community", "Other"] as const;
+export const actualGradeOptions = ["UNKNOWN", "PSA10", "PSA9", "PSA8_OR_LOWER"] as const;
+export const decisionSourceOptions = ["manual", "listing_risk", "raw_vs_slab"] as const;
+export const decisionPlanStatusOptions = ["open", "done", "skipped"] as const;
 export const journalActionOptions = [
   "Considering purchase",
   "Bought",
@@ -25,6 +31,9 @@ export const journalActionOptions = [
 
 export const userProfileSchema = z.object({
   ip: z.enum(ipOptions),
+  favoriteTcgs: z.array(z.enum(favoriteTcgOptions)).default(["One Piece"]),
+  playerType: z.enum(playerTypeOptions).default("Hybrid Collector-Seller"),
+  budgetRange: z.enum(budgetRangeOptions).default("$300"),
   goal: z.enum(goalOptions),
   monthlyBudget: z.number().min(0),
   riskLevel: z.enum(riskOptions),
@@ -83,7 +92,21 @@ export const decisionJournalEntrySchema = z.object({
   reviewDate: z.string().default(""),
   finalOutcome: z.string().trim().default(""),
   lessonsLearned: z.string().trim().default(""),
+  assumedPsa10Probability: z.number().min(0).max(1).optional(),
+  actualGrade: z.enum(actualGradeOptions).default("UNKNOWN"),
+  source: z.enum(decisionSourceOptions).default("manual"),
   createdAt: z.string(),
+});
+
+export const decisionPlanItemSchema = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  source: z.enum(["listing_risk", "raw_vs_slab"]),
+  title: z.string().trim().min(1),
+  cardName: z.string().trim().min(1),
+  summary: z.string().trim().min(1),
+  dueDate: z.string(),
+  status: z.enum(decisionPlanStatusOptions),
 });
 
 export const generatedPlanSchema = z.object({
@@ -144,7 +167,7 @@ export const agentTraceStepSchema = z.object({
 export const criticResultSchema = z.object({
   passed: z.boolean(),
   flags: z.array(z.string()),
-  rewrittenSummary: z.string().optional(),
+  rewrittenSummary: z.string().nullable(),
 });
 
 export const journalDraftSchema = z.object({
@@ -182,6 +205,7 @@ export type PlanInput = z.infer<typeof planInputSchema>;
 export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;
 export type DecisionJournalEntry = z.infer<typeof decisionJournalEntrySchema>;
+export type DecisionPlanItem = z.infer<typeof decisionPlanItemSchema>;
 export type GeneratedPlan = z.infer<typeof generatedPlanSchema>;
 export type GeneratedPlanSet = z.infer<typeof generatedPlanSetSchema>;
 export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;

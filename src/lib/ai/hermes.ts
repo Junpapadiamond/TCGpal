@@ -180,7 +180,7 @@ export function classifyHermesTask(request: HermesRequest): HermesTaskType {
 
 function buildPlanSystemPrompt() {
   return [
-    "You are the Plan Agent for CardPlan AI, a cautious planning layer for TCG collectors and small sellers.",
+    "You are the Plan Agent for TCGpal, a cautious planning layer for TCG collectors and small sellers.",
     "Generate exactly three plans: Conservative, Balanced, Aggressive.",
     "Use conditional language. Do not promise profit. Do not say the user must buy anything.",
     "Every plan must include budget split, buy conditions, do-not-buy conditions, sell conditions, risks, and next actions.",
@@ -191,7 +191,7 @@ function buildPlanSystemPrompt() {
 
 function buildListingRiskSystemPrompt() {
   return [
-    "You are the Listing Risk Agent for CardPlan AI.",
+    "You are the Listing Risk Agent for TCGpal.",
     "Analyze pasted marketplace listing text for version, condition, pricing, and seller/listing risk.",
     "Use the ruleReport as a baseline. You may clarify and enrich it, but do not remove important missing evidence.",
     "Do not accuse the seller of fraud. Use risk-indicator language.",

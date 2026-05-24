@@ -5,7 +5,9 @@ import {
   BarChart3,
   BookOpenCheck,
   Calculator,
+  Check,
   ClipboardList,
+  Layers3,
   Gauge,
   LayoutDashboard,
   ListChecks,
@@ -17,19 +19,28 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import {
+  getCuratedRecommendations,
+  toListingRiskInput,
+  toRawVsSlabInput,
+  type CuratedCardRecommendation,
+} from "@/lib/curated-recommendations";
+import { getGradingCalibration, type GradingCalibration } from "@/lib/journal-calibration";
 import { analyzeListingRisk } from "@/lib/listing-risk";
-import { generatePlan } from "@/lib/plan-generator";
 import { calculateRawVsSlab } from "@/lib/raw-vs-slab";
 import {
-  defaultPlanInput,
   defaultProfile,
   defaultRawVsSlabInput,
   starterJournalEntry,
 } from "@/lib/sample-data";
 import {
+  actualGradeOptions,
+  budgetRangeOptions,
   decisionJournalEntrySchema,
-  generatedPlanSetSchema,
+  decisionPlanItemSchema,
+  decisionSourceOptions,
+  favoriteTcgOptions,
   goalOptions,
   gradingOptions,
   hermesResponseSchema,
@@ -39,36 +50,42 @@ import {
   listingRiskReportSchema,
   listingRiskInputSchema,
   marketOptions,
-  planInputSchema,
+  playerTypeOptions,
   rawVsSlabInputSchema,
   riskOptions,
   userProfileSchema,
   type DecisionJournalEntry,
-  type GeneratedPlanSet,
+  type DecisionPlanItem,
   type HermesResponse,
   type ListingRiskInput,
   type ListingRiskReport,
-  type PlanInput,
   type RawVsSlabInput,
   type RawVsSlabResult,
   type UserProfile,
 } from "@/lib/schemas";
 import {
+  loadDecisionPlanItems,
   loadJournalEntries,
-  loadLatestPlan,
+  loadLatestRawResult,
   loadProfile,
+  saveDecisionPlanItems,
   saveJournalEntries,
-  saveLatestPlan,
+  saveLatestRawResult,
   saveProfile,
 } from "@/lib/storage";
 
-type View = "landing" | "onboarding" | "dashboard" | "plan" | "risk" | "raw" | "journal";
+type View = "landing" | "onboarding" | "dashboard" | "risk" | "raw" | "journal";
 
 type JournalForm = Omit<DecisionJournalEntry, "id" | "createdAt">;
+type OnboardingStep = "tcg" | "persona" | "budget";
+type AiHealth = {
+  ok: boolean;
+  warning?: string;
+  models?: { role: string; model: string; ok: boolean; status?: number }[];
+};
 
 const views: { id: View; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "plan", label: "Plan", icon: ClipboardList },
+  { id: "dashboard", label: "Home", icon: LayoutDashboard },
   { id: "risk", label: "Risk", icon: SearchCheck },
   { id: "raw", label: "Raw vs Slab", icon: Calculator },
   { id: "journal", label: "Journal", icon: BookOpenCheck },
@@ -98,50 +115,51 @@ const journalDefaults: JournalForm = {
   reviewDate: "",
   finalOutcome: "",
   lessonsLearned: "",
+  assumedPsa10Probability: 0.25,
+  actualGrade: "UNKNOWN",
+  source: "manual",
 };
 
 export default function Home() {
   const [view, setView] = useState<View>("landing");
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
-  const [latestPlan, setLatestPlan] = useState<GeneratedPlanSet | null>(null);
   const [riskReport, setRiskReport] = useState<ListingRiskReport | null>(null);
   const [rawResult, setRawResult] = useState<RawVsSlabResult>(() => calculateRawVsSlab(defaultRawVsSlabInput));
   const [journalEntries, setJournalEntries] = useState<DecisionJournalEntry[]>([]);
+  const [decisionPlanItems, setDecisionPlanItems] = useState<DecisionPlanItem[]>([]);
+  const [selectedCard, setSelectedCard] = useState<CuratedCardRecommendation | null>(null);
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("tcg");
   const [journalFilter, setJournalFilter] = useState<DecisionJournalEntry["actionType"] | "All">("All");
-  const [aiPlanResponse, setAiPlanResponse] = useState<HermesResponse | null>(null);
   const [aiRiskResponse, setAiRiskResponse] = useState<HermesResponse | null>(null);
-  const [aiLoading, setAiLoading] = useState<"plan" | "risk" | null>(null);
+  const [aiLoading, setAiLoading] = useState<"risk" | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [aiHealth, setAiHealth] = useState<AiHealth | null>(null);
 
   const profileForm = useForm<UserProfile>({ defaultValues: defaultProfile });
-  const planForm = useForm<PlanInput>({ defaultValues: defaultPlanInput });
   const riskForm = useForm<ListingRiskInput>({ defaultValues: listingDefaults });
   const rawForm = useForm<RawVsSlabInput>({ defaultValues: defaultRawVsSlabInput });
   const journalForm = useForm<JournalForm>({ defaultValues: journalDefaults });
+  const onboardingProfile = useWatch({ control: profileForm.control });
+  const watchedPsa10Probability = useWatch({ control: rawForm.control, name: "psa10Probability" });
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const storedProfile = loadProfile();
-      const storedPlan = loadLatestPlan();
+      const storedDecisionPlanItems = loadDecisionPlanItems();
+      const storedRawResult = loadLatestRawResult();
       const storedEntries = loadJournalEntries();
 
       if (storedProfile) {
         setProfile(storedProfile);
         profileForm.reset(storedProfile);
-        planForm.reset({
-          ...defaultPlanInput,
-          ip: storedProfile.ip,
-          budget: storedProfile.monthlyBudget,
-          goal: storedProfile.goal,
-          riskLevel: storedProfile.riskLevel,
-          holdingPeriod: storedProfile.holdingPeriod,
-          gradingPreference: storedProfile.gradingPreference,
-          preferredMarket: storedProfile.preferredMarket,
-        });
       }
 
-      if (storedPlan) {
-        setLatestPlan(storedPlan);
+      if (storedDecisionPlanItems.length) {
+        setDecisionPlanItems(storedDecisionPlanItems);
+      }
+
+      if (storedRawResult) {
+        setRawResult(storedRawResult);
       }
 
       if (storedEntries.length) {
@@ -153,17 +171,45 @@ export default function Home() {
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [journalForm, planForm, profileForm]);
+  }, [journalForm, profileForm]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+
+    fetch("/api/ai/health")
+      .then((response) => response.json())
+      .then((data: AiHealth) => setAiHealth(data))
+      .catch((error: unknown) => {
+        console.warn("AI health check failed", error);
+        setAiHealth({
+          ok: false,
+          warning: "AI health check failed. AI actions may use local fallback.",
+        });
+      });
+  }, []);
 
   const filteredEntries = useMemo(() => {
     if (journalFilter === "All") return journalEntries;
     return journalEntries.filter((entry) => entry.actionType === journalFilter);
   }, [journalEntries, journalFilter]);
 
+  const openPlanItems = useMemo(() => {
+    return decisionPlanItems.filter((item) => item.status === "open");
+  }, [decisionPlanItems]);
+
+  const gradingCalibration = useMemo(() => {
+    return getGradingCalibration(journalEntries, Number(watchedPsa10Probability) || defaultRawVsSlabInput.psa10Probability);
+  }, [journalEntries, watchedPsa10Probability]);
+
+  const recommendedCards = useMemo(() => {
+    return getCuratedRecommendations(profile);
+  }, [profile]);
+
   const dashboardStats = [
     { label: "Monthly budget", value: `$${profile.monthlyBudget}`, icon: Target },
     { label: "Risk posture", value: profile.riskLevel, icon: Gauge },
     { label: "Journal entries", value: String(journalEntries.length), icon: BookOpenCheck },
+    { label: "30-day items", value: String(openPlanItems.length), icon: ClipboardList },
     { label: "Last EV", value: formatMoney(rawResult.expectedProfit), icon: BarChart3 },
   ];
 
@@ -179,12 +225,31 @@ export default function Home() {
     navigateTo("dashboard");
   }
 
-  function handlePlanSubmit(data: PlanInput) {
-    const parsed = planInputSchema.parse(data);
-    const plan = generatePlan(parsed);
-    setLatestPlan(plan);
-    saveLatestPlan(plan);
-    setAiPlanResponse(null);
+  function toggleFavoriteTcg(tcg: UserProfile["favoriteTcgs"][number]) {
+    const current = profileForm.getValues("favoriteTcgs") ?? [];
+    const next = current.includes(tcg) ? current.filter((item) => item !== tcg) : [...current, tcg];
+    profileForm.setValue("favoriteTcgs", next.length ? next : [tcg], { shouldDirty: true });
+  }
+
+  function finishFirstRun() {
+    const formValues = profileForm.getValues();
+    const favoriteTcgs = formValues.favoriteTcgs?.length ? formValues.favoriteTcgs : ["One Piece"];
+    const primaryTcg = favoriteTcgs[0] === "Pokemon" ? "Pokemon" : favoriteTcgs[0] === "Yu-Gi-Oh" ? "Yu-Gi-Oh" : favoriteTcgs[0] === "Other" ? "Other" : "One Piece";
+    const budget = budgetRangeToMonthlyBudget(formValues.budgetRange);
+    const nextProfile = userProfileSchema.parse({
+      ...defaultProfile,
+      ...formValues,
+      favoriteTcgs,
+      ip: primaryTcg,
+      monthlyBudget: budget,
+      goal: personaToGoal(formValues.playerType),
+      riskLevel: formValues.playerType === "Seller / Vendor" ? "Medium" : defaultProfile.riskLevel,
+    });
+
+    setProfile(nextProfile);
+    profileForm.reset(nextProfile);
+    saveProfile(nextProfile);
+    navigateTo("dashboard");
   }
 
   function handleRiskSubmit(data: ListingRiskInput) {
@@ -195,7 +260,9 @@ export default function Home() {
 
   function handleRawSubmit(data: RawVsSlabInput) {
     const parsed = rawVsSlabInputSchema.parse(data);
-    setRawResult(calculateRawVsSlab(parsed));
+    const result = calculateRawVsSlab(parsed);
+    setRawResult(result);
+    saveLatestRawResult(result);
   }
 
   function handleJournalSubmit(data: JournalForm) {
@@ -208,29 +275,6 @@ export default function Home() {
     setJournalEntries(nextEntries);
     saveJournalEntries(nextEntries);
     journalForm.reset({ ...journalDefaults, date: new Date().toISOString().slice(0, 10) });
-  }
-
-  async function handlePlanAiSubmit(data: PlanInput) {
-    const parsed = planInputSchema.parse(data);
-    setAiLoading("plan");
-    setAiError(null);
-
-    try {
-      const response = await callHermes({
-        taskHint: "PLAN_GENERATION",
-        profile,
-        planInput: parsed,
-        journalSummary: summarizeJournal(journalEntries),
-      });
-      const plan = generatedPlanSetSchema.parse(response.result);
-      setLatestPlan(plan);
-      saveLatestPlan(plan);
-      setAiPlanResponse(response);
-    } catch (error) {
-      setAiError(error instanceof Error ? error.message : "AI plan generation failed.");
-    } finally {
-      setAiLoading(null);
-    }
   }
 
   async function handleRiskAiSubmit(data: ListingRiskInput) {
@@ -249,49 +293,108 @@ export default function Home() {
       setRiskReport(report);
       setAiRiskResponse(response);
     } catch (error) {
-      setAiError(error instanceof Error ? error.message : "AI listing analysis failed.");
+      console.error("AI listing analysis failed", error);
+      setAiError("AI temporarily unavailable, using local fallback.");
     } finally {
       setAiLoading(null);
     }
   }
 
+  function handleApplyCalibration() {
+    rawForm.setValue("psa10Probability", gradingCalibration.suggestedProbability, { shouldDirty: true });
+    const nextInput = rawVsSlabInputSchema.parse({
+      ...rawForm.getValues(),
+      psa10Probability: gradingCalibration.suggestedProbability,
+    });
+    const result = calculateRawVsSlab(nextInput);
+    setRawResult(result);
+    saveLatestRawResult(result);
+  }
+
+  function handleAddRiskToPlan() {
+    if (!riskReport) return;
+    const listing = riskForm.getValues();
+    addDecisionPlanItem({
+      source: "listing_risk",
+      title: "Resolve listing risk before buying",
+      cardName: listing.title,
+      summary: `${riskReport.score} risk. ${riskReport.suitability}`,
+    });
+  }
+
+  function handleAddRawToPlan() {
+    const listing = riskForm.getValues();
+    addDecisionPlanItem({
+      source: "raw_vs_slab",
+      title: rawResult.expectedProfit >= 0 ? "Verify condition before raw purchase" : "Wait for a better raw entry",
+      cardName: listing.title || "Current raw-vs-slab decision",
+      summary: `${formatMoney(rawResult.expectedProfit)} EV. ${rawResult.recommendation}`,
+    });
+  }
+
+  function handleAddCardToPlan(card: CuratedCardRecommendation) {
+    addDecisionPlanItem({
+      source: "raw_vs_slab",
+      title: `Review ${card.cardName} within 30 days`,
+      cardName: `${card.cardName} ${card.version}`,
+      summary: `${card.buyTone} Snapshot: raw ${formatMoney(card.suggestedRawPrice)}, PSA10 ${formatMoney(card.suggestedPsa10Price)}.`,
+    });
+    setSelectedCard(null);
+  }
+
+  function handleSendCardToRaw(card: CuratedCardRecommendation) {
+    const input = toRawVsSlabInput(card);
+    rawForm.reset(input);
+    const result = calculateRawVsSlab(input);
+    setRawResult(result);
+    saveLatestRawResult(result);
+    setSelectedCard(null);
+    navigateTo("raw");
+  }
+
+  function handleSendCardToRisk(card: CuratedCardRecommendation) {
+    const input = toListingRiskInput(card);
+    riskForm.reset(input);
+    setRiskReport(analyzeListingRisk(input));
+    setAiRiskResponse(null);
+    setSelectedCard(null);
+    navigateTo("risk");
+  }
+
+  function addDecisionPlanItem(input: Pick<DecisionPlanItem, "source" | "title" | "cardName" | "summary">) {
+    const item = decisionPlanItemSchema.parse({
+      ...input,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      dueDate: getDateOffset(30),
+      status: "open",
+    });
+    const nextItems = [item, ...decisionPlanItems];
+    setDecisionPlanItems(nextItems);
+    saveDecisionPlanItems(nextItems);
+  }
+
+  function updateDecisionPlanStatus(id: string, status: DecisionPlanItem["status"]) {
+    const nextItems = decisionPlanItems.map((item) => (item.id === id ? { ...item, status } : item));
+    setDecisionPlanItems(nextItems);
+    saveDecisionPlanItems(nextItems);
+  }
+
   return (
     <main className="min-h-screen bg-[#f6f7f3] text-[#17211c]">
       <Header activeView={view} onNavigate={navigateTo} />
+      {aiHealth && !aiHealth.ok && <AiHealthBanner health={aiHealth} />}
 
       {view === "landing" && (
-        <section className="border-b border-[#d8ddcf] bg-[#eef2e7]">
-          <div className="mx-auto grid min-h-[620px] max-w-7xl grid-cols-1 gap-8 px-5 py-10 md:grid-cols-[1.05fr_0.95fr] md:px-8 lg:px-10">
-            <div className="flex flex-col justify-center">
-              <Badge icon={ShieldCheck}>Cautious planning layer for TCG decisions</Badge>
-              <h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-tight text-[#111815] md:text-6xl">
-                Stop guessing. Build a card plan.
-              </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-[#4d5a50]">
-                CardPlan AI helps collectors and small sellers turn goals, budgets, listing details, and grading assumptions into
-                structured buy/sell plans. It explains tradeoffs without promising profit.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button className="primary-button" onClick={() => navigateTo("onboarding")}>
-                  <ListChecks className="h-4 w-4" />
-                  Create My First Plan
-                </button>
-                <button className="secondary-button" onClick={() => navigateTo("risk")}>
-                  <SearchCheck className="h-4 w-4" />
-                  Check a Listing Risk
-                </button>
-              </div>
-              <div className="mt-8 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-                {["Conditional plans", "Deterministic math", "Decision journal"].map((item) => (
-                  <div key={item} className="rounded-md border border-[#d8ddcf] bg-white/70 px-4 py-3 text-sm font-medium">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <ProductPreview />
-          </div>
-        </section>
+        <FirstRunExperience
+          step={onboardingStep}
+          profile={userProfileSchema.parse({ ...defaultProfile, ...onboardingProfile })}
+          onToggleTcg={toggleFavoriteTcg}
+          onSelectPersona={(playerType) => profileForm.setValue("playerType", playerType, { shouldDirty: true })}
+          onSelectBudget={(budgetRange) => profileForm.setValue("budgetRange", budgetRange, { shouldDirty: true })}
+          onStepChange={setOnboardingStep}
+          onFinish={finishFirstRun}
+        />
       )}
 
       <div className="mx-auto max-w-7xl px-5 py-8 md:px-8 lg:px-10">
@@ -324,11 +427,16 @@ export default function Home() {
         {view === "dashboard" && (
           <section className="space-y-6">
             <SectionIntro
-              eyebrow="Dashboard"
-              title="Portfolio demo cockpit"
-              description="A compact view of user context, saved plan, recent risk posture, and journal habits."
+              eyebrow="Home"
+              title="Cards worth reviewing first"
+              description="Curated demo recommendations based on your TCGs, player type, and budget range."
             />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <RecommendationGrid
+              cards={recommendedCards}
+              profile={profile}
+              onSelectCard={setSelectedCard}
+            />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
               {dashboardStats.map((stat) => (
                 <Metric key={stat.label} {...stat} />
               ))}
@@ -349,63 +457,24 @@ export default function Home() {
               <Panel title="Next best actions" icon={Sparkles}>
                 <ActionList
                   items={[
-                    "Generate or refresh the plan around the current budget.",
-                    "Run the riskiest candidate listing through text-based checks.",
-                    "Use Raw vs Slab before buying raw cards above $50.",
-                    "Write the stop condition in Decision Journal before purchase.",
+                    "Paste the current eBay listing into Listing Risk.",
+                    "Run Raw vs Slab before buying raw cards above $50.",
+                    "Use journal history to calibrate PSA10 assumptions.",
+                    "Add unresolved decisions to the 30-day plan before purchase.",
                   ]}
                 />
               </Panel>
             </div>
-            {latestPlan && <PlanResults planSet={latestPlan} />}
+            <DecisionPlanList items={decisionPlanItems} onUpdateStatus={updateDecisionPlanStatus} />
           </section>
-        )}
-
-        {view === "plan" && (
-          <ToolSurface
-            icon={ClipboardList}
-            eyebrow="Plan Generator"
-            title="Generate three conditional plans"
-            description="Mock structured logic creates conservative, balanced, and aggressive plans from the user's goal and constraints."
-          >
-            <form className="form-grid" onSubmit={planForm.handleSubmit(handlePlanSubmit)}>
-              <SelectField label="IP" {...planForm.register("ip")} options={ipOptions} />
-              <InputField label="Theme or candidate cards" {...planForm.register("theme")} />
-              <InputField label="Budget" type="number" {...planForm.register("budget", { valueAsNumber: true })} />
-              <SelectField label="Goal" {...planForm.register("goal")} options={goalOptions} />
-              <SelectField label="Risk level" {...planForm.register("riskLevel")} options={riskOptions} />
-              <SelectField label="Holding period" {...planForm.register("holdingPeriod")} options={holdingOptions} />
-              <SelectField label="Willing to grade" {...planForm.register("gradingPreference")} options={gradingOptions} />
-              <SelectField label="Preferred market" {...planForm.register("preferredMarket")} options={marketOptions} />
-              <TextAreaField className="md:col-span-2" label="Notes" {...planForm.register("notes")} />
-              <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
-                <button className="primary-button" type="submit">
-                  <Sparkles className="h-4 w-4" />
-                  Generate Local Plan
-                </button>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  disabled={aiLoading === "plan"}
-                  onClick={planForm.handleSubmit(handlePlanAiSubmit)}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {aiLoading === "plan" ? "Running Hermes..." : "Generate with AI"}
-                </button>
-              </div>
-            </form>
-            {aiError && <AiError message={aiError} />}
-            {aiPlanResponse && <AgentTrace response={aiPlanResponse} />}
-            {latestPlan && <PlanResults planSet={latestPlan} />}
-          </ToolSurface>
         )}
 
         {view === "risk" && (
           <ToolSurface
             icon={SearchCheck}
             eyebrow="Listing Risk Checker"
-            title="Screen pasted listing text before buying"
-            description="Phase 0 uses text-only mock logic. Image upload, vision, and Supabase storage wait until later phases."
+            title="Should this listing move forward?"
+            description="Paste title and description first. If the evidence clears the first screen, continue into raw-vs-slab math."
           >
             <form className="form-grid" onSubmit={riskForm.handleSubmit(handleRiskSubmit)}>
               <InputField className="md:col-span-2" label="Listing title" {...riskForm.register("title")} />
@@ -431,7 +500,13 @@ export default function Home() {
             </form>
             {aiError && <AiError message={aiError} />}
             {aiRiskResponse && <AgentTrace response={aiRiskResponse} />}
-            {riskReport && <RiskReport report={riskReport} />}
+            {riskReport && (
+              <RiskReport
+                report={riskReport}
+                onContinue={() => navigateTo("raw")}
+                onAddToPlan={handleAddRiskToPlan}
+              />
+            )}
           </ToolSurface>
         )}
 
@@ -442,16 +517,17 @@ export default function Home() {
             title="Use deterministic math before grading speculation"
             description="All arithmetic is TypeScript code. The explanation only interprets the calculated result."
           >
+            <CalibrationCard calibration={gradingCalibration} onApply={handleApplyCalibration} />
             <form className="form-grid" onSubmit={rawForm.handleSubmit(handleRawSubmit)}>
               <InputField label="Raw price" type="number" step="0.01" {...rawForm.register("rawPrice", { valueAsNumber: true })} />
               <InputField label="PSA10 sold price" type="number" step="0.01" {...rawForm.register("psa10Price", { valueAsNumber: true })} />
               <InputField label="PSA9 sold price" type="number" step="0.01" {...rawForm.register("psa9Price", { valueAsNumber: true })} />
               <InputField label="Other estimate" type="number" step="0.01" {...rawForm.register("otherPrice", { valueAsNumber: true })} />
               <InputField label="Grading + inbound cost" type="number" step="0.01" {...rawForm.register("gradingCost", { valueAsNumber: true })} />
-              <InputField label="Marketplace fee rate" type="number" step="0.01" {...rawForm.register("marketplaceFeeRate", { valueAsNumber: true })} />
+              <InputField label="Marketplace fee rate (0.13 = 13%)" type="number" step="0.01" {...rawForm.register("marketplaceFeeRate", { valueAsNumber: true })} />
               <InputField label="Sale shipping" type="number" step="0.01" {...rawForm.register("shippingCost", { valueAsNumber: true })} />
-              <InputField label="PSA10 probability" type="number" step="0.01" {...rawForm.register("psa10Probability", { valueAsNumber: true })} />
-              <InputField label="PSA9 probability" type="number" step="0.01" {...rawForm.register("psa9Probability", { valueAsNumber: true })} />
+              <InputField label="PSA10 probability (0.25 = 25%)" type="number" step="0.01" {...rawForm.register("psa10Probability", { valueAsNumber: true })} />
+              <InputField label="PSA9 probability (0.40 = 40%)" type="number" step="0.01" {...rawForm.register("psa9Probability", { valueAsNumber: true })} />
               <div className="md:col-span-2">
                 <button className="primary-button" type="submit">
                   <Calculator className="h-4 w-4" />
@@ -459,7 +535,7 @@ export default function Home() {
                 </button>
               </div>
             </form>
-            <RawResult result={rawResult} />
+            <RawResult result={rawResult} onAddToPlan={handleAddRawToPlan} />
           </ToolSurface>
         )}
 
@@ -484,6 +560,16 @@ export default function Home() {
               <TextAreaField label="Risks noted" {...journalForm.register("risks")} />
               <InputField label="Review date" type="date" {...journalForm.register("reviewDate")} />
               <TextAreaField label="Missing information" {...journalForm.register("missingInfo")} />
+              <InputField
+                label="Assumed PSA10 probability (0.30 = 30%)"
+                type="number"
+                step="0.01"
+                {...journalForm.register("assumedPsa10Probability", {
+                  setValueAs: (value) => (value === "" ? undefined : Number(value)),
+                })}
+              />
+              <SelectField label="Actual grade" {...journalForm.register("actualGrade")} options={actualGradeOptions} />
+              <SelectField label="Decision source" {...journalForm.register("source")} options={decisionSourceOptions} />
               <div className="md:col-span-2">
                 <button className="primary-button" type="submit">
                   <Save className="h-4 w-4" />
@@ -509,6 +595,15 @@ export default function Home() {
           </ToolSurface>
         )}
       </div>
+      {selectedCard && (
+        <CardDecisionSheet
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onRunRaw={handleSendCardToRaw}
+          onCheckRisk={handleSendCardToRisk}
+          onAddToPlan={handleAddCardToPlan}
+        />
+      )}
     </main>
   );
 }
@@ -522,8 +617,8 @@ function Header({ activeView, onNavigate }: { activeView: View; onNavigate: (vie
             <Sparkles className="h-5 w-5" />
           </span>
           <span>
-            <span className="block text-lg font-semibold">CardPlan AI</span>
-            <span className="block text-xs font-medium uppercase text-[#647168]">PM demo MVP</span>
+            <span className="block text-lg font-semibold">TCGpal</span>
+            <span className="block text-xs font-medium uppercase text-[#647168]">Cautious TCG decisions</span>
           </span>
         </button>
         <nav className="flex gap-2 overflow-x-auto">
@@ -546,26 +641,229 @@ function Header({ activeView, onNavigate }: { activeView: View; onNavigate: (vie
   );
 }
 
-function ProductPreview() {
+function FirstRunExperience({
+  step,
+  profile,
+  onToggleTcg,
+  onSelectPersona,
+  onSelectBudget,
+  onStepChange,
+  onFinish,
+}: {
+  step: OnboardingStep;
+  profile: UserProfile;
+  onToggleTcg: (tcg: UserProfile["favoriteTcgs"][number]) => void;
+  onSelectPersona: (playerType: UserProfile["playerType"]) => void;
+  onSelectBudget: (budgetRange: UserProfile["budgetRange"]) => void;
+  onStepChange: (step: OnboardingStep) => void;
+  onFinish: () => void;
+}) {
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-full max-w-xl rounded-lg border border-[#c7d1c3] bg-white p-4 shadow-[0_18px_60px_rgba(28,45,37,0.14)]">
-        <div className="flex items-center justify-between border-b border-[#e3e7dd] pb-3">
-          <div>
-            <p className="text-xs font-semibold uppercase text-[#68756c]">Plan preview</p>
-            <h2 className="text-xl font-semibold">Balanced Chopper Plan</h2>
+    <section className="border-b border-[#d8ddcf] bg-[#eef2e7]">
+      <div className="mx-auto grid min-h-[680px] max-w-7xl grid-cols-1 gap-8 px-5 py-10 md:grid-cols-[0.9fr_1.1fr] md:px-8 lg:px-10">
+        <div className="flex flex-col justify-center">
+          <Badge icon={Layers3}>TCGpal starts with the cards you care about</Badge>
+          <h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-tight text-[#111815] md:text-6xl">
+            Build your card radar.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#4d5a50]">
+            Pick your games, your player type, and a rough budget. TCGpal will show cards to review before you paste a listing or run grading math.
+          </p>
+          <div className="mt-8 flex gap-2">
+            {(["tcg", "persona", "budget"] as const).map((item, index) => (
+              <button
+                key={item}
+                className={`h-2 flex-1 rounded-full ${step === item ? "bg-[#153f38]" : "bg-white"}`}
+                aria-label={`Step ${index + 1}`}
+                onClick={() => onStepChange(item)}
+              />
+            ))}
           </div>
-          <span className="rounded-md bg-[#f2d06b] px-3 py-1 text-sm font-semibold">Medium risk</span>
         </div>
-        <div className="grid grid-cols-3 gap-3 py-4">
-          <MetricMini label="Budget" value="$300" />
-          <MetricMini label="Reserve" value="$45" />
-          <MetricMini label="Review" value="30 days" />
+        <div className="rounded-lg border border-[#c7d1c3] bg-white p-5 shadow-[0_18px_60px_rgba(28,45,37,0.14)] md:p-6">
+          {step === "tcg" && (
+            <div>
+              <p className="text-xs font-semibold uppercase text-[#68756c]">Step 1 of 3</p>
+              <h2 className="mt-2 text-3xl font-semibold">What TCGs do you follow?</h2>
+              <p className="mt-2 text-sm leading-6 text-[#536057]">Choose more than one. Your first home screen will be built around these games.</p>
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {favoriteTcgOptions.map((tcg) => {
+                  const active = profile.favoriteTcgs.includes(tcg);
+                  return (
+                    <button key={tcg} className={`choice-card ${active ? "choice-card-active" : ""}`} onClick={() => onToggleTcg(tcg)}>
+                      <span>{tcg}</span>
+                      {active && <Check className="h-4 w-4" />}
+                    </button>
+                  );
+                })}
+              </div>
+              <button className="primary-button mt-6 w-full" onClick={() => onStepChange("persona")}>
+                Continue
+              </button>
+            </div>
+          )}
+          {step === "persona" && (
+            <div>
+              <p className="text-xs font-semibold uppercase text-[#68756c]">Step 2 of 3</p>
+              <h2 className="mt-2 text-3xl font-semibold">What type of TCG player are you?</h2>
+              <div className="mt-6 grid grid-cols-1 gap-3">
+                {playerTypeOptions.map((playerType) => (
+                  <button
+                    key={playerType}
+                    className={`choice-card items-start ${profile.playerType === playerType ? "choice-card-active" : ""}`}
+                    onClick={() => onSelectPersona(playerType)}
+                  >
+                    <span>
+                      <span className="block text-base">{playerType}</span>
+                      <span className="mt-1 block text-sm font-medium leading-6 text-[#536057]">{personaDescription(playerType)}</span>
+                    </span>
+                    {profile.playerType === playerType && <Check className="h-4 w-4 shrink-0" />}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-6 flex gap-3">
+                <button className="secondary-button flex-1" onClick={() => onStepChange("tcg")}>
+                  Back
+                </button>
+                <button className="primary-button flex-1" onClick={() => onStepChange("budget")}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+          {step === "budget" && (
+            <div>
+              <p className="text-xs font-semibold uppercase text-[#68756c]">Step 3 of 3</p>
+              <h2 className="mt-2 text-3xl font-semibold">What budget should TCGpal respect?</h2>
+              <p className="mt-2 text-sm leading-6 text-[#536057]">A range is enough for now. You can change it later.</p>
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {budgetRangeOptions.map((budgetRange) => (
+                  <button
+                    key={budgetRange}
+                    className={`choice-card ${profile.budgetRange === budgetRange ? "choice-card-active" : ""}`}
+                    onClick={() => onSelectBudget(budgetRange)}
+                  >
+                    <span>{budgetRange}</span>
+                    {profile.budgetRange === budgetRange && <Check className="h-4 w-4" />}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-6 flex gap-3">
+                <button className="secondary-button flex-1" onClick={() => onStepChange("persona")}>
+                  Back
+                </button>
+                <button className="primary-button flex-1" onClick={onFinish}>
+                  Show my cards
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="space-y-3">
-          <PreviewRow label="Buy condition" value="Version clear, price below sold comps, front/back photos available." />
-          <PreviewRow label="Risk flag" value="No raw grading play above $50 without corner and surface closeups." />
-          <PreviewRow label="Journal prompt" value="Write thesis, stop condition, and review date before purchase." />
+      </div>
+    </section>
+  );
+}
+
+function RecommendationGrid({
+  cards,
+  profile,
+  onSelectCard,
+}: {
+  cards: CuratedCardRecommendation[];
+  profile: UserProfile;
+  onSelectCard: (card: CuratedCardRecommendation) => void;
+}) {
+  return (
+    <section className="rounded-lg border border-[#d8ddcf] bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase text-[#68756c]">Recommended first reviews</p>
+          <h3 className="mt-1 text-2xl font-semibold">{profile.playerType} radar</h3>
+        </div>
+        <p className="text-sm font-medium text-[#536057]">{profile.favoriteTcgs.join(", ")} · {profile.budgetRange}</p>
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => (
+          <button key={card.id} className="text-left" onClick={() => onSelectCard(card)}>
+            <article className="h-full rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-4 transition hover:-translate-y-1 hover:border-[#9eb0a0] hover:shadow-lg">
+              <div className="flex gap-4">
+                <DesignedCard card={card} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase text-[#68756c]">{card.tcg}</p>
+                  <h4 className="mt-1 text-lg font-semibold leading-6">{card.cardName}</h4>
+                  <p className="mt-1 text-sm leading-5 text-[#536057]">{card.version}</p>
+                  <p className="mt-3 font-mono text-sm font-bold">{formatMoney(card.suggestedRawPrice)} raw</p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-[#435046]">{card.buyTone}</p>
+            </article>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CardDecisionSheet({
+  card,
+  onClose,
+  onRunRaw,
+  onCheckRisk,
+  onAddToPlan,
+}: {
+  card: CuratedCardRecommendation;
+  onClose: () => void;
+  onRunRaw: (card: CuratedCardRecommendation) => void;
+  onCheckRisk: (card: CuratedCardRecommendation) => void;
+  onAddToPlan: (card: CuratedCardRecommendation) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-40 bg-[#111815]/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="mx-auto max-h-[calc(100vh-2rem)] max-w-4xl overflow-y-auto rounded-lg bg-white p-5 shadow-2xl md:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex gap-4">
+            <DesignedCard card={card} large />
+            <div>
+              <p className="text-xs font-semibold uppercase text-[#68756c]">{card.tcg} · {card.rarity}</p>
+              <h2 className="mt-1 text-3xl font-semibold">{card.cardName}</h2>
+              <p className="mt-1 text-[#536057]">{card.version}</p>
+            </div>
+          </div>
+          <button className="secondary-button min-h-0 px-3 py-2" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1fr]">
+          <section className="rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-4">
+            <h3 className="text-lg font-semibold">Moderate buy tone</h3>
+            <p className="mt-3 leading-7 text-[#435046]">{card.buyTone}</p>
+            <GroupedList title="Risk flags" items={card.riskFlags} />
+          </section>
+          <section className="rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-4">
+            <h3 className="text-lg font-semibold">Raw / slab snapshot</h3>
+            <DetailGrid
+              items={[
+                ["Raw guide", formatMoney(card.suggestedRawPrice)],
+                ["PSA9 guide", formatMoney(card.suggestedPsa9Price)],
+                ["PSA10 guide", formatMoney(card.suggestedPsa10Price)],
+                ["PSA10 odds", formatPercent(card.psa10Probability)],
+              ]}
+            />
+          </section>
+        </div>
+        <div className="sticky bottom-0 -mx-5 mt-6 flex flex-col gap-3 border-t border-[#e3e7dd] bg-white/95 px-5 py-4 backdrop-blur sm:flex-row md:-mx-6 md:px-6">
+          <button className="primary-button" onClick={() => onRunRaw(card)}>
+            <Calculator className="h-4 w-4" />
+            Run Raw vs Slab
+          </button>
+          <button className="secondary-button" onClick={() => onCheckRisk(card)}>
+            <SearchCheck className="h-4 w-4" />
+            Check Listing Risk
+          </button>
+          <button className="secondary-button" onClick={() => onAddToPlan(card)}>
+            <ClipboardList className="h-4 w-4" />
+            Add to 30-day plan
+          </button>
         </div>
       </div>
     </div>
@@ -652,50 +950,27 @@ function Metric({ label, value, icon: Icon }: { label: string; value: string; ic
   );
 }
 
-function MetricMini({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-[#e3e7dd] bg-[#f8faf5] p-3">
-      <p className="text-xs font-semibold uppercase text-[#68756c]">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
-    </div>
-  );
-}
+function RiskReport({
+  report,
+  onContinue,
+  onAddToPlan,
+}: {
+  report: ListingRiskReport;
+  onContinue: () => void;
+  onAddToPlan: () => void;
+}) {
+  const riskTone = getRiskTone(report.score);
 
-function PreviewRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-[#f8faf5] p-3">
-      <p className="text-xs font-semibold uppercase text-[#68756c]">{label}</p>
-      <p className="mt-1 text-sm leading-6 text-[#354139]">{value}</p>
-    </div>
-  );
-}
-
-function PlanResults({ planSet }: { planSet: GeneratedPlanSet }) {
-  return (
-    <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
-      {planSet.plans.map((plan) => (
-        <section key={plan.posture} className="rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
-          <p className="text-xs font-semibold uppercase text-[#68756c]">{plan.posture}</p>
-          <h3 className="mt-1 text-xl font-semibold">{plan.title}</h3>
-          <p className="mt-3 text-sm leading-6 text-[#536057]">{plan.summary}</p>
-          <GroupedList title="Budget split" items={plan.budgetSplit} />
-          <GroupedList title="Buy conditions" items={plan.buyConditions} />
-          <GroupedList title="Do not buy" items={plan.doNotBuyConditions} />
-          <GroupedList title="Next actions" items={plan.nextActions} />
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function RiskReport({ report }: { report: ListingRiskReport }) {
   return (
     <section className="mt-6 rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
-      <div className="flex flex-wrap items-center gap-3">
-        <Badge icon={AlertTriangle}>Risk score: {report.score}</Badge>
-        <Badge icon={Gauge}>Confidence: {report.confidence}</Badge>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+        <div className={`rounded-lg border p-5 ${riskTone.containerClass}`}>
+          <p className="text-xs font-semibold uppercase tracking-wide">{riskTone.kicker}</p>
+          <p className="mt-2 text-4xl font-black leading-none md:text-5xl">{riskTone.headline}</p>
+          <p className="mt-3 text-sm font-semibold">Confidence: {report.confidence}</p>
+        </div>
+        <p className="leading-7 text-[#435046]">{report.cautiousSummary}</p>
       </div>
-      <p className="mt-4 leading-7 text-[#435046]">{report.cautiousSummary}</p>
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <GroupedList title="Missing information" items={report.missingInfo} />
         <GroupedList title="Key risks" items={report.keyRisks} />
@@ -704,26 +979,39 @@ function RiskReport({ report }: { report: ListingRiskReport }) {
       <div className="mt-5 rounded-md bg-white p-4 text-sm leading-6 text-[#354139]">
         <strong>Suitability:</strong> {report.suitability}
       </div>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <button className="primary-button" type="button" onClick={onContinue}>
+          <Calculator className="h-4 w-4" />
+          Continue to Raw vs Slab
+        </button>
+        <button className="secondary-button" type="button" onClick={onAddToPlan}>
+          <ClipboardList className="h-4 w-4" />
+          Add this to 30-day plan
+        </button>
+      </div>
     </section>
   );
 }
 
 function AgentTrace({ response }: { response: HermesResponse }) {
   return (
-    <section className="mt-6 rounded-lg border border-[#c7d1c3] bg-[#f8faf5] p-5">
-      <div className="flex flex-wrap items-center gap-3">
+    <details className="mt-6 rounded-lg border border-[#c7d1c3] bg-[#f8faf5] p-5 text-sm">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3 font-semibold">
+        <Badge icon={Sparkles}>View AI reasoning trace</Badge>
+        <Badge icon={Gauge}>{response.fallbackUsed ? "Local fallback used" : "AI assisted"}</Badge>
+      </summary>
+      <div className="mt-5 flex flex-wrap items-center gap-3">
         <Badge icon={Sparkles}>Hermes task: {response.taskType}</Badge>
-        <Badge icon={Gauge}>{response.fallbackUsed ? "Fallback used" : "AI assisted"}</Badge>
       </div>
-      {response.warnings.length > 0 && <GroupedList title="Warnings" items={response.warnings} />}
+      {response.warnings.length > 0 && <GroupedList title="Warnings" items={response.warnings.map(sanitizeTraceMessage)} />}
       <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
         {response.trace.map((step) => (
           <article key={`${step.step}-${step.agent}`} className="rounded-md border border-[#d8ddcf] bg-white p-4">
             <p className="text-xs font-semibold uppercase text-[#68756c]">{step.step}</p>
             <h4 className="mt-1 text-base font-semibold">{step.agent}</h4>
-            <p className="mt-2 text-sm leading-6 text-[#536057]">{step.summary}</p>
+            <p className="mt-2 text-sm leading-6 text-[#536057]">{sanitizeTraceMessage(step.summary)}</p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#536057]">
-              <span className="rounded-md bg-[#eef2e7] px-2 py-1">Model: {step.model}</span>
+              <span className="rounded-md bg-[#eef2e7] px-2 py-1">Model: {sanitizeTraceMessage(step.model)}</span>
               {step.toolsUsed.map((tool) => (
                 <span key={tool} className="rounded-md bg-[#eef2e7] px-2 py-1">
                   Tool: {tool}
@@ -733,7 +1021,23 @@ function AgentTrace({ response }: { response: HermesResponse }) {
           </article>
         ))}
       </div>
-    </section>
+    </details>
+  );
+}
+
+function AiHealthBanner({ health }: { health: AiHealth }) {
+  const modelText = health.models
+    ?.filter((model) => !model.ok)
+    .map((model) => `${model.role}: ${model.model}${model.status ? ` (${model.status})` : ""}`)
+    .join(", ");
+
+  return (
+    <div className="border-b border-[#e2c76c] bg-[#fff7d6] px-5 py-3 text-sm font-medium text-[#59451a]">
+      <div className="mx-auto max-w-7xl">
+        {health.warning || "AI temporarily unavailable, using local fallback."}
+        {modelText ? <span className="ml-2 font-mono text-xs">Check: {modelText}</span> : null}
+      </div>
+    </div>
   );
 }
 
@@ -745,32 +1049,120 @@ function AiError({ message }: { message: string }) {
   );
 }
 
-function RawResult({ result }: { result: RawVsSlabResult }) {
+function CalibrationCard({ calibration, onApply }: { calibration: GradingCalibration; onApply: () => void }) {
   return (
-    <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-      <div className="rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
-        <h3 className="text-lg font-semibold">Calculation result</h3>
-        <DetailGrid
-          items={[
-            ["PSA10 net value", formatMoney(result.psa10NetValue)],
-            ["PSA9 net value", formatMoney(result.psa9NetValue)],
-            ["Other net value", formatMoney(result.otherNetValue)],
-            ["Expected profit", formatMoney(result.expectedProfit)],
-            ["Worst case", formatMoney(result.worstCaseOutcome)],
-            [
-              "Break-even PSA10",
-              result.breakEvenPsa10Probability === null ? "N/A" : `${(result.breakEvenPsa10Probability * 100).toFixed(1)}%`,
-            ],
-          ]}
-        />
-      </div>
-      <div className="rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
-        <h3 className="text-lg font-semibold">Explanation</h3>
-        <p className="mt-3 leading-7 text-[#435046]">{result.explanation}</p>
-        <p className="mt-4 rounded-md bg-white p-4 text-sm font-medium leading-6 text-[#243028]">{result.recommendation}</p>
-        <GroupedList title="Assumptions" items={result.assumptions} />
+    <section className="mb-5 rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase text-[#68756c]">Journal calibration</p>
+          <p className="mt-2 text-sm leading-6 text-[#435046]">{calibration.message}</p>
+          {calibration.enoughHistory && (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#536057]">
+              <span className="rounded-md bg-white px-2 py-1">Sample: {calibration.sampleSize}</span>
+              <span className="rounded-md bg-white px-2 py-1">Assumed avg: {formatPercent(calibration.assumedAverage)}</span>
+              <span className="rounded-md bg-white px-2 py-1">Actual PSA10: {formatPercent(calibration.actualPsa10Rate)}</span>
+            </div>
+          )}
+        </div>
+        <button className="secondary-button shrink-0" type="button" disabled={!calibration.enoughHistory} onClick={onApply}>
+          Apply adjusted probability
+        </button>
       </div>
     </section>
+  );
+}
+
+function RawResult({ result, onAddToPlan }: { result: RawVsSlabResult; onAddToPlan: () => void }) {
+  const profitable = result.expectedProfit >= 0;
+
+  return (
+    <section className="mt-6 space-y-4">
+      <div
+        className={`rounded-lg border p-6 text-center ${
+          profitable ? "border-[#9fc7a3] bg-[#f1f8ef] text-[#173f24]" : "border-[#e1aaa4] bg-[#fff5f3] text-[#7a241e]"
+        }`}
+      >
+        <p className="text-xs font-extrabold uppercase tracking-wide">Expected Profit</p>
+        <p className="mt-2 font-mono text-5xl font-black leading-none md:text-6xl">{formatMoney(result.expectedProfit)}</p>
+        <p className="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6">{result.recommendation}</p>
+        <button className="secondary-button mt-5 bg-white/80" type="button" onClick={onAddToPlan}>
+          <ClipboardList className="h-4 w-4" />
+          Add this to 30-day plan
+        </button>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1fr]">
+        <div className="rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
+          <h3 className="text-lg font-semibold">Supporting numbers</h3>
+          <DetailGrid
+            items={[
+              ["PSA10 net value", formatMoney(result.psa10NetValue)],
+              ["PSA9 net value", formatMoney(result.psa9NetValue)],
+              ["Other net value", formatMoney(result.otherNetValue)],
+              ["Worst case", formatMoney(result.worstCaseOutcome)],
+              [
+                "Break-even PSA10",
+                result.breakEvenPsa10Probability === null ? "N/A" : `${(result.breakEvenPsa10Probability * 100).toFixed(1)}%`,
+              ],
+            ]}
+            dangerLabels={["Worst case"]}
+          />
+        </div>
+        <div className="rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
+          <h3 className="text-lg font-semibold">Explanation</h3>
+          <p className="mt-3 leading-7 text-[#435046]">{result.explanation}</p>
+          <GroupedList title="Assumptions" items={result.assumptions} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DecisionPlanList({
+  items,
+  onUpdateStatus,
+}: {
+  items: DecisionPlanItem[];
+  onUpdateStatus: (id: string, status: DecisionPlanItem["status"]) => void;
+}) {
+  if (!items.length) {
+    return (
+      <Panel title="30-day plan" icon={ClipboardList}>
+        <p className="text-sm leading-6 text-[#536057]">
+          No active decision items yet. Run a listing risk check or raw-vs-slab calculation, then add the decision here.
+        </p>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel title="30-day plan" icon={ClipboardList}>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {items.map((item) => (
+          <article key={item.id} className="rounded-md border border-[#d8ddcf] bg-[#f8faf5] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase text-[#68756c]">{formatDecisionSource(item.source)}</p>
+                <h4 className="mt-1 text-lg font-semibold">{item.title}</h4>
+              </div>
+              <span className="rounded-md bg-white px-3 py-1 text-xs font-bold uppercase text-[#354139]">{item.status}</span>
+            </div>
+            <p className="mt-2 text-sm font-semibold text-[#243028]">{item.cardName}</p>
+            <p className="mt-2 text-sm leading-6 text-[#536057]">{item.summary}</p>
+            <p className="mt-3 text-xs font-semibold uppercase text-[#68756c]">Due {item.dueDate}</p>
+            {item.status === "open" && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button className="secondary-button min-h-0 px-3 py-2 text-xs" type="button" onClick={() => onUpdateStatus(item.id, "done")}>
+                  Mark done
+                </button>
+                <button className="secondary-button min-h-0 px-3 py-2 text-xs" type="button" onClick={() => onUpdateStatus(item.id, "skipped")}>
+                  Skip
+                </button>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </Panel>
   );
 }
 
@@ -793,9 +1185,36 @@ function JournalEntry({ entry }: { entry: DecisionJournalEntry }) {
           ["Stop condition", entry.stopCondition || "Not specified"],
           ["Risks", entry.risks || "Not specified"],
           ["Missing info", entry.missingInfo || "Not specified"],
+          ["Assumed PSA10", typeof entry.assumedPsa10Probability === "number" ? formatPercent(entry.assumedPsa10Probability) : "Not specified"],
+          ["Actual grade", entry.actualGrade || "UNKNOWN"],
         ]}
       />
     </article>
+  );
+}
+
+function DesignedCard({ card, large = false }: { card: CuratedCardRecommendation; large?: boolean }) {
+  const tone = getTcgTone(card.tcg);
+  return (
+    <div
+      className={`relative overflow-hidden rounded-md border ${tone.border} ${tone.bg} ${large ? "h-44 w-32" : "h-32 w-24"} shrink-0 p-2 shadow-inner`}
+    >
+      <div className={`absolute inset-x-0 top-0 h-2 ${tone.strip}`} />
+      <div className="mt-2 flex h-full flex-col justify-between">
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-wide text-white/85">{card.tcg}</p>
+          <div className="mt-2 rounded-sm border border-white/30 bg-white/20 p-2 text-center text-[10px] font-bold uppercase leading-4 text-white">
+            Card art
+            <br />
+            coming soon
+          </div>
+        </div>
+        <div>
+          <p className="truncate text-[10px] font-black uppercase text-white">{card.cardName}</p>
+          <p className="truncate text-[9px] font-semibold text-white/75">{card.rarity}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -815,15 +1234,19 @@ function GroupedList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function DetailGrid({ items }: { items: [string, string][] }) {
+function DetailGrid({ items, dangerLabels = [] }: { items: [string, string][]; dangerLabels?: string[] }) {
   return (
     <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {items.map(([label, value]) => (
-        <div key={label} className="rounded-md bg-[#f8faf5] p-3">
-          <dt className="text-xs font-semibold uppercase text-[#68756c]">{label}</dt>
-          <dd className="mt-1 text-sm leading-6 text-[#354139]">{value}</dd>
-        </div>
-      ))}
+      {items.map(([label, value]) => {
+        const isDanger = dangerLabels.includes(label);
+
+        return (
+          <div key={label} className="rounded-md bg-[#f8faf5] p-3">
+            <dt className="text-xs font-semibold uppercase text-[#68756c]">{label}</dt>
+            <dd className={`mt-1 font-mono text-sm leading-6 ${isDanger ? "font-bold text-[#9f2f25]" : "text-[#354139]"}`}>{value}</dd>
+          </div>
+        );
+      })}
     </dl>
   );
 }
@@ -853,11 +1276,13 @@ function Badge({ children, icon: Icon }: { children: React.ReactNode; icon: Reac
 const InputField = ({
   label,
   className = "",
+  type,
+  inputMode,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) => (
   <label className={`field ${className}`}>
     <span>{label}</span>
-    <input {...props} />
+    <input type={type} inputMode={inputMode ?? (type === "number" ? "decimal" : undefined)} {...props} />
   </label>
 );
 
@@ -930,8 +1355,99 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 }
 
+function formatPercent(value: number) {
+  return `${Math.round(value * 100)}%`;
+}
+
+function getDateOffset(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function formatDecisionSource(source: DecisionPlanItem["source"]) {
+  return source === "listing_risk" ? "Listing risk" : "Raw vs slab";
+}
+
+function budgetRangeToMonthlyBudget(budgetRange: UserProfile["budgetRange"]) {
+  if (budgetRange === "$50") return 50;
+  if (budgetRange === "$150") return 150;
+  if (budgetRange === "$1000+") return 1000;
+  if (budgetRange === "Talk about it later") return 300;
+  return 300;
+}
+
+function personaToGoal(playerType: UserProfile["playerType"]): UserProfile["goal"] {
+  if (playerType === "Collector") return "Collection";
+  if (playerType === "Seller / Vendor") return "Small seller inventory";
+  return "Collection + resale";
+}
+
+function personaDescription(playerType: UserProfile["playerType"]) {
+  if (playerType === "Collector") return "I mainly collect cards I like and want to avoid overpaying.";
+  if (playerType === "Seller / Vendor") return "I buy cards as inventory and care about margin, fees, and liquidity.";
+  return "I collect, but I also care about resale, grading upside, and decision discipline.";
+}
+
+function getTcgTone(tcg: UserProfile["favoriteTcgs"][number]) {
+  if (tcg === "Pokemon") return { bg: "bg-[#2f6db3]", border: "border-[#1f4f86]", strip: "bg-[#f2d06b]" };
+  if (tcg === "One Piece") return { bg: "bg-[#255f59]", border: "border-[#17433f]", strip: "bg-[#d14c3f]" };
+  if (tcg === "Yu-Gi-Oh") return { bg: "bg-[#4b2f6f]", border: "border-[#301f48]", strip: "bg-[#b9a05f]" };
+  if (tcg === "League / Riot TCG") return { bg: "bg-[#20364f]", border: "border-[#142536]", strip: "bg-[#b7985a]" };
+  return { bg: "bg-[#4d5a50]", border: "border-[#333d36]", strip: "bg-[#c7d1c3]" };
+}
+
 function filterClass(active: boolean) {
   return `rounded-md border px-3 py-2 text-sm font-semibold ${
     active ? "border-[#153f38] bg-[#153f38] text-white" : "border-[#d8ddcf] bg-white text-[#354139] hover:border-[#a8b5aa]"
   }`;
+}
+
+function getRiskTone(score: ListingRiskReport["score"]) {
+  if (score === "High") {
+    return {
+      kicker: "High risk",
+      headline: "ASK QUESTIONS FIRST",
+      containerClass: "border-[#d88980] bg-[#fff5f3] text-[#7a241e]",
+    };
+  }
+
+  if (score === "Medium-High") {
+    return {
+      kicker: "Elevated risk",
+      headline: "VERIFY BEFORE BUYING",
+      containerClass: "border-[#e2c76c] bg-[#fff9dd] text-[#5d4815]",
+    };
+  }
+
+  if (score === "Medium") {
+    return {
+      kicker: "Moderate risk",
+      headline: "CHECK THE GAPS",
+      containerClass: "border-[#d8c887] bg-[#fffbea] text-[#574819]",
+    };
+  }
+
+  return {
+    kicker: "Lower risk",
+    headline: "CONDITIONALLY OK",
+    containerClass: "border-[#9fc7a3] bg-[#f1f8ef] text-[#173f24]",
+  };
+}
+
+function sanitizeTraceMessage(message: string) {
+  const lower = message.toLowerCase();
+  if (lower.includes("zod") || lower.includes("invalid_type") || lower.includes("validation")) {
+    return "AI output did not match the expected app schema, so the local fallback was used.";
+  }
+
+  if (lower.includes("openai 401") || lower.includes("not_authorized") || lower.includes("api key")) {
+    return "AI provider is unavailable in this local session, so the local fallback was used.";
+  }
+
+  if (message.length > 180) {
+    return `${message.slice(0, 177)}...`;
+  }
+
+  return message;
 }

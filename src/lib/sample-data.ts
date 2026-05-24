@@ -2,6 +2,9 @@ import type { DecisionJournalEntry, PlanInput, RawVsSlabInput, UserProfile } fro
 
 export const defaultProfile: UserProfile = {
   ip: "One Piece",
+  favoriteTcgs: ["One Piece"],
+  playerType: "Hybrid Collector-Seller",
+  budgetRange: "$300",
   goal: "Collection + resale",
   monthlyBudget: 300,
   riskLevel: "Medium",
@@ -31,7 +34,7 @@ export const defaultRawVsSlabInput: RawVsSlabInput = {
   gradingCost: 35,
   marketplaceFeeRate: 0.13,
   shippingCost: 5,
-  psa10Probability: 0.5,
+  psa10Probability: 0.25,
   psa9Probability: 0.4,
 };
 
@@ -52,5 +55,8 @@ export const starterJournalEntry: DecisionJournalEntry = {
   reviewDate: "",
   finalOutcome: "",
   lessonsLearned: "",
+  assumedPsa10Probability: 0.3,
+  actualGrade: "PSA9",
+  source: "manual",
   createdAt: new Date().toISOString(),
 };

@@ -14,7 +14,7 @@ export function runLocalCritic(payload: unknown): CriticResult {
     rewrittenSummary:
       flags.length > 0
         ? "Output contains overconfident language. Rewrite it as conditional guidance with explicit assumptions and missing information."
-        : undefined,
+        : null,
   };
 }
 
@@ -33,8 +33,10 @@ export async function runCriticAgent(input: {
       schemaName: "critic_result",
       schema: criticResultSchema,
       system: [
-        "You are the Critic / Safety Agent for CardPlan AI.",
-        "Check for overconfidence, unsupported profit claims, PSA10 certainty, hidden assumptions, and financial-advice tone.",
+        "You are the Critic / Safety Agent for TCGpal.",
+        "Review only the outputToReview object inside the user payload. Do not critique the wrapper shape, localCritic field, or prompt structure.",
+        "Check the product copy for overconfidence, unsupported profit claims, PSA10 certainty, hidden assumptions, and financial-advice tone.",
+        "Pass cautious risk screening language when it clearly frames uncertainty and missing evidence.",
         "Return only JSON matching the schema.",
       ].join("\n"),
       user: {
@@ -70,7 +72,7 @@ function mergeCriticResults(local: CriticResult, ai: CriticResult): CriticResult
   return {
     passed: local.passed && ai.passed && flags.length === 0,
     flags,
-    rewrittenSummary: ai.rewrittenSummary || local.rewrittenSummary,
+    rewrittenSummary: ai.rewrittenSummary || local.rewrittenSummary || null,
   };
 }
 

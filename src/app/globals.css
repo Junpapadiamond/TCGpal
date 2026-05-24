@@ -25,6 +25,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 button,
@@ -108,6 +109,38 @@ button:disabled {
   border-color: #153f38;
   background: #153f38;
   color: #ffffff;
+}
+
+.choice-card {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #d8ddcf;
+  border-radius: 0.5rem;
+  background: #fbfcf8;
+  color: #17211c;
+  padding: 1rem;
+  font-weight: 800;
+  text-align: left;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.choice-card:hover {
+  border-color: #9eb0a0;
+  background: #f8faf5;
+  transform: translateY(-1px);
+}
+
+.choice-card-active {
+  border-color: #153f38;
+  background: #eef7f2;
+  box-shadow: inset 0 0 0 1px #153f38;
 }
 
 .form-grid {

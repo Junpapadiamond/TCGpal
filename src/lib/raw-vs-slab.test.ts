@@ -12,7 +12,7 @@ describe("raw vs slab calculations", () => {
 
     expect(result.psa10NetValue).toBe(186.4);
     expect(result.psa9NetValue).toBe(77.65);
-    expect(result.expectedProfit).toBe(12.68);
+    expect(result.expectedProfit).toBe(-25.39);
     expect(result.worstCaseOutcome).toBe(-80.85);
   });
 
