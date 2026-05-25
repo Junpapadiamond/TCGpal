@@ -1,4 +1,5 @@
 import {
+  decisionJournalEntrySchema,
   userProfileSchema,
   type DecisionJournalEntry,
   type DecisionPlanItem,
@@ -66,7 +67,13 @@ export function saveLatestRawResult(result: RawVsSlabResult) {
 }
 
 export function loadJournalEntries(): DecisionJournalEntry[] {
-  return loadJson<DecisionJournalEntry[]>(keys.journal, []);
+  const stored = loadJson<unknown>(keys.journal, []);
+  if (!Array.isArray(stored)) return [];
+
+  return stored
+    .map((entry) => decisionJournalEntrySchema.safeParse(entry))
+    .filter((entry): entry is { success: true; data: DecisionJournalEntry } => entry.success)
+    .map((entry) => entry.data);
 }
 
 export function saveJournalEntries(entries: DecisionJournalEntry[]) {

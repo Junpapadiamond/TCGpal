@@ -128,6 +128,7 @@ export async function routeHermes(rawRequest: HermesRequest): Promise<HermesResp
   } else {
     result = buildJournalDraft({
       rawResult: request.rawResult,
+      journalEntry: request.journalEntry,
       cardName: request.planInput?.theme || request.listingInput?.title,
     });
     const parsedDraft = journalDraftSchema.parse(result);

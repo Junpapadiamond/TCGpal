@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f3;
-  --foreground: #17211c;
+  --background: #f5f3ed;
+  --foreground: #2d2620;
 }
 
 @theme inline {
@@ -24,7 +24,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -51,10 +51,11 @@ button:disabled {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   transition:
     background 160ms ease,
     border-color 160ms ease,
@@ -63,25 +64,26 @@ button:disabled {
 }
 
 .primary-button {
-  border: 1px solid #153f38;
-  background: #153f38;
-  color: #ffffff;
+  border: 1px solid #386445;
+  background: #4a7c59;
+  color: #f5f3ed;
+  box-shadow: 0 2px 0 #2f523b;
 }
 
 .primary-button:hover {
-  background: #1f695d;
+  background: #386445;
   transform: translateY(-1px);
 }
 
 .secondary-button {
-  border: 1px solid #c7d1c3;
-  background: #ffffff;
-  color: #17211c;
+  border: 1px solid #dcd9c8;
+  background: #fffdf7;
+  color: #2d2620;
 }
 
 .secondary-button:hover {
-  border-color: #859387;
-  background: #f8faf5;
+  border-color: #c8c2aa;
+  background: #ecebe1;
 }
 
 .nav-button {
@@ -92,23 +94,23 @@ button:disabled {
   justify-content: center;
   gap: 0.45rem;
   border: 1px solid transparent;
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   padding: 0.55rem 0.75rem;
-  color: #536057;
-  font-size: 0.9rem;
+  color: #6b6555;
+  font-size: 0.86rem;
   font-weight: 700;
 }
 
 .nav-button:hover {
-  border-color: #d8ddcf;
-  background: #ffffff;
-  color: #17211c;
+  border-color: #dcd9c8;
+  background: #fffdf7;
+  color: #2d2620;
 }
 
 .nav-button-active {
-  border-color: #153f38;
-  background: #153f38;
-  color: #ffffff;
+  border-color: #dcd9c8;
+  background: #ecebe1;
+  color: #4a7c59;
 }
 
 .choice-card {
@@ -119,10 +121,10 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border: 1px solid #d8ddcf;
-  border-radius: 0.5rem;
-  background: #fbfcf8;
-  color: #17211c;
+  border: 1px solid #dcd9c8;
+  border-radius: 0.25rem;
+  background: #fffdf7;
+  color: #2d2620;
   padding: 1rem 3rem 1rem 1rem;
   font-weight: 800;
   text-align: left;
@@ -134,15 +136,15 @@ button:disabled {
 }
 
 .choice-card:hover {
-  border-color: #9eb0a0;
-  background: #f8faf5;
+  border-color: #c8c2aa;
+  background: #ecebe1;
   transform: translateY(-1px);
 }
 
 .choice-card-active {
-  border-color: #153f38;
-  background: #eef7f2;
-  box-shadow: inset 0 0 0 1px #153f38;
+  border-color: #4a7c59;
+  background: #eef0df;
+  box-shadow: inset 0 0 0 1px #4a7c59;
 }
 
 .choice-check {
@@ -154,9 +156,9 @@ button:disabled {
   width: 1.5rem;
   transform: translateY(-50%);
   place-items: center;
-  border-radius: 999px;
-  background: #153f38;
-  color: #ffffff;
+  border-radius: 0.25rem;
+  background: #4a7c59;
+  color: #f5f3ed;
 }
 
 .form-grid {
@@ -182,7 +184,7 @@ button:disabled {
   font-size: 0.82rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: #68756c;
+  color: #6b6555;
 }
 
 .field input,
@@ -190,10 +192,10 @@ button:disabled {
 .field textarea {
   width: 100%;
   min-width: 0;
-  border: 1px solid #cfd8ca;
-  border-radius: 0.375rem;
-  background: #fbfcf8;
-  color: #17211c;
+  border: 1px solid #dcd9c8;
+  border-radius: 0.25rem;
+  background: #fffdf7;
+  color: #2d2620;
   outline: none;
   padding: 0.75rem 0.85rem;
 }
@@ -205,6 +207,6 @@ button:disabled {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: #1f695d;
-  box-shadow: 0 0 0 3px rgba(31, 105, 93, 0.14);
+  border-color: #4a7c59;
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.14);
 }

@@ -1,0 +1,61 @@
+- generic [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - button "T TCGpal Card counter notes" [ref=e5] [cursor=pointer]:
+        - generic [ref=e6]: T
+        - generic [ref=e7]:
+          - generic [ref=e8]: TCGpal
+          - generic [ref=e9]: Card counter notes
+      - navigation [ref=e10]:
+        - button "Home" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+          - text: Home
+        - button "Risk" [active] [ref=e17] [cursor=pointer]:
+          - img [ref=e18]
+          - text: Risk
+        - button "Raw vs Slab" [ref=e22] [cursor=pointer]:
+          - img [ref=e23]
+          - text: Raw vs Slab
+        - button "Journal" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+          - text: Journal
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - img [ref=e68]
+        - generic [ref=e72]:
+          - paragraph [ref=e73]: Listing Risk Checker
+          - heading "Should this listing move forward?" [level=2] [ref=e74]
+          - paragraph [ref=e75]: Paste title and description first. If the evidence clears the first screen, continue into raw-vs-slab math.
+      - generic [ref=e77]:
+        - generic [ref=e78]:
+          - generic [ref=e79]: Listing title
+          - textbox "Listing title" [ref=e80]: Tony Tony Chopper EB01 Alt Art Japanese One Piece Mint
+        - generic [ref=e81]:
+          - generic [ref=e82]: Description
+          - textbox "Description" [ref=e83]: Great condition, looks PSA10. No returns.
+        - generic [ref=e84]:
+          - generic [ref=e85]: Listed price
+          - spinbutton "Listed price" [ref=e86]: "120"
+        - generic [ref=e87]:
+          - generic [ref=e88]: Marketplace
+          - combobox "Marketplace" [ref=e89]:
+            - option "eBay" [selected]
+            - option "TCGplayer"
+            - option "Cardmarket"
+            - option "Mercari"
+            - option "Local community"
+            - option "Other"
+        - generic [ref=e90]:
+          - generic [ref=e91]: User goal
+          - combobox "User goal" [ref=e92]:
+            - option "Self-collection"
+            - option "Grading" [selected]
+            - option "Resale"
+        - generic [ref=e93]:
+          - button "Analyze Locally" [ref=e94] [cursor=pointer]:
+            - img [ref=e95]
+            - text: Analyze Locally
+          - button "Analyze with AI" [ref=e97] [cursor=pointer]:
+            - img [ref=e98]
+            - text: Analyze with AI
+  - alert [ref=e64]
