@@ -1,8 +1,11 @@
+import { evaluateBuySell, type DecisionSignals } from "@/lib/buy-sell";
 import { analyzeListingRisk } from "@/lib/listing-risk";
 import { analyzeAuthenticityRisk } from "@/lib/listing-risk-authenticity";
 import { calculateRawVsSlab } from "@/lib/raw-vs-slab";
 import type {
   AuthenticityAssessment,
+  BuySellDecision,
+  BuySellInput,
   GeneratedPlanSet,
   JournalDraft,
   ListingRiskInput,
@@ -10,6 +13,10 @@ import type {
   RawVsSlabInput,
   RawVsSlabResult,
 } from "@/lib/schemas";
+
+export function runBuySellEvaluator(input: BuySellInput, signals: DecisionSignals = {}): BuySellDecision {
+  return evaluateBuySell(input, signals);
+}
 
 export function analyzeListingRiskText(input: ListingRiskInput): ListingRiskReport {
   return analyzeListingRisk(input);

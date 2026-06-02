@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Save,
+  Scale,
   SearchCheck,
   ShieldCheck,
   Sparkles,
@@ -18,7 +19,9 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { evaluateBuySell } from "@/lib/buy-sell";
 import { analyzeListingRisk } from "@/lib/listing-risk";
+import { analyzeAuthenticityRisk } from "@/lib/listing-risk-authenticity";
 import { generatePlan } from "@/lib/plan-generator";
 import { calculateRawVsSlab } from "@/lib/raw-vs-slab";
 import {
@@ -28,6 +31,10 @@ import {
   starterJournalEntry,
 } from "@/lib/sample-data";
 import {
+  buySellActionOptions,
+  buySellDecisionSchema,
+  buySellInputSchema,
+  collectionNeedOptions,
   decisionJournalEntrySchema,
   generatedPlanSetSchema,
   goalOptions,
@@ -42,11 +49,14 @@ import {
   planInputSchema,
   productTypeOptions,
   rawVsSlabInputSchema,
+  restockRiskOptions,
   returnsPolicyOptions,
   riskOptions,
   sellerRatingOptions,
   sellerTypeOptions,
   userProfileSchema,
+  type BuySellDecision,
+  type BuySellInput,
   type DecisionJournalEntry,
   type GeneratedPlanSet,
   type HermesResponse,
@@ -66,7 +76,7 @@ import {
   saveProfile,
 } from "@/lib/storage";
 
-type View = "landing" | "onboarding" | "dashboard" | "plan" | "risk" | "raw" | "journal";
+type View = "landing" | "onboarding" | "dashboard" | "plan" | "risk" | "raw" | "decision" | "journal";
 
 type JournalForm = Omit<DecisionJournalEntry, "id" | "createdAt">;
 
@@ -75,6 +85,7 @@ const views: { id: View; label: string; icon: React.ComponentType<{ className?: 
   { id: "plan", label: "Plan", icon: ClipboardList },
   { id: "risk", label: "Risk", icon: SearchCheck },
   { id: "raw", label: "Raw vs Slab", icon: Calculator },
+  { id: "decision", label: "Buy/Sell", icon: Scale },
   { id: "journal", label: "Journal", icon: BookOpenCheck },
 ];
 
@@ -89,6 +100,21 @@ const listingDefaults: ListingRiskInput = {
   sellerRating: "New / No history",
   returnsPolicy: "No returns",
   region: "",
+};
+
+const decisionDefaults: BuySellInput = {
+  cardName: "Tony Tony Chopper EB01-006 AA",
+  action: "Evaluate buy",
+  askingPrice: 120,
+  soldComp: 105,
+  budget: 300,
+  monthlyBudget: 300,
+  goal: "Collection + resale",
+  riskLevel: "Medium",
+  holdingPeriod: "3-6 months",
+  collectionNeed: "Nice to have",
+  restockRisk: "Unknown",
+  versionNotes: "Japanese alternate art; confirm EB01-006 vs any reprint.",
 };
 
 const journalDefaults: JournalForm = {
@@ -117,15 +143,18 @@ export default function Home() {
   const [rawResult, setRawResult] = useState<RawVsSlabResult>(() => calculateRawVsSlab(defaultRawVsSlabInput));
   const [journalEntries, setJournalEntries] = useState<DecisionJournalEntry[]>([]);
   const [journalFilter, setJournalFilter] = useState<DecisionJournalEntry["actionType"] | "All">("All");
+  const [decision, setDecision] = useState<BuySellDecision | null>(null);
   const [aiPlanResponse, setAiPlanResponse] = useState<HermesResponse | null>(null);
   const [aiRiskResponse, setAiRiskResponse] = useState<HermesResponse | null>(null);
-  const [aiLoading, setAiLoading] = useState<"plan" | "risk" | null>(null);
+  const [aiDecisionResponse, setAiDecisionResponse] = useState<HermesResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState<"plan" | "risk" | "decision" | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
 
   const profileForm = useForm<UserProfile>({ defaultValues: defaultProfile });
   const planForm = useForm<PlanInput>({ defaultValues: defaultPlanInput });
   const riskForm = useForm<ListingRiskInput>({ defaultValues: listingDefaults });
   const rawForm = useForm<RawVsSlabInput>({ defaultValues: defaultRawVsSlabInput });
+  const decisionForm = useForm<BuySellInput>({ defaultValues: decisionDefaults });
   const journalForm = useForm<JournalForm>({ defaultValues: journalDefaults });
 
   useEffect(() => {
@@ -205,6 +234,47 @@ export default function Home() {
   function handleRawSubmit(data: RawVsSlabInput) {
     const parsed = rawVsSlabInputSchema.parse(data);
     setRawResult(calculateRawVsSlab(parsed));
+  }
+
+  // The decision engine orchestrates the listing and raw-vs-slab inputs the user
+  // already entered in the other tools, so the buy/sell call reuses that context.
+  function buildDecisionInput(data: BuySellInput): BuySellInput {
+    return buySellInputSchema.parse({
+      ...data,
+      listingInput: listingRiskInputSchema.parse(riskForm.getValues()),
+      rawInput: rawVsSlabInputSchema.parse(rawForm.getValues()),
+    });
+  }
+
+  function handleDecisionSubmit(data: BuySellInput) {
+    const parsed = buildDecisionInput(data);
+    const listingReport = parsed.listingInput ? analyzeListingRisk(parsed.listingInput) : undefined;
+    const authenticity = parsed.listingInput ? analyzeAuthenticityRisk(parsed.listingInput) : undefined;
+    const rawSignal = parsed.rawInput ? calculateRawVsSlab(parsed.rawInput) : undefined;
+    setDecision(evaluateBuySell(parsed, { listingReport, authenticity, rawResult: rawSignal }));
+    setAiDecisionResponse(null);
+  }
+
+  async function handleDecisionAiSubmit(data: BuySellInput) {
+    const parsed = buildDecisionInput(data);
+    setAiLoading("decision");
+    setAiError(null);
+
+    try {
+      const response = await callHermes({
+        taskHint: "BUY_SELL_DECISION",
+        profile,
+        decisionInput: parsed,
+        journalSummary: summarizeJournal(journalEntries),
+      });
+      const decisionResult = buySellDecisionSchema.parse(response.result);
+      setDecision(decisionResult);
+      setAiDecisionResponse(response);
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : "AI buy/sell evaluation failed.");
+    } finally {
+      setAiLoading(null);
+    }
   }
 
   function handleJournalSubmit(data: JournalForm) {
@@ -477,6 +547,48 @@ export default function Home() {
           </ToolSurface>
         )}
 
+        {view === "decision" && (
+          <ToolSurface
+            icon={Scale}
+            eyebrow="Buy/Sell Decision Engine"
+            title="Turn the screening signals into a cautious buy or sell stance"
+            description="Hermes orchestrates your Listing Risk, Authenticity, and Raw vs Slab inputs. All prices, comps, and math stay deterministic; the agent only adds reasoning and conditions."
+          >
+            <form className="form-grid" onSubmit={decisionForm.handleSubmit(handleDecisionSubmit)}>
+              <InputField className="md:col-span-2" label="Card name" {...decisionForm.register("cardName")} />
+              <SelectField label="Decision" {...decisionForm.register("action")} options={buySellActionOptions} />
+              <SelectField label="Collection need" {...decisionForm.register("collectionNeed")} options={collectionNeedOptions} />
+              <InputField label="Asking / target price" type="number" step="0.01" {...decisionForm.register("askingPrice", { valueAsNumber: true })} />
+              <InputField label="Recent sold comp" type="number" step="0.01" {...decisionForm.register("soldComp", { valueAsNumber: true })} />
+              <InputField label="Budget for this card" type="number" {...decisionForm.register("budget", { valueAsNumber: true })} />
+              <InputField label="Monthly budget" type="number" {...decisionForm.register("monthlyBudget", { valueAsNumber: true })} />
+              <SelectField label="Goal" {...decisionForm.register("goal")} options={goalOptions} />
+              <SelectField label="Risk level" {...decisionForm.register("riskLevel")} options={riskOptions} />
+              <SelectField label="Holding period" {...decisionForm.register("holdingPeriod")} options={holdingOptions} />
+              <SelectField label="Reprint / restock risk" {...decisionForm.register("restockRisk")} options={restockRiskOptions} />
+              <TextAreaField className="md:col-span-2" label="Version notes" {...decisionForm.register("versionNotes")} />
+              <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
+                <button className="primary-button" type="submit">
+                  <Scale className="h-4 w-4" />
+                  Evaluate Locally
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={aiLoading === "decision"}
+                  onClick={decisionForm.handleSubmit(handleDecisionAiSubmit)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {aiLoading === "decision" ? "Running Hermes..." : "Evaluate with AI"}
+                </button>
+              </div>
+            </form>
+            {aiError && <AiError message={aiError} />}
+            {aiDecisionResponse && <AgentTrace response={aiDecisionResponse} />}
+            {decision && <DecisionResult decision={decision} />}
+          </ToolSurface>
+        )}
+
         {view === "journal" && (
           <ToolSurface
             icon={BookOpenCheck}
@@ -731,6 +843,47 @@ function RiskReport({ report }: { report: ListingRiskReport }) {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+function DecisionResult({ decision }: { decision: BuySellDecision }) {
+  const signals: [string, string][] = [];
+  if (decision.linkedSignals.listingRiskScore) signals.push(["Listing risk", decision.linkedSignals.listingRiskScore]);
+  if (decision.linkedSignals.authenticityRisk) signals.push(["Authenticity risk", decision.linkedSignals.authenticityRisk]);
+  if (decision.linkedSignals.rawVsSlabExpectedProfit !== undefined && decision.linkedSignals.rawVsSlabExpectedProfit !== null) {
+    signals.push(["Raw-vs-slab EV", formatMoney(decision.linkedSignals.rawVsSlabExpectedProfit)]);
+  }
+
+  return (
+    <section className="mt-6 rounded-lg border border-[#d8ddcf] bg-[#fbfcf8] p-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <Badge icon={Scale}>Stance: {decision.stance}</Badge>
+        <Badge icon={Target}>{decision.action}</Badge>
+      </div>
+      <p className="mt-4 leading-7 text-[#435046]">{decision.headline}</p>
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div className="rounded-md bg-white p-4 text-sm leading-6 text-[#354139]">
+          <strong>Price vs comp:</strong> {decision.priceVsComp}
+        </div>
+        <div className="rounded-md bg-white p-4 text-sm leading-6 text-[#354139]">
+          <strong>Budget fit:</strong> {decision.budgetFit}
+        </div>
+        <div className="rounded-md bg-white p-4 text-sm leading-6 text-[#354139]">
+          <strong>Expected value:</strong> {decision.expectedValueNote}
+        </div>
+      </div>
+      {signals.length > 0 && <DetailGrid items={signals} />}
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <GroupedList title="Reasoning" items={decision.reasoning} />
+        <GroupedList title="Risks" items={decision.risks} />
+        {decision.buyConditions.length > 0 && <GroupedList title="Buy conditions" items={decision.buyConditions} />}
+        {decision.passConditions.length > 0 && <GroupedList title="Pass conditions" items={decision.passConditions} />}
+        {decision.sellConditions.length > 0 && <GroupedList title="Sell conditions" items={decision.sellConditions} />}
+        {decision.missingInfo.length > 0 && <GroupedList title="Missing information" items={decision.missingInfo} />}
+        <GroupedList title="Next actions" items={decision.nextActions} />
+        <GroupedList title="Assumptions" items={decision.assumptions} />
+      </div>
     </section>
   );
 }

@@ -29,6 +29,7 @@ export function getPrimaryAgentForTask(taskType: HermesTaskType) {
   if (taskType === "PLAN_GENERATION") return "Plan Agent";
   if (taskType === "LISTING_RISK_CHECK") return "Listing Risk Agent";
   if (taskType === "RAW_VS_SLAB_EXPLAIN") return "Calculation Explainer Agent";
+  if (taskType === "BUY_SELL_DECISION") return "Buy/Sell Decision Agent";
   return "Journal Reflection Agent";
 }
 

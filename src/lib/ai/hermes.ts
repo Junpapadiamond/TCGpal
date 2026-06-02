@@ -6,11 +6,13 @@ import {
   analyzeListingAuthenticity,
   analyzeListingRiskText,
   buildJournalDraft,
+  runBuySellEvaluator,
   runRawVsSlabCalculator,
 } from "@/lib/ai/tools";
 import { generatePlan } from "@/lib/plan-generator";
 import {
   authenticityAssessmentSchema,
+  buySellDecisionSchema,
   generatedPlanSetSchema,
   hermesRequestSchema,
   hermesResponseSchema,
@@ -18,10 +20,12 @@ import {
   listingRiskReportSchema,
   type AgentTraceStep,
   type AuthenticityAssessment,
+  type BuySellDecision,
   type HermesRequest,
   type HermesResponse,
   type HermesTaskType,
   type ListingRiskReport,
+  type RawVsSlabResult,
 } from "@/lib/schemas";
 
 export async function routeHermes(rawRequest: HermesRequest): Promise<HermesResponse> {
@@ -93,7 +97,7 @@ export async function routeHermes(rawRequest: HermesRequest): Promise<HermesResp
 
     // Two specialist sub-agents run in parallel, each with its own deterministic fallback.
     const [conditionOutcome, authenticityOutcome] = await Promise.all([
-      runListingSubAgent({
+      runSubAgent({
         provider,
         config,
         schemaName: "listing_risk_report",
@@ -103,7 +107,7 @@ export async function routeHermes(rawRequest: HermesRequest): Promise<HermesResp
         fallback: conditionRule,
         agentName: "Condition & Version Agent",
       }),
-      runListingSubAgent({
+      runSubAgent({
         provider,
         config,
         schemaName: "authenticity_assessment",
@@ -145,6 +149,71 @@ export async function routeHermes(rawRequest: HermesRequest): Promise<HermesResp
       summary: authenticityOutcome.fallback
         ? "Authenticity & Seller Agent fell back to deterministic counterfeit and seller-credibility heuristics."
         : "Authenticity & Seller Agent assessed counterfeit and seller-credibility signals on top of the rule baseline.",
+    });
+  } else if (taskType === "BUY_SELL_DECISION") {
+    if (!request.decisionInput) throw new Error("BUY_SELL_DECISION requires decisionInput.");
+    const decisionInput = request.decisionInput;
+
+    // Orchestrate the deterministic tools the decision depends on.
+    let listingReport: ListingRiskReport | undefined;
+    let authenticity: AuthenticityAssessment | undefined;
+    if (decisionInput.listingInput) {
+      listingReport = analyzeListingRiskText(decisionInput.listingInput);
+      authenticity = analyzeListingAuthenticity(decisionInput.listingInput);
+      trace.push({
+        step: "screen_listing",
+        agent: "Listing Risk + Authenticity Tools",
+        model: "deterministic TypeScript",
+        toolsUsed: ["analyzeListingRiskText", "analyzeListingAuthenticity"],
+        summary: `Screened the linked listing: risk ${listingReport.score}, authenticity ${authenticity.authenticityRisk}.`,
+      });
+    }
+
+    let rawResult: RawVsSlabResult | undefined = request.rawResult;
+    if (!rawResult && decisionInput.rawInput) {
+      rawResult = runRawVsSlabCalculator(decisionInput.rawInput);
+    }
+    if (rawResult) {
+      trace.push({
+        step: "calculate_raw_vs_slab",
+        agent: "Calculation Agent",
+        model: "deterministic TypeScript",
+        toolsUsed: ["calculateRawVsSlab"],
+        summary: `Raw-vs-slab expected profit ${Math.round(rawResult.expectedProfit)}.`,
+      });
+    }
+
+    const baseline = runBuySellEvaluator(decisionInput, { listingReport, authenticity, rawResult });
+    trace.push({
+      step: "evaluate_buy_sell",
+      agent: "Decision Baseline",
+      model: "deterministic TypeScript",
+      toolsUsed: ["evaluateBuySell"],
+      summary: `Deterministic stance: ${baseline.stance}.`,
+    });
+
+    const outcome = await runSubAgent({
+      provider,
+      config,
+      schemaName: "buy_sell_decision",
+      schema: buySellDecisionSchema,
+      system: buildBuySellSystemPrompt(),
+      user: { context, decisionInput, deterministicBaseline: baseline, signals: { listingReport, authenticity, rawResult } },
+      fallback: baseline,
+      agentName: "Buy/Sell Decision Agent",
+    });
+
+    result = outcome.fallback ? baseline : mergeBuySell(baseline, outcome.data);
+    if (outcome.fallback) fallbackUsed = true;
+    if (outcome.warning) warnings.push(outcome.warning);
+    trace.push({
+      step: "decision_synthesis",
+      agent: "Buy/Sell Decision Agent",
+      model: outcome.model,
+      toolsUsed: [],
+      summary: outcome.fallback
+        ? "Decision Agent fell back to the deterministic buy/sell evaluation."
+        : "Decision Agent added reasoning and conditions on top of the deterministic baseline.",
     });
   } else if (taskType === "RAW_VS_SLAB_EXPLAIN") {
     if (!request.rawInput) throw new Error("RAW_VS_SLAB_EXPLAIN requires rawInput.");
@@ -203,6 +272,7 @@ export async function routeHermes(rawRequest: HermesRequest): Promise<HermesResp
 
 export function classifyHermesTask(request: HermesRequest): HermesTaskType {
   if (request.taskHint) return request.taskHint;
+  if (request.decisionInput) return "BUY_SELL_DECISION";
   if (request.listingInput) return "LISTING_RISK_CHECK";
   if (request.planInput) return "PLAN_GENERATION";
   if (request.rawInput || request.rawResult) return "RAW_VS_SLAB_EXPLAIN";
@@ -242,6 +312,39 @@ function buildAuthenticitySystemPrompt() {
   ].join("\n");
 }
 
+function buildBuySellSystemPrompt() {
+  return [
+    "You are the Buy/Sell Decision Agent for CardPlan AI.",
+    "You receive a deterministic baseline decision plus screening signals (listing risk, authenticity, raw-vs-slab).",
+    "Do not change the baseline stance, price-vs-comp, budget-fit, expected-value notes, or any number; those are computed deterministically.",
+    "You may add clearer reasoning, buy/pass/sell conditions, risks, missing information, and next actions that respect the user's goal, risk level, holding period, deck need, version notes, and reprint risk.",
+    "Use conditional language. Do not promise profit, do not say the user must buy, and do not guarantee authenticity or grades.",
+    "Return only JSON matching the buy_sell_decision schema, keeping the baseline stance and numeric fields unchanged.",
+  ].join("\n");
+}
+
+function mergeBuySell(rule: BuySellDecision, ai: BuySellDecision): BuySellDecision {
+  // Deterministic stance, numbers, and narrative anchors stay authoritative; AI text is additive.
+  return {
+    ...ai,
+    cardName: rule.cardName,
+    action: rule.action,
+    stance: rule.stance,
+    priceVsComp: rule.priceVsComp,
+    budgetFit: rule.budgetFit,
+    expectedValueNote: rule.expectedValueNote,
+    linkedSignals: rule.linkedSignals,
+    reasoning: mergeStrings(rule.reasoning, ai.reasoning),
+    buyConditions: mergeStrings(rule.buyConditions, ai.buyConditions),
+    passConditions: mergeStrings(rule.passConditions, ai.passConditions),
+    sellConditions: mergeStrings(rule.sellConditions, ai.sellConditions),
+    risks: mergeStrings(rule.risks, ai.risks),
+    missingInfo: mergeStrings(rule.missingInfo, ai.missingInfo),
+    nextActions: mergeStrings(rule.nextActions, ai.nextActions),
+    assumptions: mergeStrings(rule.assumptions, ai.assumptions),
+  };
+}
+
 type SubAgentOutcome<T> = {
   data: T;
   model: string;
@@ -249,7 +352,7 @@ type SubAgentOutcome<T> = {
   warning?: string;
 };
 
-async function runListingSubAgent<T>(args: {
+async function runSubAgent<T>(args: {
   provider: AiProvider;
   config: AiConfig;
   schemaName: string;

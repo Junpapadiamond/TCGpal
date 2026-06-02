@@ -32,6 +32,27 @@ export const sellerRatingOptions = [
   "Unknown",
 ] as const;
 export const returnsPolicyOptions = ["Returns accepted", "No returns", "Unknown"] as const;
+export const buySellActionOptions = ["Evaluate buy", "Evaluate sell"] as const;
+export const collectionNeedOptions = [
+  "Core want / deck need",
+  "Nice to have",
+  "Duplicate / already have",
+  "Speculative only",
+] as const;
+export const restockRiskOptions = [
+  "Low (no reprint signals)",
+  "Medium",
+  "High (reprint/promo likely)",
+  "Unknown",
+] as const;
+export const buySellStanceOptions = [
+  "Lean buy",
+  "Buy only if conditions met",
+  "Hold / wait",
+  "Lean pass",
+  "Lean sell",
+  "Partial sell",
+] as const;
 
 export const userProfileSchema = z.object({
   ip: z.enum(ipOptions),
@@ -151,10 +172,52 @@ export const rawVsSlabResultSchema = z.object({
   assumptions: z.array(z.string()),
 });
 
+export const buySellInputSchema = z.object({
+  cardName: z.string().trim().min(1),
+  action: z.enum(buySellActionOptions).default("Evaluate buy"),
+  askingPrice: z.number().min(0),
+  soldComp: z.number().min(0),
+  budget: z.number().min(0),
+  monthlyBudget: z.number().min(0),
+  goal: z.enum(goalOptions),
+  riskLevel: z.enum(riskOptions),
+  holdingPeriod: z.enum(holdingOptions),
+  collectionNeed: z.enum(collectionNeedOptions).default("Nice to have"),
+  restockRisk: z.enum(restockRiskOptions).default("Unknown"),
+  versionNotes: z.string().trim().default(""),
+  // Optional linked tool inputs the decision engine can orchestrate.
+  listingInput: listingRiskInputSchema.optional(),
+  rawInput: rawVsSlabInputSchema.optional(),
+});
+
+export const buySellDecisionSchema = z.object({
+  cardName: z.string(),
+  action: z.enum(buySellActionOptions),
+  stance: z.enum(buySellStanceOptions),
+  headline: z.string(),
+  priceVsComp: z.string(),
+  budgetFit: z.string(),
+  expectedValueNote: z.string(),
+  reasoning: z.array(z.string()).min(1),
+  buyConditions: z.array(z.string()),
+  passConditions: z.array(z.string()),
+  sellConditions: z.array(z.string()),
+  risks: z.array(z.string()).min(1),
+  missingInfo: z.array(z.string()),
+  nextActions: z.array(z.string()).min(1),
+  assumptions: z.array(z.string()),
+  linkedSignals: z.object({
+    listingRiskScore: z.string().optional(),
+    authenticityRisk: z.string().optional(),
+    rawVsSlabExpectedProfit: z.number().nullable().optional(),
+  }),
+});
+
 export const hermesTaskTypeSchema = z.enum([
   "PLAN_GENERATION",
   "LISTING_RISK_CHECK",
   "RAW_VS_SLAB_EXPLAIN",
+  "BUY_SELL_DECISION",
   "JOURNAL_DRAFT",
 ]);
 
@@ -191,12 +254,19 @@ export const hermesRequestSchema = z.object({
   listingInput: listingRiskInputSchema.optional(),
   rawInput: rawVsSlabInputSchema.optional(),
   rawResult: rawVsSlabResultSchema.optional(),
+  decisionInput: buySellInputSchema.optional(),
   journalSummary: z.string().default(""),
 });
 
 export const hermesResponseSchema = z.object({
   taskType: hermesTaskTypeSchema,
-  result: z.union([generatedPlanSetSchema, listingRiskReportSchema, rawVsSlabResultSchema, journalDraftSchema]),
+  result: z.union([
+    generatedPlanSetSchema,
+    listingRiskReportSchema,
+    rawVsSlabResultSchema,
+    buySellDecisionSchema,
+    journalDraftSchema,
+  ]),
   trace: z.array(agentTraceStepSchema),
   warnings: z.array(z.string()),
   fallbackUsed: z.boolean(),
@@ -212,6 +282,8 @@ export type GeneratedPlanSet = z.infer<typeof generatedPlanSetSchema>;
 export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
 export type AuthenticityAssessment = z.infer<typeof authenticityAssessmentSchema>;
 export type RawVsSlabResult = z.infer<typeof rawVsSlabResultSchema>;
+export type BuySellInput = z.infer<typeof buySellInputSchema>;
+export type BuySellDecision = z.infer<typeof buySellDecisionSchema>;
 export type HermesTaskType = z.infer<typeof hermesTaskTypeSchema>;
 export type AgentTraceStep = z.infer<typeof agentTraceStepSchema>;
 export type CriticResult = z.infer<typeof criticResultSchema>;

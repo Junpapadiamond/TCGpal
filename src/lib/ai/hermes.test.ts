@@ -5,6 +5,7 @@ import { getAiConfig, getModelForStep } from "@/lib/ai/config";
 import { classifyHermesTask, routeHermes } from "@/lib/ai/hermes";
 import { calculateRawVsSlab } from "@/lib/raw-vs-slab";
 import {
+  buySellDecisionSchema,
   generatedPlanSetSchema,
   hermesResponseSchema,
   listingRiskReportSchema,
@@ -42,6 +43,15 @@ describe("Hermes eval harness", () => {
 
       if (response.taskType === "RAW_VS_SLAB_EXPLAIN") {
         expect(rawVsSlabResultSchema.safeParse(response.result).success).toBe(true);
+      }
+
+      if (response.taskType === "BUY_SELL_DECISION") {
+        expect(buySellDecisionSchema.safeParse(response.result).success).toBe(true);
+        const steps = response.trace.map((step) => step.step);
+        // The decision engine orchestrates listing + raw-vs-slab tools before deciding.
+        expect(steps).toContain("screen_listing");
+        expect(steps).toContain("evaluate_buy_sell");
+        expect(steps).toContain("decision_synthesis");
       }
     }
   });
