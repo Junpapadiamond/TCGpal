@@ -2,7 +2,17 @@ import { z } from "zod";
 import type { AiProvider } from "@/lib/ai/provider";
 import { criticResultSchema, type AgentTraceStep, type CriticResult } from "@/lib/schemas";
 
-export const bannedLanguage = ["guaranteed profit", "must buy", "risk-free", "certainly psa10", "definitely psa10"];
+export const bannedLanguage = [
+  "guaranteed profit",
+  "must buy",
+  "risk-free",
+  "certainly psa10",
+  "definitely psa10",
+  "guaranteed authentic",
+  "100% authentic",
+  "definitely genuine",
+  "definitely real",
+];
 
 export function runLocalCritic(payload: unknown): CriticResult {
   const text = JSON.stringify(payload).toLowerCase();
@@ -35,6 +45,7 @@ export async function runCriticAgent(input: {
       system: [
         "You are the Critic / Safety Agent for CardPlan AI.",
         "Check for overconfidence, unsupported profit claims, PSA10 certainty, hidden assumptions, and financial-advice tone.",
+        "Also flag unsupported authenticity guarantees (e.g. certainty that an item is genuine or fake) and any direct accusation of fraud; these should be reframed as verification steps.",
         "Return only JSON matching the schema.",
       ].join("\n"),
       user: {

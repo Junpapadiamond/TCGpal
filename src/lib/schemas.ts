@@ -22,6 +22,16 @@ export const journalActionOptions = [
   "Holding",
   "Re-evaluation",
 ] as const;
+export const productTypeOptions = ["Sealed Box", "Sealed Pack", "Single Card", "Other"] as const;
+export const sellerTypeOptions = ["Official Distributor", "Marketplace Seller", "Individual", "Unknown"] as const;
+export const sellerRatingOptions = [
+  "High (98%+)",
+  "Medium (90-97%)",
+  "Low (under 90%)",
+  "New / No history",
+  "Unknown",
+] as const;
+export const returnsPolicyOptions = ["Returns accepted", "No returns", "Unknown"] as const;
 
 export const userProfileSchema = z.object({
   ip: z.enum(ipOptions),
@@ -52,6 +62,12 @@ export const listingRiskInputSchema = z.object({
   price: z.number().min(0),
   marketplace: z.enum(marketOptions),
   userGoal: z.enum(["Self-collection", "Grading", "Resale"]),
+  // Optional authenticity / seller-credibility context (Phase 0: user-provided only, no scraping).
+  productType: z.enum(productTypeOptions).optional(),
+  sellerType: z.enum(sellerTypeOptions).optional(),
+  sellerRating: z.enum(sellerRatingOptions).optional(),
+  returnsPolicy: z.enum(returnsPolicyOptions).optional(),
+  region: z.string().trim().optional(),
 });
 
 export const rawVsSlabInputSchema = z.object({
@@ -104,6 +120,14 @@ export const generatedPlanSetSchema = z.object({
   plans: z.array(generatedPlanSchema).length(3),
 });
 
+export const authenticityAssessmentSchema = z.object({
+  authenticityRisk: z.enum(["Low", "Medium", "Medium-High", "High"]),
+  counterfeitSignals: z.array(z.string()),
+  sellerCredibilitySignals: z.array(z.string()),
+  authenticityQuestions: z.array(z.string()).min(1),
+  authenticitySummary: z.string(),
+});
+
 export const listingRiskReportSchema = z.object({
   score: z.enum(["Low", "Medium", "Medium-High", "High"]),
   confidence: z.enum(["Low", "Medium-low", "Medium", "High"]),
@@ -112,6 +136,7 @@ export const listingRiskReportSchema = z.object({
   sellerQuestions: z.array(z.string()).min(1),
   suitability: z.string(),
   cautiousSummary: z.string(),
+  authenticity: authenticityAssessmentSchema.optional(),
 });
 
 export const rawVsSlabResultSchema = z.object({
@@ -185,6 +210,7 @@ export type DecisionJournalEntry = z.infer<typeof decisionJournalEntrySchema>;
 export type GeneratedPlan = z.infer<typeof generatedPlanSchema>;
 export type GeneratedPlanSet = z.infer<typeof generatedPlanSetSchema>;
 export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
+export type AuthenticityAssessment = z.infer<typeof authenticityAssessmentSchema>;
 export type RawVsSlabResult = z.infer<typeof rawVsSlabResultSchema>;
 export type HermesTaskType = z.infer<typeof hermesTaskTypeSchema>;
 export type AgentTraceStep = z.infer<typeof agentTraceStepSchema>;

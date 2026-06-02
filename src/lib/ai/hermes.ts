@@ -1,16 +1,23 @@
 import { z } from "zod";
 import { runCriticAgent } from "@/lib/ai/critic";
-import { getAiConfig, getModelForStep, getPrimaryAgentForTask } from "@/lib/ai/config";
-import { createAiProvider } from "@/lib/ai/provider";
-import { analyzeListingRiskText, buildJournalDraft, runRawVsSlabCalculator } from "@/lib/ai/tools";
+import { getAiConfig, getModelForStep, getPrimaryAgentForTask, type AiConfig } from "@/lib/ai/config";
+import { createAiProvider, type AiProvider } from "@/lib/ai/provider";
+import {
+  analyzeListingAuthenticity,
+  analyzeListingRiskText,
+  buildJournalDraft,
+  runRawVsSlabCalculator,
+} from "@/lib/ai/tools";
 import { generatePlan } from "@/lib/plan-generator";
 import {
+  authenticityAssessmentSchema,
   generatedPlanSetSchema,
   hermesRequestSchema,
   hermesResponseSchema,
   journalDraftSchema,
   listingRiskReportSchema,
   type AgentTraceStep,
+  type AuthenticityAssessment,
   type HermesRequest,
   type HermesResponse,
   type HermesTaskType,
@@ -80,41 +87,65 @@ export async function routeHermes(rawRequest: HermesRequest): Promise<HermesResp
     }
   } else if (taskType === "LISTING_RISK_CHECK") {
     if (!request.listingInput) throw new Error("LISTING_RISK_CHECK requires listingInput.");
-    const ruleReport = analyzeListingRiskText(request.listingInput);
+    const listingInput = request.listingInput;
+    const conditionRule = analyzeListingRiskText(listingInput);
+    const authenticityRule = analyzeListingAuthenticity(listingInput);
 
-    try {
-      const ai = await provider.completeJson({
-        role: "primary",
+    // Two specialist sub-agents run in parallel, each with its own deterministic fallback.
+    const [conditionOutcome, authenticityOutcome] = await Promise.all([
+      runListingSubAgent({
+        provider,
+        config,
         schemaName: "listing_risk_report",
         schema: listingRiskReportSchema,
         system: buildListingRiskSystemPrompt(),
-        user: {
-          context,
-          listingInput: request.listingInput,
-          ruleReport,
-        },
-      });
+        user: { context, listingInput, ruleReport: conditionRule },
+        fallback: conditionRule,
+        agentName: "Condition & Version Agent",
+      }),
+      runListingSubAgent({
+        provider,
+        config,
+        schemaName: "authenticity_assessment",
+        schema: authenticityAssessmentSchema,
+        system: buildAuthenticitySystemPrompt(),
+        user: { context, listingInput, authenticityRule },
+        fallback: authenticityRule,
+        agentName: "Authenticity & Seller Agent",
+      }),
+    ]);
 
-      result = mergeRiskReports(ruleReport, ai.data);
-      trace.push({
-        step: "analyze_listing",
-        agent: "Listing Risk Agent",
-        model: ai.model,
-        toolsUsed: ["analyzeListingRiskText"],
-        summary: "Listing Risk Agent combined rule-based screening with AI explanation.",
-      });
-    } catch (error) {
-      fallbackUsed = true;
-      result = ruleReport;
-      warnings.push(`Listing Risk Agent used local fallback. ${getErrorMessage(error)}`);
-      trace.push({
-        step: "analyze_listing",
-        agent: "Listing Risk Agent",
-        model: `${config.provider} unavailable`,
-        toolsUsed: ["analyzeListingRiskText fallback"],
-        summary: "Listing Risk Agent fell back to deterministic text-risk logic.",
-      });
-    }
+    const mergedCondition = conditionOutcome.fallback
+      ? conditionRule
+      : mergeRiskReports(conditionRule, conditionOutcome.data);
+    const mergedAuthenticity = authenticityOutcome.fallback
+      ? authenticityRule
+      : mergeAuthenticity(authenticityRule, authenticityOutcome.data);
+
+    result = { ...mergedCondition, authenticity: mergedAuthenticity };
+
+    if (conditionOutcome.fallback || authenticityOutcome.fallback) fallbackUsed = true;
+    if (conditionOutcome.warning) warnings.push(conditionOutcome.warning);
+    if (authenticityOutcome.warning) warnings.push(authenticityOutcome.warning);
+
+    trace.push({
+      step: "analyze_condition",
+      agent: "Condition & Version Agent",
+      model: conditionOutcome.model,
+      toolsUsed: ["analyzeListingRiskText"],
+      summary: conditionOutcome.fallback
+        ? "Condition & Version Agent fell back to deterministic text-risk logic."
+        : "Condition & Version Agent combined rule-based screening with AI explanation.",
+    });
+    trace.push({
+      step: "analyze_authenticity",
+      agent: "Authenticity & Seller Agent",
+      model: authenticityOutcome.model,
+      toolsUsed: ["analyzeListingAuthenticity"],
+      summary: authenticityOutcome.fallback
+        ? "Authenticity & Seller Agent fell back to deterministic counterfeit and seller-credibility heuristics."
+        : "Authenticity & Seller Agent assessed counterfeit and seller-credibility signals on top of the rule baseline.",
+    });
   } else if (taskType === "RAW_VS_SLAB_EXPLAIN") {
     if (!request.rawInput) throw new Error("RAW_VS_SLAB_EXPLAIN requires rawInput.");
     result = request.rawResult ?? runRawVsSlabCalculator(request.rawInput);
@@ -198,6 +229,63 @@ function buildListingRiskSystemPrompt() {
     "Do not claim a card is certainly PSA10 or safe for grading without evidence.",
     "Return only JSON matching the listing_risk_report schema.",
   ].join("\n");
+}
+
+function buildAuthenticitySystemPrompt() {
+  return [
+    "You are the Authenticity & Seller Agent for CardPlan AI.",
+    "Assess counterfeit and authenticity risk for TCG listings: resealed or non-genuine sealed product, bootleg or proxy single cards, and seller credibility.",
+    "Use the authenticityRule baseline. You may clarify and enrich it, but do not remove important counterfeit or seller-credibility signals.",
+    "Do not accuse the seller of fraud and do not declare the item fake. Use risk-indicator and verification language.",
+    "Be especially cautious with sealed boxes, high-value singles, individual or low-history sellers, and domestic-premium markets.",
+    "Return only JSON matching the authenticity_assessment schema.",
+  ].join("\n");
+}
+
+type SubAgentOutcome<T> = {
+  data: T;
+  model: string;
+  fallback: boolean;
+  warning?: string;
+};
+
+async function runListingSubAgent<T>(args: {
+  provider: AiProvider;
+  config: AiConfig;
+  schemaName: string;
+  schema: z.ZodType<T>;
+  system: string;
+  user: unknown;
+  fallback: T;
+  agentName: string;
+}): Promise<SubAgentOutcome<T>> {
+  try {
+    const ai = await args.provider.completeJson({
+      role: "primary",
+      schemaName: args.schemaName,
+      schema: args.schema,
+      system: args.system,
+      user: args.user,
+    });
+    return { data: ai.data, model: ai.model, fallback: false };
+  } catch (error) {
+    return {
+      data: args.fallback,
+      model: `${args.config.provider} unavailable`,
+      fallback: true,
+      warning: `${args.agentName} used local fallback. ${getErrorMessage(error)}`,
+    };
+  }
+}
+
+function mergeAuthenticity(rule: AuthenticityAssessment, ai: AuthenticityAssessment): AuthenticityAssessment {
+  return {
+    ...ai,
+    authenticityRisk: higherRiskScore(rule.authenticityRisk, ai.authenticityRisk),
+    counterfeitSignals: mergeStrings(rule.counterfeitSignals, ai.counterfeitSignals),
+    sellerCredibilitySignals: mergeStrings(rule.sellerCredibilitySignals, ai.sellerCredibilitySignals),
+    authenticityQuestions: mergeStrings(rule.authenticityQuestions, ai.authenticityQuestions),
+  };
 }
 
 function mergeRiskReports(ruleReport: ListingRiskReport, aiReport: ListingRiskReport): ListingRiskReport {

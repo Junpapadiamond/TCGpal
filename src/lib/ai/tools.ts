@@ -1,6 +1,8 @@
 import { analyzeListingRisk } from "@/lib/listing-risk";
+import { analyzeAuthenticityRisk } from "@/lib/listing-risk-authenticity";
 import { calculateRawVsSlab } from "@/lib/raw-vs-slab";
 import type {
+  AuthenticityAssessment,
   GeneratedPlanSet,
   JournalDraft,
   ListingRiskInput,
@@ -11,6 +13,10 @@ import type {
 
 export function analyzeListingRiskText(input: ListingRiskInput): ListingRiskReport {
   return analyzeListingRisk(input);
+}
+
+export function analyzeListingAuthenticity(input: ListingRiskInput): AuthenticityAssessment {
+  return analyzeAuthenticityRisk(input);
 }
 
 export function runRawVsSlabCalculator(input: RawVsSlabInput): RawVsSlabResult {

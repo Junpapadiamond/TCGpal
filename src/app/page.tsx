@@ -40,8 +40,12 @@ import {
   listingRiskInputSchema,
   marketOptions,
   planInputSchema,
+  productTypeOptions,
   rawVsSlabInputSchema,
+  returnsPolicyOptions,
   riskOptions,
+  sellerRatingOptions,
+  sellerTypeOptions,
   userProfileSchema,
   type DecisionJournalEntry,
   type GeneratedPlanSet,
@@ -80,6 +84,11 @@ const listingDefaults: ListingRiskInput = {
   price: 120,
   marketplace: "eBay",
   userGoal: "Grading",
+  productType: "Single Card",
+  sellerType: "Individual",
+  sellerRating: "New / No history",
+  returnsPolicy: "No returns",
+  region: "",
 };
 
 const journalDefaults: JournalForm = {
@@ -413,6 +422,11 @@ export default function Home() {
               <InputField label="Listed price" type="number" {...riskForm.register("price", { valueAsNumber: true })} />
               <SelectField label="Marketplace" {...riskForm.register("marketplace")} options={marketOptions} />
               <SelectField label="User goal" {...riskForm.register("userGoal")} options={["Self-collection", "Grading", "Resale"]} />
+              <SelectField label="Product type" {...riskForm.register("productType")} options={productTypeOptions} />
+              <SelectField label="Seller type" {...riskForm.register("sellerType")} options={sellerTypeOptions} />
+              <SelectField label="Seller rating" {...riskForm.register("sellerRating")} options={sellerRatingOptions} />
+              <SelectField label="Returns policy" {...riskForm.register("returnsPolicy")} options={returnsPolicyOptions} />
+              <InputField className="md:col-span-2" label="Region / market context (optional)" {...riskForm.register("region")} />
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
                 <button className="primary-button" type="submit">
                   <AlertTriangle className="h-4 w-4" />
@@ -704,6 +718,19 @@ function RiskReport({ report }: { report: ListingRiskReport }) {
       <div className="mt-5 rounded-md bg-white p-4 text-sm leading-6 text-[#354139]">
         <strong>Suitability:</strong> {report.suitability}
       </div>
+      {report.authenticity && (
+        <div className="mt-5 rounded-lg border border-[#d8ddcf] bg-white p-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge icon={ShieldCheck}>Authenticity risk: {report.authenticity.authenticityRisk}</Badge>
+          </div>
+          <p className="mt-4 leading-7 text-[#435046]">{report.authenticity.authenticitySummary}</p>
+          <div className="mt-3 grid grid-cols-1 gap-5 lg:grid-cols-3">
+            <GroupedList title="Counterfeit signals" items={report.authenticity.counterfeitSignals} />
+            <GroupedList title="Seller credibility" items={report.authenticity.sellerCredibilitySignals} />
+            <GroupedList title="Authenticity questions" items={report.authenticity.authenticityQuestions} />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

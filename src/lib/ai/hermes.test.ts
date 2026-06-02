@@ -31,6 +31,13 @@ describe("Hermes eval harness", () => {
 
       if (response.taskType === "LISTING_RISK_CHECK") {
         expect(listingRiskReportSchema.safeParse(response.result).success).toBe(true);
+        const report = listingRiskReportSchema.parse(response.result);
+        // Multi-agent listing flow always attaches an authenticity assessment, even on local fallback.
+        expect(report.authenticity).toBeTruthy();
+        expect(report.authenticity?.authenticityQuestions.length).toBeGreaterThan(0);
+        const steps = response.trace.map((step) => step.step);
+        expect(steps).toContain("analyze_condition");
+        expect(steps).toContain("analyze_authenticity");
       }
 
       if (response.taskType === "RAW_VS_SLAB_EXPLAIN") {
