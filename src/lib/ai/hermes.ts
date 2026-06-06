@@ -2,6 +2,7 @@ import { z } from "zod";
 import { runCriticAgent } from "@/lib/ai/critic";
 import { getAiConfig, getModelForStep, getPrimaryAgentForTask } from "@/lib/ai/config";
 import { createAiProvider } from "@/lib/ai/provider";
+import { mergeUserFacingStrings, sanitizeUserFacingText } from "@/lib/ai/report-cleanup";
 import { analyzeListingRiskText, buildJournalDraft, runRawVsSlabCalculator } from "@/lib/ai/tools";
 import { generatePlan } from "@/lib/plan-generator";
 import {
@@ -206,14 +207,12 @@ function mergeRiskReports(ruleReport: ListingRiskReport, aiReport: ListingRiskRe
     ...aiReport,
     score: higherRiskScore(ruleReport.score, aiReport.score),
     confidence: lowerConfidence(ruleReport.confidence, aiReport.confidence),
-    missingInfo: mergeStrings(ruleReport.missingInfo, aiReport.missingInfo),
-    keyRisks: mergeStrings(ruleReport.keyRisks, aiReport.keyRisks),
-    sellerQuestions: mergeStrings(ruleReport.sellerQuestions, aiReport.sellerQuestions),
+    suitability: sanitizeUserFacingText(aiReport.suitability),
+    cautiousSummary: sanitizeUserFacingText(aiReport.cautiousSummary),
+    missingInfo: mergeUserFacingStrings(ruleReport.missingInfo, aiReport.missingInfo),
+    keyRisks: mergeUserFacingStrings(ruleReport.keyRisks, aiReport.keyRisks),
+    sellerQuestions: mergeUserFacingStrings(ruleReport.sellerQuestions, aiReport.sellerQuestions),
   };
-}
-
-function mergeStrings(left: string[], right: string[]) {
-  return Array.from(new Set([...left, ...right])).filter(Boolean);
 }
 
 function higherRiskScore(left: ListingRiskReport["score"], right: ListingRiskReport["score"]) {

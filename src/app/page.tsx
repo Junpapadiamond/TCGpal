@@ -6,17 +6,18 @@ import {
   Calculator,
   Check,
   ClipboardList,
-  FilePenLine,
+  Clock3,
   Layers3,
   Gauge,
   LayoutDashboard,
   ListChecks,
+  LogIn,
+  ShoppingBag,
   Save,
   SearchCheck,
-  ShieldCheck,
   Sparkles,
-  Target,
 } from "lucide-react";
+import Image from "next/image";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -27,13 +28,14 @@ import {
   type CuratedCardRecommendation,
   type JournalBasedRecommendation,
 } from "@/lib/curated-recommendations";
+import { getTodayRemaining, getTodaySpent } from "@/lib/budget-ledger";
 import { getGradingCalibration, type GradingCalibration } from "@/lib/journal-calibration";
+import { runFomoCheck } from "@/lib/fomo-check";
 import { analyzeListingRisk } from "@/lib/listing-risk";
 import { calculateRawVsSlab } from "@/lib/raw-vs-slab";
 import {
   defaultProfile,
   defaultRawVsSlabInput,
-  starterJournalEntry,
 } from "@/lib/sample-data";
 import {
   actualGradeOptions,
@@ -58,8 +60,11 @@ import {
   rawVsSlabInputSchema,
   riskOptions,
   userProfileSchema,
+  type CooldownTicket,
+  type DemoSession,
   type DecisionJournalEntry,
   type DecisionPlanItem,
+  type FomoCheckResult,
   type HermesResponse,
   type JournalDraft,
   type ListingEvidence,
@@ -70,20 +75,28 @@ import {
   type RawVsSlabInput,
   type RawVsSlabResult,
   type RiskScore,
+  type TcgPurchase,
   type UserProfile,
 } from "@/lib/schemas";
 import {
+  loadCooldownTickets,
+  loadDemoSession,
   loadDecisionPlanItems,
   loadJournalEntries,
   loadLatestRawResult,
   loadProfile,
+  loadTodayPurchases,
+  saveCooldownTickets,
+  saveDemoSession,
   saveDecisionPlanItems,
   saveJournalEntries,
   saveLatestRawResult,
   saveProfile,
+  saveTodayPurchases,
 } from "@/lib/storage";
 
 type View = "landing" | "onboarding" | "dashboard" | "risk" | "raw" | "journal";
+type Locale = "en" | "zh";
 
 type JournalForm = Omit<DecisionJournalEntry, "id" | "createdAt">;
 type OnboardingStep = "tcg" | "persona" | "budget";
@@ -112,6 +125,20 @@ type ListingPipelineState = {
   fallbackUsed: boolean;
 };
 
+type RawDecisionContext = {
+  cardName: string;
+};
+
+type ReadyToBuyResult = {
+  card: CuratedCardRecommendation;
+  askingPrice: number;
+  feelingText: string;
+  evidenceText: string;
+  fomoResult: FomoCheckResult;
+};
+
+const localeStorageKey = "cardplan.locale";
+
 const views: { id: View; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "dashboard", label: "Home", icon: LayoutDashboard },
   { id: "risk", label: "Risk", icon: SearchCheck },
@@ -120,52 +147,59 @@ const views: { id: View; label: string; icon: React.ComponentType<{ className?: 
 ];
 
 const listingDefaults: ListingRiskInput = {
-  title: "Tony Tony Chopper EB01 Alt Art Japanese One Piece Mint",
-  description: "Great condition, looks PSA10. No returns.",
-  price: 120,
+  title: "Umbreon VMAX 215/203 Evolving Skies Alternate Art Near Mint",
+  description: "Beautiful card. Front and back photos shown. Ships insured.",
+  price: 1300,
   marketplace: "eBay",
-  userGoal: "Grading",
+  userGoal: "Self-collection",
 };
 
 const journalDefaults: JournalForm = {
-  tcg: "One Piece",
-  cardName: "Tony Tony Chopper EB01-006 AA",
-  version: "Japanese alternate art",
+  tcg: "Pokemon",
+  cardName: "Umbreon VMAX",
+  version: "Evolving Skies Alternate Art 215/203",
   date: new Date().toISOString().slice(0, 10),
   actionType: "Considering purchase",
-  price: 80,
+  price: 1300,
   userGoal: "Collection + resale",
-  tags: "Chopper, alternate art, grading discipline",
+  tags: "Pokemon, Evolving Skies, alt art, grading discipline",
   sentiment: "Cautious",
-  thesis: "I want one representative Chopper card that can stay in my collection while preserving resale flexibility.",
-  watchReason: "Character fit is strong, but the grading upside only matters if condition evidence is clear.",
-  buyCondition: "Only buy below $80 with clean front/back photos and clear version.",
+  thesis: "I want a grail-level Pokemon card without letting icon premium override condition evidence.",
+  watchReason: "Umbreon is a durable collector chase, but raw entry price needs discipline.",
+  buyCondition: "Only review copies with front/back photos, clean edges, and recent sold comp support.",
   sellCondition: "Review if net profit exceeds 30% after fees or if I need to rotate budget.",
-  stopCondition: "Skip if version is unclear or the raw-vs-slab math only works with an optimistic PSA10 assumption.",
-  risks: "Version ambiguity, condition uncertainty, and low liquidity for lower-end cards.",
-  missingInfo: "Back photo, corner closeups, recent sold comps.",
+  stopCondition: "Skip if condition photos are weak or the raw-vs-slab math only works with an optimistic PSA10 assumption.",
+  risks: "Icon premium, condition uncertainty, and PSA10 margin compression.",
+  missingInfo: "Corner closeups, surface video, recent sold comps.",
   reviewDate: "",
   reviewStatus: "Needs review",
   finalOutcome: "",
   lessonsLearned: "",
-  assumedPsa10Probability: 0.25,
+  assumedPsa10Probability: 0.16,
   actualGrade: "UNKNOWN",
   source: "manual",
 };
 
 export default function Home() {
   const [view, setView] = useState<View>("landing");
+  const [locale, setLocale] = useState<Locale>("en");
+  const [demoSession, setDemoSession] = useState<DemoSession | null>(null);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [riskReport, setRiskReport] = useState<ListingRiskReport | null>(null);
   const [rawResult, setRawResult] = useState<RawVsSlabResult>(() => calculateRawVsSlab(defaultRawVsSlabInput));
+  const [rawDecisionContext, setRawDecisionContext] = useState<RawDecisionContext>({ cardName: "Current raw-vs-slab decision" });
   const [journalEntries, setJournalEntries] = useState<DecisionJournalEntry[]>([]);
   const [decisionPlanItems, setDecisionPlanItems] = useState<DecisionPlanItem[]>([]);
+  const [todayPurchases, setTodayPurchases] = useState<TcgPurchase[]>([]);
+  const [cooldownTickets, setCooldownTickets] = useState<CooldownTicket[]>([]);
   const [selectedCard, setSelectedCard] = useState<CuratedCardRecommendation | null>(null);
+  const [readyToBuyOpen, setReadyToBuyOpen] = useState(false);
+  const [prefilledDecision, setPrefilledDecision] = useState<ReadyToBuyResult | null>(null);
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("tcg");
   const [journalFilter, setJournalFilter] = useState<DecisionJournalEntry["actionType"] | "All">("All");
   const [aiRiskResponse, setAiRiskResponse] = useState<HermesResponse | null>(null);
-  const [journalAgentResponse, setJournalAgentResponse] = useState<HermesResponse | null>(null);
-  const [journalAgentDraft, setJournalAgentDraft] = useState<JournalDraft | null>(null);
+  const [, setJournalAgentResponse] = useState<HermesResponse | null>(null);
+  const [, setJournalAgentDraft] = useState<JournalDraft | null>(null);
   const [aiLoading, setAiLoading] = useState<"risk" | "journal" | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiHealth, setAiHealth] = useState<AiHealth | null>(null);
@@ -192,13 +226,26 @@ export default function Home() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const storedProfile = loadProfile();
+      const storedSession = loadDemoSession();
+      const storedLocale = window.localStorage.getItem(localeStorageKey);
       const storedDecisionPlanItems = loadDecisionPlanItems();
       const storedRawResult = loadLatestRawResult();
       const storedEntries = loadJournalEntries();
+      const storedPurchases = loadTodayPurchases();
+      const storedCooldownTickets = loadCooldownTickets();
+
+      if (storedLocale === "en" || storedLocale === "zh") {
+        setLocale(storedLocale);
+      }
+
+      if (storedSession) {
+        setDemoSession(storedSession);
+      }
 
       if (storedProfile) {
         setProfile(storedProfile);
         profileForm.reset(storedProfile);
+        setView(storedSession ? "dashboard" : "landing");
       }
 
       if (storedDecisionPlanItems.length) {
@@ -211,14 +258,23 @@ export default function Home() {
 
       if (storedEntries.length) {
         setJournalEntries(storedEntries);
-      } else {
-        setJournalEntries([starterJournalEntry]);
-        saveJournalEntries([starterJournalEntry]);
+      }
+
+      if (storedPurchases.length) {
+        setTodayPurchases(storedPurchases);
+      }
+
+      if (storedCooldownTickets.length) {
+        setCooldownTickets(storedCooldownTickets);
       }
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, [journalForm, profileForm]);
+
+  useEffect(() => {
+    window.localStorage.setItem(localeStorageKey, locale);
+  }, [locale]);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;
@@ -236,41 +292,43 @@ export default function Home() {
   }, []);
 
   const filteredEntries = useMemo(() => {
-    if (journalFilter === "All") return journalEntries;
-    return journalEntries.filter((entry) => entry.actionType === journalFilter);
-  }, [journalEntries, journalFilter]);
+    const activeEntries = journalEntries.filter((entry) => profile.favoriteTcgs.includes(entry.tcg));
+    if (journalFilter === "All") return activeEntries;
+    return activeEntries.filter((entry) => entry.actionType === journalFilter);
+  }, [journalEntries, journalFilter, profile.favoriteTcgs]);
 
-  const recentJournalEntries = useMemo(() => journalEntries.slice(0, 3), [journalEntries]);
-
-  const reviewQueue = useMemo(() => {
-    return journalEntries
-      .filter((entry) => entry.reviewStatus !== "Resolved")
-      .slice(0, 4);
-  }, [journalEntries]);
-
-  const openPlanItems = useMemo(() => {
-    return decisionPlanItems.filter((item) => item.status === "open");
-  }, [decisionPlanItems]);
+  const visibleJournalEntries = useMemo(() => {
+    return journalEntries.filter((entry) => profile.favoriteTcgs.includes(entry.tcg));
+  }, [journalEntries, profile.favoriteTcgs]);
 
   const gradingCalibration = useMemo(() => {
-    return getGradingCalibration(journalEntries, Number(watchedPsa10Probability) || defaultRawVsSlabInput.psa10Probability);
-  }, [journalEntries, watchedPsa10Probability]);
+    return getGradingCalibration(visibleJournalEntries, Number(watchedPsa10Probability) || defaultRawVsSlabInput.psa10Probability);
+  }, [visibleJournalEntries, watchedPsa10Probability]);
 
   const journalRecommendations = useMemo(() => {
-    return getJournalBasedRecommendations(profile, journalEntries);
-  }, [journalEntries, profile]);
+    return getJournalBasedRecommendations(profile, visibleJournalEntries);
+  }, [profile, visibleJournalEntries]);
 
-  const dashboardStats = [
-    { label: "Monthly budget", value: `$${profile.monthlyBudget}`, icon: Target },
-    { label: "Risk posture", value: profile.riskLevel, icon: Gauge },
-    { label: "Journal entries", value: String(journalEntries.length), icon: BookOpenCheck },
-    { label: "Needs review", value: String(reviewQueue.length), icon: FilePenLine },
-    { label: "30-day items", value: String(openPlanItems.length), icon: ClipboardList },
-  ];
+  const todaySpent = useMemo(() => {
+    return getTodaySpent(todayPurchases);
+  }, [todayPurchases]);
+
+  const todayRemaining = getTodayRemaining(profile.todayBudget, todayPurchases);
 
   function navigateTo(nextView: View) {
     setView(nextView);
     window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+  }
+
+  function handleDemoAuth(mode: DemoSession["mode"]) {
+    const session = {
+      signedIn: true,
+      mode,
+      createdAt: new Date().toISOString(),
+    } satisfies DemoSession;
+    setDemoSession(session);
+    saveDemoSession(session);
+    setView("landing");
   }
 
   function handleProfileSubmit(data: UserProfile) {
@@ -282,20 +340,34 @@ export default function Home() {
 
   function toggleFavoriteTcg(tcg: UserProfile["favoriteTcgs"][number]) {
     const current = profileForm.getValues("favoriteTcgs") ?? [];
-    const next = current.includes(tcg) ? current.filter((item) => item !== tcg) : [...current, tcg];
+    const isDefaultOnly = current.length === 1 && current[0] === defaultProfile.favoriteTcgs[0];
+    const next = current.includes(tcg)
+      ? current.filter((item) => item !== tcg)
+      : isDefaultOnly
+        ? [tcg]
+        : [...current, tcg];
     profileForm.setValue("favoriteTcgs", next.length ? next : [tcg], { shouldDirty: true });
+  }
+
+  function handleSelectBudgetRange(budgetRange: UserProfile["budgetRange"]) {
+    const monthlyBudget = budgetRangeToMonthlyBudget(budgetRange);
+    profileForm.setValue("budgetRange", budgetRange, { shouldDirty: true });
+    profileForm.setValue("monthlyBudget", monthlyBudget, { shouldDirty: true });
+    profileForm.setValue("todayBudget", Math.min(monthlyBudget, 300), { shouldDirty: true });
   }
 
   function finishFirstRun() {
     const formValues = profileForm.getValues();
-    const favoriteTcgs = formValues.favoriteTcgs?.length ? formValues.favoriteTcgs : ["One Piece"];
+    const favoriteTcgs = formValues.favoriteTcgs?.length ? formValues.favoriteTcgs : ["Pokemon"];
     const primaryTcg = favoriteTcgs[0] === "Pokemon" ? "Pokemon" : favoriteTcgs[0] === "Yu-Gi-Oh" ? "Yu-Gi-Oh" : favoriteTcgs[0] === "Other" ? "Other" : "One Piece";
     const budget = budgetRangeToMonthlyBudget(formValues.budgetRange);
+    const todayBudget = formValues.todayBudget || Math.min(budget, 300);
     const nextProfile = userProfileSchema.parse({
       ...defaultProfile,
       ...formValues,
       favoriteTcgs,
       ip: primaryTcg,
+      todayBudget,
       monthlyBudget: budget,
       goal: personaToGoal(formValues.playerType),
       riskLevel: formValues.playerType === "Seller / Vendor" ? "Medium" : defaultProfile.riskLevel,
@@ -305,6 +377,70 @@ export default function Home() {
     profileForm.reset(nextProfile);
     saveProfile(nextProfile);
     navigateTo("dashboard");
+  }
+
+  function handleReadyToBuySubmit(input: {
+    card: CuratedCardRecommendation;
+    askingPrice: number;
+    feelingText: string;
+    evidenceText: string;
+  }) {
+    const result = runFomoCheck({
+      cardName: input.card.cardName,
+      cardVersion: input.card.version,
+      askingPrice: input.askingPrice,
+      todayBudget: Math.max(todayRemaining, 0),
+      monthlyBudget: profile.monthlyBudget,
+      budgetRange: profile.budgetRange,
+      versionConfirmed: true,
+      feelingText: input.feelingText,
+      evidenceText: input.evidenceText,
+    });
+    const readyResult = {
+      card: input.card,
+      askingPrice: input.askingPrice,
+      feelingText: input.feelingText,
+      evidenceText: input.evidenceText,
+      fomoResult: result,
+    } satisfies ReadyToBuyResult;
+
+    setPrefilledDecision(readyResult);
+    setSelectedCard(input.card);
+    setReadyToBuyOpen(false);
+  }
+
+  function handleCreateCooldownTicket(input: ReadyToBuyResult) {
+    const ticket = {
+      id: crypto.randomUUID(),
+      cardId: input.card.id,
+      cardName: input.card.cardName,
+      cardVersion: input.card.version,
+      askingPrice: input.askingPrice,
+      originalThesis: input.feelingText,
+      missingEvidence: input.evidenceText.trim() ? input.evidenceText : "Add photos, comps, condition proof, seller context, or version evidence before revisiting.",
+      decisionPosture: input.fomoResult.decisionPosture,
+      nextStep: input.fomoResult.nextStep,
+      createdAt: new Date().toISOString(),
+      revisitDate: getDateOffset(1),
+      status: "cooling",
+    } satisfies CooldownTicket;
+    const nextTickets = [ticket, ...cooldownTickets];
+    setCooldownTickets(nextTickets);
+    saveCooldownTickets(nextTickets);
+  }
+
+  function handleMarkBought(input: ReadyToBuyResult) {
+    const purchase = {
+      id: crypto.randomUUID(),
+      cardId: input.card.id,
+      cardName: input.card.cardName,
+      cardVersion: input.card.version,
+      askingPrice: input.askingPrice,
+      boughtAt: new Date().toISOString(),
+    } satisfies TcgPurchase;
+    const nextPurchases = [purchase, ...todayPurchases];
+    setTodayPurchases(nextPurchases);
+    saveTodayPurchases(nextPurchases);
   }
 
   function handleRiskSubmit(data: ListingRiskInput) {
@@ -442,7 +578,7 @@ export default function Home() {
       math: stage.stage === "math" ? stage.math : current.math,
       critic: stage.stage === "critic" ? stage.critic : current.critic,
       trace: [...current.trace.filter((item) => item.step !== stage.trace.step), stage.trace],
-      warnings: [...current.warnings, ...stage.warnings.map(sanitizeTraceMessage)],
+      warnings: [...current.warnings, ...stage.warnings.map((message) => sanitizeTraceMessage(message))],
       fallbackUsed: current.fallbackUsed || stage.fallbackUsed,
     }));
 
@@ -479,11 +615,10 @@ export default function Home() {
   }
 
   function handleAddRawToPlan() {
-    const listing = riskForm.getValues();
     addDecisionPlanItem({
       source: "raw_vs_slab",
       title: rawResult.expectedProfit >= 0 ? "Verify condition before raw purchase" : "Wait for a better raw entry",
-      cardName: listing.title || "Current raw-vs-slab decision",
+      cardName: rawDecisionContext.cardName,
       summary: `${formatMoney(rawResult.expectedProfit)} EV. ${rawResult.recommendation}`,
     });
   }
@@ -503,6 +638,7 @@ export default function Home() {
     rawForm.reset(input);
     const result = calculateRawVsSlab(input);
     setRawResult(result);
+    setRawDecisionContext({ cardName: `${card.cardName} ${card.version}`.trim() });
     saveLatestRawResult(result);
     setSelectedCard(null);
     navigateTo("raw");
@@ -530,24 +666,23 @@ export default function Home() {
     saveDecisionPlanItems(nextItems);
   }
 
-  function updateDecisionPlanStatus(id: string, status: DecisionPlanItem["status"]) {
-    const nextItems = decisionPlanItems.map((item) => (item.id === id ? { ...item, status } : item));
-    setDecisionPlanItems(nextItems);
-    saveDecisionPlanItems(nextItems);
-  }
-
   return (
-    <main className="min-h-screen bg-[#f5f3ed] text-[#2d2620]">
-      <Header activeView={view} onNavigate={navigateTo} />
-      {aiHealth && !aiHealth.ok && <AiHealthBanner health={aiHealth} />}
+    <main className="min-h-screen bg-[#f4f7f3] text-[#24312f]">
+      <Header activeView={view} locale={locale} onLocaleChange={setLocale} onNavigate={navigateTo} />
+      {aiHealth && !aiHealth.ok && <AiHealthBanner locale={locale} health={aiHealth} />}
 
-      {view === "landing" && (
+      {view === "landing" && !demoSession && (
+        <DemoAuthGate locale={locale} onEnter={handleDemoAuth} />
+      )}
+
+      {view === "landing" && demoSession && (
         <FirstRunExperience
+          locale={locale}
           step={onboardingStep}
           profile={userProfileSchema.parse({ ...defaultProfile, ...onboardingProfile })}
           onToggleTcg={toggleFavoriteTcg}
           onSelectPersona={(playerType) => profileForm.setValue("playerType", playerType, { shouldDirty: true })}
-          onSelectBudget={(budgetRange) => profileForm.setValue("budgetRange", budgetRange, { shouldDirty: true })}
+          onSelectBudget={handleSelectBudgetRange}
           onStepChange={setOnboardingStep}
           onFinish={finishFirstRun}
         />
@@ -557,23 +692,24 @@ export default function Home() {
         {view === "onboarding" && (
           <ToolSurface
             icon={ListChecks}
-            eyebrow="Onboarding"
-            title="Set the guardrails before the recommendation"
-            description="The demo starts with user context because the same card can be reasonable for one collector and risky for another."
+            eyebrow={getLocaleCopy(locale).profile.eyebrow}
+            title={getLocaleCopy(locale).profile.title}
+            description={getLocaleCopy(locale).profile.description}
           >
             <form className="form-grid" onSubmit={profileForm.handleSubmit(handleProfileSubmit)}>
-              <SelectField label="Favorite IP" {...profileForm.register("ip")} options={ipOptions} />
-              <SelectField label="Primary goal" {...profileForm.register("goal")} options={goalOptions} />
-              <InputField label="Monthly budget" type="number" {...profileForm.register("monthlyBudget", { valueAsNumber: true })} />
-              <SelectField label="Risk level" {...profileForm.register("riskLevel")} options={riskOptions} />
-              <SelectField label="Holding period" {...profileForm.register("holdingPeriod")} options={holdingOptions} />
-              <SelectField label="Willing to grade" {...profileForm.register("gradingPreference")} options={gradingOptions} />
-              <SelectField label="Preferred market" {...profileForm.register("preferredMarket")} options={marketOptions} />
-              <TextAreaField className="md:col-span-2" label="Favorite characters or themes" {...profileForm.register("favoriteCharacters")} />
+              <SelectField label={getLocaleCopy(locale).profile.favoriteIp} {...profileForm.register("ip")} options={ipOptions} locale={locale} />
+              <SelectField label={getLocaleCopy(locale).profile.primaryGoal} {...profileForm.register("goal")} options={goalOptions} locale={locale} />
+              <InputField label={getLocaleCopy(locale).profile.todayBudget} type="number" {...profileForm.register("todayBudget", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).profile.monthlyBudget} type="number" {...profileForm.register("monthlyBudget", { valueAsNumber: true })} />
+              <SelectField label={getLocaleCopy(locale).profile.riskLevel} {...profileForm.register("riskLevel")} options={riskOptions} locale={locale} />
+              <SelectField label={getLocaleCopy(locale).profile.holdingPeriod} {...profileForm.register("holdingPeriod")} options={holdingOptions} locale={locale} />
+              <SelectField label={getLocaleCopy(locale).profile.gradingPreference} {...profileForm.register("gradingPreference")} options={gradingOptions} locale={locale} />
+              <SelectField label={getLocaleCopy(locale).profile.preferredMarket} {...profileForm.register("preferredMarket")} options={marketOptions} locale={locale} />
+              <TextAreaField className="md:col-span-2" label={getLocaleCopy(locale).profile.favoriteCharacters} {...profileForm.register("favoriteCharacters")} />
               <div className="md:col-span-2">
                 <button className="primary-button" type="submit">
                   <Save className="h-4 w-4" />
-                  Save Profile
+                  {getLocaleCopy(locale).profile.save}
                 </button>
               </div>
             </form>
@@ -581,77 +717,38 @@ export default function Home() {
         )}
 
         {view === "dashboard" && (
-          <section className="space-y-6">
-            <SectionIntro
-              eyebrow="Home"
-              title="Collection decision journal"
-              description="Start from your recorded thesis, unresolved review items, and local card radar. Agent help only runs when you ask for it."
-            />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-              {dashboardStats.map((stat) => (
-                <Metric key={stat.label} {...stat} />
-              ))}
-            </div>
-            <JournalHome
-              entries={recentJournalEntries}
-              reviewQueue={reviewQueue}
-              onOpenJournal={() => navigateTo("journal")}
-              onAskAgent={handleJournalAgent}
-              onAddToPlan={handleAddJournalReviewToPlan}
-              loading={aiLoading === "journal"}
-            />
-            {journalAgentDraft && <JournalAgentReflection draft={journalAgentDraft} response={journalAgentResponse} />}
-            {aiError && aiLoading !== "risk" && <AiError message={aiError} />}
+          <section className="space-y-5">
             <RecommendationGrid
+              locale={locale}
               recommendations={journalRecommendations}
               profile={profile}
+              todaySpent={todaySpent}
+              todayRemaining={todayRemaining}
+              cooldownTickets={cooldownTickets}
+              hasJournalEntries={visibleJournalEntries.length > 0}
+              onReadyToBuy={() => setReadyToBuyOpen(true)}
               onSelectCard={setSelectedCard}
             />
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1fr]">
-              <Panel title="Active profile" icon={Target}>
-                <DetailGrid
-                  items={[
-                    ["IP focus", profile.ip],
-                    ["Goal", profile.goal],
-                    ["Market", profile.preferredMarket],
-                    ["Holding period", profile.holdingPeriod],
-                    ["Grading", profile.gradingPreference],
-                    ["Characters", profile.favoriteCharacters],
-                  ]}
-                />
-              </Panel>
-              <Panel title="Next best actions" icon={Sparkles}>
-                <ActionList
-                  items={[
-                    "Write the thesis before buying or grading.",
-                    "Use Risk Review when a listing lacks version or condition evidence.",
-                    "Run Raw vs Slab only after the listing passes the evidence check.",
-                    "Keep unresolved心得 in the 30-day plan until reviewed.",
-                  ]}
-                />
-              </Panel>
-            </div>
-            <DecisionPlanList items={decisionPlanItems} onUpdateStatus={updateDecisionPlanStatus} />
           </section>
         )}
 
         {view === "risk" && (
           <ToolSurface
             icon={SearchCheck}
-            eyebrow="Listing Risk Checker"
-            title="Should this listing move forward?"
-            description="Paste title and description first. If the evidence clears the first screen, continue into raw-vs-slab math."
+            eyebrow={getLocaleCopy(locale).risk.eyebrow}
+            title={getLocaleCopy(locale).risk.title}
+            description={getLocaleCopy(locale).risk.description}
           >
             <form className="form-grid" onSubmit={riskForm.handleSubmit(handleRiskSubmit)}>
-              <InputField className="md:col-span-2" label="Listing title" {...riskForm.register("title")} />
-              <TextAreaField className="md:col-span-2" label="Description" {...riskForm.register("description")} />
-              <InputField label="Listed price" type="number" {...riskForm.register("price", { valueAsNumber: true })} />
-              <SelectField label="Marketplace" {...riskForm.register("marketplace")} options={marketOptions} />
-              <SelectField label="User goal" {...riskForm.register("userGoal")} options={["Self-collection", "Grading", "Resale"]} />
+              <InputField className="md:col-span-2" label={getLocaleCopy(locale).risk.listingTitle} {...riskForm.register("title")} />
+              <TextAreaField className="md:col-span-2" label={getLocaleCopy(locale).risk.descriptionLabel} {...riskForm.register("description")} />
+              <InputField label={getLocaleCopy(locale).risk.listedPrice} type="number" {...riskForm.register("price", { valueAsNumber: true })} />
+              <SelectField label={getLocaleCopy(locale).risk.marketplace} {...riskForm.register("marketplace")} options={marketOptions} locale={locale} />
+              <SelectField label={getLocaleCopy(locale).risk.userGoal} {...riskForm.register("userGoal")} options={["Self-collection", "Grading", "Resale"]} locale={locale} />
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
                 <button className="primary-button" type="submit">
                   <AlertTriangle className="h-4 w-4" />
-                  Analyze Locally
+                  {getLocaleCopy(locale).risk.analyzeLocal}
                 </button>
                 <button
                   className="secondary-button"
@@ -660,7 +757,7 @@ export default function Home() {
                   onClick={riskForm.handleSubmit(handleRiskAiSubmit)}
                 >
                   <Sparkles className="h-4 w-4" />
-                  {aiLoading === "risk" ? "Running Hermes..." : "Analyze with AI"}
+                  {aiLoading === "risk" ? getLocaleCopy(locale).risk.runningHermes : getLocaleCopy(locale).risk.analyzeAi}
                 </button>
                 <button
                   className="secondary-button"
@@ -669,22 +766,24 @@ export default function Home() {
                   onClick={riskForm.handleSubmit(handlePipelineEvidenceSubmit)}
                 >
                   <ListChecks className="h-4 w-4" />
-                  {pipelineLoading === "evidence" ? "Evidence Agent..." : "Analyze with AI Pipeline"}
+                  {pipelineLoading === "evidence" ? getLocaleCopy(locale).risk.evidenceAgentLoading : getLocaleCopy(locale).risk.analyzePipeline}
                 </button>
               </div>
             </form>
-            {aiError && <AiError message={aiError} />}
-            {pipelineError && <AiError message={pipelineError} />}
+            {aiError && <AiError locale={locale} message={aiError} />}
+            {pipelineError && <AiError locale={locale} message={pipelineError} />}
             <ListingRiskPipeline
+              locale={locale}
               state={listingPipeline}
               loading={pipelineLoading}
               onEvidenceChange={(evidence) => setListingPipeline((current) => ({ ...current, evidence }))}
               onContinue={handlePipelineContinue}
               onAddToPlan={handleAddRiskToPlan}
             />
-            {aiRiskResponse && <AgentTrace response={aiRiskResponse} />}
+            {aiRiskResponse && <AgentTrace locale={locale} response={aiRiskResponse} />}
             {riskReport && (
               <RiskReport
+                locale={locale}
                 report={riskReport}
                 onContinue={() => navigateTo("raw")}
                 onAddToPlan={handleAddRiskToPlan}
@@ -696,90 +795,91 @@ export default function Home() {
         {view === "raw" && (
           <ToolSurface
             icon={Calculator}
-            eyebrow="Raw vs Slab Calculator"
-            title="Use deterministic math before grading speculation"
-            description="All arithmetic is TypeScript code. The explanation only interprets the calculated result."
+            eyebrow={getLocaleCopy(locale).raw.eyebrow}
+            title={getLocaleCopy(locale).raw.title}
+            description={getLocaleCopy(locale).raw.description}
           >
-            <CalibrationCard calibration={gradingCalibration} onApply={handleApplyCalibration} />
+            <CalibrationCard locale={locale} calibration={gradingCalibration} onApply={handleApplyCalibration} />
             <form className="form-grid" onSubmit={rawForm.handleSubmit(handleRawSubmit)}>
-              <InputField label="Raw price" type="number" step="0.01" {...rawForm.register("rawPrice", { valueAsNumber: true })} />
-              <InputField label="PSA10 sold price" type="number" step="0.01" {...rawForm.register("psa10Price", { valueAsNumber: true })} />
-              <InputField label="PSA9 sold price" type="number" step="0.01" {...rawForm.register("psa9Price", { valueAsNumber: true })} />
-              <InputField label="Other estimate" type="number" step="0.01" {...rawForm.register("otherPrice", { valueAsNumber: true })} />
-              <InputField label="Grading + inbound cost" type="number" step="0.01" {...rawForm.register("gradingCost", { valueAsNumber: true })} />
-              <InputField label="Marketplace fee rate (0.13 = 13%)" type="number" step="0.01" {...rawForm.register("marketplaceFeeRate", { valueAsNumber: true })} />
-              <InputField label="Sale shipping" type="number" step="0.01" {...rawForm.register("shippingCost", { valueAsNumber: true })} />
-              <InputField label="PSA10 probability (0.25 = 25%)" type="number" step="0.01" {...rawForm.register("psa10Probability", { valueAsNumber: true })} />
-              <InputField label="PSA9 probability (0.40 = 40%)" type="number" step="0.01" {...rawForm.register("psa9Probability", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.rawPrice} type="number" step="0.01" {...rawForm.register("rawPrice", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.psa10Price} type="number" step="0.01" {...rawForm.register("psa10Price", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.psa9Price} type="number" step="0.01" {...rawForm.register("psa9Price", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.otherPrice} type="number" step="0.01" {...rawForm.register("otherPrice", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.gradingCost} type="number" step="0.01" {...rawForm.register("gradingCost", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.feeRate} type="number" step="0.01" {...rawForm.register("marketplaceFeeRate", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.shipping} type="number" step="0.01" {...rawForm.register("shippingCost", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.psa10Probability} type="number" step="0.01" {...rawForm.register("psa10Probability", { valueAsNumber: true })} />
+              <InputField label={getLocaleCopy(locale).raw.psa9Probability} type="number" step="0.01" {...rawForm.register("psa9Probability", { valueAsNumber: true })} />
               <div className="md:col-span-2">
                 <button className="primary-button" type="submit">
                   <Calculator className="h-4 w-4" />
-                  Recalculate
+                  {getLocaleCopy(locale).raw.recalculate}
                 </button>
               </div>
             </form>
-            <RawResult result={rawResult} onAddToPlan={handleAddRawToPlan} />
+            <RawResult locale={locale} result={rawResult} context={rawDecisionContext} onAddToPlan={handleAddRawToPlan} />
           </ToolSurface>
         )}
 
         {view === "journal" && (
           <ToolSurface
             icon={BookOpenCheck}
-            eyebrow="Collection Decision Journal"
-            title="Capture the thesis, risks, and review result"
-            description="Structured心得 stays in localStorage and feeds the home recommendation radar without external card data."
+            eyebrow={getLocaleCopy(locale).journal.eyebrow}
+            title={getLocaleCopy(locale).journal.title}
+            description={getLocaleCopy(locale).journal.description}
           >
             <form className="form-grid" onSubmit={journalForm.handleSubmit(handleJournalSubmit)}>
-              <SelectField label="TCG" {...journalForm.register("tcg")} options={favoriteTcgOptions} />
-              <InputField label="Card name" {...journalForm.register("cardName")} />
-              <InputField label="Version" {...journalForm.register("version")} />
-              <InputField label="Date" type="date" {...journalForm.register("date")} />
-              <SelectField label="Action type" {...journalForm.register("actionType")} options={journalActionOptions} />
-              <InputField label="Price" type="number" step="0.01" {...journalForm.register("price", { valueAsNumber: true })} />
-              <SelectField label="Goal" {...journalForm.register("userGoal")} options={goalOptions} />
-              <InputField label="Tags" placeholder="character, set, risk theme" {...journalForm.register("tags")} />
-              <SelectField label="Sentiment" {...journalForm.register("sentiment")} options={journalSentimentOptions} />
-              <TextAreaField className="md:col-span-2" label="Original thesis" {...journalForm.register("thesis")} />
-              <TextAreaField className="md:col-span-2" label="Watch reason" {...journalForm.register("watchReason")} />
-              <TextAreaField label="Buy condition" {...journalForm.register("buyCondition")} />
-              <TextAreaField label="Sell condition" {...journalForm.register("sellCondition")} />
-              <TextAreaField label="Stop condition" {...journalForm.register("stopCondition")} />
-              <TextAreaField label="Risks noted" {...journalForm.register("risks")} />
-              <InputField label="Review date" type="date" {...journalForm.register("reviewDate")} />
-              <SelectField label="Review status" {...journalForm.register("reviewStatus")} options={journalReviewStatusOptions} />
-              <TextAreaField label="Missing information" {...journalForm.register("missingInfo")} />
-              <TextAreaField label="Final outcome" {...journalForm.register("finalOutcome")} />
-              <TextAreaField label="Lessons learned" {...journalForm.register("lessonsLearned")} />
+              <SelectField label="TCG" {...journalForm.register("tcg")} options={favoriteTcgOptions} locale={locale} />
+              <InputField label={getLocaleCopy(locale).journal.cardName} {...journalForm.register("cardName")} />
+              <InputField label={getLocaleCopy(locale).journal.version} {...journalForm.register("version")} />
+              <InputField label={getLocaleCopy(locale).journal.date} type="date" {...journalForm.register("date")} />
+              <SelectField label={getLocaleCopy(locale).journal.actionType} {...journalForm.register("actionType")} options={journalActionOptions} locale={locale} />
+              <InputField label={getLocaleCopy(locale).journal.price} type="number" step="0.01" {...journalForm.register("price", { valueAsNumber: true })} />
+              <SelectField label={getLocaleCopy(locale).journal.goal} {...journalForm.register("userGoal")} options={goalOptions} locale={locale} />
+              <InputField label={getLocaleCopy(locale).journal.tags} placeholder={getLocaleCopy(locale).journal.tagsPlaceholder} {...journalForm.register("tags")} />
+              <SelectField label={getLocaleCopy(locale).journal.sentiment} {...journalForm.register("sentiment")} options={journalSentimentOptions} locale={locale} />
+              <TextAreaField className="md:col-span-2" label={getLocaleCopy(locale).journal.thesis} {...journalForm.register("thesis")} />
+              <TextAreaField className="md:col-span-2" label={getLocaleCopy(locale).journal.watchReason} {...journalForm.register("watchReason")} />
+              <TextAreaField label={getLocaleCopy(locale).journal.buyCondition} {...journalForm.register("buyCondition")} />
+              <TextAreaField label={getLocaleCopy(locale).journal.sellCondition} {...journalForm.register("sellCondition")} />
+              <TextAreaField label={getLocaleCopy(locale).journal.stopCondition} {...journalForm.register("stopCondition")} />
+              <TextAreaField label={getLocaleCopy(locale).journal.risks} {...journalForm.register("risks")} />
+              <InputField label={getLocaleCopy(locale).journal.reviewDate} type="date" {...journalForm.register("reviewDate")} />
+              <SelectField label={getLocaleCopy(locale).journal.reviewStatus} {...journalForm.register("reviewStatus")} options={journalReviewStatusOptions} locale={locale} />
+              <TextAreaField label={getLocaleCopy(locale).journal.missingInfo} {...journalForm.register("missingInfo")} />
+              <TextAreaField label={getLocaleCopy(locale).journal.finalOutcome} {...journalForm.register("finalOutcome")} />
+              <TextAreaField label={getLocaleCopy(locale).journal.lessons} {...journalForm.register("lessonsLearned")} />
               <InputField
-                label="Assumed PSA10 probability (0.30 = 30%)"
+                label={getLocaleCopy(locale).journal.assumedPsa10}
                 type="number"
                 step="0.01"
                 {...journalForm.register("assumedPsa10Probability", {
                   setValueAs: (value) => (value === "" ? undefined : Number(value)),
                 })}
               />
-              <SelectField label="Actual grade" {...journalForm.register("actualGrade")} options={actualGradeOptions} />
-              <SelectField label="Decision source" {...journalForm.register("source")} options={decisionSourceOptions} />
+              <SelectField label={getLocaleCopy(locale).journal.actualGrade} {...journalForm.register("actualGrade")} options={actualGradeOptions} locale={locale} />
+              <SelectField label={getLocaleCopy(locale).journal.decisionSource} {...journalForm.register("source")} options={decisionSourceOptions} locale={locale} />
               <div className="md:col-span-2">
                 <button className="primary-button" type="submit">
                   <Save className="h-4 w-4" />
-                  Save Journal Entry
+                  {getLocaleCopy(locale).journal.save}
                 </button>
               </div>
             </form>
             <div className="mt-8 flex flex-wrap items-center gap-2">
               <button className={filterClass(journalFilter === "All")} onClick={() => setJournalFilter("All")}>
-                All
+                {getLocaleCopy(locale).journal.all}
               </button>
               {journalActionOptions.map((action) => (
                 <button key={action} className={filterClass(journalFilter === action)} onClick={() => setJournalFilter(action)}>
-                  {action}
+                  {localizeOption(action, locale)}
                 </button>
               ))}
             </div>
             <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
               {filteredEntries.map((entry) => (
                 <JournalEntry
+                  locale={locale}
                   key={entry.id}
                   entry={entry}
                   onAskAgent={handleJournalAgent}
@@ -793,51 +893,152 @@ export default function Home() {
       </div>
       {selectedCard && (
         <CardDecisionSheet
+          locale={locale}
           card={selectedCard}
+          profile={profile}
+          readyToBuyResult={prefilledDecision?.card.id === selectedCard.id ? prefilledDecision : null}
+          todayRemaining={todayRemaining}
           onClose={() => setSelectedCard(null)}
           onRunRaw={handleSendCardToRaw}
           onCheckRisk={handleSendCardToRisk}
           onAddToPlan={handleAddCardToPlan}
+          onCreateCooldownTicket={handleCreateCooldownTicket}
+          onMarkBought={handleMarkBought}
+        />
+      )}
+
+      {readyToBuyOpen && (
+        <ReadyToBuyModal
+          locale={locale}
+          recommendations={journalRecommendations.map((recommendation) => recommendation.card)}
+          profile={profile}
+          todaySpent={todaySpent}
+          todayRemaining={todayRemaining}
+          onClose={() => setReadyToBuyOpen(false)}
+          onSubmit={handleReadyToBuySubmit}
         />
       )}
     </main>
   );
 }
 
-function Header({ activeView, onNavigate }: { activeView: View; onNavigate: (view: View) => void }) {
+function Header({
+  activeView,
+  locale,
+  onLocaleChange,
+  onNavigate,
+}: {
+  activeView: View;
+  locale: Locale;
+  onLocaleChange: (locale: Locale) => void;
+  onNavigate: (view: View) => void;
+}) {
+  const t = getLocaleCopy(locale);
+
   return (
-    <header className="sticky top-0 z-20 border-b border-[#dcd9c8] bg-[#f5f3ed]/95 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-[#d6ded5] bg-[#f4f7f3]/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between md:px-8 lg:px-10">
         <button className="flex w-fit items-center gap-3 text-left" onClick={() => onNavigate("landing")}>
-          <span className="grid h-10 w-10 place-items-center rounded-md bg-[#4a7c59] font-serif text-lg font-bold text-[#f5f3ed]">
-            T
-          </span>
+          <BrandMark size="sm" />
           <span>
-            <span className="block font-serif text-xl font-bold text-[#4a7c59]">TCGpal</span>
-            <span className="block text-xs font-semibold uppercase text-[#6b6555]">Card counter notes</span>
+            <span className="block font-serif text-xl font-bold text-[#2f6f73]">TCGpal</span>
+            <span className="block text-xs font-semibold uppercase text-[#64736c]">{t.headerSubtitle}</span>
           </span>
         </button>
-        <nav className="flex gap-2 overflow-x-auto">
-          {views.map((item) => {
-            const Icon = item.icon;
-            return (
+        <div className="flex flex-wrap items-center gap-2">
+          <nav className="flex gap-2 overflow-x-auto">
+            {views.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  className={`nav-button ${activeView === item.id ? "nav-button-active" : ""}`}
+                  onClick={() => onNavigate(item.id)}
+                >
+                  <Icon className="h-4 w-4" />
+                  {t.nav[item.id]}
+                </button>
+              );
+            })}
+          </nav>
+          <div className="flex rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-1">
+            {(["en", "zh"] as const).map((option) => (
               <button
-                key={item.id}
-                className={`nav-button ${activeView === item.id ? "nav-button-active" : ""}`}
-                onClick={() => onNavigate(item.id)}
+                key={option}
+                className={`min-h-8 rounded px-3 text-xs font-black uppercase ${locale === option ? "bg-[#2f6f73] text-[#f4f7f3]" : "text-[#64736c]"}`}
+                type="button"
+                onClick={() => onLocaleChange(option)}
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                {option === "en" ? "EN" : "中文"}
               </button>
-            );
-          })}
-        </nav>
+            ))}
+          </div>
+        </div>
       </div>
     </header>
   );
 }
 
+function DemoAuthGate({ locale, onEnter }: { locale: Locale; onEnter: (mode: DemoSession["mode"]) => void }) {
+  const t = getLocaleCopy(locale).auth;
+
+  return (
+    <section className="border-b border-[#d6ded5] bg-[#e7efe8]">
+      <div className="mx-auto grid min-h-[620px] max-w-7xl grid-cols-1 gap-8 px-5 py-10 md:grid-cols-[0.9fr_1.1fr] md:px-8 lg:px-10">
+        <div className="flex flex-col justify-center">
+          <BrandMark size="lg" />
+          <Badge icon={ShoppingBag}>{t.badge}</Badge>
+          <h1 className="mt-5 max-w-3xl font-serif text-5xl font-bold leading-tight text-[#2f6f73] md:text-7xl">
+            {t.title}
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#64736c]">
+            {t.description}
+          </p>
+        </div>
+        <div className="flex items-center">
+          <div className="w-full rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 shadow-[0_18px_50px_rgba(45,38,32,0.12)] md:p-6">
+            <p className="text-xs font-semibold uppercase text-[#64736c]">{t.eyebrow}</p>
+            <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.panelTitle}</h2>
+            <p className="mt-3 text-sm leading-6 text-[#64736c]">
+              {t.panelDescription}
+            </p>
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button className="primary-button" type="button" onClick={() => onEnter("login")}>
+                <LogIn className="h-4 w-4" />
+                {t.login}
+              </button>
+              <button className="secondary-button" type="button" onClick={() => onEnter("signup")}>
+                <Sparkles className="h-4 w-4" />
+                {t.signup}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BrandMark({ size = "sm" }: { size?: "sm" | "lg" }) {
+  const large = size === "lg";
+
+  return (
+    <div
+      className={`relative ${large ? "mb-5 h-20 w-20" : "h-10 w-10"} shrink-0`}
+      aria-hidden="true"
+    >
+      <span className="absolute inset-x-[18%] bottom-[12%] top-[12%] rotate-[-10deg] rounded-md border border-[#24585c] bg-[#d7a84e] shadow-sm" />
+      <span className="absolute inset-x-[12%] bottom-[8%] top-[8%] rotate-[7deg] rounded-md border border-[#24585c] bg-[#fcfbf6] shadow-sm" />
+      <span className="absolute inset-[10%] grid place-items-center rounded-md border border-[#1f474a] bg-[#2f6f73] shadow-sm">
+        <span className={`${large ? "text-2xl" : "text-sm"} font-serif font-black text-[#fcfbf6]`}>T</span>
+      </span>
+      <span className="absolute bottom-[19%] left-[27%] right-[27%] h-[2px] rounded-full bg-[#f4f7f3]/80" />
+    </div>
+  );
+}
+
 function FirstRunExperience({
+  locale,
   step,
   profile,
   onToggleTcg,
@@ -846,6 +1047,7 @@ function FirstRunExperience({
   onStepChange,
   onFinish,
 }: {
+  locale: Locale;
   step: OnboardingStep;
   profile: UserProfile;
   onToggleTcg: (tcg: UserProfile["favoriteTcgs"][number]) => void;
@@ -854,34 +1056,36 @@ function FirstRunExperience({
   onStepChange: (step: OnboardingStep) => void;
   onFinish: () => void;
 }) {
+  const t = getLocaleCopy(locale).onboarding;
+
   return (
-    <section className="border-b border-[#dcd9c8] bg-[#ecebe1]">
+    <section className="border-b border-[#d6ded5] bg-[#e7efe8]">
       <div className="mx-auto grid min-h-[680px] max-w-7xl grid-cols-1 gap-8 px-5 py-10 md:grid-cols-[0.86fr_1.14fr] md:px-8 lg:px-10">
         <div className="flex flex-col justify-center">
-          <Badge icon={Layers3}>TCGpal starts with the cards you care about</Badge>
-          <h1 className="mt-5 max-w-3xl font-serif text-5xl font-bold leading-tight text-[#4a7c59] md:text-7xl">
-            Build your card radar.
+          <Badge icon={Layers3}>{t.badge}</Badge>
+          <h1 className="mt-5 max-w-3xl font-serif text-5xl font-bold leading-tight text-[#2f6f73] md:text-7xl">
+            {t.title}
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#6b6555]">
-            Pick your games, your player type, and a rough budget. TCGpal will show cards to review before you paste a listing or run grading math.
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#64736c]">
+            {t.description}
           </p>
           <div className="mt-8 flex gap-2">
             {(["tcg", "persona", "budget"] as const).map((item, index) => (
               <button
                 key={item}
-                className={`h-2 flex-1 rounded-full ${step === item ? "bg-[#b7472a]" : "bg-[#fffdf7]"}`}
+                className={`h-2 flex-1 rounded-full ${step === item ? "bg-[#b26a4c]" : "bg-[#fcfbf6]"}`}
                 aria-label={`Step ${index + 1}`}
                 onClick={() => onStepChange(item)}
               />
             ))}
           </div>
         </div>
-        <div className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5 shadow-[0_18px_50px_rgba(45,38,32,0.12)] md:p-6">
+        <div className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 shadow-[0_18px_50px_rgba(45,38,32,0.12)] md:p-6">
           {step === "tcg" && (
             <div>
-              <p className="text-xs font-semibold uppercase text-[#6b6555]">Step 1 of 3</p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-[#4a7c59]">What TCGs do you follow?</h2>
-              <p className="mt-2 text-sm leading-6 text-[#6b6555]">Choose more than one. Your first home screen will be built around these games.</p>
+              <p className="text-xs font-semibold uppercase text-[#64736c]">{t.step1}</p>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.tcgTitle}</h2>
+              <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.tcgDescription}</p>
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {favoriteTcgOptions.map((tcg) => {
                   const active = profile.favoriteTcgs.includes(tcg);
@@ -898,14 +1102,14 @@ function FirstRunExperience({
                 })}
               </div>
               <button className="primary-button mt-6 w-full" onClick={() => onStepChange("persona")}>
-                Continue
+                {t.continue}
               </button>
             </div>
           )}
           {step === "persona" && (
             <div>
-              <p className="text-xs font-semibold uppercase text-[#6b6555]">Step 2 of 3</p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-[#4a7c59]">What type of TCG player are you?</h2>
+              <p className="text-xs font-semibold uppercase text-[#64736c]">{t.step2}</p>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.personaTitle}</h2>
               <div className="mt-6 grid grid-cols-1 gap-3">
                 {playerTypeOptions.map((playerType) => (
                   <button
@@ -914,8 +1118,8 @@ function FirstRunExperience({
                     onClick={() => onSelectPersona(playerType)}
                   >
                     <span>
-                      <span className="block text-base">{playerType}</span>
-                      <span className="mt-1 block text-sm font-medium leading-6 text-[#6b6555]">{personaDescription(playerType)}</span>
+                      <span className="block text-base">{localizeOption(playerType, locale)}</span>
+                      <span className="mt-1 block text-sm font-medium leading-6 text-[#64736c]">{personaDescription(playerType, locale)}</span>
                     </span>
                     {profile.playerType === playerType && (
                       <span className="choice-check" aria-hidden="true">
@@ -927,19 +1131,25 @@ function FirstRunExperience({
               </div>
               <div className="mt-6 flex gap-3">
                 <button className="secondary-button flex-1" onClick={() => onStepChange("tcg")}>
-                  Back
+                  {t.back}
                 </button>
                 <button className="primary-button flex-1" onClick={() => onStepChange("budget")}>
-                  Continue
+                  {t.continue}
                 </button>
               </div>
             </div>
           )}
           {step === "budget" && (
             <div>
-              <p className="text-xs font-semibold uppercase text-[#6b6555]">Step 3 of 3</p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-[#4a7c59]">What budget should TCGpal respect?</h2>
-              <p className="mt-2 text-sm leading-6 text-[#6b6555]">A range is enough for now. You can change it later.</p>
+              <p className="text-xs font-semibold uppercase text-[#64736c]">{t.step3}</p>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.budgetTitle}</h2>
+              <p className="mt-2 text-sm leading-6 text-[#64736c]">
+                {t.budgetDescription}
+              </p>
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <InputField label={t.todayBudget} type="number" min="0" step="1" value={profile.todayBudget} onChange={() => undefined} readOnly />
+                <InputField label={t.monthlyBenchmark} type="number" min="0" step="1" value={profile.monthlyBudget} onChange={() => undefined} readOnly />
+              </div>
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {budgetRangeOptions.map((budgetRange) => (
                   <button
@@ -947,7 +1157,7 @@ function FirstRunExperience({
                     className={`choice-card ${profile.budgetRange === budgetRange ? "choice-card-active" : ""}`}
                     onClick={() => onSelectBudget(budgetRange)}
                   >
-                    <span>{budgetRange}</span>
+                    <span>{localizeOption(budgetRange, locale)}</span>
                     {profile.budgetRange === budgetRange && (
                       <span className="choice-check" aria-hidden="true">
                         <Check className="h-4 w-4" />
@@ -958,10 +1168,10 @@ function FirstRunExperience({
               </div>
               <div className="mt-6 flex gap-3">
                 <button className="secondary-button flex-1" onClick={() => onStepChange("persona")}>
-                  Back
+                  {t.back}
                 </button>
                 <button className="primary-button flex-1" onClick={onFinish}>
-                  Show my cards
+                  {t.start}
                 </button>
               </div>
             </div>
@@ -972,166 +1182,95 @@ function FirstRunExperience({
   );
 }
 
-function JournalHome({
-  entries,
-  reviewQueue,
-  onOpenJournal,
-  onAskAgent,
-  onAddToPlan,
-  loading,
-}: {
-  entries: DecisionJournalEntry[];
-  reviewQueue: DecisionJournalEntry[];
-  onOpenJournal: () => void;
-  onAskAgent: (entry: DecisionJournalEntry) => void;
-  onAddToPlan: (entry: DecisionJournalEntry) => void;
-  loading: boolean;
-}) {
-  const leadEntry = entries[0];
-
-  return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-      <section className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5 shadow-sm">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase text-[#6b6555]">Latest counter note</p>
-            <h3 className="mt-1 font-serif text-3xl font-bold text-[#4a7c59]">{leadEntry?.cardName ?? "Start a card thesis"}</h3>
-          </div>
-          <button className="primary-button" type="button" onClick={onOpenJournal}>
-            <FilePenLine className="h-4 w-4" />
-            New note
-          </button>
-        </div>
-        {leadEntry ? (
-          <div className="mt-5">
-            <p className="text-sm leading-7 text-[#4a3a30]">{leadEntry.thesis}</p>
-            <DetailGrid
-              items={[
-                ["TCG", leadEntry.tcg],
-                ["Sentiment", leadEntry.sentiment],
-                ["Review status", leadEntry.reviewStatus],
-                ["Watch reason", leadEntry.watchReason || "Not specified"],
-              ]}
-            />
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button className="secondary-button" type="button" disabled={loading} onClick={() => onAskAgent(leadEntry)}>
-                <Sparkles className="h-4 w-4" />
-                {loading ? "Checking note..." : "Ask Agent"}
-              </button>
-              <button className="secondary-button" type="button" onClick={() => onAddToPlan(leadEntry)}>
-                <ClipboardList className="h-4 w-4" />
-                Add review item
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="mt-4 text-sm leading-6 text-[#6b6555]">Create a structured心得 first; recommendations will adapt after there is history.</p>
-        )}
-      </section>
-
-      <Panel title="Review queue" icon={FilePenLine}>
-        {reviewQueue.length ? (
-          <div className="space-y-3">
-            {reviewQueue.map((entry) => (
-              <article key={entry.id} className="rounded-md bg-[#f5f3ed] p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase text-[#6b6555]">{entry.reviewStatus}</p>
-                    <h4 className="mt-1 font-serif text-lg font-bold text-[#4a7c59]">{entry.cardName}</h4>
-                  </div>
-                  <span className="rounded-md bg-[#ecebe1] px-2 py-1 text-xs font-bold uppercase text-[#6b6555]">{entry.tcg}</span>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-[#6b6555]">{entry.watchReason || entry.stopCondition || entry.risks || "Review the original thesis before acting."}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button className="secondary-button min-h-0 px-3 py-2 text-xs" type="button" disabled={loading} onClick={() => onAskAgent(entry)}>
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Agent
-                  </button>
-                  <button className="secondary-button min-h-0 px-3 py-2 text-xs" type="button" onClick={() => onAddToPlan(entry)}>
-                    <ClipboardList className="h-3.5 w-3.5" />
-                    Plan
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm leading-6 text-[#6b6555]">No unresolved notes. New decisions can still be added from Journal, Listing Risk, or Raw vs Slab.</p>
-        )}
-      </Panel>
-    </div>
-  );
-}
-
-function JournalAgentReflection({ draft, response }: { draft: JournalDraft; response: HermesResponse | null }) {
-  return (
-    <section className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase text-[#6b6555]">Journal Agent</p>
-          <h3 className="mt-1 font-serif text-2xl font-bold text-[#4a7c59]">{draft.cardName}</h3>
-        </div>
-        <Badge icon={Sparkles}>{response?.fallbackUsed ? "Local fallback used" : response ? "AI assisted" : "Local reflection"}</Badge>
-      </div>
-      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-md bg-[#f5f3ed] p-4">
-          <h4 className="font-serif text-lg font-bold text-[#4a7c59]">Next action prompt</h4>
-          <p className="mt-2 text-sm leading-6 text-[#4a3a30]">{draft.reviewPrompt}</p>
-        </div>
-        <div className="rounded-md bg-[#f5f3ed] p-4">
-          <h4 className="font-serif text-lg font-bold text-[#4a7c59]">Guardrail</h4>
-          <p className="mt-2 text-sm leading-6 text-[#4a3a30]">{draft.stopCondition}</p>
-        </div>
-      </div>
-      <GroupedList title="Risks to re-check" items={splitListText(draft.risks)} />
-      {response && <AgentTrace response={response} />}
-    </section>
-  );
-}
-
 function RecommendationGrid({
+  locale,
   recommendations,
   profile,
+  todaySpent,
+  todayRemaining,
+  cooldownTickets,
+  hasJournalEntries,
+  onReadyToBuy,
   onSelectCard,
 }: {
+  locale: Locale;
   recommendations: JournalBasedRecommendation[];
   profile: UserProfile;
+  todaySpent: number;
+  todayRemaining: number;
+  cooldownTickets: CooldownTicket[];
+  hasJournalEntries: boolean;
+  onReadyToBuy: () => void;
   onSelectCard: (card: CuratedCardRecommendation) => void;
 }) {
+  const t = getLocaleCopy(locale).home;
+  const coolingCount = cooldownTickets.filter((ticket) => ticket.status === "cooling").length;
+
   return (
-    <section className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5 shadow-sm">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase text-[#6b6555]">From your journal</p>
-          <h3 className="mt-1 font-serif text-3xl font-bold text-[#4a7c59]">Cards to review next</h3>
+    <section className="bg-[#f4f7f3]">
+      <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+          <p className="text-xs font-semibold uppercase text-[#64736c]">{hasJournalEntries ? t.eyebrowRadar : t.eyebrowStart}</p>
+          <h1 className="mt-1 max-w-3xl font-serif text-4xl font-bold leading-tight text-[#2f6f73] md:text-6xl">{t.title}</h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-[#64736c]">
+            {t.description}
+          </p>
+          <button className="primary-button mt-5 text-base" type="button" onClick={onReadyToBuy}>
+            <ShoppingBag className="h-5 w-5" />
+            {t.cta}
+          </button>
         </div>
-        <p className="w-fit rounded-full bg-[#f9a620] px-3 py-1 text-xs font-bold uppercase text-[#4a3a10]">{profile.favoriteTcgs.join(", ")} · {profile.budgetRange}</p>
+        <div className="rounded-md border border-[#d6ded5] bg-[#e7efe8] p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase text-[#64736c]">{t.guardrail}</p>
+            <span className="rounded-md bg-[#d7a84e] px-3 py-1 text-xs font-bold uppercase text-[#4a3f24]">{profile.favoriteTcgs.join(", ")}</span>
+          </div>
+          <DetailGrid
+            items={[
+              [t.todayBudget, formatMoney(profile.todayBudget)],
+              [t.spentToday, formatMoney(todaySpent)],
+              [t.remaining, formatMoney(todayRemaining)],
+              [t.monthlyBenchmark, formatMoney(profile.monthlyBudget)],
+            ]}
+            dangerLabels={todayRemaining <= 0 ? [t.remaining] : []}
+          />
+          {coolingCount > 0 && (
+            <div className="mt-4 rounded-md bg-[#fcfbf6] p-3">
+              <p className="text-xs font-bold uppercase text-[#64736c]">{t.coolingDown}</p>
+              <p className="mt-1 text-sm font-semibold text-[#36413d]">
+                {t.savedForReview(coolingCount)}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-6 xl:grid-cols-12">
+      <div className="mb-4 flex flex-col gap-1">
+        <p className="text-xs font-semibold uppercase text-[#64736c]">{t.quickPicks}</p>
+        <p className="text-sm leading-6 text-[#64736c]">{t.quickPicksDescription}</p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {recommendations.map((recommendation, index) => {
           const card = recommendation.card;
-          const featured = index === 0;
           return (
             <button
               key={card.id}
-              className={`text-left ${featured ? "md:col-span-6 xl:col-span-5" : "md:col-span-3 xl:col-span-7"} ${index === 2 ? "xl:-mt-5" : ""}`}
+              className="group text-left"
               onClick={() => onSelectCard(card)}
             >
-              <article className={`h-full rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-4 transition hover:-translate-y-1 hover:border-[#c8c2aa] hover:shadow-lg ${featured ? "md:p-5" : ""}`}>
-                <div className={`flex gap-4 ${featured ? "items-end" : ""}`}>
-                  <DesignedCard card={card} large={featured} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold uppercase text-[#6b6555]">{card.tcg}</p>
-                    <h4 className={`${featured ? "text-3xl" : "text-lg"} mt-1 font-serif font-bold leading-tight text-[#4a7c59]`}>{card.cardName}</h4>
-                    <p className="mt-1 text-sm leading-5 text-[#6b6555]">{card.version}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="rounded bg-[#f9a620] px-2 py-1 font-mono text-xs font-bold text-[#4a3a10]">{formatMoney(card.suggestedRawPrice)} raw</span>
-                      <span className="rounded bg-[#ecebe1] px-2 py-1 font-mono text-xs font-bold text-[#4a7c59]">{formatPercent(card.psa10Probability)} PSA10?</span>
-                    </div>
-                  </div>
+              <article className="flex h-full flex-col rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4 transition group-hover:-translate-y-1 group-hover:border-[#bccbc2] group-hover:shadow-lg">
+                <div className="mx-auto">
+                  <DesignedCard card={card} large />
                 </div>
-                <p className="mt-4 border-l-4 border-[#b7472a] bg-[#ecebe1] px-3 py-2 text-sm leading-6 text-[#4a3a30]">{recommendation.reason}</p>
-                <p className="mt-3 text-xs font-semibold uppercase text-[#6b6555]">Local score {recommendation.score}</p>
+                <div className="mt-4 flex flex-1 flex-col">
+                  <p className="text-xs font-semibold uppercase text-[#64736c]">{index + 1} · {localizeCardText(card.rarity, locale)}</p>
+                  <h2 className="mt-1 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{card.cardName}</h2>
+                  <p className="mt-1 text-sm leading-5 text-[#64736c]">{card.version}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded bg-[#d7a84e] px-2 py-1 font-mono text-xs font-bold text-[#4a3f24]">{formatMoney(card.suggestedRawPrice)} {t.raw}</span>
+                    <span className="rounded bg-[#e7efe8] px-2 py-1 font-mono text-xs font-bold text-[#2f6f73]">{formatPercent(card.psa10Probability)} {t.psa10}</span>
+                  </div>
+                  <p className="mt-auto pt-5 text-sm font-bold text-[#b26a4c]">{t.review}</p>
+                </div>
               </article>
             </button>
           );
@@ -1141,68 +1280,445 @@ function RecommendationGrid({
   );
 }
 
+function ReadyToBuyModal({
+  locale,
+  recommendations,
+  profile,
+  todaySpent,
+  todayRemaining,
+  onClose,
+  onSubmit,
+}: {
+  locale: Locale;
+  recommendations: CuratedCardRecommendation[];
+  profile: UserProfile;
+  todaySpent: number;
+  todayRemaining: number;
+  onClose: () => void;
+  onSubmit: (input: { card: CuratedCardRecommendation; askingPrice: number; feelingText: string; evidenceText: string }) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [selectedCard, setSelectedCard] = useState<CuratedCardRecommendation | null>(null);
+  const [askingPrice, setAskingPrice] = useState("");
+  const [feelingText, setFeelingText] = useState("");
+  const [evidenceText, setEvidenceText] = useState("");
+  const t = getLocaleCopy(locale).readyModal;
+
+  const matches = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return recommendations;
+
+    return recommendations.filter((card) =>
+      [card.cardName, card.version, card.rarity, card.id]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalized),
+    );
+  }, [query, recommendations]);
+
+  function handleSelectCard(card: CuratedCardRecommendation) {
+    setSelectedCard(card);
+    setAskingPrice(String(card.suggestedRawPrice));
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedCard) return;
+
+    onSubmit({
+      card: selectedCard,
+      askingPrice: Number(askingPrice) || 0,
+      feelingText,
+      evidenceText,
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-[#24312f]/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="mx-auto max-h-[calc(100vh-2rem)] max-w-5xl overflow-y-auto rounded-md bg-[#fcfbf6] p-5 shadow-2xl md:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase text-[#64736c]">{t.eyebrow}</p>
+            <h2 className="mt-1 font-serif text-3xl font-bold text-[#2f6f73]">{t.title}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64736c]">
+              {t.description}
+            </p>
+          </div>
+          <button className="secondary-button min-h-0 px-3 py-2" type="button" onClick={onClose}>
+            {t.close}
+          </button>
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+          <section className="rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-md bg-[#fcfbf6] p-3">
+                <p className="text-xs font-bold uppercase text-[#64736c]">{t.today}</p>
+                <p className="mt-1 font-mono text-xl font-black text-[#2f6f73]">{formatMoney(profile.todayBudget)}</p>
+              </div>
+              <div className="rounded-md bg-[#fcfbf6] p-3">
+                <p className="text-xs font-bold uppercase text-[#64736c]">{t.spent}</p>
+                <p className="mt-1 font-mono text-xl font-black text-[#24312f]">{formatMoney(todaySpent)}</p>
+              </div>
+              <div className="rounded-md bg-[#fcfbf6] p-3">
+                <p className="text-xs font-bold uppercase text-[#64736c]">{t.left}</p>
+                <p className="mt-1 font-mono text-xl font-black text-[#b26a4c]">{formatMoney(todayRemaining)}</p>
+              </div>
+            </div>
+            <label className="field mt-4">
+              <span>{t.searchLabel}</span>
+              <input
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setSelectedCard(null);
+                }}
+                placeholder={t.searchPlaceholder}
+              />
+            </label>
+            <div className="mt-4 space-y-3">
+              {matches.map((card) => {
+                const active = selectedCard?.id === card.id;
+                return (
+                  <button
+                    key={card.id}
+                    className={`choice-card min-h-[88px] items-start ${active ? "choice-card-active" : ""}`}
+                    type="button"
+                    onClick={() => handleSelectCard(card)}
+                  >
+                    <span>
+                      <span className="block text-base">{card.cardName}</span>
+                      <span className="mt-1 block text-sm font-medium leading-6 text-[#64736c]">{card.version}</span>
+                      <span className="mt-1 block font-mono text-xs text-[#b26a4c]">{localizeCardText(card.rarity, locale)} · {formatMoney(card.suggestedRawPrice)} {t.guide}</span>
+                    </span>
+                    {active && (
+                      <span className="choice-check" aria-hidden="true">
+                        <Check className="h-4 w-4" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+              {matches.length === 0 && (
+                <div className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4 text-sm leading-6 text-[#64736c]">
+                  {t.noMatch}
+                </div>
+              )}
+            </div>
+          </section>
+          <form className="rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-4" onSubmit={handleSubmit}>
+            <div className="rounded-md bg-[#fcfbf6] p-3">
+              <p className="text-xs font-bold uppercase text-[#64736c]">{t.selectedVersion}</p>
+              <p className="mt-1 font-serif text-xl font-bold text-[#2f6f73]">{selectedCard ? selectedCard.cardName : t.chooseFirst}</p>
+              <p className="mt-1 text-sm leading-6 text-[#64736c]">{selectedCard?.version ?? t.noVersionNoVerdict}</p>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-4">
+              <label className="field">
+                <span>{t.askingPrice}</span>
+                <input type="number" min="0" step="0.01" value={askingPrice} onChange={(event) => setAskingPrice(event.target.value)} required />
+              </label>
+              <label className="field">
+                <span>{t.feeling}</span>
+                <textarea
+                  value={feelingText}
+                  onChange={(event) => setFeelingText(event.target.value)}
+                  placeholder={t.feelingPlaceholder}
+                  required
+                />
+              </label>
+              <label className="field">
+                <span>{t.evidence}</span>
+                <textarea
+                  value={evidenceText}
+                  onChange={(event) => setEvidenceText(event.target.value)}
+                  placeholder={t.evidencePlaceholder}
+                />
+              </label>
+              <button className="primary-button" type="submit" disabled={!selectedCard || !feelingText.trim()}>
+                <Sparkles className="h-4 w-4" />
+                {t.verdict}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CardDecisionSheet({
+  locale,
   card,
+  profile,
+  readyToBuyResult,
+  todayRemaining,
   onClose,
   onRunRaw,
   onCheckRisk,
   onAddToPlan,
+  onCreateCooldownTicket,
+  onMarkBought,
 }: {
+  locale: Locale;
   card: CuratedCardRecommendation;
+  profile: UserProfile;
+  readyToBuyResult: ReadyToBuyResult | null;
+  todayRemaining: number;
   onClose: () => void;
   onRunRaw: (card: CuratedCardRecommendation) => void;
   onCheckRisk: (card: CuratedCardRecommendation) => void;
   onAddToPlan: (card: CuratedCardRecommendation) => void;
+  onCreateCooldownTicket: (input: ReadyToBuyResult) => void;
+  onMarkBought: (input: ReadyToBuyResult) => void;
 }) {
+  const [showFomoCheck, setShowFomoCheck] = useState(Boolean(readyToBuyResult));
+  const [feelingText, setFeelingText] = useState(readyToBuyResult?.feelingText ?? "");
+  const [askingPrice, setAskingPrice] = useState(String(readyToBuyResult?.askingPrice ?? card.suggestedRawPrice));
+  const [evidenceText, setEvidenceText] = useState(readyToBuyResult?.evidenceText ?? "");
+  const [fomoResult, setFomoResult] = useState<FomoCheckResult | null>(readyToBuyResult?.fomoResult ?? null);
+  const [cooldownSaved, setCooldownSaved] = useState(false);
+  const [boughtSaved, setBoughtSaved] = useState(false);
+  const t = getLocaleCopy(locale).sheet;
+
+  function handleFomoCheckSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFomoResult(runFomoCheck({
+      cardName: card.cardName,
+      cardVersion: card.version,
+      askingPrice: Number(askingPrice) || 0,
+      todayBudget: todayRemaining,
+      monthlyBudget: profile.monthlyBudget,
+      budgetRange: profile.budgetRange,
+      versionConfirmed: true,
+      feelingText,
+      evidenceText,
+    }));
+    setCooldownSaved(false);
+    setBoughtSaved(false);
+  }
+
+  const currentDecision = fomoResult
+    ? {
+        card,
+        askingPrice: Number(askingPrice) || 0,
+        feelingText,
+        evidenceText,
+        fomoResult,
+      } satisfies ReadyToBuyResult
+    : null;
+
+  function handleCooldownClick() {
+    if (!currentDecision) return;
+    onCreateCooldownTicket(currentDecision);
+    setCooldownSaved(true);
+  }
+
+  function handleBoughtClick() {
+    if (!currentDecision) return;
+    onMarkBought(currentDecision);
+    setBoughtSaved(true);
+  }
+
   return (
-    <div className="fixed inset-0 z-40 bg-[#2d2620]/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="mx-auto max-h-[calc(100vh-2rem)] max-w-4xl overflow-y-auto rounded-md bg-[#fffdf7] p-5 shadow-2xl md:p-6">
+    <div className="fixed inset-0 z-40 bg-[#24312f]/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="mx-auto max-h-[calc(100vh-2rem)] max-w-4xl overflow-y-auto rounded-md bg-[#fcfbf6] p-5 shadow-2xl md:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-4">
             <DesignedCard card={card} large />
             <div>
-              <p className="text-xs font-semibold uppercase text-[#6b6555]">{card.tcg} · {card.rarity}</p>
-              <h2 className="mt-1 font-serif text-3xl font-bold text-[#4a7c59]">{card.cardName}</h2>
-              <p className="mt-1 text-[#6b6555]">{card.version}</p>
+              <p className="text-xs font-semibold uppercase text-[#64736c]">{card.tcg} · {localizeCardText(card.rarity, locale)}</p>
+              <h2 className="mt-1 font-serif text-3xl font-bold text-[#2f6f73]">{card.cardName}</h2>
+              <p className="mt-1 text-[#64736c]">{card.version}</p>
             </div>
           </div>
           <button className="secondary-button min-h-0 px-3 py-2" onClick={onClose}>
-            Close
+            {t.close}
           </button>
         </div>
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1fr]">
-          <section className="rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-4">
-            <h3 className="font-serif text-lg font-bold text-[#4a7c59]">Counter note</h3>
-            <p className="mt-3 leading-7 text-[#4a3a30]">{card.buyTone}</p>
-            <GroupedList title="Risk flags" items={card.riskFlags} />
+          <section className="rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-4">
+            <h3 className="font-serif text-lg font-bold text-[#2f6f73]">{t.counterNote}</h3>
+            <p className="mt-3 leading-7 text-[#36413d]">{localizeCardText(card.buyTone, locale)}</p>
+            <GroupedList title={t.riskFlags} items={card.riskFlags.map((flag) => localizeCardText(flag, locale))} />
           </section>
-          <section className="rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-4">
-            <h3 className="font-serif text-lg font-bold text-[#4a7c59]">Raw / slab snapshot</h3>
+          <section className="rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-4">
+            <h3 className="font-serif text-lg font-bold text-[#2f6f73]">{t.snapshot}</h3>
             <DetailGrid
               items={[
-                ["Raw guide", formatMoney(card.suggestedRawPrice)],
-                ["PSA9 guide", formatMoney(card.suggestedPsa9Price)],
-                ["PSA10 guide", formatMoney(card.suggestedPsa10Price)],
-                ["PSA10 odds", formatPercent(card.psa10Probability)],
+                [t.rawGuide, formatMoney(card.suggestedRawPrice)],
+                [t.psa9Guide, formatMoney(card.suggestedPsa9Price)],
+                [t.psa10Guide, formatMoney(card.suggestedPsa10Price)],
+                [t.psa10Odds, formatPercent(card.psa10Probability)],
               ]}
             />
           </section>
         </div>
-        <div className="sticky bottom-0 -mx-5 mt-6 flex flex-col gap-3 border-t border-[#dcd9c8] bg-[#fffdf7]/95 px-5 py-4 backdrop-blur sm:flex-row md:-mx-6 md:px-6">
-          <button className="primary-button" onClick={() => onRunRaw(card)}>
+        {showFomoCheck && (
+          <section className="mt-6 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-4">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase text-[#64736c]">{t.fomoCheck}</p>
+                <h3 className="mt-1 font-serif text-2xl font-bold text-[#2f6f73]">{t.slowTitle}</h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64736c]">
+                  {t.slowDescription}
+                </p>
+              </div>
+              <span className="w-fit rounded-md bg-[#e7efe8] px-3 py-2 text-xs font-bold uppercase text-[#64736c]">
+                {t.todayLeft} {formatMoney(todayRemaining)}
+              </span>
+            </div>
+            <form className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleFomoCheckSubmit}>
+              <label className="field md:col-span-2">
+                <span>{t.feeling}</span>
+                <textarea
+                  value={feelingText}
+                  onChange={(event) => setFeelingText(event.target.value)}
+                  placeholder={t.feelingPlaceholder}
+                  required
+                />
+              </label>
+              <label className="field">
+                <span>{t.askingPrice}</span>
+                <input type="number" min="0" step="0.01" value={askingPrice} onChange={(event) => setAskingPrice(event.target.value)} />
+              </label>
+              <label className="field">
+                <span>{t.evidence}</span>
+                <textarea
+                  value={evidenceText}
+                  onChange={(event) => setEvidenceText(event.target.value)}
+                  placeholder={t.evidencePlaceholder}
+                />
+              </label>
+              <div className="md:col-span-2">
+                <button className="primary-button" type="submit">
+                  <Sparkles className="h-4 w-4" />
+                  {t.showCard}
+                </button>
+              </div>
+            </form>
+            {fomoResult && (
+              <FomoDecisionCard
+                result={fomoResult}
+                locale={locale}
+                onCreateCooldown={currentDecision && fomoResult.cooldownRecommended ? handleCooldownClick : undefined}
+                onMarkBought={currentDecision ? handleBoughtClick : undefined}
+                cooldownSaved={cooldownSaved}
+                boughtSaved={boughtSaved}
+              />
+            )}
+          </section>
+        )}
+        <div className="sticky bottom-0 -mx-5 mt-6 flex flex-col gap-3 border-t border-[#d6ded5] bg-[#fcfbf6]/95 px-5 py-4 backdrop-blur sm:flex-row md:-mx-6 md:px-6">
+          <button className="primary-button" onClick={() => setShowFomoCheck((current) => !current)}>
+            <Sparkles className="h-4 w-4" />
+            {t.fomoCheck}
+          </button>
+          <button className="secondary-button" onClick={() => onRunRaw(card)}>
             <Calculator className="h-4 w-4" />
-            Run Raw vs Slab
+            {t.runRaw}
           </button>
           <button className="secondary-button" onClick={() => onCheckRisk(card)}>
             <SearchCheck className="h-4 w-4" />
-            Check Listing Risk
+            {t.checkRisk}
           </button>
           <button className="secondary-button" onClick={() => onAddToPlan(card)}>
             <ClipboardList className="h-4 w-4" />
-            Add to 30-day plan
+            {t.addPlan}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FomoDecisionCard({
+  result,
+  locale,
+  onCreateCooldown,
+  onMarkBought,
+  cooldownSaved = false,
+  boughtSaved = false,
+}: {
+  result: FomoCheckResult;
+  locale: Locale;
+  onCreateCooldown?: () => void;
+  onMarkBought?: () => void;
+  cooldownSaved?: boolean;
+  boughtSaved?: boolean;
+}) {
+  const tone = getFomoPostureTone(result.decisionPosture);
+  const t = getLocaleCopy(locale).verdict;
+
+  return (
+    <section className={`mt-5 rounded-md border p-4 ${tone.container}`}>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase">{t.title}</p>
+          <h4 className="mt-1 font-serif text-3xl font-bold">{localizePosture(result.decisionPosture, locale)}</h4>
+          <p className="mt-3 max-w-2xl text-sm leading-6">{localizeFomoSummary(result, locale)}</p>
+        </div>
+        <span className={`w-fit rounded-md px-3 py-2 text-xs font-bold uppercase ${tone.badge}`}>
+          {localizeNextStep(result.nextStep, locale)}
+        </span>
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <FomoMetric label={t.fomoHeat} score={result.fomoHeat.score} metricLabel={localizeMetricLabel(result.fomoHeat.label, locale)} />
+        <FomoMetric label={t.budgetStrain} score={result.budgetStrain.score} metricLabel={localizeMetricLabel(result.budgetStrain.label, locale)} />
+        <FomoMetric label={t.evidenceStrength} score={result.evidenceStrength.score} metricLabel={localizeMetricLabel(result.evidenceStrength.label, locale)} />
+        <FomoMetric label={t.versionClarity} score={result.versionClarity.score} metricLabel={localizeMetricLabel(result.versionClarity.label, locale)} />
+      </div>
+      <div className="mt-5 rounded-md bg-[#fcfbf6]/75 p-3 text-sm font-semibold leading-6 text-[#24312f]">
+        {localizeGuardrail(result, locale)}
+      </div>
+      {result.hardStop && (
+        <div className="mt-3 rounded-md border border-[#d88980] bg-[#fff5f3] p-3 text-sm font-bold text-[#7a241e]">
+          {t.hardStop}
+        </div>
+      )}
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-4">
+        <GroupedList title={t.emotionAgent} items={localizeReasons(result.fomoHeat.reasons, locale)} />
+        <GroupedList title={t.budgetAgent} items={localizeReasons(result.budgetStrain.reasons, locale)} />
+        <GroupedList title={t.evidenceAgent} items={localizeReasons(result.evidenceStrength.reasons, locale)} />
+        <GroupedList title={t.versionAgent} items={localizeReasons(result.versionClarity.reasons, locale)} />
+      </div>
+      {(onCreateCooldown || onMarkBought) && (
+        <div className="mt-5 flex flex-col gap-3 border-t border-current/15 pt-4 sm:flex-row">
+          {onCreateCooldown && (
+            <button className="primary-button" type="button" disabled={cooldownSaved} onClick={onCreateCooldown}>
+              <Clock3 className="h-4 w-4" />
+              {cooldownSaved ? t.cooldownSaved : t.cooldown}
+            </button>
+          )}
+          {onMarkBought && (
+            <button className="secondary-button" type="button" disabled={boughtSaved} onClick={onMarkBought}>
+              <ShoppingBag className="h-4 w-4" />
+              {boughtSaved ? t.boughtSaved : t.bought}
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function FomoMetric({
+  label,
+  score,
+  metricLabel,
+}: {
+  label: string;
+  score: number;
+  metricLabel: string;
+}) {
+  return (
+    <div className="rounded-md bg-[#fcfbf6]/75 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-bold uppercase text-[#64736c]">{label}</p>
+        <p className="font-mono text-xs font-bold text-[#24312f]">{metricLabel}</p>
+      </div>
+      <div className="mt-3 h-2 rounded-full bg-[#d6ded5]">
+        <div className="h-2 rounded-full bg-[#b26a4c]" style={{ width: `${score}%` }} />
+      </div>
+      <p className="mt-2 font-mono text-xs font-bold text-[#64736c]">{score}/100</p>
     </div>
   );
 }
@@ -1223,7 +1739,7 @@ function ToolSurface({
   return (
     <section className="space-y-6">
       <SectionIntro eyebrow={eyebrow} title={title} description={description} icon={Icon} />
-      <div className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5 shadow-sm md:p-6">{children}</div>
+      <div className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 shadow-sm md:p-6">{children}</div>
     </section>
   );
 }
@@ -1242,88 +1758,59 @@ function SectionIntro({
   return (
     <div className="flex max-w-3xl items-start gap-3">
       {Icon && (
-        <span className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#4a7c59] text-[#f5f3ed]">
+        <span className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#2f6f73] text-[#f4f7f3]">
           <Icon className="h-5 w-5" />
         </span>
       )}
       <div>
-        <p className="text-xs font-semibold uppercase text-[#6b6555]">{eyebrow}</p>
-        <h2 className="mt-1 font-serif text-3xl font-bold text-[#4a7c59]">{title}</h2>
-        <p className="mt-2 leading-7 text-[#6b6555]">{description}</p>
+        <p className="text-xs font-semibold uppercase text-[#64736c]">{eyebrow}</p>
+        <h2 className="mt-1 font-serif text-3xl font-bold text-[#2f6f73]">{title}</h2>
+        <p className="mt-2 leading-7 text-[#64736c]">{description}</p>
       </div>
-    </div>
-  );
-}
-
-function Panel({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5">
-      <h3 className="mb-4 flex items-center gap-2 font-serif text-lg font-bold text-[#4a7c59]">
-        <Icon className="h-5 w-5 text-[#b7472a]" />
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-function Metric({ label, value, icon: Icon }: { label: string; value: string; icon: React.ComponentType<{ className?: string }> }) {
-  return (
-    <div className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-[#6b6555]">{label}</p>
-        <Icon className="h-4 w-4 text-[#b7472a]" />
-      </div>
-      <p className="mt-3 font-mono text-2xl font-bold text-[#4a7c59]">{value}</p>
     </div>
   );
 }
 
 function RiskReport({
+  locale,
   report,
   onContinue,
   onAddToPlan,
 }: {
+  locale: Locale;
   report: ListingRiskReport;
   onContinue: () => void;
   onAddToPlan: () => void;
 }) {
-  const riskTone = getRiskTone(report.score);
+  const riskTone = getRiskTone(report.score, locale);
+  const t = getLocaleCopy(locale).riskReport;
 
   return (
-    <section className="mt-6 rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-5">
+    <section className="mt-6 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-5">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
         <div className={`rounded-lg border p-5 ${riskTone.containerClass}`}>
           <p className="text-xs font-semibold uppercase tracking-wide">{riskTone.kicker}</p>
           <p className="mt-2 text-4xl font-black leading-none md:text-5xl">{riskTone.headline}</p>
-          <p className="mt-3 text-sm font-semibold">Confidence: {report.confidence}</p>
+          <p className="mt-3 text-sm font-semibold">{t.confidence}: {localizeOption(report.confidence, locale)}</p>
         </div>
-        <p className="leading-7 text-[#4a3a30]">{report.cautiousSummary}</p>
+        <p className="leading-7 text-[#36413d]">{localizeRiskReportText(report.cautiousSummary, locale)}</p>
       </div>
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <GroupedList title="Missing information" items={report.missingInfo} />
-        <GroupedList title="Key risks" items={report.keyRisks} />
-        <GroupedList title="Seller questions" items={report.sellerQuestions} />
+        <GroupedList title={t.missingInfo} items={localizeRiskReportItems(report.missingInfo, locale)} />
+        <GroupedList title={t.keyRisks} items={localizeRiskReportItems(report.keyRisks, locale)} />
+        <GroupedList title={t.sellerQuestions} items={localizeRiskReportItems(report.sellerQuestions, locale)} />
       </div>
-      <div className="mt-5 rounded-md bg-[#fffdf7] p-4 text-sm leading-6 text-[#2d2620]">
-        <strong>Suitability:</strong> {report.suitability}
+      <div className="mt-5 rounded-md bg-[#fcfbf6] p-4 text-sm leading-6 text-[#24312f]">
+        <strong>{t.suitability}:</strong> {localizeRiskReportText(report.suitability, locale)}
       </div>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <button className="primary-button" type="button" onClick={onContinue}>
           <Calculator className="h-4 w-4" />
-          Continue to Raw vs Slab
+          {t.continueRaw}
         </button>
         <button className="secondary-button" type="button" onClick={onAddToPlan}>
           <ClipboardList className="h-4 w-4" />
-          Add this to 30-day plan
+          {t.addPlan}
         </button>
       </div>
     </section>
@@ -1331,12 +1818,14 @@ function RiskReport({
 }
 
 function ListingRiskPipeline({
+  locale,
   state,
   loading,
   onEvidenceChange,
   onContinue,
   onAddToPlan,
 }: {
+  locale: Locale;
   state: ListingPipelineState;
   loading: "evidence" | "risk_math_critic" | null;
   onEvidenceChange: (evidence: ListingEvidence) => void;
@@ -1344,6 +1833,7 @@ function ListingRiskPipeline({
   onAddToPlan: () => void;
 }) {
   if (!state.listingInput && !loading) return null;
+  const t = getLocaleCopy(locale).pipeline;
 
   const updateEvidence = (field: keyof Pick<ListingEvidence, "cardName" | "setCode" | "cardNumber" | "language">, value: string) => {
     if (!state.evidence) return;
@@ -1360,84 +1850,84 @@ function ListingRiskPipeline({
 
   return (
     <section className="mt-6 space-y-4">
-      <div className="rounded-md border border-[#dcd9c8] bg-[#ecebe1] p-5">
+      <div className="rounded-md border border-[#d6ded5] bg-[#e7efe8] p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase text-[#6b6555]">Agent Review Pipeline</p>
-            <h3 className="mt-1 font-serif text-2xl font-bold text-[#4a7c59]">Evidence first, then risk and math</h3>
+            <p className="text-xs font-semibold uppercase text-[#64736c]">{t.eyebrow}</p>
+            <h3 className="mt-1 font-serif text-2xl font-bold text-[#2f6f73]">{t.title}</h3>
           </div>
-          <Badge icon={ListChecks}>{state.fallbackUsed ? "Local fallback used" : "Editable review"}</Badge>
+          <Badge icon={ListChecks}>{state.fallbackUsed ? t.localFallback : t.editableReview}</Badge>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold uppercase text-[#6b6555] md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold uppercase text-[#64736c] md:grid-cols-4">
           {[
-            ["Evidence", Boolean(state.evidence)],
-            ["Risk", Boolean(state.riskScore)],
-            ["Math", Boolean(state.math)],
-            ["Critic", Boolean(state.critic)],
+            [t.evidence, Boolean(state.evidence)],
+            [t.risk, Boolean(state.riskScore)],
+            [t.math, Boolean(state.math)],
+            [t.critic, Boolean(state.critic)],
           ].map(([label, done]) => (
-            <div key={String(label)} className={`rounded-md border px-3 py-2 ${done ? "border-[#4a7c59] bg-[#fffdf7] text-[#4a7c59]" : "border-[#dcd9c8] bg-[#f5f3ed]"}`}>
-              {done ? "Done" : "Waiting"} · {label}
+            <div key={String(label)} className={`rounded-md border px-3 py-2 ${done ? "border-[#2f6f73] bg-[#fcfbf6] text-[#2f6f73]" : "border-[#d6ded5] bg-[#f4f7f3]"}`}>
+              {done ? t.done : t.waiting} · {label}
             </div>
           ))}
         </div>
       </div>
 
-      {loading === "evidence" && <PipelineNote label="Evidence agent is reading the listing text..." />}
+      {loading === "evidence" && <PipelineNote label={t.evidenceLoading} />}
 
       {state.evidence && (
-        <section className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5">
+        <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase text-[#6b6555]">Evidence Extracted</p>
-              <h3 className="mt-1 font-serif text-2xl font-bold text-[#4a7c59]">Confirm the card identity</h3>
+              <p className="text-xs font-semibold uppercase text-[#64736c]">{t.extracted}</p>
+              <h3 className="mt-1 font-serif text-2xl font-bold text-[#2f6f73]">{t.confirmIdentity}</h3>
             </div>
             <button className="primary-button" type="button" disabled={loading !== null} onClick={() => onContinue(state.evidence!)}>
               <Check className="h-4 w-4" />
-              Confirm & Continue
+              {t.confirmContinue}
             </button>
           </div>
           <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
             {([
-              ["cardName", "Card name"],
-              ["setCode", "Set"],
-              ["cardNumber", "Card number"],
-              ["language", "Language"],
+              ["cardName", t.cardName],
+              ["setCode", t.set],
+              ["cardNumber", t.cardNumber],
+              ["language", t.language],
             ] as const).map(([field, label]) => (
-              <label key={field} className="rounded-md bg-[#f5f3ed] p-3">
-                <span className="text-xs font-semibold uppercase text-[#6b6555]">{label}</span>
+              <label key={field} className="rounded-md bg-[#f4f7f3] p-3">
+                <span className="text-xs font-semibold uppercase text-[#64736c]">{label}</span>
                 <input
-                  className="mt-2 w-full rounded-md border border-[#dcd9c8] bg-[#fffdf7] px-3 py-2 font-mono text-sm outline-none focus:border-[#4a7c59]"
+                  className="mt-2 w-full rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 font-mono text-sm outline-none focus:border-[#2f6f73]"
                   value={state.evidence?.[field].value ?? ""}
-                  placeholder="Missing"
+                  placeholder={t.missing}
                   onChange={(event) => updateEvidence(field, event.target.value)}
                 />
-                <span className="mt-2 block text-xs font-semibold text-[#6b6555]">
-                  {state.evidence?.[field].confidence ?? "low"} · {state.evidence?.[field].source ?? "unknown"}
+                <span className="mt-2 block text-xs font-semibold text-[#64736c]">
+                  {localizeOption(state.evidence?.[field].confidence ?? "low", locale)} · {localizeOption(state.evidence?.[field].source ?? "unknown", locale)}
                 </span>
               </label>
             ))}
           </div>
-          <GroupedList title={`Missing evidence (${state.evidence.missingEvidence.length})`} items={state.evidence.missingEvidence} />
+          <GroupedList title={`${t.missingEvidence} (${state.evidence.missingEvidence.length})`} items={state.evidence.missingEvidence} />
         </section>
       )}
 
-      {loading === "risk_math_critic" && !state.riskScore && <PipelineNote label="Risk agent is scoring condition, version, price, policy, and grading viability..." />}
+      {loading === "risk_math_critic" && !state.riskScore && <PipelineNote label={t.riskLoading} />}
 
       {state.riskScore && (
-        <section className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5">
-          <p className="text-xs font-semibold uppercase text-[#6b6555]">Risk Agent</p>
-          <h3 className={`mt-2 font-serif text-4xl font-bold leading-tight ${state.riskScore.overall >= 70 ? "text-[#b7472a]" : "text-[#4a7c59]"}`}>
-            {state.riskScore.verdict}
+        <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+          <p className="text-xs font-semibold uppercase text-[#64736c]">{t.riskAgent}</p>
+          <h3 className={`mt-2 font-serif text-4xl font-bold leading-tight ${state.riskScore.overall >= 70 ? "text-[#b26a4c]" : "text-[#2f6f73]"}`}>
+            {localizeRiskReportText(state.riskScore.verdict, locale)}
           </h3>
-          <p className="mt-2 font-mono text-lg font-bold">Overall: {state.riskScore.overall}/100</p>
+          <p className="mt-2 font-mono text-lg font-bold">{t.overall}: {state.riskScore.overall}/100</p>
           <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
             {Object.entries(state.riskScore.dimensions).map(([key, dimension]) => (
-              <div key={key} className="rounded-md bg-[#f5f3ed] p-4">
+              <div key={key} className="rounded-md bg-[#f4f7f3] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold capitalize text-[#4a3a30]">{formatRiskDimensionName(key)}</p>
+                  <p className="font-semibold capitalize text-[#36413d]">{localizeRiskDimensionName(key, locale)}</p>
                   <p className="font-mono font-bold">{dimension.score}/100</p>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-[#6b6555]">{dimension.reasons.join(" ")}</p>
+                <p className="mt-2 text-sm leading-6 text-[#64736c]">{localizeRiskReportText(dimension.reasons.join(" "), locale)}</p>
               </div>
             ))}
           </div>
@@ -1445,41 +1935,41 @@ function ListingRiskPipeline({
       )}
 
       {state.math && (
-        <section className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5">
-          <p className="text-xs font-semibold uppercase text-[#6b6555]">Math Agent</p>
-          <h3 className="mt-1 font-serif text-2xl font-bold text-[#4a7c59]">Raw vs Slab impact</h3>
-          <div className="mt-5 rounded-md bg-[#f5f3ed] p-5 text-center">
-            <p className="text-sm font-semibold uppercase text-[#6b6555]">Expected Value</p>
-            <p className={`mt-2 font-mono text-5xl font-black ${state.math.result.expectedProfit >= 0 ? "text-[#4a7c59]" : "text-[#b7472a]"}`}>
+        <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+          <p className="text-xs font-semibold uppercase text-[#64736c]">{t.mathAgent}</p>
+          <h3 className="mt-1 font-serif text-2xl font-bold text-[#2f6f73]">{t.mathImpact}</h3>
+          <div className="mt-5 rounded-md bg-[#f4f7f3] p-5 text-center">
+            <p className="text-sm font-semibold uppercase text-[#64736c]">{t.expectedValue}</p>
+            <p className={`mt-2 font-mono text-5xl font-black ${state.math.result.expectedProfit >= 0 ? "text-[#2f6f73]" : "text-[#b26a4c]"}`}>
               {formatMoney(state.math.result.expectedProfit)}
             </p>
-            <p className="mt-2 text-sm text-[#6b6555]">{state.math.result.recommendation}</p>
+            <p className="mt-2 text-sm text-[#64736c]">{localizeRawText(state.math.result.recommendation, locale)}</p>
           </div>
-          <GroupedList title="Assumptions used" items={state.math.assumptionNotes} />
+          <GroupedList title={t.assumptions} items={localizeRawItems(state.math.assumptionNotes, locale)} />
         </section>
       )}
 
       {state.critic && (
-        <section className={`rounded-md border p-5 ${state.critic.passed ? "border-[#4a7c59] bg-[#eef0df]" : "border-[#b7472a] bg-[#fff3ed]"}`}>
-          <p className="text-xs font-semibold uppercase text-[#6b6555]">Final Recommendation</p>
-          <h3 className="mt-2 font-serif text-3xl font-bold leading-tight text-[#2d2620]">{state.critic.finalRecommendation}</h3>
-          {state.critic.warnings.length > 0 && <GroupedList title="Critic warnings" items={state.critic.warnings} />}
+        <section className={`rounded-md border p-5 ${state.critic.passed ? "border-[#2f6f73] bg-[#e4eee7]" : "border-[#b26a4c] bg-[#fff3ed]"}`}>
+          <p className="text-xs font-semibold uppercase text-[#64736c]">{t.finalRecommendation}</p>
+          <h3 className="mt-2 font-serif text-3xl font-bold leading-tight text-[#24312f]">{localizeRiskReportText(state.critic.finalRecommendation, locale)}</h3>
+          {state.critic.warnings.length > 0 && <GroupedList title={t.criticWarnings} items={localizeRiskReportItems(state.critic.warnings, locale)} />}
           <button className="primary-button mt-5" type="button" onClick={onAddToPlan}>
             <ClipboardList className="h-4 w-4" />
-            Add to 30-day plan
+            {t.addPlan}
           </button>
         </section>
       )}
 
       {state.trace.length > 0 && (
-        <details className="rounded-md border border-[#dcd9c8] bg-[#2d2620] p-5 text-sm text-[#f5f3ed]">
-          <summary className="cursor-pointer font-mono text-xs uppercase text-[#f9a620]">View technical trace ({state.trace.length} agents)</summary>
+        <details className="rounded-md border border-[#d6ded5] bg-[#24312f] p-5 text-sm text-[#f4f7f3]">
+          <summary className="cursor-pointer font-mono text-xs uppercase text-[#d7a84e]">{t.trace} ({state.trace.length} {t.agents})</summary>
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
             {state.trace.map((step) => (
-              <article key={step.step} className="rounded-md border border-[#4a3a30] bg-[#3a312a] p-4 font-mono text-xs">
-                <p className="uppercase text-[#f9a620]">{step.step}</p>
-                <h4 className="mt-1 text-sm font-bold text-[#fffdf7]">{step.agent}</h4>
-                <p className="mt-2 leading-6">{sanitizeTraceMessage(step.summary)}</p>
+              <article key={step.step} className="rounded-md border border-[#36413d] bg-[#2d3d3b] p-4 font-mono text-xs">
+                <p className="uppercase text-[#d7a84e]">{step.step}</p>
+                <h4 className="mt-1 text-sm font-bold text-[#fcfbf6]">{step.agent}</h4>
+                <p className="mt-2 leading-6">{sanitizeTraceMessage(step.summary, locale)}</p>
               </article>
             ))}
           </div>
@@ -1491,35 +1981,37 @@ function ListingRiskPipeline({
 
 function PipelineNote({ label }: { label: string }) {
   return (
-    <div className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-5">
-      <div className="h-4 w-48 animate-pulse rounded bg-[#dcd9c8]" />
-      <p className="mt-4 text-sm font-semibold text-[#6b6555]">{label}</p>
+    <div className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+      <div className="h-4 w-48 animate-pulse rounded bg-[#d6ded5]" />
+      <p className="mt-4 text-sm font-semibold text-[#64736c]">{label}</p>
     </div>
   );
 }
 
-function AgentTrace({ response }: { response: HermesResponse }) {
+function AgentTrace({ locale, response }: { locale: Locale; response: HermesResponse }) {
+  const t = getLocaleCopy(locale).agentTrace;
+
   return (
-    <details className="mt-6 rounded-md border border-[#dcd9c8] bg-[#ecebe1] p-5 text-sm">
+    <details className="mt-6 rounded-md border border-[#d6ded5] bg-[#e7efe8] p-5 text-sm">
       <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3 font-semibold">
-        <Badge icon={Sparkles}>View AI reasoning trace</Badge>
-        <Badge icon={Gauge}>{response.fallbackUsed ? "Local fallback used" : "AI assisted"}</Badge>
+        <Badge icon={Sparkles}>{t.viewTrace}</Badge>
+        <Badge icon={Gauge}>{response.fallbackUsed ? t.localFallback : t.aiAssisted}</Badge>
       </summary>
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Badge icon={Sparkles}>Hermes task: {response.taskType}</Badge>
+        <Badge icon={Sparkles}>{t.hermesTask}: {response.taskType}</Badge>
       </div>
-      {response.warnings.length > 0 && <GroupedList title="Warnings" items={response.warnings.map(sanitizeTraceMessage)} />}
+      {response.warnings.length > 0 && <GroupedList title={t.warnings} items={response.warnings.map((message) => sanitizeTraceMessage(message, locale))} />}
       <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
         {response.trace.map((step) => (
-          <article key={`${step.step}-${step.agent}`} className="rounded-md border border-[#dcd9c8] bg-[#fffdf7] p-4">
-            <p className="text-xs font-semibold uppercase text-[#6b6555]">{step.step}</p>
-            <h4 className="mt-1 text-base font-semibold text-[#4a7c59]">{step.agent}</h4>
-            <p className="mt-2 text-sm leading-6 text-[#6b6555]">{sanitizeTraceMessage(step.summary)}</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#6b6555]">
-              <span className="rounded-md bg-[#ecebe1] px-2 py-1">Model: {sanitizeTraceMessage(step.model)}</span>
+          <article key={`${step.step}-${step.agent}`} className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4">
+            <p className="text-xs font-semibold uppercase text-[#64736c]">{step.step}</p>
+            <h4 className="mt-1 text-base font-semibold text-[#2f6f73]">{step.agent}</h4>
+            <p className="mt-2 text-sm leading-6 text-[#64736c]">{sanitizeTraceMessage(step.summary, locale)}</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#64736c]">
+              <span className="rounded-md bg-[#e7efe8] px-2 py-1">{t.model}: {sanitizeTraceMessage(step.model, locale)}</span>
               {step.toolsUsed.map((tool) => (
-                <span key={tool} className="rounded-md bg-[#ecebe1] px-2 py-1">
-                  Tool: {tool}
+                <span key={tool} className="rounded-md bg-[#e7efe8] px-2 py-1">
+                  {t.tool}: {tool}
                 </span>
               ))}
             </div>
@@ -1530,7 +2022,8 @@ function AgentTrace({ response }: { response: HermesResponse }) {
   );
 }
 
-function AiHealthBanner({ health }: { health: AiHealth }) {
+function AiHealthBanner({ locale, health }: { locale: Locale; health: AiHealth }) {
+  const t = getLocaleCopy(locale).aiHealth;
   const modelText = health.models
     ?.filter((model) => !model.ok)
     .map((model) => `${model.role}: ${model.model}${model.status ? ` (${model.status})` : ""}`)
@@ -1539,46 +2032,49 @@ function AiHealthBanner({ health }: { health: AiHealth }) {
   return (
     <div className="border-b border-[#e2c76c] bg-[#fff7d6] px-5 py-3 text-sm font-medium text-[#59451a]">
       <div className="mx-auto max-w-7xl">
-        {health.warning || "AI temporarily unavailable, using local fallback."}
-        {modelText ? <span className="ml-2 font-mono text-xs">Check: {modelText}</span> : null}
+        {localizeAiMessage(health.warning, locale) || t.fallback}
+        {modelText ? <span className="ml-2 font-mono text-xs">{t.check}: {modelText}</span> : null}
       </div>
     </div>
   );
 }
 
-function AiError({ message }: { message: string }) {
+function AiError({ locale, message }: { locale: Locale; message: string }) {
   return (
     <div className="mt-5 rounded-md border border-[#d8a29a] bg-[#fff7f5] p-4 text-sm leading-6 text-[#81352f]">
-      <strong>AI request failed:</strong> {message}
+      <strong>{getLocaleCopy(locale).common.aiRequestFailed}:</strong> {localizeAiMessage(message, locale)}
     </div>
   );
 }
 
-function CalibrationCard({ calibration, onApply }: { calibration: GradingCalibration; onApply: () => void }) {
+function CalibrationCard({ locale, calibration, onApply }: { locale: Locale; calibration: GradingCalibration; onApply: () => void }) {
+  const t = getLocaleCopy(locale).calibration;
+
   return (
-    <section className="mb-5 rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-5">
+    <section className="mb-5 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase text-[#6b6555]">Journal calibration</p>
-          <p className="mt-2 text-sm leading-6 text-[#4a3a30]">{calibration.message}</p>
+          <p className="text-xs font-semibold uppercase text-[#64736c]">{t.title}</p>
+          <p className="mt-2 text-sm leading-6 text-[#36413d]">{localizeCalibrationMessage(calibration.message, locale)}</p>
           {calibration.enoughHistory && (
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#6b6555]">
-              <span className="rounded-md bg-[#fffdf7] px-2 py-1">Sample: {calibration.sampleSize}</span>
-              <span className="rounded-md bg-[#fffdf7] px-2 py-1">Assumed avg: {formatPercent(calibration.assumedAverage)}</span>
-              <span className="rounded-md bg-[#fffdf7] px-2 py-1">Actual PSA10: {formatPercent(calibration.actualPsa10Rate)}</span>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#64736c]">
+              <span className="rounded-md bg-[#fcfbf6] px-2 py-1">{t.sample}: {calibration.sampleSize}</span>
+              <span className="rounded-md bg-[#fcfbf6] px-2 py-1">{t.assumedAvg}: {formatPercent(calibration.assumedAverage)}</span>
+              <span className="rounded-md bg-[#fcfbf6] px-2 py-1">{t.actualPsa10}: {formatPercent(calibration.actualPsa10Rate)}</span>
             </div>
           )}
         </div>
         <button className="secondary-button shrink-0" type="button" disabled={!calibration.enoughHistory} onClick={onApply}>
-          Apply adjusted probability
+          {t.apply}
         </button>
       </div>
     </section>
   );
 }
 
-function RawResult({ result, onAddToPlan }: { result: RawVsSlabResult; onAddToPlan: () => void }) {
+function RawResult({ locale, result, context, onAddToPlan }: { locale: Locale; result: RawVsSlabResult; context: RawDecisionContext; onAddToPlan: () => void }) {
   const profitable = result.expectedProfit >= 0;
+  const t = getLocaleCopy(locale).rawResult;
 
   return (
     <section className="mt-6 space-y-4">
@@ -1587,138 +2083,94 @@ function RawResult({ result, onAddToPlan }: { result: RawVsSlabResult; onAddToPl
           profitable ? "border-[#9fc7a3] bg-[#f1f8ef] text-[#173f24]" : "border-[#e1aaa4] bg-[#fff5f3] text-[#7a241e]"
         }`}
       >
-        <p className="text-xs font-extrabold uppercase tracking-wide">Expected Profit</p>
+        <p className="mx-auto mb-3 w-fit rounded-md bg-[#fcfbf6]/70 px-3 py-1 text-xs font-bold uppercase text-[#64736c]">{context.cardName}</p>
+        <p className="text-xs font-extrabold uppercase tracking-wide">{t.expectedProfit}</p>
         <p className="mt-2 font-mono text-5xl font-black leading-none md:text-6xl">{formatMoney(result.expectedProfit)}</p>
-        <p className="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6">{result.recommendation}</p>
-        <button className="secondary-button mt-5 bg-[#fffdf7]/80" type="button" onClick={onAddToPlan}>
+        <p className="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6">{localizeRawText(result.recommendation, locale)}</p>
+        <button className="secondary-button mt-5 bg-[#fcfbf6]/80" type="button" onClick={onAddToPlan}>
           <ClipboardList className="h-4 w-4" />
-          Add this to 30-day plan
+          {t.addPlan}
         </button>
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1fr]">
-        <div className="rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-5">
-          <h3 className="font-serif text-lg font-bold text-[#4a7c59]">Supporting numbers</h3>
+        <div className="rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-5">
+          <h3 className="font-serif text-lg font-bold text-[#2f6f73]">{t.supportingNumbers}</h3>
           <DetailGrid
             items={[
-              ["PSA10 net value", formatMoney(result.psa10NetValue)],
-              ["PSA9 net value", formatMoney(result.psa9NetValue)],
-              ["Other net value", formatMoney(result.otherNetValue)],
-              ["Worst case", formatMoney(result.worstCaseOutcome)],
+              [t.psa10Net, formatMoney(result.psa10NetValue)],
+              [t.psa9Net, formatMoney(result.psa9NetValue)],
+              [t.otherNet, formatMoney(result.otherNetValue)],
+              [t.worstCase, formatMoney(result.worstCaseOutcome)],
               [
-                "Break-even PSA10",
-                result.breakEvenPsa10Probability === null ? "N/A" : `${(result.breakEvenPsa10Probability * 100).toFixed(1)}%`,
+                t.breakEvenPsa10,
+                result.breakEvenPsa10Probability === null ? getLocaleCopy(locale).common.notAvailable : `${(result.breakEvenPsa10Probability * 100).toFixed(1)}%`,
               ],
             ]}
-            dangerLabels={["Worst case"]}
+            dangerLabels={[t.worstCase]}
           />
         </div>
-        <div className="rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-5">
-          <h3 className="font-serif text-lg font-bold text-[#4a7c59]">Explanation</h3>
-          <p className="mt-3 leading-7 text-[#4a3a30]">{result.explanation}</p>
-          <GroupedList title="Assumptions" items={result.assumptions} />
+        <div className="rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-5">
+          <h3 className="font-serif text-lg font-bold text-[#2f6f73]">{t.explanation}</h3>
+          <p className="mt-3 leading-7 text-[#36413d]">{localizeRawText(result.explanation, locale)}</p>
+          <GroupedList title={t.assumptions} items={localizeRawItems(result.assumptions, locale)} />
         </div>
       </div>
     </section>
   );
 }
 
-function DecisionPlanList({
-  items,
-  onUpdateStatus,
-}: {
-  items: DecisionPlanItem[];
-  onUpdateStatus: (id: string, status: DecisionPlanItem["status"]) => void;
-}) {
-  if (!items.length) {
-    return (
-      <Panel title="30-day plan" icon={ClipboardList}>
-        <p className="text-sm leading-6 text-[#6b6555]">
-          No active decision items yet. Run a listing risk check or raw-vs-slab calculation, then add the decision here.
-        </p>
-      </Panel>
-    );
-  }
-
-  return (
-    <Panel title="30-day plan" icon={ClipboardList}>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {items.map((item) => (
-          <article key={item.id} className="rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-[#6b6555]">{formatDecisionSource(item.source)}</p>
-                <h4 className="mt-1 font-serif text-lg font-bold text-[#4a7c59]">{item.title}</h4>
-              </div>
-              <span className="rounded-md bg-[#f9a620] px-3 py-1 text-xs font-bold uppercase text-[#4a3a10]">{item.status}</span>
-            </div>
-            <p className="mt-2 text-sm font-semibold text-[#2d2620]">{item.cardName}</p>
-            <p className="mt-2 text-sm leading-6 text-[#6b6555]">{item.summary}</p>
-            <p className="mt-3 text-xs font-semibold uppercase text-[#6b6555]">Due {item.dueDate}</p>
-            {item.status === "open" && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button className="secondary-button min-h-0 px-3 py-2 text-xs" type="button" onClick={() => onUpdateStatus(item.id, "done")}>
-                  Mark done
-                </button>
-                <button className="secondary-button min-h-0 px-3 py-2 text-xs" type="button" onClick={() => onUpdateStatus(item.id, "skipped")}>
-                  Skip
-                </button>
-              </div>
-            )}
-          </article>
-        ))}
-      </div>
-    </Panel>
-  );
-}
-
 function JournalEntry({
+  locale,
   entry,
   onAskAgent,
   onAddToPlan,
   loading,
 }: {
+  locale: Locale;
   entry: DecisionJournalEntry;
   onAskAgent: (entry: DecisionJournalEntry) => void;
   onAddToPlan: (entry: DecisionJournalEntry) => void;
   loading: boolean;
 }) {
+  const t = getLocaleCopy(locale).journalEntry;
+
   return (
-    <article className="rounded-md border border-[#dcd9c8] bg-[#f5f3ed] p-5">
+    <article className="rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase text-[#6b6555]">{entry.actionType}</p>
-          <h3 className="mt-1 font-serif text-lg font-bold text-[#4a7c59]">{entry.cardName}</h3>
+          <p className="text-xs font-semibold uppercase text-[#64736c]">{localizeOption(entry.actionType, locale)}</p>
+          <h3 className="mt-1 font-serif text-lg font-bold text-[#2f6f73]">{entry.cardName}</h3>
         </div>
-        <span className="rounded-md bg-[#f9a620] px-3 py-1 text-sm font-bold text-[#4a3a10]">{formatMoney(entry.price)}</span>
+        <span className="rounded-md bg-[#d7a84e] px-3 py-1 text-sm font-bold text-[#4a3f24]">{formatMoney(entry.price)}</span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-[#6b6555]">{entry.thesis}</p>
+      <p className="mt-3 text-sm leading-6 text-[#64736c]">{entry.thesis}</p>
       <DetailGrid
         items={[
           ["TCG", entry.tcg],
-          ["Version", entry.version || "Not specified"],
-          ["Date", entry.date],
-          ["Tags", entry.tags || "Not specified"],
-          ["Sentiment", entry.sentiment],
-          ["Review status", entry.reviewStatus],
-          ["Watch reason", entry.watchReason || "Not specified"],
-          ["Buy condition", entry.buyCondition || "Not specified"],
-          ["Stop condition", entry.stopCondition || "Not specified"],
-          ["Risks", entry.risks || "Not specified"],
-          ["Missing info", entry.missingInfo || "Not specified"],
-          ["Final outcome", entry.finalOutcome || "Not recorded"],
-          ["Lessons", entry.lessonsLearned || "Not recorded"],
-          ["Assumed PSA10", typeof entry.assumedPsa10Probability === "number" ? formatPercent(entry.assumedPsa10Probability) : "Not specified"],
-          ["Actual grade", entry.actualGrade || "UNKNOWN"],
+          [t.version, entry.version || t.notSpecified],
+          [t.date, entry.date],
+          [t.tags, entry.tags || t.notSpecified],
+          [t.sentiment, localizeOption(entry.sentiment, locale)],
+          [t.reviewStatus, localizeOption(entry.reviewStatus, locale)],
+          [t.watchReason, entry.watchReason || t.notSpecified],
+          [t.buyCondition, entry.buyCondition || t.notSpecified],
+          [t.stopCondition, entry.stopCondition || t.notSpecified],
+          [t.risks, entry.risks || t.notSpecified],
+          [t.missingInfo, entry.missingInfo || t.notSpecified],
+          [t.finalOutcome, entry.finalOutcome || t.notRecorded],
+          [t.lessons, entry.lessonsLearned || t.notRecorded],
+          [t.assumedPsa10, typeof entry.assumedPsa10Probability === "number" ? formatPercent(entry.assumedPsa10Probability) : t.notSpecified],
+          [t.actualGrade, localizeOption(entry.actualGrade || "UNKNOWN", locale)],
         ]}
       />
       <div className="mt-5 flex flex-wrap gap-3">
         <button className="secondary-button" type="button" disabled={loading} onClick={() => onAskAgent(entry)}>
           <Sparkles className="h-4 w-4" />
-          {loading ? "Checking..." : "Ask Agent"}
+          {loading ? t.checking : t.askAgent}
         </button>
         <button className="secondary-button" type="button" onClick={() => onAddToPlan(entry)}>
           <ClipboardList className="h-4 w-4" />
-          Add review item
+          {t.addReview}
         </button>
       </div>
     </article>
@@ -1727,27 +2179,52 @@ function JournalEntry({
 
 function DesignedCard({ card, large = false }: { card: CuratedCardRecommendation; large?: boolean }) {
   const tone = getTcgTone(card.tcg);
+
+  if (card.imageUrl) {
+    return (
+      <div
+        className={`relative shrink-0 overflow-hidden rounded-md border border-[#bccbc2] bg-[#e7efe8] ${large ? "h-52 w-36" : "h-32 w-24"} shadow-inner`}
+      >
+        <Image
+          className="object-contain"
+          src={card.imageUrl}
+          alt={`${card.cardName} ${card.version}`}
+          fill
+          sizes={large ? "144px" : "96px"}
+        />
+        <div className="absolute left-2 top-2 rounded-sm bg-[#24312f]/75 px-1.5 py-0.5 text-[8px] font-black uppercase text-[#f4f7f3]">
+          {card.tcg}
+        </div>
+        {card.imageSource && (
+          <div className="absolute inset-x-2 bottom-2 rounded-sm bg-[#fcfbf6]/85 px-1.5 py-0.5 text-center text-[8px] font-black uppercase text-[#64736c]">
+            {card.imageSource}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`relative shrink-0 overflow-hidden rounded-md border ${tone.border} ${tone.bg} ${large ? "h-52 w-36" : "h-32 w-24"} p-2 shadow-inner`}
     >
       <div className={`absolute inset-x-0 top-0 h-2 ${tone.strip}`} />
-      <div className="absolute left-2 top-4 rounded-sm bg-[#2d2620]/70 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-[#f5f3ed]">
+      <div className="absolute left-2 top-4 rounded-sm bg-[#24312f]/70 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-[#f4f7f3]">
         {card.tcg}
       </div>
-      <div className="absolute right-2 top-4 rounded-sm bg-[#f5f3ed] px-1.5 py-0.5 text-[8px] font-black uppercase text-[#b7472a]">
+      <div className="absolute right-2 top-4 rounded-sm bg-[#f4f7f3] px-1.5 py-0.5 text-[8px] font-black uppercase text-[#b26a4c]">
         {card.rarity.slice(0, 5)}
       </div>
       <div className="mt-8 flex h-[calc(100%-2rem)] flex-col justify-between">
         <div>
-          <div className="grid min-h-14 place-items-center rounded-sm border border-current/20 bg-[#fffdf7]/20 p-2 text-center">
+          <div className="grid min-h-14 place-items-center rounded-sm border border-current/20 bg-[#fcfbf6]/20 p-2 text-center">
             <span className="font-serif text-[10px] font-bold uppercase leading-4">
               Binder
               <br />
               slot
             </span>
           </div>
-          <div className="mt-2 w-fit rotate-[-3deg] rounded-sm bg-[#f9a620] px-2 py-1 text-[9px] font-black uppercase text-[#4a3a10]">
+          <div className="mt-2 w-fit rotate-[-3deg] rounded-sm bg-[#d7a84e] px-2 py-1 text-[9px] font-black uppercase text-[#4a3f24]">
             Ask photos
           </div>
         </div>
@@ -1763,11 +2240,11 @@ function DesignedCard({ card, large = false }: { card: CuratedCardRecommendation
 function GroupedList({ title, items }: { title: string; items: string[] }) {
   return (
     <div className="mt-5">
-      <h4 className="text-sm font-semibold uppercase text-[#6b6555]">{title}</h4>
-      <ul className="mt-2 space-y-2 text-sm leading-6 text-[#4a3a30]">
+      <h4 className="text-sm font-semibold uppercase text-[#64736c]">{title}</h4>
+      <ul className="mt-2 space-y-2 text-sm leading-6 text-[#36413d]">
         {items.map((item) => (
           <li key={item} className="flex gap-2">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b7472a]" />
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b26a4c]" />
             <span>{item}</span>
           </li>
         ))}
@@ -1783,9 +2260,9 @@ function DetailGrid({ items, dangerLabels = [] }: { items: [string, string][]; d
         const isDanger = dangerLabels.includes(label);
 
         return (
-          <div key={label} className="rounded-md bg-[#ecebe1] p-3">
-            <dt className="text-xs font-semibold uppercase text-[#6b6555]">{label}</dt>
-            <dd className={`mt-1 font-mono text-sm leading-6 ${isDanger ? "font-bold text-[#b7472a]" : "text-[#2d2620]"}`}>{value}</dd>
+          <div key={label} className="rounded-md bg-[#e7efe8] p-3">
+            <dt className="text-xs font-semibold uppercase text-[#64736c]">{label}</dt>
+            <dd className={`mt-1 font-mono text-sm leading-6 ${isDanger ? "font-bold text-[#b26a4c]" : "text-[#24312f]"}`}>{value}</dd>
           </div>
         );
       })}
@@ -1793,23 +2270,10 @@ function DetailGrid({ items, dangerLabels = [] }: { items: [string, string][]; d
   );
 }
 
-function ActionList({ items }: { items: string[] }) {
-  return (
-    <ul className="space-y-3">
-      {items.map((item) => (
-        <li key={item} className="flex items-start gap-3 rounded-md bg-[#ecebe1] p-3 text-sm leading-6 text-[#2d2620]">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#b7472a]" />
-          {item}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function Badge({ children, icon: Icon }: { children: React.ReactNode; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <span className="inline-flex w-fit items-center gap-2 rounded-md border border-[#dcd9c8] bg-[#fffdf7] px-3 py-1.5 text-sm font-semibold text-[#2d2620]">
-      <Icon className="h-4 w-4 text-[#b7472a]" />
+    <span className="inline-flex w-fit items-center gap-2 rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-1.5 text-sm font-semibold text-[#24312f]">
+      <Icon className="h-4 w-4 text-[#b26a4c]" />
       {children}
     </span>
   );
@@ -1842,15 +2306,16 @@ const TextAreaField = ({
 const SelectField = ({
   label,
   options,
+  locale = "en",
   className = "",
   ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; options: readonly string[] }) => (
+}: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; options: readonly string[]; locale?: Locale }) => (
   <label className={`field ${className}`}>
     <span>{label}</span>
     <select {...props}>
       {options.map((option) => (
         <option key={option} value={option}>
-          {option}
+          {localizeOption(option, locale)}
         </option>
       ))}
     </select>
@@ -1960,14 +2425,6 @@ function buildJournalReviewSummary(entry: DecisionJournalEntry) {
   return `${reviewTarget}. Re-check: ${watchReason}`;
 }
 
-function splitListText(text: string) {
-  const items = text
-    .split(/[.;\n]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-  return items.length ? items : ["Re-check the original thesis, missing evidence, and stop condition before acting."];
-}
-
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 }
@@ -1976,21 +2433,918 @@ function formatPercent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
+function getLocaleCopy(locale: Locale) {
+  return locale === "zh" ? zhCopy : enCopy;
+}
+
+function localizePosture(posture: FomoCheckResult["decisionPosture"], locale: Locale) {
+  if (locale === "en") return posture;
+  const map: Record<FomoCheckResult["decisionPosture"], string> = {
+    Cool: "冷静",
+    Warm: "偏热",
+    Hot: "很热",
+    Overheated: "过热",
+  };
+  return map[posture];
+}
+
+function localizeNextStep(nextStep: FomoCheckResult["nextStep"], locale: Locale) {
+  if (locale === "en") return nextStep;
+  const map: Record<FomoCheckResult["nextStep"], string> = {
+    Pause: "暂停",
+    "Ask for evidence": "先补信息",
+    "Run math": "先跑数学",
+    "Proceed within guardrails": "在边界内继续",
+  };
+  return map[nextStep];
+}
+
+function localizeMetricLabel(label: FomoCheckResult["fomoHeat"]["label"], locale: Locale) {
+  if (locale === "en") return label;
+  const map: Record<FomoCheckResult["fomoHeat"]["label"], string> = {
+    Low: "低",
+    Medium: "中",
+    High: "高",
+  };
+  return map[label];
+}
+
+function localizeFomoSummary(result: FomoCheckResult, locale: Locale) {
+  if (locale === "en") return result.warmSummary;
+  if (result.decisionPosture === "Overheated") return "不是你傻，是这单太上头了。先别买，让价格、预算和品相信息都冷一下。";
+  if (result.decisionPosture === "Hot") return "你是真的喜欢，但现在有点热。先把成交价、品相和预算再看一遍。";
+  if (result.decisionPosture === "Warm") return "还不算冲动买，但也别直接下单。先把缺的信息补上。";
+  return "这次看起来比较冷静。可以继续看，但别让倒计时替你决定。";
+}
+
+function localizeGuardrail(result: FomoCheckResult, locale: Locale) {
+  if (locale === "en") return result.guardrail;
+  if (result.nextStep === "Pause") return "先暂停至少 24 小时，或者把入手价降到预算线以内再复盘。";
+  if (result.nextStep === "Ask for evidence") return "先要正反面图、边角/表面特写，还有近期成交价。信息不够，先别花情绪钱。";
+  if (result.nextStep === "Run math") return "先用保守的 PSA10 概率算一下。不要把想象中的评级空间当成事实。";
+  return "冷静再读一遍：价格、品相信息和买入理由都还说得通，再继续。";
+}
+
+function localizeReasons(reasons: string[], locale: Locale) {
+  if (locale === "en") return reasons;
+
+  return reasons.map((reason) => {
+    if (reason.startsWith("FOMO language found")) return "有上头信号：立刻买、怕错过、会涨、会后悔。";
+    if (reason === "No strong panic language found.") return "没看到明显恐慌语言。";
+    if (reason === "The thought does not yet include many grounding details.") return "现在更多是感觉，落地事实还少。";
+    if (reason === "You included some grounding details, which lowers the emotional heat.") return "你有提到一些事实，热度会降一点。";
+    if (reason.includes("today's buy budget")) return reason.replace("This would use", "这会占用").replace("of today's buy budget.", "的今日购买预算。");
+    if (reason.includes("monthly hobby budget benchmark")) return reason.replace("It is", "它相当于").replace("of the monthly hobby budget benchmark.", "的月度爱好预算参考。");
+    if (reason === "The asking price is above the active budget guardrail, so this is a hard pause.") return "价格已经超过预算线，这里该硬停。";
+    if (reason === "The price leaves meaningful room inside today's budget.") return "价格还在今日预算内，留有空间。";
+    if (reason === "It is within today's budget, but concentrated enough to slow down.") return "还在预算内，但占比不小，别急。";
+    if (reason === "No concrete evidence was entered yet.") return "还没写具体信息。";
+    if (reason === "The evidence note is still thin.") return "信息还太少。";
+    if (reason.startsWith("Evidence mentioned")) return "有提到一些信息：正反面图、成交价、品相或卖家情况。";
+    if (reason === "The evidence note has enough detail to review.") return "信息细节够复盘了。";
+    if (reason === "A specific card version was selected before the check.") return "已经选了明确版本。";
+    if (reason.startsWith("Selected version:")) return reason.replace("Selected version:", "已选版本：");
+    if (reason === "The card version is not confirmed yet.") return "版本还没确认。";
+    if (reason === "No version label is attached to this decision.") return "这次购买还没绑到具体版本。";
+    return reason;
+  });
+}
+
+function localizeRiskReportItems(items: string[], locale: Locale) {
+  if (locale === "en") return items;
+  return items.map((item) => localizeRiskReportText(item, locale));
+}
+
+function localizeRiskReportText(text: string, locale: Locale) {
+  if (locale === "en") return text;
+
+  const exact: Record<string, string> = {
+    "Exact card number, release, language, or region confirmation": "准确卡号、版本、语言或发行地区",
+    "Clear back photo": "清晰背面图",
+    "Corner and surface closeups": "边角和表面特写",
+    "Recent sold-comparable range": "近期成交价区间",
+    "Version is not clearly confirmed, so similar cards or reprints could be confused.": "版本没有说清楚，容易把相似版本或再版混在一起。",
+    "Back condition is not evidenced, which matters for whitening, centering, and grading risk.": "背面品相没有信息，白边、居中和评级风险都看不出来。",
+    "Strong condition language is present, but it should be supported by photos rather than seller confidence.": "卖家用了很强的品相说法，但要看图，不要只信描述。",
+    "The listing text contains buyer-risk signals such as limited photos, stock-photo wording, or no-return language.": "链接里有买家风险信号，比如图少、疑似公图或不退换。",
+    "A grading goal requires stricter evidence than personal collection.": "如果目标是送评，需要比自留更严格的品相信息。",
+    "The listed price is high enough that fees, shipping, and liquidity should be checked against sold comps.": "这个价格已经不低，要把手续费、运费、流动性和近期成交价一起看。",
+    "No major text-based risk indicators were found, but photo evidence and sold comps are still needed.": "文字里没看到明显大雷，但正反面图和近期成交价还是要补。",
+    "Can you provide clear front and back photos under normal lighting?": "可以补一组正常光线下的正反面图吗？",
+    "Are there any scratches, dents, whitening, print lines, or surface marks?": "有没有划痕、压痕、白边、印线或表面痕迹？",
+    "Can you confirm the exact card number, set, language, and release version?": "可以确认准确卡号、系列、语言和版本吗？",
+    "Can you share corner closeups and angled surface photos?": "可以补边角特写和斜角表面图吗？",
+    "Is the price based on recent sold comps or current active listings?": "这个价格是参考近期成交价，还是参考在售链接？",
+    "Not suitable for grading speculation until missing condition and version evidence is resolved.": "缺的品相和版本信息补齐前，不适合拿来赌送评。",
+    "Only suitable for personal collection if the price is discounted and uncertainty is acceptable.": "只有在价格有折让、你也能接受不确定性时，才适合自留继续看。",
+    "Potentially usable for collection, but not ready for resale or grading decisions without seller follow-up.": "自留可以继续看，但没问清楚前，不适合拿来做转手或送评判断。",
+    "Possibly suitable for grading only after closeups confirm corners, back, and surface.": "只有边角、背面和表面图都确认后，才可能适合送评。",
+    "Reasonable to continue reviewing, assuming sold comps and photo evidence support the price.": "如果近期成交价和图片都撑得住这个价格，可以继续看。",
+  };
+
+  if (exact[text]) return exact[text];
+  if (text.startsWith("Risk is ")) {
+    return text
+      .replace("Risk is high", "风险偏高")
+      .replace("Risk is medium-high", "风险中高")
+      .replace("Risk is medium", "风险中等")
+      .replace("Risk is low", "风险较低")
+      .replace("with high confidence from pasted text.", "，基于你贴的文字，把握度较高。")
+      .replace("with medium confidence from pasted text.", "，基于你贴的文字，把握度中等。")
+      .replace("with medium-low confidence from pasted text.", "，基于你贴的文字，把握度中低。")
+      .replace("with low confidence from pasted text.", "，基于你贴的文字，把握度较低。")
+      .replace("Treat this as a screening result, not proof of condition.", "这只是初筛，不是品相证明。")
+      .replace("For self-collection, ask for missing evidence before relying on the listing.", "如果是自留，先把缺的信息问清楚再信这个链接。")
+      .replace("For grading, ask for missing evidence before relying on the listing.", "如果是送评，先把缺的信息问清楚再信这个链接。")
+      .replace("For resale, ask for missing evidence before relying on the listing.", "如果是转手，先把缺的信息问清楚再信这个链接。");
+  }
+  return text;
+}
+
+function localizeRawItems(items: string[], locale: Locale) {
+  if (locale === "en") return items;
+  return items.map((item) => localizeRawText(item, locale));
+}
+
+function localizeRawText(text: string, locale: Locale) {
+  if (locale === "en") return text;
+
+  const exact: Record<string, string> = {
+    "Direct PSA10 is cleaner if you mainly want certainty; the raw route depends too much on a perfect grade.": "如果你主要想要确定性，直接看 PSA10 更干净；裸卡路线太依赖满分。",
+    "Avoid the raw grading route at the current inputs unless better condition evidence or a lower entry price appears.": "按现在的输入，不建议走裸卡送评路线，除非有更强品相信息或更低入手价。",
+    "Raw can be considered only with strong condition evidence because the downside is meaningful if it misses PSA9/10.": "只有品相信息够强，才考虑裸卡；没到 PSA9/10 时，下行空间不小。",
+    "This is sensitive to PSA10 probability; verify surface, corners, centering, and back photos before acting.": "这个结果很吃 PSA10 概率。下单前先确认表面、边角、居中和背面图。",
+    "The raw route is numerically reasonable, but it should still be treated as conditional on verified condition and clear version.": "数字上裸卡路线说得通，但前提还是品相确认、版本清楚。",
+    "The calculation does not include taxes, opportunity cost, grading turnaround risk, or price movement during grading.": "这个计算没有包含税、机会成本、送评周期风险，以及送评期间价格变化。",
+  };
+
+  if (exact[text]) return exact[text];
+  if (text.startsWith("Marketplace fee is ")) return text.replace("Marketplace fee is", "平台手续费按").replace(".", " 计算。");
+  if (text.startsWith("Sale shipping is ")) return text.replace("Sale shipping is", "每次出货运费按").replace("per completed sale.", "计算。");
+  if (text.startsWith("The model treats outcomes below PSA9 as an")) {
+    return text
+      .replace('The model treats outcomes below PSA9 as an "other" result worth', "低于 PSA9 的结果按“其他”估值")
+      .replace("before fees.", "，再扣手续费。");
+  }
+  if (text.startsWith("A break-even PSA10 probability cannot be calculated")) {
+    return "因为 PSA10 到手价值没有明显高过低分结果，所以没法算打平所需 PSA10 概率。";
+  }
+  if (text.startsWith("The raw route needs roughly ")) {
+    return text
+      .replace("The raw route needs roughly", "在这些假设下，裸卡路线大概需要")
+      .replace("PSA10 probability to break even under these assumptions.", "的 PSA10 概率才能打平。");
+  }
+  if (text.startsWith("The expected value is positive")) {
+    return text
+      .replace("The expected value is positive, but the conclusion still depends on grading accuracy and liquidity.", "期望值是正的，但结论仍然取决于评级判断准不准、以及这张卡好不好出。")
+      .replace("The raw route needs roughly", "裸卡路线大概需要")
+      .replace("PSA10 probability to break even under these assumptions.", "的 PSA10 概率才能打平。");
+  }
+  if (text.startsWith("The expected value is negative")) {
+    return text
+      .replace("The expected value is negative at the current inputs.", "按当前输入，期望值是负的。")
+      .replace("Consider lowering raw cost, improving condition confidence, or buying an already graded copy.", "可以考虑压低裸卡入手价、补强品相信息，或者直接看评级卡。")
+      .replace("The raw route needs roughly", "裸卡路线大概需要")
+      .replace("PSA10 probability to break even under these assumptions.", "的 PSA10 概率才能打平。");
+  }
+  return text;
+}
+
+function localizeCalibrationMessage(message: string, locale: Locale) {
+  if (locale === "en") return message;
+  return message
+    .replace("Not enough graded journal outcomes yet. Add completed grading results to calibrate PSA10 assumptions.", "评级结果样本还不够。多记几次实际评级结果后，TCGpal 才能校准你的 PSA10 假设。")
+    .replace("Your historical PSA10 hit rate is lower than your current assumption. Consider using", "你过去实际出 PSA10 的比例低于当前假设。可以先用")
+    .replace("until more outcomes are logged.", "，等记录更多结果后再调整。")
+    .replace("Your historical PSA10 hit rate is higher than your current assumption, but keep the current conservative input until more outcomes are logged.", "你过去实际出 PSA10 的比例高于当前假设，但样本还少，先保守一点比较稳。")
+    .replace("Your current PSA10 assumption is close to your logged outcomes.", "你现在的 PSA10 假设和历史记录比较接近。");
+}
+
+function localizeAiMessage(message: string | undefined, locale: Locale) {
+  if (!message) return "";
+  if (locale === "en") return message;
+  return message
+    .replace("AI health check failed. AI actions may use local fallback.", "AI 健康检查失败，AI 操作可能会先用本地兜底。")
+    .replace("Journal agent temporarily unavailable. Showing a local reflection instead.", "日志 Agent 暂时不可用，先显示本地复盘。")
+    .replace("AI temporarily unavailable, using local fallback.", "AI 暂时不可用，先用本地兜底。")
+    .replace("AI request failed", "AI 请求失败")
+    .replace("Hermes request failed.", "Hermes 请求失败。")
+    .replace("Pipeline request failed", "检查链路请求失败")
+    .replace("Hermes returned a non-JSON response.", "Hermes 返回的不是 JSON。");
+}
+
+const enCopy = {
+  headerSubtitle: "Card counter notes",
+  nav: {
+    dashboard: "Home",
+    risk: "Risk",
+    raw: "Raw vs Slab",
+    journal: "Journal",
+    landing: "Start",
+    onboarding: "Profile",
+  } as Record<View, string>,
+  auth: {
+    badge: "Purchase-intent rescue",
+    title: "Before you buy the card, slow the decision down.",
+    description: "TCGpal checks the buying process first: emotion, budget, evidence, and exact version. It does not pretend to predict the market.",
+    eyebrow: "Demo account",
+    panelTitle: "Start local, no backend.",
+    panelDescription: "This gate only stores a local demo session so the early flow can feel like a real product without adding auth yet.",
+    login: "Log in",
+    signup: "Sign up",
+  },
+  onboarding: {
+    badge: "TCGpal starts with the cards you care about",
+    title: "Set the guardrails before the chase.",
+    description: "Pick your games, your player type, and the budget limits TCGpal should respect when you feel pressure to buy.",
+    step1: "Step 1 of 3",
+    tcgTitle: "What TCGs do you follow?",
+    tcgDescription: "Choose more than one. Your first home screen will be built around these games.",
+    step2: "Step 2 of 3",
+    personaTitle: "What type of TCG player are you?",
+    step3: "Step 3 of 3",
+    budgetTitle: "What budget should TCGpal respect?",
+    budgetDescription: "Today's buy budget is the hard purchase guardrail. Monthly hobby budget is the softer benchmark.",
+    todayBudget: "Today's buy budget",
+    monthlyBenchmark: "Monthly hobby benchmark",
+    continue: "Continue",
+    back: "Back",
+    start: "Start Ready to Buy flow",
+  },
+  home: {
+    eyebrowStart: "Start here",
+    eyebrowRadar: "Your Pokemon radar",
+    title: "Ready to buy?",
+    description: "Use this when the price, the listing clock, or the hype is pushing you to act now.",
+    cta: "Ready to Buy",
+    guardrail: "Today's guardrail",
+    todayBudget: "Today budget",
+    spentToday: "Spent today",
+    remaining: "Remaining",
+    monthlyBenchmark: "Monthly benchmark",
+    coolingDown: "Cooling down",
+    savedForReview: (count: number) => `${count} card decision${count === 1 ? "" : "s"} saved for review.`,
+    quickPicks: "Quick card picks",
+    quickPicksDescription: "These are demo cards you can click, but the main flow starts from Ready to Buy.",
+    raw: "raw",
+    psa10: "PSA10?",
+    review: "Review this card",
+  },
+  readyModal: {
+    eyebrow: "Ready to Buy",
+    title: "Name the card before the feeling makes the call.",
+    description: "Search by card name, version, or label. Pick the exact version first, then TCGpal checks the decision posture.",
+    close: "Close",
+    today: "Today",
+    spent: "Spent",
+    left: "Left",
+    searchLabel: "Card name / label / set code",
+    searchPlaceholder: "Umbreon VMAX, Luffy P-033, Charizard SAR",
+    guide: "guide",
+    noMatch: "No local match yet. For this v1, use one of the demo cards so version selection stays explicit.",
+    selectedVersion: "Selected version",
+    chooseFirst: "Choose a card first",
+    noVersionNoVerdict: "TCGpal will not run a verdict without a version.",
+    askingPrice: "Current asking price",
+    feeling: "What are you telling yourself right now?",
+    feelingPlaceholder: "Example: I think this is going up and I might miss the last fair copy.",
+    evidence: "What evidence do you have?",
+    evidencePlaceholder: "Sold comps, front/back photos, condition proof, seller context...",
+    verdict: "Get Calm Verdict",
+  },
+  sheet: {
+    close: "Close",
+    counterNote: "Counter note",
+    riskFlags: "Risk flags",
+    snapshot: "Raw / slab snapshot",
+    rawGuide: "Raw guide",
+    psa9Guide: "PSA9 guide",
+    psa10Guide: "PSA10 guide",
+    psa10Odds: "PSA10 odds",
+    fomoCheck: "Pre-buy Check",
+    slowTitle: "Slow the decision down.",
+    slowDescription: "This is about your decision posture: emotional heat, budget strain, and evidence quality.",
+    todayLeft: "Today left",
+    feeling: "What are you telling yourself right now?",
+    feelingPlaceholder: "Example: I feel like if I do not buy this today, it will run away from me.",
+    askingPrice: "Current asking price",
+    evidence: "What evidence do you have?",
+    evidencePlaceholder: "Photos, comps, condition proof, seller context...",
+    showCard: "Show calm decision card",
+    runRaw: "Run Raw vs Slab",
+    checkRisk: "Check Listing Risk",
+    addPlan: "Add to 30-day plan",
+  },
+  verdict: {
+    title: "Calm Decision Card",
+    hardStop: "Hard stop: this breaks the current budget guardrail.",
+    fomoHeat: "Decision heat",
+    budgetStrain: "Budget strain",
+    evidenceStrength: "Evidence strength",
+    versionClarity: "Version clarity",
+    emotionAgent: "Emotion Agent",
+    budgetAgent: "Budget Agent",
+    evidenceAgent: "Evidence Agent",
+    versionAgent: "Version Agent",
+    cooldown: "Create cooldown ticket",
+    cooldownSaved: "Cooldown ticket saved",
+    bought: "I bought it",
+    boughtSaved: "Purchase recorded",
+  },
+  profile: {
+    eyebrow: "Onboarding",
+    title: "Set the guardrails before the recommendation",
+    description: "The demo starts with user context because the same card can be reasonable for one collector and risky for another.",
+    favoriteIp: "Favorite IP",
+    primaryGoal: "Primary goal",
+    todayBudget: "Today's buy budget",
+    monthlyBudget: "Monthly budget",
+    riskLevel: "Risk level",
+    holdingPeriod: "Holding period",
+    gradingPreference: "Willing to grade",
+    preferredMarket: "Preferred market",
+    favoriteCharacters: "Favorite characters or themes",
+    save: "Save Profile",
+  },
+  risk: {
+    eyebrow: "Listing Risk Checker",
+    title: "Should this listing move forward?",
+    description: "Paste title and description first. If the evidence clears the first screen, continue into raw-vs-slab math.",
+    listingTitle: "Listing title",
+    descriptionLabel: "Description",
+    listedPrice: "Listed price",
+    marketplace: "Marketplace",
+    userGoal: "User goal",
+    analyzeLocal: "Analyze Locally",
+    runningHermes: "Running Hermes...",
+    analyzeAi: "Analyze with AI",
+    evidenceAgentLoading: "Evidence Agent...",
+    analyzePipeline: "Analyze with AI Pipeline",
+  },
+  riskReport: {
+    confidence: "Confidence",
+    missingInfo: "Missing information",
+    keyRisks: "Key risks",
+    sellerQuestions: "Seller questions",
+    suitability: "Suitability",
+    continueRaw: "Continue to Raw vs Slab",
+    addPlan: "Add this to 30-day plan",
+  },
+  pipeline: {
+    eyebrow: "Agent Review Pipeline",
+    title: "Evidence first, then risk and math",
+    localFallback: "Local fallback used",
+    editableReview: "Editable review",
+    evidence: "Evidence",
+    risk: "Risk",
+    math: "Math",
+    critic: "Critic",
+    done: "Done",
+    waiting: "Waiting",
+    evidenceLoading: "Evidence agent is reading the listing text...",
+    extracted: "Evidence Extracted",
+    confirmIdentity: "Confirm the card identity",
+    confirmContinue: "Confirm & Continue",
+    cardName: "Card name",
+    set: "Set",
+    cardNumber: "Card number",
+    language: "Language",
+    missing: "Missing",
+    missingEvidence: "Missing evidence",
+    riskLoading: "Risk agent is scoring condition, version, price, policy, and grading viability...",
+    riskAgent: "Risk Agent",
+    overall: "Overall",
+    mathAgent: "Math Agent",
+    mathImpact: "Raw vs Slab impact",
+    expectedValue: "Expected Value",
+    assumptions: "Assumptions used",
+    finalRecommendation: "Final Recommendation",
+    criticWarnings: "Critic warnings",
+    addPlan: "Add to 30-day plan",
+    trace: "View technical trace",
+    agents: "agents",
+  },
+  raw: {
+    eyebrow: "Raw vs Slab Calculator",
+    title: "Use deterministic math before grading speculation",
+    description: "All arithmetic is TypeScript code. The explanation only interprets the calculated result.",
+    rawPrice: "Raw price",
+    psa10Price: "PSA10 sold price",
+    psa9Price: "PSA9 sold price",
+    otherPrice: "Other estimate",
+    gradingCost: "Grading + inbound cost",
+    feeRate: "Marketplace fee rate (0.13 = 13%)",
+    shipping: "Sale shipping",
+    psa10Probability: "PSA10 probability (0.25 = 25%)",
+    psa9Probability: "PSA9 probability (0.40 = 40%)",
+    recalculate: "Recalculate",
+  },
+  calibration: {
+    title: "Journal calibration",
+    sample: "Sample",
+    assumedAvg: "Assumed avg",
+    actualPsa10: "Actual PSA10",
+    apply: "Apply adjusted probability",
+  },
+  rawResult: {
+    expectedProfit: "Expected Profit",
+    addPlan: "Add this to 30-day plan",
+    supportingNumbers: "Supporting numbers",
+    psa10Net: "PSA10 net value",
+    psa9Net: "PSA9 net value",
+    otherNet: "Other net value",
+    worstCase: "Worst case",
+    breakEvenPsa10: "Break-even PSA10",
+    explanation: "Explanation",
+    assumptions: "Assumptions",
+  },
+  journal: {
+    eyebrow: "Collection Decision Journal",
+    title: "Capture the thesis, risks, and review result",
+    description: "Structured notes stay in localStorage and feed the home recommendation radar without external card data.",
+    cardName: "Card name",
+    version: "Version",
+    date: "Date",
+    actionType: "Action type",
+    price: "Price",
+    goal: "Goal",
+    tags: "Tags",
+    tagsPlaceholder: "character, set, risk theme",
+    sentiment: "Sentiment",
+    thesis: "Original thesis",
+    watchReason: "Watch reason",
+    buyCondition: "Buy condition",
+    sellCondition: "Sell condition",
+    stopCondition: "Stop condition",
+    risks: "Risks noted",
+    reviewDate: "Review date",
+    reviewStatus: "Review status",
+    missingInfo: "Missing information",
+    finalOutcome: "Final outcome",
+    lessons: "Lessons learned",
+    assumedPsa10: "Assumed PSA10 probability (0.30 = 30%)",
+    actualGrade: "Actual grade",
+    decisionSource: "Decision source",
+    save: "Save Journal Entry",
+    all: "All",
+  },
+  journalEntry: {
+    version: "Version",
+    date: "Date",
+    tags: "Tags",
+    sentiment: "Sentiment",
+    reviewStatus: "Review status",
+    watchReason: "Watch reason",
+    buyCondition: "Buy condition",
+    stopCondition: "Stop condition",
+    risks: "Risks",
+    missingInfo: "Missing info",
+    finalOutcome: "Final outcome",
+    lessons: "Lessons",
+    assumedPsa10: "Assumed PSA10",
+    actualGrade: "Actual grade",
+    notSpecified: "Not specified",
+    notRecorded: "Not recorded",
+    checking: "Checking...",
+    askAgent: "Ask Agent",
+    addReview: "Add review item",
+  },
+  agentTrace: {
+    viewTrace: "View AI reasoning trace",
+    localFallback: "Local fallback used",
+    aiAssisted: "AI assisted",
+    hermesTask: "Hermes task",
+    warnings: "Warnings",
+    model: "Model",
+    tool: "Tool",
+  },
+  common: {
+    aiRequestFailed: "AI request failed",
+    notAvailable: "N/A",
+  },
+  aiHealth: {
+    fallback: "AI temporarily unavailable, using local fallback.",
+    check: "Check",
+  },
+};
+
+const zhCopy: typeof enCopy = {
+  headerSubtitle: "买卡前先冷静一下",
+  nav: {
+    dashboard: "首页",
+    risk: "风险",
+    raw: "裸卡/评级",
+    journal: "日志",
+    landing: "开始",
+    onboarding: "资料",
+  },
+  auth: {
+    badge: "买卡前先停一下",
+    title: "下单前，先别急。",
+    description: "TCGpal 先看这次购买是不是被情绪推着走：预算够不够，品相和成交价有没有看，版本有没有选对。它不装作能预测涨跌。",
+    eyebrow: "演示账号",
+    panelTitle: "先用本地版。",
+    panelDescription: "这里不会连后端，只是在本地记一下你进来了。先把买卡前的体验跑顺。",
+    login: "登录",
+    signup: "注册",
+  },
+  onboarding: {
+    badge: "先知道你在玩什么",
+    title: "追卡前，先把边界写下来。",
+    description: "选你玩的卡种、你的买卡习惯，还有今天最多能花多少。真的上头的时候，这些数字会比感觉可靠。",
+    step1: "第 1 步，共 3 步",
+    tcgTitle: "你关注哪些 TCG？",
+    tcgDescription: "可以选多个。首页先按这些卡种来。",
+    step2: "第 2 步，共 3 步",
+    personaTitle: "你平时怎么买卡？",
+    step3: "第 3 步，共 3 步",
+    budgetTitle: "今天最多花多少？",
+    budgetDescription: "今日预算是硬线。月度预算只是参照，帮你判断这单是不是太重。",
+    todayBudget: "今日购买预算",
+    monthlyBenchmark: "月度爱好预算",
+    continue: "继续",
+    back: "返回",
+    start: "开始买前检查",
+  },
+  home: {
+    eyebrowStart: "从这里开始",
+    eyebrowRadar: "你的 Pokemon 雷达",
+    title: "准备下单？",
+    description: "如果你已经开始想“现在不买就来不及了”，先点这里。",
+    cta: "买前检查",
+    guardrail: "今日预算线",
+    todayBudget: "今日预算",
+    spentToday: "今日已花",
+    remaining: "剩余",
+    monthlyBenchmark: "月度预算参考",
+    coolingDown: "冷静中",
+    savedForReview: (count: number) => `${count} 张卡先放一放，之后再看。`,
+    quickPicks: "快速卡牌选择",
+    quickPicksDescription: "下面是演示卡。真正要买某张卡时，先用上面的买前检查。",
+    raw: "裸卡",
+    psa10: "PSA10？",
+    review: "查看这张卡",
+  },
+  readyModal: {
+    eyebrow: "买前检查",
+    title: "先确认是哪张卡。",
+    description: "输入卡名、版本或编号。版本选错，后面的判断就没有意义。",
+    close: "关闭",
+    today: "今日",
+    spent: "已花",
+    left: "剩余",
+    searchLabel: "卡名 / 编号 / 系列代码",
+    searchPlaceholder: "Umbreon VMAX, Luffy P-033, Charizard SAR",
+    guide: "参考价",
+    noMatch: "本地还没有这张卡。v1 先用演示卡，避免版本乱掉。",
+    selectedVersion: "已选版本",
+    chooseFirst: "请先选择一张卡",
+    noVersionNoVerdict: "没选版本，不给判断。",
+    askingPrice: "卖家开价",
+    feeling: "你现在怎么说服自己？",
+    feelingPlaceholder: "例如：感觉它要涨了，现在不买会后悔。",
+    evidence: "你看过哪些信息？",
+    evidencePlaceholder: "近期成交价、正反面图、品相细节、卖家信息...",
+    verdict: "看下单建议",
+  },
+  sheet: {
+    close: "关闭",
+    counterNote: "别上头提醒",
+    riskFlags: "风险点",
+    snapshot: "裸卡 / 评级卡快照",
+    rawGuide: "裸卡参考",
+    psa9Guide: "PSA9 参考",
+    psa10Guide: "PSA10 参考",
+    psa10Odds: "PSA10 假设",
+    fomoCheck: "买前检查",
+    slowTitle: "先慢一点。",
+    slowDescription: "这里不猜涨跌，只看这次购买是不是太上头、太贵、信息太少。",
+    todayLeft: "今日剩余",
+    feeling: "你现在怎么说服自己？",
+    feelingPlaceholder: "例如：今天不买，感觉它就跑了。",
+    askingPrice: "卖家开价",
+    evidence: "你看过哪些信息？",
+    evidencePlaceholder: "正反面图、成交价、品相、卖家信息...",
+    showCard: "看下单建议",
+    runRaw: "算裸卡/评级",
+    checkRisk: "检查链接风险",
+    addPlan: "加入 30 天计划",
+  },
+  verdict: {
+    title: "下单建议",
+    hardStop: "先别下单：这单已经超过今天的预算线。",
+    fomoHeat: "上头程度",
+    budgetStrain: "预算压力",
+    evidenceStrength: "信息完整度",
+    versionClarity: "版本确认",
+    emotionAgent: "情绪 Agent",
+    budgetAgent: "预算 Agent",
+    evidenceAgent: "信息 Agent",
+    versionAgent: "版本 Agent",
+    cooldown: "先加入观察清单",
+    cooldownSaved: "已加入观察清单",
+    bought: "我买了",
+    boughtSaved: "购买已记录",
+  },
+  profile: {
+    eyebrow: "资料设置",
+    title: "先把预算和偏好写清楚",
+    description: "同一张卡，对不同玩家可能完全不一样。这里先记你的基础边界。",
+    favoriteIp: "主要 IP",
+    primaryGoal: "主要目标",
+    todayBudget: "今日购买预算",
+    monthlyBudget: "月度预算",
+    riskLevel: "风险偏好",
+    holdingPeriod: "持有周期",
+    gradingPreference: "是否考虑送评",
+    preferredMarket: "常用市场",
+    favoriteCharacters: "喜欢的角色或主题",
+    save: "保存资料",
+  },
+  risk: {
+    eyebrow: "链接风险检查",
+    title: "这条链接能不能继续看？",
+    description: "先贴标题和描述。信息过关，再去算裸卡/评级空间。",
+    listingTitle: "链接标题",
+    descriptionLabel: "描述",
+    listedPrice: "卖家开价",
+    marketplace: "平台",
+    userGoal: "你的目标",
+    analyzeLocal: "本地检查",
+    runningHermes: "Hermes 处理中...",
+    analyzeAi: "用 AI 看一下",
+    evidenceAgentLoading: "信息 Agent 处理中...",
+    analyzePipeline: "跑 AI 检查链路",
+  },
+  riskReport: {
+    confidence: "把握度",
+    missingInfo: "缺的信息",
+    keyRisks: "主要风险",
+    sellerQuestions: "要问卖家的问题",
+    suitability: "适不适合",
+    continueRaw: "继续算裸卡/评级",
+    addPlan: "加入 30 天计划",
+  },
+  pipeline: {
+    eyebrow: "Agent 检查链路",
+    title: "先看信息，再看风险和数学",
+    localFallback: "已用本地兜底",
+    editableReview: "可编辑检查",
+    evidence: "信息",
+    risk: "风险",
+    math: "数学",
+    critic: "复核",
+    done: "完成",
+    waiting: "等待",
+    evidenceLoading: "信息 Agent 正在读链接文字...",
+    extracted: "提取到的信息",
+    confirmIdentity: "先确认是哪张卡",
+    confirmContinue: "确认并继续",
+    cardName: "卡名",
+    set: "系列",
+    cardNumber: "卡号",
+    language: "语言",
+    missing: "缺失",
+    missingEvidence: "缺的信息",
+    riskLoading: "风险 Agent 正在看品相、版本、价格、退换和评级空间...",
+    riskAgent: "风险 Agent",
+    overall: "总分",
+    mathAgent: "数学 Agent",
+    mathImpact: "裸卡/评级影响",
+    expectedValue: "期望值",
+    assumptions: "使用的假设",
+    finalRecommendation: "最终建议",
+    criticWarnings: "复核提醒",
+    addPlan: "加入 30 天计划",
+    trace: "查看技术 trace",
+    agents: "个 Agent",
+  },
+  raw: {
+    eyebrow: "裸卡/评级计算器",
+    title: "先算清楚，再谈送评空间",
+    description: "这里的数学都是确定代码，不靠模型猜。",
+    rawPrice: "裸卡价格",
+    psa10Price: "PSA10 成交价",
+    psa9Price: "PSA9 成交价",
+    otherPrice: "其他结果估值",
+    gradingCost: "送评和来回成本",
+    feeRate: "平台手续费率（0.13 = 13%）",
+    shipping: "出货运费",
+    psa10Probability: "PSA10 概率（0.25 = 25%）",
+    psa9Probability: "PSA9 概率（0.40 = 40%）",
+    recalculate: "重新计算",
+  },
+  calibration: {
+    title: "日志校准",
+    sample: "样本",
+    assumedAvg: "原本假设",
+    actualPsa10: "实际 PSA10",
+    apply: "套用调整后的概率",
+  },
+  rawResult: {
+    expectedProfit: "期望利润",
+    addPlan: "加入 30 天计划",
+    supportingNumbers: "关键数字",
+    psa10Net: "PSA10 到手",
+    psa9Net: "PSA9 到手",
+    otherNet: "其他结果到手",
+    worstCase: "最差情况",
+    breakEvenPsa10: "打平所需 PSA10",
+    explanation: "说明",
+    assumptions: "假设",
+  },
+  journal: {
+    eyebrow: "买卡日志",
+    title: "把当时怎么想的记下来",
+    description: "这些记录只存在本地。之后可以用来校准你对品相、评级和预算的判断。",
+    cardName: "卡名",
+    version: "版本",
+    date: "日期",
+    actionType: "动作",
+    price: "价格",
+    goal: "目标",
+    tags: "标签",
+    tagsPlaceholder: "角色、系列、风险点",
+    sentiment: "状态",
+    thesis: "当时的购买理由",
+    watchReason: "观察原因",
+    buyCondition: "什么条件才买",
+    sellCondition: "什么条件卖",
+    stopCondition: "什么情况不买",
+    risks: "记录的风险",
+    reviewDate: "复盘日期",
+    reviewStatus: "复盘状态",
+    missingInfo: "缺的信息",
+    finalOutcome: "最后结果",
+    lessons: "学到什么",
+    assumedPsa10: "当时假设的 PSA10 概率（0.30 = 30%）",
+    actualGrade: "实际评级",
+    decisionSource: "来源",
+    save: "保存日志",
+    all: "全部",
+  },
+  journalEntry: {
+    version: "版本",
+    date: "日期",
+    tags: "标签",
+    sentiment: "状态",
+    reviewStatus: "复盘状态",
+    watchReason: "观察原因",
+    buyCondition: "买入条件",
+    stopCondition: "停止条件",
+    risks: "风险",
+    missingInfo: "缺的信息",
+    finalOutcome: "最后结果",
+    lessons: "复盘",
+    assumedPsa10: "假设 PSA10",
+    actualGrade: "实际评级",
+    notSpecified: "未填写",
+    notRecorded: "未记录",
+    checking: "检查中...",
+    askAgent: "问 Agent",
+    addReview: "加入复盘",
+  },
+  agentTrace: {
+    viewTrace: "查看 AI 推理 trace",
+    localFallback: "已用本地兜底",
+    aiAssisted: "AI 辅助",
+    hermesTask: "Hermes 任务",
+    warnings: "提醒",
+    model: "模型",
+    tool: "工具",
+  },
+  common: {
+    aiRequestFailed: "AI 请求失败",
+    notAvailable: "无",
+  },
+  aiHealth: {
+    fallback: "AI 暂时不可用，先用本地兜底。",
+    check: "检查",
+  },
+};
+
 function formatRiskDimensionName(value: string) {
   return value
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (letter) => letter.toUpperCase());
 }
 
+function localizeRiskDimensionName(value: string, locale: Locale) {
+  if (locale === "en") return formatRiskDimensionName(value);
+  const map: Record<string, string> = {
+    condition: "品相",
+    versionClarity: "版本清晰度",
+    priceVsComps: "价格/成交价",
+    sellerPolicy: "卖家规则",
+    gradingViability: "评级空间",
+  };
+  return map[value] ?? formatRiskDimensionName(value);
+}
+
+function localizeOption(value: string, locale: Locale) {
+  if (locale === "en") return value;
+  const map: Record<string, string> = {
+    Collector: "收藏为主",
+    "Hybrid Collector-Seller": "收藏 + 交易",
+    "Seller / Vendor": "卖家 / 卡商",
+    Collection: "收藏",
+    "Collection + resale": "收藏 + 转手",
+    "Grading play": "送评玩法",
+    "Small seller inventory": "小卖家库存",
+    "Set completion": "补齐套装",
+    Low: "低",
+    Medium: "中",
+    "Medium-low": "中低",
+    "Medium-High": "中高",
+    High: "高",
+    low: "低",
+    medium: "中",
+    high: "高",
+    unknown: "未知",
+    explicit_description: "描述里有写",
+    "Short-term": "短期",
+    "3-6 months": "3-6 个月",
+    "1 year+": "1 年以上",
+    "Long-term collection": "长期收藏",
+    No: "不考虑",
+    Maybe: "可能",
+    Yes: "会",
+    "Self-collection": "自留收藏",
+    Grading: "送评",
+    Resale: "转手",
+    "Considering purchase": "考虑购买",
+    Bought: "已买",
+    Skipped: "跳过",
+    "Sent for grading": "已送评",
+    "Listed for sale": "已挂出",
+    Sold: "已卖",
+    Holding: "持有中",
+    "Re-evaluation": "重新评估",
+    "Still interested": "仍感兴趣",
+    Cautious: "谨慎",
+    "Passed for now": "暂时放弃",
+    Exited: "已退出",
+    "Needs review": "待复盘",
+    Watching: "观察中",
+    Resolved: "已解决",
+    manual: "手动",
+    listing_risk: "链接风险",
+    raw_vs_slab: "裸卡/评级",
+    UNKNOWN: "未记录",
+    PSA8_OR_LOWER: "PSA8 或更低",
+    "Talk about it later": "之后再说",
+  };
+  return map[value] ?? value;
+}
+
+function localizeCardText(value: string, locale: Locale) {
+  if (locale === "en") return value;
+  const map: Record<string, string> = {
+    "Alt Art": "异画",
+    "Special Illustration Rare": "SAR / 特别插画稀有",
+    "Secret Rare": "SR / Secret Rare",
+    Preview: "预览卡",
+    QCSR: "25 周年 QCSR",
+    "Only move forward if the listing has front/back photos, corner closeups, and clear Japanese EB01 version evidence.": "只有看到正反面图、边角特写，并且日版 EB01 版本清楚，才继续看。",
+    "Treat as a flagship chase only after checking recent sold comps, print quality, and whether hype premium has cooled.": "这是旗舰追逐卡，先看近期成交价、印刷品相，以及热度溢价有没有冷下来。",
+    "Moonbreon is collector-icon territory; only review copies with clean edges, surface, centering, and recent sold-comparable support.": "月布已经是标志级收藏卡。只看边缘、表面、居中都清楚，而且近期成交价能撑住的卡。",
+    "Strong modern chase with durable demand, but raw grading upside should be checked against centering and surface photos first.": "现代热门追逐卡，需求比较稳，但裸卡送评空间要先看居中和表面图。",
+    "Review as a grail-level Evolving Skies card; avoid raw copies unless photos clearly support the condition claim.": "按高价 Evolving Skies 追逐卡来看。没有清楚图片支撑品相说法，就别碰裸卡。",
+    "A major character chase; compare raw entry against PSA9 downside before assuming grading upside.": "大角色追逐卡。别先想 PSA10，先把裸卡入手价和 PSA9 下行空间对一下。",
+    "Treat this as a watchlist candidate until the game has more liquidity and clearer market comps.": "先当观察卡看，等流动性和市场成交更清楚再说。",
+    "Treat this as a collector-first review; only consider grading if edges and foil surface are clearly documented.": "先按收藏卡来看。只有边缘和闪面状态拍清楚，才考虑送评。",
+    "Condition claims need photos": "品相说法要看图",
+    "Grading upside is sensitive": "送评空间很吃品相",
+    "Version clarity matters": "版本必须说清楚",
+    "High hype premium": "热度溢价高",
+    "Very condition-sensitive": "非常吃品相",
+    "Entry price needs current sold comps": "入手价要对近期成交价",
+    "Icon premium": "标志卡溢价",
+    "High fake/repack attention": "热门卡，假卡/重封关注度高",
+    "PSA10 margin depends heavily on condition": "PSA10 空间很依赖品相",
+    "Centering matters": "居中很重要",
+    "Raw copies can be over-described": "裸卡描述容易过度美化",
+    "High liquidity but volatile premium": "流动性高，但溢价波动大",
+    "Evolving Skies premium": "Evolving Skies 溢价",
+    "Condition photos required": "必须要品相图",
+    "PSA10 spread can compress": "PSA10 价差可能被压缩",
+    "Character premium": "角色溢价",
+    "Surface/edge evidence needed": "需要表面和边缘信息",
+    "Grading route needs conservative PSA10 odds": "送评路线要用保守 PSA10 概率",
+    "New-market liquidity": "新市场流动性不稳",
+    "No stable grading comps": "评级成交参考还不稳定",
+    "Collector-first only": "只适合收藏优先",
+    "Foil surface risk": "闪面风险",
+    "Version naming ambiguity": "版本命名容易混",
+    "High entry price": "入手价高",
+  };
+  return map[value] ?? value;
+}
+
 function getDateOffset(days: number) {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
-}
-
-function formatDecisionSource(source: DecisionPlanItem["source"]) {
-  if (source === "journal") return "Journal review";
-  return source === "listing_risk" ? "Listing risk" : "Raw vs slab";
 }
 
 function budgetRangeToMonthlyBudget(budgetRange: UserProfile["budgetRange"]) {
@@ -2007,65 +3361,101 @@ function personaToGoal(playerType: UserProfile["playerType"]): UserProfile["goal
   return "Collection + resale";
 }
 
-function personaDescription(playerType: UserProfile["playerType"]) {
+function personaDescription(playerType: UserProfile["playerType"], locale: Locale = "en") {
+  if (locale === "zh") {
+    if (playerType === "Collector") return "主要买自己喜欢的卡，不想因为上头多花钱。";
+    if (playerType === "Seller / Vendor") return "会把卡当库存看，关心利润、手续费和流动性。";
+    return "会收藏，也会在意转手、送评空间和买入纪律。";
+  }
+
   if (playerType === "Collector") return "I mainly collect cards I like and want to avoid overpaying.";
   if (playerType === "Seller / Vendor") return "I buy cards as inventory and care about margin, fees, and liquidity.";
   return "I collect, but I also care about resale, grading upside, and decision discipline.";
 }
 
 function getTcgTone(tcg: UserProfile["favoriteTcgs"][number]) {
-  if (tcg === "Pokemon") return { bg: "bg-[#f9a620] text-[#4a3a10]", border: "border-[#d18a18]", strip: "bg-[#4a7c59]" };
-  if (tcg === "One Piece") return { bg: "bg-[#4a7c59] text-[#f5f3ed]", border: "border-[#386445]", strip: "bg-[#b7472a]" };
-  if (tcg === "Yu-Gi-Oh") return { bg: "bg-[#b7472a] text-[#f5f3ed]", border: "border-[#8f351f]", strip: "bg-[#f9a620]" };
-  if (tcg === "League / Riot TCG") return { bg: "bg-[#ecebe1] text-[#4a7c59]", border: "border-[#dcd9c8]", strip: "bg-[#b7472a]" };
-  return { bg: "bg-[#6b6555] text-[#f5f3ed]", border: "border-[#565044]", strip: "bg-[#f9a620]" };
+  if (tcg === "Pokemon") return { bg: "bg-[#d7a84e] text-[#4a3f24]", border: "border-[#b89344]", strip: "bg-[#2f6f73]" };
+  if (tcg === "One Piece") return { bg: "bg-[#2f6f73] text-[#f4f7f3]", border: "border-[#24585c]", strip: "bg-[#b26a4c]" };
+  if (tcg === "Yu-Gi-Oh") return { bg: "bg-[#b26a4c] text-[#f4f7f3]", border: "border-[#8e4f3b]", strip: "bg-[#d7a84e]" };
+  if (tcg === "League / Riot TCG") return { bg: "bg-[#e7efe8] text-[#2f6f73]", border: "border-[#d6ded5]", strip: "bg-[#b26a4c]" };
+  return { bg: "bg-[#64736c] text-[#f4f7f3]", border: "border-[#4f5a54]", strip: "bg-[#d7a84e]" };
 }
 
 function filterClass(active: boolean) {
   return `rounded-md border px-3 py-2 text-sm font-semibold ${
-    active ? "border-[#4a7c59] bg-[#4a7c59] text-[#f5f3ed]" : "border-[#dcd9c8] bg-[#fffdf7] text-[#4a3a30] hover:border-[#c8c2aa]"
+    active ? "border-[#2f6f73] bg-[#2f6f73] text-[#f4f7f3]" : "border-[#d6ded5] bg-[#fcfbf6] text-[#36413d] hover:border-[#bccbc2]"
   }`;
 }
 
-function getRiskTone(score: ListingRiskReport["score"]) {
+function getRiskTone(score: ListingRiskReport["score"], locale: Locale = "en") {
   if (score === "High") {
     return {
-      kicker: "High risk",
-      headline: "ASK QUESTIONS FIRST",
+      kicker: locale === "zh" ? "高风险" : "High risk",
+      headline: locale === "zh" ? "先问清楚" : "ASK QUESTIONS FIRST",
       containerClass: "border-[#d88980] bg-[#fff5f3] text-[#7a241e]",
     };
   }
 
   if (score === "Medium-High") {
     return {
-      kicker: "Elevated risk",
-      headline: "VERIFY BEFORE BUYING",
+      kicker: locale === "zh" ? "风险偏高" : "Elevated risk",
+      headline: locale === "zh" ? "买前先确认" : "VERIFY BEFORE BUYING",
       containerClass: "border-[#e2c76c] bg-[#fff9dd] text-[#5d4815]",
     };
   }
 
   if (score === "Medium") {
     return {
-      kicker: "Moderate risk",
-      headline: "CHECK THE GAPS",
+      kicker: locale === "zh" ? "中等风险" : "Moderate risk",
+      headline: locale === "zh" ? "先补信息" : "CHECK THE GAPS",
       containerClass: "border-[#d8c887] bg-[#fffbea] text-[#574819]",
     };
   }
 
   return {
-    kicker: "Lower risk",
-    headline: "CONDITIONALLY OK",
+    kicker: locale === "zh" ? "风险较低" : "Lower risk",
+    headline: locale === "zh" ? "有条件继续" : "CONDITIONALLY OK",
     containerClass: "border-[#9fc7a3] bg-[#f1f8ef] text-[#173f24]",
   };
 }
 
-function sanitizeTraceMessage(message: string) {
+function getFomoPostureTone(posture: FomoCheckResult["decisionPosture"]) {
+  if (posture === "Overheated") {
+    return {
+      container: "border-[#d88980] bg-[#fff5f3] text-[#7a241e]",
+      badge: "bg-[#7a241e] text-[#fcfbf6]",
+    };
+  }
+
+  if (posture === "Hot") {
+    return {
+      container: "border-[#e2c76c] bg-[#fff9dd] text-[#5d4815]",
+      badge: "bg-[#b26a4c] text-[#fcfbf6]",
+    };
+  }
+
+  if (posture === "Warm") {
+    return {
+      container: "border-[#d6ded5] bg-[#fffbea] text-[#36413d]",
+      badge: "bg-[#d7a84e] text-[#4a3f24]",
+    };
+  }
+
+  return {
+    container: "border-[#9fc7a3] bg-[#f1f8ef] text-[#173f24]",
+    badge: "bg-[#2f6f73] text-[#f4f7f3]",
+  };
+}
+
+function sanitizeTraceMessage(message: string, locale: Locale = "en") {
   const lower = message.toLowerCase();
   if (lower.includes("zod") || lower.includes("invalid_type") || lower.includes("validation")) {
+    if (locale === "zh") return "AI 输出和应用预期格式不一致，所以已切回本地兜底。";
     return "AI output did not match the expected app schema, so the local fallback was used.";
   }
 
   if (lower.includes("openai 401") || lower.includes("not_authorized") || lower.includes("api key")) {
+    if (locale === "zh") return "当前本地会话里的 AI 服务不可用，所以已切回本地兜底。";
     return "AI provider is unavailable in this local session, so the local fallback was used.";
   }
 

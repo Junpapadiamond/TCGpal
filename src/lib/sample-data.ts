@@ -1,17 +1,18 @@
 import type { DecisionJournalEntry, PlanInput, RawVsSlabInput, UserProfile } from "./schemas";
 
 export const defaultProfile: UserProfile = {
-  ip: "One Piece",
-  favoriteTcgs: ["One Piece"],
+  ip: "Pokemon",
+  favoriteTcgs: ["Pokemon"],
   playerType: "Hybrid Collector-Seller",
-  budgetRange: "$300",
+  budgetRange: "$1000+",
   goal: "Collection + resale",
-  monthlyBudget: 300,
+  todayBudget: 300,
+  monthlyBudget: 1000,
   riskLevel: "Medium",
   holdingPeriod: "3-6 months",
   gradingPreference: "Maybe",
   preferredMarket: "eBay",
-  favoriteCharacters: "Tony Tony Chopper, Nami, Law, Pikachu",
+  favoriteCharacters: "Charizard, Umbreon, Giratina, Rayquaza, Gengar",
 };
 
 export const defaultPlanInput: PlanInput = {

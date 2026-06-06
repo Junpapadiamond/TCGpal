@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f3ed;
-  --foreground: #2d2620;
+  --background: #f4f7f3;
+  --foreground: #24312f;
 }
 
 @theme inline {
@@ -64,26 +64,26 @@ button:disabled {
 }
 
 .primary-button {
-  border: 1px solid #386445;
-  background: #4a7c59;
-  color: #f5f3ed;
-  box-shadow: 0 2px 0 #2f523b;
+  border: 1px solid #24585c;
+  background: #2f6f73;
+  color: #f4f7f3;
+  box-shadow: 0 2px 0 #1f474a;
 }
 
 .primary-button:hover {
-  background: #386445;
+  background: #24585c;
   transform: translateY(-1px);
 }
 
 .secondary-button {
-  border: 1px solid #dcd9c8;
-  background: #fffdf7;
-  color: #2d2620;
+  border: 1px solid #d6ded5;
+  background: #fcfbf6;
+  color: #24312f;
 }
 
 .secondary-button:hover {
-  border-color: #c8c2aa;
-  background: #ecebe1;
+  border-color: #bccbc2;
+  background: #e7efe8;
 }
 
 .nav-button {
@@ -96,21 +96,21 @@ button:disabled {
   border: 1px solid transparent;
   border-radius: 0.25rem;
   padding: 0.55rem 0.75rem;
-  color: #6b6555;
+  color: #64736c;
   font-size: 0.86rem;
   font-weight: 700;
 }
 
 .nav-button:hover {
-  border-color: #dcd9c8;
-  background: #fffdf7;
-  color: #2d2620;
+  border-color: #d6ded5;
+  background: #fcfbf6;
+  color: #24312f;
 }
 
 .nav-button-active {
-  border-color: #dcd9c8;
-  background: #ecebe1;
-  color: #4a7c59;
+  border-color: #d6ded5;
+  background: #e7efe8;
+  color: #2f6f73;
 }
 
 .choice-card {
@@ -121,10 +121,10 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border: 1px solid #dcd9c8;
+  border: 1px solid #d6ded5;
   border-radius: 0.25rem;
-  background: #fffdf7;
-  color: #2d2620;
+  background: #fcfbf6;
+  color: #24312f;
   padding: 1rem 3rem 1rem 1rem;
   font-weight: 800;
   text-align: left;
@@ -136,15 +136,15 @@ button:disabled {
 }
 
 .choice-card:hover {
-  border-color: #c8c2aa;
-  background: #ecebe1;
+  border-color: #bccbc2;
+  background: #e7efe8;
   transform: translateY(-1px);
 }
 
 .choice-card-active {
-  border-color: #4a7c59;
-  background: #eef0df;
-  box-shadow: inset 0 0 0 1px #4a7c59;
+  border-color: #2f6f73;
+  background: #e4eee7;
+  box-shadow: inset 0 0 0 1px #2f6f73;
 }
 
 .choice-check {
@@ -157,8 +157,8 @@ button:disabled {
   transform: translateY(-50%);
   place-items: center;
   border-radius: 0.25rem;
-  background: #4a7c59;
-  color: #f5f3ed;
+  background: #2f6f73;
+  color: #f4f7f3;
 }
 
 .form-grid {
@@ -184,7 +184,7 @@ button:disabled {
   font-size: 0.82rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: #6b6555;
+  color: #64736c;
 }
 
 .field input,
@@ -192,10 +192,10 @@ button:disabled {
 .field textarea {
   width: 100%;
   min-width: 0;
-  border: 1px solid #dcd9c8;
+  border: 1px solid #d6ded5;
   border-radius: 0.25rem;
-  background: #fffdf7;
-  color: #2d2620;
+  background: #fcfbf6;
+  color: #24312f;
   outline: none;
   padding: 0.75rem 0.85rem;
 }
@@ -207,6 +207,6 @@ button:disabled {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: #4a7c59;
+  border-color: #2f6f73;
   box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.14);
 }

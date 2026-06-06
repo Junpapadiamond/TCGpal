@@ -6,6 +6,8 @@ export type CuratedCardRecommendation = {
   cardName: string;
   version: string;
   rarity: string;
+  imageUrl?: string;
+  imageSource?: string;
   personas: UserProfile["playerType"][];
   budgetRanges: UserProfile["budgetRange"][];
   suggestedRawPrice: number;
@@ -48,25 +50,123 @@ export const curatedRecommendations: CuratedCardRecommendation[] = [
     },
   },
   {
-    id: "pokemon-charizard-vstar-cz",
+    id: "pokemon-mega-charizard-x-ex-phantasmal-flames-sir",
     tcg: "Pokemon",
-    cardName: "Charizard VSTAR",
-    version: "Crown Zenith",
-    rarity: "Ultra Rare",
+    cardName: "Mega Charizard X ex",
+    version: "Phantasmal Flames 125/094",
+    rarity: "Special Illustration Rare",
+    imageUrl: "https://images.pokemontcg.io/me2/125.png",
+    imageSource: "Pokemon TCG API",
     personas: ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"],
-    budgetRanges: ["$150", "$300", "$1000+", "Talk about it later"],
-    suggestedRawPrice: 65,
-    suggestedPsa9Price: 78,
-    suggestedPsa10Price: 155,
-    psa10Probability: 0.28,
-    buyTone: "Better as a disciplined inventory candidate than a chase-card bet; entry price and liquidity matter more than hype.",
-    riskFlags: ["Population may be high", "Condition must be verified", "Grading margin needs sold comps"],
+    budgetRanges: ["$1000+", "Talk about it later"],
+    suggestedRawPrice: 820,
+    suggestedPsa9Price: 760,
+    suggestedPsa10Price: 1600,
+    psa10Probability: 0.18,
+    buyTone: "Treat as a flagship chase only after checking recent sold comps, print quality, and whether hype premium has cooled.",
+    riskFlags: ["High hype premium", "Very condition-sensitive", "Entry price needs current sold comps"],
     listingSample: {
-      title: "Charizard VSTAR Crown Zenith Ultra Rare Near Mint",
-      description: "Near mint, front and back photos available. Returns accepted.",
-      price: 65,
+      title: "Mega Charizard X ex 125/094 Phantasmal Flames SIR Near Mint",
+      description: "Near mint. Front and back photos available. No whitening visible.",
+      price: 820,
       marketplace: "eBay",
       userGoal: "Resale",
+    },
+  },
+  {
+    id: "pokemon-umbreon-vmax-evolving-skies-alt",
+    tcg: "Pokemon",
+    cardName: "Umbreon VMAX",
+    version: "Evolving Skies Alternate Art 215/203",
+    rarity: "Secret Rare",
+    imageUrl: "https://images.pokemontcg.io/swsh7/215.png",
+    imageSource: "Pokemon TCG API",
+    personas: ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"],
+    budgetRanges: ["$1000+", "Talk about it later"],
+    suggestedRawPrice: 1300,
+    suggestedPsa9Price: 1150,
+    suggestedPsa10Price: 2200,
+    psa10Probability: 0.16,
+    buyTone: "Moonbreon is collector-icon territory; only review copies with clean edges, surface, centering, and recent sold-comparable support.",
+    riskFlags: ["Icon premium", "High fake/repack attention", "PSA10 margin depends heavily on condition"],
+    listingSample: {
+      title: "Umbreon VMAX 215/203 Evolving Skies Alternate Art Near Mint",
+      description: "Beautiful card. Front and back photos shown. Ships insured.",
+      price: 1300,
+      marketplace: "eBay",
+      userGoal: "Self-collection",
+    },
+  },
+  {
+    id: "pokemon-giratina-v-lost-origin-alt",
+    tcg: "Pokemon",
+    cardName: "Giratina V",
+    version: "Lost Origin Alternate Art 186/196",
+    rarity: "Secret Rare",
+    imageUrl: "https://images.pokemontcg.io/swsh11/186.png",
+    imageSource: "Pokemon TCG API",
+    personas: ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"],
+    budgetRanges: ["$300", "$1000+", "Talk about it later"],
+    suggestedRawPrice: 390,
+    suggestedPsa9Price: 330,
+    suggestedPsa10Price: 750,
+    psa10Probability: 0.2,
+    buyTone: "Strong modern chase with durable demand, but raw grading upside should be checked against centering and surface photos first.",
+    riskFlags: ["Centering matters", "Raw copies can be over-described", "High liquidity but volatile premium"],
+    listingSample: {
+      title: "Giratina V 186/196 Lost Origin Alternate Art Near Mint",
+      description: "Clean raw copy. Includes front/back photos and corner closeups.",
+      price: 390,
+      marketplace: "eBay",
+      userGoal: "Grading",
+    },
+  },
+  {
+    id: "pokemon-rayquaza-vmax-evolving-skies-alt",
+    tcg: "Pokemon",
+    cardName: "Rayquaza VMAX",
+    version: "Evolving Skies Alternate Art 218/203",
+    rarity: "Secret Rare",
+    imageUrl: "https://images.pokemontcg.io/swsh7/218.png",
+    imageSource: "Pokemon TCG API",
+    personas: ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"],
+    budgetRanges: ["$300", "$1000+", "Talk about it later"],
+    suggestedRawPrice: 520,
+    suggestedPsa9Price: 450,
+    suggestedPsa10Price: 950,
+    psa10Probability: 0.18,
+    buyTone: "Review as a grail-level Evolving Skies card; avoid raw copies unless photos clearly support the condition claim.",
+    riskFlags: ["Evolving Skies premium", "Condition photos required", "PSA10 spread can compress"],
+    listingSample: {
+      title: "Rayquaza VMAX 218/203 Evolving Skies Alternate Art NM",
+      description: "Near mint, front/back included. Minor factory edge mark possible.",
+      price: 520,
+      marketplace: "eBay",
+      userGoal: "Self-collection",
+    },
+  },
+  {
+    id: "pokemon-gengar-vmax-fusion-strike-alt",
+    tcg: "Pokemon",
+    cardName: "Gengar VMAX",
+    version: "Fusion Strike Alternate Art 271/264",
+    rarity: "Secret Rare",
+    imageUrl: "https://images.pokemontcg.io/swsh8/271.png",
+    imageSource: "Pokemon TCG API",
+    personas: ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"],
+    budgetRanges: ["$300", "$1000+", "Talk about it later"],
+    suggestedRawPrice: 430,
+    suggestedPsa9Price: 370,
+    suggestedPsa10Price: 820,
+    psa10Probability: 0.19,
+    buyTone: "A major character chase; compare raw entry against PSA9 downside before assuming grading upside.",
+    riskFlags: ["Character premium", "Surface/edge evidence needed", "Grading route needs conservative PSA10 odds"],
+    listingSample: {
+      title: "Gengar VMAX 271/264 Fusion Strike Alternate Art Near Mint",
+      description: "Front photo only. Seller says mint and PSA10 candidate.",
+      price: 430,
+      marketplace: "eBay",
+      userGoal: "Grading",
     },
   },
   {
@@ -116,21 +216,23 @@ export const curatedRecommendations: CuratedCardRecommendation[] = [
 ];
 
 export function getCuratedRecommendations(profile: UserProfile) {
-  const tcgs = profile.favoriteTcgs?.length ? profile.favoriteTcgs : ["One Piece"];
+  const tcgs = profile.favoriteTcgs?.length ? profile.favoriteTcgs : ["Pokemon"];
   const exact = curatedRecommendations.filter((card) =>
     tcgs.includes(card.tcg) &&
     card.personas.includes(profile.playerType) &&
     (profile.budgetRange === "Talk about it later" || card.budgetRanges.includes(profile.budgetRange)),
   );
 
-  if (exact.length) return exact.slice(0, 4);
+  if (exact.length) return exact.slice(0, 5);
 
-  return curatedRecommendations.filter((card) => tcgs.includes(card.tcg)).slice(0, 4);
+  return curatedRecommendations.filter((card) => tcgs.includes(card.tcg)).slice(0, 5);
 }
 
 export function getJournalBasedRecommendations(profile: UserProfile, entries: DecisionJournalEntry[]): JournalBasedRecommendation[] {
   const fallbackCards = getCuratedRecommendations(profile);
-  const cards = Array.from(new Map([...curatedRecommendations, ...fallbackCards].map((card) => [card.id, card])).values());
+  const selectedTcgs = profile.favoriteTcgs?.length ? profile.favoriteTcgs : ["Pokemon"];
+  const cards = Array.from(new Map([...curatedRecommendations, ...fallbackCards].map((card) => [card.id, card])).values())
+    .filter((card) => selectedTcgs.includes(card.tcg));
   const journalSignals = buildJournalSignals(profile, entries);
 
   if (!entries.length) {
@@ -145,7 +247,7 @@ export function getJournalBasedRecommendations(profile: UserProfile, entries: De
   return cards
     .map((card) => scoreCardFromJournal(card, profile, journalSignals))
     .sort((left, right) => right.score - left.score)
-    .slice(0, 4);
+    .slice(0, 5);
 }
 
 export function toRawVsSlabInput(card: CuratedCardRecommendation): RawVsSlabInput {

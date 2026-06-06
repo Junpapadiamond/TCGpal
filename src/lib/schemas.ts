@@ -37,6 +37,7 @@ export const userProfileSchema = z.object({
   playerType: z.enum(playerTypeOptions).default("Hybrid Collector-Seller"),
   budgetRange: z.enum(budgetRangeOptions).default("$300"),
   goal: z.enum(goalOptions),
+  todayBudget: z.number().min(0).default(300),
   monthlyBudget: z.number().min(0),
   riskLevel: z.enum(riskOptions),
   holdingPeriod: z.enum(holdingOptions),
@@ -75,6 +76,67 @@ export const rawVsSlabInputSchema = z.object({
   shippingCost: z.number().min(0),
   psa10Probability: z.number().min(0).max(1),
   psa9Probability: z.number().min(0).max(1),
+});
+
+export const fomoCheckInputSchema = z.object({
+  cardName: z.string().trim().min(1),
+  cardVersion: z.string().trim().default(""),
+  askingPrice: z.number().min(0),
+  todayBudget: z.number().min(0).default(0),
+  monthlyBudget: z.number().min(0),
+  budgetRange: z.enum(budgetRangeOptions),
+  versionConfirmed: z.boolean().default(true),
+  feelingText: z.string().trim().min(1),
+  evidenceText: z.string().trim().default(""),
+});
+
+export const fomoMetricSchema = z.object({
+  score: z.number().int().min(0).max(100),
+  label: z.enum(["Low", "Medium", "High"]),
+  reasons: z.array(z.string()).min(1).max(4),
+});
+
+export const fomoCheckResultSchema = z.object({
+  decisionPosture: z.enum(["Cool", "Warm", "Hot", "Overheated"]),
+  nextStep: z.enum(["Pause", "Ask for evidence", "Run math", "Proceed within guardrails"]),
+  fomoHeat: fomoMetricSchema,
+  budgetStrain: fomoMetricSchema,
+  evidenceStrength: fomoMetricSchema,
+  versionClarity: fomoMetricSchema,
+  hardStop: z.boolean(),
+  cooldownRecommended: z.boolean(),
+  warmSummary: z.string(),
+  guardrail: z.string(),
+});
+
+export const demoSessionSchema = z.object({
+  signedIn: z.boolean(),
+  mode: z.enum(["login", "signup"]),
+  createdAt: z.string(),
+});
+
+export const tcgPurchaseSchema = z.object({
+  id: z.string(),
+  cardId: z.string(),
+  cardName: z.string().trim().min(1),
+  cardVersion: z.string().trim().default(""),
+  askingPrice: z.number().min(0),
+  boughtAt: z.string(),
+});
+
+export const cooldownTicketSchema = z.object({
+  id: z.string(),
+  cardId: z.string(),
+  cardName: z.string().trim().min(1),
+  cardVersion: z.string().trim().default(""),
+  askingPrice: z.number().min(0),
+  originalThesis: z.string().trim().min(1),
+  missingEvidence: z.string().trim().default(""),
+  decisionPosture: fomoCheckResultSchema.shape.decisionPosture,
+  nextStep: fomoCheckResultSchema.shape.nextStep,
+  createdAt: z.string(),
+  revisitDate: z.string(),
+  status: z.enum(["cooling", "reviewed", "skipped", "bought"]).default("cooling"),
 });
 
 export const decisionJournalEntrySchema = z.object({
@@ -292,6 +354,11 @@ export type UserProfile = z.infer<typeof userProfileSchema>;
 export type PlanInput = z.infer<typeof planInputSchema>;
 export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;
+export type FomoCheckInput = z.infer<typeof fomoCheckInputSchema>;
+export type FomoCheckResult = z.infer<typeof fomoCheckResultSchema>;
+export type DemoSession = z.infer<typeof demoSessionSchema>;
+export type TcgPurchase = z.infer<typeof tcgPurchaseSchema>;
+export type CooldownTicket = z.infer<typeof cooldownTicketSchema>;
 export type DecisionJournalEntry = z.infer<typeof decisionJournalEntrySchema>;
 export type DecisionPlanItem = z.infer<typeof decisionPlanItemSchema>;
 export type GeneratedPlan = z.infer<typeof generatedPlanSchema>;

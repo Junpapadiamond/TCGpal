@@ -4,16 +4,24 @@ import { getCuratedRecommendations, getJournalBasedRecommendations, toListingRis
 import { listingRiskInputSchema, rawVsSlabInputSchema } from "./schemas";
 
 describe("curated recommendations", () => {
-  it("returns cards for multiple selected TCGs", () => {
+  it("returns five Pokemon chase cards for a Pokemon-only profile", () => {
     const cards = getCuratedRecommendations({
       ...defaultProfile,
-      favoriteTcgs: ["Pokemon", "One Piece"],
+      favoriteTcgs: ["Pokemon"],
       playerType: "Collector",
-      budgetRange: "$150",
+      budgetRange: "$1000+",
     });
 
-    expect(cards.length).toBeGreaterThan(1);
-    expect(new Set(cards.map((card) => card.tcg))).toEqual(new Set(["One Piece", "Pokemon"]));
+    expect(cards).toHaveLength(5);
+    expect(new Set(cards.map((card) => card.tcg))).toEqual(new Set(["Pokemon"]));
+    expect(cards.map((card) => card.cardName)).toEqual([
+      "Mega Charizard X ex",
+      "Umbreon VMAX",
+      "Giratina V",
+      "Rayquaza VMAX",
+      "Gengar VMAX",
+    ]);
+    expect(cards.every((card) => card.imageUrl?.startsWith("https://images.pokemontcg.io/"))).toBe(true);
   });
 
   it("prioritizes grading and resale cards for hybrid users", () => {
@@ -38,6 +46,48 @@ describe("curated recommendations", () => {
     expect(cards.length).toBeGreaterThan(0);
   });
 
+  it("keeps journal-scored recommendations inside selected TCGs", () => {
+    const cards = getJournalBasedRecommendations(
+      {
+        ...defaultProfile,
+        favoriteTcgs: ["Pokemon"],
+        playerType: "Hybrid Collector-Seller",
+        budgetRange: "$1000+",
+      },
+      [
+        {
+          id: "journal-1",
+          tcg: "One Piece",
+          cardName: "Tony Tony Chopper",
+          version: "EB01 Japanese Alternate Art",
+          date: "2026-05-24",
+          actionType: "Considering purchase",
+          price: 80,
+          userGoal: "Collection + resale",
+          tags: "Chopper alternate art",
+          sentiment: "Still interested",
+          thesis: "I used to watch One Piece cards, but this profile is now Pokemon-only.",
+          watchReason: "Old preference.",
+          buyCondition: "",
+          sellCondition: "",
+          stopCondition: "",
+          risks: "",
+          missingInfo: "",
+          reviewDate: "",
+          reviewStatus: "Watching",
+          finalOutcome: "",
+          lessonsLearned: "",
+          actualGrade: "UNKNOWN",
+          source: "manual",
+          createdAt: "2026-05-24T00:00:00.000Z",
+        },
+      ],
+    );
+
+    expect(cards).toHaveLength(5);
+    expect(cards.every((recommendation) => recommendation.card.tcg === "Pokemon")).toBe(true);
+  });
+
   it("converts a selected card to valid tool inputs", () => {
     const card = getCuratedRecommendations(defaultProfile)[0]!;
 
@@ -50,13 +100,13 @@ describe("curated recommendations", () => {
       {
         id: "journal-1",
         tcg: "Pokemon",
-        cardName: "Charizard VSTAR",
-        version: "Crown Zenith",
+        cardName: "Mega Charizard X ex",
+        version: "Phantasmal Flames 125/094",
         date: "2026-05-24",
         actionType: "Considering purchase",
         price: 65,
         userGoal: "Collection + resale",
-        tags: "Charizard Crown Zenith",
+        tags: "Charizard Phantasmal Flames",
         sentiment: "Still interested",
         thesis: "I want to track Charizard because it has collection demand but needs disciplined entry pricing.",
         watchReason: "Charizard is a character I keep comparing against other chase cards.",
@@ -75,7 +125,7 @@ describe("curated recommendations", () => {
       },
     ]);
 
-    expect(cards[0]?.card.cardName).toBe("Charizard VSTAR");
+    expect(cards[0]?.card.cardName).toBe("Mega Charizard X ex");
     expect(cards[0]?.reason).toContain("Recommended because");
   });
 });
