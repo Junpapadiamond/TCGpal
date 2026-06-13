@@ -15,6 +15,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TCGpal",
   description: "A cautious card decision layer for TCG collectors and small sellers.",
+  icons: {
+    icon: [
+      { url: "/tcgpal-icon.svg", type: "image/svg+xml" },
+      { url: "/icon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

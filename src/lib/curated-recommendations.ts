@@ -1,4 +1,5 @@
 import type { DecisionJournalEntry, ListingRiskInput, RawVsSlabInput, UserProfile } from "./schemas";
+import type { PokemonTcgCard } from "./external/pokemon-tcg";
 
 export type CuratedCardRecommendation = {
   id: string;
@@ -25,6 +26,40 @@ export type JournalBasedRecommendation = {
   score: number;
   signals: string[];
 };
+
+export function pokemonCardToRecommendation(card: PokemonTcgCard): CuratedCardRecommendation {
+  const rawGuide = extractPokemonRawPrice(card) ?? 0;
+  const version = [
+    card.set?.name,
+    card.number,
+    card.rarity,
+  ].filter(Boolean).join(" ");
+
+  return {
+    id: `pokemon-api-${card.id}`,
+    tcg: "Pokemon",
+    cardName: card.name,
+    version,
+    rarity: card.rarity ?? card.subtypes?.join(" / ") ?? "Pokemon card",
+    imageUrl: card.images?.large ?? card.images?.small,
+    imageSource: "Pokemon TCG API",
+    personas: ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"],
+    budgetRanges: ["$50", "$150", "$300", "$1000+", "Talk about it later"],
+    suggestedRawPrice: rawGuide,
+    suggestedPsa9Price: Math.round(rawGuide * 0.9),
+    suggestedPsa10Price: Math.round(rawGuide * 1.7),
+    psa10Probability: 0.18,
+    buyTone: "API card selected. TCGpal still needs listing photos, exact condition, and recent sold comps before this becomes a clean buy decision.",
+    riskFlags: ["API catalog match", "Condition still unknown", "Sold comps still need verification"],
+    listingSample: {
+      title: `${card.name} ${version}`.trim(),
+      description: "Pokemon TCG API catalog match. Add seller listing text before checking listing risk.",
+      price: rawGuide,
+      marketplace: "eBay",
+      userGoal: "Self-collection",
+    },
+  };
+}
 
 export const curatedRecommendations: CuratedCardRecommendation[] = [
   {
@@ -377,6 +412,30 @@ function tokenize(text: string) {
 function sentenceJoin(items: string[]) {
   if (items.length <= 1) return items[0] ?? "";
   return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function extractPokemonRawPrice(card: PokemonTcgCard) {
+  const prices = card.tcgplayer?.prices;
+  if (!prices) return null;
+
+  const values: number[] = [];
+  for (const price of Object.values(prices)) {
+    if (!isRecord(price)) continue;
+    for (const key of ["market", "mid", "low", "high"]) {
+      const value = price[key];
+      if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+        values.push(value);
+        break;
+      }
+    }
+  }
+
+  if (!values.length) return null;
+  return Math.round(Math.max(...values));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 const commonTerms = new Set([

@@ -1,12 +1,18 @@
 import type { HermesTaskType } from "@/lib/schemas";
 
-export type AiProviderName = "openai" | "glm" | "kimi" | "mimo";
+export type AiProviderName = "openai" | "anthropic" | "glm" | "kimi" | "mimo";
 export type AiModelRole = "classifier" | "primary" | "critic";
+export type AiReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
 
 export type AiConfig = {
   provider: AiProviderName;
   primaryModel: string;
   cheapModel: string;
+  baseUrl: string;
+  anthropicBaseUrl: string;
+  anthropicModel: string;
+  reasoningEffort: AiReasoningEffort;
+  disableResponseStorage: boolean;
   hasApiKey: boolean;
 };
 
@@ -15,9 +21,18 @@ export function getAiConfig(): AiConfig {
 
   return {
     provider,
-    primaryModel: process.env.OPENAI_MODEL_PRIMARY || "gpt-5.4-mini",
-    cheapModel: process.env.OPENAI_MODEL_CHEAP || "gpt-5.4-nano",
-    hasApiKey: provider === "openai" && Boolean(process.env.OPENAI_API_KEY),
+    primaryModel: process.env.OPENAI_MODEL || process.env.OPENAI_MODEL_PRIMARY || "gpt-5.5-2026-04-23",
+    cheapModel: process.env.OPENAI_MODEL_REVIEW || process.env.OPENAI_MODEL_CHEAP || process.env.OPENAI_MODEL || "gpt-5.5-2026-04-23",
+    baseUrl: normalizeBaseUrl(process.env.OPENAI_BASE_URL),
+    anthropicBaseUrl: normalizeAnthropicBaseUrl(process.env.ANTHROPIC_BASE_URL),
+    anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-4-8",
+    reasoningEffort: parseReasoningEffort(process.env.OPENAI_REASONING_EFFORT),
+    disableResponseStorage: parseBoolean(process.env.OPENAI_DISABLE_RESPONSE_STORAGE),
+    hasApiKey: provider === "openai"
+      ? Boolean(process.env.OPENAI_API_KEY)
+      : provider === "anthropic"
+        ? Boolean(process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY)
+        : false,
   };
 }
 
@@ -33,6 +48,31 @@ export function getPrimaryAgentForTask(taskType: HermesTaskType) {
 }
 
 function parseProvider(value: string | undefined): AiProviderName {
+  if (value === "anthropic") return value;
   if (value === "glm" || value === "kimi" || value === "mimo") return value;
   return "openai";
+}
+
+function normalizeBaseUrl(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "https://api.openai.com/v1";
+  return trimmed.replace(/\/+$/, "");
+}
+
+function normalizeAnthropicBaseUrl(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "https://api.anthropic.com/v1";
+  return trimmed.replace(/\/+$/, "").replace(/\/v1\/messages$/, "").replace(/\/messages$/, "");
+}
+
+function parseReasoningEffort(value: string | undefined): AiReasoningEffort {
+  if (value === "none" || value === "minimal" || value === "low" || value === "medium" || value === "high" || value === "xhigh") {
+    return value;
+  }
+
+  return "xhigh";
+}
+
+function parseBoolean(value: string | undefined) {
+  return value === "1" || value === "true" || value === "yes";
 }

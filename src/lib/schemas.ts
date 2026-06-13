@@ -109,6 +109,112 @@ export const fomoCheckResultSchema = z.object({
   guardrail: z.string(),
 });
 
+export const marketCheckDecisionSchema = z.enum(["Buy", "Ask seller", "Wait", "Pause"]);
+export const marketCheckConfidenceSchema = z.enum(["low", "medium", "high"]);
+
+export const marketCheckSourceSchema = z.object({
+  label: z.string(),
+  url: z.string().nullable().default(null),
+  status: z.enum(["used", "missing", "unavailable"]),
+  note: z.string(),
+});
+
+export const marketCheckToolTraceSchema = z.object({
+  step: z.string(),
+  tool: z.string(),
+  model: z.string(),
+  summary: z.string(),
+  sources: z.array(marketCheckSourceSchema).default([]),
+});
+
+export const marketCheckRequestSchema = z.object({
+  cardName: z.string().trim().min(1),
+  cardVersion: z.string().trim().default(""),
+  tcg: z.enum(favoriteTcgOptions).default("Pokemon"),
+  askingPrice: z.number().min(0),
+  feelingText: z.string().trim().min(1),
+  evidenceText: z.string().trim().default(""),
+  profile: userProfileSchema,
+});
+
+export const identifiedCardSchema = z.object({
+  cardName: z.string(),
+  version: z.string(),
+  tcg: z.enum(favoriteTcgOptions),
+  confidence: marketCheckConfidenceSchema,
+  candidates: z.array(z.object({
+    name: z.string(),
+    version: z.string(),
+    source: z.string(),
+    imageUrl: z.string().nullable().default(null),
+    url: z.string().nullable().default(null),
+  })),
+  missing: z.array(z.string()),
+});
+
+export const referencePricesSchema = z.object({
+  available: z.boolean(),
+  source: z.string(),
+  rawLow: z.number().nullable(),
+  rawMid: z.number().nullable(),
+  rawHigh: z.number().nullable(),
+  psa9: z.number().nullable(),
+  psa10: z.number().nullable(),
+  notes: z.array(z.string()),
+});
+
+export const soldCompsSchema = z.object({
+  available: z.boolean(),
+  source: z.string(),
+  manualCheckUrl: z.string().default(""),
+  lookupQuery: z.string().default(""),
+  comps: z.array(z.object({
+    label: z.string(),
+    price: z.number(),
+    soldAt: z.string().nullable().default(null),
+    url: z.string().nullable().default(null),
+  })),
+  notes: z.array(z.string()),
+});
+
+export const evidenceGapCheckSchema = z.object({
+  score: z.number().int().min(0).max(100),
+  gaps: z.array(z.string()),
+  strengths: z.array(z.string()),
+});
+
+export const marketBudgetRulesSchema = z.object({
+  hardStop: z.boolean(),
+  budgetStrain: z.number().int().min(0).max(100),
+  activeBudget: z.number(),
+  remainingToday: z.number(),
+  notes: z.array(z.string()),
+});
+
+export const marketCheckDecisionSummarySchema = z.object({
+  decision: marketCheckDecisionSchema,
+  confidence: marketCheckConfidenceSchema,
+  summary: z.string(),
+  nextActions: z.array(z.string()).min(1),
+  assumptions: z.array(z.string()),
+  missingInformation: z.array(z.string()),
+});
+
+export const marketCheckResponseSchema = z.object({
+  input: marketCheckRequestSchema,
+  identifiedCard: identifiedCardSchema,
+  referencePrices: referencePricesSchema,
+  soldComps: soldCompsSchema,
+  evidence: evidenceGapCheckSchema,
+  budget: marketBudgetRulesSchema,
+  result: marketCheckDecisionSummarySchema,
+  sources: z.array(marketCheckSourceSchema),
+  trace: z.array(marketCheckToolTraceSchema),
+  warnings: z.array(z.string()),
+  fallbackUsed: z.boolean(),
+  model: z.string(),
+});
+
 export const demoSessionSchema = z.object({
   signedIn: z.boolean(),
   mode: z.enum(["login", "signup"]),
@@ -356,6 +462,16 @@ export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;
 export type FomoCheckInput = z.infer<typeof fomoCheckInputSchema>;
 export type FomoCheckResult = z.infer<typeof fomoCheckResultSchema>;
+export type MarketCheckDecision = z.infer<typeof marketCheckDecisionSchema>;
+export type MarketCheckRequest = z.infer<typeof marketCheckRequestSchema>;
+export type MarketCheckResponse = z.infer<typeof marketCheckResponseSchema>;
+export type MarketCheckSource = z.infer<typeof marketCheckSourceSchema>;
+export type MarketCheckToolTrace = z.infer<typeof marketCheckToolTraceSchema>;
+export type IdentifiedCard = z.infer<typeof identifiedCardSchema>;
+export type ReferencePrices = z.infer<typeof referencePricesSchema>;
+export type SoldComps = z.infer<typeof soldCompsSchema>;
+export type EvidenceGapCheck = z.infer<typeof evidenceGapCheckSchema>;
+export type MarketBudgetRules = z.infer<typeof marketBudgetRulesSchema>;
 export type DemoSession = z.infer<typeof demoSessionSchema>;
 export type TcgPurchase = z.infer<typeof tcgPurchaseSchema>;
 export type CooldownTicket = z.infer<typeof cooldownTicketSchema>;

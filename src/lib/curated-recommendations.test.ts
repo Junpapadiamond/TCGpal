@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultProfile } from "./sample-data";
-import { getCuratedRecommendations, getJournalBasedRecommendations, toListingRiskInput, toRawVsSlabInput } from "./curated-recommendations";
+import { getCuratedRecommendations, getJournalBasedRecommendations, pokemonCardToRecommendation, toListingRiskInput, toRawVsSlabInput } from "./curated-recommendations";
 import { listingRiskInputSchema, rawVsSlabInputSchema } from "./schemas";
 
 describe("curated recommendations", () => {
@@ -93,6 +93,30 @@ describe("curated recommendations", () => {
 
     expect(rawVsSlabInputSchema.safeParse(toRawVsSlabInput(card)).success).toBe(true);
     expect(listingRiskInputSchema.safeParse(toListingRiskInput(card)).success).toBe(true);
+  });
+
+  it("converts a Pokemon TCG API card into a selectable recommendation", () => {
+    const card = pokemonCardToRecommendation({
+      id: "swsh7-215",
+      name: "Umbreon VMAX",
+      supertype: "Pokemon",
+      subtypes: ["VMAX"],
+      number: "215",
+      rarity: "Rare Secret",
+      set: { name: "Evolving Skies" },
+      images: { large: "https://images.pokemontcg.io/swsh7/215.png" },
+      tcgplayer: {
+        prices: {
+          holofoil: { market: 500 },
+        },
+      },
+    });
+
+    expect(card.id).toBe("pokemon-api-swsh7-215");
+    expect(card.tcg).toBe("Pokemon");
+    expect(card.version).toContain("Evolving Skies");
+    expect(card.suggestedRawPrice).toBe(500);
+    expect(rawVsSlabInputSchema.safeParse(toRawVsSlabInput(card)).success).toBe(true);
   });
 
   it("uses journal terms to prioritize related local recommendations", () => {

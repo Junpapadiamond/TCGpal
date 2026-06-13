@@ -7,6 +7,7 @@ import {
   Check,
   ClipboardList,
   Clock3,
+  ExternalLink,
   Layers3,
   Gauge,
   LayoutDashboard,
@@ -19,10 +20,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
   getJournalBasedRecommendations,
+  pokemonCardToRecommendation,
   toListingRiskInput,
   toRawVsSlabInput,
   type CuratedCardRecommendation,
@@ -56,6 +58,7 @@ import {
   listingRiskReportSchema,
   listingRiskInputSchema,
   marketOptions,
+  marketCheckResponseSchema,
   playerTypeOptions,
   rawVsSlabInputSchema,
   riskOptions,
@@ -70,6 +73,7 @@ import {
   type ListingEvidence,
   type ListingRiskInput,
   type ListingRiskReport,
+  type MarketCheckResponse,
   type PipelineCriticResult,
   type PipelineMathResult,
   type RawVsSlabInput,
@@ -103,7 +107,7 @@ type OnboardingStep = "tcg" | "persona" | "budget";
 type AiHealth = {
   ok: boolean;
   warning?: string;
-  models?: { role: string; model: string; ok: boolean; status?: number }[];
+  models?: { role: string; model: string; ok: boolean; status?: number; warning?: string }[];
 };
 
 type PipelineTraceStep = {
@@ -202,6 +206,7 @@ export default function Home() {
   const [, setJournalAgentDraft] = useState<JournalDraft | null>(null);
   const [aiLoading, setAiLoading] = useState<"risk" | "journal" | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [showRiskAdvanced, setShowRiskAdvanced] = useState(false);
   const [aiHealth, setAiHealth] = useState<AiHealth | null>(null);
   const [pipelineLoading, setPipelineLoading] = useState<"evidence" | "risk_math_critic" | null>(null);
   const [pipelineError, setPipelineError] = useState<string | null>(null);
@@ -745,29 +750,43 @@ export default function Home() {
               <InputField label={getLocaleCopy(locale).risk.listedPrice} type="number" {...riskForm.register("price", { valueAsNumber: true })} />
               <SelectField label={getLocaleCopy(locale).risk.marketplace} {...riskForm.register("marketplace")} options={marketOptions} locale={locale} />
               <SelectField label={getLocaleCopy(locale).risk.userGoal} {...riskForm.register("userGoal")} options={["Self-collection", "Grading", "Resale"]} locale={locale} />
-              <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
-                <button className="primary-button" type="submit">
-                  <AlertTriangle className="h-4 w-4" />
-                  {getLocaleCopy(locale).risk.analyzeLocal}
-                </button>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  disabled={aiLoading === "risk"}
-                  onClick={riskForm.handleSubmit(handleRiskAiSubmit)}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {aiLoading === "risk" ? getLocaleCopy(locale).risk.runningHermes : getLocaleCopy(locale).risk.analyzeAi}
-                </button>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  disabled={pipelineLoading !== null}
-                  onClick={riskForm.handleSubmit(handlePipelineEvidenceSubmit)}
-                >
-                  <ListChecks className="h-4 w-4" />
-                  {pipelineLoading === "evidence" ? getLocaleCopy(locale).risk.evidenceAgentLoading : getLocaleCopy(locale).risk.analyzePipeline}
-                </button>
+              <div className="flex flex-col gap-3 md:col-span-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button className="primary-button" type="submit">
+                    <AlertTriangle className="h-4 w-4" />
+                    {getLocaleCopy(locale).risk.analyzeLocal}
+                  </button>
+                  <button
+                    className="text-left text-sm font-semibold text-[#2f6f73] underline-offset-2 hover:underline"
+                    type="button"
+                    aria-expanded={showRiskAdvanced}
+                    onClick={() => setShowRiskAdvanced((value) => !value)}
+                  >
+                    {showRiskAdvanced ? getLocaleCopy(locale).risk.advancedHide : getLocaleCopy(locale).risk.advancedShow}
+                  </button>
+                </div>
+                {showRiskAdvanced && (
+                  <div className="flex flex-col gap-3 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-3 sm:flex-row">
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      disabled={aiLoading === "risk"}
+                      onClick={riskForm.handleSubmit(handleRiskAiSubmit)}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {aiLoading === "risk" ? getLocaleCopy(locale).risk.runningHermes : getLocaleCopy(locale).risk.analyzeAi}
+                    </button>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      disabled={pipelineLoading !== null}
+                      onClick={riskForm.handleSubmit(handlePipelineEvidenceSubmit)}
+                    >
+                      <ListChecks className="h-4 w-4" />
+                      {pipelineLoading === "evidence" ? getLocaleCopy(locale).risk.evidenceAgentLoading : getLocaleCopy(locale).risk.analyzePipeline}
+                    </button>
+                  </div>
+                )}
               </div>
             </form>
             {aiError && <AiError locale={locale} message={aiError} />}
@@ -938,12 +957,9 @@ function Header({
   return (
     <header className="sticky top-0 z-20 border-b border-[#d6ded5] bg-[#f4f7f3]/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between md:px-8 lg:px-10">
-        <button className="flex w-fit items-center gap-3 text-left" onClick={() => onNavigate("landing")}>
-          <BrandMark size="sm" />
-          <span>
-            <span className="block font-serif text-xl font-bold text-[#2f6f73]">TCGpal</span>
-            <span className="block text-xs font-semibold uppercase text-[#64736c]">{t.headerSubtitle}</span>
-          </span>
+        <button className="flex w-fit items-center gap-3 text-left" onClick={() => onNavigate("landing")} aria-label="TCGpal home">
+          <BrandMark variant="horizontal" />
+          <span className="sr-only">{t.headerSubtitle}</span>
         </button>
         <div className="flex flex-wrap items-center gap-2">
           <nav className="flex gap-2 overflow-x-auto">
@@ -986,7 +1002,7 @@ function DemoAuthGate({ locale, onEnter }: { locale: Locale; onEnter: (mode: Dem
     <section className="border-b border-[#d6ded5] bg-[#e7efe8]">
       <div className="mx-auto grid min-h-[620px] max-w-7xl grid-cols-1 gap-8 px-5 py-10 md:grid-cols-[0.9fr_1.1fr] md:px-8 lg:px-10">
         <div className="flex flex-col justify-center">
-          <BrandMark size="lg" />
+          <BrandMark variant="icon" size="lg" />
           <Badge icon={ShoppingBag}>{t.badge}</Badge>
           <h1 className="mt-5 max-w-3xl font-serif text-5xl font-bold leading-tight text-[#2f6f73] md:text-7xl">
             {t.title}
@@ -1019,21 +1035,23 @@ function DemoAuthGate({ locale, onEnter }: { locale: Locale; onEnter: (mode: Dem
   );
 }
 
-function BrandMark({ size = "sm" }: { size?: "sm" | "lg" }) {
+function BrandMark({ variant = "icon", size = "sm" }: { variant?: "icon" | "horizontal"; size?: "sm" | "lg" }) {
   const large = size === "lg";
+  const dimensions = variant === "horizontal"
+    ? { width: 173, height: 50, className: "h-[50px] w-[173px]" }
+    : large
+      ? { width: 96, height: 96, className: "mb-5 h-20 w-20" }
+      : { width: 40, height: 40, className: "h-10 w-10" };
 
   return (
-    <div
-      className={`relative ${large ? "mb-5 h-20 w-20" : "h-10 w-10"} shrink-0`}
-      aria-hidden="true"
-    >
-      <span className="absolute inset-x-[18%] bottom-[12%] top-[12%] rotate-[-10deg] rounded-md border border-[#24585c] bg-[#d7a84e] shadow-sm" />
-      <span className="absolute inset-x-[12%] bottom-[8%] top-[8%] rotate-[7deg] rounded-md border border-[#24585c] bg-[#fcfbf6] shadow-sm" />
-      <span className="absolute inset-[10%] grid place-items-center rounded-md border border-[#1f474a] bg-[#2f6f73] shadow-sm">
-        <span className={`${large ? "text-2xl" : "text-sm"} font-serif font-black text-[#fcfbf6]`}>T</span>
-      </span>
-      <span className="absolute bottom-[19%] left-[27%] right-[27%] h-[2px] rounded-full bg-[#f4f7f3]/80" />
-    </div>
+    <Image
+      className={`shrink-0 ${dimensions.className}`}
+      src={variant === "horizontal" ? "/tcgpal-logo-horizontal.svg" : "/tcgpal-icon.svg"}
+      alt="TCGpal"
+      width={dimensions.width}
+      height={dimensions.height}
+      priority={variant === "horizontal"}
+    />
   );
 }
 
@@ -1302,24 +1320,76 @@ function ReadyToBuyModal({
   const [askingPrice, setAskingPrice] = useState("");
   const [feelingText, setFeelingText] = useState("");
   const [evidenceText, setEvidenceText] = useState("");
+  const [pokemonCards, setPokemonCards] = useState<CuratedCardRecommendation[]>([]);
+  const [pokemonPage, setPokemonPage] = useState(1);
+  const [pokemonTotal, setPokemonTotal] = useState<number | null>(null);
+  const [pokemonLoading, setPokemonLoading] = useState(false);
+  const [pokemonError, setPokemonError] = useState<string | null>(null);
   const t = getLocaleCopy(locale).readyModal;
+  const canUsePokemonApi = profile.favoriteTcgs.includes("Pokemon") || profile.ip === "Pokemon";
+  const canLoadMorePokemon = canUsePokemonApi && (pokemonTotal === null || pokemonCards.length < pokemonTotal);
 
   const matches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return recommendations;
+    const apiIds = new Set(pokemonCards.map((card) => card.id));
+    const combined = [...pokemonCards, ...recommendations.filter((card) => !apiIds.has(card.id))];
+    if (!normalized) return combined;
 
-    return recommendations.filter((card) =>
+    return combined.filter((card) =>
       [card.cardName, card.version, card.rarity, card.id]
         .join(" ")
         .toLowerCase()
         .includes(normalized),
     );
-  }, [query, recommendations]);
+  }, [pokemonCards, query, recommendations]);
 
   function handleSelectCard(card: CuratedCardRecommendation) {
     setSelectedCard(card);
-    setAskingPrice(String(card.suggestedRawPrice));
+    setAskingPrice(card.suggestedRawPrice > 0 ? String(card.suggestedRawPrice) : "");
   }
+
+  const loadPokemonCards = useCallback(async ({ page, append, signal }: { page: number; append: boolean; signal?: AbortSignal }) => {
+    if (!canUsePokemonApi) return;
+
+    setPokemonLoading(true);
+    setPokemonError(null);
+
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: "24",
+      });
+      const trimmedQuery = query.trim();
+      if (trimmedQuery.length >= 2) params.set("query", trimmedQuery);
+
+      const response = await fetch(`/api/external/pokemon/search?${params.toString()}`, { signal });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error || "Pokemon card lookup failed.");
+
+      const cards = Array.isArray(json.cards) ? json.cards.map(pokemonCardToRecommendation) : [];
+      setPokemonCards((current) => append ? mergeCards(current, cards) : cards);
+      setPokemonPage(page);
+      setPokemonTotal(typeof json.totalCount === "number" ? json.totalCount : null);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setPokemonError(error instanceof Error ? error.message : "Pokemon card lookup failed.");
+      if (!append) setPokemonCards([]);
+    } finally {
+      setPokemonLoading(false);
+    }
+  }, [canUsePokemonApi, query]);
+
+  useEffect(() => {
+    if (!canUsePokemonApi) return;
+
+    const timer = window.setTimeout(() => {
+      void loadPokemonCards({ page: 1, append: false });
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [canUsePokemonApi, loadPokemonCards]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1375,6 +1445,28 @@ function ReadyToBuyModal({
                 placeholder={t.searchPlaceholder}
               />
             </label>
+            {canUsePokemonApi && (
+              <div className="mt-3 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3 text-sm leading-6 text-[#64736c]">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    {pokemonLoading
+                      ? t.apiLoading
+                      : t.apiStatus(pokemonCards.length, pokemonTotal)}
+                  </span>
+                  <button
+                    className="secondary-button min-h-0 px-3 py-2 text-xs"
+                    type="button"
+                    disabled={pokemonLoading || !canLoadMorePokemon}
+                    onClick={() => void loadPokemonCards({ page: pokemonPage + 1, append: true })}
+                  >
+                    {t.loadMore}
+                  </button>
+                </div>
+                {pokemonError && (
+                  <p className="mt-2 font-semibold text-[#b26a4c]">{pokemonError}</p>
+                )}
+              </div>
+            )}
             <div className="mt-4 space-y-3">
               {matches.map((card) => {
                 const active = selectedCard?.id === card.id;
@@ -1414,7 +1506,7 @@ function ReadyToBuyModal({
             <div className="mt-4 grid grid-cols-1 gap-4">
               <label className="field">
                 <span>{t.askingPrice}</span>
-                <input type="number" min="0" step="0.01" value={askingPrice} onChange={(event) => setAskingPrice(event.target.value)} required />
+                <input type="number" min="0" step="0.01" inputMode="decimal" value={askingPrice} onChange={(event) => setAskingPrice(event.target.value)} placeholder={selectedCard ? `${formatMoney(selectedCard.suggestedRawPrice)} ${t.guide}` : undefined} required />
               </label>
               <label className="field">
                 <span>{t.feeling}</span>
@@ -1472,16 +1564,58 @@ function CardDecisionSheet({
 }) {
   const [showFomoCheck, setShowFomoCheck] = useState(Boolean(readyToBuyResult));
   const [feelingText, setFeelingText] = useState(readyToBuyResult?.feelingText ?? "");
-  const [askingPrice, setAskingPrice] = useState(String(readyToBuyResult?.askingPrice ?? card.suggestedRawPrice));
+  const [askingPrice, setAskingPrice] = useState(readyToBuyResult?.askingPrice ? String(readyToBuyResult.askingPrice) : "");
   const [evidenceText, setEvidenceText] = useState(readyToBuyResult?.evidenceText ?? "");
   const [fomoResult, setFomoResult] = useState<FomoCheckResult | null>(readyToBuyResult?.fomoResult ?? null);
+  const [marketCheck, setMarketCheck] = useState<MarketCheckResponse | null>(null);
+  const [marketCheckLoading, setMarketCheckLoading] = useState(false);
+  const [marketCheckError, setMarketCheckError] = useState<string | null>(null);
   const [cooldownSaved, setCooldownSaved] = useState(false);
   const [boughtSaved, setBoughtSaved] = useState(false);
   const t = getLocaleCopy(locale).sheet;
 
-  function handleFomoCheckSubmit(event: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (!readyToBuyResult) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      setMarketCheck(null);
+      setMarketCheckError(null);
+      setMarketCheckLoading(true);
+
+      void callMarketCheck({
+        cardName: readyToBuyResult.card.cardName,
+        cardVersion: readyToBuyResult.card.version,
+        tcg: readyToBuyResult.card.tcg,
+        askingPrice: readyToBuyResult.askingPrice,
+        feelingText: readyToBuyResult.feelingText,
+        evidenceText: readyToBuyResult.evidenceText,
+        profile: {
+          ...profile,
+          todayBudget: todayRemaining,
+        },
+      })
+        .then((response) => {
+          if (!cancelled) setMarketCheck(response);
+        })
+        .catch((error) => {
+          if (!cancelled) setMarketCheckError(error instanceof Error ? error.message : "Market check failed.");
+        })
+        .finally(() => {
+          if (!cancelled) setMarketCheckLoading(false);
+        });
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [profile, readyToBuyResult, todayRemaining]);
+
+  async function handleFomoCheckSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFomoResult(runFomoCheck({
+    const nextFomoResult = runFomoCheck({
       cardName: card.cardName,
       cardVersion: card.version,
       askingPrice: Number(askingPrice) || 0,
@@ -1491,9 +1625,34 @@ function CardDecisionSheet({
       versionConfirmed: true,
       feelingText,
       evidenceText,
-    }));
+    });
+
+    setFomoResult(nextFomoResult);
+    setMarketCheck(null);
+    setMarketCheckError(null);
     setCooldownSaved(false);
     setBoughtSaved(false);
+    setMarketCheckLoading(true);
+
+    try {
+      const response = await callMarketCheck({
+        cardName: card.cardName,
+        cardVersion: card.version,
+        tcg: card.tcg,
+        askingPrice: Number(askingPrice) || 0,
+        feelingText,
+        evidenceText,
+        profile: {
+          ...profile,
+          todayBudget: todayRemaining,
+        },
+      });
+      setMarketCheck(response);
+    } catch (error) {
+      setMarketCheckError(error instanceof Error ? error.message : "Market check failed.");
+    } finally {
+      setMarketCheckLoading(false);
+    }
   }
 
   const currentDecision = fomoResult
@@ -1578,7 +1737,7 @@ function CardDecisionSheet({
               </label>
               <label className="field">
                 <span>{t.askingPrice}</span>
-                <input type="number" min="0" step="0.01" value={askingPrice} onChange={(event) => setAskingPrice(event.target.value)} />
+                <input type="number" min="0" step="0.01" inputMode="decimal" value={askingPrice} onChange={(event) => setAskingPrice(event.target.value)} placeholder={`${formatMoney(card.suggestedRawPrice)} ${t.rawGuide}`} />
               </label>
               <label className="field">
                 <span>{t.evidence}</span>
@@ -1596,14 +1755,19 @@ function CardDecisionSheet({
               </div>
             </form>
             {fomoResult && (
-              <FomoDecisionCard
-                result={fomoResult}
-                locale={locale}
-                onCreateCooldown={currentDecision && fomoResult.cooldownRecommended ? handleCooldownClick : undefined}
-                onMarkBought={currentDecision ? handleBoughtClick : undefined}
-                cooldownSaved={cooldownSaved}
-                boughtSaved={boughtSaved}
-              />
+              <>
+                <MarketCheckPanel
+                  locale={locale}
+                  result={marketCheck}
+                  loading={marketCheckLoading}
+                  error={marketCheckError}
+                  fomoResult={fomoResult}
+                  onCreateCooldown={currentDecision && fomoResult.cooldownRecommended ? handleCooldownClick : undefined}
+                  onMarkBought={currentDecision ? handleBoughtClick : undefined}
+                  cooldownSaved={cooldownSaved}
+                  boughtSaved={boughtSaved}
+                />
+              </>
             )}
           </section>
         )}
@@ -1630,76 +1794,6 @@ function CardDecisionSheet({
   );
 }
 
-function FomoDecisionCard({
-  result,
-  locale,
-  onCreateCooldown,
-  onMarkBought,
-  cooldownSaved = false,
-  boughtSaved = false,
-}: {
-  result: FomoCheckResult;
-  locale: Locale;
-  onCreateCooldown?: () => void;
-  onMarkBought?: () => void;
-  cooldownSaved?: boolean;
-  boughtSaved?: boolean;
-}) {
-  const tone = getFomoPostureTone(result.decisionPosture);
-  const t = getLocaleCopy(locale).verdict;
-
-  return (
-    <section className={`mt-5 rounded-md border p-4 ${tone.container}`}>
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase">{t.title}</p>
-          <h4 className="mt-1 font-serif text-3xl font-bold">{localizePosture(result.decisionPosture, locale)}</h4>
-          <p className="mt-3 max-w-2xl text-sm leading-6">{localizeFomoSummary(result, locale)}</p>
-        </div>
-        <span className={`w-fit rounded-md px-3 py-2 text-xs font-bold uppercase ${tone.badge}`}>
-          {localizeNextStep(result.nextStep, locale)}
-        </span>
-      </div>
-      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <FomoMetric label={t.fomoHeat} score={result.fomoHeat.score} metricLabel={localizeMetricLabel(result.fomoHeat.label, locale)} />
-        <FomoMetric label={t.budgetStrain} score={result.budgetStrain.score} metricLabel={localizeMetricLabel(result.budgetStrain.label, locale)} />
-        <FomoMetric label={t.evidenceStrength} score={result.evidenceStrength.score} metricLabel={localizeMetricLabel(result.evidenceStrength.label, locale)} />
-        <FomoMetric label={t.versionClarity} score={result.versionClarity.score} metricLabel={localizeMetricLabel(result.versionClarity.label, locale)} />
-      </div>
-      <div className="mt-5 rounded-md bg-[#fcfbf6]/75 p-3 text-sm font-semibold leading-6 text-[#24312f]">
-        {localizeGuardrail(result, locale)}
-      </div>
-      {result.hardStop && (
-        <div className="mt-3 rounded-md border border-[#d88980] bg-[#fff5f3] p-3 text-sm font-bold text-[#7a241e]">
-          {t.hardStop}
-        </div>
-      )}
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-4">
-        <GroupedList title={t.emotionAgent} items={localizeReasons(result.fomoHeat.reasons, locale)} />
-        <GroupedList title={t.budgetAgent} items={localizeReasons(result.budgetStrain.reasons, locale)} />
-        <GroupedList title={t.evidenceAgent} items={localizeReasons(result.evidenceStrength.reasons, locale)} />
-        <GroupedList title={t.versionAgent} items={localizeReasons(result.versionClarity.reasons, locale)} />
-      </div>
-      {(onCreateCooldown || onMarkBought) && (
-        <div className="mt-5 flex flex-col gap-3 border-t border-current/15 pt-4 sm:flex-row">
-          {onCreateCooldown && (
-            <button className="primary-button" type="button" disabled={cooldownSaved} onClick={onCreateCooldown}>
-              <Clock3 className="h-4 w-4" />
-              {cooldownSaved ? t.cooldownSaved : t.cooldown}
-            </button>
-          )}
-          {onMarkBought && (
-            <button className="secondary-button" type="button" disabled={boughtSaved} onClick={onMarkBought}>
-              <ShoppingBag className="h-4 w-4" />
-              {boughtSaved ? t.boughtSaved : t.bought}
-            </button>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
-
 function FomoMetric({
   label,
   score,
@@ -1719,6 +1813,244 @@ function FomoMetric({
         <div className="h-2 rounded-full bg-[#b26a4c]" style={{ width: `${score}%` }} />
       </div>
       <p className="mt-2 font-mono text-xs font-bold text-[#64736c]">{score}/100</p>
+    </div>
+  );
+}
+
+function MarketCheckPanel({
+  locale,
+  result,
+  loading,
+  error,
+  fomoResult,
+  onCreateCooldown,
+  onMarkBought,
+  cooldownSaved = false,
+  boughtSaved = false,
+}: {
+  locale: Locale;
+  result: MarketCheckResponse | null;
+  loading: boolean;
+  error: string | null;
+  fomoResult: FomoCheckResult;
+  onCreateCooldown?: () => void;
+  onMarkBought?: () => void;
+  cooldownSaved?: boolean;
+  boughtSaved?: boolean;
+}) {
+  const t = getLocaleCopy(locale).marketCheck;
+  const verdictCopy = getLocaleCopy(locale).verdict;
+  const checks = result ? buildMarketCheckItems(result, locale) : [];
+  const nextActions = result ? buildCompactMarketActions(result, locale) : [];
+  const manualSoldUrl = result?.soldComps.manualCheckUrl;
+
+  return (
+    <section className="mt-5 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase text-[#64736c]">{t.eyebrow}</p>
+          <h4 className="mt-1 font-serif text-2xl font-bold text-[#2f6f73]">{t.title}</h4>
+        </div>
+        {result && (
+          <span className="w-fit rounded-md bg-[#e7efe8] px-3 py-2 text-xs font-bold uppercase text-[#2f6f73]">
+            {localizeMarketDecision(result.result.decision, locale)} · {localizeConfidence(result.result.confidence, locale)}
+          </span>
+        )}
+      </div>
+      {loading && (
+        <MarketCheckLoadingPanel locale={locale} />
+      )}
+      {error && (
+        <div className="mt-4 rounded-md border border-[#d88980] bg-[#fff5f3] p-3 text-sm font-bold text-[#7a241e]">
+          {error}
+        </div>
+      )}
+      {result && (
+        <>
+          <div className="mt-4 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-[#2f6f73] px-3 py-1.5 text-xs font-bold uppercase text-white">
+                {localizeMarketDecision(result.result.decision, locale)}
+              </span>
+              <span className="rounded-md bg-[#fcfbf6] px-3 py-1.5 text-xs font-bold uppercase text-[#64736c]">
+                {t.confidence}: {localizeConfidence(result.result.confidence, locale)}
+              </span>
+              <span className="rounded-md bg-[#fcfbf6] px-3 py-1.5 text-xs font-bold uppercase text-[#64736c]">
+                {result.fallbackUsed ? t.localFallback : t.aiChecked}
+              </span>
+            </div>
+            <p className="mt-3 text-base font-semibold leading-7 text-[#24312f]">
+              {buildCompactMarketReason(result, locale)}
+            </p>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
+            {checks.map((item) => (
+              <div key={item.label} className={`rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-3 ${item.kind === "market" ? "md:col-span-2 xl:col-span-2" : ""}`}>
+                <p className="text-xs font-bold uppercase text-[#64736c]">{item.label}</p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-[#24312f]">{item.value}</p>
+                {item.kind === "market" && manualSoldUrl && (
+                  <div className="mt-3 border-t border-[#d6ded5] pt-3">
+                    <a className="inline-flex min-h-10 items-center gap-2 rounded-md border border-[#2f6f73] bg-[#fcfbf6] px-3 py-2 text-sm font-extrabold text-[#2f6f73] hover:bg-[#e7efe8]" href={manualSoldUrl} target="_blank" rel="noopener noreferrer">
+                      {t.checkEbaySold}
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                    <p className="mt-2 text-xs font-semibold leading-5 text-[#64736c]">{t.ebaySoldHint}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3">
+            <p className="text-sm font-bold uppercase text-[#64736c]">{t.nextActions}</p>
+            <ul className="mt-2 space-y-2 text-sm leading-6 text-[#36413d]">
+              {nextActions.map((action) => (
+                <li key={action} className="flex gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#2f6f73]" />
+                  <span>{action}</span>
+                </li>
+              ))}
+              {manualSoldUrl && (
+                <li className="flex gap-2">
+                  <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-[#2f6f73]" />
+                  <a className="font-bold text-[#2f6f73] underline-offset-4 hover:underline" href={manualSoldUrl} target="_blank" rel="noopener noreferrer">
+                    {t.openEbayAction}
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {(onCreateCooldown || onMarkBought) && (
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              {onCreateCooldown && (
+                <button className="primary-button" type="button" disabled={cooldownSaved} onClick={onCreateCooldown}>
+                  <Clock3 className="h-4 w-4" />
+                  {cooldownSaved ? verdictCopy.cooldownSaved : verdictCopy.cooldown}
+                </button>
+              )}
+              {onMarkBought && (
+                <button className="secondary-button" type="button" disabled={boughtSaved} onClick={onMarkBought}>
+                  <ShoppingBag className="h-4 w-4" />
+                  {boughtSaved ? verdictCopy.boughtSaved : verdictCopy.bought}
+                </button>
+              )}
+            </div>
+          )}
+
+          <details className="mt-4 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-3">
+            <summary className="cursor-pointer text-sm font-bold text-[#2f6f73]">{t.localSignals}</summary>
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+              <FomoMetric label={verdictCopy.fomoHeat} score={fomoResult.fomoHeat.score} metricLabel={localizeMetricLabel(fomoResult.fomoHeat.label, locale)} />
+              <FomoMetric label={verdictCopy.budgetStrain} score={fomoResult.budgetStrain.score} metricLabel={localizeMetricLabel(fomoResult.budgetStrain.label, locale)} />
+              <FomoMetric label={verdictCopy.evidenceStrength} score={fomoResult.evidenceStrength.score} metricLabel={localizeMetricLabel(fomoResult.evidenceStrength.label, locale)} />
+              <FomoMetric label={verdictCopy.versionClarity} score={fomoResult.versionClarity.score} metricLabel={localizeMetricLabel(fomoResult.versionClarity.label, locale)} />
+            </div>
+          </details>
+
+          <details className="mt-4 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-3">
+            <summary className="cursor-pointer text-sm font-bold text-[#2f6f73]">{t.debug}</summary>
+            <div className="mt-3 rounded-md bg-[#fcfbf6] p-3 text-xs leading-5 text-[#64736c]">
+              <p className="font-mono font-bold text-[#24312f]">{result.model}</p>
+              <p className="mt-2">{t.sources}</p>
+              <ul className="mt-1 space-y-1">
+                {result.sources.map((source) => (
+                  <li key={`${source.label}-${source.status}-${source.note}`}>
+                    {source.label}: {localizeSourceStatus(source.status, locale)} · {localizeMarketText(source.note, locale)}
+                  </li>
+                ))}
+              </ul>
+              {result.soldComps.lookupQuery && (
+                <p className="mt-2 font-mono">
+                  eBay: {result.soldComps.lookupQuery}
+                </p>
+              )}
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+              {result.trace.map((step) => (
+                <div key={`${step.step}-${step.tool}`} className="rounded-md bg-[#fcfbf6] p-3 text-xs leading-5 text-[#64736c]">
+                  <p className="font-mono font-bold text-[#24312f]">{step.tool}</p>
+                  <p>{localizeMarketText(step.summary, locale)}</p>
+                  <p className="font-mono">{step.model}</p>
+                </div>
+              ))}
+            </div>
+          </details>
+          {result.fallbackUsed && (
+            <p className="mt-3 text-xs font-bold uppercase text-[#b26a4c]">{t.fallback}</p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function MarketCheckLoadingPanel({ locale }: { locale: Locale }) {
+  const t = getLocaleCopy(locale).marketCheck;
+  const steps = t.loadingSteps;
+  const [activeStep, setActiveStep] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const active = steps[activeStep];
+
+  useEffect(() => {
+    const stepTimer = window.setInterval(() => {
+      setActiveStep((current) => (current + 1) % steps.length);
+    }, 1400);
+    const elapsedTimer = window.setInterval(() => {
+      setElapsedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => {
+      window.clearInterval(stepTimer);
+      window.clearInterval(elapsedTimer);
+    };
+  }, [steps.length]);
+
+  return (
+    <div className="market-agent-panel mt-4 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-4" aria-live="polite">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="agent-live-dot" />
+            <p className="text-xs font-black uppercase tracking-wide text-[#2f6f73]">{t.loadingEyebrow}</p>
+          </div>
+          <p className="mt-2 text-base font-extrabold leading-7 text-[#24312f]">{t.loading}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-black uppercase text-[#64736c]">
+            <span className="rounded-md bg-[#fcfbf6] px-2.5 py-1.5 text-[#2f6f73]">
+              {t.loadingNow}: {active.label}
+            </span>
+            <span className="rounded-md bg-[#fcfbf6] px-2.5 py-1.5">
+              {t.loadingElapsed}: {elapsedSeconds}s
+            </span>
+          </div>
+        </div>
+        <div className="agent-orbit" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+      <div className="agent-progress mt-4" aria-hidden="true">
+        <span />
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-5">
+        {steps.map((step, index) => (
+          <div
+            key={step.label}
+            className={`agent-step rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3 ${index === activeStep ? "is-active" : ""} ${index < activeStep ? "is-complete" : ""}`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="agent-step-dot" />
+              <p className="text-xs font-black uppercase text-[#64736c]">{step.label}</p>
+            </div>
+            <p className="mt-2 min-h-10 text-xs font-semibold leading-5 text-[#64736c]">{step.detail}</p>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e7efe8]">
+              <span className="agent-step-bar block h-full rounded-full bg-[#2f6f73]" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -2190,6 +2522,7 @@ function DesignedCard({ card, large = false }: { card: CuratedCardRecommendation
           src={card.imageUrl}
           alt={`${card.cardName} ${card.version}`}
           fill
+          priority={large}
           sizes={large ? "144px" : "96px"}
         />
         <div className="absolute left-2 top-2 rounded-sm bg-[#24312f]/75 px-1.5 py-0.5 text-[8px] font-black uppercase text-[#f4f7f3]">
@@ -2388,6 +2721,46 @@ async function callListingRiskPipeline(input: {
   }
 }
 
+async function callMarketCheck(input: {
+  cardName: string;
+  cardVersion: string;
+  tcg: CuratedCardRecommendation["tcg"];
+  askingPrice: number;
+  feelingText: string;
+  evidenceText: string;
+  profile: UserProfile;
+}) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 45000);
+  let response: Response;
+
+  try {
+    response = await fetch("/api/agent/market-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Market check is taking too long. Use the deterministic pre-buy result and try AI again after the model/proxy responds faster.");
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+
+  const text = await response.text();
+  const json = parseJsonResponse(text);
+
+  if (!response.ok) {
+    throw new Error(json?.error || "Market check failed.");
+  }
+
+  return marketCheckResponseSchema.parse(json);
+}
+
 function parseJsonResponse(text: string) {
   try {
     return JSON.parse(text);
@@ -2433,30 +2806,12 @@ function formatPercent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
+function mergeCards(current: CuratedCardRecommendation[], incoming: CuratedCardRecommendation[]) {
+  return Array.from(new Map([...current, ...incoming].map((card) => [card.id, card])).values());
+}
+
 function getLocaleCopy(locale: Locale) {
   return locale === "zh" ? zhCopy : enCopy;
-}
-
-function localizePosture(posture: FomoCheckResult["decisionPosture"], locale: Locale) {
-  if (locale === "en") return posture;
-  const map: Record<FomoCheckResult["decisionPosture"], string> = {
-    Cool: "冷静",
-    Warm: "偏热",
-    Hot: "很热",
-    Overheated: "过热",
-  };
-  return map[posture];
-}
-
-function localizeNextStep(nextStep: FomoCheckResult["nextStep"], locale: Locale) {
-  if (locale === "en") return nextStep;
-  const map: Record<FomoCheckResult["nextStep"], string> = {
-    Pause: "暂停",
-    "Ask for evidence": "先补信息",
-    "Run math": "先跑数学",
-    "Proceed within guardrails": "在边界内继续",
-  };
-  return map[nextStep];
 }
 
 function localizeMetricLabel(label: FomoCheckResult["fomoHeat"]["label"], locale: Locale) {
@@ -2469,45 +2824,166 @@ function localizeMetricLabel(label: FomoCheckResult["fomoHeat"]["label"], locale
   return map[label];
 }
 
-function localizeFomoSummary(result: FomoCheckResult, locale: Locale) {
-  if (locale === "en") return result.warmSummary;
-  if (result.decisionPosture === "Overheated") return "不是你傻，是这单太上头了。先别买，让价格、预算和品相信息都冷一下。";
-  if (result.decisionPosture === "Hot") return "你是真的喜欢，但现在有点热。先把成交价、品相和预算再看一遍。";
-  if (result.decisionPosture === "Warm") return "还不算冲动买，但也别直接下单。先把缺的信息补上。";
-  return "这次看起来比较冷静。可以继续看，但别让倒计时替你决定。";
+function localizeMarketDecision(decision: MarketCheckResponse["result"]["decision"], locale: Locale) {
+  if (locale === "en") return decision;
+  const map: Record<MarketCheckResponse["result"]["decision"], string> = {
+    Buy: "可以买",
+    "Ask seller": "先问卖家",
+    Wait: "先等等",
+    Pause: "暂停",
+  };
+  return map[decision];
 }
 
-function localizeGuardrail(result: FomoCheckResult, locale: Locale) {
-  if (locale === "en") return result.guardrail;
-  if (result.nextStep === "Pause") return "先暂停至少 24 小时，或者把入手价降到预算线以内再复盘。";
-  if (result.nextStep === "Ask for evidence") return "先要正反面图、边角/表面特写，还有近期成交价。信息不够，先别花情绪钱。";
-  if (result.nextStep === "Run math") return "先用保守的 PSA10 概率算一下。不要把想象中的评级空间当成事实。";
-  return "冷静再读一遍：价格、品相信息和买入理由都还说得通，再继续。";
+function localizeConfidence(confidence: MarketCheckResponse["result"]["confidence"], locale: Locale) {
+  if (locale === "en") return confidence;
+  const map: Record<MarketCheckResponse["result"]["confidence"], string> = {
+    low: "低把握",
+    medium: "中等把握",
+    high: "高把握",
+  };
+  return map[confidence];
 }
 
-function localizeReasons(reasons: string[], locale: Locale) {
-  if (locale === "en") return reasons;
+function localizeSourceStatus(status: MarketCheckResponse["sources"][number]["status"], locale: Locale) {
+  if (locale === "en") return status;
+  const map: Record<MarketCheckResponse["sources"][number]["status"], string> = {
+    used: "已使用",
+    missing: "没找到",
+    unavailable: "未接入",
+  };
+  return map[status];
+}
 
-  return reasons.map((reason) => {
-    if (reason.startsWith("FOMO language found")) return "有上头信号：立刻买、怕错过、会涨、会后悔。";
-    if (reason === "No strong panic language found.") return "没看到明显恐慌语言。";
-    if (reason === "The thought does not yet include many grounding details.") return "现在更多是感觉，落地事实还少。";
-    if (reason === "You included some grounding details, which lowers the emotional heat.") return "你有提到一些事实，热度会降一点。";
-    if (reason.includes("today's buy budget")) return reason.replace("This would use", "这会占用").replace("of today's buy budget.", "的今日购买预算。");
-    if (reason.includes("monthly hobby budget benchmark")) return reason.replace("It is", "它相当于").replace("of the monthly hobby budget benchmark.", "的月度爱好预算参考。");
-    if (reason === "The asking price is above the active budget guardrail, so this is a hard pause.") return "价格已经超过预算线，这里该硬停。";
-    if (reason === "The price leaves meaningful room inside today's budget.") return "价格还在今日预算内，留有空间。";
-    if (reason === "It is within today's budget, but concentrated enough to slow down.") return "还在预算内，但占比不小，别急。";
-    if (reason === "No concrete evidence was entered yet.") return "还没写具体信息。";
-    if (reason === "The evidence note is still thin.") return "信息还太少。";
-    if (reason.startsWith("Evidence mentioned")) return "有提到一些信息：正反面图、成交价、品相或卖家情况。";
-    if (reason === "The evidence note has enough detail to review.") return "信息细节够复盘了。";
-    if (reason === "A specific card version was selected before the check.") return "已经选了明确版本。";
-    if (reason.startsWith("Selected version:")) return reason.replace("Selected version:", "已选版本：");
-    if (reason === "The card version is not confirmed yet.") return "版本还没确认。";
-    if (reason === "No version label is attached to this decision.") return "这次购买还没绑到具体版本。";
-    return reason;
-  });
+function buildCompactMarketReason(result: MarketCheckResponse, locale: Locale) {
+  const activeBudget = result.budget.activeBudget;
+  const ask = result.input.askingPrice;
+
+  if (result.budget.hardStop) {
+    return locale === "zh"
+      ? `先暂停。这张卡开价 ${formatMoney(ask)}，高于你现在的 ${formatMoney(activeBudget)} 预算线。`
+      : `Pause for now. The ask is ${formatMoney(ask)}, above your active ${formatMoney(activeBudget)} guardrail.`;
+  }
+
+  if (!result.soldComps.available) {
+    return locale === "zh"
+      ? "先不要直接买。预算可继续看，但 TCGpal 还没有接入近期成交记录。"
+      : "Do not make it a clean buy yet. Budget is reviewable, but recent sold comps are not connected.";
+  }
+
+  if (result.evidence.gaps.length > 0 || result.identifiedCard.confidence !== "high") {
+    return locale === "zh"
+      ? "先问卖家。版本或品相信息还不够支撑直接下单。"
+      : "Ask the seller first. Version or condition evidence is not strong enough for a clean buy.";
+  }
+
+  return locale === "zh"
+    ? "可以继续考虑，但只在预算和品相信息都守住时才下单。"
+    : "You can keep considering it, but only if price and condition still stay inside your guardrails.";
+}
+
+function buildMarketCheckItems(result: MarketCheckResponse, locale: Locale) {
+  const reference = getReferenceLabel(result, locale);
+  const comps = result.soldComps.available
+    ? locale === "zh" ? "有成交记录" : "Comps connected"
+    : result.soldComps.manualCheckUrl
+      ? locale === "zh" ? "手动核对链接" : "Manual sold check"
+      : locale === "zh" ? "未接成交" : "No sold comps";
+  const budget = result.budget.hardStop
+    ? locale === "zh" ? "超过预算" : "Over budget"
+    : locale === "zh" ? "预算内" : "Inside budget";
+  const evidence = result.evidence.gaps.length === 0
+    ? locale === "zh" ? "信息够看" : "Evidence okay"
+    : locale === "zh" ? `缺 ${result.evidence.gaps.length} 项` : `${result.evidence.gaps.length} gaps`;
+
+  return [
+    { label: locale === "zh" ? "版本" : "Version", value: localizeConfidence(result.identifiedCard.confidence, locale), kind: "version" },
+    { label: locale === "zh" ? "预算" : "Budget", value: budget, kind: "budget" },
+    { label: locale === "zh" ? "市场" : "Market", value: `${reference} · ${comps}`, kind: "market" },
+    { label: locale === "zh" ? "信息" : "Evidence", value: evidence, kind: "evidence" },
+  ];
+}
+
+function getReferenceLabel(result: MarketCheckResponse, locale: Locale) {
+  if (!result.referencePrices.available) {
+    return locale === "zh" ? "无实时参考" : "No live ref";
+  }
+
+  if (result.referencePrices.source === "TCGpal curated baseline") {
+    return locale === "zh" ? "Demo 基准" : "Demo baseline";
+  }
+
+  if (result.referencePrices.source === "PriceCharting") {
+    return locale === "zh" ? "PriceCharting 参考" : "PriceCharting ref";
+  }
+
+  return locale === "zh" ? "外部参考" : "External ref";
+}
+
+function buildCompactMarketActions(result: MarketCheckResponse, locale: Locale) {
+  if (result.budget.hardStop) {
+    return locale === "zh"
+      ? ["先等 24 小时。", `除非价格降到 ${formatMoney(result.budget.activeBudget)} 以内，否则不要出价。`]
+      : ["Wait 24 hours.", `Do not offer unless the price drops under ${formatMoney(result.budget.activeBudget)}.`];
+  }
+
+  if (!result.soldComps.available) {
+    return locale === "zh"
+      ? ["只看同版本、同评级的近期成交中位价。", "确认价格和品相都合理后再决定。"]
+      : ["Use the recent median for matching version and grade.", "Only continue if price and condition still line up."];
+  }
+
+  const actions = localizeMarketItems(result.result.nextActions, locale).slice(0, 2);
+  return actions.length ? actions : locale === "zh" ? ["先补齐缺的信息。"] : ["Fill the missing evidence first."];
+}
+
+function localizeMarketItems(items: string[], locale: Locale) {
+  return items.map((item) => localizeMarketText(item, locale));
+}
+
+function localizeMarketText(text: string, locale: Locale) {
+  if (locale === "en") return text;
+
+  const exact: Record<string, string> = {
+    "OpenAI API key is missing. TCGpal used local deterministic tools only.": "没有配置 OpenAI API key，TCGpal 已使用本地确定性工具。",
+    "Card version is not confirmed.": "卡片版本还没确认。",
+    "Front photo is missing.": "缺正面图。",
+    "Back photo is missing.": "缺背面图。",
+    "Corner or edge closeups are missing.": "缺边角或边缘特写。",
+    "Surface or video evidence is missing.": "缺表面或视频信息。",
+    "Recent sold comps or reference prices are missing.": "缺近期成交价或参考价。",
+    "Seller policy or return terms are missing.": "缺卖家政策或退换条款。",
+    "Exact card/version confidence is not high.": "卡片/版本确认把握度还不高。",
+    "Recent sold comps are unavailable.": "近期成交记录目前未接入。",
+    "Reference prices are unavailable.": "参考价格目前不可用。",
+    "Budget hard stop must clear before buying.": "预算硬停解除前不要买。",
+    "Sold comps are unavailable in this build. Ask for or manually verify recent completed sales before buying.": "这个版本还没有接入成交记录。购买前请手动确认近期已成交价格。",
+    "No sold-comps provider is wired in Phase 0.8. Do not claim eBay or marketplace sold history.": "Phase 0.8 还没有接入成交数据来源，不能声称查过 eBay 或市场成交。",
+    "Automated sold comps are unavailable in this build. Use the manual eBay sold-search link to verify recent completed sales before buying.": "这个版本还没有接入自动成交数据。购买前请用 eBay sold 搜索链接手动核对近期已成交价格。",
+    "Automated sold comps are not connected. Generated a verified eBay sold-search link for manual review.": "自动成交数据尚未接入；这里只生成 eBay sold 手动核对链接。",
+    "Used local curated demo prices because live reference pricing was unavailable.": "实时参考价不可用，已使用本地 demo 参考价。",
+    "Local demo baseline. Refresh with a configured pricing adapter before treating this as current market evidence.": "这是本地 demo 基准价。要当成当前市场信息前，需要配置价格来源重新检查。",
+    "Sold comps provider is not configured in this phase.": "当前阶段还没有配置成交记录来源。",
+  };
+
+  if (exact[text]) return exact[text];
+  if (text.startsWith("Pause. The asking price breaks the active budget guardrail")) return "暂停。卖家开价超过当前预算线，现在不该继续购买。";
+  if (text.startsWith("Ask seller before buying.")) return "购买前先问卖家。卡片可以继续观察，但信息还不够支撑干净的下单决定。";
+  if (text.startsWith("Wait for better market evidence.")) return "先等更好的市场信息。预算和版本可以继续看，但这个版本还没有接入近期成交记录。";
+  if (text.startsWith("Buy can be considered")) return "可以在预算边界内考虑购买，但前提是再冷静读一遍价格、图片和原始买入理由。";
+  if (text.startsWith("Check recent completed sales manually.")) return "手动检查近期已成交价格。";
+  if (text.startsWith("Open eBay sold and confirm the price before offering.")) return "出价前打开 eBay sold，先核对近期成交价。";
+  if (text.startsWith("Manual lookup query:")) return text.replace("Manual lookup query:", "手动搜索关键词：");
+  if (text.startsWith("Compare the ask against the raw reference range.")) return "把卖家开价和裸卡参考区间对比。";
+  if (text.startsWith("Only proceed if price and condition evidence still agree.")) return "只有当价格和品相信息仍然互相支持时，才继续。";
+  if (text.startsWith("Ask for front/back photos")) return "向卖家要正反面图和品相特写。";
+  if (text.startsWith("Confirm exact set")) return "确认准确系列、卡号、语言和版本。";
+  if (text.startsWith("Verify recent sold comps")) return "付款前在 TCGpal 外部核对近期成交记录。";
+  if (text.startsWith("Wait at least 24 hours.")) return "至少等 24 小时。";
+  if (text.startsWith("Lower the entry price")) return "把入手价降到预算线以内。";
+  if (text.startsWith("Recheck evidence only after")) return "预算硬停解除后，再重新检查信息。";
+
+  return text;
 }
 
 function localizeRiskReportItems(items: string[], locale: Locale) {
@@ -2701,7 +3177,10 @@ const enCopy = {
     searchLabel: "Card name / label / set code",
     searchPlaceholder: "Umbreon VMAX, Luffy P-033, Charizard SAR",
     guide: "guide",
-    noMatch: "No local match yet. For this v1, use one of the demo cards so version selection stays explicit.",
+    apiLoading: "Loading Pokemon TCG API cards...",
+    apiStatus: (loaded: number, total: number | null) => total ? `${loaded} of ${total.toLocaleString()} Pokemon API cards loaded` : `${loaded} Pokemon API cards loaded`,
+    loadMore: "Load more",
+    noMatch: "No match yet. Try a Pokemon card name, set, or number.",
     selectedVersion: "Selected version",
     chooseFirst: "Choose a card first",
     noVersionNoVerdict: "TCGpal will not run a verdict without a version.",
@@ -2751,6 +3230,34 @@ const enCopy = {
     bought: "I bought it",
     boughtSaved: "Purchase recorded",
   },
+  marketCheck: {
+    eyebrow: "Agent market check",
+    title: "Buy check",
+    loading: "The market agent is calling card, price, comps, evidence, and budget tools...",
+    loadingEyebrow: "Live agent run",
+    loadingNow: "Now",
+    loadingElapsed: "Elapsed",
+    loadingSteps: [
+      { label: "Card ID", detail: "Matching exact print and version." },
+      { label: "Reference", detail: "Checking configured price sources." },
+      { label: "Sold comps", detail: "Looking for connected comp evidence." },
+      { label: "Evidence", detail: "Scanning photos, seller notes, and gaps." },
+      { label: "Budget", detail: "Applying deterministic guardrails." },
+    ],
+    nextActions: "Next actions",
+    missing: "Missing information",
+    sources: "Sources",
+    trace: "Tool trace",
+    debug: "Debug details",
+    localSignals: "Local decision signals",
+    confidence: "Confidence",
+    aiChecked: "AI checked",
+    localFallback: "Local fallback",
+    fallback: "Local deterministic fallback used",
+    checkEbaySold: "Check recent sold on eBay",
+    ebaySoldHint: "Look at the median of matching version + grade. Ignore outliers and lots.",
+    openEbayAction: "Open eBay sold and confirm the price before offering.",
+  },
   profile: {
     eyebrow: "Onboarding",
     title: "Set the guardrails before the recommendation",
@@ -2775,7 +3282,9 @@ const enCopy = {
     listedPrice: "Listed price",
     marketplace: "Marketplace",
     userGoal: "User goal",
-    analyzeLocal: "Analyze Locally",
+    analyzeLocal: "Analyze listing",
+    advancedShow: "Advanced: AI tools",
+    advancedHide: "Hide AI tools",
     runningHermes: "Running Hermes...",
     analyzeAi: "Analyze with AI",
     evidenceAgentLoading: "Evidence Agent...",
@@ -2996,7 +3505,10 @@ const zhCopy: typeof enCopy = {
     searchLabel: "卡名 / 编号 / 系列代码",
     searchPlaceholder: "Umbreon VMAX, Luffy P-033, Charizard SAR",
     guide: "参考价",
-    noMatch: "本地还没有这张卡。v1 先用演示卡，避免版本乱掉。",
+    apiLoading: "正在载入 Pokemon TCG API 卡牌...",
+    apiStatus: (loaded: number, total: number | null) => total ? `已载入 ${loaded} / ${total.toLocaleString()} 张 Pokemon API 卡` : `已载入 ${loaded} 张 Pokemon API 卡`,
+    loadMore: "载入更多",
+    noMatch: "还没有匹配。可以换卡名、系列或编号再试。",
     selectedVersion: "已选版本",
     chooseFirst: "请先选择一张卡",
     noVersionNoVerdict: "没选版本，不给判断。",
@@ -3046,6 +3558,34 @@ const zhCopy: typeof enCopy = {
     bought: "我买了",
     boughtSaved: "购买已记录",
   },
+  marketCheck: {
+    eyebrow: "Agent 市场检查",
+    title: "购买检查",
+    loading: "市场 Agent 正在调用卡片、价格、成交、信息和预算工具...",
+    loadingEyebrow: "Agent 实时检查中",
+    loadingNow: "正在跑",
+    loadingElapsed: "已用时",
+    loadingSteps: [
+      { label: "卡片识别", detail: "确认卡名、系列和版本。" },
+      { label: "参考价", detail: "检查已配置的价格来源。" },
+      { label: "成交", detail: "寻找已接入的成交证据。" },
+      { label: "信息", detail: "检查照片、卖家描述和缺口。" },
+      { label: "预算", detail: "套用确定性预算红线。" },
+    ],
+    nextActions: "下一步",
+    missing: "缺的信息",
+    sources: "来源",
+    trace: "工具链路",
+    debug: "Debug 细节",
+    localSignals: "本地判断信号",
+    confidence: "把握度",
+    aiChecked: "AI 已检查",
+    localFallback: "本地兜底",
+    fallback: "已使用本地确定性兜底",
+    checkEbaySold: "去 eBay 查近期已成交",
+    ebaySoldHint: "看同版本+同评级的中位价，忽略异常价和 lot。",
+    openEbayAction: "出价前打开 eBay sold，先核对价格。",
+  },
   profile: {
     eyebrow: "资料设置",
     title: "先把预算和偏好写清楚",
@@ -3070,7 +3610,9 @@ const zhCopy: typeof enCopy = {
     listedPrice: "卖家开价",
     marketplace: "平台",
     userGoal: "你的目标",
-    analyzeLocal: "本地检查",
+    analyzeLocal: "检查这条 listing",
+    advancedShow: "进阶：AI 工具",
+    advancedHide: "收起 AI 工具",
     runningHermes: "Hermes 处理中...",
     analyzeAi: "用 AI 看一下",
     evidenceAgentLoading: "信息 Agent 处理中...",
@@ -3416,34 +3958,6 @@ function getRiskTone(score: ListingRiskReport["score"], locale: Locale = "en") {
     kicker: locale === "zh" ? "风险较低" : "Lower risk",
     headline: locale === "zh" ? "有条件继续" : "CONDITIONALLY OK",
     containerClass: "border-[#9fc7a3] bg-[#f1f8ef] text-[#173f24]",
-  };
-}
-
-function getFomoPostureTone(posture: FomoCheckResult["decisionPosture"]) {
-  if (posture === "Overheated") {
-    return {
-      container: "border-[#d88980] bg-[#fff5f3] text-[#7a241e]",
-      badge: "bg-[#7a241e] text-[#fcfbf6]",
-    };
-  }
-
-  if (posture === "Hot") {
-    return {
-      container: "border-[#e2c76c] bg-[#fff9dd] text-[#5d4815]",
-      badge: "bg-[#b26a4c] text-[#fcfbf6]",
-    };
-  }
-
-  if (posture === "Warm") {
-    return {
-      container: "border-[#d6ded5] bg-[#fffbea] text-[#36413d]",
-      badge: "bg-[#d7a84e] text-[#4a3f24]",
-    };
-  }
-
-  return {
-    container: "border-[#9fc7a3] bg-[#f1f8ef] text-[#173f24]",
-    badge: "bg-[#2f6f73] text-[#f4f7f3]",
   };
 }
 

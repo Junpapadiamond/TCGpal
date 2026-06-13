@@ -210,3 +210,215 @@ button:disabled {
   border-color: #2f6f73;
   box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.14);
 }
+
+.market-agent-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.market-agent-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 0%, rgba(47, 111, 115, 0.07) 45%, transparent 68%);
+  transform: translateX(-100%);
+  animation: agent-scan 2.4s ease-in-out infinite;
+}
+
+.agent-live-dot {
+  display: inline-block;
+  height: 0.55rem;
+  width: 0.55rem;
+  border-radius: 999px;
+  background: #2f6f73;
+  box-shadow: 0 0 0 0 rgba(47, 111, 115, 0.35);
+  animation: agent-pulse 1.4s ease-out infinite;
+}
+
+.agent-orbit {
+  position: relative;
+  height: 2.5rem;
+  width: 2.5rem;
+  border: 1px solid #c8d6cd;
+  border-radius: 999px;
+}
+
+.agent-orbit span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 0.45rem;
+  width: 0.45rem;
+  border-radius: 999px;
+  background: #2f6f73;
+  transform-origin: -0.75rem center;
+  animation: agent-orbit 1.8s linear infinite;
+}
+
+.agent-orbit span:nth-child(2) {
+  animation-delay: -0.6s;
+  background: #b26a4c;
+}
+
+.agent-orbit span:nth-child(3) {
+  animation-delay: -1.2s;
+  background: #d7a84e;
+}
+
+.agent-progress {
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7efe8;
+}
+
+.agent-progress span {
+  display: block;
+  height: 100%;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2f6f73, #d7a84e, #2f6f73);
+  animation: agent-progress 2.2s ease-in-out infinite;
+}
+
+.agent-step {
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.agent-step.is-active {
+  border-color: #2f6f73;
+  background: #fffdf4;
+  box-shadow: 0 0 0 3px rgba(47, 111, 115, 0.08);
+  transform: translateY(-1px);
+}
+
+.agent-step.is-active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 0%, rgba(215, 168, 78, 0.16) 50%, transparent 78%);
+  transform: translateX(-100%);
+  animation: agent-step-scan 1.4s ease-in-out infinite;
+}
+
+.agent-step.is-complete .agent-step-dot {
+  background: #d7a84e;
+}
+
+.agent-step-dot {
+  display: inline-block;
+  height: 0.45rem;
+  width: 0.45rem;
+  shrink: 0;
+  border-radius: 999px;
+  background: #2f6f73;
+}
+
+.agent-step-bar {
+  width: 70%;
+  transform-origin: left center;
+  transform: scaleX(0.18);
+  transition: transform 180ms ease;
+}
+
+.agent-step.is-active .agent-step-bar {
+  animation: agent-step-bar 1.4s ease-in-out infinite;
+}
+
+.agent-step.is-complete .agent-step-bar {
+  transform: scaleX(1);
+}
+
+@keyframes agent-scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  55%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes agent-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(47, 111, 115, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 0.6rem rgba(47, 111, 115, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 111, 115, 0);
+  }
+}
+
+@keyframes agent-orbit {
+  from {
+    transform: rotate(0deg) translateX(1.05rem) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(1.05rem) rotate(-360deg);
+  }
+}
+
+@keyframes agent-progress {
+  0% {
+    transform: translateX(-90%);
+  }
+  55% {
+    transform: translateX(80%);
+  }
+  100% {
+    transform: translateX(180%);
+  }
+}
+
+@keyframes agent-step-fade {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+@keyframes agent-step-scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  70%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes agent-step-bar {
+  0%,
+  100% {
+    transform: scaleX(0.28);
+  }
+  55% {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-agent-panel::before,
+  .agent-live-dot,
+  .agent-orbit span,
+  .agent-progress span,
+  .agent-step,
+  .agent-step.is-active::before,
+  .agent-step-bar {
+    animation: none;
+  }
+}

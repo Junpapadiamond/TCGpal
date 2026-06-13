@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         hostname: "images.pokemontcg.io",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.scrydex.com",
+        pathname: "/**",
+      },
     ],
   },
 };

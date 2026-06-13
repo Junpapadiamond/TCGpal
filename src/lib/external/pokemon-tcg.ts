@@ -60,6 +60,15 @@ type SearchPokemonCardsOptions = {
   timeoutMs?: number;
 };
 
+type BrowsePokemonCardsOptions = {
+  query?: string;
+  page?: number;
+  pageSize?: number;
+  apiKey?: string;
+  fetcher?: typeof fetch;
+  timeoutMs?: number;
+};
+
 const POKEMON_TCG_API_BASE_URL = "https://api.pokemontcg.io/v2";
 
 export async function searchPokemonCards({
@@ -72,10 +81,30 @@ export async function searchPokemonCards({
   const normalizedQuery = query.trim();
   if (normalizedQuery.length < 2) throw new Error("Pokemon card search query must be at least 2 characters.");
 
+  return browsePokemonCards({
+    query: normalizedQuery,
+    page: 1,
+    pageSize: Math.min(Math.max(pageSize, 1), 20),
+    apiKey,
+    fetcher,
+    timeoutMs,
+  });
+}
+
+export async function browsePokemonCards({
+  query = "",
+  page = 1,
+  pageSize = 24,
+  apiKey = process.env.POKEMON_TCG_API_KEY,
+  fetcher = fetch,
+  timeoutMs = 8000,
+}: BrowsePokemonCardsOptions): Promise<PokemonTcgSearchResult> {
+  const normalizedQuery = query.trim();
   const apiQuery = buildPokemonCardQuery(normalizedQuery);
   const url = new URL(`${POKEMON_TCG_API_BASE_URL}/cards`);
-  url.searchParams.set("q", apiQuery);
-  url.searchParams.set("pageSize", String(Math.min(Math.max(pageSize, 1), 20)));
+  if (apiQuery) url.searchParams.set("q", apiQuery);
+  url.searchParams.set("page", String(Math.max(page, 1)));
+  url.searchParams.set("pageSize", String(Math.min(Math.max(pageSize, 1), 250)));
   url.searchParams.set("orderBy", "-set.releaseDate,name");
 
   const controller = new AbortController();
@@ -104,6 +133,7 @@ export async function searchPokemonCards({
 }
 
 function buildPokemonCardQuery(query: string) {
+  if (!query) return "";
   if (query.includes(":")) return query;
   return `name:"${query.replaceAll('"', '\\"')}"`;
 }
