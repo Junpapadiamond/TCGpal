@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
         hostname: "images.scrydex.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "i.ebayimg.com",
+        pathname: "/**",
+      },
     ],
   },
 };

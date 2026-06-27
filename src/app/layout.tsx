@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TCGpal",
-  description: "A cautious card decision layer for TCG collectors and small sellers.",
+  title: "TCGpal — Compare Pokémon card listings with evidence",
+  description: "Compare landed cost, seller signals, and condition evidence before buying a Pokémon card.",
   icons: {
     icon: [
       { url: "/tcgpal-icon.svg", type: "image/svg+xml" },

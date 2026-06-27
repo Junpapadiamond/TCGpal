@@ -1,65 +1,68 @@
 # TCGpal
 
-TCGpal is a PM-demo MVP for a cautious decision layer for TCG collectors and small sellers. It is not another price chart. It helps users decide whether a marketplace listing is worth pursuing by connecting card-first recommendations, listing risk, raw-vs-slab math, and their own decision history.
+TCGpal helps U.S. Pokémon collectors compare a specific raw-card listing against supported alternatives. It separates three questions that ordinary price apps collapse:
 
-## Phase 0 Demo
+- What is the lowest estimated cost?
+- Which listing has the strongest seller and return signals?
+- Which listing provides the best condition evidence?
 
-Built features:
+The app shows its sources and does not predict grades or invent sold transactions.
 
-- First-run TCG/persona/budget picker
-- Card-forward Home with curated demo recommendations
-- Listing Risk Checker using pasted title, description, price, and goal
-- Raw vs Slab Calculator using deterministic TypeScript math
-- Decision Journal saved to `localStorage`, including assumed PSA10 odds and actual grading outcomes
-- 30-day decision plan items generated from Listing Risk and Raw vs Slab results
-- Journal-based grading calibration that adjusts new PSA10 assumptions from recent outcomes
-- Hermes Router server route with AI-assisted Listing Risk actions and technical trace
-- Provider adapter with OpenAI default and future GLM/Kimi/MiMo extension points
-- Eval harness for routing, schema validation, deterministic math, safety language, and model-cost guards
+## Current v1
 
-Deferred features:
+- Direct listing-first flow with no login
+- Official eBay active-listing adapter
+- Manual candidates from TCGplayer, Facebook, Reddit, Mercari, Whatnot, shops, and shows
+- Optional Pokémon TCG catalog matching
+- Optional PriceCharting reference pricing
+- Deterministic landed-cost, seller-trust, evidence, eligibility, and ranking rules
+- Optional OpenAI evidence synthesis with deterministic fallback
+- Labeled demo inventory when eBay credentials are absent
+- Privacy-restricted PostHog custom events
 
-- Supabase
-- Auth
-- Image upload
-- Vision model
-- External marketplace APIs
-- Payments
-- Perplexity/web search
-- Full multi-provider runtime beyond OpenAI
-
-## Tech Stack
-
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- React Hook Form
-- Zod
-- Vitest
-- localStorage persistence
-- OpenAI Responses API via a server-side provider adapter
-
-## AI Setup
-
-Copy `.env.example` to `.env.local` and add your API key:
-
-```bash
-AI_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
-OPENAI_MODEL_PRIMARY=gpt-5.4-mini
-OPENAI_MODEL_CHEAP=gpt-5.4-nano
-```
-
-The demo still works without an API key. In that case, Hermes returns local fallback results. Technical trace is available behind a collapsed UI toggle.
-
-## Getting Started
+## Setup
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+The demo works without credentials. Add eBay credentials for live active listings and optional provider keys for richer evidence.
+
+## Environment
+
+```bash
+EBAY_CLIENT_ID=
+EBAY_CLIENT_SECRET=
+EBAY_MARKETPLACE_ID=EBAY_US
+
+POKEMON_TCG_API_KEY=
+PRICECHARTING_API_TOKEN=
+
+AI_PROVIDER=openai
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5.5-2026-04-23
+
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+All marketplace and AI keys stay server-side. The PostHog project key is public by design, but analytics payloads are restricted by an explicit property allowlist.
+
+## Public API
+
+`POST /api/agent/listing-compare`
+
+The response is one of:
+
+- `needs_confirmation`: the exact card/version must be confirmed.
+- `complete`: ranked choices and evidence are available.
+- `partial`: some evidence source is unavailable, but the report is still useful.
+
+See [product spec](docs/product-spec.md), [architecture and data sources](docs/architecture-and-data-sources.md), and [validation plan](docs/validation-plan.md).
 
 ## Verification
 
@@ -70,6 +73,6 @@ npm run test
 npm run build
 ```
 
-## Product Guardrails
+## Product boundaries
 
-TCGpal should explain uncertainty and tradeoffs. It should not promise profit, claim guaranteed grades, or tell a user they must buy a card.
+No scraping, sold-history claims, image grading, auth, payments, or investment promises. Seller condition labels remain claims; TCGpal scores the evidence available to review them.

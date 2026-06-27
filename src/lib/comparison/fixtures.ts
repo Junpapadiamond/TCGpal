@@ -1,0 +1,141 @@
+import type { CardIdentityCandidate, NormalizedListing } from "@/lib/schemas";
+
+export const demoIdentities: CardIdentityCandidate[] = [
+  {
+    id: "swsh7-215",
+    name: "Umbreon VMAX",
+    setName: "Evolving Skies",
+    setCode: "SWSH7",
+    cardNumber: "215/203",
+    language: "English",
+    imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png",
+    confidence: "high",
+    matchReasons: ["Card name, set, and collector number match."],
+  },
+  {
+    id: "swsh7-TG23",
+    name: "Umbreon VMAX",
+    setName: "Brilliant Stars Trainer Gallery",
+    setCode: "SWSH9",
+    cardNumber: "TG23/TG30",
+    language: "English",
+    imageUrl: "https://images.pokemontcg.io/swsh9tg/TG23_hires.png",
+    confidence: "medium",
+    matchReasons: ["Same Pokémon and card type, but a different set and number."],
+  },
+];
+
+export const demoListingSeeds: Array<Omit<
+  NormalizedListing,
+  | "estimatedTax"
+  | "preTaxTotal"
+  | "estimatedLandedCost"
+  | "sellerTrustScore"
+  | "evidenceCompletenessScore"
+  | "safetyScore"
+  | "eligible"
+  | "exclusionReasons"
+>> = [
+  {
+    id: "demo-ebay-value",
+    marketplace: "eBay",
+    url: "https://www.ebay.com/sch/i.html?_nkw=Umbreon+VMAX+215%2F203",
+    title: "Umbreon VMAX 215/203 Evolving Skies Alt Art - raw",
+    cardId: "swsh7-215",
+    matchConfidence: "high",
+    matchReasons: ["Exact card number and set name appear in the title."],
+    active: true,
+    raw: true,
+    currency: "USD",
+    price: 1225,
+    shipping: 0,
+    claimedCondition: "Lightly Played",
+    imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png",
+    seller: {
+      feedbackPercentage: 99.6,
+      feedbackCount: 846,
+      returnsAccepted: true,
+      topRated: false,
+      buyerProtection: true,
+    },
+    evidence: {
+      photoCount: 4,
+      frontBackExplicit: true,
+      closeupsExplicit: false,
+      surfaceExplicit: false,
+      identityExplicit: true,
+      substantiveConditionNotes: true,
+      missing: ["No corner closeups.", "No surface video or glare-free closeup."],
+    },
+    observedAt: new Date().toISOString(),
+    demo: true,
+  },
+  {
+    id: "demo-ebay-safe",
+    marketplace: "eBay",
+    url: "https://www.ebay.com/sch/i.html?_nkw=Umbreon+VMAX+215%2F203",
+    title: "2021 Pokémon Umbreon VMAX 215/203 Alternate Art raw card",
+    cardId: "swsh7-215",
+    matchConfidence: "high",
+    matchReasons: ["Exact collector number, year, and set match."],
+    active: true,
+    raw: true,
+    currency: "USD",
+    price: 1295,
+    shipping: 8.95,
+    claimedCondition: "Near Mint",
+    imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png",
+    seller: {
+      feedbackPercentage: 100,
+      feedbackCount: 4200,
+      returnsAccepted: true,
+      topRated: true,
+      buyerProtection: true,
+    },
+    evidence: {
+      photoCount: 5,
+      frontBackExplicit: true,
+      closeupsExplicit: true,
+      surfaceExplicit: false,
+      identityExplicit: true,
+      substantiveConditionNotes: true,
+      missing: ["Surface evidence is limited."],
+    },
+    observedAt: new Date().toISOString(),
+    demo: true,
+  },
+  {
+    id: "demo-ebay-evidence",
+    marketplace: "eBay",
+    url: "https://www.ebay.com/sch/i.html?_nkw=Umbreon+VMAX+215%2F203",
+    title: "Umbreon VMAX 215/203 raw - front back corners surface video",
+    cardId: "swsh7-215",
+    matchConfidence: "high",
+    matchReasons: ["Exact number and version are explicitly stated."],
+    active: true,
+    raw: true,
+    currency: "USD",
+    price: 1320,
+    shipping: 5,
+    claimedCondition: "Near Mint",
+    imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png",
+    seller: {
+      feedbackPercentage: 99.2,
+      feedbackCount: 318,
+      returnsAccepted: true,
+      topRated: false,
+      buyerProtection: true,
+    },
+    evidence: {
+      photoCount: 9,
+      frontBackExplicit: true,
+      closeupsExplicit: true,
+      surfaceExplicit: true,
+      identityExplicit: true,
+      substantiveConditionNotes: true,
+      missing: [],
+    },
+    observedAt: new Date().toISOString(),
+    demo: true,
+  },
+];

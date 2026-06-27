@@ -1,5 +1,3 @@
-import type { HermesTaskType } from "@/lib/schemas";
-
 export type AiProviderName = "openai" | "anthropic" | "glm" | "kimi" | "mimo";
 export type AiModelRole = "classifier" | "primary" | "critic";
 export type AiReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
@@ -38,13 +36,6 @@ export function getAiConfig(): AiConfig {
 
 export function getModelForStep(role: AiModelRole, config: AiConfig = getAiConfig()) {
   return role === "primary" ? config.primaryModel : config.cheapModel;
-}
-
-export function getPrimaryAgentForTask(taskType: HermesTaskType) {
-  if (taskType === "PLAN_GENERATION") return "Plan Agent";
-  if (taskType === "LISTING_RISK_CHECK") return "Listing Risk Agent";
-  if (taskType === "RAW_VS_SLAB_EXPLAIN") return "Calculation Explainer Agent";
-  return "Journal Reflection Agent";
 }
 
 function parseProvider(value: string | undefined): AiProviderName {

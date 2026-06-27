@@ -28,6 +28,10 @@ export type AiProbeResult = {
 };
 
 export function createAiProvider(config: AiConfig): AiProvider {
+  if (config.provider === "anthropic") {
+    return config.hasApiKey ? new AnthropicMessagesProvider(config) : new UnavailableProvider("anthropic");
+  }
+
   if (config.provider !== "openai") {
     return new UnavailableProvider(config.provider);
   }
@@ -49,14 +53,9 @@ export async function probeAnthropicModel(config: AiConfig): Promise<AiProbeResu
   }
 
   try {
-    const response = await fetch(`${config.anthropicBaseUrl}/messages`, {
+    const response = await fetch(`${config.anthropicBaseUrl}/v1/messages`, {
       method: "POST",
-      headers: {
-        "x-api-key": token,
-        Authorization: `Bearer ${token}`,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
+      headers: anthropicHeaders(),
       body: JSON.stringify({
         model: config.anthropicModel,
         max_tokens: 16,
@@ -152,6 +151,91 @@ class OpenAiResponsesProvider implements AiProvider {
       provider: "openai",
     };
   }
+}
+
+class AnthropicMessagesProvider implements AiProvider {
+  constructor(private readonly config: AiConfig) {}
+
+  async completeJson<T>({ schemaName, schema, system, user }: CompleteJsonInput<T>): Promise<AiProviderResult<T>> {
+    const model = this.config.anthropicModel;
+    const response = await fetch(`${this.config.anthropicBaseUrl}/v1/messages`, {
+      method: "POST",
+      headers: anthropicHeaders(),
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        system,
+        messages: [
+          {
+            role: "user",
+            content: [
+              "Respond with a single JSON object only — no markdown fences, no prose before or after.",
+              `It must conform exactly to this JSON Schema (named "${schemaName}"). Return the object itself, not the schema, and do not nest it under any key:`,
+              JSON.stringify(z.toJSONSchema(schema)),
+              "Input data to summarize:",
+              JSON.stringify(user, null, 2),
+            ].join("\n\n"),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(`Anthropic ${response.status}: ${message.slice(0, 500)}`);
+    }
+
+    const text = extractAnthropicText((await response.json()) as unknown);
+    const parsed = schema.safeParse(parseJsonObject(text));
+
+    if (!parsed.success) {
+      throw new Error(`AI output failed ${schemaName} validation: ${parsed.error.message}`);
+    }
+
+    return {
+      data: parsed.data,
+      model,
+      provider: "anthropic",
+    };
+  }
+}
+
+function anthropicHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "anthropic-version": "2023-06-01",
+    "Content-Type": "application/json",
+  };
+  // ANTHROPIC_AUTH_TOKEN → Authorization: Bearer (proxy / OAuth style).
+  // ANTHROPIC_API_KEY → x-api-key (official key style). Sending both can make a
+  // proxy forward the x-api-key upstream and 401 ("invalid x-api-key").
+  const authToken = process.env.ANTHROPIC_AUTH_TOKEN;
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  } else if (process.env.ANTHROPIC_API_KEY) {
+    headers["x-api-key"] = process.env.ANTHROPIC_API_KEY;
+  }
+  return headers;
+}
+
+function extractAnthropicText(payload: unknown) {
+  if (typeof payload !== "object" || !payload || !("content" in payload) || !Array.isArray(payload.content)) {
+    throw new Error("Anthropic response did not include content.");
+  }
+
+  const chunks: string[] = [];
+  for (const block of payload.content) {
+    if (
+      typeof block === "object" && block
+      && "type" in block && block.type === "text"
+      && "text" in block && typeof block.text === "string"
+    ) {
+      chunks.push(block.text);
+    }
+  }
+
+  const text = chunks.join("\n").trim();
+  if (!text) throw new Error("Anthropic response text was empty.");
+  return text;
 }
 
 export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {

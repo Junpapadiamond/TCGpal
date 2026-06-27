@@ -1,0 +1,107 @@
+import { describe, expect, it } from "vitest";
+import { runListingComparison } from "@/lib/ai/listing-compare";
+import { comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
+
+// Keep the orchestration tests hermetic: stub the Pokémon catalog response so we
+// never hit the live API. eBay/PriceCharting short-circuit on missing env creds
+// before fetching, so the catalog endpoint is the only call the fetcher serves.
+const catalogResponse = {
+  data: [
+    {
+      id: "swsh7-215",
+      name: "Umbreon VMAX",
+      number: "215/203",
+      set: { id: "swsh7", name: "Evolving Skies" },
+      images: { small: "https://images.pokemontcg.io/swsh7/215.png", large: "https://images.pokemontcg.io/swsh7/215_hires.png" },
+      tcgplayer: { url: "https://prices.pokemontcg.io/tcgplayer/swsh7-215", prices: { holofoil: { low: 300, mid: 350, high: 600, market: 420 } } },
+    },
+    {
+      id: "swsh7-TG23",
+      name: "Umbreon VMAX",
+      number: "TG23/TG30",
+      set: { id: "swsh9tg", name: "Brilliant Stars Trainer Gallery" },
+      images: { small: "https://images.pokemontcg.io/swsh9tg/TG23.png", large: "https://images.pokemontcg.io/swsh9tg/TG23_hires.png" },
+    },
+  ],
+  page: 1,
+  pageSize: 6,
+  count: 2,
+  totalCount: 2,
+};
+
+const fetcher = (async (input: RequestInfo | URL) => {
+  if (String(input).includes("api.pokemontcg.io")) {
+    return { ok: true, status: 200, json: async () => catalogResponse } as Response;
+  }
+  throw new Error("network disabled in test");
+}) as unknown as typeof fetch;
+
+const request: ComparisonRequest = {
+  sourceListing: {
+    marketplace: "Facebook",
+    url: "",
+    title: "Umbreon VMAX Evolving Skies 215/203 raw",
+    description: "Front and back photos, corner closeups, surface video. Clean copy with a tiny white dot.",
+    price: 1240,
+    shipping: 10,
+    claimedCondition: "Near Mint",
+    active: true,
+    seller: {
+      feedbackPercentage: null,
+      feedbackCount: null,
+      returnsAccepted: false,
+      topRated: false,
+      buyerProtection: false,
+    },
+    evidence: {
+      photoCount: 8,
+      frontBackExplicit: true,
+      closeupsExplicit: true,
+      surfaceExplicit: true,
+      identityExplicit: true,
+      substantiveConditionNotes: true,
+      missing: [],
+    },
+  },
+  buyer: {
+    country: "US",
+    postalCode: "10001",
+    taxRate: 0.08,
+    desiredCondition: "Unknown",
+  },
+  cardHint: {
+    name: "Umbreon VMAX",
+    setCode: "SWSH7",
+    cardNumber: "215/203",
+    language: "English",
+  },
+};
+
+describe("listing comparison agent", () => {
+  it("returns a schema-valid labeled demo report without marketplace credentials", async () => {
+    const response = await runListingComparison(request, { fetcher });
+    expect(comparisonReportSchema.safeParse(response).success).toBe(true);
+    expect(response.demoMode).toBe(true);
+    expect(response.rankedChoices.length).toBe(3);
+    expect(response.candidates.some((candidate) => candidate.demo)).toBe(true);
+  });
+
+  it("requires confirmation when identity input is ambiguous", async () => {
+    const response = await runListingComparison({
+      ...request,
+      cardHint: { name: "", setCode: "", cardNumber: "", language: "English" },
+    }, { fetcher });
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.rankedChoices).toEqual([]);
+  });
+
+  it("continues after the user confirms a catalog identity", async () => {
+    const response = await runListingComparison({
+      ...request,
+      cardHint: { name: "", setCode: "", cardNumber: "", language: "English" },
+      confirmedCardId: "swsh7-215",
+    }, { fetcher });
+    expect(response.status).toBe("complete");
+    expect(response.confirmedCard?.id).toBe("swsh7-215");
+  });
+});
