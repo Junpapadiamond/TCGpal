@@ -302,6 +302,7 @@ function ComparisonExperience() {
               <div className="eyebrow">
                 <SearchCheck className="h-4 w-4" />
                 {t.hero.eyebrow}
+                <Pokeball />
               </div>
               <h1 className="mt-3 max-w-4xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
                 {t.hero.title}
@@ -588,6 +589,23 @@ function LanguageToggle({ lang, setLang, t }: { lang: Lang; setLang: (lang: Lang
         );
       })}
     </div>
+  );
+}
+
+function Pokeball() {
+  return (
+    <span
+      aria-label="Pokeball"
+      title="Pokeball"
+      className="ml-1.5 inline-block h-4 w-4 shrink-0 rounded-full border border-[#1f2421] align-middle"
+      style={{
+        background:
+          "linear-gradient(#e63946 0 50%, #f7f9f5 50% 100%)",
+        boxShadow: "inset 0 0 0 1.5px #1f2421",
+      }}
+    >
+      <span className="block h-full w-full rounded-full bg-[radial-gradient(circle,_#f7f9f5_0_1.5px,_#1f2421_1.5px_3px,_transparent_3px)] bg-center bg-no-repeat" />
+    </span>
   );
 }
 
