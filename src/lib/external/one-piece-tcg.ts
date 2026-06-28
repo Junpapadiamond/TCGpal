@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CardIdentityCandidate } from "@/lib/schemas";
+import { findOnePieceCatalogCard, onePieceCatalog } from "./one-piece-catalog";
 
 // OPTCG API (https://www.optcgapi.com) is a free, no-key community catalog for the
 // One Piece Trading Card Game. It exposes static-ish JSON dumps plus per-card
@@ -109,6 +110,10 @@ export async function getOnePieceCard({
   const id = cardSetId.trim().toUpperCase();
   if (!id) throw new Error("One Piece card id is required.");
 
+  // Bundled-first: a curated card resolves instantly and works with no network.
+  const bundled = findOnePieceCatalogCard(id);
+  if (bundled) return bundled;
+
   const base = resolveBaseUrl(baseUrl);
   // A given id lives in exactly one of these collections; try in likelihood order.
   const paths = [
@@ -139,8 +144,10 @@ export async function searchOnePieceCards({
 }: SearchOnePieceCardsOptions): Promise<OnePieceTcgSearchResult> {
   const normalizedQuery = query.trim();
   const directId = cardNumber.trim().toUpperCase();
+  const limit = Math.min(Math.max(pageSize, 1), 50);
 
-  // Fast path: a concrete card id (OP01-001) resolves to a single print.
+  // Fast path: a concrete card id (OP01-001) resolves to a single print. This is
+  // bundled-first inside getOnePieceCard, so it works with no network.
   if (directId && CARD_SET_ID_PATTERN.test(directId)) {
     const card = await getOnePieceCard({ cardSetId: directId, baseUrl, fetcher, timeoutMs });
     if (card) {
@@ -149,18 +156,43 @@ export async function searchOnePieceCards({
   }
 
   if (normalizedQuery.length < 2) {
-    throw new Error("One Piece card search query must be at least 2 characters.");
+    return { source: "optcg-api", query: normalizedQuery, cards: [], count: 0 };
   }
 
-  // OPTCG has no name-query endpoint, so pull the cached full set-card dump and
-  // match locally. The response is cached (revalidate) to keep this cheap.
+  // The bundled catalog guarantees matches for common queries with zero network.
+  // The live OPTCG dump augments breadth when reachable; its failure never
+  // propagates (best-effort), so search always returns the bundled results.
   const base = resolveBaseUrl(baseUrl);
-  const raw = await fetchJson(`${base}/allSetCards/`, fetcher, timeoutMs);
-  const all = z.array(onePieceCardSchema).parse(raw);
+  const live = await fetchLiveAllSetCards(base, fetcher, timeoutMs);
+  const merged = mergeOnePieceCatalogs(onePieceCatalog, live);
+  const cards = rankOnePieceCards(merged, normalizedQuery, limit);
 
-  const limit = Math.min(Math.max(pageSize, 1), 50);
-  const cards = all
-    .map((card) => ({ card, score: scoreOnePieceCard(card, normalizedQuery) }))
+  return { source: "optcg-api", query: normalizedQuery, cards, count: cards.length };
+}
+
+// Best-effort live dump. Returns [] on any failure so the bundled catalog is
+// always enough on its own.
+async function fetchLiveAllSetCards(base: string, fetcher: typeof fetch, timeoutMs: number): Promise<OnePieceTcgCard[]> {
+  try {
+    const raw = await fetchJson(`${base}/allSetCards/`, fetcher, timeoutMs);
+    return z.array(onePieceCardSchema).parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+// Union by card_set_id. Live entries override bundled ones (fresher art/price)
+// while bundled-only cards stay, preserving the offline guarantee.
+function mergeOnePieceCatalogs(bundled: OnePieceTcgCard[], live: OnePieceTcgCard[]): OnePieceTcgCard[] {
+  const byId = new Map<string, OnePieceTcgCard>();
+  for (const card of bundled) byId.set(card.card_set_id.toUpperCase(), card);
+  for (const card of live) byId.set(card.card_set_id.toUpperCase(), card);
+  return Array.from(byId.values());
+}
+
+function rankOnePieceCards(cards: OnePieceTcgCard[], query: string, limit: number): OnePieceTcgCard[] {
+  return cards
+    .map((card) => ({ card, score: scoreOnePieceCard(card, query) }))
     .filter((entry) => entry.score > 0)
     .sort(
       (a, b) =>
@@ -170,8 +202,6 @@ export async function searchOnePieceCards({
     )
     .slice(0, limit)
     .map((entry) => entry.card);
-
-  return { source: "optcg-api", query: normalizedQuery, cards, count: cards.length };
 }
 
 function normalizeOnePieceName(value: string): string {
@@ -251,12 +281,27 @@ function deriveSetCode(card: OnePieceTcgCard): string {
   return card.card_set_id.split("-")[0] ?? card.card_set_id;
 }
 
+// Hosts allowlisted for next/image in next.config.ts. An imageUrl on any other
+// host would make next/image throw at render time, so we drop it to null (the UI
+// falls back to a placeholder) instead of risking a crash from live data.
+const ALLOWED_IMAGE_HOSTS = [/(^|\.)onepiece-cardgame\.com$/i, /(^|\.)optcgapi\.com$/i];
+
+function safeImageUrl(value: string | null | undefined): string | null {
+  const image = value?.trim();
+  if (!image || !/^https?:\/\//i.test(image)) return null;
+  try {
+    const host = new URL(image).hostname;
+    return ALLOWED_IMAGE_HOSTS.some((pattern) => pattern.test(host)) ? image : null;
+  } catch {
+    return null;
+  }
+}
+
 export function mapOnePieceCardToIdentity(
   card: OnePieceTcgCard,
   options: { confidence: CardIdentityCandidate["confidence"]; matchReasons: string[] },
 ): CardIdentityCandidate {
-  const image = card.card_image?.trim();
-  const imageUrl = image && /^https?:\/\//i.test(image) ? image : null;
+  const imageUrl = safeImageUrl(card.card_image);
   const market = toMarketPrice(card);
 
   return {

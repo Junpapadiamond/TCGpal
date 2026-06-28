@@ -20,6 +20,19 @@ const nextConfig: NextConfig = {
         hostname: "i.ebayimg.com",
         pathname: "/**",
       },
+      // One Piece card art. en.onepiece-cardgame.com serves the official
+      // watermarked "SAMPLE" images used by the bundled catalog; the optcgapi
+      // hosts cover images returned by the live OPTCG augmentation.
+      {
+        protocol: "https",
+        hostname: "en.onepiece-cardgame.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.optcgapi.com",
+        pathname: "/**",
+      },
     ],
   },
 };

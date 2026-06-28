@@ -204,41 +204,49 @@ describe("listing comparison agent", () => {
     expect(response.confirmedCard?.setSymbolUrl).toBe("https://images.pokemontcg.io/swsh7/symbol.png");
   });
 
-  it("routes One Piece requests to the OPTCG catalog and confirms by card id", async () => {
-    const optcgFetcher = (async (input: RequestInfo | URL) => {
-      const url = new URL(String(input));
-      if (url.hostname.includes("optcgapi.com") && url.pathname === "/api/sets/card/OP01-001/") {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => [
-            {
-              card_name: "Monkey.D.Luffy",
-              card_set_id: "OP01-001",
-              set_id: "OP-01",
-              set_name: "Romance Dawn",
-              rarity: "L",
-              card_image: "https://www.optcgapi.com/images/OP01-001.png",
-              market_price: 4.5,
-            },
-          ],
-        } as Response;
-      }
+  it("routes One Piece requests to the bundled OPTCG catalog and confirms offline", async () => {
+    // A throwing fetcher proves the One Piece path resolves with zero network:
+    // the bundled catalog answers the confirm-by-id without any live call.
+    const offline = (async () => {
       throw new Error("network disabled in test");
     }) as unknown as typeof fetch;
 
     const response = await runListingComparison(
       {
         ...request,
-        cardHint: { game: "onePiece", name: "Monkey.D.Luffy", setCode: "OP-01", cardNumber: "OP01-001", language: "English" },
-        confirmedCardId: "OP01-001",
+        cardHint: { game: "onePiece", name: "Monkey.D.Luffy", setCode: "OP-01", cardNumber: "OP01-024", language: "English" },
+        confirmedCardId: "OP01-024",
       },
-      { fetcher: optcgFetcher },
+      { fetcher: offline },
     );
 
-    expect(response.confirmedCard?.id).toBe("OP01-001");
+    expect(response.confirmedCard?.id).toBe("OP01-024");
+    expect(response.confirmedCard?.name).toBe("Monkey.D.Luffy");
     expect(response.confirmedCard?.setName).toBe("Romance Dawn");
-    expect(response.confirmedCard?.imageUrl).toBe("https://www.optcgapi.com/images/OP01-001.png");
+    expect(response.confirmedCard?.imageUrl).toBe(
+      "https://en.onepiece-cardgame.com/images/cardlist/card/OP01-024.png",
+    );
     expect(response.trace.some((entry) => entry.actor === "One Piece catalog adapter")).toBe(true);
+  });
+
+  it("GUARANTEE: typing a One Piece name returns candidates even with no network", async () => {
+    const offline = (async () => {
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "onePiece", name: "luffy", setCode: "", cardNumber: "", language: "English" },
+      },
+      { fetcher: offline },
+    );
+
+    // The user-facing promise: search resolves to real options, not "no match".
+    expect(response.identityCandidates.length).toBeGreaterThan(0);
+    expect(
+      response.identityCandidates.some((card) => card.name.toLowerCase().includes("luffy")),
+    ).toBe(true);
   });
 });
