@@ -25,6 +25,7 @@ import {
   Tag,
 } from "lucide-react";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
+import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import {
   comparisonReportSchema,
   type CardIdentityCandidate,
@@ -108,6 +109,15 @@ const defaultValues: ComparisonForm = {
 };
 
 export function ComparisonApp() {
+  return (
+    <LanguageProvider>
+      <ComparisonExperience />
+    </LanguageProvider>
+  );
+}
+
+function ComparisonExperience() {
+  const t = useT();
   const form = useForm<ComparisonForm>({ defaultValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
@@ -291,31 +301,30 @@ export function ComparisonApp() {
             <div>
               <div className="eyebrow">
                 <SearchCheck className="h-4 w-4" />
-                Evidence-backed buy recommendations
+                {t.hero.eyebrow}
               </div>
               <h1 className="mt-3 max-w-4xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
-                The one to buy—three ways to be right.
+                {t.hero.title}
               </h1>
             </div>
             <p className="max-w-xl text-sm leading-6 text-[#64736c] sm:text-base sm:leading-7">
-              Tell us the card. TCGpal compares live listings and recommends the cheapest, safest,
-              or best-documented option.
+              {t.hero.subtitle}
             </p>
           </div>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#52635c] sm:text-sm">
-            <Promise icon={ReceiptText} label="Price + shipping + optional tax" />
-            <Promise icon={ShieldCheck} label="Seller and return signals" />
-            <Promise icon={Camera} label="Evidence quality, never grade prediction" />
+            <Promise icon={ReceiptText} label={t.hero.promiseTax} />
+            <Promise icon={ShieldCheck} label={t.hero.promiseSeller} />
+            <Promise icon={Camera} label={t.hero.promiseEvidence} />
           </div>
         </section>
 
         <section id="compare" className="mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
           <div className="border-b border-[#d6ded5] px-5 py-5 sm:px-7">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <h2 className="font-serif text-3xl font-bold text-[#2f6f73]">Find the best listing</h2>
+              <h2 className="font-serif text-3xl font-bold text-[#2f6f73]">{t.form.heading}</h2>
               <button className="text-button" type="button" onClick={useDemo} disabled={loading}>
                 <Sparkles className="h-4 w-4" />
-                Run the labeled demo
+                {t.form.runDemo}
               </button>
             </div>
           </div>
@@ -323,30 +332,30 @@ export function ComparisonApp() {
           <form className="p-5 sm:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
             <div className="grid gap-4 md:grid-cols-3">
               <label className="field">
-                <span>Card name</span>
-                <input {...form.register("cardName")} placeholder="Umbreon VMAX" required />
+                <span>{t.form.cardName}</span>
+                <input {...form.register("cardName")} placeholder={t.form.ph.cardName} required />
               </label>
               <label className="field">
-                <span>Set</span>
-                <input {...form.register("setCode")} placeholder="Evolving Skies / SWSH7" />
+                <span>{t.form.set}</span>
+                <input {...form.register("setCode")} placeholder={t.form.ph.set} />
               </label>
               <label className="field">
-                <span>Collector number</span>
-                <input {...form.register("cardNumber")} placeholder="215/203" />
+                <span>{t.form.collectorNumber}</span>
+                <input {...form.register("cardNumber")} placeholder={t.form.ph.collectorNumber} />
               </label>
             </div>
             <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
             <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-[#64736c]">
               <SearchCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2f6f73]" />
-              Add the collector number to jump straight to ranked listings; with just a name, you&apos;ll confirm the exact version next.
+              {t.form.collectorHelp}
             </p>
 
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               <label className="field">
-                <span>Delivery ZIP</span>
+                <span>{t.form.deliveryZip}</span>
                 <div className="input-with-icon">
                   <MapPin className="h-4 w-4" />
-                  <input {...form.register("postalCode")} inputMode="numeric" placeholder="10001" />
+                  <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
                 </div>
               </label>
             </div>
@@ -359,23 +368,23 @@ export function ComparisonApp() {
             >
               <span className="flex items-center gap-2">
                 <Calculator className="h-4 w-4" />
-                Options — tax rate and desired condition
+                {t.form.optionsToggle}
               </span>
               <ChevronDown className={`h-4 w-4 transition ${optionsOpen ? "rotate-180" : ""}`} />
             </button>
             {optionsOpen && (
               <div className="mt-4 grid gap-4 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-5 md:grid-cols-2">
                 <label className="field">
-                  <span>Optional tax rate</span>
+                  <span>{t.form.optionalTaxRate}</span>
                   <div className="input-suffix">
-                    <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder="8.0" />
+                    <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
                     <span>%</span>
                   </div>
                 </label>
                 <label className="field">
-                  <span>Desired condition</span>
+                  <span>{t.form.desiredCondition}</span>
                   <select {...form.register("desiredCondition")}>
-                    {conditions.map((value) => <option key={value}>{value}</option>)}
+                    {conditions.map((value) => <option key={value} value={value}>{t.conditions[value]}</option>)}
                   </select>
                 </label>
               </div>
@@ -389,7 +398,7 @@ export function ComparisonApp() {
             >
               <span className="flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-[#2f6f73]" />
-                Already eyeing a specific listing? Add it (optional)
+                {t.form.listingToggle}
               </span>
               <ChevronDown className={`h-4 w-4 transition ${listingOpen ? "rotate-180" : ""}`} />
             </button>
@@ -397,55 +406,55 @@ export function ComparisonApp() {
             <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
               <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
                 <label className="field">
-                  <span>Listing URL</span>
+                  <span>{t.form.listingUrl}</span>
                   <div className="input-with-icon">
                     <Globe2 className="h-4 w-4" />
                     <input
                       {...form.register("url")}
-                      placeholder="https://www.ebay.com/itm/... or paste another marketplace link"
+                      placeholder={t.form.ph.listingUrl}
                     />
                   </div>
-                  <small>Only eBay URLs are fetched automatically. Other links remain user-supplied evidence.</small>
+                  <small>{t.form.listingUrlHelp}</small>
                 </label>
                 <label className="field">
-                  <span>Marketplace</span>
+                  <span>{t.form.marketplace}</span>
                   {isManual ? (
                     <select {...form.register("marketplace")}>
-                      {marketplaces.map((value) => <option key={value}>{value}</option>)}
+                      {marketplaces.map((value) => <option key={value} value={value}>{t.marketplaces[value] ?? value}</option>)}
                     </select>
                   ) : (
                     <div className="flex min-h-11 items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-3 text-sm font-bold text-[#2f6f73]">
                       <BadgeCheck className="h-4 w-4" />
-                      eBay · auto-detected from URL
+                      {t.form.ebayAutoDetected}
                     </div>
                   )}
                 </label>
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-4">
                 <label className="field md:col-span-2">
-                  <span>Listing title</span>
-                  <input {...form.register("listingTitle")} placeholder="Paste the seller's exact title" />
+                  <span>{t.form.listingTitle}</span>
+                  <input {...form.register("listingTitle")} placeholder={t.form.ph.listingTitle} />
                 </label>
                 <label className="field">
-                  <span>Asking price</span>
+                  <span>{t.form.askingPrice}</span>
                   <div className="input-prefix">
                     <span>$</span>
-                    <input {...form.register("price")} inputMode="decimal" placeholder="0.00" />
+                    <input {...form.register("price")} inputMode="decimal" placeholder={t.form.ph.price} />
                   </div>
                 </label>
                 <label className="field">
-                  <span>Shipping</span>
+                  <span>{t.form.shipping}</span>
                   <div className="input-prefix">
                     <span>$</span>
-                    <input {...form.register("shipping")} inputMode="decimal" placeholder="0.00" />
+                    <input {...form.register("shipping")} inputMode="decimal" placeholder={t.form.ph.shipping} />
                   </div>
                 </label>
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-4">
                 <label className="field">
-                  <span>Seller-claimed condition</span>
+                  <span>{t.form.sellerClaimedCondition}</span>
                   <select {...form.register("claimedCondition")}>
-                    {conditions.map((value) => <option key={value}>{value}</option>)}
+                    {conditions.map((value) => <option key={value} value={value}>{t.conditions[value]}</option>)}
                   </select>
                 </label>
               </div>
@@ -460,7 +469,7 @@ export function ComparisonApp() {
             >
               <span className="flex items-center gap-2">
                 <FileSearch className="h-4 w-4" />
-                Add seller and photo evidence for a stronger comparison
+                {t.form.advancedToggle}
               </span>
               <ChevronDown className={`h-4 w-4 transition ${advancedOpen ? "rotate-180" : ""}`} />
             </button>
@@ -469,39 +478,39 @@ export function ComparisonApp() {
               <div className="mt-4 grid gap-5 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-5 lg:grid-cols-2">
                 <div>
                   <label className="field">
-                    <span>Seller description / condition notes</span>
+                    <span>{t.form.sellerNotes}</span>
                     <textarea
                       {...form.register("description")}
                       rows={5}
-                      placeholder="Paste condition notes, return terms, and what the seller says the photos show."
+                      placeholder={t.form.ph.sellerNotes}
                     />
                   </label>
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <label className="field">
-                      <span>Feedback %</span>
-                      <input {...form.register("feedbackPercentage")} inputMode="decimal" placeholder="99.5" />
+                      <span>{t.form.feedbackPct}</span>
+                      <input {...form.register("feedbackPercentage")} inputMode="decimal" placeholder={t.form.ph.feedbackPct} />
                     </label>
                     <label className="field">
-                      <span>Feedback count</span>
-                      <input {...form.register("feedbackCount")} inputMode="numeric" placeholder="500" />
+                      <span>{t.form.feedbackCount}</span>
+                      <input {...form.register("feedbackCount")} inputMode="numeric" placeholder={t.form.ph.feedbackCount} />
                     </label>
                   </div>
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                    <CheckField label="Returns accepted" registration={form.register("returnsAccepted")} />
-                    <CheckField label="Buyer protection" registration={form.register("buyerProtection")} />
+                    <CheckField label={t.form.returnsAccepted} registration={form.register("returnsAccepted")} />
+                    <CheckField label={t.form.buyerProtection} registration={form.register("buyerProtection")} />
                   </div>
                 </div>
                 <div>
                   <label className="field">
-                    <span>Item-specific photo count</span>
+                    <span>{t.form.photoCount}</span>
                     <input {...form.register("photoCount")} inputMode="numeric" min="0" />
                   </label>
-                  <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">Explicit evidence</p>
+                  <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.explicitEvidence}</p>
                   <div className="mt-3 grid gap-2">
-                    <CheckField label="Front and back are shown" registration={form.register("frontBackExplicit")} />
-                    <CheckField label="Corners and edges have closeups" registration={form.register("closeupsExplicit")} />
-                    <CheckField label="Surface, foil, or video evidence exists" registration={form.register("surfaceExplicit")} />
-                    <CheckField label="Condition notes mention specific defects" registration={form.register("substantiveConditionNotes")} />
+                    <CheckField label={t.form.evFrontBack} registration={form.register("frontBackExplicit")} />
+                    <CheckField label={t.form.evCorners} registration={form.register("closeupsExplicit")} />
+                    <CheckField label={t.form.evSurface} registration={form.register("surfaceExplicit")} />
+                    <CheckField label={t.form.evNotes} registration={form.register("substantiveConditionNotes")} />
                   </div>
                 </div>
               </div>
@@ -510,11 +519,11 @@ export function ComparisonApp() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-2 text-sm leading-6 text-[#64736c]">
                 <Info className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
-                <span>Condition labels remain seller claims. TCGpal scores evidence completeness, not likely grade.</span>
+                <span>{t.form.conditionDisclaimer}</span>
               </div>
               <button className="primary-button shrink-0" type="submit" disabled={loading}>
                 {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <SearchCheck className="h-4 w-4" />}
-                {loading ? "Validating evidence…" : "Find best listings"}
+                {loading ? t.form.submitLoading : t.form.submitIdle}
               </button>
             </div>
           </form>
@@ -536,19 +545,49 @@ export function ComparisonApp() {
 }
 
 function Header() {
+  const t = useT();
+  const { lang, setLang } = useLang();
   return (
     <header className="border-b border-[#d6ded5] bg-[#f7f9f5]/95">
       <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <a className="flex items-center gap-3" href="#" aria-label="TCGpal home">
+        <a className="flex items-center gap-3" href="#" aria-label={t.header.home}>
           <Image src="/tcgpal-logo-horizontal.svg" alt="TCGpal" width={142} height={41} priority />
         </a>
-        <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
-          <a className="hover:text-[#2f6f73]" href="#compare">Check a listing</a>
-          <a className="hover:text-[#2f6f73]" href="#method">Method</a>
-          <span className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-[#2f6f73]">Pokémon · Raw singles · US</span>
-        </nav>
+        <div className="flex items-center gap-3 sm:gap-6">
+          <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
+            <a className="hover:text-[#2f6f73]" href="#compare">{t.header.checkListing}</a>
+            <a className="hover:text-[#2f6f73]" href="#method">{t.header.method}</a>
+            <span className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-[#2f6f73]">{t.header.scopeBadge}</span>
+          </nav>
+          <LanguageToggle lang={lang} setLang={setLang} t={t} />
+        </div>
       </div>
     </header>
+  );
+}
+
+function LanguageToggle({ lang, setLang, t }: { lang: Lang; setLang: (lang: Lang) => void; t: Dict }) {
+  return (
+    <div
+      className="inline-flex items-center rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-0.5 text-xs font-bold"
+      role="group"
+      aria-label={t.toggleAria}
+    >
+      {(["en", "zh"] as const).map((value) => {
+        const active = lang === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setLang(value)}
+            aria-pressed={active}
+            className={`rounded px-2.5 py-1 transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
+          >
+            {t.langName[value]}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -562,15 +601,16 @@ function Promise({ icon: Icon, label }: { icon: typeof ReceiptText; label: strin
 }
 
 function CardKeyPreview({ name, setCode, cardNumber }: { name: string; setCode: string; cardNumber: string }) {
+  const t = useT();
   if (!setCode.trim() && !cardNumber.trim()) return null;
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] px-3 py-2.5 text-xs">
-      <span className="font-black uppercase tracking-[0.1em] text-[#64736c]">Catalog key</span>
+      <span className="font-black uppercase tracking-[0.1em] text-[#64736c]">{t.catalogKey.label}</span>
       {name.trim() && <span className="rounded bg-[#e7efe8] px-2 py-1 font-bold text-[#2f6f73]">{name.trim()}</span>}
       {setCode.trim() && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-1 font-mono font-black uppercase text-[#2f6f73]">{setCode.trim()}</span>}
       {cardNumber.trim() && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-2 py-1 font-mono font-black text-[#6f5a22]">#{cardNumber.trim()}</span>}
-      <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-1 font-bold text-[#52635c]">English</span>
+      <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-1 font-bold text-[#52635c]">{t.catalogKey.language}</span>
     </div>
   );
 }
@@ -617,21 +657,21 @@ function LoopStep({ number, title, description }: { number: string; title: strin
 }
 
 function HowItWorks() {
+  const t = useT();
   return (
     <section className="mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-6 sm:p-8">
       <p className="eyebrow text-[#2f6f73]">
         <Sparkles className="h-4 w-4" />
-        How the validation loop works
+        {t.howItWorks.eyebrow}
       </p>
       <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <LoopStep number="01" title="Confirm the exact card" description="Set, collector number, language, and reprint must agree." />
-        <LoopStep number="02" title="Gather supported evidence" description="Official eBay data, optional references, and your pasted candidates." />
-        <LoopStep number="03" title="Rules score every option" description="The agent reconciles evidence; deterministic math chooses winners." />
-        <LoopStep number="04" title="Critic checks every claim" description="No invented comps, scam certainty, or grading promises." />
+        <LoopStep number="01" title={t.howItWorks.s1t} description={t.howItWorks.s1d} />
+        <LoopStep number="02" title={t.howItWorks.s2t} description={t.howItWorks.s2d} />
+        <LoopStep number="03" title={t.howItWorks.s3t} description={t.howItWorks.s3d} />
+        <LoopStep number="04" title={t.howItWorks.s4t} description={t.howItWorks.s4d} />
       </div>
       <div className="mt-5 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4 text-sm leading-6 text-[#64736c]">
-        <strong className="text-[#24312f]">Supported now:</strong> Pokémon raw singles in USD.
-        Other marketplaces stay manual until a legal provider is connected.
+        <strong className="text-[#24312f]">{t.howItWorks.supportedLabel}</strong>{t.howItWorks.supportedBody}
       </div>
     </section>
   );
@@ -647,13 +687,14 @@ function CheckField({ label, registration }: { label: string; registration: UseF
 }
 
 function LoadingLoop() {
+  const t = useT();
   return (
     <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-6" aria-live="polite">
       <div className="flex items-center gap-3">
         <LoaderCircle className="h-5 w-5 animate-spin text-[#2f6f73]" />
         <div>
-          <p className="font-serif text-xl font-bold text-[#2f6f73]">TCGpal is validating the comparison</p>
-          <p className="mt-1 text-sm text-[#64736c]">Identity → marketplace evidence → deterministic ranking → claim critic</p>
+          <p className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.title}</p>
+          <p className="mt-1 text-sm text-[#64736c]">{t.loading.steps}</p>
         </div>
       </div>
       <div className="agent-progress mt-5"><span /></div>
@@ -662,11 +703,12 @@ function LoadingLoop() {
 }
 
 function ErrorNotice({ message }: { message: string }) {
+  const t = useT();
   return (
     <div className="mt-6 flex items-start gap-3 rounded-md border border-[#e4c0ad] bg-[#fff7f0] p-5 text-sm leading-6 text-[#7e4934]" role="alert">
       <CircleAlert className="mt-1 h-5 w-5 shrink-0" />
       <div>
-        <p className="font-bold">The comparison needs another try.</p>
+        <p className="font-bold">{t.error.title}</p>
         <p>{message}</p>
       </div>
     </div>
@@ -674,16 +716,17 @@ function ErrorNotice({ message }: { message: string }) {
 }
 
 function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdentityCandidate[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
+  const t = useT();
   return (
     <section id="comparison-result" className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-7">
       <div className="max-w-2xl">
         <p className="eyebrow">
           <BadgeCheck className="h-4 w-4" />
-          Version confirmation required
+          {t.identity.eyebrow}
         </p>
-        <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">Which exact card do you want?</h2>
+        <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.identity.heading}</h2>
         <p className="mt-2 leading-7 text-[#64736c]">
-          TCGpal pauses here because same-art reprints and similar versions can make the wrong price look convincing. Pick the version, and we&apos;ll rank live listings for it.
+          {t.identity.desc}
         </p>
       </div>
       {identities.length ? (
@@ -700,20 +743,19 @@ function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdent
               ) : (
                 <div className="mx-auto aspect-[2.5/3.5] w-36 rounded-md bg-[#e7efe8]" />
               )}
-              <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{identity.confidence} confidence</p>
+              <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{t.identity.confidence(identity.confidence)}</p>
               <h3 className="mt-1 font-serif text-xl font-bold text-[#2f6f73]">{identity.name}</h3>
               <CardIdentityRail identity={identity} className="mt-3" />
               <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
                 <Check className="h-4 w-4" />
-                Confirm this version
+                {t.identity.confirm}
               </button>
             </article>
           ))}
         </div>
       ) : (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
-          No catalog match was found. Check the Pokémon name, then add the printed collector number
-          (for example, 215/203) or a set name/code and try again.
+          {t.identity.noMatch}
         </div>
       )}
     </section>
@@ -721,6 +763,7 @@ function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdent
 }
 
 function ComparisonResult({ report, feedbackSent, onFeedback }: { report: ComparisonReport; feedbackSent: boolean; onFeedback: (changedDecision: boolean) => void }) {
+  const t = useT();
   const listingMap = useMemo(() => new Map(report.candidates.map((candidate) => [candidate.id, candidate])), [report.candidates]);
   const excluded = report.candidates.filter((candidate) => !candidate.eligible);
 
@@ -744,7 +787,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
       {report.demoMode && (
         <div className="flex items-start gap-3 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
           <Info className="mt-1 h-4 w-4 shrink-0" />
-          <p><strong>Labeled demo inventory.</strong> eBay credentials are not configured, so these candidate listings are fixtures—not live offers.</p>
+          <p><strong>{t.result.demoTitle}</strong>{t.result.demoBody}</p>
         </div>
       )}
 
@@ -763,32 +806,32 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
             )}
             <span className="holo-hint items-center gap-1.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#52635c]">
               <Sparkles className="h-3.5 w-3.5 text-[#b26a4c]" />
-              Move to catch the foil
+              {t.result.moveFoil}
             </span>
           </div>
           <div>
             <p className="eyebrow text-[#2f6f73]">
               <BadgeCheck className="h-4 w-4" />
-              Exact version confirmed
+              {t.result.versionConfirmed}
             </p>
             <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{report.confirmedCard?.name}</h2>
             {report.confirmedCard && <CardIdentityRail identity={report.confirmedCard} className="mt-3" />}
             {typeof report.confirmedCard?.marketMid === "number" && (
               <p className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#2f6f73]">
                 <Tag className="h-4 w-4" />
-                TCGplayer market ≈ {formatMoney(report.confirmedCard.marketMid)}
+                {t.result.marketApprox} {formatMoney(report.confirmedCard.marketMid)}
                 {typeof report.confirmedCard.marketLow === "number" && typeof report.confirmedCard.marketHigh === "number" && (
                   <span className="font-medium text-[#64736c]">({formatMoney(report.confirmedCard.marketLow)}–{formatMoney(report.confirmedCard.marketHigh)})</span>
                 )}
                 {report.confirmedCard.marketUrl && (
-                  <a className="underline" href={report.confirmedCard.marketUrl} target="_blank" rel="noreferrer">view</a>
+                  <a className="underline" href={report.confirmedCard.marketUrl} target="_blank" rel="noreferrer">{t.result.view}</a>
                 )}
               </p>
             )}
             <p className="mt-4 max-w-3xl leading-7 text-[#52635c]">{report.narrative.summary}</p>
           </div>
           <div className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-4 py-3 text-center">
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">Eligible options</p>
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">{t.result.eligibleOptions}</p>
             <p className="mt-1 font-mono text-3xl font-black text-[#2f6f73]">{report.candidates.filter((candidate) => candidate.eligible).length}</p>
           </div>
         </div>
@@ -800,11 +843,11 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
             <div>
               <p className="eyebrow">
                 <Sparkles className="h-4 w-4" />
-                Your best buy
+                {t.result.yourBestBuy}
               </p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">Recommended listing</h2>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.result.recommendedListing}</h2>
             </div>
-            <p className="text-sm text-[#64736c]">We default to the safest verified buy. Switch the lens anytime.</p>
+            <p className="text-sm text-[#64736c]">{t.result.defaultLensNote}</p>
           </div>
           <div className="inline-flex flex-wrap gap-1 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-1">
             {report.rankedChoices.map((choice) => {
@@ -815,10 +858,10 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
                   type="button"
                   onClick={() => setRoleOverride(choice.role)}
                   aria-pressed={active}
-                  title={roleToggleHint(choice.role)}
+                  title={roleToggleHint(choice.role, t)}
                   className={`rounded px-3 py-2 text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
                 >
-                  {roleToggleLabel(choice.role)}
+                  {roleToggleLabel(choice.role, t)}
                 </button>
               );
             })}
@@ -841,15 +884,15 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-6">
           <p className="eyebrow">
             <ReceiptText className="h-4 w-4" />
-            Evidence ledger
+            {t.result.evidenceLedger}
           </p>
-          <h3 className="mt-2 font-serif text-2xl font-bold text-[#2f6f73]">Every eligible candidate</h3>
+          <h3 className="mt-2 font-serif text-2xl font-bold text-[#2f6f73]">{t.result.everyCandidate}</h3>
           <div className="mt-5 space-y-3">
             {report.candidates.filter((candidate) => candidate.eligible).map((listing) => <CandidateRow key={listing.id} listing={listing} />)}
           </div>
           {excluded.length > 0 && (
             <details className="mt-4 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-              <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{excluded.length} excluded candidate{excluded.length === 1 ? "" : "s"}</summary>
+              <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.excluded(excluded.length)}</summary>
               <div className="mt-3 space-y-2 text-sm text-[#64736c]">
                 {excluded.map((listing) => <p key={listing.id}><strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}</p>)}
               </div>
@@ -861,7 +904,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
               <Calculator className="h-4 w-4" />
-              Reference context
+              {t.result.referenceContext}
             </p>
             <div className="mt-4 space-y-3">
               {report.references.map((reference) => (
@@ -871,10 +914,10 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
                     <StatusPill status={reference.status} />
                   </div>
                   <p className="mt-2 text-sm leading-6 text-[#64736c]">{reference.note}</p>
-                  {reference.rawMid !== null && <p className="mt-2 font-mono text-lg font-black text-[#2f6f73]">${reference.rawMid.toFixed(2)} reference</p>}
+                  {reference.rawMid !== null && <p className="mt-2 font-mono text-lg font-black text-[#2f6f73]">{t.result.reference(reference.rawMid.toFixed(2))}</p>}
                   {reference.url && (
                     <a className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#2f6f73] underline" href={reference.url} target="_blank" rel="noreferrer">
-                      Open manual check <ExternalLink className="h-3.5 w-3.5" />
+                      {t.result.openManualCheck} <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   )}
                 </div>
@@ -885,7 +928,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
               <CircleAlert className="h-4 w-4" />
-              Before you buy
+              {t.result.beforeYouBuy}
             </p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-[#52635c]">
               {report.narrative.cautions.map((caution) => (
@@ -900,7 +943,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
       </div>
 
       <details id="method" className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
-        <summary className="cursor-pointer font-bold text-[#52635c]">Technical validation trace</summary>
+        <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.technicalTrace}</summary>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {report.trace.map((step) => (
             <div key={`${step.step}-${step.actor}`} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
@@ -922,18 +965,18 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
 
       <section className="rounded-md border border-[#d6ded5] bg-[#24312f] p-6 text-[#fcfbf6] sm:flex sm:items-center sm:justify-between sm:gap-6">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[#b9cbc1]">Help validate the product</p>
-          <h3 className="mt-2 font-serif text-2xl font-bold">Did this evidence change what you would do?</h3>
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-[#b9cbc1]">{t.result.helpValidate}</p>
+          <h3 className="mt-2 font-serif text-2xl font-bold">{t.result.feedbackQuestion}</h3>
         </div>
         {feedbackSent ? (
           <p className="mt-4 inline-flex items-center gap-2 font-bold text-[#d7a84e] sm:mt-0">
             <Check className="h-5 w-5" />
-            Feedback saved. Thank you.
+            {t.result.feedbackSaved}
           </p>
         ) : (
           <div className="mt-4 flex gap-3 sm:mt-0">
-            <button className="dark-button" type="button" onClick={() => onFeedback(true)}>Yes</button>
-            <button className="dark-button" type="button" onClick={() => onFeedback(false)}>Not yet</button>
+            <button className="dark-button" type="button" onClick={() => onFeedback(true)}>{t.result.yes}</button>
+            <button className="dark-button" type="button" onClick={() => onFeedback(false)}>{t.result.notYet}</button>
           </div>
         )}
       </section>
@@ -941,36 +984,36 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
   );
 }
 
-function roleToggleLabel(role: RankedChoice["role"]) {
-  return role === "lowest_landed_cost" ? "Cheapest" : role === "safest_listing" ? "Safest" : "Best-documented";
+function roleToggleLabel(role: RankedChoice["role"], t: Dict) {
+  return role === "lowest_landed_cost" ? t.lens.cheapest : role === "safest_listing" ? t.lens.safest : t.lens.bestDocumented;
 }
 
-function roleToggleHint(role: RankedChoice["role"]) {
+function roleToggleHint(role: RankedChoice["role"], t: Dict) {
   return role === "lowest_landed_cost"
-    ? "Lowest total price, including shipping and any tax."
+    ? t.lens.cheapestHint
     : role === "safest_listing"
-      ? "Best combined seller trust and listing-evidence score."
-      : "Most complete photo and condition evidence — not a grade prediction.";
+      ? t.lens.safestHint
+      : t.lens.bestDocumentedHint;
 }
 
 type VerdictTone = "good" | "ok" | "bad";
 
-function sellerVerdict(score: number): { label: string; tone: VerdictTone } {
-  if (score >= 80) return { label: "Trusted seller", tone: "good" };
-  if (score >= 60) return { label: "Decent seller", tone: "ok" };
-  return { label: "Unproven seller", tone: "bad" };
+function sellerVerdict(score: number, t: Dict): { label: string; tone: VerdictTone } {
+  if (score >= 80) return { label: t.card.trustedSeller, tone: "good" };
+  if (score >= 60) return { label: t.card.decentSeller, tone: "ok" };
+  return { label: t.card.unprovenSeller, tone: "bad" };
 }
 
-function evidenceVerdict(score: number): { label: string; tone: VerdictTone } {
-  if (score >= 80) return { label: "Well-documented", tone: "good" };
-  if (score >= 50) return { label: "Partly documented", tone: "ok" };
-  return { label: "Thin evidence", tone: "bad" };
+function evidenceVerdict(score: number, t: Dict): { label: string; tone: VerdictTone } {
+  if (score >= 80) return { label: t.card.wellDocumented, tone: "good" };
+  if (score >= 50) return { label: t.card.partlyDocumented, tone: "ok" };
+  return { label: t.card.thinEvidence, tone: "bad" };
 }
 
-function riskVerdict(score: number): { label: string; tone: VerdictTone } {
-  if (score >= 80) return { label: "Low risk", tone: "good" };
-  if (score >= 60) return { label: "Some risk", tone: "ok" };
-  return { label: "Higher risk", tone: "bad" };
+function riskVerdict(score: number, t: Dict): { label: string; tone: VerdictTone } {
+  if (score >= 80) return { label: t.card.lowRisk, tone: "good" };
+  if (score >= 60) return { label: t.card.someRisk, tone: "ok" };
+  return { label: t.card.higherRisk, tone: "bad" };
 }
 
 function VerdictTag({ verdict, icon: Icon }: { verdict: { label: string; tone: VerdictTone }; icon: typeof ShieldCheck }) {
@@ -988,15 +1031,16 @@ function VerdictTag({ verdict, icon: Icon }: { verdict: { label: string; tone: V
 }
 
 function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvidence; compact?: boolean }) {
+  const t = useT();
   const items = [
-    { label: `${evidence.photoCount} photo${evidence.photoCount === 1 ? "" : "s"}`, available: evidence.photoCount > 0, icon: Camera },
-    { label: evidence.frontBackExplicit ? "Front + back" : "Front/back not shown", available: evidence.frontBackExplicit, icon: BadgeCheck },
-    { label: evidence.closeupsExplicit ? "Corners" : "Corners not shown", available: evidence.closeupsExplicit, icon: SearchCheck },
-    { label: evidence.surfaceExplicit ? "Surface" : "Surface not shown", available: evidence.surfaceExplicit, icon: Sparkles },
+    { label: t.card.photos(evidence.photoCount), available: evidence.photoCount > 0, icon: Camera },
+    { label: evidence.frontBackExplicit ? t.card.frontBack : t.card.frontBackNo, available: evidence.frontBackExplicit, icon: BadgeCheck },
+    { label: evidence.closeupsExplicit ? t.card.corners : t.card.cornersNo, available: evidence.closeupsExplicit, icon: SearchCheck },
+    { label: evidence.surfaceExplicit ? t.card.surface : t.card.surfaceNo, available: evidence.surfaceExplicit, icon: Sparkles },
   ];
 
   return (
-    <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : "mt-4"}`} aria-label="Listing photo evidence">
+    <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : "mt-4"}`} aria-label={t.card.photoEvidenceAria}>
       {items.map(({ label, available, icon: Icon }) => (
         <span
           key={label}
@@ -1015,6 +1059,7 @@ function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvi
 }
 
 function RecommendationCard({ choice, listing, demoMode, marketPrice, recommended }: { choice: RankedChoice; listing: NormalizedListing; demoMode: boolean; marketPrice: number | null; recommended: boolean }) {
+  const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
 
@@ -1033,31 +1078,31 @@ function RecommendationCard({ choice, listing, demoMode, marketPrice, recommende
             {recommended && (
               <span className="inline-flex items-center gap-1.5 rounded-md bg-[#2f6f73] px-2.5 py-1 text-xs font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
                 <BadgeCheck className="h-3.5 w-3.5" />
-                Recommended
+                {t.card.recommended}
               </span>
             )}
             <span className="text-xs font-black uppercase tracking-[0.1em] text-[#b26a4c]">{listing.marketplace}</span>
           </div>
           <h3 className="mt-2 line-clamp-2 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{listing.title}</h3>
-          <p className="mt-1 text-sm text-[#64736c]">Seller says: {listing.claimedCondition}</p>
+          <p className="mt-1 text-sm text-[#64736c]">{t.card.sellerSays(t.conditions[listing.claimedCondition])}</p>
 
           <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
             <span className="font-mono text-3xl font-black text-[#24312f]">{formatMoney(total)}</span>
-            <span className="pb-1 text-xs font-bold uppercase tracking-[0.08em] text-[#64736c]">{listing.estimatedTax === null ? "pre-tax total" : "est. landed"}</span>
+            <span className="pb-1 text-xs font-bold uppercase tracking-[0.08em] text-[#64736c]">{listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded}</span>
             {marketDelta !== null && !listing.demo && (
               <span className={`mb-0.5 inline-flex items-center rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.05em] ${marketDelta <= 0.02 ? "bg-[#dcecdf] text-[#2f6f73]" : marketDelta <= 0.15 ? "bg-[#fff0d5] text-[#8d6032]" : "bg-[#f6dcd0] text-[#9a4a2c]"}`}>
-                {marketDelta <= 0 ? `${Math.round(Math.abs(marketDelta) * 100)}% under market` : `+${Math.round(marketDelta * 100)}% above market`}
+                {marketDelta <= 0 ? t.card.underMarket(Math.round(Math.abs(marketDelta) * 100)) : t.card.aboveMarket(Math.round(marketDelta * 100))}
               </span>
             )}
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <VerdictTag verdict={sellerVerdict(listing.sellerTrustScore)} icon={BadgeCheck} />
-            <VerdictTag verdict={evidenceVerdict(listing.evidenceCompletenessScore)} icon={Camera} />
-            <VerdictTag verdict={riskVerdict(listing.safetyScore)} icon={ShieldCheck} />
+            <VerdictTag verdict={sellerVerdict(listing.sellerTrustScore, t)} icon={BadgeCheck} />
+            <VerdictTag verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)} icon={Camera} />
+            <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={ShieldCheck} />
           </div>
           <p className="mt-2 text-xs text-[#64736c]">
-            Trust {listing.sellerTrustScore} · Evidence {listing.evidenceCompletenessScore} · Safety {listing.safetyScore} <span className="text-[#94a59c]">(of 100)</span>
+            {t.card.scoreLine(listing.sellerTrustScore, listing.evidenceCompletenessScore, listing.safetyScore)}<span className="text-[#94a59c]">{t.card.ofHundred}</span>
           </p>
           <EvidenceChecklist evidence={listing.evidence} />
 
@@ -1072,10 +1117,10 @@ function RecommendationCard({ choice, listing, demoMode, marketPrice, recommende
                 rel="noreferrer"
                 onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode })}
               >
-                Go to listing <ArrowUpRight className="h-4 w-4" />
+                {t.card.goToListing} <ArrowUpRight className="h-4 w-4" />
               </a>
             ) : (
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-[#d6ded5] bg-[#f7f9f5] text-sm font-bold text-[#64736c]">User-supplied candidate</span>
+              <span className="flex min-h-11 items-center justify-center rounded-md border border-[#d6ded5] bg-[#f7f9f5] text-sm font-bold text-[#64736c]">{t.card.userSupplied}</span>
             )}
           </div>
         </div>
@@ -1134,6 +1179,8 @@ function HoloCardArt({
 }
 
 function CandidateRow({ listing }: { listing: NormalizedListing }) {
+  const t = useT();
+  const { lang } = useLang();
   return (
     <article className="grid gap-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4 sm:grid-cols-[52px_minmax(0,1fr)] lg:grid-cols-[52px_minmax(0,1fr)_auto] lg:items-center">
       <div className="relative aspect-[2.5/3.5] w-[52px] overflow-hidden rounded border border-[#d6ded5] bg-[#e7efe8]">
@@ -1146,19 +1193,19 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-[#24312f]">{listing.marketplace}</span>
-          {listing.demo && <span className="rounded bg-[#fff0b8] px-2 py-0.5 text-xs font-black uppercase text-[#6f5a22]">Demo</span>}
-          {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">Raw single</span>}
-          <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{listing.claimedCondition}</span>
-          <span className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{listing.matchConfidence} match</span>
+          {listing.demo && <span className="rounded bg-[#fff0b8] px-2 py-0.5 text-xs font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
+          {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.candidate.rawSingle}</span>}
+          <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.conditions[listing.claimedCondition]}</span>
+          <span className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{t.candidate.match(listing.matchConfidence)}</span>
         </div>
         <p className="mt-1 line-clamp-1 text-sm text-[#64736c]">{listing.title}</p>
         <EvidenceChecklist evidence={listing.evidence} compact />
-        <p className="mt-2 text-xs text-[#64736c]">Observed {new Date(listing.observedAt).toLocaleString()}</p>
+        <p className="mt-2 text-xs text-[#64736c]">{t.candidate.observed(new Date(listing.observedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}</p>
       </div>
       <div className="col-span-2 grid grid-cols-3 gap-3 border-t border-[#d6ded5] pt-3 text-right lg:col-span-1 lg:border-0 lg:pt-0">
-        <Metric compact label="Pre-tax" value={formatMoney(listing.preTaxTotal)} />
-        <Metric compact label="Safety" value={`${listing.safetyScore}`} />
-        <Metric compact label="Evidence" value={`${listing.evidenceCompletenessScore}`} />
+        <Metric compact label={t.candidate.preTax} value={formatMoney(listing.preTaxTotal)} />
+        <Metric compact label={t.candidate.safety} value={`${listing.safetyScore}`} />
+        <Metric compact label={t.candidate.evidence} value={`${listing.evidenceCompletenessScore}`} />
       </div>
     </article>
   );
@@ -1174,12 +1221,13 @@ function Metric({ label, value, compact = false }: { label: string; value: strin
 }
 
 function StatusPill({ status }: { status: "used" | "unavailable" | "missing" }) {
+  const t = useT();
   const className = status === "used"
     ? "bg-[#dcecdf] text-[#2f6f73]"
     : status === "unavailable"
       ? "bg-[#fff0d5] text-[#8d6032]"
       : "bg-[#ecefeb] text-[#64736c]";
-  return <span className={`rounded px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${className}`}>{status}</span>;
+  return <span className={`rounded px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${className}`}>{t.status[status]}</span>;
 }
 
 function buildRequest(values: ComparisonForm, confirmedCardId?: string): ComparisonRequest {
