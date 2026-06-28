@@ -12,6 +12,12 @@ import {
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
 import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
 import {
+  getOnePieceCard,
+  mapOnePieceCardToIdentity,
+  searchOnePieceCards,
+  type OnePieceTcgCard,
+} from "@/lib/external/one-piece-tcg";
+import {
   cardIdentityCandidateSchema,
   comparisonNarrativeSchema,
   comparisonReportSchema,
@@ -197,6 +203,11 @@ async function identifyCards(
   trace: ComparisonTrace[],
 ) {
   const searchName = request.cardHint.name || cleanCardName(source.title);
+
+  if (request.cardHint.game === "onePiece") {
+    return identifyOnePieceCards(request, searchName, fetcher, warnings, trace);
+  }
+
   const localMatches = rankLocalIdentities(request, source);
 
   if (request.confirmedCardId) {
@@ -260,6 +271,81 @@ async function identifyCards(
     status: "fallback",
   });
   return fallback;
+}
+
+async function identifyOnePieceCards(
+  request: ComparisonRequest,
+  searchName: string,
+  fetcher: typeof fetch,
+  warnings: string[],
+  trace: ComparisonTrace[],
+): Promise<CardIdentityCandidate[]> {
+  if (request.confirmedCardId) {
+    try {
+      const card = await getOnePieceCard({ cardSetId: request.confirmedCardId, fetcher, timeoutMs: 15000 });
+      if (card) {
+        trace.push({
+          step: "card_identification",
+          actor: "One Piece catalog adapter",
+          summary: "Reloaded the user-confirmed One Piece card by its card id.",
+          status: "complete",
+        });
+        return [mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["User confirmed this version."] })];
+      }
+    } catch (error) {
+      warnings.push(`Confirmed One Piece card lookup unavailable: ${errorMessage(error)}`);
+    }
+  }
+
+  const directId = request.cardHint.cardNumber.trim();
+  if (searchName.length >= 2 || directId) {
+    try {
+      const result = await searchOnePieceCards({
+        query: searchName || directId,
+        cardNumber: directId,
+        pageSize: directId ? 12 : 30,
+        fetcher,
+        timeoutMs: 15000,
+      });
+      const order: Record<CardIdentityCandidate["confidence"], number> = { high: 0, medium: 1, low: 2 };
+      const matches = result.cards
+        .map((card) => mapOnePieceCardToIdentity(card, evaluateOnePieceMatch(card, request, searchName)))
+        .sort((a, b) => order[a.confidence] - order[b.confidence]);
+      trace.push({
+        step: "card_identification",
+        actor: "One Piece catalog adapter",
+        summary: `Found ${matches.length} possible One Piece identities and ranked exact id and name matches first.`,
+        status: "complete",
+      });
+      return dedupeIdentities(matches).slice(0, 6);
+    } catch (error) {
+      warnings.push(`One Piece catalog lookup unavailable: ${errorMessage(error)}`);
+    }
+  }
+
+  trace.push({
+    step: "card_identification",
+    actor: "One Piece catalog adapter",
+    summary: "No matching One Piece catalog identity was available.",
+    status: "fallback",
+  });
+  return [];
+}
+
+function evaluateOnePieceMatch(
+  card: OnePieceTcgCard,
+  request: ComparisonRequest,
+  searchName: string,
+): { confidence: CardIdentityCandidate["confidence"]; matchReasons: string[] } {
+  const requestedId = request.cardHint.cardNumber.trim().toUpperCase();
+  const cardId = card.card_set_id.toUpperCase();
+  if (requestedId && requestedId === cardId) {
+    return { confidence: "high", matchReasons: ["Requested card id matches this print."] };
+  }
+  if (searchName && normalizeText(card.card_name) === normalizeText(searchName)) {
+    return { confidence: "medium", matchReasons: ["Card name matches the catalog entry exactly."] };
+  }
+  return { confidence: "low", matchReasons: ["Card name partially matches the catalog entry."] };
 }
 
 function resolveConfirmedCard(request: ComparisonRequest, identities: CardIdentityCandidate[]) {

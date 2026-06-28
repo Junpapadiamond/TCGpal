@@ -83,6 +83,7 @@ const request: ComparisonRequest = {
     desiredCondition: "Unknown",
   },
   cardHint: {
+    game: "pokemon" as const,
     name: "Umbreon VMAX",
     setCode: "SWSH7",
     cardNumber: "215/203",
@@ -121,7 +122,7 @@ describe("listing comparison agent", () => {
   it("requires confirmation when identity input is ambiguous", async () => {
     const response = await runListingComparison({
       ...request,
-      cardHint: { name: "", setCode: "", cardNumber: "", language: "English" },
+      cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English" },
     }, { fetcher });
     expect(response.status).toBe("needs_confirmation");
     expect(response.rankedChoices).toEqual([]);
@@ -142,7 +143,7 @@ describe("listing comparison agent", () => {
     const response = await runListingComparison({
       ...request,
       sourceListing: { ...request.sourceListing, title: "" },
-      cardHint: { name: "Missingmon", setCode: "", cardNumber: "", language: "English" },
+      cardHint: { game: "pokemon", name: "Missingmon", setCode: "", cardNumber: "", language: "English" },
     }, { fetcher: emptyCatalogFetcher });
 
     expect(response.status).toBe("needs_confirmation");
@@ -183,7 +184,7 @@ describe("listing comparison agent", () => {
     const response = await runListingComparison({
       ...request,
       sourceListing: { ...request.sourceListing, title: "" },
-      cardHint: { name: "Dialga", setCode: "Team plasma", cardNumber: "N", language: "English" },
+      cardHint: { game: "pokemon", name: "Dialga", setCode: "Team plasma", cardNumber: "N", language: "English" },
     }, { fetcher: plasmaFetcher });
 
     expect(response.status).toBe("needs_confirmation");
@@ -194,12 +195,50 @@ describe("listing comparison agent", () => {
   it("continues after the user confirms a catalog identity", async () => {
     const response = await runListingComparison({
       ...request,
-      cardHint: { name: "", setCode: "", cardNumber: "", language: "English" },
+      cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English" },
       confirmedCardId: "swsh7-215",
     }, { fetcher });
     expect(response.status).toBe("complete");
     expect(response.confirmedCard?.id).toBe("swsh7-215");
     expect(response.confirmedCard?.rarity).toBe("Rare Rainbow");
     expect(response.confirmedCard?.setSymbolUrl).toBe("https://images.pokemontcg.io/swsh7/symbol.png");
+  });
+
+  it("routes One Piece requests to the OPTCG catalog and confirms by card id", async () => {
+    const optcgFetcher = (async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.hostname.includes("optcgapi.com") && url.pathname === "/api/sets/card/OP01-001/") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [
+            {
+              card_name: "Monkey.D.Luffy",
+              card_set_id: "OP01-001",
+              set_id: "OP-01",
+              set_name: "Romance Dawn",
+              rarity: "L",
+              card_image: "https://www.optcgapi.com/images/OP01-001.png",
+              market_price: 4.5,
+            },
+          ],
+        } as Response;
+      }
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        cardHint: { game: "onePiece", name: "Monkey.D.Luffy", setCode: "OP-01", cardNumber: "OP01-001", language: "English" },
+        confirmedCardId: "OP01-001",
+      },
+      { fetcher: optcgFetcher },
+    );
+
+    expect(response.confirmedCard?.id).toBe("OP01-001");
+    expect(response.confirmedCard?.setName).toBe("Romance Dawn");
+    expect(response.confirmedCard?.imageUrl).toBe("https://www.optcgapi.com/images/OP01-001.png");
+    expect(response.trace.some((entry) => entry.actor === "One Piece catalog adapter")).toBe(true);
   });
 });

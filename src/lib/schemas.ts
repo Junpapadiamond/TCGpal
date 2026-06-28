@@ -79,7 +79,10 @@ export const buyerContextSchema = z.object({
   desiredCondition: conditionClaimSchema.default("Unknown"),
 });
 
+export const tcgGameSchema = z.enum(["pokemon", "onePiece"]);
+
 export const cardHintSchema = z.object({
+  game: tcgGameSchema.default("pokemon"),
   name: z.string().trim().default(""),
   setCode: z.string().trim().default(""),
   cardNumber: z.string().trim().default(""),
@@ -90,6 +93,7 @@ export const comparisonRequestSchema = z.object({
   sourceListing: sourceListingSchema,
   buyer: buyerContextSchema,
   cardHint: cardHintSchema.default({
+    game: "pokemon",
     name: "",
     setCode: "",
     cardNumber: "",
@@ -248,6 +252,7 @@ export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;
 export type BuyerContext = z.infer<typeof buyerContextSchema>;
 export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>;
+export type TcgGame = z.infer<typeof tcgGameSchema>;
 export type CardIdentityCandidate = z.infer<typeof cardIdentityCandidateSchema>;
 export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;

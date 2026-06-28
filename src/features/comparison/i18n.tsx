@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
-import type { ConditionClaim, Marketplace } from "@/lib/schemas";
+import type { ConditionClaim, Marketplace, TcgGame } from "@/lib/schemas";
 
 export type Lang = "en" | "zh";
 
@@ -29,6 +29,8 @@ const en = {
   },
   form: {
     heading: "Find the best listing",
+    gameLabel: "Card game",
+    games: { pokemon: "Pokémon", onePiece: "One Piece" } as Record<TcgGame, string>,
     runDemo: "Run the labeled demo",
     cardName: "Card name",
     set: "Set",
@@ -79,6 +81,11 @@ const en = {
         "Paste condition notes, return terms, and what the seller says the photos show.",
       feedbackPct: "99.5",
       feedbackCount: "500",
+    },
+    phOnePiece: {
+      cardName: "Monkey.D.Luffy",
+      set: "Romance Dawn / OP-01",
+      collectorNumber: "OP01-001",
     },
   },
   catalogKey: { label: "Catalog key", language: "English" },
@@ -223,6 +230,8 @@ const zh: Dict = {
   },
   form: {
     heading: "找到最佳商品",
+    gameLabel: "卡牌游戏",
+    games: { pokemon: "宝可梦", onePiece: "海贼王" },
     runDemo: "运行示例数据",
     cardName: "卡名",
     set: "系列",
@@ -272,6 +281,11 @@ const zh: Dict = {
       sellerNotes: "粘贴品相说明、退货条款，以及卖家对照片的描述。",
       feedbackPct: "99.5",
       feedbackCount: "500",
+    },
+    phOnePiece: {
+      cardName: "Monkey.D.Luffy",
+      set: "Romance Dawn / OP-01",
+      collectorNumber: "OP01-001",
     },
   },
   catalogKey: { label: "目录键", language: "英文" },

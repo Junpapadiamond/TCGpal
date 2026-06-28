@@ -36,6 +36,7 @@ import {
   type Marketplace,
   type NormalizedListing,
   type RankedChoice,
+  type TcgGame,
 } from "@/lib/schemas";
 
 const marketplaces: Marketplace[] = [
@@ -59,6 +60,7 @@ const conditions: ConditionClaim[] = [
 ];
 
 type ComparisonForm = {
+  game: TcgGame;
   url: string;
   marketplace: Marketplace;
   cardName: string;
@@ -84,6 +86,7 @@ type ComparisonForm = {
 };
 
 const defaultValues: ComparisonForm = {
+  game: "pokemon",
   url: "",
   marketplace: "eBay",
   cardName: "",
@@ -135,6 +138,8 @@ function ComparisonExperience() {
   const cardName = useWatch({ control: form.control, name: "cardName" });
   const setCode = useWatch({ control: form.control, name: "setCode" });
   const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
+  const game = useWatch({ control: form.control, name: "game" });
+  const ph = game === "onePiece" ? t.form.phOnePiece : t.form.ph;
   const isManual = marketplace !== "eBay" || !sourceUrl.trim();
 
   useEffect(() => {
@@ -330,18 +335,36 @@ function ComparisonExperience() {
           </div>
 
           <form className="p-5 sm:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
+            <fieldset className="mb-5">
+              <legend className="mb-2 text-sm font-bold text-[#52635c]">{t.form.gameLabel}</legend>
+              <div className="inline-flex rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-1">
+                {(["pokemon", "onePiece"] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    aria-pressed={game === option}
+                    onClick={() => form.setValue("game", option)}
+                    className={`rounded px-3 py-1.5 text-sm font-bold transition ${
+                      game === option ? "bg-[#2f6f73] text-white" : "text-[#52635c] hover:text-[#2f6f73]"
+                    }`}
+                  >
+                    {t.form.games[option]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <div className="grid gap-4 md:grid-cols-3">
               <label className="field">
                 <span>{t.form.cardName}</span>
-                <input {...form.register("cardName")} placeholder={t.form.ph.cardName} required />
+                <input {...form.register("cardName")} placeholder={ph.cardName} required />
               </label>
               <label className="field">
                 <span>{t.form.set}</span>
-                <input {...form.register("setCode")} placeholder={t.form.ph.set} />
+                <input {...form.register("setCode")} placeholder={ph.set} />
               </label>
               <label className="field">
                 <span>{t.form.collectorNumber}</span>
-                <input {...form.register("cardNumber")} placeholder={t.form.ph.collectorNumber} />
+                <input {...form.register("cardNumber")} placeholder={ph.collectorNumber} />
               </label>
             </div>
             <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
@@ -1268,6 +1291,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
       desiredCondition: values.desiredCondition,
     },
     cardHint: {
+      game: values.game,
       name: values.cardName.trim(),
       setCode: values.setCode.trim(),
       cardNumber,
