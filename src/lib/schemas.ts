@@ -106,6 +106,8 @@ export const cardIdentityCandidateSchema = z.object({
   cardNumber: z.string(),
   language: z.string(),
   imageUrl: z.string().url().nullable().default(null),
+  rarity: z.string().nullable().optional(),
+  setSymbolUrl: z.string().url().nullable().optional(),
   confidence: confidenceSchema,
   matchReasons: z.array(z.string()),
   // Live TCGplayer market price for this exact version (USD), used as the

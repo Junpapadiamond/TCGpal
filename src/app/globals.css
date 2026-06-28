@@ -298,9 +298,9 @@ a {
       rgba(255, 243, 187, 0.42) 14%,
       rgba(47, 111, 115, 0.16) 31%,
       transparent 58%
-    );
+  );
   mix-blend-mode: soft-light;
-  opacity: 0.48;
+  opacity: 0;
   transition: opacity 180ms ease;
 }
 
@@ -318,7 +318,7 @@ a {
   background-position: var(--holo-x) var(--holo-y);
   background-size: 225% 225%;
   mix-blend-mode: screen;
-  opacity: 0.3;
+  opacity: 0;
   transition: opacity 180ms ease;
 }
 
@@ -339,26 +339,6 @@ a {
 .holo-card-image {
   z-index: 1;
   object-fit: contain;
-}
-
-.holo-card-sweep {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.08) 46%,
-    rgba(255, 255, 255, 0.58) 50%,
-    rgba(255, 236, 168, 0.2) 54%,
-    transparent 60%
-  );
-  background-position: 180% 0;
-  background-size: 240% 100%;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  animation: holo-sweep 5.8s ease-in-out infinite;
 }
 
 .holo-hint {
@@ -419,11 +399,6 @@ a {
 @keyframes agent-scan {
   0% { transform: translateX(-100%); }
   60%, 100% { transform: translateX(100%); }
-}
-
-@keyframes holo-sweep {
-  0%, 28% { background-position: 180% 0; }
-  58%, 100% { background-position: -80% 0; }
 }
 
 @keyframes agent-progress {

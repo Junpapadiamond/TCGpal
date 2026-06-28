@@ -31,6 +31,7 @@ import {
   type ComparisonReport,
   type ComparisonRequest,
   type ConditionClaim,
+  type ListingEvidence,
   type Marketplace,
   type NormalizedListing,
   type RankedChoice,
@@ -121,6 +122,9 @@ export function ComparisonApp() {
   const sourceUrl = useWatch({ control: form.control, name: "url" });
   const postalCode = useWatch({ control: form.control, name: "postalCode" });
   const taxRatePercent = useWatch({ control: form.control, name: "taxRatePercent" });
+  const cardName = useWatch({ control: form.control, name: "cardName" });
+  const setCode = useWatch({ control: form.control, name: "setCode" });
+  const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
   const isManual = marketplace !== "eBay" || !sourceUrl.trim();
 
   useEffect(() => {
@@ -282,22 +286,23 @@ export function ComparisonApp() {
     <main className="min-h-screen bg-[#f4f7f3] text-[#24312f]">
       <Header />
       <div className="mx-auto max-w-[1180px] px-4 pb-24 pt-8 sm:px-6 lg:px-8">
-        <section className="paper-panel flex flex-col justify-between gap-8 p-6 sm:p-9">
-          <div>
-            <div className="eyebrow">
-              <SearchCheck className="h-4 w-4" />
-              Evidence-backed buy recommendations
+        <section className="paper-panel p-5 sm:p-7">
+          <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+            <div>
+              <div className="eyebrow">
+                <SearchCheck className="h-4 w-4" />
+                Evidence-backed buy recommendations
+              </div>
+              <h1 className="mt-3 max-w-4xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
+                The one to buy—three ways to be right.
+              </h1>
             </div>
-            <h1 className="mt-5 max-w-3xl font-serif text-5xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-6xl">
-              The one to buy—<br />
-              three ways to be right.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-[#64736c] sm:text-lg">
-              Tell TCGpal which Pokémon card you want. It finds the live listings and hands you one
-              recommendation—then lets you switch the lens to cheapest, safest, or best-documented.
+            <p className="max-w-xl text-sm leading-6 text-[#64736c] sm:text-base sm:leading-7">
+              Tell us the card. TCGpal compares live listings and recommends the cheapest, safest,
+              or best-documented option.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3 text-sm font-bold text-[#52635c]">
+          <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#52635c] sm:text-sm">
             <Promise icon={ReceiptText} label="Price + shipping + optional tax" />
             <Promise icon={ShieldCheck} label="Seller and return signals" />
             <Promise icon={Camera} label="Evidence quality, never grade prediction" />
@@ -330,6 +335,7 @@ export function ComparisonApp() {
                 <input {...form.register("cardNumber")} placeholder="215/203" />
               </label>
             </div>
+            <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
             <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-[#64736c]">
               <SearchCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2f6f73]" />
               Add the collector number to jump straight to ranked listings; with just a name, you&apos;ll confirm the exact version next.
@@ -539,7 +545,7 @@ function Header() {
         <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
           <a className="hover:text-[#2f6f73]" href="#compare">Check a listing</a>
           <a className="hover:text-[#2f6f73]" href="#method">Method</a>
-          <span className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-[#2f6f73]">Pokémon · US</span>
+          <span className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-[#2f6f73]">Pokémon · Raw singles · US</span>
         </nav>
       </div>
     </header>
@@ -548,10 +554,53 @@ function Header() {
 
 function Promise({ icon: Icon, label }: { icon: typeof ReceiptText; label: string }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-2">
-      <Icon className="h-4 w-4 text-[#2f6f73]" />
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1.5">
+      <Icon className="h-3.5 w-3.5 text-[#2f6f73]" />
       {label}
     </span>
+  );
+}
+
+function CardKeyPreview({ name, setCode, cardNumber }: { name: string; setCode: string; cardNumber: string }) {
+  if (!setCode.trim() && !cardNumber.trim()) return null;
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] px-3 py-2.5 text-xs">
+      <span className="font-black uppercase tracking-[0.1em] text-[#64736c]">Catalog key</span>
+      {name.trim() && <span className="rounded bg-[#e7efe8] px-2 py-1 font-bold text-[#2f6f73]">{name.trim()}</span>}
+      {setCode.trim() && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-1 font-mono font-black uppercase text-[#2f6f73]">{setCode.trim()}</span>}
+      {cardNumber.trim() && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-2 py-1 font-mono font-black text-[#6f5a22]">#{cardNumber.trim()}</span>}
+      <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-1 font-bold text-[#52635c]">English</span>
+    </div>
+  );
+}
+
+function CardIdentityRail({ identity, className = "" }: { identity: CardIdentityCandidate; className?: string }) {
+  return (
+    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+      <span className="inline-flex items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
+        {identity.setSymbolUrl && (
+          <Image src={identity.setSymbolUrl} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
+        )}
+        <span>{identity.setName}</span>
+        {identity.setCode && <span className="font-mono font-black uppercase text-[#64736c]">{identity.setCode}</span>}
+      </span>
+      {identity.cardNumber && (
+        <span className="rounded-md border border-[#e2c879] bg-[#fff8dc] px-2.5 py-1.5 font-mono text-xs font-black text-[#6f5a22]">
+          #{identity.cardNumber}
+        </span>
+      )}
+      {identity.rarity && (
+        <span className="rounded-md border border-[#e2c879] bg-[#fff8dc] px-2.5 py-1.5 text-xs font-bold text-[#6f5a22]">
+          {identity.rarity}
+        </span>
+      )}
+      {identity.language && (
+        <span className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1.5 text-xs font-bold text-[#52635c]">
+          {identity.language}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -637,29 +686,36 @@ function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdent
           TCGpal pauses here because same-art reprints and similar versions can make the wrong price look convincing. Pick the version, and we&apos;ll rank live listings for it.
         </p>
       </div>
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {identities.map((identity) => (
-          <article key={identity.id} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-            {identity.imageUrl ? (
-              <HoloCardArt
-                src={identity.imageUrl}
-                alt={`${identity.name} ${identity.cardNumber}`}
-                sizes="144px"
-                className="mx-auto w-36"
-              />
-            ) : (
-              <div className="mx-auto aspect-[2.5/3.5] w-36 rounded-md bg-[#e7efe8]" />
-            )}
-            <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{identity.confidence} confidence</p>
-            <h3 className="mt-1 font-serif text-xl font-bold text-[#2f6f73]">{identity.name}</h3>
-            <p className="mt-1 text-sm text-[#64736c]">{identity.setName} · {identity.cardNumber}</p>
-            <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
-              <Check className="h-4 w-4" />
-              Confirm this version
-            </button>
-          </article>
-        ))}
-      </div>
+      {identities.length ? (
+        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {identities.map((identity) => (
+            <article key={identity.id} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+              {identity.imageUrl ? (
+                <HoloCardArt
+                  src={identity.imageUrl}
+                  alt={`${identity.name} ${identity.cardNumber}`}
+                  sizes="144px"
+                  className="mx-auto w-36"
+                />
+              ) : (
+                <div className="mx-auto aspect-[2.5/3.5] w-36 rounded-md bg-[#e7efe8]" />
+              )}
+              <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{identity.confidence} confidence</p>
+              <h3 className="mt-1 font-serif text-xl font-bold text-[#2f6f73]">{identity.name}</h3>
+              <CardIdentityRail identity={identity} className="mt-3" />
+              <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
+                <Check className="h-4 w-4" />
+                Confirm this version
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
+          No catalog match was found. Check the Pokémon name, then add the printed collector number
+          (for example, 215/203) or a set name/code and try again.
+        </div>
+      )}
     </section>
   );
 }
@@ -716,7 +772,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
               Exact version confirmed
             </p>
             <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{report.confirmedCard?.name}</h2>
-            <p className="mt-1 text-[#64736c]">{report.confirmedCard?.setName} · {report.confirmedCard?.cardNumber} · {report.confirmedCard?.language}</p>
+            {report.confirmedCard && <CardIdentityRail identity={report.confirmedCard} className="mt-3" />}
             {typeof report.confirmedCard?.marketMid === "number" && (
               <p className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#2f6f73]">
                 <Tag className="h-4 w-4" />
@@ -931,6 +987,33 @@ function VerdictTag({ verdict, icon: Icon }: { verdict: { label: string; tone: V
   );
 }
 
+function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvidence; compact?: boolean }) {
+  const items = [
+    { label: `${evidence.photoCount} photo${evidence.photoCount === 1 ? "" : "s"}`, available: evidence.photoCount > 0, icon: Camera },
+    { label: evidence.frontBackExplicit ? "Front + back" : "Front/back not shown", available: evidence.frontBackExplicit, icon: BadgeCheck },
+    { label: evidence.closeupsExplicit ? "Corners" : "Corners not shown", available: evidence.closeupsExplicit, icon: SearchCheck },
+    { label: evidence.surfaceExplicit ? "Surface" : "Surface not shown", available: evidence.surfaceExplicit, icon: Sparkles },
+  ];
+
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : "mt-4"}`} aria-label="Listing photo evidence">
+      {items.map(({ label, available, icon: Icon }) => (
+        <span
+          key={label}
+          className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-bold ${
+            available
+              ? "border-[#c9d7ce] bg-[#e7efe8] text-[#2f6f73]"
+              : "border-[#d6ded5] bg-[#f7f9f5] text-[#7a8982]"
+          }`}
+        >
+          <Icon className="h-3 w-3" />
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function RecommendationCard({ choice, listing, demoMode, marketPrice, recommended }: { choice: RankedChoice; listing: NormalizedListing; demoMode: boolean; marketPrice: number | null; recommended: boolean }) {
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
@@ -976,6 +1059,7 @@ function RecommendationCard({ choice, listing, demoMode, marketPrice, recommende
           <p className="mt-2 text-xs text-[#64736c]">
             Trust {listing.sellerTrustScore} · Evidence {listing.evidenceCompletenessScore} · Safety {listing.safetyScore} <span className="text-[#94a59c]">(of 100)</span>
           </p>
+          <EvidenceChecklist evidence={listing.evidence} />
 
           <p className="mt-4 text-sm leading-6 text-[#52635c]">{choice.reason}</p>
 
@@ -1045,24 +1129,33 @@ function HoloCardArt({
       onPointerCancel={resetTilt}
     >
       <Image src={src} alt={alt} fill className="holo-card-image" sizes={sizes} />
-      <span className="holo-card-sweep" aria-hidden="true" />
     </div>
   );
 }
 
 function CandidateRow({ listing }: { listing: NormalizedListing }) {
   return (
-    <article className="grid gap-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-      <div>
+    <article className="grid gap-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4 sm:grid-cols-[52px_minmax(0,1fr)] lg:grid-cols-[52px_minmax(0,1fr)_auto] lg:items-center">
+      <div className="relative aspect-[2.5/3.5] w-[52px] overflow-hidden rounded border border-[#d6ded5] bg-[#e7efe8]">
+        {listing.imageUrl ? (
+          <Image src={listing.imageUrl} alt="" fill sizes="52px" className="object-contain" />
+        ) : (
+          <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><ReceiptText className="h-5 w-5" /></span>
+        )}
+      </div>
+      <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-[#24312f]">{listing.marketplace}</span>
           {listing.demo && <span className="rounded bg-[#fff0b8] px-2 py-0.5 text-xs font-black uppercase text-[#6f5a22]">Demo</span>}
+          {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">Raw single</span>}
+          <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{listing.claimedCondition}</span>
           <span className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{listing.matchConfidence} match</span>
         </div>
         <p className="mt-1 line-clamp-1 text-sm text-[#64736c]">{listing.title}</p>
+        <EvidenceChecklist evidence={listing.evidence} compact />
         <p className="mt-2 text-xs text-[#64736c]">Observed {new Date(listing.observedAt).toLocaleString()}</p>
       </div>
-      <div className="grid grid-cols-3 gap-3 text-right">
+      <div className="col-span-2 grid grid-cols-3 gap-3 border-t border-[#d6ded5] pt-3 text-right lg:col-span-1 lg:border-0 lg:pt-0">
         <Metric compact label="Pre-tax" value={formatMoney(listing.preTaxTotal)} />
         <Metric compact label="Safety" value={`${listing.safetyScore}`} />
         <Metric compact label="Evidence" value={`${listing.evidenceCompletenessScore}`} />
@@ -1092,6 +1185,7 @@ function StatusPill({ status }: { status: "used" | "unavailable" | "missing" }) 
 function buildRequest(values: ComparisonForm, confirmedCardId?: string): ComparisonRequest {
   const description = values.description.trim();
   const taxPercent = nullableNumber(values.taxRatePercent);
+  const cardNumber = /\d/.test(values.cardNumber) ? values.cardNumber.trim() : "";
   return {
     sourceListing: {
       marketplace: values.marketplace,
@@ -1114,7 +1208,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
         frontBackExplicit: values.frontBackExplicit,
         closeupsExplicit: values.closeupsExplicit,
         surfaceExplicit: values.surfaceExplicit,
-        identityExplicit: Boolean(values.cardNumber.trim()),
+        identityExplicit: Boolean(cardNumber),
         substantiveConditionNotes: values.substantiveConditionNotes || hasSubstantiveConditionNotes(description),
         missing: [],
       },
@@ -1128,7 +1222,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
     cardHint: {
       name: values.cardName.trim(),
       setCode: values.setCode.trim(),
-      cardNumber: values.cardNumber.trim(),
+      cardNumber,
       language: "English",
     },
     confirmedCardId,

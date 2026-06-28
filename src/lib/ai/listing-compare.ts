@@ -10,7 +10,7 @@ import {
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
-import { searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
+import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
 import {
   cardIdentityCandidateSchema,
   comparisonNarrativeSchema,
@@ -196,47 +196,67 @@ async function identifyCards(
   warnings: string[],
   trace: ComparisonTrace[],
 ) {
-  const query = [request.cardHint.name, source.title].filter(Boolean).join(" ").trim();
-  const localMatches = matchDemoIdentities(`${query} ${request.cardHint.cardNumber} ${request.cardHint.setCode}`);
+  const searchName = request.cardHint.name || cleanCardName(source.title);
+  const localMatches = rankLocalIdentities(request, source);
+
+  if (request.confirmedCardId) {
+    try {
+      const card = await getPokemonCard({
+        id: request.confirmedCardId,
+        fetcher,
+        timeoutMs: 15000,
+      });
+      const match = evaluateIdentity(card, request, source);
+      trace.push({
+        step: "card_identification",
+        actor: "Pokémon catalog adapter",
+        summary: "Reloaded the user-confirmed catalog card by its stable card id.",
+        status: "complete",
+      });
+      return [toIdentityCandidate(card, request, match)];
+    } catch (error) {
+      warnings.push(`Confirmed Pokémon card lookup unavailable: ${errorMessage(error)}`);
+    }
+  }
 
   // The Pokémon TCG catalog is queryable without a key (the key only raises rate
   // limits), so resolve real card identities whenever we have a usable query.
-  if (query.length >= 2) {
+  if (searchName.length >= 2) {
     try {
       // pokemontcg.io's first (uncached) response can take 5-8s because it carries
       // pricing payloads, so allow more headroom than the 8s default to avoid an
       // unnecessary fall back to demo identities. Responses are cached for an hour.
-      const result = await searchPokemonCards({ query: request.cardHint.name || cleanCardName(source.title), pageSize: 6, fetcher, timeoutMs: 15000 });
-      const apiMatches = result.cards.map((card) => cardIdentityCandidateSchema.parse({
-        id: card.id,
-        name: card.name,
-        setName: card.set?.name ?? "Unknown set",
-        setCode: card.set?.id?.toUpperCase() ?? "",
-        cardNumber: card.number ?? "",
-        language: request.cardHint.language || "English",
-        imageUrl: card.images?.large ?? card.images?.small ?? null,
-        confidence: identityConfidence(card.name, card.number ?? "", request, source),
-        matchReasons: buildIdentityReasons(card.name, card.number ?? "", request, source),
-        ...extractTcgplayerPricing(card.tcgplayer),
-      }));
-      const merged = dedupeIdentities([...localMatches, ...apiMatches]);
+      const result = await searchPokemonCards({
+        query: searchName,
+        cardNumber: request.cardHint.cardNumber,
+        setHint: request.cardHint.setCode,
+        pageSize: request.cardHint.cardNumber ? 12 : 30,
+        fetcher,
+        timeoutMs: 15000,
+      });
+      const apiMatches = result.cards
+        .map((card) => ({ card, match: evaluateIdentity(card, request, source) }))
+        .sort((a, b) => b.match.score - a.match.score)
+        .map(({ card, match }) => toIdentityCandidate(card, request, match));
       trace.push({
         step: "card_identification",
         actor: "Pokémon catalog adapter",
-        summary: `Found ${merged.length} possible identities and preserved ambiguity for user confirmation.`,
+        summary: `Found ${apiMatches.length} possible identities and ranked exact number, set, and name matches first.`,
         status: "complete",
       });
-      return merged.slice(0, 6);
+      return dedupeIdentities(apiMatches).slice(0, 6);
     } catch (error) {
       warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
     }
   }
 
-  const fallback = localMatches.length ? localMatches : demoIdentities;
+  const fallback = localMatches;
   trace.push({
     step: "card_identification",
     actor: "Local identity matcher",
-    summary: `Returned ${fallback.length} catalog candidates without inventing a version match.`,
+    summary: fallback.length
+      ? `Returned ${fallback.length} matching demo candidates without inventing a version match.`
+      : "No matching catalog identity was available; unrelated demo cards were not substituted.",
     status: "fallback",
   });
   return fallback;
@@ -247,8 +267,12 @@ function resolveConfirmedCard(request: ComparisonRequest, identities: CardIdenti
     return identities.find((candidate) => candidate.id === request.confirmedCardId) ?? null;
   }
   const top = identities[0];
-  const hasExplicitIdentity = Boolean(request.cardHint.cardNumber && request.cardHint.name);
-  return top?.confidence === "high" && hasExplicitIdentity ? top : null;
+  const hasExplicitIdentity = Boolean(
+    request.cardHint.name
+    && collectorNumberParts(request.cardHint.cardNumber).number,
+  );
+  const highConfidenceMatches = identities.filter((candidate) => candidate.confidence === "high");
+  return top?.confidence === "high" && hasExplicitIdentity && highConfidenceMatches.length === 1 ? top : null;
 }
 
 function sourceToSeed(
@@ -430,28 +454,213 @@ function localNarrative(
   });
 }
 
-function matchDemoIdentities(text: string) {
-  const normalized = normalizeText(text);
-  const matches = demoIdentities.filter((identity) =>
-    normalized.includes(normalizeText(identity.name))
-    || normalized.includes(normalizeText(identity.cardNumber))
+type IdentityEvaluation = {
+  score: number;
+  confidence: CardIdentityCandidate["confidence"];
+  reasons: string[];
+  nameRelated: boolean;
+  numberMatches: boolean;
+};
+
+function toIdentityCandidate(
+  card: PokemonTcgCard,
+  request: ComparisonRequest,
+  match: IdentityEvaluation,
+) {
+  return cardIdentityCandidateSchema.parse({
+    id: card.id,
+    name: card.name,
+    setName: card.set?.name ?? "Unknown set",
+    setCode: card.set?.id?.toUpperCase() ?? "",
+    cardNumber: formatCollectorNumber(card.number ?? "", card.set?.printedTotal),
+    language: request.cardHint.language || "English",
+    imageUrl: card.images?.large ?? card.images?.small ?? null,
+    rarity: card.rarity ?? null,
+    setSymbolUrl: card.set?.images?.symbol ?? null,
+    confidence: match.confidence,
+    matchReasons: match.reasons,
+    ...extractTcgplayerPricing(card.tcgplayer),
+  });
+}
+
+function evaluateIdentity(
+  card: PokemonTcgCard,
+  request: ComparisonRequest,
+  source: SourceListing,
+) {
+  return evaluateIdentityFields({
+    name: card.name,
+    cardNumber: formatCollectorNumber(card.number ?? "", card.set?.printedTotal),
+    setName: card.set?.name ?? "",
+    setId: card.set?.id ?? "",
+    setSeries: card.set?.series ?? "",
+    ptcgoCode: card.set?.ptcgoCode ?? "",
+    subtypes: card.subtypes ?? [],
+  }, request, source);
+}
+
+function evaluateIdentityFields(
+  candidate: {
+    name: string;
+    cardNumber: string;
+    setName: string;
+    setId: string;
+    setSeries: string;
+    ptcgoCode: string;
+    subtypes: string[];
+  },
+  request: ComparisonRequest,
+  source: SourceListing,
+): IdentityEvaluation {
+  const requestedName = request.cardHint.name || cleanCardName(source.title);
+  const requestedNumber = request.cardHint.cardNumber || extractCollectorNumber(source.title);
+  const requestedNameText = normalizeWords(requestedName);
+  const candidateNameText = normalizeWords(candidate.name);
+  const nameExact = Boolean(requestedNameText) && requestedNameText === candidateNameText;
+  const nameRelated = Boolean(requestedNameText) && (
+    nameExact
+    || requestedNameText.includes(candidateNameText)
+    || candidateNameText.includes(requestedNameText)
+    || tokenOverlap(requestedNameText, candidateNameText) >= 0.75
   );
-  return matches.length ? matches : [];
-}
 
-function identityConfidence(name: string, number: string, request: ComparisonRequest, source: SourceListing) {
-  const text = normalizeText(`${source.title} ${source.description} ${request.cardHint.name} ${request.cardHint.cardNumber}`);
-  if (number && text.includes(normalizeText(number)) && text.includes(normalizeText(name))) return "high" as const;
-  if (text.includes(normalizeText(name))) return "medium" as const;
-  return "low" as const;
-}
+  const requestedParts = collectorNumberParts(requestedNumber);
+  const candidateParts = collectorNumberParts(candidate.cardNumber);
+  const numberMatches = Boolean(requestedParts.number)
+    && requestedParts.number === candidateParts.number;
+  const totalMatches = !requestedParts.total || requestedParts.total === candidateParts.total;
+  const exactNumber = numberMatches && totalMatches;
 
-function buildIdentityReasons(name: string, number: string, request: ComparisonRequest, source: SourceListing) {
-  const text = normalizeText(`${source.title} ${source.description} ${request.cardHint.name} ${request.cardHint.cardNumber}`);
-  return [
-    text.includes(normalizeText(name)) ? "Card name matches." : "Card name is uncertain.",
-    number && text.includes(normalizeText(number)) ? "Collector number matches." : "Collector number needs confirmation.",
+  const setProvided = Boolean(request.cardHint.setCode.trim());
+  const setMatches = setProvided && setHintMatches(candidate, request.cardHint.setCode);
+
+  let score = nameExact ? 50 : nameRelated ? 30 : 0;
+  if (requestedParts.number) score += numberMatches ? 90 : -90;
+  if (requestedParts.total) score += totalMatches ? 60 : -60;
+  if (setProvided) score += setMatches ? 45 : -30;
+
+  const confidence: CardIdentityCandidate["confidence"] = (
+    nameRelated
+    && numberMatches
+    && ((Boolean(requestedParts.total) && totalMatches) || setMatches)
+  )
+    ? "high"
+    : nameRelated || numberMatches
+      ? "medium"
+      : "low";
+
+  const reasons = [
+    nameExact
+      ? "Card name matches exactly."
+      : nameRelated
+        ? "Card name closely matches."
+        : "Card name is uncertain.",
+    requestedParts.number
+      ? exactNumber
+        ? "Collector number matches."
+        : numberMatches
+          ? "Collector-number prefix matches, but the printed set total differs."
+          : "Collector number does not match."
+      : "Collector number needs confirmation.",
   ];
+  if (setProvided) {
+    reasons.push(setMatches ? "Set matches." : "Set needs confirmation.");
+  }
+
+  return { score, confidence, reasons, nameRelated, numberMatches };
+}
+
+function rankLocalIdentities(request: ComparisonRequest, source: SourceListing) {
+  return demoIdentities
+    .map((identity) => {
+      const match = evaluateIdentityFields({
+        name: identity.name,
+        cardNumber: identity.cardNumber,
+        setName: identity.setName,
+        setId: identity.setCode,
+        setSeries: "",
+        ptcgoCode: "",
+        subtypes: [],
+      }, request, source);
+      return { identity, match };
+    })
+    .filter(({ match }) => match.nameRelated || match.numberMatches)
+    .sort((a, b) => b.match.score - a.match.score)
+    .map(({ identity, match }) => ({
+      ...identity,
+      confidence: match.confidence,
+      matchReasons: match.reasons,
+    }));
+}
+
+function formatCollectorNumber(number: string, printedTotal?: number) {
+  const normalized = number.trim();
+  if (!normalized || normalized.includes("/") || !printedTotal) return normalized;
+
+  const prefix = normalized.match(/^[A-Za-z]+/)?.[0]?.toUpperCase() ?? "";
+  if (!prefix) return `${normalized}/${printedTotal}`;
+  if (["GG", "RC", "SV", "TG"].includes(prefix)) {
+    return `${normalized}/${prefix}${printedTotal}`;
+  }
+  return normalized;
+}
+
+function extractCollectorNumber(value: string) {
+  return value.match(/\b(?:[A-Za-z]{1,4})?\d{1,3}\s*\/\s*(?:[A-Za-z]{1,4})?\d{1,3}\b/)?.[0] ?? "";
+}
+
+function collectorNumberParts(value: string) {
+  const [rawNumber = "", rawTotal = ""] = value.trim().replace(/\s+/g, "").split("/", 2);
+  return {
+    number: normalizeCollectorSegment(rawNumber),
+    total: normalizeCollectorSegment(rawTotal),
+  };
+}
+
+function normalizeCollectorSegment(value: string) {
+  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!/\d/.test(normalized)) return "";
+  const match = normalized.match(/^([A-Z]*)(\d+)$/);
+  if (!match) return normalized;
+  return `${match[1]}${Number(match[2])}`;
+}
+
+function setHintMatches(
+  candidate: {
+    setName: string;
+    setId: string;
+    setSeries: string;
+    ptcgoCode: string;
+    subtypes: string[];
+  },
+  setHint: string,
+) {
+  const candidateValues = [
+    candidate.setName,
+    candidate.setId,
+    candidate.setSeries,
+    candidate.ptcgoCode,
+    ...candidate.subtypes,
+  ]
+    .map(normalizeText)
+    .filter(Boolean);
+  return setHint
+    .split("/")
+    .map(normalizeText)
+    .filter(Boolean)
+    .some((part) => candidateValues.includes(part));
+}
+
+function normalizeWords(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function tokenOverlap(left: string, right: string) {
+  const leftTokens = new Set(left.split(/\s+/).filter(Boolean));
+  const rightTokens = new Set(right.split(/\s+/).filter(Boolean));
+  if (!leftTokens.size || !rightTokens.size) return 0;
+  const shared = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  return shared / Math.min(leftTokens.size, rightTokens.size);
 }
 
 type TcgplayerVariantPrice = { low?: number | null; mid?: number | null; high?: number | null; market?: number | null };
