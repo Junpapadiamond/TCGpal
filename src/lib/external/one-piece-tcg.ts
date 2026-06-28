@@ -153,17 +153,92 @@ export async function searchOnePieceCards({
   }
 
   // OPTCG has no name-query endpoint, so pull the cached full set-card dump and
-  // filter locally. The response is cached (revalidate) to keep this cheap.
+  // match locally. The response is cached (revalidate) to keep this cheap.
   const base = resolveBaseUrl(baseUrl);
   const raw = await fetchJson(`${base}/allSetCards/`, fetcher, timeoutMs);
   const all = z.array(onePieceCardSchema).parse(raw);
 
-  const needle = normalizedQuery.toLowerCase();
+  const limit = Math.min(Math.max(pageSize, 1), 50);
   const cards = all
-    .filter((card) => card.card_name.toLowerCase().includes(needle))
-    .slice(0, Math.min(Math.max(pageSize, 1), 50));
+    .map((card) => ({ card, score: scoreOnePieceCard(card, normalizedQuery) }))
+    .filter((entry) => entry.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score
+        || a.card.card_name.length - b.card.card_name.length
+        || a.card.card_set_id.localeCompare(b.card.card_set_id),
+    )
+    .slice(0, limit)
+    .map((entry) => entry.card);
 
   return { source: "optcg-api", query: normalizedQuery, cards, count: cards.length };
+}
+
+function normalizeOnePieceName(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function onePieceTokens(value: string): string[] {
+  return normalizeOnePieceName(value).split(" ").filter(Boolean);
+}
+
+// Bounded Levenshtein: true only when a and b are within a single edit. Used to
+// rescue single-character typos like "puffy" → "luffy".
+function withinOneEdit(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    edits += 1;
+    if (edits > 1) return false;
+    if (a.length > b.length) i += 1;
+    else if (a.length < b.length) j += 1;
+    else {
+      i += 1;
+      j += 1;
+    }
+  }
+  if (i < a.length || j < b.length) edits += 1;
+  return edits <= 1;
+}
+
+// A query token matches a card token by exact or prefix. A single typo is only
+// forgiven for a one-word query of length >= 4, which keeps "law" from matching
+// "raw" while still resolving "puffy" → "luffy".
+function matchesToken(queryToken: string, cardToken: string, allowFuzzy: boolean): boolean {
+  if (cardToken === queryToken || cardToken.startsWith(queryToken)) return true;
+  return allowFuzzy && queryToken.length >= 4 && withinOneEdit(queryToken, cardToken);
+}
+
+// Tokenized relevance score. 0 means "not a match" (every query token must hit a
+// card token). Higher is better; full-name and prefix matches beat token and
+// fuzzy matches. One Piece names look like "Monkey.D.Luffy" / "Trafalgar Law".
+function scoreOnePieceCard(card: OnePieceTcgCard, query: string): number {
+  const queryTokens = onePieceTokens(query);
+  if (queryTokens.length === 0) return 0;
+
+  const fullName = normalizeOnePieceName(card.card_name);
+  const cardTokens = fullName.split(" ").filter(Boolean);
+  const allowFuzzy = queryTokens.length === 1;
+
+  const everyTokenMatches = queryTokens.every((queryToken) =>
+    cardTokens.some((cardToken) => matchesToken(queryToken, cardToken, allowFuzzy)),
+  );
+  if (!everyTokenMatches) return 0;
+
+  const normalizedQuery = normalizeOnePieceName(query);
+  if (fullName === normalizedQuery) return 1000;
+  if (fullName.startsWith(normalizedQuery)) return 500;
+  if (queryTokens.every((queryToken) => cardTokens.includes(queryToken))) return 300;
+  if (queryTokens.every((queryToken) => cardTokens.some((cardToken) => cardToken.startsWith(queryToken)))) return 150;
+  return 50;
 }
 
 function toMarketPrice(card: OnePieceTcgCard): number | null {

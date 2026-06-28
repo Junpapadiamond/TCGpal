@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
+import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import {
   comparisonReportSchema,
   type CardIdentityCandidate,
@@ -740,6 +741,8 @@ function ErrorNotice({ message }: { message: string }) {
 
 function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdentityCandidate[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
   const t = useT();
+  const grouped = identities.length > IDENTITY_GROUP_THRESHOLD;
+  const groups = useMemo(() => (grouped ? groupIdentitiesBySet(identities) : []), [grouped, identities]);
   return (
     <section id="comparison-result" className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-7">
       <div className="max-w-2xl">
@@ -752,36 +755,63 @@ function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdent
           {t.identity.desc}
         </p>
       </div>
-      {identities.length ? (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {identities.map((identity) => (
-            <article key={identity.id} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-              {identity.imageUrl ? (
-                <HoloCardArt
-                  src={identity.imageUrl}
-                  alt={`${identity.name} ${identity.cardNumber}`}
-                  sizes="144px"
-                  className="mx-auto w-36"
-                />
-              ) : (
-                <div className="mx-auto aspect-[2.5/3.5] w-36 rounded-md bg-[#e7efe8]" />
-              )}
-              <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{t.identity.confidence(identity.confidence)}</p>
-              <h3 className="mt-1 font-serif text-xl font-bold text-[#2f6f73]">{identity.name}</h3>
-              <CardIdentityRail identity={identity} className="mt-3" />
-              <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
-                <Check className="h-4 w-4" />
-                {t.identity.confirm}
-              </button>
-            </article>
-          ))}
-        </div>
-      ) : (
+      {identities.length === 0 ? (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
           {t.identity.noMatch}
         </div>
+      ) : grouped ? (
+        <div className="mt-6 space-y-7">
+          {groups.map((group, index) => {
+            const headingId = `identity-set-${index}`;
+            return (
+              <section key={group.setName} aria-labelledby={headingId}>
+                <h3 id={headingId} className="text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
+                  {group.setName}
+                  <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">{t.identity.versions(group.items.length)}</span>
+                </h3>
+                <div className="mt-3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {group.items.map((identity) => (
+                    <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {identities.map((identity) => (
+            <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h3" />
+          ))}
+        </div>
       )}
     </section>
+  );
+}
+
+function IdentityCard({ identity, onConfirm, titleAs }: { identity: CardIdentityCandidate; onConfirm: (identity: CardIdentityCandidate) => void; titleAs: "h3" | "h4" }) {
+  const t = useT();
+  const titleClass = "mt-1 font-serif text-xl font-bold text-[#2f6f73]";
+  return (
+    <article className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+      {identity.imageUrl ? (
+        <HoloCardArt
+          src={identity.imageUrl}
+          alt={`${identity.name} ${identity.cardNumber}`}
+          sizes="144px"
+          className="mx-auto w-36"
+        />
+      ) : (
+        <div className="mx-auto aspect-[2.5/3.5] w-36 rounded-md bg-[#e7efe8]" />
+      )}
+      <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{t.identity.confidence(identity.confidence)}</p>
+      {titleAs === "h4" ? <h4 className={titleClass}>{identity.name}</h4> : <h3 className={titleClass}>{identity.name}</h3>}
+      <CardIdentityRail identity={identity} className="mt-3" />
+      <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
+        <Check className="h-4 w-4" />
+        {t.identity.confirm}
+      </button>
+    </article>
   );
 }
 

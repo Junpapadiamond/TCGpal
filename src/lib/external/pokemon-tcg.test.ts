@@ -166,6 +166,42 @@ describe("Pokemon TCG API adapter", () => {
     expect(result.cards.map((card) => card.id)).toEqual(["bw10-65", "bw10-99"]);
   });
 
+  it("builds a relaxation ladder: exact phrase, then wildcard tokens, then loose token", async () => {
+    const seen: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      seen.push(url.searchParams.get("q") ?? "");
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    await searchPokemonCards({ query: "Rayquaza VMAX", fetcher });
+
+    expect(seen).toEqual([
+      'name:"Rayquaza VMAX"',
+      "name:rayquaza* name:vmax*",
+      "name:*rayquaza*",
+    ]);
+  });
+
+  it("returns the first non-empty tier, so loose input still resolves a card", async () => {
+    const fetcher = vi.fn(async (url: URL) => {
+      const q = url.searchParams.get("q") ?? "";
+      if (q === "name:rayquaza* name:vmax*") {
+        return new Response(JSON.stringify({
+          data: [{ id: "swsh7-110", name: "Rayquaza VMAX", number: "110", set: { name: "Evolving Skies" } }],
+          count: 1,
+          totalCount: 1,
+        }));
+      }
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    const result = await searchPokemonCards({ query: "Rayquaza VMAX", fetcher });
+
+    expect(result.cards[0]?.id).toBe("swsh7-110");
+    // The exact phrase was tried first and came back empty before relaxing.
+    expect(result.apiQuery).toBe("name:rayquaza* name:vmax*");
+  });
+
   it("reloads a confirmed card by stable catalog id", async () => {
     const fetcher = vi.fn(async (url: URL) => {
       expect(url.pathname).toBe("/v2/cards/swsh7-215");

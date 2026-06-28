@@ -31,6 +31,11 @@ import {
   type SourceListing,
 } from "@/lib/schemas";
 
+// Broad queries (e.g. "pikachu") legitimately match many prints. Show enough to
+// let the buyer find the right version; the IdentityConfirmation UI groups these
+// by set so the list stays scannable.
+const MAX_IDENTITY_CANDIDATES = 24;
+
 const forbiddenNarrative = [
   /\bguaranteed\b/i,
   /\bscam\b/i,
@@ -255,7 +260,7 @@ async function identifyCards(
         summary: `Found ${apiMatches.length} possible identities and ranked exact number, set, and name matches first.`,
         status: "complete",
       });
-      return dedupeIdentities(apiMatches).slice(0, 6);
+      return dedupeIdentities(apiMatches).slice(0, MAX_IDENTITY_CANDIDATES);
     } catch (error) {
       warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
     }
@@ -317,7 +322,7 @@ async function identifyOnePieceCards(
         summary: `Found ${matches.length} possible One Piece identities and ranked exact id and name matches first.`,
         status: "complete",
       });
-      return dedupeIdentities(matches).slice(0, 6);
+      return dedupeIdentities(matches).slice(0, MAX_IDENTITY_CANDIDATES);
     } catch (error) {
       warnings.push(`One Piece catalog lookup unavailable: ${errorMessage(error)}`);
     }

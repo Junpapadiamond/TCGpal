@@ -79,6 +79,49 @@ describe("OPTCG (One Piece) adapter", () => {
     expect(card?.card_set_id).toBe("ST01-001");
   });
 
+  it("matches dotted/partial names by token and gates fuzzy to avoid false positives", async () => {
+    const dump = [
+      { card_name: "Monkey.D.Luffy", card_set_id: "OP01-001", set_id: "OP-01" },
+      { card_name: "Roronoa Zoro", card_set_id: "OP01-025", set_id: "OP-01" },
+      { card_name: "Trafalgar Law", card_set_id: "OP01-002", set_id: "OP-01" },
+      { card_name: "Raw Meat", card_set_id: "OP01-999", set_id: "OP-01" },
+    ];
+    const fetcher = vi.fn(async (url: URL) => {
+      expect(url.pathname).toBe("/api/allSetCards/");
+      return new Response(JSON.stringify(dump));
+    }) as unknown as typeof fetch;
+
+    const base = "https://www.optcgapi.com/api";
+
+    // "luffy" matches the "Monkey.D.Luffy" token despite the dots.
+    const luffy = await searchOnePieceCards({ query: "luffy", baseUrl: base, fetcher });
+    expect(luffy.cards[0]?.card_set_id).toBe("OP01-001");
+
+    // "law" resolves Trafalgar Law by exact token and does NOT fuzzy-match "Raw".
+    const law = await searchOnePieceCards({ query: "law", baseUrl: base, fetcher });
+    expect(law.cards.map((card) => card.card_set_id)).toEqual(["OP01-002"]);
+
+    // A single-character typo on a >=4 char token is forgiven: puffy -> luffy.
+    const puffy = await searchOnePieceCards({ query: "puffy", baseUrl: base, fetcher });
+    expect(puffy.cards[0]?.card_set_id).toBe("OP01-001");
+  });
+
+  it("ranks an exact full-name hit above a partial-token hit", async () => {
+    const dump = [
+      { card_name: "Sanji's Pilaf", card_set_id: "OP05-100", set_id: "OP-05" },
+      { card_name: "Sanji", card_set_id: "OP01-013", set_id: "OP-01" },
+    ];
+    const fetcher = vi.fn(async () => new Response(JSON.stringify(dump))) as unknown as typeof fetch;
+
+    const result = await searchOnePieceCards({
+      query: "sanji",
+      baseUrl: "https://www.optcgapi.com/api",
+      fetcher,
+    });
+
+    expect(result.cards[0]?.card_set_id).toBe("OP01-013");
+  });
+
   it("maps an OPTCG card onto the shared identity candidate shape", () => {
     const identity = mapOnePieceCardToIdentity(luffyCard, {
       confidence: "high",

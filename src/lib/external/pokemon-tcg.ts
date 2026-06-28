@@ -228,6 +228,31 @@ function buildPokemonCardQuery(query: string) {
   return `name:"${escapeLucenePhrase(query)}"`;
 }
 
+// Significant search tokens from a plain name: lowercase, split on
+// non-alphanumerics, drop 1-char noise. Variant tokens (vmax/vstar/ex) are kept
+// because they disambiguate rather than dilute. Tokens are [a-z0-9] only, so no
+// Lucene escaping is needed.
+function nameTokens(name: string): string[] {
+  return name
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 2);
+}
+
+// Suffix-tolerant AND of every token: `name:rayquaza* name:vmax*`. Matches loose
+// input ("rayquaza vmax" → "Rayquaza VMAX") and trailing words.
+function wildcardAllTokens(tokens: string[]): string {
+  if (tokens.length === 0) return "";
+  return tokens.map((token) => `name:${token}*`).join(" ");
+}
+
+// Loosest tier: substring on the single longest token only, e.g. `name:*charizard*`.
+// Longest-token keeps this from matching half the catalog on short tokens.
+function looseSingleToken(tokens: string[]): string {
+  const longest = tokens.reduce((best, token) => (token.length > best.length ? token : best), "");
+  return longest ? `name:*${longest}*` : "";
+}
+
 function buildPokemonCardQueries({
   name,
   cardNumber,
@@ -257,6 +282,18 @@ function buildPokemonCardQueries({
   } else {
     if (setFilter) queries.push(`${nameFilter} ${setFilter}`);
     queries.push(nameFilter);
+  }
+
+  // Relaxed fallbacks for loose/partial/typo-ish input. These only run when the
+  // precise tiers above return nothing (searchPokemonCards stops at the first
+  // non-empty result), so exact matches stay fast and precise. Skipped for raw
+  // `field:value` queries the caller passed through verbatim.
+  if (!name.includes(":")) {
+    const tokens = nameTokens(name);
+    const wildcard = wildcardAllTokens(tokens);
+    const loose = looseSingleToken(tokens);
+    if (wildcard) queries.push(wildcard);
+    if (loose) queries.push(loose);
   }
 
   return Array.from(new Set(queries.filter(Boolean)));

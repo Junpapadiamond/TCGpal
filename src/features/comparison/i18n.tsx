@@ -127,6 +127,7 @@ const en = {
     heading: "Which exact card do you want?",
     desc: "TCGpal pauses here because same-art reprints and similar versions can make the wrong price look convincing. Pick the version, and we'll rank live listings for it.",
     confidence: (level: string) => `${level} confidence`,
+    versions: (n: number) => `${n} version${n === 1 ? "" : "s"}`,
     confirm: "Confirm this version",
     noMatch:
       "No catalog match was found. Check the Pokémon name, then add the printed collector number (for example, 215/203) or a set name/code and try again.",
@@ -325,6 +326,7 @@ const zh: Dict = {
     heading: "你要找的是哪一张？",
     desc: "这里先停一下：同图再版和相似版本太多，价格很容易看走眼。选好版本，我们再按它来排在售商品。",
     confidence: (level: string) => `可信度 ${level}`,
+    versions: (n: number) => `${n} 个版本`,
     confirm: "确认这个版本",
     noMatch:
       "没找到对得上的卡片。先核对一下宝可梦名称，再补上卡面上的收藏编号（比如 215/203）或系列名称 / 代码，然后重试。",
