@@ -141,6 +141,7 @@ const en = {
     demoTitle: "Labeled demo inventory.",
     demoBody:
       " eBay credentials are not configured, so these candidate listings are fixtures—not live offers.",
+    liveDataIssue: "Some live data couldn't load — the ranking below uses only what was available.",
     moveFoil: "Move to catch the foil",
     versionConfirmed: "Exact version confirmed",
     marketApprox: "TCGplayer market ≈",
@@ -347,6 +348,7 @@ const zh: Dict = {
   result: {
     demoTitle: "标注的示例库存。",
     demoBody: " 未配置 eBay 凭据，因此这些候选商品是示例数据，并非真实在售。",
+    liveDataIssue: "部分实时数据没能加载，下面的排序只用了能拿到的数据。",
     moveFoil: "移动鼠标看闪膜效果",
     versionConfirmed: "已确认确切版本",
     marketApprox: "TCGplayer 市价 ≈",

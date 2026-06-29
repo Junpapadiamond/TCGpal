@@ -121,15 +121,28 @@ export async function runListingComparison(
       status: "complete",
     });
   } catch (error) {
-    demoMode = true;
-    seeds.push(...demoListingSeeds);
-    warnings.push(`${errorMessage(error)} Showing labeled demo inventory instead.`);
-    trace.push({
-      step: "marketplace_search",
-      actor: "eBay Browse adapter",
-      summary: "Live eBay search was unavailable; loaded labeled fixtures.",
-      status: "fallback",
-    });
+    if (hasEbayCredentials()) {
+      // Credentials ARE configured, so this is a real live failure (auth, search
+      // access, rate limit, or timeout) — surface the actual reason instead of
+      // masking it with fake demo data the buyer would mistake for real offers.
+      warnings.push(`Live eBay listings could not be loaded: ${errorMessage(error)}`);
+      trace.push({
+        step: "marketplace_search",
+        actor: "eBay Browse adapter",
+        summary: `Live eBay search failed: ${errorMessage(error)}`,
+        status: "fallback",
+      });
+    } else {
+      demoMode = true;
+      seeds.push(...demoListingSeeds);
+      warnings.push(`${errorMessage(error)} Showing labeled demo inventory instead.`);
+      trace.push({
+        step: "marketplace_search",
+        actor: "eBay Browse adapter",
+        summary: "eBay credentials are not configured; loaded labeled fixtures.",
+        status: "fallback",
+      });
+    }
   }
 
   const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: confirmedCard.marketMid ?? null }));

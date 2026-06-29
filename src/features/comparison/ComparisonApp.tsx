@@ -938,6 +938,16 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         </div>
       )}
 
+      {!report.demoMode && report.warnings.length > 0 && (
+        <div className="flex items-start gap-3 rounded-md border border-[#e5b8a3] bg-[#fcefe8] p-4 text-sm leading-6 text-[#8a4a2c]">
+          <CircleAlert className="mt-1 h-4 w-4 shrink-0" />
+          <div>
+            <strong>{t.result.liveDataIssue}</strong>
+            {report.warnings.map((warning) => <p key={warning} className="mt-1">{warning}</p>)}
+          </div>
+        </div>
+      )}
+
       {report.rankedChoices.length > 0 && (
         <div>
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
