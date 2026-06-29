@@ -120,6 +120,23 @@ describe("listing comparison agent", () => {
     expect(response.candidates.some((candidate) => candidate.demo)).toBe(true);
   });
 
+  it("keeps optional/by-design degradations out of the result banner, in the trace only", async () => {
+    // PriceCharting (optional reference pricing) and the AI->deterministic narrative
+    // fallback are expected degradations, not live-data failures the buyer must act
+    // on. They must not appear in `warnings` (the alarming result banner), but their
+    // reason should remain visible in the technical trace.
+    const response = await runListingComparison(request, { fetcher });
+
+    expect(response.warnings.some((warning) => warning.includes("PRICECHARTING"))).toBe(false);
+    expect(response.warnings.some((warning) => warning.includes("AI synthesis"))).toBe(false);
+
+    const referenceStep = response.trace.find((step) => step.step === "reference_pricing");
+    const synthesisStep = response.trace.find((step) => step.step === "evidence_synthesis");
+    expect(referenceStep?.status).toBe("fallback");
+    expect(synthesisStep?.status).toBe("fallback");
+    expect(synthesisStep?.summary).toContain("local evidence summary");
+  });
+
   it("requires confirmation when identity input is ambiguous", async () => {
     const response = await runListingComparison({
       ...request,

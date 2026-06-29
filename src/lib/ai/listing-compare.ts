@@ -154,8 +154,8 @@ export async function runListingComparison(
     status: "complete",
   });
 
-  const references = await getReferences(confirmedCard, fetcher, warnings, trace, generatedAt);
-  const narrative = await buildNarrative(confirmedCard, normalized, rankedChoices, references, warnings, trace);
+  const references = await getReferences(confirmedCard, fetcher, trace, generatedAt);
+  const narrative = await buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
   const partial = normalized.filter((listing) => listing.eligible).length === 0
     || (!demoMode && references.every((reference) => reference.status !== "used"));
 
@@ -472,7 +472,6 @@ function manualCandidatesToSeeds(
 async function getReferences(
   card: CardIdentityCandidate,
   fetcher: typeof fetch,
-  warnings: string[],
   trace: ComparisonTrace[],
   observedAt: string,
 ) {
@@ -518,8 +517,10 @@ async function getReferences(
       status: "complete",
     });
   } catch (error) {
+    // PriceCharting is an optional reference-price enrichment, not a required source.
+    // Its absence is already shown honestly in the references panel (status pill +
+    // note), so keep the reason in the trace rather than the alarming result banner.
     const unavailable = error instanceof PriceChartingUnavailableError;
-    warnings.push(errorMessage(error));
     references.push({
       label: "PriceCharting reference",
       status: unavailable ? "unavailable" : "missing",
@@ -533,7 +534,7 @@ async function getReferences(
     trace.push({
       step: "reference_pricing",
       actor: "PriceCharting adapter",
-      summary: "Reference pricing was unavailable and was not fabricated.",
+      summary: `Reference pricing was unavailable and was not fabricated: ${errorMessage(error)}`,
       status: "fallback",
     });
   }
@@ -555,7 +556,6 @@ async function buildNarrative(
   listings: NormalizedListing[],
   rankedChoices: ReturnType<typeof rankListings>,
   references: ComparisonReference[],
-  warnings: string[],
   trace: ComparisonTrace[],
 ) {
   const local = localNarrative(card, listings, rankedChoices, references);
@@ -587,11 +587,13 @@ async function buildNarrative(
     });
     return response.data;
   } catch (error) {
-    warnings.push(`AI synthesis used a deterministic fallback: ${errorMessage(error)}`);
+    // Falling back to the deterministic narrative is by design (deterministic-first),
+    // not a live-data failure the buyer must act on. Keep the reason in the trace for
+    // debugging instead of raising it in the result-level "live data couldn't load" banner.
     trace.push({
       step: "evidence_synthesis",
       actor: "Deterministic critic",
-      summary: "Used the local evidence summary because model synthesis was unavailable or rejected.",
+      summary: `Used the local evidence summary because model synthesis was unavailable or rejected: ${errorMessage(error)}`,
       status: "fallback",
     });
     return local;
