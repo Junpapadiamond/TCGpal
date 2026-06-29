@@ -159,13 +159,18 @@ export async function searchOnePieceCards({
     return { source: "optcg-api", query: normalizedQuery, cards: [], count: 0 };
   }
 
-  // The bundled catalog guarantees matches for common queries with zero network.
-  // The live OPTCG dump augments breadth when reachable; its failure never
-  // propagates (best-effort), so search always returns the bundled results.
+  // Bundled-first: the curated catalog answers common queries instantly with no
+  // network, so a slow or unreachable live API can never delay (or time out) the
+  // request. Only when the bundle has no match do we consult the live dump, and
+  // even then with a short, bounded timeout — the response never blocks on it.
+  const bundled = rankOnePieceCards(onePieceCatalog, normalizedQuery, limit);
+  if (bundled.length > 0) {
+    return { source: "optcg-api", query: normalizedQuery, cards: bundled, count: bundled.length };
+  }
+
   const base = resolveBaseUrl(baseUrl);
-  const live = await fetchLiveAllSetCards(base, fetcher, timeoutMs);
-  const merged = mergeOnePieceCatalogs(onePieceCatalog, live);
-  const cards = rankOnePieceCards(merged, normalizedQuery, limit);
+  const live = await fetchLiveAllSetCards(base, fetcher, Math.min(timeoutMs, 4000));
+  const cards = rankOnePieceCards(mergeOnePieceCatalogs(onePieceCatalog, live), normalizedQuery, limit);
 
   return { source: "optcg-api", query: normalizedQuery, cards, count: cards.length };
 }
@@ -250,7 +255,7 @@ function matchesToken(queryToken: string, cardToken: string, allowFuzzy: boolean
 // Tokenized relevance score. 0 means "not a match" (every query token must hit a
 // card token). Higher is better; full-name and prefix matches beat token and
 // fuzzy matches. One Piece names look like "Monkey.D.Luffy" / "Trafalgar Law".
-function scoreOnePieceCard(card: OnePieceTcgCard, query: string): number {
+export function scoreOnePieceCard(card: OnePieceTcgCard, query: string): number {
   const queryTokens = onePieceTokens(query);
   if (queryTokens.length === 0) return 0;
 

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getOnePieceCard,
   mapOnePieceCardToIdentity,
+  scoreOnePieceCard,
   searchOnePieceCards,
 } from "@/lib/external/one-piece-tcg";
 
@@ -98,47 +99,27 @@ describe("OPTCG (One Piece) adapter", () => {
     expect(card?.card_set_id).toBe("ST99-001");
   });
 
-  it("matches dotted/partial names by token and gates fuzzy to avoid false positives", async () => {
-    const dump = [
-      { card_name: "Monkey.D.Luffy", card_set_id: "OP01-001", set_id: "OP-01" },
-      { card_name: "Roronoa Zoro", card_set_id: "OP01-025", set_id: "OP-01" },
-      { card_name: "Trafalgar Law", card_set_id: "OP01-002", set_id: "OP-01" },
-      { card_name: "Raw Meat", card_set_id: "OP01-999", set_id: "OP-01" },
-    ];
-    const fetcher = vi.fn(async (url: URL) => {
-      expect(url.pathname).toBe("/api/allSetCards/");
-      return new Response(JSON.stringify(dump));
-    }) as unknown as typeof fetch;
+  it("scores dotted/partial names by token and gates single-typo fuzzy", () => {
+    const luffy = { card_name: "Monkey.D.Luffy", card_set_id: "OP01-024" };
+    const law = { card_name: "Trafalgar Law", card_set_id: "OP01-002" };
+    const raw = { card_name: "Raw Meat", card_set_id: "OP01-999" };
 
-    const base = "https://www.optcgapi.com/api";
+    // "luffy" matches the dotted name; "law" matches the Trafalgar Law token.
+    expect(scoreOnePieceCard(luffy, "luffy")).toBeGreaterThan(0);
+    expect(scoreOnePieceCard(law, "law")).toBeGreaterThan(0);
 
-    // "luffy" matches the "Monkey.D.Luffy" token despite the dots.
-    const luffy = await searchOnePieceCards({ query: "luffy", baseUrl: base, fetcher });
-    expect(luffy.cards[0]?.card_set_id).toBe("OP01-001");
+    // A single-character typo on a one-word query of length >= 4 is forgiven.
+    expect(scoreOnePieceCard(luffy, "puffy")).toBeGreaterThan(0);
 
-    // "law" resolves Trafalgar Law by exact token and does NOT fuzzy-match "Raw".
-    const law = await searchOnePieceCards({ query: "law", baseUrl: base, fetcher });
-    expect(law.cards.map((card) => card.card_set_id)).toEqual(["OP01-002"]);
-
-    // A single-character typo on a >=4 char token is forgiven: puffy -> luffy.
-    const puffy = await searchOnePieceCards({ query: "puffy", baseUrl: base, fetcher });
-    expect(puffy.cards[0]?.card_set_id).toBe("OP01-001");
+    // But the short "law" must not fuzzy-match "raw".
+    expect(scoreOnePieceCard(raw, "law")).toBe(0);
   });
 
-  it("ranks an exact full-name hit above a partial-token hit", async () => {
-    const dump = [
-      { card_name: "Sanji's Pilaf", card_set_id: "OP05-100", set_id: "OP-05" },
-      { card_name: "Sanji", card_set_id: "OP01-013", set_id: "OP-01" },
-    ];
-    const fetcher = vi.fn(async () => new Response(JSON.stringify(dump))) as unknown as typeof fetch;
+  it("ranks an exact full-name match above a partial-token match", () => {
+    const exact = { card_name: "Sanji", card_set_id: "OP01-013" };
+    const partial = { card_name: "Sanji's Pilaf", card_set_id: "OP05-100" };
 
-    const result = await searchOnePieceCards({
-      query: "sanji",
-      baseUrl: "https://www.optcgapi.com/api",
-      fetcher,
-    });
-
-    expect(result.cards[0]?.card_set_id).toBe("OP01-013");
+    expect(scoreOnePieceCard(exact, "sanji")).toBeGreaterThan(scoreOnePieceCard(partial, "sanji"));
   });
 
   it("maps an OPTCG card onto the shared identity candidate shape", () => {
