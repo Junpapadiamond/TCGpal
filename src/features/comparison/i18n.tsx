@@ -42,6 +42,11 @@ const en = {
     optionalTaxRate: "Optional tax rate",
     desiredCondition: "Desired condition",
     listingToggle: "Already eyeing a specific listing? Add it (optional)",
+    ledgerToggle: "Compare prices from other platforms (optional)",
+    ledgerHelp:
+      "Add listings you found on TCGplayer, Facebook, Mercari, Whatnot, or a local shop. We never fetch them — they rank in the same ledger from what you enter.",
+    ledgerAdd: "Add a listing",
+    ledgerRemove: "Remove",
     listingUrl: "Listing URL",
     listingUrlHelp:
       "Only eBay URLs are fetched automatically. Other links remain user-supplied evidence.",
@@ -247,6 +252,11 @@ const zh: Dict = {
     optionalTaxRate: "税率（可选）",
     desiredCondition: "期望品相",
     listingToggle: "已经看中某个商品？添加它（可选）",
+    ledgerToggle: "对比其他平台的价格（可选）",
+    ledgerHelp:
+      "把你在 TCGplayer、脸书、Mercari、Whatnot 或本地店看到的商品加进来。我们不会去抓取它们，只用你填的信息，和 eBay 的结果排在同一张清单里。",
+    ledgerAdd: "加一个商品",
+    ledgerRemove: "删除",
     listingUrl: "商品链接",
     listingUrlHelp:
       "只有 eBay 链接会被自动抓取，其他链接仅作为你提供的参考。",

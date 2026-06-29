@@ -100,6 +100,17 @@ export async function runListingComparison(
   const manualSeed = sourceToSeed(sourceResult, confirmedCard, generatedAt);
   if (manualSeed) seeds.push(manualSeed);
 
+  const ledgerSeeds = manualCandidatesToSeeds(request.manualCandidates, confirmedCard, generatedAt);
+  if (ledgerSeeds.length > 0) {
+    seeds.push(...ledgerSeeds);
+    trace.push({
+      step: "marketplace_search",
+      actor: "Cross-platform ledger",
+      summary: `Added ${ledgerSeeds.length} user-entered listing${ledgerSeeds.length === 1 ? "" : "s"} from other platforms (not fetched).`,
+      status: "complete",
+    });
+  }
+
   try {
     const ebaySeeds = await searchEbayAlternatives(confirmedCard, request.buyer, fetcher);
     seeds.push(...ebaySeeds);
@@ -394,6 +405,55 @@ function sourceToSeed(
     observedAt,
     demo: false,
   };
+}
+
+// Cross-platform ledger: turn each hand-entered listing into a ranked seed.
+// These are user-supplied facts only — no URL is ever fetched server-side, and
+// they carry no seller/photo evidence beyond what the buyer typed.
+function manualCandidatesToSeeds(
+  candidates: ComparisonRequest["manualCandidates"],
+  card: CardIdentityCandidate,
+  observedAt: string,
+): typeof demoListingSeeds {
+  return candidates.flatMap((candidate, index) => {
+    if (candidate.price === null) return [];
+    const titleText = candidate.title || `${card.name} ${card.cardNumber}`;
+    const explicitNumber = normalizeText(titleText).includes(normalizeText(card.cardNumber));
+    return [{
+      id: `manual-${index}`,
+      marketplace: candidate.marketplace,
+      url: candidate.url || null,
+      title: titleText,
+      cardId: card.id,
+      matchConfidence: explicitNumber ? "high" : "medium",
+      matchReasons: [`Listing you entered from ${candidate.marketplace}.`],
+      active: true,
+      raw: !/\b(psa|bgs|cgc|sgc)\s*\d|\bslab(?:bed)?\b/i.test(titleText),
+      currency: "USD",
+      price: candidate.price,
+      shipping: candidate.shipping,
+      claimedCondition: candidate.claimedCondition,
+      imageUrl: card.imageUrl,
+      seller: {
+        feedbackPercentage: null,
+        feedbackCount: null,
+        returnsAccepted: null,
+        topRated: null,
+        buyerProtection: null,
+      },
+      evidence: {
+        photoCount: 0,
+        frontBackExplicit: false,
+        closeupsExplicit: false,
+        surfaceExplicit: false,
+        identityExplicit: explicitNumber,
+        substantiveConditionNotes: false,
+        missing: [],
+      },
+      observedAt,
+      demo: false,
+    }];
+  });
 }
 
 async function getReferences(

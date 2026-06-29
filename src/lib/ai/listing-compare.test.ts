@@ -89,6 +89,7 @@ const request: ComparisonRequest = {
     cardNumber: "215/203",
     language: "English",
   },
+  manualCandidates: [],
 };
 
 describe("listing comparison agent", () => {
@@ -248,5 +249,25 @@ describe("listing comparison agent", () => {
     expect(
       response.identityCandidates.some((card) => card.name.toLowerCase().includes("luffy")),
     ).toBe(true);
+  });
+
+  it("ranks user-entered cross-platform listings in the same ledger", async () => {
+    const response = await runListingComparison(
+      {
+        ...request,
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English" },
+        confirmedCardId: "swsh7-215",
+        manualCandidates: [
+          { marketplace: "TCGplayer", url: "", title: "Umbreon VMAX 215/203", price: 980, shipping: 0, claimedCondition: "Near Mint" },
+          { marketplace: "Mercari", url: "", title: "Umbreon VMAX alt art 215/203", price: 1150, shipping: 12, claimedCondition: "Lightly Played" },
+        ],
+      },
+      { fetcher },
+    );
+
+    const marketplaces = response.candidates.map((candidate) => candidate.marketplace);
+    expect(marketplaces).toContain("TCGplayer");
+    expect(marketplaces).toContain("Mercari");
+    expect(response.trace.some((entry) => entry.actor === "Cross-platform ledger")).toBe(true);
   });
 });

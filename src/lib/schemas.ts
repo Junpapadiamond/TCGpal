@@ -89,6 +89,18 @@ export const cardHintSchema = z.object({
   language: z.string().trim().default("English"),
 });
 
+// A quick cross-platform listing the buyer enters by hand. Kept minimal so a
+// row is fast to add; richer seller/photo evidence stays on the single detailed
+// `sourceListing` path.
+export const manualCandidateSchema = z.object({
+  marketplace: marketplaceSchema,
+  url: z.string().url().optional().or(z.literal("")),
+  title: z.string().trim().default(""),
+  price: z.number().min(0).nullable().default(null),
+  shipping: z.number().min(0).nullable().default(null),
+  claimedCondition: conditionClaimSchema.default("Unknown"),
+});
+
 export const comparisonRequestSchema = z.object({
   sourceListing: sourceListingSchema,
   buyer: buyerContextSchema,
@@ -99,6 +111,10 @@ export const comparisonRequestSchema = z.object({
     cardNumber: "",
     language: "English",
   }),
+  // Lightweight listings the buyer found on other platforms (TCGplayer,
+  // Facebook, Mercari, Whatnot, local shop...). They are user-supplied facts —
+  // never fetched server-side — and rank in the same ledger as eBay results.
+  manualCandidates: z.array(manualCandidateSchema).default([]),
   confirmedCardId: z.string().trim().optional(),
 });
 
@@ -253,6 +269,7 @@ export type SourceListing = z.infer<typeof sourceListingSchema>;
 export type BuyerContext = z.infer<typeof buyerContextSchema>;
 export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>;
 export type TcgGame = z.infer<typeof tcgGameSchema>;
+export type ManualCandidate = z.infer<typeof manualCandidateSchema>;
 export type CardIdentityCandidate = z.infer<typeof cardIdentityCandidateSchema>;
 export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;

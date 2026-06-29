@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
+import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -18,11 +18,13 @@ import {
   Link2,
   LoaderCircle,
   MapPin,
+  Plus,
   ReceiptText,
   SearchCheck,
   ShieldCheck,
   Sparkles,
   Tag,
+  X,
 } from "lucide-react";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
@@ -84,6 +86,25 @@ type ComparisonForm = {
   closeupsExplicit: boolean;
   surfaceExplicit: boolean;
   substantiveConditionNotes: boolean;
+  manualCandidates: LedgerRow[];
+};
+
+type LedgerRow = {
+  marketplace: Marketplace;
+  price: string;
+  shipping: string;
+  claimedCondition: ConditionClaim;
+  title: string;
+  url: string;
+};
+
+const emptyLedgerRow: LedgerRow = {
+  marketplace: "TCGplayer",
+  price: "",
+  shipping: "",
+  claimedCondition: "Unknown",
+  title: "",
+  url: "",
 };
 
 const defaultValues: ComparisonForm = {
@@ -110,6 +131,7 @@ const defaultValues: ComparisonForm = {
   closeupsExplicit: false,
   surfaceExplicit: false,
   substantiveConditionNotes: false,
+  manualCandidates: [],
 };
 
 export function ComparisonApp() {
@@ -130,7 +152,9 @@ function ComparisonExperience() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [listingOpen, setListingOpen] = useState(false);
+  const [ledgerOpen, setLedgerOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
 
   const marketplace = useWatch({ control: form.control, name: "marketplace" });
   const sourceUrl = useWatch({ control: form.control, name: "url" });
@@ -537,6 +561,76 @@ function ComparisonExperience() {
                     <CheckField label={t.form.evNotes} registration={form.register("substantiveConditionNotes")} />
                   </div>
                 </div>
+              </div>
+            )}
+
+            <button
+              className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
+              type="button"
+              aria-expanded={ledgerOpen}
+              onClick={() => setLedgerOpen((current) => !current)}
+            >
+              <span className="flex items-center gap-2">
+                <ReceiptText className="h-4 w-4 text-[#2f6f73]" />
+                {t.form.ledgerToggle}
+              </span>
+              <ChevronDown className={`h-4 w-4 transition ${ledgerOpen ? "rotate-180" : ""}`} />
+            </button>
+            {ledgerOpen && (
+              <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
+                <p className="text-sm leading-6 text-[#64736c]">{t.form.ledgerHelp}</p>
+                {ledger.fields.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    {ledger.fields.map((field, index) => (
+                      <div key={field.id} className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4">
+                        <div className="grid gap-3 md:grid-cols-[1fr_0.8fr_1fr_auto] md:items-end">
+                          <label className="field">
+                            <span>{t.form.marketplace}</span>
+                            <select {...form.register(`manualCandidates.${index}.marketplace` as const)}>
+                              {marketplaces.map((value) => <option key={value} value={value}>{t.marketplaces[value] ?? value}</option>)}
+                            </select>
+                          </label>
+                          <label className="field">
+                            <span>{t.form.askingPrice}</span>
+                            <div className="input-prefix">
+                              <span>$</span>
+                              <input inputMode="decimal" placeholder={t.form.ph.price} {...form.register(`manualCandidates.${index}.price` as const)} />
+                            </div>
+                          </label>
+                          <label className="field">
+                            <span>{t.form.sellerClaimedCondition}</span>
+                            <select {...form.register(`manualCandidates.${index}.claimedCondition` as const)}>
+                              {conditions.map((value) => <option key={value} value={value}>{t.conditions[value]}</option>)}
+                            </select>
+                          </label>
+                          <button
+                            type="button"
+                            className="mb-1 inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-[#d6ded5] px-3 text-sm font-bold text-[#9a4a2c] hover:bg-[#f6dcd0]"
+                            onClick={() => ledger.remove(index)}
+                          >
+                            <X className="h-4 w-4" />
+                            {t.form.ledgerRemove}
+                          </button>
+                        </div>
+                        <label className="field mt-3">
+                          <span>{t.form.listingTitle}</span>
+                          <input placeholder={t.form.ph.listingTitle} {...form.register(`manualCandidates.${index}.title` as const)} />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="secondary-button mt-4"
+                  onClick={() => {
+                    ledger.append(emptyLedgerRow);
+                    trackEvent("manual_candidate_added", { marketplace: emptyLedgerRow.marketplace });
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  {t.form.ledgerAdd}
+                </button>
               </div>
             )}
 
@@ -1336,6 +1430,16 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
       cardNumber,
       language: "English",
     },
+    manualCandidates: values.manualCandidates
+      .filter((row) => row.price.trim() !== "")
+      .map((row) => ({
+        marketplace: row.marketplace,
+        url: row.url.trim(),
+        title: row.title.trim(),
+        price: nullableNumber(row.price),
+        shipping: nullableNumber(row.shipping),
+        claimedCondition: row.claimedCondition,
+      })),
     confirmedCardId,
   };
 }
