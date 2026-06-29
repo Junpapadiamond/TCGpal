@@ -1165,7 +1165,10 @@ function RecommendationCard({ choice, listing, demoMode, marketPrice, recommende
           </p>
           <EvidenceChecklist evidence={listing.evidence} />
 
-          <p className="mt-4 text-sm leading-6 text-[#52635c]">{choice.reason}</p>
+          <p className="mt-4 text-sm leading-6 text-[#52635c]">
+            <span className="font-bold text-[#2f6f73]">{t.card.whyLeads}: </span>
+            {choice.reason}
+          </p>
 
           <div className="mt-5">
             {listing.url ? (
