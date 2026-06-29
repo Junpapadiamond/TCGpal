@@ -144,6 +144,8 @@ const en = {
     yourBestBuy: "Your best buy",
     recommendedListing: "Recommended listing",
     defaultLensNote: "We default to the safest verified buy. Switch the lens anytime.",
+    avoidedTraps: (n: number) =>
+      `Screened out ${n} risky listing${n === 1 ? "" : "s"} — look-alikes, far-below-market, or wrong version.`,
     evidenceLedger: "Evidence ledger",
     everyCandidate: "Every eligible candidate",
     excluded: (n: number) => `${n} excluded candidate${n === 1 ? "" : "s"}`,
@@ -342,6 +344,7 @@ const zh: Dict = {
     yourBestBuy: "你的最佳选择",
     recommendedListing: "推荐商品",
     defaultLensNote: "默认推荐最稳妥的已核验商品，也可以随时切换角度。",
+    avoidedTraps: (n: number) => `已经帮你筛掉 ${n} 个有问题的商品：仿品、价格低得离谱，或版本对不上。`,
     evidenceLedger: "证据清单",
     everyCandidate: "每个符合条件的候选",
     excluded: (n: number) => `已排除 ${n} 个候选`,

@@ -844,6 +844,55 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         </div>
       )}
 
+      {report.rankedChoices.length > 0 && (
+        <div>
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="eyebrow">
+                <Sparkles className="h-4 w-4" />
+                {t.result.yourBestBuy}
+              </p>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.result.recommendedListing}</h2>
+            </div>
+            <p className="text-sm text-[#64736c]">{t.result.defaultLensNote}</p>
+          </div>
+          {excluded.length > 0 && (
+            <p className="mb-3 inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#eef4ef] px-3 py-1.5 text-xs font-bold text-[#2f6f73]">
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+              {t.result.avoidedTraps(excluded.length)}
+            </p>
+          )}
+          <div className="inline-flex flex-wrap gap-1 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-1">
+            {report.rankedChoices.map((choice) => {
+              const active = choice.role === selectedRole;
+              return (
+                <button
+                  key={choice.role}
+                  type="button"
+                  onClick={() => setRoleOverride(choice.role)}
+                  aria-pressed={active}
+                  title={roleToggleHint(choice.role, t)}
+                  className={`rounded px-3 py-2 text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
+                >
+                  {roleToggleLabel(choice.role, t)}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4">
+            {selectedChoice && selectedListing && (
+              <RecommendationCard
+                choice={selectedChoice}
+                listing={selectedListing}
+                demoMode={report.demoMode}
+                marketPrice={report.confirmedCard?.marketMid ?? null}
+                recommended={selectedRole === defaultRole}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="evidence-spotlight rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-7">
         <div className="relative z-10 grid gap-5 md:grid-cols-[156px_1fr_auto] md:items-center">
           <div className="flex flex-col items-center gap-3">
@@ -889,49 +938,6 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           </div>
         </div>
       </div>
-
-      {report.rankedChoices.length > 0 && (
-        <div>
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="eyebrow">
-                <Sparkles className="h-4 w-4" />
-                {t.result.yourBestBuy}
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.result.recommendedListing}</h2>
-            </div>
-            <p className="text-sm text-[#64736c]">{t.result.defaultLensNote}</p>
-          </div>
-          <div className="inline-flex flex-wrap gap-1 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-1">
-            {report.rankedChoices.map((choice) => {
-              const active = choice.role === selectedRole;
-              return (
-                <button
-                  key={choice.role}
-                  type="button"
-                  onClick={() => setRoleOverride(choice.role)}
-                  aria-pressed={active}
-                  title={roleToggleHint(choice.role, t)}
-                  className={`rounded px-3 py-2 text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
-                >
-                  {roleToggleLabel(choice.role, t)}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-4">
-            {selectedChoice && selectedListing && (
-              <RecommendationCard
-                choice={selectedChoice}
-                listing={selectedListing}
-                demoMode={report.demoMode}
-                marketPrice={report.confirmedCard?.marketMid ?? null}
-                recommended={selectedRole === defaultRole}
-              />
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_0.72fr]">
         <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-6">
