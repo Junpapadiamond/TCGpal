@@ -124,14 +124,21 @@ export async function searchEbayAlternatives(
   // Best Match (no price sort): price-ascending floods the top with cheap novelty
   // replicas that name the card. Our deterministic ranking sorts on price after
   // identity/eligibility filtering instead.
-  endpoint.searchParams.set("filter", "buyingOptions:{FIXED_PRICE},priceCurrency:USD");
+  //
+  // Only FIXED_PRICE: eBay's Browse API rejects `priceCurrency` unless it is paired
+  // with a `price` range filter, returning HTTP 400 and zero listings. The marketplace
+  // is already scoped to a single country via X-EBAY-C-MARKETPLACE-ID, so currency is
+  // enforced below by dropping any non-USD summaries instead of via the request filter.
+  endpoint.searchParams.set("filter", "buyingOptions:{FIXED_PRICE}");
   const response = await fetchWithTimeout(endpoint, {
     headers: ebayHeaders(token, buyer),
     cache: "no-store",
   }, fetcher);
   if (!response.ok) throw new Error(`eBay active-listing search failed with ${response.status}.`);
   const result = ebaySearchSchema.parse(await response.json());
-  return result.itemSummaries.map((item) => toNormalizedSeed(item, card));
+  return result.itemSummaries
+    .filter((item) => item.price.currency === "USD")
+    .map((item) => toNormalizedSeed(item, card));
 }
 
 function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: string): SourceListing {
