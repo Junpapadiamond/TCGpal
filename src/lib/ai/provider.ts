@@ -27,6 +27,27 @@ export type AiProbeResult = {
   warning?: string;
 };
 
+// The narrative call is enrichment on the comparison's critical path. Without a
+// hard cap, a slow or rate-limited model (e.g. a 429 that stalls) hangs the whole
+// serverless request until the platform kills it — which the browser reports as a
+// bare "Load failed" with no listings. Bounding it lets buildNarrative fall back to
+// the deterministic narrative quickly and still return the live listings.
+const AI_REQUEST_TIMEOUT_MS = 12000;
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs = AI_REQUEST_TIMEOUT_MS,
+) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export function createAiProvider(config: AiConfig): AiProvider {
   if (config.provider === "anthropic") {
     return config.hasApiKey ? new AnthropicMessagesProvider(config) : new UnavailableProvider("anthropic");
@@ -99,7 +120,7 @@ class OpenAiResponsesProvider implements AiProvider {
 
   async completeJson<T>({ role, schemaName, schema, system, user }: CompleteJsonInput<T>): Promise<AiProviderResult<T>> {
     const model = getModelForStep(role, this.config);
-    const response = await fetch(`${this.config.baseUrl}/responses`, {
+    const response = await fetchWithTimeout(`${this.config.baseUrl}/responses`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -158,7 +179,7 @@ class AnthropicMessagesProvider implements AiProvider {
 
   async completeJson<T>({ schemaName, schema, system, user }: CompleteJsonInput<T>): Promise<AiProviderResult<T>> {
     const model = this.config.anthropicModel;
-    const response = await fetch(`${this.config.anthropicBaseUrl}/v1/messages`, {
+    const response = await fetchWithTimeout(`${this.config.anthropicBaseUrl}/v1/messages`, {
       method: "POST",
       headers: anthropicHeaders(),
       body: JSON.stringify({
