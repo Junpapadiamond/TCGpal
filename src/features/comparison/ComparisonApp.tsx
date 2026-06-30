@@ -335,10 +335,13 @@ function ComparisonExperience() {
           <h1 className="mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
             {t.hero.title}
           </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#52635c] sm:text-base sm:leading-7">
+            {t.hero.subtitle}
+          </p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#52635c] sm:text-sm">
             <Promise icon={ReceiptText} label={t.hero.promiseTax} />
             <Promise icon={ShieldCheck} label={t.hero.promiseSeller} />
-            <Promise icon={Camera} label={t.hero.promiseEvidence} />
+            <Promise icon={Sparkles} label={t.hero.promiseEvidence} />
           </div>
         </section>
 

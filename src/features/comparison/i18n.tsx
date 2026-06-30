@@ -19,11 +19,13 @@ const en = {
     scopeBadge: "Pokémon · Raw singles · US",
   },
   hero: {
-    eyebrow: "Trading card deal finder",
-    title: "Find the best deal on any trading card.",
-    promiseTax: "Real all-in price — item + shipping + tax",
+    eyebrow: "Best value, least time",
+    title: "Find the best-value card — fast.",
+    subtitle:
+      "Tell us the card. We compare listings across marketplaces and hand you the best-value buy — weighing price, safety, and evidence — in seconds, not twenty tabs.",
+    promiseTax: "Real all-in price vs market",
     promiseSeller: "Filters out fakes & replicas",
-    promiseEvidence: "Shows the TCGplayer market price",
+    promiseEvidence: "Best value across marketplaces",
   },
   form: {
     heading: "Start with the card",
@@ -219,11 +221,13 @@ const zh: Dict = {
     scopeBadge: "宝可梦 · 未评级单卡 · 美国",
   },
   hero: {
-    eyebrow: "卡牌找好价",
-    title: "找到任何卡牌的最佳购买。",
-    promiseTax: "真实到手价 —— 商品 + 运费 + 税",
+    eyebrow: "最省时间，最值得买",
+    title: "最快找到最值的那张卡。",
+    subtitle:
+      "输入卡名，我们跨平台比对在售商品，综合价格、安全与证据，几秒钟就给你最值的那一张——不用再开二十个标签页。",
+    promiseTax: "真实到手价 vs 市价",
     promiseSeller: "自动过滤仿品与复刻",
-    promiseEvidence: "显示 TCGplayer 市价",
+    promiseEvidence: "跨平台找最值",
   },
   form: {
     heading: "从卡名开始",
