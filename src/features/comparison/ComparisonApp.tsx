@@ -1272,9 +1272,6 @@ function RecommendationCard({ choice, listing, demoMode, marketPrice, recommende
             <VerdictTag verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)} icon={Camera} />
             <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={ShieldCheck} />
           </div>
-          <p className="mt-2 text-xs text-[#64736c]">
-            {t.card.scoreLine(listing.sellerTrustScore, listing.evidenceCompletenessScore, listing.safetyScore)}<span className="text-[#94a59c]">{t.card.ofHundred}</span>
-          </p>
           <EvidenceChecklist evidence={listing.evidence} />
 
           <p className="mt-4 text-sm leading-6 text-[#52635c]">
@@ -1372,6 +1369,7 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
           {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.candidate.rawSingle}</span>}
           <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.conditions[listing.claimedCondition]}</span>
           <span className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{t.candidate.match(listing.matchConfidence)}</span>
+          <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={ShieldCheck} />
         </div>
         <p className="mt-1 line-clamp-1 text-sm text-[#64736c]">{listing.title}</p>
         <EvidenceChecklist evidence={listing.evidence} compact />
@@ -1384,10 +1382,8 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
         </p>
         <p className="mt-2 text-xs text-[#64736c]">{t.candidate.observed(new Date(listing.observedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}</p>
       </div>
-      <div className="col-span-2 grid grid-cols-3 gap-3 border-t border-[#d6ded5] pt-3 text-right lg:col-span-1 lg:border-0 lg:pt-0">
+      <div className="col-span-2 border-t border-[#d6ded5] pt-3 text-right lg:col-span-1 lg:border-0 lg:pt-0">
         <Metric compact label={t.candidate.preTax} value={formatMoney(listing.preTaxTotal)} />
-        <Metric compact label={t.candidate.safety} value={`${listing.safetyScore}`} />
-        <Metric compact label={t.candidate.evidence} value={`${listing.evidenceCompletenessScore}`} />
       </div>
     </article>
   );

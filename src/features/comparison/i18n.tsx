@@ -195,9 +195,6 @@ const en = {
     lowRisk: "Low risk",
     someRisk: "Some risk",
     higherRisk: "Higher risk",
-    scoreLine: (trust: number, evidence: number, safety: number) =>
-      `Trust ${trust} · Evidence ${evidence} · Safety ${safety} `,
-    ofHundred: "(of 100)",
     goToListing: "Go to listing",
     userSupplied: "User-supplied candidate",
     photos: (n: number) => `${n} photo${n === 1 ? "" : "s"}`,
@@ -215,8 +212,6 @@ const en = {
     match: (conf: string) => `${conf} match`,
     observed: (when: string) => `Observed ${when}`,
     preTax: "Pre-tax",
-    safety: "Safety",
-    evidence: "Evidence",
   },
   status: { used: "used", unavailable: "unavailable", missing: "missing" },
 };
@@ -403,9 +398,6 @@ const zh: Dict = {
     lowRisk: "低风险",
     someRisk: "有一定风险",
     higherRisk: "风险较高",
-    scoreLine: (trust: number, evidence: number, safety: number) =>
-      `信誉 ${trust} · 证据 ${evidence} · 安全 ${safety} `,
-    ofHundred: "（满分 100）",
     goToListing: "前往商品",
     userSupplied: "用户提供的候选",
     photos: (n: number) => `${n} 张照片`,
@@ -423,8 +415,6 @@ const zh: Dict = {
     match: (conf: string) => `匹配度 ${conf}`,
     observed: (when: string) => `记录于 ${when}`,
     preTax: "税前",
-    safety: "安全",
-    evidence: "证据",
   },
   status: { used: "已使用", unavailable: "不可用", missing: "缺失" },
 };
