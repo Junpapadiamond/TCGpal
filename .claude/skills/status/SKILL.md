@@ -64,16 +64,24 @@ alone, and never invent a commit hash or a passing test.
    - Any half-built foundation in the tree (e.g. a `harness.ts` with tests but no caller =
      a started-but-unfinished feature). List the **remaining bricks** concretely, not "polish it".
 
-5. **Write the summary.** Markdown, for chat. Keep it scannable:
-   - **Done** — a table (commit → outcome) or tight bullets. User-facing language.
-   - **Problems / blocked** — what's broken, what's unverifiable *and why*, what to run to
-     confirm. Be honest about uncertainty (e.g. "eBay keyset unverified live").
-   - **Unfinished — goals + next steps** — the active goal, then the concrete remaining
-     steps as a numbered list someone could pick up cold.
-   - End with the single most useful next action.
+5. **Write the summary as ONE copyable block.** Emit the entire status inside a single
+   fenced code block so the Claude app shows a one-click "copy" button that grabs the
+   whole thing at once. Requirements:
+   - Wrap everything in a **four-backtick** fence with a `markdown` info string
+     (` ````markdown ` … ` ```` `). Four backticks so any triple-backtick commands inside
+     (e.g. `node scripts/check-ebay.mjs`) don't close the block early.
+   - Put all three sections **inside** that one block, in order: **Done** (a markdown
+     table commit → outcome, or tight bullets, in user-facing language) · **Problems /
+     blocked** (what's broken/unverifiable and *why*, what to run to confirm — e.g. "eBay
+     keyset unverified live") · **Unfinished — goals + next steps** (active goal, then a
+     numbered list someone could pick up cold). End the block with the single most useful
+     next action.
+   - Put **nothing outside the block** except, at most, one short lead-in line — the
+     copyable block itself is the deliverable. The markdown renders as raw source inside
+     the block (tables won't prettify); that's the intended trade for one-click full copy.
 
-   Default to a chat reply. Write to a file (e.g. `STATUS.md` or `docs/handoff-<date>.md`)
-   **only if the user asks** — don't litter the repo.
+   Default to this in-chat copyable block. Write to a file (e.g. `STATUS.md` or
+   `docs/handoff-<date>.md`) **only if the user asks** — don't litter the repo.
 
 ## Rules
 - Evidence over memory: every "done" maps to a commit; every "passing" maps to a run you did.
@@ -83,3 +91,5 @@ alone, and never invent a commit hash or a passing test.
 - Don't pad. If a section is empty (nothing blocked, nothing unpushed), say so in one line.
 - Respect the branch policy in `AGENTS.md` — note the working branch and never imply work
   landed somewhere it didn't.
+- One copyable block: the whole status lives in a single four-backtick fenced block so the
+  app's copy button grabs all of it. No stray commentary outside it.
