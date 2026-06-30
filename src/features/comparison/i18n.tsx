@@ -221,13 +221,13 @@ const zh: Dict = {
     scopeBadge: "宝可梦 · 未评级单卡 · 美国",
   },
   hero: {
-    eyebrow: "最省时间，最值得买",
-    title: "最快找到最值的那张卡。",
+    eyebrow: "省时间，买得值",
+    title: "几秒钟找到最划算的那张卡。",
     subtitle:
-      "输入卡名，我们跨平台比对在售商品，综合价格、安全与证据，几秒钟就给你最值的那一张——不用再开二十个标签页。",
-    promiseTax: "真实到手价 vs 市价",
+      "报上卡名，我们把各平台在售的放一起比，价格、卖家、图都替你看过，挑出最划算的那张，不用自己开一堆标签页。",
+    promiseTax: "到手总价 vs 市价",
     promiseSeller: "自动过滤仿品与复刻",
-    promiseEvidence: "跨平台找最值",
+    promiseEvidence: "跨平台比最划算",
   },
   form: {
     heading: "从卡名开始",
