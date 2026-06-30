@@ -19,14 +19,11 @@ const en = {
     scopeBadge: "Pokémon · Raw singles · US",
   },
   hero: {
-    eyebrow: "Pokémon card deal finder",
-    title: "Find the best deal on any Pokémon card.",
-    subtitle:
-      "Type the card. TCGpal scans live eBay listings and shows you the safest buy, the cheapest, and the best-documented — with the real all-in price.",
+    eyebrow: "Trading card deal finder",
+    title: "Find the best deal on any trading card.",
     promiseTax: "Real all-in price — item + shipping + tax",
     promiseSeller: "Filters out fakes & replicas",
     promiseEvidence: "Shows the TCGplayer market price",
-    guardrail: "Condition is the seller's claim — we never predict a grade.",
   },
   form: {
     heading: "Start with the card",
@@ -36,8 +33,6 @@ const en = {
     cardName: "Card name",
     set: "Set",
     collectorNumber: "Collector number",
-    collectorHelp:
-      "Add the collector number to jump straight to ranked listings; with just a name, you'll confirm the exact version next.",
     deliveryZip: "Delivery ZIP",
     optionsToggle: "Options — tax rate and desired condition",
     optionalTaxRate: "Optional tax rate",
@@ -69,8 +64,6 @@ const en = {
     evCorners: "Corners and edges have closeups",
     evSurface: "Surface, foil, or video evidence exists",
     evNotes: "Condition notes mention specific defects",
-    conditionDisclaimer:
-      "Condition labels remain seller claims. TCGpal scores evidence completeness, not likely grade.",
     submitIdle: "Find best listings",
     submitLoading: "Validating evidence…",
     ph: {
@@ -226,14 +219,11 @@ const zh: Dict = {
     scopeBadge: "宝可梦 · 未评级单卡 · 美国",
   },
   hero: {
-    eyebrow: "宝可梦卡找好价",
-    title: "找到任何宝可梦卡的最佳购买。",
-    subtitle:
-      "输入卡名，TCGpal 会扫描 eBay 在售商品，挑出最稳妥、最便宜、资料最全的那一张——并算出真实到手价。",
+    eyebrow: "卡牌找好价",
+    title: "找到任何卡牌的最佳购买。",
     promiseTax: "真实到手价 —— 商品 + 运费 + 税",
     promiseSeller: "自动过滤仿品与复刻",
     promiseEvidence: "显示 TCGplayer 市价",
-    guardrail: "品相为卖家描述 —— 我们绝不预测评级。",
   },
   form: {
     heading: "从卡名开始",
@@ -243,8 +233,6 @@ const zh: Dict = {
     cardName: "卡名",
     set: "系列",
     collectorNumber: "收藏编号",
-    collectorHelp:
-      "填了收藏编号就能直接看到排好序的商品；只填卡名的话，下一步再让你确认具体版本。",
     deliveryZip: "收货邮编",
     optionsToggle: "选项：税率与期望品相",
     optionalTaxRate: "税率（可选）",
@@ -276,8 +264,6 @@ const zh: Dict = {
     evCorners: "边角有特写",
     evSurface: "有表面 / 闪膜 / 视频证据",
     evNotes: "品相说明提到具体瑕疵",
-    conditionDisclaimer:
-      "品相标签仅为卖家声明。TCGpal 评估的是证据完整度，而非品相评级预测。",
     submitIdle: "查找最佳商品",
     submitLoading: "正在核验证据…",
     ph: {

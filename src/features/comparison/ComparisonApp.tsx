@@ -335,15 +335,11 @@ function ComparisonExperience() {
           <h1 className="mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
             {t.hero.title}
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#64736c] sm:text-base sm:leading-7">
-            {t.hero.subtitle}
-          </p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#52635c] sm:text-sm">
             <Promise icon={ReceiptText} label={t.hero.promiseTax} />
             <Promise icon={ShieldCheck} label={t.hero.promiseSeller} />
             <Promise icon={Camera} label={t.hero.promiseEvidence} />
           </div>
-          <p className="mt-3 text-xs text-[#94a59c]">{t.hero.guardrail}</p>
         </section>
 
         <section id="compare" className="mt-4 rounded-md border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
@@ -389,10 +385,6 @@ function ComparisonExperience() {
               </label>
             </div>
             <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
-            <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-[#64736c]">
-              <SearchCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2f6f73]" />
-              {t.form.collectorHelp}
-            </p>
 
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               <label className="field">
@@ -630,11 +622,7 @@ function ComparisonExperience() {
               </div>
             )}
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-2 text-sm leading-6 text-[#64736c]">
-                <Info className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
-                <span>{t.form.conditionDisclaimer}</span>
-              </div>
+            <div className="mt-6 flex justify-end">
               <button className="primary-button shrink-0" type="submit" disabled={loading}>
                 {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <SearchCheck className="h-4 w-4" />}
                 {loading ? t.form.submitLoading : t.form.submitIdle}

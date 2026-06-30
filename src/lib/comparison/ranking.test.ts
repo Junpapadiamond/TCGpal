@@ -22,6 +22,16 @@ describe("comparison ranking", () => {
     expect(listing.estimatedLandedCost).toBe(1323);
   });
 
+  it("taxes item + shipping so pre-tax, tax, and total reconcile", () => {
+    const listing = normalizeListing({
+      listing: { ...demoListingSeeds[0], price: 100, shipping: 10 },
+      buyer,
+    });
+    expect(listing.preTaxTotal).toBe(110);
+    expect(listing.estimatedTax).toBe(8.8); // (100 + 10) * 0.08, not 100 * 0.08
+    expect(listing.estimatedLandedCost).toBe(118.8); // preTax * (1 + rate)
+  });
+
   it("keeps tax unknown without pretending the total is all-in", () => {
     const listing = normalizeListing({
       listing: demoListingSeeds[0],

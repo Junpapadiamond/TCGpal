@@ -98,7 +98,10 @@ export function normalizeListing(input: {
   const { listing, buyer } = input;
   const shipping = listing.shipping ?? 0;
   const preTaxTotal = roundMoney(listing.price + shipping);
-  const estimatedTax = buyer.taxRate === null ? null : roundMoney(listing.price * buyer.taxRate);
+  // Tax the pre-tax total (item + shipping), not the item alone: that is what eBay
+  // charges in most states and it keeps the math reconcilable — pre-tax, tax, and the
+  // landed total now satisfy landed === preTax × (1 + rate).
+  const estimatedTax = buyer.taxRate === null ? null : roundMoney(preTaxTotal * buyer.taxRate);
   const estimatedLandedCost = estimatedTax === null ? null : roundMoney(preTaxTotal + estimatedTax);
   const sellerTrustScore = calculateSellerTrustScore(listing.seller);
   const evidenceCompletenessScore = calculateEvidenceCompletenessScore(listing.evidence);

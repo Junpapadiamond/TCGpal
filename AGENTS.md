@@ -8,7 +8,7 @@ This project uses Next.js 16. Read the relevant guide in `node_modules/next/dist
 
 ## Product
 
-TCGpal is an evidence-backed listing comparison tool for U.S. Pokémon raw-single buyers.
+TCGpal is an evidence-backed listing comparison tool for U.S. trading-card raw-single buyers. Pokémon and One Piece are live; more TCGs are planned.
 
 The primary flow is intentionally narrow and **card-first** (the buyer already knows the card; we find and rank the listings):
 
@@ -22,7 +22,7 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 ## Current Status
 
 - The app opens directly to the card-search form; there is no login or onboarding gate.
-- Pokémon raw singles in USD are the only supported product category.
+- Raw singles in USD are the supported product category, across multiple TCGs. Pokémon (Pokémon TCG API) and One Piece (OPTCG adapter + bundled catalog) are wired end-to-end; the game toggle selects which. More games are planned.
 - eBay is the only automated buying source. A **production Browse API keyset is configured** (`EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`); live `item_summary/search` is the listing source. Validate creds with `node scripts/check-ebay.mjs`.
 - Card identity, images, and the **TCGplayer market price** come from the Pokémon TCG API (`api.pokemontcg.io`, works keyless; `POKEMON_TCG_API_KEY` set for higher limits). The TCGplayer market price is the primary fair-price anchor and also powers the below-market eligibility filter.
 - PriceCharting is optional secondary reference behind `PRICECHARTING_API_TOKEN`, not a transaction price.
@@ -112,7 +112,7 @@ Autocapture, session replay, pageview capture, and person profiles stay disabled
 
 ## Scope
 
-Do not add One Piece, scanning, image upload, vision grading, payments, auth, saved collections, recommendation feeds, journals, cooldowns, or planning until the Pokémon comparison pilot passes its validation gates.
+Multi-TCG is the direction: Pokémon and One Piece are live, and adding further TCGs (via their own catalog adapters behind the game toggle) is in scope. Do not add scanning, image upload, vision grading, payments, auth, saved collections, recommendation feeds, journals, cooldowns, or planning until the core comparison pilot passes its validation gates.
 
 Retained `listing-risk` and `raw-vs-slab` modules are reusable deterministic utilities, not current navigation surfaces.
 
