@@ -80,4 +80,34 @@ describe("eBay active-listing search", () => {
     const results = await searchEbayAlternatives(card, buyer, searchFetcher(captured));
     expect(results.map((listing) => listing.id)).toEqual(["ebay-1"]);
   });
+
+  it("uses the cheapest shipping option, not the first, so landed cost matches the listing", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          itemSummaries: [
+            {
+              itemId: "1",
+              title: "Umbreon VMAX 215/203",
+              price: { value: "420.00", currency: "USD" },
+              // Expedited listed first, free standard second: taking [0] would overstate.
+              shippingOptions: [
+                { shippingCost: { value: "24.99", currency: "USD" } },
+                { shippingCost: { value: "0.0", currency: "USD" } },
+              ],
+            },
+          ],
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(card, buyer, fetcher);
+    expect(results[0]?.shipping).toBe(0);
+  });
 });

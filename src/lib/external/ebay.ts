@@ -151,7 +151,7 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     title: item.title,
     description,
     price: toUsd(item.price),
-    shipping: item.shippingOptions?.[0]?.shippingCost ? toUsd(item.shippingOptions[0].shippingCost) : 0,
+    shipping: cheapestUsdShipping(item.shippingOptions),
     claimedCondition: normalizeCondition(item.condition),
     active: !item.itemEndDate || new Date(item.itemEndDate).getTime() > Date.now(),
     seller: {
@@ -285,6 +285,23 @@ function toUsd(amount: z.infer<typeof ebayAmountSchema>) {
   if (amount.currency !== "USD") return 0;
   const value = Number(amount.value);
   return Number.isFinite(value) ? value : 0;
+}
+
+// eBay returns shipping options in no guaranteed order, so taking the first one can
+// quote an expedited rate and overstate the landed cost (a real cause of the price
+// not matching the listing page). Use the cheapest USD option; absent/free shipping
+// is 0. (Calculated shipping that depends on the buyer's address simply isn't in the
+// summary, so it reads as 0 here — the item-price line still reconciles with eBay.)
+function cheapestUsdShipping(
+  options: z.infer<typeof ebayItemSchema>["shippingOptions"],
+): number {
+  const costs = (options ?? [])
+    .map((option) => option.shippingCost)
+    .filter((cost): cost is z.infer<typeof ebayAmountSchema> => cost !== undefined)
+    .filter((cost) => cost.currency === "USD")
+    .map((cost) => Number(cost.value))
+    .filter((value) => Number.isFinite(value) && value >= 0);
+  return costs.length ? Math.min(...costs) : 0;
 }
 
 function numberOrNull(value: string | undefined) {

@@ -181,6 +181,9 @@ const en = {
     sellerSays: (cond: string) => `Seller says: ${cond}`,
     estLanded: "est. landed",
     preTaxTotal: "pre-tax total",
+    freeShipping: "free ship",
+    priceBreakdown: (item: string, shipping: string, tax: string | null) =>
+      `Item ${item} · Shipping ${shipping}${tax ? ` · Est. tax ${tax}` : " · tax not included"}`,
     underMarket: (pct: number) => `${pct}% under market`,
     aboveMarket: (pct: number) => `+${pct}% above market`,
     trustedSeller: "Trusted seller",
@@ -386,6 +389,9 @@ const zh: Dict = {
     sellerSays: (cond: string) => `卖家称：${cond}`,
     estLanded: "预估到手",
     preTaxTotal: "税前合计",
+    freeShipping: "免运费",
+    priceBreakdown: (item: string, shipping: string, tax: string | null) =>
+      `商品 ${item} · 运费 ${shipping}${tax ? ` · 预估税 ${tax}` : " · 未含税"}`,
     underMarket: (pct: number) => `低于市价 ${pct}%`,
     aboveMarket: (pct: number) => `高于市价 ${pct}%`,
     trustedSeller: "可信卖家",

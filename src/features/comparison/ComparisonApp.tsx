@@ -1224,6 +1224,7 @@ function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvi
 function RecommendationCard({ choice, listing, demoMode, marketPrice, recommended }: { choice: RankedChoice; listing: NormalizedListing; demoMode: boolean; marketPrice: number | null; recommended: boolean }) {
   const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const shipping = listing.shipping ?? 0;
   const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
 
   return (
@@ -1258,6 +1259,13 @@ function RecommendationCard({ choice, listing, demoMode, marketPrice, recommende
               </span>
             )}
           </div>
+          <p className="mt-1 text-xs text-[#64736c]">
+            {t.card.priceBreakdown(
+              formatMoney(listing.price),
+              shipping > 0 ? formatMoney(shipping) : t.card.freeShipping,
+              listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
+            )}
+          </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <VerdictTag verdict={sellerVerdict(listing.sellerTrustScore, t)} icon={BadgeCheck} />
@@ -1347,6 +1355,7 @@ function HoloCardArt({
 function CandidateRow({ listing }: { listing: NormalizedListing }) {
   const t = useT();
   const { lang } = useLang();
+  const shipping = listing.shipping ?? 0;
   return (
     <article className="grid gap-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4 sm:grid-cols-[52px_minmax(0,1fr)] lg:grid-cols-[52px_minmax(0,1fr)_auto] lg:items-center">
       <div className="relative aspect-[2.5/3.5] w-[52px] overflow-hidden rounded border border-[#d6ded5] bg-[#e7efe8]">
@@ -1366,6 +1375,13 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
         </div>
         <p className="mt-1 line-clamp-1 text-sm text-[#64736c]">{listing.title}</p>
         <EvidenceChecklist evidence={listing.evidence} compact />
+        <p className="mt-1 text-xs text-[#64736c]">
+          {t.card.priceBreakdown(
+            formatMoney(listing.price),
+            shipping > 0 ? formatMoney(shipping) : t.card.freeShipping,
+            listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
+          )}
+        </p>
         <p className="mt-2 text-xs text-[#64736c]">{t.candidate.observed(new Date(listing.observedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}</p>
       </div>
       <div className="col-span-2 grid grid-cols-3 gap-3 border-t border-[#d6ded5] pt-3 text-right lg:col-span-1 lg:border-0 lg:pt-0">
