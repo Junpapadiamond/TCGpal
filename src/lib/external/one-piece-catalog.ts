@@ -71,11 +71,11 @@ const curated: OnePieceTcgCard[] = [
   ROMANCE_DAWN("OP01-120", "Shanks", "SR", "Character"),
 ];
 
-// Optional full-catalog snapshot produced by `node scripts/fetch-optcg.mjs` on a
-// machine with network access. Empty ([]) by default — committing a populated
-// snapshot extends coverage beyond the curated seed. Curated entries stay
-// authoritative (they carry verified official art), so the snapshot only adds
-// card ids not already present.
+// Full-catalog snapshot produced by `node scripts/build-optcg-catalog.mjs` from the
+// maintained `one-piece-card-game-json` dataset (one fully-tagged entry per card
+// number). This is the primary source and is bundled in the repo, so coverage works
+// with zero network. The curated seed above is only an offline safety net for the
+// rare case the snapshot is missing/empty.
 function loadSnapshot(): OnePieceTcgCard[] {
   if (!Array.isArray(generatedSnapshot)) return [];
   return (generatedSnapshot as Partial<OnePieceTcgCard>[]).filter(
@@ -86,8 +86,9 @@ function loadSnapshot(): OnePieceTcgCard[] {
 
 export const onePieceCatalog: OnePieceTcgCard[] = (() => {
   const byId = new Map<string, OnePieceTcgCard>();
-  for (const entry of curated) byId.set(entry.card_set_id.toUpperCase(), entry);
-  for (const entry of loadSnapshot()) {
+  // Snapshot first (authoritative, fully tagged); curated only fills ids it lacks.
+  for (const entry of loadSnapshot()) byId.set(entry.card_set_id.toUpperCase(), entry);
+  for (const entry of curated) {
     const key = entry.card_set_id.toUpperCase();
     if (!byId.has(key)) byId.set(key, entry);
   }

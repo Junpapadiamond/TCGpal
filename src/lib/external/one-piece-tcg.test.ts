@@ -47,36 +47,37 @@ describe("OPTCG (One Piece) adapter", () => {
   });
 
   it("augments the bundled catalog with live-only cards when reachable", async () => {
-    const dump = [{ card_name: "Kaido", card_set_id: "OP09-001", set_id: "OP-09" }];
+    // A fake card id/name that is NOT in the bundled catalog, so its presence in the
+    // result can only come from the live dump — proving the merge path still works.
+    const dump = [{ card_name: "Liveonlymon", card_set_id: "OP99-001", set_id: "OP-99" }];
     const fetcher = vi.fn(async (url: URL) => {
       expect(url.pathname).toBe("/api/allSetCards/");
       return new Response(JSON.stringify(dump));
     }) as unknown as typeof fetch;
 
     const result = await searchOnePieceCards({
-      query: "kaido",
+      query: "liveonlymon",
       baseUrl: "https://www.optcgapi.com/api",
       fetcher,
     });
 
-    // "Kaido" is not in the bundled seed, so its presence proves the live merge.
-    expect(result.cards.map((card) => card.card_set_id)).toContain("OP09-001");
+    expect(result.cards.map((card) => card.card_set_id)).toContain("OP99-001");
   });
 
   it("resolves a non-bundled card id via the live single-card endpoint", async () => {
     const fetcher = vi.fn(async (url: URL) => {
-      expect(url.pathname).toBe("/api/sets/card/OP09-099/");
-      return new Response(JSON.stringify([{ card_name: "Kaido", card_set_id: "OP09-099" }]));
+      expect(url.pathname).toBe("/api/sets/card/OP99-099/");
+      return new Response(JSON.stringify([{ card_name: "Liveonlymon", card_set_id: "OP99-099" }]));
     }) as unknown as typeof fetch;
 
     const result = await searchOnePieceCards({
-      query: "Kaido",
-      cardNumber: "OP09-099",
+      query: "Liveonlymon",
+      cardNumber: "OP99-099",
       baseUrl: "https://www.optcgapi.com/api",
       fetcher,
     });
 
-    expect(result.cards[0]?.card_set_id).toBe("OP09-099");
+    expect(result.cards[0]?.card_set_id).toBe("OP99-099");
   });
 
   it("tries the deck endpoint for a non-bundled card id not in the main sets", async () => {
