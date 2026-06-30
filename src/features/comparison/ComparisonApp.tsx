@@ -1169,8 +1169,9 @@ function sellerVerdict(score: number, t: Dict): { label: string; tone: VerdictTo
 }
 
 function evidenceVerdict(score: number, t: Dict): { label: string; tone: VerdictTone } {
-  if (score >= 80) return { label: t.card.wellDocumented, tone: "good" };
-  if (score >= 50) return { label: t.card.partlyDocumented, tone: "ok" };
+  // Photo-led score: 8+ photos (or a fully-asserted manual listing) clears "good".
+  if (score >= 50) return { label: t.card.wellDocumented, tone: "good" };
+  if (score >= 25) return { label: t.card.partlyDocumented, tone: "ok" };
   return { label: t.card.thinEvidence, tone: "bad" };
 }
 
@@ -1196,11 +1197,13 @@ function VerdictTag({ verdict, icon: Icon }: { verdict: { label: string; tone: V
 
 function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvidence; compact?: boolean }) {
   const t = useT();
+  // Show photo count (the verified signal) plus only the content items that are
+  // positively known — never a red ✗ for things we simply didn't verify.
   const items = [
     { label: t.card.photos(evidence.photoCount), available: evidence.photoCount > 0, icon: Camera },
-    { label: evidence.frontBackExplicit ? t.card.frontBack : t.card.frontBackNo, available: evidence.frontBackExplicit, icon: BadgeCheck },
-    { label: evidence.closeupsExplicit ? t.card.corners : t.card.cornersNo, available: evidence.closeupsExplicit, icon: SearchCheck },
-    { label: evidence.surfaceExplicit ? t.card.surface : t.card.surfaceNo, available: evidence.surfaceExplicit, icon: Sparkles },
+    ...(evidence.frontBackExplicit ? [{ label: t.card.frontBack, available: true, icon: BadgeCheck }] : []),
+    ...(evidence.closeupsExplicit ? [{ label: t.card.corners, available: true, icon: SearchCheck }] : []),
+    ...(evidence.surfaceExplicit ? [{ label: t.card.surface, available: true, icon: Sparkles }] : []),
   ];
 
   return (

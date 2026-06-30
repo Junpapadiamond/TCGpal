@@ -37,6 +37,27 @@ describe("comparison ranking", () => {
     expect(calculateEvidenceCompletenessScore(demoListingSeeds[2].evidence)).toBe(100);
   });
 
+  it("scores evidence from the verifiable photo count, not from guessed content flags", () => {
+    const base = {
+      photoCount: 0,
+      frontBackExplicit: false,
+      closeupsExplicit: false,
+      surfaceExplicit: false,
+      identityExplicit: false,
+      substantiveConditionNotes: false,
+      missing: [],
+    };
+    // An auto-fetched eBay listing carries no content flags: photo count alone drives it,
+    // and a photo-rich listing still earns a solid evidence read ("best documented" = most photos).
+    expect(calculateEvidenceCompletenessScore({ ...base, photoCount: 0 })).toBe(0);
+    expect(calculateEvidenceCompletenessScore({ ...base, photoCount: 8 })).toBe(55);
+    expect(
+      calculateEvidenceCompletenessScore({ ...base, photoCount: 8 }),
+    ).toBeGreaterThan(
+      calculateEvidenceCompletenessScore({ ...base, photoCount: 4 }),
+    );
+  });
+
   it("returns distinct, stable role winners", () => {
     const listings = demoListingSeeds.map((listing) => normalizeListing({ listing, buyer }));
     const choices = rankListings(listings);

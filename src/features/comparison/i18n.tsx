@@ -199,11 +199,8 @@ const en = {
     userSupplied: "User-supplied candidate",
     photos: (n: number) => `${n} photo${n === 1 ? "" : "s"}`,
     frontBack: "Front + back",
-    frontBackNo: "Front/back not shown",
     corners: "Corners",
-    cornersNo: "Corners not shown",
     surface: "Surface",
-    surfaceNo: "Surface not shown",
     photoEvidenceAria: "Listing photo evidence",
   },
   candidate: {
@@ -402,11 +399,8 @@ const zh: Dict = {
     userSupplied: "用户提供的候选",
     photos: (n: number) => `${n} 张照片`,
     frontBack: "正反面",
-    frontBackNo: "未展示正反面",
     corners: "边角",
-    cornersNo: "未展示边角",
     surface: "表面",
-    surfaceNo: "未展示表面",
     photoEvidenceAria: "商品照片证据",
   },
   candidate: {

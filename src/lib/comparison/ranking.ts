@@ -60,17 +60,22 @@ export function calculateSellerTrustScore(signals: SellerTrustSignals) {
 }
 
 export function calculateEvidenceCompletenessScore(evidence: ListingEvidence) {
+  // Photo count is the one evidence signal we can actually verify on an auto-fetched
+  // listing, so it carries the score. The content flags (front/back, corners, surface,
+  // condition notes) only add when they are genuinely known — i.e. a buyer asserted
+  // them on a manually-entered listing — never guessed from marketplace prose.
   let score = 0;
 
-  if (evidence.photoCount >= 6) score += 30;
-  else if (evidence.photoCount >= 4) score += 20;
-  else if (evidence.photoCount >= 2) score += 10;
+  if (evidence.photoCount >= 8) score += 55;
+  else if (evidence.photoCount >= 6) score += 45;
+  else if (evidence.photoCount >= 4) score += 30;
+  else if (evidence.photoCount >= 2) score += 16;
+  else if (evidence.photoCount >= 1) score += 8;
 
-  if (evidence.frontBackExplicit) score += 20;
-  if (evidence.closeupsExplicit) score += 15;
-  if (evidence.surfaceExplicit) score += 15;
-  if (evidence.identityExplicit) score += 10;
-  if (evidence.substantiveConditionNotes) score += 10;
+  if (evidence.frontBackExplicit) score += 18;
+  if (evidence.closeupsExplicit) score += 14;
+  if (evidence.surfaceExplicit) score += 8;
+  if (evidence.substantiveConditionNotes) score += 5;
 
   return Math.min(100, score);
 }

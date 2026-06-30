@@ -248,26 +248,21 @@ async function fetchWithTimeout(
 }
 
 function evidenceFromText(text: string, photoCount: number) {
-  const normalized = text.toLowerCase();
-  const frontBackExplicit = /front.{0,12}back|back.{0,12}front/.test(normalized);
-  const closeupsExplicit = /corner|edge|close[- ]?up/.test(normalized);
-  const surfaceExplicit = /surface|foil|holo|video|glare/.test(normalized);
-  const identityExplicit = /\b\d{1,3}\/\d{1,3}\b/.test(normalized);
-  const substantiveConditionNotes = /scratch|whitening|dent|crease|print line|off[- ]?center|clean/.test(normalized);
-  const missing = [
-    !frontBackExplicit ? "Front and back views are not explicitly described." : "",
-    !closeupsExplicit ? "Corner and edge closeups are not explicit." : "",
-    !surfaceExplicit ? "Surface evidence is not explicit." : "",
-    !substantiveConditionNotes ? "Condition notes are mostly a seller label." : "",
-  ].filter(Boolean);
+  // For an auto-fetched eBay listing we can verify the photo COUNT and whether the
+  // collector number is in the title — but not what the photos actually show. We no
+  // longer infer front/back, corner, or surface coverage from the seller's prose:
+  // that guesswork was routinely wrong (every holo listing says "holo", etc.). Those
+  // read as not-verified; the buyer reviews the photos via the listing link. Photo
+  // count is the honest evidence signal, so "best documented" means "most photos".
+  const identityExplicit = /\b\d{1,3}\/\d{1,3}\b/.test(text.toLowerCase());
   return {
     photoCount,
-    frontBackExplicit,
-    closeupsExplicit,
-    surfaceExplicit,
+    frontBackExplicit: false,
+    closeupsExplicit: false,
+    surfaceExplicit: false,
     identityExplicit,
-    substantiveConditionNotes,
-    missing,
+    substantiveConditionNotes: false,
+    missing: ["Photo content isn't verified from the listing text — open the listing to review the photos."],
   };
 }
 
