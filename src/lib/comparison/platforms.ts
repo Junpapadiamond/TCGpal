@@ -100,12 +100,74 @@ export type RunPlatformFanoutInput = {
   agents?: PlatformAgent[];
 };
 
+// A platform's outcome after it ran (or failed). The agent path and the
+// deterministic path both produce these and feed them to the single builder
+// below, so trace/result/warning shapes can never drift between the two.
+export type PlatformOutcome = {
+  agent: PlatformAgent;
+  seeds?: PlatformSeed[];
+  error?: string;
+};
+
+// Per-agent search timeout. The fan-out owns this rather than trusting every
+// adapter to bound itself, so a single hung marketplace can never stall the
+// whole comparison (Promise.all waits for the slowest agent).
+const PLATFORM_SEARCH_TIMEOUT_MS = 10000;
+
+export async function searchPlatformWithTimeout(
+  agent: PlatformAgent,
+  input: PlatformSearchInput,
+  timeoutMs = PLATFORM_SEARCH_TIMEOUT_MS,
+): Promise<PlatformSeed[]> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${agent.marketplace} search timed out after ${Math.round(timeoutMs / 1000)}s.`)),
+      timeoutMs,
+    );
+  });
+  try {
+    return await Promise.race([agent.search(input), timeout]);
+  } finally {
+    clearTimeout(timer!);
+  }
+}
+
+// The single source of truth for how a platform's outcome becomes a seed list,
+// a trace entry, a sources-panel result, and (on failure) a warning. Shared by
+// the deterministic fan-out and the model-allocator path.
+export function summarizePlatformOutcome(outcome: PlatformOutcome): {
+  seeds: PlatformSeed[];
+  trace: ComparisonTrace;
+  result: ComparisonPlatformResult;
+  warning?: string;
+} {
+  const { agent } = outcome;
+  if (outcome.seeds === undefined && outcome.error !== undefined) {
+    return {
+      seeds: [],
+      warning: `Live ${agent.marketplace} listings could not be loaded: ${outcome.error}`,
+      trace: { step: "marketplace_search", actor: agent.label, summary: `Live ${agent.marketplace} search failed: ${outcome.error}`, status: "fallback" },
+      result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, status: "fallback", configured: true, count: 0, detail: outcome.error },
+    };
+  }
+  const seeds = outcome.seeds ?? [];
+  return {
+    seeds,
+    trace: { step: "marketplace_search", actor: agent.label, summary: `Loaded ${seeds.length} live active-listing candidate${seeds.length === 1 ? "" : "s"}.`, status: "complete" },
+    result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, status: "complete", configured: true, count: seeds.length, detail: `${seeds.length} live candidate${seeds.length === 1 ? "" : "s"}.` },
+  };
+}
+
+// A configured-but-absent platform: surfaced in the sources panel (no warning,
+// no trace spam) so the operator sees which APIs would join once their keys are set.
+export function skippedPlatformResult(agent: PlatformAgent): ComparisonPlatformResult {
+  return { id: agent.id, marketplace: agent.marketplace, label: agent.label, status: "skipped", configured: false, count: 0, detail: `Not configured (needs ${agent.requiredEnv.join(", ")}).` };
+}
+
 // Fan out across every configured platform agent IN PARALLEL, isolating each
-// agent's failure so one marketplace being down (auth, rate limit, timeout) never
-// sinks the others. Each agent contributes its seeds, one trace entry, and a
-// per-platform result for the "sources checked" panel. Unconfigured agents are
-// reported as "skipped" (no warning, no trace spam) so the user can still see
-// which marketplaces would join once their API is connected.
+// agent's failure (and timeout) so one marketplace being down never sinks the
+// others.
 export async function runPlatformFanout({
   card,
   buyer,
@@ -121,68 +183,25 @@ export async function runPlatformFanout({
   const configured = agents.filter((agent) => agent.isConfigured());
 
   const settled = await Promise.all(
-    configured.map(async (agent) => {
+    configured.map(async (agent): Promise<PlatformOutcome> => {
       try {
-        return { agent, seeds: await agent.search({ card, buyer, fetcher, plan }), error: null as unknown };
+        return { agent, seeds: await searchPlatformWithTimeout(agent, { card, buyer, fetcher, plan }) };
       } catch (error) {
-        return { agent, seeds: [] as PlatformSeed[], error };
+        return { agent, error: error instanceof Error ? error.message : "Unknown marketplace error." };
       }
     }),
   );
 
-  for (const { agent, seeds: agentSeeds, error } of settled) {
-    if (error) {
-      const detail = error instanceof Error ? error.message : "Unknown marketplace error.";
-      warnings.push(`Live ${agent.marketplace} listings could not be loaded: ${detail}`);
-      traces.push({
-        step: "marketplace_search",
-        actor: agent.label,
-        summary: `Live ${agent.marketplace} search failed: ${detail}`,
-        status: "fallback",
-      });
-      results.push({
-        id: agent.id,
-        marketplace: agent.marketplace,
-        label: agent.label,
-        status: "fallback",
-        configured: true,
-        count: 0,
-        detail,
-      });
-      continue;
-    }
-
-    seeds.push(...agentSeeds);
-    traces.push({
-      step: "marketplace_search",
-      actor: agent.label,
-      summary: `Loaded ${agentSeeds.length} live active-listing candidate${agentSeeds.length === 1 ? "" : "s"}.`,
-      status: "complete",
-    });
-    results.push({
-      id: agent.id,
-      marketplace: agent.marketplace,
-      label: agent.label,
-      status: "complete",
-      configured: true,
-      count: agentSeeds.length,
-      detail: `${agentSeeds.length} live candidate${agentSeeds.length === 1 ? "" : "s"}.`,
-    });
+  for (const outcome of settled) {
+    const summary = summarizePlatformOutcome(outcome);
+    seeds.push(...summary.seeds);
+    traces.push(summary.trace);
+    results.push(summary.result);
+    if (summary.warning) warnings.push(summary.warning);
   }
 
-  // Surface configured-but-absent platforms so the operator can see exactly which
-  // APIs are live and which would join the fan-out once their keys are set.
   for (const agent of agents) {
-    if (agent.isConfigured()) continue;
-    results.push({
-      id: agent.id,
-      marketplace: agent.marketplace,
-      label: agent.label,
-      status: "skipped",
-      configured: false,
-      count: 0,
-      detail: `Not configured (needs ${agent.requiredEnv.join(", ")}).`,
-    });
+    if (!agent.isConfigured()) results.push(skippedPlatformResult(agent));
   }
 
   return { seeds, traces, warnings, results, configuredCount: configured.length };

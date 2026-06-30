@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   runPlatformFanout,
+  searchPlatformWithTimeout,
+  summarizePlatformOutcome,
   type PlatformAgent,
   type PlatformSeed,
 } from "@/lib/comparison/platforms";
@@ -107,5 +109,25 @@ describe("platform fan-out", () => {
     const result = await runPlatformFanout({ card, buyer, fetcher, agents });
     expect(result.configuredCount).toBe(0);
     expect(result.seeds).toEqual([]);
+  });
+
+  it("times out a hung agent so it cannot stall the fan-out", async () => {
+    const agent = mockAgent({ id: "hung", marketplace: "eBay", search: () => new Promise<PlatformSeed[]>(() => {}) });
+    await expect(searchPlatformWithTimeout(agent, { card, buyer, fetcher }, 10)).rejects.toThrow(/timed out/);
+  });
+
+  it("builds the same result/trace shape for success and failure (shared builder)", () => {
+    const agent = mockAgent({ id: "ebay", marketplace: "eBay" });
+    const ok = summarizePlatformOutcome({ agent, seeds: [seed("a", "eBay")] });
+    expect(ok.result.status).toBe("complete");
+    expect(ok.result.count).toBe(1);
+    expect(ok.trace.status).toBe("complete");
+    expect(ok.warning).toBeUndefined();
+
+    const bad = summarizePlatformOutcome({ agent, error: "boom" });
+    expect(bad.result.status).toBe("fallback");
+    expect(bad.trace.status).toBe("fallback");
+    expect(bad.warning).toContain("boom");
+    expect(bad.seeds).toEqual([]);
   });
 });

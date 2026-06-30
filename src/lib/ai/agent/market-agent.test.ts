@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createOpenAiAgentModel, runMarketSearch } from "@/lib/ai/agent/market-agent";
+import {
+  createChatCompletionsAgentModel,
+  createOpenAiAgentModel,
+  getAllocatorConfig,
+  runMarketSearch,
+  type AllocatorConfig,
+} from "@/lib/ai/agent/market-agent";
 import type { AgentDecision, AgentModel, AgentTool } from "@/lib/ai/agent/harness";
 import type { PlatformAgent, PlatformSeed } from "@/lib/comparison/platforms";
 import type { AiConfig } from "@/lib/ai/config";
@@ -172,5 +178,79 @@ describe("createOpenAiAgentModel", () => {
 
     const model = createOpenAiAgentModel(config);
     await expect(model.decide({ goal: "g", messages: [{ role: "user", content: "g" }], tools })).rejects.toThrow(/500/);
+  });
+});
+
+describe("createChatCompletionsAgentModel (Chinese / OpenAI-compatible)", () => {
+  const allocator: AllocatorConfig = {
+    dialect: "chat",
+    model: "glm-4-flash",
+    baseUrl: "https://open.bigmodel.test/v4",
+    apiKey: "sk-glm",
+    reasoningEffort: "low",
+    disableResponseStorage: true,
+  };
+  const tools: AgentTool[] = [
+    { name: "search_ebay", description: "Search eBay", parameters: z.object({ query: z.string().optional() }), execute: () => ({ ok: true }) },
+  ];
+
+  it("parses a Chat Completions tool_call into a tool_calls decision", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ message: { role: "assistant", tool_calls: [{ id: "c1", type: "function", function: { name: "search_ebay", arguments: "{\"query\":\"y\"}" } }] } }],
+      }),
+      text: async () => "",
+    })) as unknown as typeof fetch);
+
+    const model = createChatCompletionsAgentModel(allocator);
+    const decision = await model.decide({ goal: "find card", messages: [{ role: "user", content: "find card" }], tools });
+
+    expect(decision.kind).toBe("tool_calls");
+    if (decision.kind === "tool_calls") {
+      expect(decision.toolCalls[0]?.name).toBe("search_ebay");
+      expect(decision.toolCalls[0]?.args).toEqual({ query: "y" });
+    }
+  });
+
+  it("parses a Chat Completions text message into a final decision", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ choices: [{ message: { role: "assistant", content: "searched eBay" } }] }),
+      text: async () => "",
+    })) as unknown as typeof fetch);
+
+    const model = createChatCompletionsAgentModel(allocator);
+    const decision = await model.decide({ goal: "g", messages: [{ role: "user", content: "g" }], tools });
+
+    expect(decision.kind).toBe("final");
+    if (decision.kind === "final") expect(decision.output).toBe("searched eBay");
+  });
+
+  it("throws on a non-ok response so the caller can fall back", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 502, json: async () => ({}), text: async () => "bad gateway" })) as unknown as typeof fetch);
+    const model = createChatCompletionsAgentModel(allocator);
+    await expect(model.decide({ goal: "g", messages: [{ role: "user", content: "g" }], tools })).rejects.toThrow(/502/);
+  });
+});
+
+describe("getAllocatorConfig", () => {
+  it("defaults the allocator to the cheap model and the main base URL", () => {
+    const cfg = getAllocatorConfig(config);
+    expect(cfg.dialect).toBe("chat");
+    expect(cfg.model).toBe(config.cheapModel);
+    expect(cfg.baseUrl).toBe(config.baseUrl);
+  });
+
+  it("points the allocator at an independent endpoint/model when configured", () => {
+    vi.stubEnv("COMPARISON_AGENT_BASE_URL", "https://open.bigmodel.test/v4/");
+    vi.stubEnv("COMPARISON_AGENT_MODEL", "glm-4-flash");
+    vi.stubEnv("COMPARISON_AGENT_API_KEY", "sk-glm");
+    const cfg = getAllocatorConfig(config);
+    expect(cfg.model).toBe("glm-4-flash");
+    expect(cfg.baseUrl).toBe("https://open.bigmodel.test/v4"); // trailing slash trimmed
+    expect(cfg.apiKey).toBe("sk-glm");
   });
 });
