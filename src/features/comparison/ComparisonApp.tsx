@@ -328,36 +328,31 @@ function ComparisonExperience() {
       <Header />
       <div className="mx-auto max-w-[1180px] px-4 pb-24 pt-8 sm:px-6 lg:px-8">
         <section className="paper-panel p-5 sm:p-7">
-          <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-            <div>
-              <div className="eyebrow">
-                <SearchCheck className="h-4 w-4" />
-                {t.hero.eyebrow}
-              </div>
-              <h1 className="mt-3 max-w-4xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
-                {t.hero.title}
-              </h1>
-            </div>
-            <p className="max-w-xl text-sm leading-6 text-[#64736c] sm:text-base sm:leading-7">
-              {t.hero.subtitle}
-            </p>
+          <div className="eyebrow">
+            <SearchCheck className="h-4 w-4" />
+            {t.hero.eyebrow}
           </div>
+          <h1 className="mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
+            {t.hero.title}
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#64736c] sm:text-base sm:leading-7">
+            {t.hero.subtitle}
+          </p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#52635c] sm:text-sm">
             <Promise icon={ReceiptText} label={t.hero.promiseTax} />
             <Promise icon={ShieldCheck} label={t.hero.promiseSeller} />
             <Promise icon={Camera} label={t.hero.promiseEvidence} />
           </div>
+          <p className="mt-3 text-xs text-[#94a59c]">{t.hero.guardrail}</p>
         </section>
 
-        <section id="compare" className="mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
-          <div className="border-b border-[#d6ded5] px-5 py-5 sm:px-7">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <h2 className="font-serif text-3xl font-bold text-[#2f6f73]">{t.form.heading}</h2>
-              <button className="text-button" type="button" onClick={useDemo} disabled={loading}>
-                <Sparkles className="h-4 w-4" />
-                {t.form.runDemo}
-              </button>
-            </div>
+        <section id="compare" className="mt-4 rounded-md border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
+          <div className="flex items-center justify-between gap-3 px-5 pt-5 sm:px-7">
+            <p className="text-sm font-bold uppercase tracking-[0.08em] text-[#64736c]">{t.form.heading}</p>
+            <button className="text-button" type="button" onClick={useDemo} disabled={loading}>
+              <Sparkles className="h-4 w-4" />
+              {t.form.runDemo}
+            </button>
           </div>
 
           <form className="p-5 sm:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
