@@ -287,4 +287,76 @@ describe("listing comparison agent", () => {
     expect(marketplaces).toContain("Mercari");
     expect(response.trace.some((entry) => entry.actor === "Cross-platform ledger")).toBe(true);
   });
+
+  it("surfaces a lookup-unavailable warning (and retries) instead of a silent 'no match'", async () => {
+    // The Pokémon catalog API is down: a transient failure must not look like
+    // "this card doesn't exist". It should retry once, then report the real reason.
+    let pokemonCalls = 0;
+    const failing = (async (input: RequestInfo | URL) => {
+      if (String(input).includes("api.pokemontcg.io")) {
+        pokemonCalls += 1;
+        throw new Error("503 Service Unavailable");
+      }
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "pokemon", name: "Zzqqx Nonexistent", setCode: "", cardNumber: "", language: "English" },
+      },
+      { fetcher: failing },
+    );
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates).toEqual([]);
+    expect(pokemonCalls).toBe(2); // one retry on transient failure
+    expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(true);
+  });
+
+  it("ranks the requested One Piece set first and confirms it as high confidence", async () => {
+    const offline = (async () => {
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "onePiece", name: "Luffy", setCode: "EB-02", cardNumber: "", language: "English" },
+      },
+      { fetcher: offline },
+    );
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates[0]?.setCode).toBe("EB-02");
+    expect(response.identityCandidates[0]?.confidence).toBe("high");
+    // Every high-confidence candidate is from the requested set, not a different print.
+    expect(
+      response.identityCandidates
+        .filter((card) => card.confidence === "high")
+        .every((card) => card.setCode === "EB-02"),
+    ).toBe(true);
+  });
+
+  it("without a set, a One Piece name stays a set-grouped pick (no false high confidence)", async () => {
+    const offline = (async () => {
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "onePiece", name: "Luffy", setCode: "", cardNumber: "", language: "English" },
+      },
+      { fetcher: offline },
+    );
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates.length).toBeGreaterThan(1);
+    expect(new Set(response.identityCandidates.map((card) => card.setCode)).size).toBeGreaterThan(1);
+    expect(response.identityCandidates.every((card) => card.confidence !== "high")).toBe(true);
+  });
 });

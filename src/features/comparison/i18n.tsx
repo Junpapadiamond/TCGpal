@@ -131,7 +131,9 @@ const en = {
     versions: (n: number) => `${n} version${n === 1 ? "" : "s"}`,
     confirm: "Confirm this version",
     noMatch:
-      "No catalog match was found. Check the Pokémon name, then add the printed collector number (for example, 215/203) or a set name/code and try again.",
+      "No catalog match was found. Check the card name, then add the printed collector number (for example, 215/203) or a set name/code and try again.",
+    lookupUnavailable:
+      "The card catalog is temporarily unavailable, so we couldn't list versions. This is a lookup hiccup, not a missing card — please try again in a moment.",
   },
   result: {
     demoTitle: "Labeled demo inventory.",
@@ -330,7 +332,9 @@ const zh: Dict = {
     versions: (n: number) => `${n} 个版本`,
     confirm: "确认这个版本",
     noMatch:
-      "没找到对得上的卡片。先核对一下宝可梦名称，再补上卡面上的收藏编号（比如 215/203）或系列名称 / 代码，然后重试。",
+      "没找到对得上的卡片。先核对一下卡片名称，再补上卡面上的收藏编号（比如 215/203）或系列名称 / 代码，然后重试。",
+    lookupUnavailable:
+      "卡片库暂时连不上，没能列出版本。这是查询出了点小问题，不是没有这张卡——过一会儿再试一下。",
   },
   result: {
     demoTitle: "标注的示例库存。",

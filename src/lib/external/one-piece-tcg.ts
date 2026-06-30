@@ -60,6 +60,7 @@ export type OnePieceTcgSearchResult = {
 type SearchOnePieceCardsOptions = {
   query: string;
   cardNumber?: string;
+  setHint?: string;
   pageSize?: number;
   baseUrl?: string;
   fetcher?: typeof fetch;
@@ -137,6 +138,7 @@ export async function getOnePieceCard({
 export async function searchOnePieceCards({
   query,
   cardNumber = "",
+  setHint = "",
   pageSize = 8,
   baseUrl,
   fetcher = fetch,
@@ -163,14 +165,14 @@ export async function searchOnePieceCards({
   // network, so a slow or unreachable live API can never delay (or time out) the
   // request. Only when the bundle has no match do we consult the live dump, and
   // even then with a short, bounded timeout — the response never blocks on it.
-  const bundled = rankOnePieceCards(onePieceCatalog, normalizedQuery, limit);
+  const bundled = rankOnePieceCards(onePieceCatalog, normalizedQuery, limit, setHint);
   if (bundled.length > 0) {
     return { source: "optcg-api", query: normalizedQuery, cards: bundled, count: bundled.length };
   }
 
   const base = resolveBaseUrl(baseUrl);
   const live = await fetchLiveAllSetCards(base, fetcher, Math.min(timeoutMs, 4000));
-  const cards = rankOnePieceCards(mergeOnePieceCatalogs(onePieceCatalog, live), normalizedQuery, limit);
+  const cards = rankOnePieceCards(mergeOnePieceCatalogs(onePieceCatalog, live), normalizedQuery, limit, setHint);
 
   return { source: "optcg-api", query: normalizedQuery, cards, count: cards.length };
 }
@@ -195,9 +197,16 @@ function mergeOnePieceCatalogs(bundled: OnePieceTcgCard[], live: OnePieceTcgCard
   return Array.from(byId.values());
 }
 
-function rankOnePieceCards(cards: OnePieceTcgCard[], query: string, limit: number): OnePieceTcgCard[] {
+function rankOnePieceCards(cards: OnePieceTcgCard[], query: string, limit: number, setHint = ""): OnePieceTcgCard[] {
   return cards
-    .map((card) => ({ card, score: scoreOnePieceCard(card, query) }))
+    .map((card) => {
+      // Name relevance gates inclusion; a matching set hint floats those prints to the
+      // top of the returned page so a name with many prints (e.g. 80+ Luffys) doesn't
+      // bury the set the buyer asked for before it can be ranked.
+      const nameScore = scoreOnePieceCard(card, query);
+      const score = nameScore > 0 && setHint && onePieceSetMatches(card, setHint) ? nameScore + 1000 : nameScore;
+      return { card, score };
+    })
     .filter((entry) => entry.score > 0)
     .sort(
       (a, b) =>
@@ -207,6 +216,22 @@ function rankOnePieceCards(cards: OnePieceTcgCard[], query: string, limit: numbe
     )
     .slice(0, limit)
     .map((entry) => entry.card);
+}
+
+function normalizeSetToken(value: string | null | undefined): string {
+  return (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+// Does the user's set hint (e.g. "EB-02", "eb02", "memorial") point at this card's
+// set? Normalized so punctuation/case never matters; the card-number prefix is a
+// fallback when set_id is absent.
+export function onePieceSetMatches(card: OnePieceTcgCard, setHint: string): boolean {
+  const requested = normalizeSetToken(setHint);
+  if (!requested) return false;
+  return [card.set_id, card.set_name, card.card_set_id.split("-")[0]]
+    .map(normalizeSetToken)
+    .filter(Boolean)
+    .some((value) => value === requested || value.includes(requested));
 }
 
 function normalizeOnePieceName(value: string): string {

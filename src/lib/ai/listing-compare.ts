@@ -14,6 +14,7 @@ import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/e
 import {
   getOnePieceCard,
   mapOnePieceCardToIdentity,
+  onePieceSetMatches,
   searchOnePieceCards,
   type OnePieceTcgCard,
 } from "@/lib/external/one-piece-tcg";
@@ -262,18 +263,23 @@ async function identifyCards(
   // The Pokémon TCG catalog is queryable without a key (the key only raises rate
   // limits), so resolve real card identities whenever we have a usable query.
   if (searchName.length >= 2) {
-    try {
-      // pokemontcg.io's first (uncached) response can take 5-8s because it carries
-      // pricing payloads, so allow more headroom than the 8s default to avoid an
-      // unnecessary fall back to demo identities. Responses are cached for an hour.
-      const result = await searchPokemonCards({
+    // pokemontcg.io's first (uncached) response can take 5-8s because it carries
+    // pricing payloads, so allow more headroom than the 8s default. Retry once: a
+    // transient rate-limit/network blip should not look like "this card doesn't
+    // exist". Responses are cached for an hour.
+    const result = await searchPokemonWithRetry(
+      {
         query: searchName,
         cardNumber: request.cardHint.cardNumber,
         setHint: request.cardHint.setCode,
         pageSize: request.cardHint.cardNumber ? 12 : 30,
         fetcher,
         timeoutMs: 15000,
-      });
+      },
+      warnings,
+    );
+
+    if (result) {
       const apiMatches = result.cards
         .map((card) => ({ card, match: evaluateIdentity(card, request, source) }))
         .sort((a, b) => b.match.score - a.match.score)
@@ -285,9 +291,17 @@ async function identifyCards(
         status: "complete",
       });
       return dedupeIdentities(apiMatches).slice(0, MAX_IDENTITY_CANDIDATES);
-    } catch (error) {
-      warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
     }
+
+    // The lookup itself failed (warning already recorded). Surface that as an
+    // unavailable lookup, not a confident "no match", so the UI can say "try again".
+    trace.push({
+      step: "card_identification",
+      actor: "Pokémon catalog adapter",
+      summary: "Catalog lookup was unavailable after a retry; could not list versions.",
+      status: "fallback",
+    });
+    if (!localMatches.length) return [];
   }
 
   const fallback = localMatches;
@@ -300,6 +314,25 @@ async function identifyCards(
     status: "fallback",
   });
   return fallback;
+}
+
+// One retry on a transient Pokémon catalog failure. Returns null (and records a
+// user-facing warning) only when both attempts fail, so the caller can distinguish
+// "lookup unavailable" from a genuine empty result.
+async function searchPokemonWithRetry(
+  options: Parameters<typeof searchPokemonCards>[0],
+  warnings: string[],
+): Promise<Awaited<ReturnType<typeof searchPokemonCards>> | null> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await searchPokemonCards(options);
+    } catch (error) {
+      if (attempt === 1) {
+        warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
+      }
+    }
+  }
+  return null;
 }
 
 async function identifyOnePieceCards(
@@ -332,6 +365,7 @@ async function identifyOnePieceCards(
       const result = await searchOnePieceCards({
         query: searchName || directId,
         cardNumber: directId,
+        setHint: request.cardHint.setCode,
         pageSize: directId ? 12 : 30,
         fetcher,
         timeoutMs: 15000,
@@ -361,20 +395,25 @@ async function identifyOnePieceCards(
   return [];
 }
 
+// Every candidate here already passed the name search, so the baseline is "medium"
+// (name matches, version still unconfirmed). A matching card id or set raises it to
+// "high" so the requested print sorts to the top of the set-grouped picker.
 function evaluateOnePieceMatch(
   card: OnePieceTcgCard,
   request: ComparisonRequest,
   searchName: string,
 ): { confidence: CardIdentityCandidate["confidence"]; matchReasons: string[] } {
   const requestedId = request.cardHint.cardNumber.trim().toUpperCase();
-  const cardId = card.card_set_id.toUpperCase();
-  if (requestedId && requestedId === cardId) {
+  if (requestedId && requestedId === card.card_set_id.toUpperCase()) {
     return { confidence: "high", matchReasons: ["Requested card id matches this print."] };
+  }
+  if (onePieceSetMatches(card, request.cardHint.setCode)) {
+    return { confidence: "high", matchReasons: ["Card name and set both match this print."] };
   }
   if (searchName && normalizeText(card.card_name) === normalizeText(searchName)) {
     return { confidence: "medium", matchReasons: ["Card name matches the catalog entry exactly."] };
   }
-  return { confidence: "low", matchReasons: ["Card name partially matches the catalog entry."] };
+  return { confidence: "medium", matchReasons: ["Card name matches; confirm the exact version."] };
 }
 
 function resolveConfirmedCard(request: ComparisonRequest, identities: CardIdentityCandidate[]) {

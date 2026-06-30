@@ -123,6 +123,17 @@ describe("OPTCG (One Piece) adapter", () => {
     expect(scoreOnePieceCard(exact, "sanji")).toBeGreaterThan(scoreOnePieceCard(partial, "sanji"));
   });
 
+  it("floats the requested set to the top when a name has many prints", async () => {
+    const offline = vi.fn(async () => {
+      throw new Error("network disabled");
+    }) as unknown as typeof fetch;
+
+    // "Luffy" has 80+ prints across 30+ sets; the set hint must pull EB-02 to the top.
+    const result = await searchOnePieceCards({ query: "luffy", setHint: "EB-02", fetcher: offline });
+    expect(result.cards.length).toBeGreaterThan(0);
+    expect(result.cards[0]?.set_id).toBe("EB-02");
+  });
+
   it("maps an OPTCG card onto the shared identity candidate shape", () => {
     const identity = mapOnePieceCardToIdentity(luffyCard, {
       confidence: "high",

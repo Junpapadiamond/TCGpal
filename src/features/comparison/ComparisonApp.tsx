@@ -639,7 +639,7 @@ function ComparisonExperience() {
         {loading && <LoadingLoop />}
         {error && <ErrorNotice message={error} />}
         {report?.status === "needs_confirmation" && !loading && (
-          <IdentityConfirmation identities={report.identityCandidates} onConfirm={confirmIdentity} />
+          <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
         )}
         {report && report.status !== "needs_confirmation" && !loading && (
           <ComparisonResult report={report} feedbackSent={feedbackSent} onFeedback={sendFeedback} />
@@ -820,10 +820,13 @@ function ErrorNotice({ message }: { message: string }) {
   );
 }
 
-function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdentityCandidate[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
+function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identities: CardIdentityCandidate[]; warnings?: string[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
   const t = useT();
   const grouped = identities.length > IDENTITY_GROUP_THRESHOLD;
   const groups = useMemo(() => (grouped ? groupIdentitiesBySet(identities) : []), [grouped, identities]);
+  // A failed catalog lookup must not read as "no such card" — distinguish it so the
+  // empty state says "temporarily unavailable, try again" instead of "no match".
+  const lookupUnavailable = identities.length === 0 && warnings.some((warning) => /catalog lookup unavailable/i.test(warning));
   return (
     <section id="comparison-result" className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-7">
       <div className="max-w-2xl">
@@ -838,7 +841,7 @@ function IdentityConfirmation({ identities, onConfirm }: { identities: CardIdent
       </div>
       {identities.length === 0 ? (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
-          {t.identity.noMatch}
+          {lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch}
         </div>
       ) : grouped ? (
         <div className="mt-6 space-y-7">
