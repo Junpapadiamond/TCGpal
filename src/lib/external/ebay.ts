@@ -106,6 +106,9 @@ export async function searchEbayAlternatives(
   card: CardIdentityCandidate,
   buyer: BuyerContext,
   fetcher: typeof fetch = fetch,
+  // Optional model-refined query. The deterministic default below is always the
+  // fallback, so a missing or empty override never weakens the search.
+  queryOverride?: string,
 ): Promise<Array<Omit<
   NormalizedListing,
   | "estimatedTax"
@@ -119,7 +122,8 @@ export async function searchEbayAlternatives(
 >>> {
   const token = await getEbayToken(fetcher);
   const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item_summary/search`);
-  endpoint.searchParams.set("q", `${card.name} ${card.setName} ${card.cardNumber}`);
+  const query = queryOverride?.trim() || `${card.name} ${card.setName} ${card.cardNumber}`;
+  endpoint.searchParams.set("q", query);
   endpoint.searchParams.set("limit", "50");
   // Best Match (no price sort): price-ascending floods the top with cheap novelty
   // replicas that name the card. Our deterministic ranking sorts on price after

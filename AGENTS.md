@@ -84,9 +84,12 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 ## Architecture
 
 - `src/features/comparison/ComparisonApp.tsx`: the card-first comparison experience — search → confirm version → one recommended buy (`RecommendationCard`) with a lens toggle; verdict-led plain-language tags with the numeric scores de-emphasized; market-anchor chip and per-listing vs-market read.
-- `src/lib/comparison/*`: fixtures, scoring, landed-cost math, and deterministic ranking (incl. `exclusionPatterns` and the `MARKET_FLOOR_RATIO` below-market gate).
+- `src/lib/comparison/*`: fixtures, scoring, landed-cost math, deterministic ranking (incl. `exclusionPatterns` and the `MARKET_FLOOR_RATIO` below-market gate), and the cross-platform **platform-agent registry + fan-out** (`platforms.ts`).
+- `src/lib/comparison/platforms.ts`: each marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation, so the system "works as long as you have the APIs" — adding a marketplace is one adapter. eBay is the only live agent today; others stay manual-ledger until a licensed API is connected.
 - `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), and PriceCharting adapters.
-- `src/lib/ai/listing-compare.ts`: comparison orchestration, identity + TCGplayer-price extraction, synthesis, fallback, and trace.
+- `src/lib/ai/agent/harness.ts`: provider-agnostic `runAgent` loop (model decides tools, deterministic execute, budget hard-stop).
+- `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an AI key is set, exposes the same platform adapters to `runAgent` as tools (`createOpenAiAgentModel` is the OpenAI Responses function-calling model). Deterministic fan-out is always the floor and fallback; a configured platform the model skips is still searched deterministically.
+- `src/lib/ai/listing-compare.ts`: comparison orchestration — identity + TCGplayer-price extraction, the cross-platform market search (`runMarketSearch`), synthesis, fallback, and trace.
 - `src/app/api/agent/listing-compare`: the public comparison route.
 - `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
 - `src/lib/analytics.ts`: explicit PostHog events and privacy allowlist.

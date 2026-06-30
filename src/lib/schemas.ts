@@ -204,6 +204,19 @@ export const comparisonNarrativeSchema = z.object({
   cautions: z.array(z.string()),
 });
 
+// One entry per platform agent in the cross-platform fan-out: whether it ran,
+// was unavailable, or sat out because its API is not configured. Powers the
+// "sources checked" panel so the user can see exactly which marketplaces are live.
+export const comparisonPlatformResultSchema = z.object({
+  id: z.string(),
+  marketplace: marketplaceSchema,
+  label: z.string(),
+  status: z.enum(["complete", "fallback", "skipped"]),
+  configured: z.boolean(),
+  count: z.number().int().min(0).default(0),
+  detail: z.string().default(""),
+});
+
 export const comparisonReportSchema = z.object({
   status: z.enum(["needs_confirmation", "complete", "partial"]),
   request: comparisonRequestSchema,
@@ -215,6 +228,7 @@ export const comparisonReportSchema = z.object({
   narrative: comparisonNarrativeSchema,
   warnings: z.array(z.string()),
   trace: z.array(comparisonTraceSchema),
+  platforms: z.array(comparisonPlatformResultSchema).default([]),
   demoMode: z.boolean(),
   generatedAt: z.string(),
 });
@@ -276,6 +290,7 @@ export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
 export type ComparisonReport = z.infer<typeof comparisonReportSchema>;
 export type ComparisonTrace = z.infer<typeof comparisonTraceSchema>;
+export type ComparisonPlatformResult = z.infer<typeof comparisonPlatformResultSchema>;
 export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;

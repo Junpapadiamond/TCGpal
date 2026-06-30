@@ -5,10 +5,10 @@ import { normalizeListing, rankListings } from "@/lib/comparison/ranking";
 import {
   EbayUnavailableError,
   getEbayListingByUrl,
-  hasEbayCredentials,
   parseEbayUrl,
-  searchEbayAlternatives,
 } from "@/lib/external/ebay";
+import { getConfiguredPlatformAgents } from "@/lib/comparison/platforms";
+import { runMarketSearch } from "@/lib/ai/agent/market-agent";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
 import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
 import {
@@ -85,7 +85,8 @@ export async function runListingComparison(
       },
       warnings,
       trace,
-      demoMode: !hasEbayCredentials(),
+      platforms: [],
+      demoMode: getConfiguredPlatformAgents().length === 0,
       generatedAt,
     });
   }
@@ -112,38 +113,29 @@ export async function runListingComparison(
     });
   }
 
-  try {
-    const ebaySeeds = await searchEbayAlternatives(confirmedCard, request.buyer, fetcher);
-    seeds.push(...ebaySeeds);
+  // Cross-platform fan-out: every configured marketplace agent searches in
+  // parallel and reconciles into the same ledger. Each agent self-gates on its own
+  // API credentials, so this scales to whatever platforms the operator has wired —
+  // a failing one is isolated and never sinks the others.
+  const fanout = await runMarketSearch({ card: confirmedCard, buyer: request.buyer, fetcher });
+  seeds.push(...fanout.seeds);
+  warnings.push(...fanout.warnings);
+  trace.push(...fanout.traces);
+  const platformResults = fanout.results;
+
+  if (fanout.configuredCount === 0) {
+    // No live marketplace API is configured at all, so there is no real source to
+    // fail — fall back to labeled demo inventory the buyer cannot mistake for real
+    // offers, rather than masking the gap.
+    demoMode = true;
+    seeds.push(...demoListingSeeds);
+    warnings.push("No live marketplace API is configured. Showing labeled demo inventory instead.");
     trace.push({
       step: "marketplace_search",
-      actor: "eBay Browse adapter",
-      summary: `Loaded ${ebaySeeds.length} live active-listing candidates.`,
-      status: "complete",
+      actor: "Platform fan-out",
+      summary: "No marketplace API is configured; loaded labeled fixtures.",
+      status: "fallback",
     });
-  } catch (error) {
-    if (hasEbayCredentials()) {
-      // Credentials ARE configured, so this is a real live failure (auth, search
-      // access, rate limit, or timeout) — surface the actual reason instead of
-      // masking it with fake demo data the buyer would mistake for real offers.
-      warnings.push(`Live eBay listings could not be loaded: ${errorMessage(error)}`);
-      trace.push({
-        step: "marketplace_search",
-        actor: "eBay Browse adapter",
-        summary: `Live eBay search failed: ${errorMessage(error)}`,
-        status: "fallback",
-      });
-    } else {
-      demoMode = true;
-      seeds.push(...demoListingSeeds);
-      warnings.push(`${errorMessage(error)} Showing labeled demo inventory instead.`);
-      trace.push({
-        step: "marketplace_search",
-        actor: "eBay Browse adapter",
-        summary: "eBay credentials are not configured; loaded labeled fixtures.",
-        status: "fallback",
-      });
-    }
   }
 
   const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: confirmedCard.marketMid ?? null }));
@@ -171,6 +163,7 @@ export async function runListingComparison(
     narrative,
     warnings,
     trace,
+    platforms: platformResults,
     demoMode,
     generatedAt,
   });

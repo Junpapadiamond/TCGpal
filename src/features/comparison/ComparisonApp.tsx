@@ -938,6 +938,8 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         </div>
       )}
 
+      {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
+
       {report.rankedChoices.length > 0 && (
         <div>
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -1388,6 +1390,48 @@ function Metric({ label, value, compact = false }: { label: string; value: strin
       <p className="text-[10px] font-black uppercase tracking-[0.09em] text-[#64736c]">{label}</p>
       <p className={`${compact ? "text-sm" : "text-lg"} mt-1 font-mono font-black text-[#2f6f73]`}>{value}</p>
     </div>
+  );
+}
+
+// The cross-platform fan-out is transparent: show every marketplace agent and
+// whether it was queried, was unavailable, or sat out because its API is not
+// connected. This makes "works as long as you have the APIs" visible to the user.
+function SourcesChecked({ platforms }: { platforms: ComparisonReport["platforms"] }) {
+  const t = useT();
+  return (
+    <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+      <p className="eyebrow">
+        <Globe2 className="h-4 w-4" />
+        {t.result.sourcesTitle}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {platforms.map((platform) => {
+          const tone = platform.status === "complete"
+            ? "bg-[#dcecdf] text-[#2f6f73]"
+            : platform.status === "fallback"
+              ? "bg-[#fff0d5] text-[#8d6032]"
+              : "bg-[#ecefeb] text-[#64736c]";
+          const label = platform.status === "complete"
+            ? t.result.sourceQueried
+            : platform.status === "fallback"
+              ? t.result.sourceUnavailable
+              : t.result.sourceNotConnected;
+          return (
+            <div
+              key={platform.id}
+              className="inline-flex items-center gap-2 rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-1.5 text-sm"
+            >
+              <span className="font-bold text-[#24312f]">{platform.marketplace}</span>
+              <span className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${tone}`}>{label}</span>
+              {platform.status === "complete" && (
+                <span className="text-xs text-[#64736c]">{t.result.sourceCount(platform.count)}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-xs leading-5 text-[#64736c]">{t.result.sourcesHint}</p>
+    </section>
   );
 }
 
