@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
+import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import {
@@ -1442,7 +1443,9 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
     buyer: {
       country: "US",
       postalCode: values.postalCode.trim(),
-      taxRate: taxPercent === null ? null : taxPercent / 100,
+      // Manual rate wins as an override; otherwise estimate from the buyer's ZIP so
+      // landed cost reflects roughly what eBay charges. Null (unknown ZIP) → pre-tax total.
+      taxRate: taxPercent === null ? estimateSalesTaxRateFromZip(values.postalCode.trim()) : taxPercent / 100,
       desiredCondition: values.desiredCondition,
     },
     cardHint: {
