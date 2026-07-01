@@ -9,6 +9,7 @@ import type {
   ComparisonTrace,
   Marketplace,
   NormalizedListing,
+  PlatformSourceMode,
 } from "@/lib/schemas";
 
 // A "platform agent" is one marketplace the comparison can pull live listings
@@ -28,6 +29,7 @@ export type PlatformSeed = Omit<
   | "sellerTrustScore"
   | "evidenceCompletenessScore"
   | "safetyScore"
+  | "valueScore"
   | "eligible"
   | "exclusionReasons"
 >;
@@ -52,6 +54,12 @@ export type PlatformAgent = {
   marketplace: Marketplace;
   // Human label shown in the trace and the "sources checked" panel.
   label: string;
+  // How this agent actually sources listings — official API, a licensed/partner
+  // data provider, a cached reference index, or the manual-entry fallback. Purely
+  // informational for the UI; the fanout treats every agent identically regardless
+  // of sourceMode ("the UI should not care whether the source is official API,
+  // partner feed, licensed provider, cached index, or a future approved adapter").
+  sourceMode: PlatformSourceMode;
   // Env vars this agent needs. Surfaced for diagnostics only — never the values.
   requiredEnv: string[];
   isConfigured: () => boolean;
@@ -65,13 +73,49 @@ export const ebayPlatformAgent: PlatformAgent = {
   id: "ebay",
   marketplace: "eBay",
   label: "eBay Browse adapter",
+  sourceMode: "official_api",
   requiredEnv: ["EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET"],
   isConfigured: hasEbayCredentials,
   search: ({ card, buyer, fetcher, plan }) =>
     searchEbayAlternatives(card, buyer, fetcher, plan?.query),
 };
 
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent];
+// Roadmap marketplaces: each already implements the PlatformAgent interface —
+// proving the fanout, ranking, and "sources checked" UI are fully provider-agnostic
+// today — but stays permanently unconfigured (search() is unreachable) until a real
+// adapter (official API, partner feed, or licensed data provider) is wired behind
+// it. Turning one on then is "one adapter," exactly as intended: implement search(),
+// flip isConfigured() to check the new env key, done. TCGplayer's inline market
+// price already appears in the References panel via the Pokémon catalog adapter —
+// it is deliberately NOT duplicated here as a fake purchasable listing; a live
+// TCGplayer listings feed would need its own licensed marketplace-data adapter.
+function stubPlatformAgent(config: {
+  id: string;
+  marketplace: Marketplace;
+  label: string;
+  sourceMode: PlatformSourceMode;
+  requiredEnv: string[];
+}): PlatformAgent {
+  return {
+    ...config,
+    isConfigured: () => false,
+    search: async () => [],
+  };
+}
+
+const ROADMAP_AGENTS: PlatformAgent[] = [
+  stubPlatformAgent({ id: "tcgplayer", marketplace: "TCGplayer", label: "TCGplayer listings feed", sourceMode: "cached_index", requiredEnv: ["TCGPLAYER_API_KEY"] }),
+  stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket adapter", sourceMode: "licensed_provider", requiredEnv: ["CARDMARKET_API_KEY"] }),
+  stubPlatformAgent({ id: "snkrdunk", marketplace: "SNKRDUNK", label: "SNKRDUNK adapter", sourceMode: "licensed_provider", requiredEnv: ["SNKRDUNK_PROVIDER_KEY"] }),
+  stubPlatformAgent({ id: "mercari", marketplace: "Mercari", label: "Mercari adapter", sourceMode: "licensed_provider", requiredEnv: ["MERCARI_PROVIDER_KEY"] }),
+  stubPlatformAgent({ id: "whatnot", marketplace: "Whatnot", label: "Whatnot adapter", sourceMode: "licensed_provider", requiredEnv: ["WHATNOT_PROVIDER_KEY"] }),
+  stubPlatformAgent({ id: "xianyu", marketplace: "Xianyu", label: "Xianyu adapter", sourceMode: "licensed_provider", requiredEnv: ["XIANYU_PROVIDER_KEY"] }),
+  stubPlatformAgent({ id: "jihuanshe", marketplace: "集换社", label: "集换社 adapter", sourceMode: "licensed_provider", requiredEnv: ["JIHUANSHE_PROVIDER_KEY"] }),
+  stubPlatformAgent({ id: "yahoo-auctions-jp", marketplace: "Yahoo Auctions JP", label: "Yahoo Auctions JP adapter", sourceMode: "partner_feed", requiredEnv: ["YAHOO_AUCTIONS_JP_PARTNER_KEY"] }),
+  stubPlatformAgent({ id: "shopee-tw", marketplace: "Shopee Taiwan", label: "Shopee Taiwan adapter", sourceMode: "partner_feed", requiredEnv: ["SHOPEE_TW_PARTNER_KEY"] }),
+];
+
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
@@ -148,21 +192,21 @@ export function summarizePlatformOutcome(outcome: PlatformOutcome): {
       seeds: [],
       warning: `Live ${agent.marketplace} listings could not be loaded: ${outcome.error}`,
       trace: { step: "marketplace_search", actor: agent.label, summary: `Live ${agent.marketplace} search failed: ${outcome.error}`, status: "fallback" },
-      result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, status: "fallback", configured: true, count: 0, detail: outcome.error },
+      result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, sourceMode: agent.sourceMode, status: "fallback", configured: true, count: 0, detail: outcome.error },
     };
   }
   const seeds = outcome.seeds ?? [];
   return {
     seeds,
     trace: { step: "marketplace_search", actor: agent.label, summary: `Loaded ${seeds.length} live active-listing candidate${seeds.length === 1 ? "" : "s"}.`, status: "complete" },
-    result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, status: "complete", configured: true, count: seeds.length, detail: `${seeds.length} live candidate${seeds.length === 1 ? "" : "s"}.` },
+    result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, sourceMode: agent.sourceMode, status: "complete", configured: true, count: seeds.length, detail: `${seeds.length} live candidate${seeds.length === 1 ? "" : "s"}.` },
   };
 }
 
 // A configured-but-absent platform: surfaced in the sources panel (no warning,
 // no trace spam) so the operator sees which APIs would join once their keys are set.
 export function skippedPlatformResult(agent: PlatformAgent): ComparisonPlatformResult {
-  return { id: agent.id, marketplace: agent.marketplace, label: agent.label, status: "skipped", configured: false, count: 0, detail: `Not configured (needs ${agent.requiredEnv.join(", ")}).` };
+  return { id: agent.id, marketplace: agent.marketplace, label: agent.label, sourceMode: agent.sourceMode, status: "skipped", configured: false, count: 0, detail: `Not configured (needs ${agent.requiredEnv.join(", ")}).` };
 }
 
 // Fan out across every configured platform agent IN PARALLEL, isolating each

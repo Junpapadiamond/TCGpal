@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runListingComparison } from "@/lib/ai/listing-compare";
+import { applyQueryParser, runListingComparison } from "@/lib/ai/listing-compare";
 import { cardIdentityCandidateSchema, comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
 
 // Keep the orchestration tests hermetic: stub the Pokémon catalog response so we
@@ -88,9 +88,30 @@ const request: ComparisonRequest = {
     setCode: "SWSH7",
     cardNumber: "215/203",
     language: "English",
+    variant: "",
+    gradingClaim: "",
   },
   manualCandidates: [],
 };
+
+// A 2-party rendezvous: each side blocks in `arrive()` until BOTH have arrived. If two async
+// operations are dispatched sequentially rather than concurrently, the second never starts
+// until the first fully resolves — but the first can't resolve because it's waiting on the
+// second. That deadlocks (and the test times out), which is exactly the regression this proves.
+function makeBarrier(parties: number) {
+  let remaining = parties;
+  let resolveAll: () => void;
+  const ready = new Promise<void>((resolve) => {
+    resolveAll = resolve;
+  });
+  return {
+    arrive: async () => {
+      remaining -= 1;
+      if (remaining <= 0) resolveAll();
+      await ready;
+    },
+  };
+}
 
 describe("listing comparison agent", () => {
   it("keeps identity metadata optional for older and demo responses", () => {
@@ -116,7 +137,11 @@ describe("listing comparison agent", () => {
     expect(response.confirmedCard?.id).toBe("swsh7-215");
     expect(response.confirmedCard?.cardNumber).toBe("215/203");
     expect(response.demoMode).toBe(true);
-    expect(response.rankedChoices.length).toBe(3);
+    // Best Value + Cheapest + Safest + Best-documented — 4 roles across the 4
+    // distinct eligible listings here (the manually-entered Facebook source seed
+    // plus the 3 demo eBay fixtures).
+    expect(response.rankedChoices.length).toBe(4);
+    expect(response.rankedChoices[0]?.role).toBe("best_value");
     expect(response.candidates.some((candidate) => candidate.demo)).toBe(true);
   });
 
@@ -140,7 +165,7 @@ describe("listing comparison agent", () => {
   it("requires confirmation when identity input is ambiguous", async () => {
     const response = await runListingComparison({
       ...request,
-      cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English" },
+      cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
     }, { fetcher });
     expect(response.status).toBe("needs_confirmation");
     expect(response.rankedChoices).toEqual([]);
@@ -161,7 +186,7 @@ describe("listing comparison agent", () => {
     const response = await runListingComparison({
       ...request,
       sourceListing: { ...request.sourceListing, title: "" },
-      cardHint: { game: "pokemon", name: "Missingmon", setCode: "", cardNumber: "", language: "English" },
+      cardHint: { game: "pokemon", name: "Missingmon", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
     }, { fetcher: emptyCatalogFetcher });
 
     expect(response.status).toBe("needs_confirmation");
@@ -202,7 +227,7 @@ describe("listing comparison agent", () => {
     const response = await runListingComparison({
       ...request,
       sourceListing: { ...request.sourceListing, title: "" },
-      cardHint: { game: "pokemon", name: "Dialga", setCode: "Team plasma", cardNumber: "N", language: "English" },
+      cardHint: { game: "pokemon", name: "Dialga", setCode: "Team plasma", cardNumber: "N", language: "English", variant: "", gradingClaim: "" },
     }, { fetcher: plasmaFetcher });
 
     expect(response.status).toBe("needs_confirmation");
@@ -213,13 +238,40 @@ describe("listing comparison agent", () => {
   it("continues after the user confirms a catalog identity", async () => {
     const response = await runListingComparison({
       ...request,
-      cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English" },
+      cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
       confirmedCardId: "swsh7-215",
     }, { fetcher });
     expect(response.status).toBe("complete");
     expect(response.confirmedCard?.id).toBe("swsh7-215");
     expect(response.confirmedCard?.rarity).toBe("Rare Rainbow");
     expect(response.confirmedCard?.setSymbolUrl).toBe("https://images.pokemontcg.io/swsh7/symbol.png");
+  });
+
+  it("hero search box: one free-text query auto-confirms exactly like the structured multi-field form", async () => {
+    const response = await runListingComparison({
+      ...request,
+      query: "Umbreon VMAX 215/203",
+      cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+    }, { fetcher });
+    expect(response.status).toBe("complete");
+    expect(response.confirmedCard?.id).toBe("swsh7-215");
+    expect(response.trace.some((entry) => entry.actor === "Smart query parser")).toBe(true);
+  });
+
+
+  it("hero search box: an explicit structured cardHint field is not overwritten by the query parse", () => {
+    const merged = applyQueryParser(
+      {
+        ...request,
+        query: "Pikachu 25/102",
+        cardHint: { game: "pokemon", name: "Umbreon VMAX", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      [],
+    );
+    // Explicit name wins over the query's parsed name ("Pikachu").
+    expect(merged.cardHint.name).toBe("Umbreon VMAX");
+    // Blank cardNumber is filled from the query's parsed collector number.
+    expect(merged.cardHint.cardNumber).toBe("25/102");
   });
 
   it("routes One Piece requests to the bundled OPTCG catalog and confirms offline", async () => {
@@ -232,7 +284,7 @@ describe("listing comparison agent", () => {
     const response = await runListingComparison(
       {
         ...request,
-        cardHint: { game: "onePiece", name: "Monkey.D.Luffy", setCode: "OP-01", cardNumber: "OP01-024", language: "English" },
+        cardHint: { game: "onePiece", name: "Monkey.D.Luffy", setCode: "OP-01", cardNumber: "OP01-024", language: "English", variant: "", gradingClaim: "" },
         confirmedCardId: "OP01-024",
       },
       { fetcher: offline },
@@ -256,7 +308,7 @@ describe("listing comparison agent", () => {
       {
         ...request,
         sourceListing: { ...request.sourceListing, title: "", url: "" },
-        cardHint: { game: "onePiece", name: "luffy", setCode: "", cardNumber: "", language: "English" },
+        cardHint: { game: "onePiece", name: "luffy", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
       },
       { fetcher: offline },
     );
@@ -272,7 +324,7 @@ describe("listing comparison agent", () => {
     const response = await runListingComparison(
       {
         ...request,
-        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English" },
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
         confirmedCardId: "swsh7-215",
         manualCandidates: [
           { marketplace: "TCGplayer", url: "", title: "Umbreon VMAX 215/203", price: 980, shipping: 0, claimedCondition: "Near Mint" },
@@ -287,6 +339,52 @@ describe("listing comparison agent", () => {
     expect(marketplaces).toContain("Mercari");
     expect(response.trace.some((entry) => entry.actor === "Cross-platform ledger")).toBe(true);
   });
+
+  it("dispatches the marketplace fan-out and reference pricing concurrently, not sequentially", async () => {
+    process.env.EBAY_CLIENT_ID = "id";
+    process.env.EBAY_CLIENT_SECRET = "secret";
+    process.env.PRICECHARTING_API_TOKEN = "token";
+    const { resetEbayTokenCacheForTests } = await import("@/lib/external/ebay");
+    resetEbayTokenCacheForTests();
+
+    const barrier = makeBarrier(2);
+    const concurrentFetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("api.pokemontcg.io")) {
+        if (new URL(url).pathname === "/v2/cards/swsh7-215") {
+          return { ok: true, status: 200, json: async () => ({ data: catalogResponse.data[1] }) } as Response;
+        }
+        return { ok: true, status: 200, json: async () => catalogResponse } as Response;
+      }
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 7200 }) } as Response;
+      }
+      if (url.includes("api.ebay.com/buy/browse")) {
+        // Blocks until PriceCharting has also been dispatched — proves the two calls were
+        // in flight at the same time (references no longer waits for the fan-out to finish).
+        await barrier.arrive();
+        return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+      }
+      if (url.includes("pricecharting.com")) {
+        await barrier.arrive();
+        return { ok: true, status: 200, json: async () => ({ products: [] }) } as Response;
+      }
+      throw new Error(`unexpected fetch in concurrency test: ${url}`);
+    }) as unknown as typeof fetch;
+
+    try {
+      const response = await runListingComparison(
+        { ...request, cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" }, confirmedCardId: "swsh7-215" },
+        { fetcher: concurrentFetcher },
+      );
+      expect(response.status).not.toBe("needs_confirmation");
+    } finally {
+      delete process.env.EBAY_CLIENT_ID;
+      delete process.env.EBAY_CLIENT_SECRET;
+      delete process.env.PRICECHARTING_API_TOKEN;
+      resetEbayTokenCacheForTests();
+    }
+  }, 5000);
 
   it("surfaces a lookup-unavailable warning (and retries) instead of a silent 'no match'", async () => {
     // The Pokémon catalog API is down: a transient failure must not look like
@@ -304,7 +402,7 @@ describe("listing comparison agent", () => {
       {
         ...request,
         sourceListing: { ...request.sourceListing, title: "", url: "" },
-        cardHint: { game: "pokemon", name: "Zzqqx Nonexistent", setCode: "", cardNumber: "", language: "English" },
+        cardHint: { game: "pokemon", name: "Zzqqx Nonexistent", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
       },
       { fetcher: failing },
     );
@@ -324,7 +422,7 @@ describe("listing comparison agent", () => {
       {
         ...request,
         sourceListing: { ...request.sourceListing, title: "", url: "" },
-        cardHint: { game: "onePiece", name: "Luffy", setCode: "EB-02", cardNumber: "", language: "English" },
+        cardHint: { game: "onePiece", name: "Luffy", setCode: "EB-02", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
       },
       { fetcher: offline },
     );
@@ -349,7 +447,7 @@ describe("listing comparison agent", () => {
       {
         ...request,
         sourceListing: { ...request.sourceListing, title: "", url: "" },
-        cardHint: { game: "onePiece", name: "Luffy", setCode: "", cardNumber: "", language: "English" },
+        cardHint: { game: "onePiece", name: "Luffy", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
       },
       { fetcher: offline },
     );

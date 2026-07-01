@@ -3,12 +3,30 @@ import { z } from "zod";
 export const marketplaceSchema = z.enum([
   "eBay",
   "TCGplayer",
+  "Cardmarket",
   "Facebook",
   "Reddit",
   "Mercari",
   "Whatnot",
+  "SNKRDUNK",
+  "Xianyu",
+  "集换社",
+  "Yahoo Auctions JP",
+  "Shopee Taiwan",
   "Local shop",
   "Other",
+]);
+
+// How a marketplace agent actually sources its listings — surfaced in the "sources
+// checked" panel so the operator (and eventually the buyer) can see whether a
+// platform is live via an official API, requires a partner/licensed integration, is
+// served from a cached index, or is the universal manual-entry fallback.
+export const platformSourceModeSchema = z.enum([
+  "official_api",
+  "partner_feed",
+  "licensed_provider",
+  "cached_index",
+  "manual_fallback",
 ]);
 
 export const conditionClaimSchema = z.enum([
@@ -87,6 +105,16 @@ export const cardHintSchema = z.object({
   setCode: z.string().trim().default(""),
   cardNumber: z.string().trim().default(""),
   language: z.string().trim().default("English"),
+  // Parsed from a free-text search query (e.g. "Gold Star", "Alt Art", "Promo") —
+  // disambiguation context, not a separate search field. Raw singles only today;
+  // ranking does not act on this (see gradingClaim below).
+  variant: z.string().trim().default(""),
+  // Parsed from a free-text query like "PSA 10" — captured as identity metadata
+  // (useful to disambiguate a graded listing's underlying raw print) even though
+  // TCGpal's ranking is raw-singles-only today and does not search for or rank
+  // graded listings. Supporting graded-listing comparison is a separate, explicit
+  // product-scope decision, not implied by capturing this field.
+  gradingClaim: z.string().trim().default(""),
 });
 
 // A quick cross-platform listing the buyer enters by hand. Kept minimal so a
@@ -104,12 +132,20 @@ export const manualCandidateSchema = z.object({
 export const comparisonRequestSchema = z.object({
   sourceListing: sourceListingSchema,
   buyer: buyerContextSchema,
+  // The hero search box: one free-text string ("P-096 One Piece Japanese Promo").
+  // When present, it is deterministically parsed into cardHint fields before
+  // identity resolution runs — this is the "one box, one click" entry point.
+  // Any cardHint field the caller also sets explicitly is NOT overwritten by the
+  // parse (progressive-disclosure detail fields always win over the free-text guess).
+  query: z.string().trim().max(200).optional(),
   cardHint: cardHintSchema.default({
     game: "pokemon",
     name: "",
     setCode: "",
     cardNumber: "",
     language: "English",
+    variant: "",
+    gradingClaim: "",
   }),
   // Lightweight listings the buyer found on other platforms (TCGplayer,
   // Facebook, Mercari, Whatnot, local shop...). They are user-supplied facts —
@@ -161,6 +197,9 @@ export const normalizedListingSchema = z.object({
   sellerTrustScore: z.number().int().min(0).max(100),
   evidenceCompletenessScore: z.number().int().min(0).max(100),
   safetyScore: z.number().int().min(0).max(100),
+  // Composite "best value" score: price-vs-market + safety + evidence. Deterministic —
+  // computed alongside the other scores in normalizeListing(), never AI-assigned.
+  valueScore: z.number().int().min(0).max(100),
   eligible: z.boolean(),
   exclusionReasons: z.array(z.string()),
   observedAt: z.string(),
@@ -168,6 +207,7 @@ export const normalizedListingSchema = z.object({
 });
 
 export const rankedChoiceRoleSchema = z.enum([
+  "best_value",
   "lowest_landed_cost",
   "safest_listing",
   "best_condition_evidence",
@@ -211,6 +251,7 @@ export const comparisonPlatformResultSchema = z.object({
   id: z.string(),
   marketplace: marketplaceSchema,
   label: z.string(),
+  sourceMode: platformSourceModeSchema,
   status: z.enum(["complete", "fallback", "skipped"]),
   configured: z.boolean(),
   count: z.number().int().min(0).default(0),
@@ -283,6 +324,7 @@ export type SourceListing = z.infer<typeof sourceListingSchema>;
 export type BuyerContext = z.infer<typeof buyerContextSchema>;
 export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>;
 export type TcgGame = z.infer<typeof tcgGameSchema>;
+export type CardHint = z.infer<typeof cardHintSchema>;
 export type ManualCandidate = z.infer<typeof manualCandidateSchema>;
 export type CardIdentityCandidate = z.infer<typeof cardIdentityCandidateSchema>;
 export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
@@ -291,6 +333,7 @@ export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
 export type ComparisonReport = z.infer<typeof comparisonReportSchema>;
 export type ComparisonTrace = z.infer<typeof comparisonTraceSchema>;
 export type ComparisonPlatformResult = z.infer<typeof comparisonPlatformResultSchema>;
+export type PlatformSourceMode = z.infer<typeof platformSourceModeSchema>;
 export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;

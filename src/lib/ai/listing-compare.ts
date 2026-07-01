@@ -8,6 +8,7 @@ import {
   parseEbayUrl,
 } from "@/lib/external/ebay";
 import { getConfiguredPlatformAgents } from "@/lib/comparison/platforms";
+import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { runMarketSearch } from "@/lib/ai/agent/market-agent";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
 import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
@@ -23,6 +24,7 @@ import {
   comparisonNarrativeSchema,
   comparisonReportSchema,
   comparisonRequestSchema,
+  type CardHint,
   type CardIdentityCandidate,
   type ComparisonReference,
   type ComparisonReport,
@@ -52,13 +54,14 @@ export async function runListingComparison(
     now?: () => Date;
   } = {},
 ): Promise<ComparisonReport> {
-  const request = comparisonRequestSchema.parse(rawRequest);
   const fetcher = dependencies.fetcher ?? fetch;
   const now = dependencies.now ?? (() => new Date());
   const generatedAt = now().toISOString();
   const warnings: string[] = [];
   const trace: ComparisonTrace[] = [];
   let demoMode = false;
+
+  const request = applyQueryParser(comparisonRequestSchema.parse(rawRequest), trace);
 
   const sourceResult = await ingestSourceListing(request, fetcher, warnings, trace);
   const identities = await identifyCards(request, sourceResult, fetcher, warnings, trace);
@@ -97,6 +100,11 @@ export async function runListingComparison(
     summary: `Confirmed ${confirmedCard.name}, ${confirmedCard.setName} ${confirmedCard.cardNumber}.`,
     status: "complete",
   });
+
+  // References only need the confirmed card, not the ranked listings, so kick them off
+  // now to overlap with the marketplace fan-out below instead of waiting for it — this
+  // removes the PriceCharting round trip from the critical path entirely.
+  const referencesPromise = getReferences(confirmedCard, fetcher, trace, generatedAt);
 
   const seeds: typeof demoListingSeeds = [];
   const manualSeed = sourceToSeed(sourceResult, confirmedCard, generatedAt);
@@ -147,7 +155,7 @@ export async function runListingComparison(
     status: "complete",
   });
 
-  const references = await getReferences(confirmedCard, fetcher, trace, generatedAt);
+  const references = await referencesPromise;
   const narrative = await buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
   const partial = normalized.filter((listing) => listing.eligible).length === 0
     || (!demoMode && references.every((reference) => reference.status !== "used"));
@@ -167,6 +175,51 @@ export async function runListingComparison(
     demoMode,
     generatedAt,
   });
+}
+
+// The hero search box entry point: deterministically decompose one free-text
+// query into cardHint fields, then merge — never overwriting a field the caller
+// (the progressive-disclosure detail form) explicitly set. On the game/language
+// fields, which have non-blank schema defaults ("pokemon"/"English"), a caller
+// that hasn't touched those pickers is indistinguishable from one who explicitly
+// chose the default — so a confident signal from the query text wins in that
+// case. This only matters when both a query AND explicit conflicting cardHint
+// fields are sent at once; the primary hero-search flow sends query alone with a
+// blank cardHint, where this is unambiguous.
+export function applyQueryParser(request: ComparisonRequest, trace: ComparisonTrace[]): ComparisonRequest {
+  const query = request.query?.trim();
+  if (!query) return request;
+
+  const parsed = parseCardQuery(query);
+  const cardHint: CardHint = {
+    game: request.cardHint.game !== "pokemon" ? request.cardHint.game : (parsed.game ?? request.cardHint.game),
+    name: request.cardHint.name || parsed.name,
+    setCode: request.cardHint.setCode,
+    cardNumber: request.cardHint.cardNumber || parsed.cardNumber,
+    language: request.cardHint.language !== "English" ? request.cardHint.language : (parsed.language || request.cardHint.language),
+    variant: request.cardHint.variant || parsed.variant,
+    gradingClaim: request.cardHint.gradingClaim || parsed.gradingClaim,
+  };
+
+  const derived = [
+    cardHint.name && `name "${cardHint.name}"`,
+    cardHint.cardNumber && `collector number ${cardHint.cardNumber}`,
+    parsed.game && `game ${parsed.game}`,
+    parsed.language && `language ${parsed.language}`,
+    cardHint.variant && `variant ${cardHint.variant}`,
+    cardHint.gradingClaim && `grading claim ${cardHint.gradingClaim}`,
+  ].filter(Boolean);
+
+  trace.push({
+    step: "query_parsing",
+    actor: "Smart query parser",
+    summary: derived.length
+      ? `Parsed "${query}" into ${derived.join(", ")}.`
+      : `Could not derive structured fields from "${query}"; treating it as a plain name search.`,
+    status: "complete",
+  });
+
+  return { ...request, cardHint };
 }
 
 async function ingestSourceListing(

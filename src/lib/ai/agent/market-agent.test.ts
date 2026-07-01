@@ -52,7 +52,7 @@ function seed(id: string, marketplace: Marketplace): PlatformSeed {
 }
 
 function ebayMock(search: PlatformAgent["search"]): PlatformAgent {
-  return { id: "ebay", marketplace: "eBay", label: "eBay Browse adapter", requiredEnv: ["EBAY_CLIENT_ID"], isConfigured: () => true, search };
+  return { id: "ebay", marketplace: "eBay", label: "eBay Browse adapter", sourceMode: "official_api", requiredEnv: ["EBAY_CLIENT_ID"], isConfigured: () => true, search };
 }
 
 function scriptedModel(decisions: AgentDecision[]): AgentModel {

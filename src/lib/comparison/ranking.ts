@@ -59,6 +59,36 @@ export function calculateSellerTrustScore(signals: SellerTrustSignals) {
   return Math.min(100, score);
 }
 
+// Maps a listing's price relative to the market anchor onto a 0-100 component: at
+// or below 70% of market scores 100 (clearly below market — a strong "best value"
+// signal), at market (100%) scores 50, 30%+ above market scores 0. When no market
+// price is known, returns a neutral midpoint so the composite still ranks on
+// safety/evidence alone rather than collapsing to zero.
+export function calculatePriceComponent(landedOrPreTaxTotal: number, marketPrice: number | null) {
+  if (marketPrice === null || marketPrice <= 0) return 50;
+  const ratio = landedOrPreTaxTotal / marketPrice;
+  if (ratio <= 0.7) return 100;
+  // "+ 0" normalizes -0 (floating-point rounding can land exactly on a boundary,
+  // e.g. ratio === 1.3, and produce -0, which fails strict equality against 0).
+  if (ratio <= 1.0) return Math.round(100 - ((ratio - 0.7) / 0.3) * 50) + 0;
+  if (ratio <= 1.3) return Math.round(50 - ((ratio - 1.0) / 0.3) * 50) + 0;
+  return 0;
+}
+
+// Best Value is a deterministic composite, not a fourth independent signal: price
+// leads (below-market is the strongest "best value" tell), safety and evidence
+// keep it from picking a cheap-but-risky listing. Weights are a product choice,
+// not a derived constant — tune here if the default lens starts feeling wrong.
+const VALUE_WEIGHTS = { price: 0.5, safety: 0.3, evidence: 0.2 };
+
+export function calculateValueScore(input: { priceComponent: number; safetyScore: number; evidenceCompletenessScore: number }) {
+  return Math.round(
+    input.priceComponent * VALUE_WEIGHTS.price
+    + input.safetyScore * VALUE_WEIGHTS.safety
+    + input.evidenceCompletenessScore * VALUE_WEIGHTS.evidence,
+  );
+}
+
 export function calculateEvidenceCompletenessScore(evidence: ListingEvidence) {
   // Photo count is the one evidence signal we can actually verify on an auto-fetched
   // listing, so it carries the score. The content flags (front/back, corners, surface,
@@ -89,6 +119,7 @@ export function normalizeListing(input: {
     | "sellerTrustScore"
     | "evidenceCompletenessScore"
     | "safetyScore"
+    | "valueScore"
     | "eligible"
     | "exclusionReasons"
   >;
@@ -106,7 +137,10 @@ export function normalizeListing(input: {
   const sellerTrustScore = calculateSellerTrustScore(listing.seller);
   const evidenceCompletenessScore = calculateEvidenceCompletenessScore(listing.evidence);
   const safetyScore = Math.round((sellerTrustScore * 0.6) + (evidenceCompletenessScore * 0.4));
-  const exclusionReasons = getExclusionReasons(listing, input.marketPrice ?? null);
+  const marketPrice = input.marketPrice ?? null;
+  const priceComponent = calculatePriceComponent(estimatedLandedCost ?? preTaxTotal, marketPrice);
+  const valueScore = calculateValueScore({ priceComponent, safetyScore, evidenceCompletenessScore });
+  const exclusionReasons = getExclusionReasons(listing, marketPrice);
 
   return normalizedListingSchema.parse({
     ...listing,
@@ -116,6 +150,7 @@ export function normalizeListing(input: {
     sellerTrustScore,
     evidenceCompletenessScore,
     safetyScore,
+    valueScore,
     eligible: exclusionReasons.length === 0,
     exclusionReasons,
   });
@@ -128,21 +163,37 @@ export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
   const selected = new Set<string>();
   const choices: RankedChoice[] = [];
 
-  const cheapest = [...eligible].sort((a, b) => {
-    const aCost = a.estimatedLandedCost ?? a.preTaxTotal;
-    const bCost = b.estimatedLandedCost ?? b.preTaxTotal;
-    return aCost - bCost || b.safetyScore - a.safetyScore;
-  })[0];
-
+  // Best Value leads: the flagship recommendation — a deterministic composite of
+  // price-vs-market, seller trust, and evidence, not just "cheapest." This is the
+  // product's default answer to "which one do I buy."
+  const bestValue = [...eligible].sort((a, b) => b.valueScore - a.valueScore || a.preTaxTotal - b.preTaxTotal)[0];
   choices.push(makeChoice(
-    "lowest_landed_cost",
-    cheapest,
-    "Lowest landed cost",
-    cheapest.estimatedTax === null
-      ? `Lowest pre-tax total at $${cheapest.preTaxTotal.toFixed(2)}; tax is not included.`
-      : `Lowest estimated landed cost at $${cheapest.estimatedLandedCost?.toFixed(2)}.`,
+    "best_value",
+    bestValue,
+    "Best value",
+    `Best combination of price vs. market, seller trust, and evidence (${bestValue.valueScore}/100).`,
   ));
-  selected.add(cheapest.id);
+  selected.add(bestValue.id);
+
+  const cheapest = pickDistinct(
+    [...eligible].sort((a, b) => {
+      const aCost = a.estimatedLandedCost ?? a.preTaxTotal;
+      const bCost = b.estimatedLandedCost ?? b.preTaxTotal;
+      return aCost - bCost || b.safetyScore - a.safetyScore;
+    }),
+    selected,
+  );
+  if (cheapest) {
+    choices.push(makeChoice(
+      "lowest_landed_cost",
+      cheapest,
+      "Cheapest usable",
+      cheapest.estimatedTax === null
+        ? `Lowest pre-tax total at $${cheapest.preTaxTotal.toFixed(2)}; tax is not included.`
+        : `Lowest estimated landed cost at $${cheapest.estimatedLandedCost?.toFixed(2)}.`,
+    ));
+    selected.add(cheapest.id);
+  }
 
   const safest = pickDistinct(
     [...eligible].sort((a, b) => b.safetyScore - a.safetyScore || a.preTaxTotal - b.preTaxTotal),
@@ -152,7 +203,7 @@ export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
     choices.push(makeChoice(
       "safest_listing",
       safest,
-      "Safest listing",
+      "Safest buy",
       `Highest combined seller and listing-evidence score (${safest.safetyScore}/100).`,
     ));
     selected.add(safest.id);
@@ -170,7 +221,7 @@ export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
     choices.push(makeChoice(
       "best_condition_evidence",
       bestEvidence,
-      "Best condition evidence",
+      "Best documented",
       `Most complete photo and condition evidence (${bestEvidence.evidenceCompletenessScore}/100); this is not a grade prediction.`,
     ));
   }

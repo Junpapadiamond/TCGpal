@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  ebayPlatformAgent,
+  getPlatformAgents,
   runPlatformFanout,
   searchPlatformWithTimeout,
   summarizePlatformOutcome,
@@ -51,6 +53,7 @@ function seed(id: string, marketplace: Marketplace): PlatformSeed {
 function mockAgent(overrides: Partial<PlatformAgent> & Pick<PlatformAgent, "id" | "marketplace">): PlatformAgent {
   return {
     label: `${overrides.marketplace} adapter`,
+    sourceMode: "official_api",
     requiredEnv: [`${overrides.id.toUpperCase()}_KEY`],
     isConfigured: () => true,
     search: async () => [],
@@ -111,6 +114,12 @@ describe("platform fan-out", () => {
     expect(result.seeds).toEqual([]);
   });
 
+  it("round-trips sourceMode through the sources-panel result", async () => {
+    const agents = [mockAgent({ id: "ebay", marketplace: "eBay", sourceMode: "official_api", search: async () => [seed("ebay-1", "eBay")] })];
+    const result = await runPlatformFanout({ card, buyer, fetcher, agents });
+    expect(result.results[0]?.sourceMode).toBe("official_api");
+  });
+
   it("times out a hung agent so it cannot stall the fan-out", async () => {
     const agent = mockAgent({ id: "hung", marketplace: "eBay", search: () => new Promise<PlatformSeed[]>(() => {}) });
     await expect(searchPlatformWithTimeout(agent, { card, buyer, fetcher }, 10)).rejects.toThrow(/timed out/);
@@ -129,5 +138,37 @@ describe("platform fan-out", () => {
     expect(bad.trace.status).toBe("fallback");
     expect(bad.warning).toContain("boom");
     expect(bad.seeds).toEqual([]);
+  });
+});
+
+describe("default registry (roadmap adapters)", () => {
+  it("keeps eBay as the one configured-by-default (real) agent", () => {
+    const agents = getPlatformAgents();
+    expect(agents).toContain(ebayPlatformAgent);
+    expect(ebayPlatformAgent.sourceMode).toBe("official_api");
+  });
+
+  it("registers roadmap marketplaces behind the same interface, all self-gated off until wired", async () => {
+    const agents = getPlatformAgents();
+    const roadmap = agents.filter((agent) => agent.id !== "ebay");
+
+    // Proves the fanout/UI are provider-agnostic today: every roadmap agent implements
+    // search() and is registered, but none is configured, so none joins a real fan-out.
+    expect(roadmap.length).toBeGreaterThan(0);
+    for (const agent of roadmap) {
+      expect(agent.isConfigured()).toBe(false);
+      await expect(agent.search({ card, buyer, fetcher })).resolves.toEqual([]);
+    }
+
+    const result = await runPlatformFanout({ card, buyer, fetcher: fetcher as unknown as typeof fetch, agents: [ebayPlatformAgent, ...roadmap] });
+    expect(result.configuredCount).toBe(0); // eBay unconfigured too (no env creds in this test)
+    const skipped = result.results.filter((r) => r.status === "skipped");
+    expect(skipped.length).toBe(agents.length);
+  });
+
+  it("does not duplicate the TCGplayer reference price as a fake purchasable listing", () => {
+    const tcgplayer = getPlatformAgents().find((agent) => agent.id === "tcgplayer");
+    expect(tcgplayer?.sourceMode).toBe("cached_index");
+    expect(tcgplayer?.isConfigured()).toBe(false);
   });
 });

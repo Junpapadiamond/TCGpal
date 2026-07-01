@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getEbayListingByUrl, parseEbayUrl, searchEbayAlternatives } from "@/lib/external/ebay";
+import {
+  getEbayListingByUrl,
+  parseEbayUrl,
+  resetEbayTokenCacheForTests,
+  searchEbayAlternatives,
+} from "@/lib/external/ebay";
 import type { CardIdentityCandidate } from "@/lib/schemas";
 
 describe("eBay URL boundary", () => {
@@ -27,10 +32,12 @@ describe("eBay active-listing search", () => {
   beforeEach(() => {
     process.env.EBAY_CLIENT_ID = "test-id";
     process.env.EBAY_CLIENT_SECRET = "test-secret";
+    resetEbayTokenCacheForTests();
   });
   afterEach(() => {
     delete process.env.EBAY_CLIENT_ID;
     delete process.env.EBAY_CLIENT_SECRET;
+    resetEbayTokenCacheForTests();
   });
 
   const card = {
@@ -109,5 +116,22 @@ describe("eBay active-listing search", () => {
 
     const results = await searchEbayAlternatives(card, buyer, fetcher);
     expect(results[0]?.shipping).toBe(0);
+  });
+
+  it("caches the OAuth token across requests instead of refetching it every time", async () => {
+    let tokenCalls = 0;
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        tokenCalls += 1;
+        return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 7200 }) } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+    }) as unknown as typeof fetch;
+
+    await searchEbayAlternatives(card, buyer, fetcher);
+    await searchEbayAlternatives(card, buyer, fetcher);
+
+    expect(tokenCalls).toBe(1);
   });
 });

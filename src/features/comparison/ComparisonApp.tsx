@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
+import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import {
@@ -64,6 +65,11 @@ const conditions: ConditionClaim[] = [
 ];
 
 type ComparisonForm = {
+  // The hero search box: one free-text query, deterministically parsed server-side
+  // into game/name/collector number/language/variant/grading claim. This is the
+  // primary "one box, one click" entry point; the fields below stay available as
+  // progressive disclosure for a buyer who wants to fill them in separately.
+  heroQuery: string;
   game: TcgGame;
   url: string;
   marketplace: Marketplace;
@@ -109,6 +115,7 @@ const emptyLedgerRow: LedgerRow = {
 };
 
 const defaultValues: ComparisonForm = {
+  heroQuery: "",
   game: "pokemon",
   url: "",
   marketplace: "eBay",
@@ -151,12 +158,14 @@ function ComparisonExperience() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [listingOpen, setListingOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
 
+  const heroQuery = useWatch({ control: form.control, name: "heroQuery" });
   const marketplace = useWatch({ control: form.control, name: "marketplace" });
   const sourceUrl = useWatch({ control: form.control, name: "url" });
   const postalCode = useWatch({ control: form.control, name: "postalCode" });
@@ -167,6 +176,10 @@ function ComparisonExperience() {
   const game = useWatch({ control: form.control, name: "game" });
   const ph = game === "onePiece" ? t.form.phOnePiece : t.form.ph;
   const isManual = marketplace !== "eBay" || !sourceUrl.trim();
+  // Live, client-side preview of the same deterministic parse the server runs —
+  // shows the buyer what TCGpal understood from their search before submitting,
+  // so a wrong read is obvious immediately rather than after a round trip.
+  const heroPreview = useMemo(() => (heroQuery.trim().length >= 2 ? parseCardQuery(heroQuery) : null), [heroQuery]);
 
   useEffect(() => {
     initializeAnalytics();
@@ -208,6 +221,11 @@ function ComparisonExperience() {
   }, [postalCode, taxRatePercent]);
 
   async function submitComparison(values: ComparisonForm, confirmedCardId?: string) {
+    if (!values.heroQuery.trim() && !values.cardName.trim()) {
+      form.setError("heroQuery", { type: "required", message: t.form.heroSearchRequired });
+      return;
+    }
+
     if (report && !confirmedCardId) {
       trackEvent("second_comparison_started", {
         marketplace: values.marketplace,
@@ -355,39 +373,84 @@ function ComparisonExperience() {
           </div>
 
           <form className="p-5 sm:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
-            <fieldset className="mb-5">
-              <legend className="mb-2 text-sm font-bold text-[#52635c]">{t.form.gameLabel}</legend>
-              <div className="inline-flex rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-1">
-                {(["pokemon", "onePiece"] as const).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    aria-pressed={game === option}
-                    onClick={() => form.setValue("game", option)}
-                    className={`rounded px-3 py-1.5 text-sm font-bold transition ${
-                      game === option ? "bg-[#2f6f73] text-white" : "text-[#52635c] hover:text-[#2f6f73]"
-                    }`}
-                  >
-                    {t.form.games[option]}
-                  </button>
-                ))}
+            <label className="field">
+              <span className="sr-only">{t.form.heroSearchLabel}</span>
+              <div className="input-with-icon">
+                <SearchCheck className="h-5 w-5" />
+                <input
+                  {...form.register("heroQuery")}
+                  placeholder={t.form.heroSearchPlaceholder}
+                  className="text-lg"
+                  autoFocus
+                />
               </div>
-            </fieldset>
-            <div className="grid gap-4 md:grid-cols-3">
-              <label className="field">
-                <span>{t.form.cardName}</span>
-                <input {...form.register("cardName")} placeholder={ph.cardName} required />
-              </label>
-              <label className="field">
-                <span>{t.form.set}</span>
-                <input {...form.register("setCode")} placeholder={ph.set} />
-              </label>
-              <label className="field">
-                <span>{t.form.collectorNumber}</span>
-                <input {...form.register("cardNumber")} placeholder={ph.collectorNumber} />
-              </label>
-            </div>
-            <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
+            </label>
+            {form.formState.errors.heroQuery && (
+              <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
+            )}
+            {heroPreview && (
+              <p className="mt-2 text-sm leading-6 text-[#64736c]">
+                <span className="font-bold text-[#2f6f73]">{t.form.heroParsedPrefix}</span>{" "}
+                {[
+                  heroPreview.game && t.form.games[heroPreview.game],
+                  heroPreview.name,
+                  heroPreview.cardNumber,
+                  heroPreview.language,
+                  heroPreview.variant,
+                  heroPreview.gradingClaim,
+                ].filter(Boolean).join(" · ") || t.form.heroParsedNothing}
+              </p>
+            )}
+
+            <button
+              className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
+              type="button"
+              aria-expanded={detailsOpen}
+              onClick={() => setDetailsOpen((current) => !current)}
+            >
+              <span className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-[#2f6f73]" />
+                {t.form.detailsToggle}
+              </span>
+              <ChevronDown className={`h-4 w-4 transition ${detailsOpen ? "rotate-180" : ""}`} />
+            </button>
+            {detailsOpen && (
+              <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
+                <fieldset className="mb-5">
+                  <legend className="mb-2 text-sm font-bold text-[#52635c]">{t.form.gameLabel}</legend>
+                  <div className="inline-flex rounded-md border border-[#d6ded5] bg-white p-1">
+                    {(["pokemon", "onePiece"] as const).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        aria-pressed={game === option}
+                        onClick={() => form.setValue("game", option)}
+                        className={`rounded px-3 py-1.5 text-sm font-bold transition ${
+                          game === option ? "bg-[#2f6f73] text-white" : "text-[#52635c] hover:text-[#2f6f73]"
+                        }`}
+                      >
+                        {t.form.games[option]}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <label className="field">
+                    <span>{t.form.cardName}</span>
+                    <input {...form.register("cardName")} placeholder={ph.cardName} />
+                  </label>
+                  <label className="field">
+                    <span>{t.form.set}</span>
+                    <input {...form.register("setCode")} placeholder={ph.set} />
+                  </label>
+                  <label className="field">
+                    <span>{t.form.collectorNumber}</span>
+                    <input {...form.register("cardNumber")} placeholder={ph.collectorNumber} />
+                  </label>
+                </div>
+                <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
+              </div>
+            )}
 
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               <label className="field">
@@ -904,11 +967,12 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
   const listingMap = useMemo(() => new Map(report.candidates.map((candidate) => [candidate.id, candidate])), [report.candidates]);
   const excluded = report.candidates.filter((candidate) => !candidate.eligible);
 
-  // Default to the safest verified buy (the $150-buyer's first fear is getting
-  // burned, not overpaying), but keep every lens one tap away.
+  // Default to Best Value — the flagship "which one do I buy" recommendation,
+  // a composite of price-vs-market, seller trust, and evidence — but keep every
+  // lens (Cheapest / Safest / Best-documented) one tap away.
   const defaultRole = useMemo<RankedChoice["role"] | null>(() => {
     const roles = report.rankedChoices.map((choice) => choice.role);
-    return roles.includes("safest_listing") ? "safest_listing" : roles[0] ?? null;
+    return roles.includes("best_value") ? "best_value" : roles.includes("safest_listing") ? "safest_listing" : roles[0] ?? null;
   }, [report.rankedChoices]);
   const [roleOverride, setRoleOverride] = useState<RankedChoice["role"] | null>(null);
   // Honor the user's chosen lens, but fall back to the default when it is not
@@ -1049,7 +1113,13 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
             <details className="mt-4 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
               <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.excluded(excluded.length)}</summary>
               <div className="mt-3 space-y-2 text-sm text-[#64736c]">
-                {excluded.map((listing) => <p key={listing.id}><strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}</p>)}
+                {excluded.map((listing) => (
+                  <p key={listing.id}>
+                    <span className="font-black uppercase tracking-[0.04em] text-[#9a4a2c]">{t.result.tooRiskySkip}</span>
+                    {" — "}
+                    <strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}
+                  </p>
+                ))}
               </div>
             </details>
           )}
@@ -1140,15 +1210,21 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
 }
 
 function roleToggleLabel(role: RankedChoice["role"], t: Dict) {
-  return role === "lowest_landed_cost" ? t.lens.cheapest : role === "safest_listing" ? t.lens.safest : t.lens.bestDocumented;
+  switch (role) {
+    case "best_value": return t.lens.bestValue;
+    case "lowest_landed_cost": return t.lens.cheapest;
+    case "safest_listing": return t.lens.safest;
+    case "best_condition_evidence": return t.lens.bestDocumented;
+  }
 }
 
 function roleToggleHint(role: RankedChoice["role"], t: Dict) {
-  return role === "lowest_landed_cost"
-    ? t.lens.cheapestHint
-    : role === "safest_listing"
-      ? t.lens.safestHint
-      : t.lens.bestDocumentedHint;
+  switch (role) {
+    case "best_value": return t.lens.bestValueHint;
+    case "lowest_landed_cost": return t.lens.cheapestHint;
+    case "safest_listing": return t.lens.safestHint;
+    case "best_condition_evidence": return t.lens.bestDocumentedHint;
+  }
 }
 
 type VerdictTone = "good" | "ok" | "bad";
@@ -1450,6 +1526,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
   const taxPercent = nullableNumber(values.taxRatePercent);
   const cardNumber = /\d/.test(values.cardNumber) ? values.cardNumber.trim() : "";
   return {
+    query: values.heroQuery.trim(),
     sourceListing: {
       marketplace: values.marketplace,
       url: values.url.trim(),
@@ -1490,6 +1567,8 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
       setCode: values.setCode.trim(),
       cardNumber,
       language: "English",
+      variant: "",
+      gradingClaim: "",
     },
     manualCandidates: values.manualCandidates
       .filter((row) => row.price.trim() !== "")

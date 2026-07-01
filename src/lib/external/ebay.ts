@@ -53,6 +53,13 @@ const ebayTokenSchema = z.object({
 const EBAY_HOSTS = new Set(["ebay.com", "www.ebay.com", "m.ebay.com"]);
 const EBAY_API = "https://api.ebay.com";
 
+// eBay's client-credentials token is valid ~2h, but was refetched on every request — costing
+// ~1-2s per comparison for no reason. Cache it in module scope; the actual token HTTP call
+// itself stays cache: "no-store" (this is an app-level cache, not a browser/CDN one).
+let cachedToken: { token: string; expiresAt: number } | null = null;
+// Refresh a minute early so a token never expires mid-request.
+const TOKEN_EXPIRY_MARGIN_MS = 60_000;
+
 export class EbayUnavailableError extends Error {
   constructor(message: string) {
     super(message);
@@ -81,6 +88,12 @@ export function parseEbayUrl(value: string) {
 
 export function hasEbayCredentials() {
   return Boolean(process.env.EBAY_CLIENT_ID && process.env.EBAY_CLIENT_SECRET);
+}
+
+// Test-only: the token cache is module-scoped (by design, so it survives across requests in
+// the same server process), so tests that assert on fetch counts need to reset it between cases.
+export function resetEbayTokenCacheForTests() {
+  cachedToken = null;
 }
 
 export async function getEbayListingByUrl(
@@ -117,6 +130,7 @@ export async function searchEbayAlternatives(
   | "sellerTrustScore"
   | "evidenceCompletenessScore"
   | "safetyScore"
+  | "valueScore"
   | "eligible"
   | "exclusionReasons"
 >>> {
@@ -202,6 +216,10 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
 }
 
 async function getEbayToken(fetcher: typeof fetch) {
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.token;
+  }
+
   const clientId = process.env.EBAY_CLIENT_ID;
   const clientSecret = process.env.EBAY_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
@@ -221,7 +239,10 @@ async function getEbayToken(fetcher: typeof fetch) {
     cache: "no-store",
   }, fetcher);
   if (!response.ok) throw new EbayUnavailableError(`eBay authentication failed with ${response.status}.`);
-  return ebayTokenSchema.parse(await response.json()).access_token;
+  const parsed = ebayTokenSchema.parse(await response.json());
+  const ttlMs = (parsed.expires_in ?? 7200) * 1000;
+  cachedToken = { token: parsed.access_token, expiresAt: Date.now() + Math.max(ttlMs - TOKEN_EXPIRY_MARGIN_MS, 0) };
+  return parsed.access_token;
 }
 
 function ebayHeaders(token: string, buyer: BuyerContext) {

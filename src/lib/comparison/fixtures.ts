@@ -33,6 +33,7 @@ export const demoListingSeeds: Array<Omit<
   | "sellerTrustScore"
   | "evidenceCompletenessScore"
   | "safetyScore"
+  | "valueScore"
   | "eligible"
   | "exclusionReasons"
 >> = [
