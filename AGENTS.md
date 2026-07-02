@@ -156,3 +156,5 @@ Then run `npm run dev` and verify:
 - Desktop and mobile layouts remain usable.
 
 For any UI-affecting change, always verify visually before handing off: run the dev server, drive the changed flow in a real browser (Playwright with the preinstalled Chromium in remote sessions), capture screenshots of the affected screens in both English and 中文 plus a mobile viewport, and share those screenshots with the user.
+
+When the work is finished — gate green and visually verified — push it to `main` (fast-forward from the working branch) so Vercel deploys it. Don't leave finished work sitting on a side branch waiting to be asked.
