@@ -205,30 +205,3 @@ export function IconSpinner({ className }: IconProps) {
     </Svg>
   );
 }
-
-// --- Game emblems ---------------------------------------------------------
-// Unlike the UI icons above, these are small multicolor marks for the game
-// tiles. They are TCGpal-drawn stand-ins evoking each game (a red/white ball,
-// a straw hat) — NOT the official trademarked logos, which would need a
-// license before shipping.
-
-export function EmblemPokemon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
-      <circle cx="12" cy="12" r="8.75" fill="#fcfbf6" stroke="#24312f" strokeWidth="1.5" />
-      <path d="M3.25 12a8.75 8.75 0 0 1 17.5 0z" fill="#e3350d" stroke="#24312f" strokeWidth="1.5" />
-      <path d="M3.25 12h17.5" stroke="#24312f" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="2.7" fill="#fcfbf6" stroke="#24312f" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-export function EmblemOnePiece({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
-      <ellipse cx="12" cy="16.2" rx="9.4" ry="3.1" fill="#d7a84e" stroke="#8a6a2a" strokeWidth="1.4" />
-      <path d="M5.6 15.6c0-4.2 2.5-8.4 6.4-8.4s6.4 4.2 6.4 8.4c-1.9 1-4 1.4-6.4 1.4s-4.5-.4-6.4-1.4z" fill="#e2c879" stroke="#8a6a2a" strokeWidth="1.4" />
-      <path d="M5.9 13.4c1.8.9 3.8 1.3 6.1 1.3s4.3-.4 6.1-1.3" fill="none" stroke="#d0202e" strokeWidth="2.6" />
-    </svg>
-  );
-}

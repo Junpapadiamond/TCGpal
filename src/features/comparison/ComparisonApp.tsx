@@ -4,8 +4,6 @@ import Image from "next/image";
 import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
 import {
-  EmblemOnePiece,
-  EmblemPokemon,
   IconArrowUpRight,
   IconCardCheck,
   IconCardFan,
@@ -57,11 +55,13 @@ const marketplaces: Marketplace[] = [
   "Other",
 ];
 
-// Branded selector tiles per game: TCGpal-drawn emblem + the game's signature
-// accent. Adding a TCG later = one more entry here plus its catalog adapter.
-const gameTiles: Array<{ id: TcgGame; emblem: IconComponent; accent: string; tint: string }> = [
-  { id: "pokemon", emblem: EmblemPokemon, accent: "#2a75bb", tint: "#eef4fb" },
-  { id: "onePiece", emblem: EmblemOnePiece, accent: "#d0202e", tint: "#fdf0ef" },
+// Branded selector tiles per game: the official logo (operator-supplied
+// assets in /public; marks belong to their respective owners) plus the game's
+// signature accent. Adding a TCG later = one more entry here plus its catalog
+// adapter. logoZoom compensates for built-in whitespace in an asset.
+const gameTiles: Array<{ id: TcgGame; logo: string; accent: string; tint: string; logoZoom: number }> = [
+  { id: "pokemon", logo: "/logo-pokemon-tcg.png", accent: "#2a75bb", tint: "#eef4fb", logoZoom: 1 },
+  { id: "onePiece", logo: "/logo-one-piece-card-game.png", accent: "#d0202e", tint: "#fdf0ef", logoZoom: 2.1 },
 ];
 
 const conditions: ConditionClaim[] = [
@@ -427,29 +427,32 @@ function ComparisonExperience() {
                     signature accent), Collectr-style, instead of a plain text
                     toggle. The parser still auto-selects from the search text. */}
                 <div className="grid grid-cols-2 gap-2">
-                  {gameTiles.map(({ id, emblem: Emblem, accent, tint }) => {
+                  {gameTiles.map(({ id, logo, accent, tint, logoZoom }) => {
                     const active = game === id;
                     return (
                       <button
                         key={id}
                         type="button"
                         aria-pressed={active}
+                        aria-label={t.form.games[id]}
                         onClick={() => form.setValue("game", id)}
                         style={active ? { borderColor: accent, background: tint } : undefined}
-                        className={`flex min-h-14 items-center justify-center gap-2.5 rounded-md border-2 px-4 py-2 transition sm:min-w-44 ${
-                          active ? "shadow-[0_2px_0_rgba(36,49,47,0.12)]" : "border-[#d6ded5] bg-[#fffef9] opacity-75 hover:opacity-100"
+                        className={`relative flex min-h-16 items-center justify-center overflow-hidden rounded-md border-2 px-4 py-2 transition sm:min-w-44 ${
+                          active ? "shadow-[0_2px_0_rgba(36,49,47,0.12)]" : "border-[#d6ded5] bg-[#fffef9] opacity-70 grayscale-[0.35] hover:opacity-100 hover:grayscale-0"
                         }`}
                       >
-                        <Emblem className="h-7 w-7 shrink-0" />
-                        <span className="text-left">
-                          <span className={`block font-serif text-base font-bold leading-tight ${active ? "text-[#24312f]" : "text-[#52635c]"}`}>
-                            {t.form.games[id]}
-                          </span>
-                          <span className="block text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#8a978f]">
-                            {id === "pokemon" ? "TCG" : "Card Game"}
-                          </span>
+                        {/* multiply lets flat-white logo backgrounds melt into the paper tile */}
+                        <span className="relative block h-11 w-full">
+                          <Image
+                            src={logo}
+                            alt={t.form.games[id]}
+                            fill
+                            sizes="176px"
+                            className="object-contain mix-blend-multiply"
+                            style={logoZoom !== 1 ? { transform: `scale(${logoZoom})` } : undefined}
+                          />
                         </span>
-                        {active && <IconCheck className="h-4 w-4 shrink-0 text-[#24312f]" />}
+                        {active && <IconCheck className="absolute right-2 top-2 h-4 w-4 shrink-0 text-[#24312f]" />}
                       </button>
                     );
                   })}
