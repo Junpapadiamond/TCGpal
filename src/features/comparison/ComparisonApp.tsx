@@ -4,28 +4,27 @@ import Image from "next/image";
 import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
 import {
-  ArrowUpRight,
-  BadgeCheck,
-  Calculator,
-  Camera,
-  Check,
-  ChevronDown,
-  CircleAlert,
-  ExternalLink,
-  FileSearch,
-  Globe2,
-  Info,
-  Link2,
-  LoaderCircle,
-  MapPin,
-  Plus,
-  ReceiptText,
-  SearchCheck,
-  ShieldCheck,
-  Sparkles,
-  Tag,
-  X,
-} from "lucide-react";
+  IconArrowUpRight,
+  IconCardCheck,
+  IconCardFan,
+  IconCardSearch,
+  IconCaution,
+  IconCheck,
+  IconChevronDown,
+  IconExternal,
+  IconFoil,
+  IconInfo,
+  IconLink,
+  IconPhotoProof,
+  IconPin,
+  IconPlus,
+  IconReceipt,
+  IconSeal,
+  IconSpinner,
+  IconTag,
+  IconX,
+  type IconComponent,
+} from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
@@ -157,11 +156,11 @@ function ComparisonExperience() {
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  // Two doors below the hero search, grouped by intent: refine what we search
+  // for, or bring a listing you already found (with its evidence and any
+  // manual candidates from unsupported marketplaces).
+  const [refineOpen, setRefineOpen] = useState(false);
   const [listingOpen, setListingOpen] = useState(false);
-  const [ledgerOpen, setLedgerOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
 
@@ -347,7 +346,7 @@ function ComparisonExperience() {
       <div className="mx-auto max-w-[1180px] px-4 pb-24 pt-8 sm:px-6 lg:px-8">
         <section className="paper-panel p-5 sm:p-7">
           <div className="eyebrow">
-            <SearchCheck className="h-4 w-4" />
+            <IconCardSearch className="h-4 w-4" />
             {t.hero.eyebrow}
           </div>
           <h1 className="mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
@@ -357,9 +356,9 @@ function ComparisonExperience() {
             {t.hero.subtitle}
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#52635c] sm:text-sm">
-            <Promise icon={ReceiptText} label={t.hero.promiseTax} />
-            <Promise icon={ShieldCheck} label={t.hero.promiseSeller} />
-            <Promise icon={Sparkles} label={t.hero.promiseEvidence} />
+            <Promise icon={IconReceipt} label={t.hero.promiseTax} />
+            <Promise icon={IconCardCheck} label={t.hero.promiseSeller} />
+            <Promise icon={IconCardFan} label={t.hero.promiseEvidence} />
           </div>
         </section>
 
@@ -367,7 +366,7 @@ function ComparisonExperience() {
           <div className="flex items-center justify-between gap-3 px-5 pt-5 sm:px-7">
             <p className="text-sm font-bold uppercase tracking-[0.08em] text-[#64736c]">{t.form.heading}</p>
             <button className="text-button" type="button" onClick={useDemo} disabled={loading}>
-              <Sparkles className="h-4 w-4" />
+              <IconFoil className="h-4 w-4" />
               {t.form.runDemo}
             </button>
           </div>
@@ -376,7 +375,7 @@ function ComparisonExperience() {
             <label className="field">
               <span className="sr-only">{t.form.heroSearchLabel}</span>
               <div className="input-with-icon">
-                <SearchCheck className="h-5 w-5" />
+                <IconCardSearch className="h-5 w-5" />
                 <input
                   {...form.register("heroQuery")}
                   placeholder={t.form.heroSearchPlaceholder}
@@ -402,19 +401,29 @@ function ComparisonExperience() {
               </p>
             )}
 
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <label className="field">
+                <span>{t.form.deliveryZip}</span>
+                <div className="input-with-icon">
+                  <IconPin className="h-4 w-4" />
+                  <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
+                </div>
+              </label>
+            </div>
+
             <button
               className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
               type="button"
-              aria-expanded={detailsOpen}
-              onClick={() => setDetailsOpen((current) => !current)}
+              aria-expanded={refineOpen}
+              onClick={() => setRefineOpen((current) => !current)}
             >
               <span className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-[#2f6f73]" />
-                {t.form.detailsToggle}
+                <IconTag className="h-4 w-4 text-[#2f6f73]" />
+                {t.form.refineToggle}
               </span>
-              <ChevronDown className={`h-4 w-4 transition ${detailsOpen ? "rotate-180" : ""}`} />
+              <IconChevronDown className={`h-4 w-4 transition ${refineOpen ? "rotate-180" : ""}`} />
             </button>
-            {detailsOpen && (
+            {refineOpen && (
               <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
                 <fieldset className="mb-5">
                   <legend className="mb-2 text-sm font-bold text-[#52635c]">{t.form.gameLabel}</legend>
@@ -449,46 +458,21 @@ function ComparisonExperience() {
                   </label>
                 </div>
                 <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
-              </div>
-            )}
-
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              <label className="field">
-                <span>{t.form.deliveryZip}</span>
-                <div className="input-with-icon">
-                  <MapPin className="h-4 w-4" />
-                  <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <label className="field">
+                    <span>{t.form.optionalTaxRate}</span>
+                    <div className="input-suffix">
+                      <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
+                      <span>%</span>
+                    </div>
+                  </label>
+                  <label className="field">
+                    <span>{t.form.desiredCondition}</span>
+                    <select {...form.register("desiredCondition")}>
+                      {conditions.map((value) => <option key={value} value={value}>{t.conditions[value]}</option>)}
+                    </select>
+                  </label>
                 </div>
-              </label>
-            </div>
-
-            <button
-              className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
-              type="button"
-              aria-expanded={optionsOpen}
-              onClick={() => setOptionsOpen((current) => !current)}
-            >
-              <span className="flex items-center gap-2">
-                <Calculator className="h-4 w-4" />
-                {t.form.optionsToggle}
-              </span>
-              <ChevronDown className={`h-4 w-4 transition ${optionsOpen ? "rotate-180" : ""}`} />
-            </button>
-            {optionsOpen && (
-              <div className="mt-4 grid gap-4 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-5 md:grid-cols-2">
-                <label className="field">
-                  <span>{t.form.optionalTaxRate}</span>
-                  <div className="input-suffix">
-                    <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
-                    <span>%</span>
-                  </div>
-                </label>
-                <label className="field">
-                  <span>{t.form.desiredCondition}</span>
-                  <select {...form.register("desiredCondition")}>
-                    {conditions.map((value) => <option key={value} value={value}>{t.conditions[value]}</option>)}
-                  </select>
-                </label>
               </div>
             )}
 
@@ -499,10 +483,10 @@ function ComparisonExperience() {
               onClick={() => setListingOpen((current) => !current)}
             >
               <span className="flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-[#2f6f73]" />
+                <IconLink className="h-4 w-4 text-[#2f6f73]" />
                 {t.form.listingToggle}
               </span>
-              <ChevronDown className={`h-4 w-4 transition ${listingOpen ? "rotate-180" : ""}`} />
+              <IconChevronDown className={`h-4 w-4 transition ${listingOpen ? "rotate-180" : ""}`} />
             </button>
             {listingOpen && (
             <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
@@ -510,7 +494,7 @@ function ComparisonExperience() {
                 <label className="field">
                   <span>{t.form.listingUrl}</span>
                   <div className="input-with-icon">
-                    <Globe2 className="h-4 w-4" />
+                    <IconLink className="h-4 w-4" />
                     <input
                       {...form.register("url")}
                       placeholder={t.form.ph.listingUrl}
@@ -526,7 +510,7 @@ function ComparisonExperience() {
                     </select>
                   ) : (
                     <div className="flex min-h-11 items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-3 text-sm font-bold text-[#2f6f73]">
-                      <BadgeCheck className="h-4 w-4" />
+                      <IconSeal className="h-4 w-4" />
                       {t.form.ebayAutoDetected}
                     </div>
                   )}
@@ -560,79 +544,59 @@ function ComparisonExperience() {
                   </select>
                 </label>
               </div>
-            </div>
-            )}
 
-            <button
-              className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
-              type="button"
-              aria-expanded={advancedOpen}
-              onClick={() => setAdvancedOpen((current) => !current)}
-            >
-              <span className="flex items-center gap-2">
-                <FileSearch className="h-4 w-4" />
-                {t.form.advancedToggle}
-              </span>
-              <ChevronDown className={`h-4 w-4 transition ${advancedOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            {advancedOpen && (
-              <div className="mt-4 grid gap-5 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-5 lg:grid-cols-2">
-                <div>
-                  <label className="field">
-                    <span>{t.form.sellerNotes}</span>
-                    <textarea
-                      {...form.register("description")}
-                      rows={5}
-                      placeholder={t.form.ph.sellerNotes}
-                    />
-                  </label>
-                  <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-6 border-t border-[#d6ded5] pt-5">
+                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">
+                  <IconPhotoProof className="h-4 w-4 text-[#2f6f73]" />
+                  {t.form.evidenceSubhead}
+                </p>
+                <div className="mt-4 grid gap-5 lg:grid-cols-2">
+                  <div>
                     <label className="field">
-                      <span>{t.form.feedbackPct}</span>
-                      <input {...form.register("feedbackPercentage")} inputMode="decimal" placeholder={t.form.ph.feedbackPct} />
+                      <span>{t.form.sellerNotes}</span>
+                      <textarea
+                        {...form.register("description")}
+                        rows={5}
+                        placeholder={t.form.ph.sellerNotes}
+                      />
                     </label>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <label className="field">
+                        <span>{t.form.feedbackPct}</span>
+                        <input {...form.register("feedbackPercentage")} inputMode="decimal" placeholder={t.form.ph.feedbackPct} />
+                      </label>
+                      <label className="field">
+                        <span>{t.form.feedbackCount}</span>
+                        <input {...form.register("feedbackCount")} inputMode="numeric" placeholder={t.form.ph.feedbackCount} />
+                      </label>
+                    </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                      <CheckField label={t.form.returnsAccepted} registration={form.register("returnsAccepted")} />
+                      <CheckField label={t.form.buyerProtection} registration={form.register("buyerProtection")} />
+                    </div>
+                  </div>
+                  <div>
                     <label className="field">
-                      <span>{t.form.feedbackCount}</span>
-                      <input {...form.register("feedbackCount")} inputMode="numeric" placeholder={t.form.ph.feedbackCount} />
+                      <span>{t.form.photoCount}</span>
+                      <input {...form.register("photoCount")} inputMode="numeric" min="0" />
                     </label>
-                  </div>
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                    <CheckField label={t.form.returnsAccepted} registration={form.register("returnsAccepted")} />
-                    <CheckField label={t.form.buyerProtection} registration={form.register("buyerProtection")} />
-                  </div>
-                </div>
-                <div>
-                  <label className="field">
-                    <span>{t.form.photoCount}</span>
-                    <input {...form.register("photoCount")} inputMode="numeric" min="0" />
-                  </label>
-                  <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.explicitEvidence}</p>
-                  <div className="mt-3 grid gap-2">
-                    <CheckField label={t.form.evFrontBack} registration={form.register("frontBackExplicit")} />
-                    <CheckField label={t.form.evCorners} registration={form.register("closeupsExplicit")} />
-                    <CheckField label={t.form.evSurface} registration={form.register("surfaceExplicit")} />
-                    <CheckField label={t.form.evNotes} registration={form.register("substantiveConditionNotes")} />
+                    <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.explicitEvidence}</p>
+                    <div className="mt-3 grid gap-2">
+                      <CheckField label={t.form.evFrontBack} registration={form.register("frontBackExplicit")} />
+                      <CheckField label={t.form.evCorners} registration={form.register("closeupsExplicit")} />
+                      <CheckField label={t.form.evSurface} registration={form.register("surfaceExplicit")} />
+                      <CheckField label={t.form.evNotes} registration={form.register("substantiveConditionNotes")} />
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
 
-            <button
-              className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
-              type="button"
-              aria-expanded={ledgerOpen}
-              onClick={() => setLedgerOpen((current) => !current)}
-            >
-              <span className="flex items-center gap-2">
-                <ReceiptText className="h-4 w-4 text-[#2f6f73]" />
-                {t.form.ledgerToggle}
-              </span>
-              <ChevronDown className={`h-4 w-4 transition ${ledgerOpen ? "rotate-180" : ""}`} />
-            </button>
-            {ledgerOpen && (
-              <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
-                <p className="text-sm leading-6 text-[#64736c]">{t.form.ledgerHelp}</p>
+              <div className="mt-6 border-t border-[#d6ded5] pt-5">
+                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">
+                  <IconReceipt className="h-4 w-4 text-[#2f6f73]" />
+                  {t.form.ledgerSubhead}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.form.ledgerHelp}</p>
                 {ledger.fields.length > 0 && (
                   <div className="mt-4 space-y-3">
                     {ledger.fields.map((field, index) => (
@@ -662,7 +626,7 @@ function ComparisonExperience() {
                             className="mb-1 inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-[#d6ded5] px-3 text-sm font-bold text-[#9a4a2c] hover:bg-[#f6dcd0]"
                             onClick={() => ledger.remove(index)}
                           >
-                            <X className="h-4 w-4" />
+                            <IconX className="h-4 w-4" />
                             {t.form.ledgerRemove}
                           </button>
                         </div>
@@ -682,15 +646,16 @@ function ComparisonExperience() {
                     trackEvent("manual_candidate_added", { marketplace: emptyLedgerRow.marketplace });
                   }}
                 >
-                  <Plus className="h-4 w-4" />
+                  <IconPlus className="h-4 w-4" />
                   {t.form.ledgerAdd}
                 </button>
               </div>
+            </div>
             )}
 
             <div className="mt-6 flex justify-end">
               <button className="primary-button shrink-0" type="submit" disabled={loading}>
-                {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <SearchCheck className="h-4 w-4" />}
+                {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
                 {loading ? t.form.submitLoading : t.form.submitIdle}
               </button>
             </div>
@@ -759,7 +724,7 @@ function LanguageToggle({ lang, setLang, t }: { lang: Lang; setLang: (lang: Lang
   );
 }
 
-function Promise({ icon: Icon, label }: { icon: typeof ReceiptText; label: string }) {
+function Promise({ icon: Icon, label }: { icon: IconComponent; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1.5">
       <Icon className="h-3.5 w-3.5 text-[#2f6f73]" />
@@ -829,7 +794,7 @@ function HowItWorks() {
   return (
     <section className="mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-6 sm:p-8">
       <p className="eyebrow text-[#2f6f73]">
-        <Sparkles className="h-4 w-4" />
+        <IconFoil className="h-4 w-4" />
         {t.howItWorks.eyebrow}
       </p>
       <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -859,7 +824,7 @@ function LoadingLoop() {
   return (
     <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-6" aria-live="polite">
       <div className="flex items-center gap-3">
-        <LoaderCircle className="h-5 w-5 animate-spin text-[#2f6f73]" />
+        <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73]" />
         <div>
           <p className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.title}</p>
           <p className="mt-1 text-sm text-[#64736c]">{t.loading.steps}</p>
@@ -874,7 +839,7 @@ function ErrorNotice({ message }: { message: string }) {
   const t = useT();
   return (
     <div className="mt-6 flex items-start gap-3 rounded-md border border-[#e4c0ad] bg-[#fff7f0] p-5 text-sm leading-6 text-[#7e4934]" role="alert">
-      <CircleAlert className="mt-1 h-5 w-5 shrink-0" />
+      <IconCaution className="mt-1 h-5 w-5 shrink-0" />
       <div>
         <p className="font-bold">{t.error.title}</p>
         <p>{message}</p>
@@ -894,7 +859,7 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
     <section id="comparison-result" className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-7">
       <div className="max-w-2xl">
         <p className="eyebrow">
-          <BadgeCheck className="h-4 w-4" />
+          <IconSeal className="h-4 w-4" />
           {t.identity.eyebrow}
         </p>
         <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.identity.heading}</h2>
@@ -955,7 +920,7 @@ function IdentityCard({ identity, onConfirm, titleAs }: { identity: CardIdentity
       {titleAs === "h4" ? <h4 className={titleClass}>{identity.name}</h4> : <h3 className={titleClass}>{identity.name}</h3>}
       <CardIdentityRail identity={identity} className="mt-3" />
       <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
-        <Check className="h-4 w-4" />
+        <IconCheck className="h-4 w-4" />
         {t.identity.confirm}
       </button>
     </article>
@@ -983,18 +948,20 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
   const selectedChoice = report.rankedChoices.find((choice) => choice.role === selectedRole) ?? null;
   const selectedListing = selectedChoice ? listingMap.get(selectedChoice.listingId) ?? null : null;
 
+  const eligibleCount = report.candidates.filter((candidate) => candidate.eligible).length;
+
   return (
-    <section id="comparison-result" className="mt-6 scroll-mt-6 space-y-6">
+    <section id="comparison-result" className="mt-6 scroll-mt-6 space-y-5">
       {report.demoMode && (
         <div className="flex items-start gap-3 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
-          <Info className="mt-1 h-4 w-4 shrink-0" />
+          <IconInfo className="mt-1 h-4 w-4 shrink-0" />
           <p><strong>{t.result.demoTitle}</strong>{t.result.demoBody}</p>
         </div>
       )}
 
       {!report.demoMode && report.warnings.length > 0 && (
         <div className="flex items-start gap-3 rounded-md border border-[#e5b8a3] bg-[#fcefe8] p-4 text-sm leading-6 text-[#8a4a2c]">
-          <CircleAlert className="mt-1 h-4 w-4 shrink-0" />
+          <IconCaution className="mt-1 h-4 w-4 shrink-0" />
           <div>
             <strong>{t.result.liveDataIssue}</strong>
             {report.warnings.map((warning) => <p key={warning} className="mt-1">{warning}</p>)}
@@ -1002,99 +969,104 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         </div>
       )}
 
-      {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
-
-      {report.rankedChoices.length > 0 && (
-        <div>
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="eyebrow">
-                <Sparkles className="h-4 w-4" />
-                {t.result.yourBestBuy}
+      {/*
+        The one loud element on the page: confirmed version and the recommended
+        listing merged into a single verdict hero. Everything below it (ledger,
+        cautions, methodology drawer) is visibly subordinate.
+      */}
+      <div className="evidence-spotlight rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-8">
+        <div className="relative z-10">
+          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+            <div className="min-w-0">
+              <p className="eyebrow text-[#2f6f73]">
+                <IconSeal className="h-4 w-4" />
+                {t.result.versionConfirmed}
               </p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.result.recommendedListing}</h2>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73] sm:text-4xl">
+                {report.confirmedCard?.name ?? selectedListing?.title}
+              </h2>
+              {report.confirmedCard && <CardIdentityRail identity={report.confirmedCard} className="mt-3" />}
             </div>
-            <p className="text-sm text-[#64736c]">{t.result.defaultLensNote}</p>
-          </div>
-          {excluded.length > 0 && (
-            <p className="mb-3 inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#eef4ef] px-3 py-1.5 text-xs font-bold text-[#2f6f73]">
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-              {t.result.avoidedTraps(excluded.length)}
-            </p>
-          )}
-          <div className="inline-flex flex-wrap gap-1 rounded-md border border-[#d6ded5] bg-[#f4f7f3] p-1">
-            {report.rankedChoices.map((choice) => {
-              const active = choice.role === selectedRole;
-              return (
-                <button
-                  key={choice.role}
-                  type="button"
-                  onClick={() => setRoleOverride(choice.role)}
-                  aria-pressed={active}
-                  title={roleToggleHint(choice.role, t)}
-                  className={`rounded px-3 py-2 text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
-                >
-                  {roleToggleLabel(choice.role, t)}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-4">
-            {selectedChoice && selectedListing && (
-              <RecommendationCard
-                choice={selectedChoice}
-                listing={selectedListing}
-                demoMode={report.demoMode}
-                marketPrice={report.confirmedCard?.marketMid ?? null}
-                recommended={selectedRole === defaultRole}
-              />
+            {report.rankedChoices.length > 0 && (
+              <div className="max-w-sm">
+                <div className="inline-flex flex-wrap gap-1 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-1">
+                  {report.rankedChoices.map((choice) => {
+                    const active = choice.role === selectedRole;
+                    return (
+                      <button
+                        key={choice.role}
+                        type="button"
+                        onClick={() => setRoleOverride(choice.role)}
+                        aria-pressed={active}
+                        title={roleToggleHint(choice.role, t)}
+                        className={`rounded px-3 py-2 text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
+                      >
+                        {roleToggleLabel(choice.role, t)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 hidden text-xs leading-5 text-[#64736c] sm:block">{t.result.defaultLensNote}</p>
+              </div>
             )}
           </div>
-        </div>
-      )}
 
-      <div className="evidence-spotlight rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-7">
-        <div className="relative z-10 grid gap-5 md:grid-cols-[156px_1fr_auto] md:items-center">
-          <div className="flex flex-col items-center gap-3">
-            {report.confirmedCard?.imageUrl ? (
-              <HoloCardArt
-                src={report.confirmedCard.imageUrl}
-                alt={`${report.confirmedCard.name} ${report.confirmedCard.cardNumber}`}
-                sizes="144px"
-                className="w-36"
-              />
-            ) : (
-              <div className="aspect-[2.5/3.5] w-36 rounded-md bg-[#fcfbf6]" />
-            )}
-            <span className="holo-hint items-center gap-1.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#52635c]">
-              <Sparkles className="h-3.5 w-3.5 text-[#b26a4c]" />
-              {t.result.moveFoil}
-            </span>
+          <div className="mt-6 grid gap-6 md:grid-cols-[168px_1fr] md:items-start">
+            <div className="flex flex-col items-center gap-3">
+              {report.confirmedCard?.imageUrl ? (
+                <HoloCardArt
+                  src={report.confirmedCard.imageUrl}
+                  alt={`${report.confirmedCard.name} ${report.confirmedCard.cardNumber}`}
+                  sizes="168px"
+                  className="w-40"
+                />
+              ) : (
+                <div className="aspect-[2.5/3.5] w-40 rounded-md bg-[#fcfbf6]" />
+              )}
+              <span className="holo-hint items-center gap-1.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#52635c]">
+                <IconFoil className="h-3.5 w-3.5 text-[#b26a4c]" />
+                {t.result.moveFoil}
+              </span>
+              {typeof report.confirmedCard?.marketMid === "number" && (
+                <p className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-2 text-center text-xs font-bold text-[#2f6f73]">
+                  <IconTag className="h-3.5 w-3.5" />
+                  {t.result.marketApprox} {formatMoney(report.confirmedCard.marketMid)}
+                  {typeof report.confirmedCard.marketLow === "number" && typeof report.confirmedCard.marketHigh === "number" && (
+                    <span className="font-medium text-[#64736c]">({formatMoney(report.confirmedCard.marketLow)}–{formatMoney(report.confirmedCard.marketHigh)})</span>
+                  )}
+                  {report.confirmedCard.marketUrl && (
+                    <a className="underline" href={report.confirmedCard.marketUrl} target="_blank" rel="noreferrer">{t.result.view}</a>
+                  )}
+                </p>
+              )}
+            </div>
+            <div className="min-w-0">
+              {selectedChoice && selectedListing && (
+                <RecommendationBody
+                  choice={selectedChoice}
+                  listing={selectedListing}
+                  demoMode={report.demoMode}
+                  marketPrice={report.confirmedCard?.marketMid ?? null}
+                  recommended={selectedRole === defaultRole}
+                />
+              )}
+            </div>
           </div>
-          <div>
-            <p className="eyebrow text-[#2f6f73]">
-              <BadgeCheck className="h-4 w-4" />
-              {t.result.versionConfirmed}
-            </p>
-            <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{report.confirmedCard?.name}</h2>
-            {report.confirmedCard && <CardIdentityRail identity={report.confirmedCard} className="mt-3" />}
-            {typeof report.confirmedCard?.marketMid === "number" && (
-              <p className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#2f6f73]">
-                <Tag className="h-4 w-4" />
-                {t.result.marketApprox} {formatMoney(report.confirmedCard.marketMid)}
-                {typeof report.confirmedCard.marketLow === "number" && typeof report.confirmedCard.marketHigh === "number" && (
-                  <span className="font-medium text-[#64736c]">({formatMoney(report.confirmedCard.marketLow)}–{formatMoney(report.confirmedCard.marketHigh)})</span>
-                )}
-                {report.confirmedCard.marketUrl && (
-                  <a className="underline" href={report.confirmedCard.marketUrl} target="_blank" rel="noreferrer">{t.result.view}</a>
-                )}
-              </p>
-            )}
-            <p className="mt-4 max-w-3xl leading-7 text-[#52635c]">{report.narrative.summary}</p>
-          </div>
-          <div className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-4 py-3 text-center">
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">{t.result.eligibleOptions}</p>
-            <p className="mt-1 font-mono text-3xl font-black text-[#2f6f73]">{report.candidates.filter((candidate) => candidate.eligible).length}</p>
+
+          <div className="mt-6 border-t border-[#c9d7ce] pt-4">
+            <p className="max-w-3xl leading-7 text-[#52635c]">{report.narrative.summary}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-1.5 text-[#2f6f73]">
+                <IconCardFan className="h-3.5 w-3.5 shrink-0" />
+                {t.result.eligibleSummary(eligibleCount)}
+              </span>
+              {excluded.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-1.5 text-[#2f6f73]">
+                  <IconCardCheck className="h-3.5 w-3.5 shrink-0" />
+                  {t.result.avoidedTraps(excluded.length)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1102,7 +1074,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
       <div className="grid gap-5 lg:grid-cols-[1fr_0.72fr]">
         <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-6">
           <p className="eyebrow">
-            <ReceiptText className="h-4 w-4" />
+            <IconReceipt className="h-4 w-4" />
             {t.result.evidenceLedger}
           </p>
           <h3 className="mt-2 font-serif text-2xl font-bold text-[#2f6f73]">{t.result.everyCandidate}</h3>
@@ -1125,34 +1097,10 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           )}
         </section>
 
-        <aside className="space-y-5">
+        <aside>
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
-              <Calculator className="h-4 w-4" />
-              {t.result.referenceContext}
-            </p>
-            <div className="mt-4 space-y-3">
-              {report.references.map((reference) => (
-                <div key={reference.label} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-bold">{reference.label}</p>
-                    <StatusPill status={reference.status} />
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-[#64736c]">{reference.note}</p>
-                  {reference.rawMid !== null && <p className="mt-2 font-mono text-lg font-black text-[#2f6f73]">{t.result.reference(reference.rawMid.toFixed(2))}</p>}
-                  {reference.url && (
-                    <a className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#2f6f73] underline" href={reference.url} target="_blank" rel="noreferrer">
-                      {t.result.openManualCheck} <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
-            <p className="eyebrow">
-              <CircleAlert className="h-4 w-4" />
+              <IconCaution className="h-4 w-4" />
               {t.result.beforeYouBuy}
             </p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-[#52635c]">
@@ -1167,19 +1115,59 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         </aside>
       </div>
 
+      {/*
+        One quiet methodology drawer instead of three competing sections:
+        which sources were queried, what reference pricing said, and the full
+        validation trace all live here, collapsed by default.
+      */}
       <details id="method" className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
-        <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.technicalTrace}</summary>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {report.trace.map((step) => (
-            <div key={`${step.step}-${step.actor}`} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-black uppercase tracking-[0.1em] text-[#64736c]">{step.step.replaceAll("_", " ")}</p>
-                <StatusPill status={step.status === "complete" ? "used" : step.status === "fallback" ? "unavailable" : "missing"} />
-              </div>
-              <p className="mt-2 font-bold text-[#24312f]">{step.actor}</p>
-              <p className="mt-1 text-sm leading-6 text-[#64736c]">{step.summary}</p>
+        <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
+
+        {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
+
+        {report.references.length > 0 && (
+          <div className="mt-5">
+            <p className="eyebrow">
+              <IconTag className="h-4 w-4" />
+              {t.result.referenceContext}
+            </p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {report.references.map((reference) => (
+                <div key={reference.label} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-bold">{reference.label}</p>
+                    <StatusPill status={reference.status} />
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[#64736c]">{reference.note}</p>
+                  {reference.rawMid !== null && <p className="mt-2 font-mono text-lg font-black text-[#2f6f73]">{t.result.reference(reference.rawMid.toFixed(2))}</p>}
+                  {reference.url && (
+                    <a className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#2f6f73] underline" href={reference.url} target="_blank" rel="noreferrer">
+                      {t.result.openManualCheck} <IconExternal className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        )}
+
+        <div className="mt-5">
+          <p className="eyebrow">
+            <IconCardSearch className="h-4 w-4" />
+            {t.result.technicalTrace}
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {report.trace.map((step) => (
+              <div key={`${step.step}-${step.actor}`} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-black uppercase tracking-[0.1em] text-[#64736c]">{step.step.replaceAll("_", " ")}</p>
+                  <StatusPill status={step.status === "complete" ? "used" : step.status === "fallback" ? "unavailable" : "missing"} />
+                </div>
+                <p className="mt-2 font-bold text-[#24312f]">{step.actor}</p>
+                <p className="mt-1 text-sm leading-6 text-[#64736c]">{step.summary}</p>
+              </div>
+            ))}
+          </div>
         </div>
         {report.warnings.length > 0 && (
           <div className="mt-4 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
@@ -1195,7 +1183,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         </div>
         {feedbackSent ? (
           <p className="mt-4 inline-flex items-center gap-2 font-bold text-[#d7a84e] sm:mt-0">
-            <Check className="h-5 w-5" />
+            <IconCheck className="h-5 w-5" />
             {t.result.feedbackSaved}
           </p>
         ) : (
@@ -1248,7 +1236,7 @@ function riskVerdict(score: number, t: Dict): { label: string; tone: VerdictTone
   return { label: t.card.higherRisk, tone: "bad" };
 }
 
-function VerdictTag({ verdict, icon: Icon }: { verdict: { label: string; tone: VerdictTone }; icon: typeof ShieldCheck }) {
+function VerdictTag({ verdict, icon: Icon }: { verdict: { label: string; tone: VerdictTone }; icon: IconComponent }) {
   const cls = verdict.tone === "good"
     ? "bg-[#dcecdf] text-[#2f6f73]"
     : verdict.tone === "ok"
@@ -1267,10 +1255,10 @@ function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvi
   // Show photo count (the verified signal) plus only the content items that are
   // positively known — never a red ✗ for things we simply didn't verify.
   const items = [
-    { label: t.card.photos(evidence.photoCount), available: evidence.photoCount > 0, icon: Camera },
-    ...(evidence.frontBackExplicit ? [{ label: t.card.frontBack, available: true, icon: BadgeCheck }] : []),
-    ...(evidence.closeupsExplicit ? [{ label: t.card.corners, available: true, icon: SearchCheck }] : []),
-    ...(evidence.surfaceExplicit ? [{ label: t.card.surface, available: true, icon: Sparkles }] : []),
+    { label: t.card.photos(evidence.photoCount), available: evidence.photoCount > 0, icon: IconPhotoProof },
+    ...(evidence.frontBackExplicit ? [{ label: t.card.frontBack, available: true, icon: IconCardFan }] : []),
+    ...(evidence.closeupsExplicit ? [{ label: t.card.corners, available: true, icon: IconCardSearch }] : []),
+    ...(evidence.surfaceExplicit ? [{ label: t.card.surface, available: true, icon: IconFoil }] : []),
   ];
 
   return (
@@ -1292,80 +1280,72 @@ function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvi
   );
 }
 
-function RecommendationCard({ choice, listing, demoMode, marketPrice, recommended }: { choice: RankedChoice; listing: NormalizedListing; demoMode: boolean; marketPrice: number | null; recommended: boolean }) {
+// The recommended-listing body lives inside the verdict hero, which already
+// shows the confirmed card's art — so this renders only the listing facts:
+// badge, title, landed cost, verdicts, evidence, reason, and the CTA.
+function RecommendationBody({ choice, listing, demoMode, marketPrice, recommended }: { choice: RankedChoice; listing: NormalizedListing; demoMode: boolean; marketPrice: number | null; recommended: boolean }) {
   const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const shipping = listing.shipping ?? 0;
   const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
 
   return (
-    <article className="choice-card rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-5 shadow-[0_18px_40px_rgba(36,49,47,0.06)] sm:p-6">
-      <div className="grid gap-5 sm:grid-cols-[132px_1fr]">
-        <div className="mx-auto w-28 sm:mx-0 sm:w-full">
-          {listing.imageUrl ? (
-            <HoloCardArt src={listing.imageUrl} alt={listing.title} sizes="132px" className="w-full" />
-          ) : (
-            <div className="aspect-[2.5/3.5] w-full rounded-md bg-[#e7efe8]" />
-          )}
-        </div>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            {recommended && (
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-[#2f6f73] px-2.5 py-1 text-xs font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
-                <BadgeCheck className="h-3.5 w-3.5" />
-                {t.card.recommended}
-              </span>
-            )}
-            <span className="text-xs font-black uppercase tracking-[0.1em] text-[#b26a4c]">{listing.marketplace}</span>
-          </div>
-          <h3 className="mt-2 line-clamp-2 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{listing.title}</h3>
-          <p className="mt-1 text-sm text-[#64736c]">{t.card.sellerSays(t.conditions[listing.claimedCondition])}</p>
+    <article className="choice-card min-w-0 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-5 shadow-[0_18px_40px_rgba(36,49,47,0.06)] sm:p-6">
+      <div className="flex flex-wrap items-center gap-2">
+        {recommended && (
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-[#2f6f73] px-2.5 py-1 text-xs font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
+            <IconSeal className="h-3.5 w-3.5" />
+            {t.card.recommended}
+          </span>
+        )}
+        <span className="text-xs font-black uppercase tracking-[0.1em] text-[#b26a4c]">{listing.marketplace}</span>
+      </div>
+      <h3 className="mt-2 line-clamp-2 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{listing.title}</h3>
+      <p className="mt-1 text-sm text-[#64736c]">{t.card.sellerSays(t.conditions[listing.claimedCondition])}</p>
 
-          <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
-            <span className="font-mono text-3xl font-black text-[#24312f]">{formatMoney(total)}</span>
-            <span className="pb-1 text-xs font-bold uppercase tracking-[0.08em] text-[#64736c]">{listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded}</span>
-            {marketDelta !== null && !listing.demo && (
-              <span className={`mb-0.5 inline-flex items-center rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.05em] ${marketDelta <= 0.02 ? "bg-[#dcecdf] text-[#2f6f73]" : marketDelta <= 0.15 ? "bg-[#fff0d5] text-[#8d6032]" : "bg-[#f6dcd0] text-[#9a4a2c]"}`}>
-                {marketDelta <= 0 ? t.card.underMarket(Math.round(Math.abs(marketDelta) * 100)) : t.card.aboveMarket(Math.round(marketDelta * 100))}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-[#64736c]">
-            {t.card.priceBreakdown(
-              formatMoney(listing.price),
-              shipping > 0 ? formatMoney(shipping) : t.card.freeShipping,
-              listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
-            )}
-          </p>
+      <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
+        <span className="font-mono text-3xl font-black text-[#24312f]">{formatMoney(total)}</span>
+        <span className="pb-1 text-xs font-bold uppercase tracking-[0.08em] text-[#64736c]">{listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded}</span>
+        {marketDelta !== null && !listing.demo && (
+          <span className={`mb-0.5 inline-flex items-center rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.05em] ${marketDelta <= 0.02 ? "bg-[#dcecdf] text-[#2f6f73]" : marketDelta <= 0.15 ? "bg-[#fff0d5] text-[#8d6032]" : "bg-[#f6dcd0] text-[#9a4a2c]"}`}>
+            {marketDelta <= 0 ? t.card.underMarket(Math.round(Math.abs(marketDelta) * 100)) : t.card.aboveMarket(Math.round(marketDelta * 100))}
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-[#64736c]">
+        {t.card.priceBreakdown(
+          formatMoney(listing.price),
+          shipping > 0 ? formatMoney(shipping) : t.card.freeShipping,
+          listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
+        )}
+      </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <VerdictTag verdict={sellerVerdict(listing.sellerTrustScore, t)} icon={BadgeCheck} />
-            <VerdictTag verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)} icon={Camera} />
-            <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={ShieldCheck} />
-          </div>
-          <EvidenceChecklist evidence={listing.evidence} />
+      <div className="mt-4 flex flex-wrap gap-2">
+        <VerdictTag verdict={sellerVerdict(listing.sellerTrustScore, t)} icon={IconSeal} />
+        <VerdictTag verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)} icon={IconPhotoProof} />
+        <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={IconCardCheck} />
+      </div>
+      <EvidenceChecklist evidence={listing.evidence} />
 
-          <p className="mt-4 text-sm leading-6 text-[#52635c]">
-            <span className="font-bold text-[#2f6f73]">{t.card.whyLeads}: </span>
-            {choice.reason}
-          </p>
+      <p className="mt-4 text-sm leading-6 text-[#52635c]">
+        <span className="font-bold text-[#2f6f73]">{t.card.whyLeads}: </span>
+        {choice.reason}
+      </p>
 
-          <div className="mt-5">
-            {listing.url ? (
-              <a
-                className="primary-button w-full sm:w-auto"
-                href={listing.url}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode })}
-              >
-                {t.card.goToListing} <ArrowUpRight className="h-4 w-4" />
-              </a>
-            ) : (
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-[#d6ded5] bg-[#f7f9f5] text-sm font-bold text-[#64736c]">{t.card.userSupplied}</span>
-            )}
-          </div>
-        </div>
+      <div className="mt-5">
+        {listing.url ? (
+          <a
+            className="primary-button w-full sm:w-auto"
+            href={listing.url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode })}
+          >
+            {t.card.goToListing} <IconArrowUpRight className="h-4 w-4" />
+          </a>
+        ) : (
+          <span className="flex min-h-11 items-center justify-center rounded-md border border-[#d6ded5] bg-[#f7f9f5] text-sm font-bold text-[#64736c]">{t.card.userSupplied}</span>
+        )}
       </div>
     </article>
   );
@@ -1430,7 +1410,7 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
         {listing.imageUrl ? (
           <Image src={listing.imageUrl} alt="" fill sizes="52px" className="object-contain" />
         ) : (
-          <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><ReceiptText className="h-5 w-5" /></span>
+          <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-5 w-5" /></span>
         )}
       </div>
       <div className="min-w-0">
@@ -1440,7 +1420,7 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
           {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.candidate.rawSingle}</span>}
           <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.conditions[listing.claimedCondition]}</span>
           <span className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{t.candidate.match(listing.matchConfidence)}</span>
-          <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={ShieldCheck} />
+          <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={IconCardCheck} />
         </div>
         <p className="mt-1 line-clamp-1 text-sm text-[#64736c]">{listing.title}</p>
         <EvidenceChecklist evidence={listing.evidence} compact />
@@ -1471,13 +1451,14 @@ function Metric({ label, value, compact = false }: { label: string; value: strin
 
 // The cross-platform fan-out is transparent: show every marketplace agent and
 // whether it was queried, was unavailable, or sat out because its API is not
-// connected. This makes "works as long as you have the APIs" visible to the user.
+// connected. Lives inside the "How we checked" drawer so it informs without
+// competing with the verdict.
 function SourcesChecked({ platforms }: { platforms: ComparisonReport["platforms"] }) {
   const t = useT();
   return (
-    <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+    <div className="mt-5">
       <p className="eyebrow">
-        <Globe2 className="h-4 w-4" />
+        <IconCardFan className="h-4 w-4" />
         {t.result.sourcesTitle}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -1507,7 +1488,7 @@ function SourcesChecked({ platforms }: { platforms: ComparisonReport["platforms"
         })}
       </div>
       <p className="mt-3 text-xs leading-5 text-[#64736c]">{t.result.sourcesHint}</p>
-    </section>
+    </div>
   );
 }
 
