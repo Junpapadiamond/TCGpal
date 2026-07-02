@@ -154,3 +154,5 @@ Then run `npm run dev` and verify:
 - Technical trace is collapsed.
 - No grade prediction or automated sold-history claim appears.
 - Desktop and mobile layouts remain usable.
+
+For any UI-affecting change, always verify visually before handing off: run the dev server, drive the changed flow in a real browser (Playwright with the preinstalled Chromium in remote sessions), capture screenshots of the affected screens in both English and 中文 plus a mobile viewport, and share those screenshots with the user.
