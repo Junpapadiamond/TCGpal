@@ -27,6 +27,7 @@ import {
 } from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
+import { calculatePriceComponent } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
@@ -179,6 +180,14 @@ function ComparisonExperience() {
   // shows the buyer what TCGpal understood from their search before submitting,
   // so a wrong read is obvious immediately rather than after a round trip.
   const heroPreview = useMemo(() => (heroQuery.trim().length >= 2 ? parseCardQuery(heroQuery) : null), [heroQuery]);
+
+  // Keep the visible game toggle in lockstep with what the search text implies
+  // (e.g. "Luffy OP01-024" flips it to One Piece). The toggle stays clickable —
+  // a manual tap simply wins until the text next implies a game.
+  const detectedGame = heroPreview?.game ?? null;
+  useEffect(() => {
+    if (detectedGame) form.setValue("game", detectedGame);
+  }, [detectedGame, form]);
 
   useEffect(() => {
     initializeAnalytics();
@@ -401,8 +410,27 @@ function ComparisonExperience() {
               </p>
             )}
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              <label className="field">
+            <div className="mt-5 flex flex-wrap items-end gap-4">
+              <fieldset className="field">
+                <legend className="sr-only">{t.form.gameLabel}</legend>
+                <span aria-hidden="true">{t.form.gameLabel}</span>
+                <div className="inline-flex min-h-11 items-center rounded-md border border-[#d6ded5] bg-[#fffef9] p-1">
+                  {(["pokemon", "onePiece"] as const).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={game === option}
+                      onClick={() => form.setValue("game", option)}
+                      className={`rounded px-3 py-1.5 text-sm font-bold transition ${
+                        game === option ? "bg-[#2f6f73] text-white" : "text-[#52635c] hover:text-[#2f6f73]"
+                      }`}
+                    >
+                      {t.form.games[option]}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="field w-full max-w-56">
                 <span>{t.form.deliveryZip}</span>
                 <div className="input-with-icon">
                   <IconPin className="h-4 w-4" />
@@ -425,24 +453,6 @@ function ComparisonExperience() {
             </button>
             {refineOpen && (
               <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
-                <fieldset className="mb-5">
-                  <legend className="mb-2 text-sm font-bold text-[#52635c]">{t.form.gameLabel}</legend>
-                  <div className="inline-flex rounded-md border border-[#d6ded5] bg-white p-1">
-                    {(["pokemon", "onePiece"] as const).map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        aria-pressed={game === option}
-                        onClick={() => form.setValue("game", option)}
-                        className={`rounded px-3 py-1.5 text-sm font-bold transition ${
-                          game === option ? "bg-[#2f6f73] text-white" : "text-[#52635c] hover:text-[#2f6f73]"
-                        }`}
-                      >
-                        {t.form.games[option]}
-                      </button>
-                    ))}
-                  </div>
-                </fieldset>
                 <div className="grid gap-4 md:grid-cols-3">
                   <label className="field">
                     <span>{t.form.cardName}</span>
@@ -1236,17 +1246,84 @@ function riskVerdict(score: number, t: Dict): { label: string; tone: VerdictTone
   return { label: t.card.higherRisk, tone: "bad" };
 }
 
-function VerdictTag({ verdict, icon: Icon }: { verdict: { label: string; tone: VerdictTone }; icon: IconComponent }) {
+function VerdictTag({ verdict, icon: Icon, hint }: { verdict: { label: string; tone: VerdictTone }; icon: IconComponent; hint?: string }) {
   const cls = verdict.tone === "good"
     ? "bg-[#dcecdf] text-[#2f6f73]"
     : verdict.tone === "ok"
       ? "bg-[#fff0d5] text-[#8d6032]"
       : "bg-[#f6dcd0] text-[#9a4a2c]";
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.04em] ${cls}`}>
+    <span title={hint} className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.04em] ${cls}`}>
       <Icon className="h-3.5 w-3.5" />
       {verdict.label}
     </span>
+  );
+}
+
+// Builds the human-readable inputs behind the seller-trust and evidence scores.
+// The same strings feed the tag tooltips and the "check the math" receipt, so
+// the two can never tell different stories.
+function sellerInputsLine(listing: NormalizedListing, t: Dict) {
+  const bits = [
+    listing.seller.feedbackPercentage !== null && t.card.mathFeedback(listing.seller.feedbackPercentage),
+    listing.seller.feedbackCount !== null && t.card.mathRatings(listing.seller.feedbackCount),
+    listing.seller.returnsAccepted === true ? t.card.mathReturns : t.card.mathReturnsUnknown,
+    listing.seller.buyerProtection === true && t.card.mathProtection,
+  ].filter(Boolean) as string[];
+  return bits.length ? bits.join(" · ") : t.card.mathNoSellerData;
+}
+
+function evidenceInputsLine(listing: NormalizedListing, t: Dict) {
+  const bits = [
+    t.card.photos(listing.evidence.photoCount),
+    listing.evidence.frontBackExplicit && t.card.frontBack,
+    listing.evidence.closeupsExplicit && t.card.corners,
+    listing.evidence.surfaceExplicit && t.card.surface,
+    listing.evidence.substantiveConditionNotes && t.card.mathConditionNotes,
+  ].filter(Boolean) as string[];
+  return bits.join(" · ");
+}
+
+// The verifiability receipt: every verdict label above it, recomputed from the
+// listing's stored deterministic inputs, one row per component, with the exact
+// composite formulas. A buyer can check any row against the live listing page.
+function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; marketPrice: number | null }) {
+  const t = useT();
+  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const priceComponent = calculatePriceComponent(total, marketPrice);
+  const rows: Array<{ label: string; inputs: string; score: number; note?: string }> = [
+    {
+      label: t.card.mathPrice,
+      inputs: listing.demo
+        ? t.card.mathDemoHidden
+        : marketPrice && marketPrice > 0
+          ? t.card.mathVs(formatMoney(total), formatMoney(marketPrice))
+          : t.card.mathNoMarket,
+      score: priceComponent,
+    },
+    { label: t.card.mathSeller, inputs: sellerInputsLine(listing, t), score: listing.sellerTrustScore, note: t.card.thTrusted },
+    { label: t.card.mathEvidence, inputs: evidenceInputsLine(listing, t), score: listing.evidenceCompletenessScore, note: t.card.thDocumented },
+    { label: t.card.mathRisk, inputs: t.card.mathRiskFormula, score: listing.safetyScore, note: t.card.thRisk },
+    { label: t.card.mathValue, inputs: t.card.mathValueFormula, score: listing.valueScore },
+  ];
+
+  return (
+    <details className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] px-4 py-3">
+      <summary className="cursor-pointer text-sm font-bold text-[#52635c]">{t.card.checkMath}</summary>
+      <div className="mt-3 divide-y divide-dashed divide-[#c9d7ce]">
+        {rows.map((row) => (
+          <div key={row.label} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
+            <div className="min-w-0">
+              <span className="font-bold text-[#24312f]">{row.label}</span>
+              <span className="ml-2 text-[#64736c]">{row.inputs}</span>
+              {row.note && <span className="ml-2 text-xs text-[#8a978f]">({row.note})</span>}
+            </div>
+            <span className="font-mono font-bold text-[#2f6f73]">{row.score}/100</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[#64736c]">{t.card.mathHint}</p>
+    </details>
   );
 }
 
@@ -1321,9 +1398,21 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <VerdictTag verdict={sellerVerdict(listing.sellerTrustScore, t)} icon={IconSeal} />
-        <VerdictTag verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)} icon={IconPhotoProof} />
-        <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={IconCardCheck} />
+        <VerdictTag
+          verdict={sellerVerdict(listing.sellerTrustScore, t)}
+          icon={IconSeal}
+          hint={`${sellerInputsLine(listing, t)} → ${listing.sellerTrustScore}/100 (${t.card.thTrusted})`}
+        />
+        <VerdictTag
+          verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)}
+          icon={IconPhotoProof}
+          hint={`${evidenceInputsLine(listing, t)} → ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
+        />
+        <VerdictTag
+          verdict={riskVerdict(listing.safetyScore, t)}
+          icon={IconCardCheck}
+          hint={`${t.card.mathRiskFormula} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
+        />
       </div>
       <EvidenceChecklist evidence={listing.evidence} />
 
@@ -1331,6 +1420,8 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
         <span className="font-bold text-[#2f6f73]">{t.card.whyLeads}: </span>
         {choice.reason}
       </p>
+
+      <VerdictMath listing={listing} marketPrice={marketPrice} />
 
       <div className="mt-5">
         {listing.url ? (
@@ -1419,8 +1510,12 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
           {listing.demo && <span className="rounded bg-[#fff0b8] px-2 py-0.5 text-xs font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
           {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.candidate.rawSingle}</span>}
           <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.conditions[listing.claimedCondition]}</span>
-          <span className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{t.candidate.match(listing.matchConfidence)}</span>
-          <VerdictTag verdict={riskVerdict(listing.safetyScore, t)} icon={IconCardCheck} />
+          <span title={listing.matchReasons.join(" ")} className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{t.candidate.match(listing.matchConfidence)}</span>
+          <VerdictTag
+            verdict={riskVerdict(listing.safetyScore, t)}
+            icon={IconCardCheck}
+            hint={`${sellerInputsLine(listing, t)} · ${evidenceInputsLine(listing, t)} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
+          />
         </div>
         <p className="mt-1 line-clamp-1 text-sm text-[#64736c]">{listing.title}</p>
         <EvidenceChecklist evidence={listing.evidence} compact />

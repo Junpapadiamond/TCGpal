@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  assessTitleMatch,
   getEbayListingByUrl,
   parseEbayUrl,
   resetEbayTokenCacheForTests,
@@ -133,5 +134,47 @@ describe("eBay active-listing search", () => {
     await searchEbayAlternatives(card, buyer, fetcher);
 
     expect(tokenCalls).toBe(1);
+  });
+});
+
+describe("assessTitleMatch (listing-title identity confidence)", () => {
+  const card = { name: "Umbreon VMAX", setName: "Evolving Skies", setCode: "SWSH7", cardNumber: "215/203" };
+
+  it("rates a clean name + full collector number as high", () => {
+    expect(assessTitleMatch("Umbreon VMAX 215/203 Evolving Skies NM", card).confidence).toBe("high");
+  });
+
+  it("tolerates zero-padded collector numbers", () => {
+    const padded = { ...card, cardNumber: "4/102" };
+    expect(assessTitleMatch("Charizard Holo 004/102 Base Set", { ...padded, name: "Charizard" }).confidence).toBe("high");
+  });
+
+  it("tolerates reordered and re-spaced name tokens", () => {
+    expect(assessTitleMatch("VMAX Umbreon 215/203 raw", card).confidence).toBe("high");
+    expect(assessTitleMatch("Umbreon V MAX 215/203", card).confidence).toBe("high");
+  });
+
+  it("keeps a bare '#215' with the right name as medium (comparable, not top confidence)", () => {
+    expect(assessTitleMatch("Umbreon VMAX #215 Evolving Skies", card).confidence).toBe("medium");
+    expect(assessTitleMatch("Umbreon VMAX 215 NM/M", card).confidence).toBe("medium");
+  });
+
+  it("accepts the set code in place of the set name", () => {
+    expect(assessTitleMatch("Umbreon VMAX SWSH7 alt art", card).confidence).toBe("medium");
+  });
+
+  it("rates number + set without the card name as medium", () => {
+    expect(assessTitleMatch("Evolving Skies 215/203 Alt Art NM", card).confidence).toBe("medium");
+  });
+
+  it("still rejects unrelated listings as low", () => {
+    expect(assessTitleMatch("Pikachu VMAX 044/185 Vivid Voltage", card).confidence).toBe("low");
+    expect(assessTitleMatch("Umbreon plush toy", card).confidence).toBe("low");
+  });
+
+  it("handles prefix-code games (One Piece) with hyphen/space variance", () => {
+    const op = { name: "Monkey.D.Luffy", setName: "Romance Dawn", setCode: "OP-01", cardNumber: "OP01-003" };
+    expect(assessTitleMatch("Monkey D Luffy OP01-003 Romance Dawn", op).confidence).toBe("high");
+    expect(assessTitleMatch("One Piece Luffy OP01 003 alt", op).confidence).toBe("high");
   });
 });

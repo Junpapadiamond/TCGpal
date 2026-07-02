@@ -136,7 +136,7 @@ export async function runListingComparison(
     // fail — fall back to labeled demo inventory the buyer cannot mistake for real
     // offers, rather than masking the gap.
     demoMode = true;
-    seeds.push(...demoListingSeeds);
+    seeds.push(...demoSeedsForCard(confirmedCard));
     warnings.push("No live marketplace API is configured. Showing labeled demo inventory instead.");
     trace.push({
       step: "marketplace_search",
@@ -451,6 +451,19 @@ function evaluateOnePieceMatch(
 ): { confidence: CardIdentityCandidate["confidence"]; matchReasons: string[] } {
   const requestedId = request.cardHint.cardNumber.trim().toUpperCase();
   if (requestedId && requestedId === card.card_set_id.toUpperCase()) {
+    // A matching card id normally auto-confirms — but if the buyer also typed a
+    // name and it contradicts this card (e.g. "Luffy ST01-004" where ST01-004
+    // is Sanji), silently trusting the id would confirm the wrong card. Demote
+    // so the version picker appears and the buyer resolves the conflict.
+    const cardName = normalizeText(card.card_name);
+    const nameAgrees = !searchName
+      || normalizeText(searchName).split(" ").some((token) => token.length >= 3 && cardName.includes(token));
+    if (!nameAgrees) {
+      return {
+        confidence: "medium",
+        matchReasons: ["The card id matches this print, but the name you typed differs — double-check the version."],
+      };
+    }
     return { confidence: "high", matchReasons: ["Requested card id matches this print."] };
   }
   if (onePieceSetMatches(card, request.cardHint.setCode)) {
@@ -473,6 +486,34 @@ function resolveConfirmedCard(request: ComparisonRequest, identities: CardIdenti
   );
   const highConfidenceMatches = identities.filter((candidate) => candidate.confidence === "high");
   return top?.confidence === "high" && hasExplicitIdentity && highConfidenceMatches.length === 1 ? top : null;
+}
+
+// Demo inventory must never impersonate offers for a different card than the
+// one the buyer confirmed (searching Zoro must not surface Umbreon fixtures).
+// Re-anchor every fixture to the confirmed card — id, image, a manual eBay
+// search link, an unmistakably-labeled templated title — and scale the fake
+// prices to the card's market anchor when one exists so the demo math reads
+// coherently at any price level.
+function demoSeedsForCard(card: CardIdentityCandidate): typeof demoListingSeeds {
+  const searchUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(`${card.name} ${card.cardNumber}`.trim())}`;
+  const cardLabel = `${card.name} ${card.cardNumber}`.trim();
+  const flavors: Record<string, { title: string; priceFactor: number }> = {
+    "demo-ebay-value": { title: `${cardLabel} ${card.setName} raw — demo listing`, priceFactor: 0.93 },
+    "demo-ebay-safe": { title: `${cardLabel} raw card, established seller — demo listing`, priceFactor: 0.98 },
+    "demo-ebay-evidence": { title: `${cardLabel} raw, front back corners surface video — demo listing`, priceFactor: 1 },
+  };
+  const market = typeof card.marketMid === "number" && card.marketMid > 0 ? card.marketMid : null;
+  return demoListingSeeds.map((seed) => {
+    const flavor = flavors[seed.id];
+    return {
+      ...seed,
+      cardId: card.id,
+      imageUrl: card.imageUrl,
+      url: searchUrl,
+      title: flavor?.title ?? seed.title,
+      price: market !== null && flavor ? Math.round(market * flavor.priceFactor * 100) / 100 : seed.price,
+    };
+  });
 }
 
 function sourceToSeed(

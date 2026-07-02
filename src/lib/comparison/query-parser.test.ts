@@ -17,7 +17,7 @@ describe("parseCardQuery", () => {
     expect(result.variant).toBe("Gold Star");
     expect(result.cardNumber).toBe("SWSH144");
     expect(result.gradingClaim.toLowerCase()).toBe("psa 10");
-    expect(result.game).toBeNull(); // "Greninja" alone is not a confident game signal
+    expect(result.game).toBe("pokemon"); // SWSH promo codes exist only in Pokémon
   });
 
   it("parses a plain fraction-style collector number the same as the multi-field form would", () => {
@@ -26,7 +26,7 @@ describe("parseCardQuery", () => {
     expect(result.cardNumber).toBe("215/203");
     expect(result.language).toBe("");
     expect(result.variant).toBe("");
-    expect(result.game).toBeNull();
+    expect(result.game).toBe("pokemon"); // fraction collector numbers exist only in Pokémon
   });
 
   it("prefers the fraction pattern over the letter-prefix pattern when both could apply", () => {
@@ -38,11 +38,23 @@ describe("parseCardQuery", () => {
     const result = parseCardQuery("OP01-024");
     expect(result.cardNumber).toBe("OP01-024");
     expect(result.name).toBe("");
+    expect(result.game).toBe("onePiece"); // OP set codes exist only in One Piece
   });
 
-  it("does not false-positive a game or language token from ordinary text", () => {
+  it("infers One Piece from an OP/ST/EB code without the words 'one piece'", () => {
+    expect(parseCardQuery("Monkey.D.Luffy OP01-024").game).toBe("onePiece");
+    expect(parseCardQuery("Zoro ST01-004").game).toBe("onePiece");
+    expect(parseCardQuery("Shanks EB01-006").game).toBe("onePiece");
+  });
+
+  it("keeps ambiguous promo codes game-neutral", () => {
+    // P-096 exists in both games' promo numbering; a wrong guess is worse than none.
+    expect(parseCardQuery("Luffy P-096").game).toBeNull();
+  });
+
+  it("does not false-positive a language token from ordinary text", () => {
     const result = parseCardQuery("Charizard Base Set 4/102");
-    expect(result.game).toBeNull();
+    expect(result.game).toBe("pokemon");
     expect(result.language).toBe("");
     expect(result.name).toBe("Charizard Base Set");
   });

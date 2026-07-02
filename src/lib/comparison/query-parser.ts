@@ -24,6 +24,14 @@ const GAME_TOKENS: Array<{ pattern: RegExp; game: TcgGame }> = [
   { pattern: /\bpok[eé]mon\b/i, game: "pokemon" },
 ];
 
+// Card-code shapes that belong to exactly one game are a confident game signal
+// on their own — a buyer types "Luffy OP01-024" without ever writing the words
+// "one piece". OP/ST/EB/PRB prefixes are One Piece set codes; SWSH/SV/SM/XY/TG
+// promo-style codes and fraction collector numbers (215/203) exist only in
+// Pokémon. Ambiguous shapes (P-096 appears in both games) stay null.
+const ONE_PIECE_CODE_PATTERN = /\b(?:OP|ST|EB|PRB)\d{1,2}(?:-\d{1,3})?\b/i;
+const POKEMON_CODE_PATTERN = /\b(?:SWSH|SVP?|SM|XY|BW|TG|GG|DP|HGSS)\d{1,4}\b/i;
+
 // Full words only (no 2-3 letter abbreviations like "JP"/"EN") — a wrong game/
 // language guess is worse than no guess, and short abbreviations are exactly the
 // kind of token that collides with unrelated text.
@@ -83,6 +91,13 @@ export function parseCardQuery(query: string): ParsedCardQuery {
       game = candidate;
       remaining = removeMatch(remaining, match);
       break;
+    }
+  }
+  if (game === null) {
+    if (ONE_PIECE_CODE_PATTERN.test(remaining)) {
+      game = "onePiece";
+    } else if (POKEMON_CODE_PATTERN.test(remaining) || FRACTION_CODE_PATTERN.test(remaining)) {
+      game = "pokemon";
     }
   }
 

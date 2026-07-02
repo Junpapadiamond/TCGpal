@@ -79,7 +79,7 @@ export function calculatePriceComponent(landedOrPreTaxTotal: number, marketPrice
 // leads (below-market is the strongest "best value" tell), safety and evidence
 // keep it from picking a cheap-but-risky listing. Weights are a product choice,
 // not a derived constant — tune here if the default lens starts feeling wrong.
-const VALUE_WEIGHTS = { price: 0.5, safety: 0.3, evidence: 0.2 };
+export const VALUE_WEIGHTS = { price: 0.5, safety: 0.3, evidence: 0.2 };
 
 export function calculateValueScore(input: { priceComponent: number; safetyScore: number; evidenceCompletenessScore: number }) {
   return Math.round(

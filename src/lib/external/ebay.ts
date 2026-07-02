@@ -136,7 +136,12 @@ export async function searchEbayAlternatives(
 >>> {
   const token = await getEbayToken(fetcher);
   const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item_summary/search`);
-  const query = queryOverride?.trim() || `${card.name} ${card.setName} ${card.cardNumber}`;
+  // Recall-first query: name + collector number. Set names are the token real
+  // titles most often omit, and Best Match treats extra terms as AND-ish — so
+  // including the set silently drops listings that are fine. Set/name/number
+  // agreement is verified deterministically per title in assessTitleMatch.
+  const query = queryOverride?.trim()
+    || [card.name, card.cardNumber || card.setName].filter(Boolean).join(" ").trim();
   endpoint.searchParams.set("q", query);
   endpoint.searchParams.set("limit", "50");
   // Best Match (no price sort): price-ascending floods the top with cheap novelty
@@ -183,12 +188,84 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
   };
 }
 
+// How confidently a live listing title identifies the confirmed card. Sellers
+// write titles loosely — reordered words ("VMAX Umbreon"), zero-padded numbers
+// ("004/102"), "#215" without the denominator, set codes instead of set names —
+// so this matcher works on normalized tokens rather than literal substrings.
+// Exported for direct unit testing; ranking eligibility depends on it (low
+// confidence is excluded from the comparison).
+export function assessTitleMatch(
+  title: string,
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "setCode" | "cardNumber">,
+): { confidence: "high" | "medium" | "low"; reasons: string[] } {
+  const squashedTitle = normalizeText(title);
+  const titleTokens = new Set(
+    title
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean)
+      .map(stripLeadingZeros),
+  );
+
+  // Name: substring on the squashed strings (handles punctuation/spacing) OR
+  // every significant name token present in any order (handles reordering).
+  const nameTokens = card.name
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 2);
+  const nameMatch = Boolean(card.name)
+    && (squashedTitle.includes(normalizeText(card.name))
+      || (nameTokens.length > 0 && nameTokens.every((token) => titleTokens.has(token))));
+  // Sellers shorten names ("Luffy" for "Monkey.D.Luffy"). A partial name is
+  // enough when the full collector code also matches — the code pins the print.
+  const namePartial = nameMatch || nameTokens.some((token) => titleTokens.has(token));
+
+  // Collector number: "full" needs the whole identifier (fraction or prefix
+  // code, zero-padding tolerated); "partial" accepts the bare numerator the way
+  // titles write "#215". A partial hit alone never reaches high confidence.
+  const { numerator, denominator } = splitCollectorNumber(card.cardNumber);
+  const squashedNumber = normalizeText(card.cardNumber);
+  const paddedFraction = numerator && denominator
+    && titleTokens.has(stripLeadingZeros(numerator)) && titleTokens.has(stripLeadingZeros(denominator));
+  const fullNumber = Boolean(card.cardNumber)
+    && (squashedTitle.includes(squashedNumber) || Boolean(paddedFraction));
+  const partialNumber = fullNumber
+    || (Boolean(numerator) && titleTokens.has(stripLeadingZeros(numerator)));
+
+  // Set: full set name or the set code ("Evolving Skies" or "SWSH7").
+  const setMatch = (Boolean(card.setName) && squashedTitle.includes(normalizeText(card.setName)))
+    || (Boolean(card.setCode) && squashedTitle.includes(normalizeText(card.setCode)));
+
+  const reasons = [
+    fullNumber
+      ? "Collector number matches."
+      : partialNumber
+        ? "Card number appears without the full collector code."
+        : "Collector number is not explicit.",
+    nameMatch ? "Card name matches." : namePartial ? "Card name partially matches." : "Card name is not explicit.",
+    setMatch ? "Set matches." : "Set is not explicit.",
+  ];
+
+  if (namePartial && fullNumber) return { confidence: "high", reasons };
+  if (nameMatch && (partialNumber || setMatch)) return { confidence: "medium", reasons };
+  if (fullNumber && setMatch) return { confidence: "medium", reasons };
+  return { confidence: "low", reasons };
+}
+
+function splitCollectorNumber(cardNumber: string) {
+  const fraction = cardNumber.match(/^\s*([A-Za-z]{0,4}\d{1,3})\s*\/\s*([A-Za-z]{0,4}\d{1,3})\s*$/);
+  if (fraction) return { numerator: fraction[1].toLowerCase(), denominator: fraction[2].toLowerCase() };
+  return { numerator: normalizeText(cardNumber), denominator: "" };
+}
+
+function stripLeadingZeros(token: string) {
+  return /^\d+$/.test(token) ? token.replace(/^0+(?=\d)/, "") : token;
+}
+
 function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdentityCandidate) {
   const source = toSourceListing(item, item.itemWebUrl ?? item.itemAffiliateWebUrl ?? "https://www.ebay.com");
   const title = item.title;
-  const exactNumber = normalizeText(title).includes(normalizeText(card.cardNumber));
-  const nameMatch = normalizeText(title).includes(normalizeText(card.name));
-  const setMatch = normalizeText(title).includes(normalizeText(card.setName));
+  const match = assessTitleMatch(title, card);
 
   return {
     id: `ebay-${item.itemId}`,
@@ -196,11 +273,8 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     url: source.url || null,
     title,
     cardId: card.id,
-    matchConfidence: exactNumber && nameMatch ? "high" as const : nameMatch && setMatch ? "medium" as const : "low" as const,
-    matchReasons: [
-      exactNumber ? "Collector number matches." : "Collector number is not explicit.",
-      setMatch ? "Set name matches." : "Set name is not explicit.",
-    ],
+    matchConfidence: match.confidence,
+    matchReasons: match.reasons,
     active: source.active,
     raw: !/\b(psa|bgs|cgc|sgc)\s*\d|\bslab(?:bed)?\b/i.test(title),
     currency: "USD" as const,
