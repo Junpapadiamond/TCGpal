@@ -9,7 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-plex-mono);
 }
 
 * {
@@ -28,6 +28,22 @@ body {
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Print finish: a fixed film of SVG fractal noise over the whole page reads
+ * as paper grain at 4% opacity. pointer-events pass through; the layer sits
+ * above content (blend keeps text legible) like ink printed on stock.
+ */
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  content: "";
+  mix-blend-mode: multiply;
+  opacity: 0.045;
+  pointer-events: none;
 }
 
 button,
@@ -52,8 +68,24 @@ a {
   text-decoration: none;
 }
 
+/*
+ * Display stack: Fraunces carries Latin headings; Han glyphs fall through to
+ * Noto Serif SC so 中文 headings get the same editorial weight. The softness
+ * axis rounds the terminals toward the warm print feel; optical sizing stays
+ * automatic so small serif labels keep their sturdier cut.
+ */
 .font-serif {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display), var(--font-serif-sc), Georgia, "Songti SC", "Times New Roman", serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+  letter-spacing: -0.01em;
+  /* Letterpress: a hairline of paper light under the ink. */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* The hero headline earns the full Fraunces personality. */
+.display-wonk {
+  font-variation-settings: "SOFT" 70, "WONK" 1;
 }
 
 .paper-panel {

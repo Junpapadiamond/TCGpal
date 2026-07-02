@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Geist, IBM_Plex_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -7,9 +7,29 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Display serif for headings: Fraunces with its optical-size, softness, and
+// wonk axes loaded so CSS can tune the print personality per size.
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
+// Money and ledger numbers. Plex Mono tops out at 700; font-black usages
+// resolve to that.
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
+
+// Chinese display serif: Han glyphs fall through Fraunces to this in the
+// heading stack, so 中文 headings get the same editorial weight as English.
+// Not preloaded — the CJK slices only download when zh text renders.
+const notoSerifSC = Noto_Serif_SC({
+  variable: "--font-serif-sc",
+  weight: ["600", "700"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -37,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${fraunces.variable} ${plexMono.variable} ${notoSerifSC.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

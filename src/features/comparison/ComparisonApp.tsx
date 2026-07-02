@@ -349,7 +349,7 @@ function ComparisonExperience() {
             <IconCardSearch className="h-4 w-4" />
             {t.hero.eyebrow}
           </div>
-          <h1 className="mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
+          <h1 className="display-wonk mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
             {t.hero.title}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#52635c] sm:text-base sm:leading-7">
