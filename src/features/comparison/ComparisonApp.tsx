@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
 import {
+  EmblemOnePiece,
+  EmblemPokemon,
   IconArrowUpRight,
   IconCardCheck,
   IconCardFan,
@@ -53,6 +55,13 @@ const marketplaces: Marketplace[] = [
   "Whatnot",
   "Local shop",
   "Other",
+];
+
+// Branded selector tiles per game: TCGpal-drawn emblem + the game's signature
+// accent. Adding a TCG later = one more entry here plus its catalog adapter.
+const gameTiles: Array<{ id: TcgGame; emblem: IconComponent; accent: string; tint: string }> = [
+  { id: "pokemon", emblem: EmblemPokemon, accent: "#2a75bb", tint: "#eef4fb" },
+  { id: "onePiece", emblem: EmblemOnePiece, accent: "#d0202e", tint: "#fdf0ef" },
 ];
 
 const conditions: ConditionClaim[] = [
@@ -410,24 +419,40 @@ function ComparisonExperience() {
               </p>
             )}
 
-            <div className="mt-5 flex flex-wrap items-end gap-4">
-              <fieldset className="field">
+            <div className="mt-5 flex flex-wrap items-end gap-x-6 gap-y-4">
+              <fieldset className="field grow sm:grow-0">
                 <legend className="sr-only">{t.form.gameLabel}</legend>
                 <span aria-hidden="true">{t.form.gameLabel}</span>
-                <div className="inline-flex min-h-11 items-center rounded-md border border-[#d6ded5] bg-[#fffef9] p-1">
-                  {(["pokemon", "onePiece"] as const).map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      aria-pressed={game === option}
-                      onClick={() => form.setValue("game", option)}
-                      className={`rounded px-3 py-1.5 text-sm font-bold transition ${
-                        game === option ? "bg-[#2f6f73] text-white" : "text-[#52635c] hover:text-[#2f6f73]"
-                      }`}
-                    >
-                      {t.form.games[option]}
-                    </button>
-                  ))}
+                {/* Each game gets its own branded tile (TCGpal-drawn emblem +
+                    signature accent), Collectr-style, instead of a plain text
+                    toggle. The parser still auto-selects from the search text. */}
+                <div className="grid grid-cols-2 gap-2">
+                  {gameTiles.map(({ id, emblem: Emblem, accent, tint }) => {
+                    const active = game === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => form.setValue("game", id)}
+                        style={active ? { borderColor: accent, background: tint } : undefined}
+                        className={`flex min-h-14 items-center justify-center gap-2.5 rounded-md border-2 px-4 py-2 transition sm:min-w-44 ${
+                          active ? "shadow-[0_2px_0_rgba(36,49,47,0.12)]" : "border-[#d6ded5] bg-[#fffef9] opacity-75 hover:opacity-100"
+                        }`}
+                      >
+                        <Emblem className="h-7 w-7 shrink-0" />
+                        <span className="text-left">
+                          <span className={`block font-serif text-base font-bold leading-tight ${active ? "text-[#24312f]" : "text-[#52635c]"}`}>
+                            {t.form.games[id]}
+                          </span>
+                          <span className="block text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#8a978f]">
+                            {id === "pokemon" ? "TCG" : "Card Game"}
+                          </span>
+                        </span>
+                        {active && <IconCheck className="h-4 w-4 shrink-0 text-[#24312f]" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </fieldset>
               <label className="field w-full max-w-56">
