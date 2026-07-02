@@ -27,7 +27,7 @@ import {
 } from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
-import { calculatePriceComponent } from "@/lib/comparison/ranking";
+import { calculatePriceComponent, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
@@ -358,7 +358,7 @@ function ComparisonExperience() {
             <IconCardSearch className="h-4 w-4" />
             {t.hero.eyebrow}
           </div>
-          <h1 className="display-wonk mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
+          <h1 className="display-soft mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
             {t.hero.title}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#52635c] sm:text-base sm:leading-7">
@@ -1016,7 +1016,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
                     );
                   })}
                 </div>
-                <p className="mt-2 hidden text-xs leading-5 text-[#64736c] sm:block">{t.result.defaultLensNote}</p>
+                <p className="mt-2 text-xs leading-5 text-[#64736c]">{t.result.defaultLensNote}</p>
               </div>
             )}
           </div>
@@ -1075,6 +1075,15 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
                   <IconCardCheck className="h-3.5 w-3.5 shrink-0" />
                   {t.result.avoidedTraps(excluded.length)}
                 </span>
+              )}
+              {report.platforms.length > 0 && (
+                <a href="#method" className="inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-1.5 text-[#2f6f73] underline-offset-2 hover:underline">
+                  <IconCardFan className="h-3.5 w-3.5 shrink-0" />
+                  {t.result.sourcesInline(
+                    report.platforms.filter((platform) => platform.status === "complete").length,
+                    report.platforms.length,
+                  )}
+                </a>
               )}
             </div>
           </div>
@@ -1260,6 +1269,20 @@ function VerdictTag({ verdict, icon: Icon, hint }: { verdict: { label: string; t
   );
 }
 
+// The displayed formulas derive from the same exported weight constants the
+// ranking math uses, so tuning a weight in ranking.ts updates the receipt too.
+function riskFormula(t: Dict) {
+  return t.card.mathRiskFormula(Math.round(SAFETY_WEIGHTS.seller * 100), Math.round(SAFETY_WEIGHTS.evidence * 100));
+}
+
+function valueFormula(t: Dict) {
+  return t.card.mathValueFormula(
+    Math.round(VALUE_WEIGHTS.price * 100),
+    Math.round(VALUE_WEIGHTS.safety * 100),
+    Math.round(VALUE_WEIGHTS.evidence * 100),
+  );
+}
+
 // Builds the human-readable inputs behind the seller-trust and evidence scores.
 // The same strings feed the tag tooltips and the "check the math" receipt, so
 // the two can never tell different stories.
@@ -1290,21 +1313,25 @@ function evidenceInputsLine(listing: NormalizedListing, t: Dict) {
 function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; marketPrice: number | null }) {
   const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const priceComponent = calculatePriceComponent(total, marketPrice);
+  // Demo listings are scored market-free end to end (the server ranks them the
+  // same way), so no vs-market read — not even a bare score — can be
+  // reconstructed from fabricated demo prices.
+  const anchor = listing.demo ? null : marketPrice;
+  const priceComponent = calculatePriceComponent(total, anchor);
   const rows: Array<{ label: string; inputs: string; score: number; note?: string }> = [
     {
       label: t.card.mathPrice,
       inputs: listing.demo
         ? t.card.mathDemoHidden
-        : marketPrice && marketPrice > 0
-          ? t.card.mathVs(formatMoney(total), formatMoney(marketPrice))
+        : anchor && anchor > 0
+          ? t.card.mathVs(formatMoney(total), formatMoney(anchor))
           : t.card.mathNoMarket,
       score: priceComponent,
     },
     { label: t.card.mathSeller, inputs: sellerInputsLine(listing, t), score: listing.sellerTrustScore, note: t.card.thTrusted },
     { label: t.card.mathEvidence, inputs: evidenceInputsLine(listing, t), score: listing.evidenceCompletenessScore, note: t.card.thDocumented },
-    { label: t.card.mathRisk, inputs: t.card.mathRiskFormula, score: listing.safetyScore, note: t.card.thRisk },
-    { label: t.card.mathValue, inputs: t.card.mathValueFormula, score: listing.valueScore },
+    { label: t.card.mathRisk, inputs: riskFormula(t), score: listing.safetyScore, note: t.card.thRisk },
+    { label: t.card.mathValue, inputs: valueFormula(t), score: listing.valueScore },
   ];
 
   return (
@@ -1411,7 +1438,7 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
         <VerdictTag
           verdict={riskVerdict(listing.safetyScore, t)}
           icon={IconCardCheck}
-          hint={`${t.card.mathRiskFormula} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
+          hint={`${riskFormula(t)} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
         />
       </div>
       <EvidenceChecklist evidence={listing.evidence} />

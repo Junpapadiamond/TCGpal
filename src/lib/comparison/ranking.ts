@@ -81,6 +81,10 @@ export function calculatePriceComponent(landedOrPreTaxTotal: number, marketPrice
 // not a derived constant — tune here if the default lens starts feeling wrong.
 export const VALUE_WEIGHTS = { price: 0.5, safety: 0.3, evidence: 0.2 };
 
+// Safety blends the two trust signals; exported so the UI's "check the math"
+// receipt derives its displayed formula from the same constants.
+export const SAFETY_WEIGHTS = { seller: 0.6, evidence: 0.4 };
+
 export function calculateValueScore(input: { priceComponent: number; safetyScore: number; evidenceCompletenessScore: number }) {
   return Math.round(
     input.priceComponent * VALUE_WEIGHTS.price
@@ -136,7 +140,7 @@ export function normalizeListing(input: {
   const estimatedLandedCost = estimatedTax === null ? null : roundMoney(preTaxTotal + estimatedTax);
   const sellerTrustScore = calculateSellerTrustScore(listing.seller);
   const evidenceCompletenessScore = calculateEvidenceCompletenessScore(listing.evidence);
-  const safetyScore = Math.round((sellerTrustScore * 0.6) + (evidenceCompletenessScore * 0.4));
+  const safetyScore = Math.round((sellerTrustScore * SAFETY_WEIGHTS.seller) + (evidenceCompletenessScore * SAFETY_WEIGHTS.evidence));
   const marketPrice = input.marketPrice ?? null;
   const priceComponent = calculatePriceComponent(estimatedLandedCost ?? preTaxTotal, marketPrice);
   const valueScore = calculateValueScore({ priceComponent, safetyScore, evidenceCompletenessScore });

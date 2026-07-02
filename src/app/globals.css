@@ -8,7 +8,6 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-plex-mono);
 }
 
@@ -83,9 +82,9 @@ a {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-/* The hero headline gets extra softness but stays upright — the WONK axis
-   slants stems (the crooked "f") and reads as a glitch, not charm. */
-.display-wonk {
+/* The hero headline gets extra softness but stays upright — never re-enable
+   the WONK axis here: it slants stems (a crooked "f") and reads as a glitch. */
+.display-soft {
   font-variation-settings: "SOFT" 70, "WONK" 0;
 }
 

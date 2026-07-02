@@ -83,7 +83,7 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 
 ## Architecture
 
-- `src/features/comparison/ComparisonApp.tsx`: the card-first comparison experience — search → confirm version → one recommended buy (`RecommendationCard`) with a lens toggle; verdict-led plain-language tags with the numeric scores de-emphasized; market-anchor chip and per-listing vs-market read.
+- `src/features/comparison/ComparisonApp.tsx`: the card-first comparison experience — search → confirm version → one recommended buy (`RecommendationBody` inside the verdict hero) with a lens toggle; verdict-led plain-language tags with the numeric scores de-emphasized; market-anchor chip and per-listing vs-market read.
 - `src/lib/comparison/*`: fixtures, scoring, landed-cost math, deterministic ranking (incl. `exclusionPatterns` and the `MARKET_FLOOR_RATIO` below-market gate), and the cross-platform **platform-agent registry + fan-out** (`platforms.ts`).
 - `src/lib/comparison/platforms.ts`: each marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation, so the system "works as long as you have the APIs" — adding a marketplace is one adapter. eBay is the only live agent today; others stay manual-ledger until a licensed API is connected.
 - `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), and PriceCharting adapters.

@@ -172,6 +172,24 @@ describe("assessTitleMatch (listing-title identity confidence)", () => {
     expect(assessTitleMatch("Umbreon plush toy", card).confidence).toBe("low");
   });
 
+  it("never matches a collector number inside a larger number", () => {
+    const base = { name: "Charizard", setName: "Base Set", setCode: "BS", cardNumber: "4/102" };
+    // "14/102" contains "4/102" as a substring — must not read as the confirmed number.
+    expect(assessTitleMatch("Charizard 14/102 holo", base).confidence).toBe("low");
+    expect(assessTitleMatch("Charizard 004/102 holo", base).confidence).toBe("high");
+  });
+
+  it("does not match a prefix code inside a longer code", () => {
+    const promo = { name: "Greninja", setName: "SWSH Black Star Promos", setCode: "SWSHP", cardNumber: "SWSH14" };
+    expect(assessTitleMatch("Greninja SWSH144 Gold Star", promo).confidence).toBe("low");
+  });
+
+  it("requires set corroboration for short bare numerators (cross-set collision guard)", () => {
+    const pikachu = { name: "Pikachu", setName: "Vivid Voltage", setCode: "SWSH4", cardNumber: "025/185" };
+    expect(assessTitleMatch("Pikachu 25 NM", pikachu).confidence).toBe("low");
+    expect(assessTitleMatch("Pikachu 25 Vivid Voltage NM", pikachu).confidence).toBe("medium");
+  });
+
   it("handles prefix-code games (One Piece) with hyphen/space variance", () => {
     const op = { name: "Monkey.D.Luffy", setName: "Romance Dawn", setCode: "OP-01", cardNumber: "OP01-003" };
     expect(assessTitleMatch("Monkey D Luffy OP01-003 Romance Dawn", op).confidence).toBe("high");

@@ -221,16 +221,20 @@ export function assessTitleMatch(
   const namePartial = nameMatch || nameTokens.some((token) => titleTokens.has(token));
 
   // Collector number: "full" needs the whole identifier (fraction or prefix
-  // code, zero-padding tolerated); "partial" accepts the bare numerator the way
-  // titles write "#215". A partial hit alone never reaches high confidence.
-  const { numerator, denominator } = splitCollectorNumber(card.cardNumber);
-  const squashedNumber = normalizeText(card.cardNumber);
-  const paddedFraction = numerator && denominator
-    && titleTokens.has(stripLeadingZeros(numerator)) && titleTokens.has(stripLeadingZeros(denominator));
-  const fullNumber = Boolean(card.cardNumber)
-    && (squashedTitle.includes(squashedNumber) || Boolean(paddedFraction));
+  // code) via an anchored pattern — zero-padding and separator variance are
+  // tolerated, but boundaries are enforced so "4/102" never matches inside
+  // "14/102". "partial" accepts the bare numerator the way titles write
+  // "#215"; a partial hit alone never reaches high confidence.
+  const { numerator } = splitCollectorNumber(card.cardNumber);
+  const numberPattern = collectorNumberPattern(card.cardNumber);
+  const fullNumber = numberPattern !== null && numberPattern.test(title);
   const partialNumber = fullNumber
     || (Boolean(numerator) && titleTokens.has(stripLeadingZeros(numerator)));
+  // A bare short numerator ("25") collides across sets for generic names, so
+  // it only supports a medium match when it is specific enough (3+ digits) or
+  // the set corroborates it.
+  const partialStrong = fullNumber
+    || (partialNumber && stripLeadingZeros(numerator).replace(/\D/g, "").length >= 3);
 
   // Set: full set name or the set code ("Evolving Skies" or "SWSH7").
   const setMatch = (Boolean(card.setName) && squashedTitle.includes(normalizeText(card.setName)))
@@ -247,7 +251,7 @@ export function assessTitleMatch(
   ];
 
   if (namePartial && fullNumber) return { confidence: "high", reasons };
-  if (nameMatch && (partialNumber || setMatch)) return { confidence: "medium", reasons };
+  if (nameMatch && (partialStrong || setMatch)) return { confidence: "medium", reasons };
   if (fullNumber && setMatch) return { confidence: "medium", reasons };
   return { confidence: "low", reasons };
 }
@@ -256,6 +260,27 @@ function splitCollectorNumber(cardNumber: string) {
   const fraction = cardNumber.match(/^\s*([A-Za-z]{0,4}\d{1,3})\s*\/\s*([A-Za-z]{0,4}\d{1,3})\s*$/);
   if (fraction) return { numerator: fraction[1].toLowerCase(), denominator: fraction[2].toLowerCase() };
   return { numerator: normalizeText(cardNumber), denominator: "" };
+}
+
+// Builds an anchored, padding/separator-tolerant pattern for the catalog's
+// collector number. Fractions ("215/203", "TG23/TG30") keep the slash;
+// prefix codes ("SWSH144", "OP01-003") allow optional hyphens/spaces between
+// their letter and digit runs. Lookarounds stop partial-digit matches
+// ("4/102" inside "14/102", "SWSH14" inside "SWSH144").
+function collectorNumberPattern(cardNumber: string): RegExp | null {
+  const trimmed = cardNumber.trim().toLowerCase();
+  if (!trimmed) return null;
+  const fraction = trimmed.match(/^([a-z]{0,4})0*(\d{1,3})\s*\/\s*([a-z]{0,4})0*(\d{1,3})$/);
+  if (fraction) {
+    const [, prefixA, digitsA, prefixB, digitsB] = fraction;
+    return new RegExp(
+      `(?<![a-z0-9])${prefixA}[-\\s]*0*${digitsA}\\s*/\\s*${prefixB}[-\\s]*0*${digitsB}(?![0-9])`,
+      "i",
+    );
+  }
+  const runs = trimmed.match(/[a-z]+|\d+/g);
+  if (!runs) return null;
+  return new RegExp(`(?<![a-z0-9])${runs.join("[-\\s]*")}(?![0-9])`, "i");
 }
 
 function stripLeadingZeros(token: string) {

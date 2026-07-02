@@ -1,6 +1,6 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
-import { demoIdentities, demoListingSeeds } from "@/lib/comparison/fixtures";
+import { demoIdentities, demoListingSeedsFor, type DemoListingSeed } from "@/lib/comparison/fixtures";
 import { normalizeListing, rankListings } from "@/lib/comparison/ranking";
 import {
   EbayUnavailableError,
@@ -106,7 +106,7 @@ export async function runListingComparison(
   // removes the PriceCharting round trip from the critical path entirely.
   const referencesPromise = getReferences(confirmedCard, fetcher, trace, generatedAt);
 
-  const seeds: typeof demoListingSeeds = [];
+  const seeds: DemoListingSeed[] = [];
   const manualSeed = sourceToSeed(sourceResult, confirmedCard, generatedAt);
   if (manualSeed) seeds.push(manualSeed);
 
@@ -136,7 +136,7 @@ export async function runListingComparison(
     // fail — fall back to labeled demo inventory the buyer cannot mistake for real
     // offers, rather than masking the gap.
     demoMode = true;
-    seeds.push(...demoSeedsForCard(confirmedCard));
+    seeds.push(...demoListingSeedsFor(confirmedCard));
     warnings.push("No live marketplace API is configured. Showing labeled demo inventory instead.");
     trace.push({
       step: "marketplace_search",
@@ -146,7 +146,10 @@ export async function runListingComparison(
     });
   }
 
-  const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: confirmedCard.marketMid ?? null }));
+  // Demo fixtures are never scored against the market anchor: their prices are
+  // fabricated, so any market-derived score would be a fake vs-market read.
+  const marketAnchor = demoMode ? null : confirmedCard.marketMid ?? null;
+  const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: marketAnchor }));
   const rankedChoices = rankListings(normalized);
   trace.push({
     step: "validation_and_ranking",
@@ -455,9 +458,15 @@ function evaluateOnePieceMatch(
     // name and it contradicts this card (e.g. "Luffy ST01-004" where ST01-004
     // is Sanji), silently trusting the id would confirm the wrong card. Demote
     // so the version picker appears and the buyer resolves the conflict.
+    // Tokenize BEFORE squashing — normalizeText strips the spaces a split
+    // would need, which would collapse this into whole-string containment and
+    // wrongly demote "Luffy Gear OP01-003" style queries.
     const cardName = normalizeText(card.card_name);
     const nameAgrees = !searchName
-      || normalizeText(searchName).split(" ").some((token) => token.length >= 3 && cardName.includes(token));
+      || searchName
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .some((token) => token.length >= 3 && cardName.includes(token));
     if (!nameAgrees) {
       return {
         confidence: "medium",
@@ -488,39 +497,11 @@ function resolveConfirmedCard(request: ComparisonRequest, identities: CardIdenti
   return top?.confidence === "high" && hasExplicitIdentity && highConfidenceMatches.length === 1 ? top : null;
 }
 
-// Demo inventory must never impersonate offers for a different card than the
-// one the buyer confirmed (searching Zoro must not surface Umbreon fixtures).
-// Re-anchor every fixture to the confirmed card — id, image, a manual eBay
-// search link, an unmistakably-labeled templated title — and scale the fake
-// prices to the card's market anchor when one exists so the demo math reads
-// coherently at any price level.
-function demoSeedsForCard(card: CardIdentityCandidate): typeof demoListingSeeds {
-  const searchUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(`${card.name} ${card.cardNumber}`.trim())}`;
-  const cardLabel = `${card.name} ${card.cardNumber}`.trim();
-  const flavors: Record<string, { title: string; priceFactor: number }> = {
-    "demo-ebay-value": { title: `${cardLabel} ${card.setName} raw — demo listing`, priceFactor: 0.93 },
-    "demo-ebay-safe": { title: `${cardLabel} raw card, established seller — demo listing`, priceFactor: 0.98 },
-    "demo-ebay-evidence": { title: `${cardLabel} raw, front back corners surface video — demo listing`, priceFactor: 1 },
-  };
-  const market = typeof card.marketMid === "number" && card.marketMid > 0 ? card.marketMid : null;
-  return demoListingSeeds.map((seed) => {
-    const flavor = flavors[seed.id];
-    return {
-      ...seed,
-      cardId: card.id,
-      imageUrl: card.imageUrl,
-      url: searchUrl,
-      title: flavor?.title ?? seed.title,
-      price: market !== null && flavor ? Math.round(market * flavor.priceFactor * 100) / 100 : seed.price,
-    };
-  });
-}
-
 function sourceToSeed(
   source: SourceListing,
   card: CardIdentityCandidate,
   observedAt: string,
-): typeof demoListingSeeds[number] | null {
+): DemoListingSeed | null {
   if (source.price === null) return null;
   const titleText = `${source.title} ${source.description}`;
   const explicitNumber = normalizeText(titleText).includes(normalizeText(card.cardNumber));
@@ -553,7 +534,7 @@ function manualCandidatesToSeeds(
   candidates: ComparisonRequest["manualCandidates"],
   card: CardIdentityCandidate,
   observedAt: string,
-): typeof demoListingSeeds {
+): DemoListingSeed[] {
   return candidates.flatMap((candidate, index) => {
     if (candidate.price === null) return [];
     const titleText = candidate.title || `${card.name} ${card.cardNumber}`;
@@ -994,7 +975,7 @@ function dedupeIdentities(identities: CardIdentityCandidate[]) {
     .sort((a, b) => confidenceRank(b.confidence) - confidenceRank(a.confidence));
 }
 
-function dedupeSeeds(seeds: typeof demoListingSeeds) {
+function dedupeSeeds(seeds: DemoListingSeed[]) {
   return Array.from(new Map(seeds.map((seed) => [seed.id, seed])).values());
 }
 
