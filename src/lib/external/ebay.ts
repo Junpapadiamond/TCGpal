@@ -2,7 +2,7 @@ import { z } from "zod";
 import type {
   BuyerContext,
   CardIdentityCandidate,
-  NormalizedListing,
+  ListingSeed,
   SourceListing,
 } from "@/lib/schemas";
 
@@ -106,20 +106,11 @@ export async function searchEbayAlternatives(
   card: CardIdentityCandidate,
   buyer: BuyerContext,
   fetcher: typeof fetch = fetch,
-): Promise<Array<Omit<
-  NormalizedListing,
-  | "estimatedTax"
-  | "preTaxTotal"
-  | "estimatedLandedCost"
-  | "sellerTrustScore"
-  | "evidenceCompletenessScore"
-  | "safetyScore"
-  | "eligible"
-  | "exclusionReasons"
->>> {
+  queryTemplate?: string,
+): Promise<ListingSeed[]> {
   const token = await getEbayToken(fetcher);
   const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item_summary/search`);
-  endpoint.searchParams.set("q", `${card.name} ${card.setName} ${card.cardNumber}`);
+  endpoint.searchParams.set("q", queryTemplate || buildEbayQuery(card));
   endpoint.searchParams.set("limit", "50");
   // Best Match (no price sort): price-ascending floods the top with cheap novelty
   // replicas that name the card. Our deterministic ranking sorts on price after
@@ -158,7 +149,13 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
   };
 }
 
-function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdentityCandidate) {
+// The crosswalk's eBay identifier is a query template, not a numeric id: the
+// platform-native way to address a card on eBay is a Best-Match search string.
+export function buildEbayQuery(card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber">) {
+  return `${card.name} ${card.setName} ${card.cardNumber}`.trim();
+}
+
+function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdentityCandidate): ListingSeed {
   const source = toSourceListing(item, item.itemWebUrl ?? item.itemAffiliateWebUrl ?? "https://www.ebay.com");
   const title = item.title;
   const exactNumber = normalizeText(title).includes(normalizeText(card.cardNumber));
@@ -187,6 +184,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     evidence: source.evidence,
     observedAt: new Date().toISOString(),
     demo: false,
+    userSupplied: false,
   };
 }
 
@@ -264,12 +262,16 @@ function evidenceFromText(text: string, photoCount: number) {
   };
 }
 
+// eBay trading-card conditions are their own scale ("Ungraded", "Graded",
+// "Like New", …). Map what maps cleanly; "Ungraded" carries no condition
+// information, so it stays "Unknown" (the UI renders that as "condition not
+// stated", never as a seller claim of Unknown).
 function normalizeCondition(value: string | undefined): SourceListing["claimedCondition"] {
   const condition = value?.toLowerCase() ?? "";
-  if (condition.includes("near mint") || condition === "new") return "Near Mint";
-  if (condition.includes("light")) return "Lightly Played";
-  if (condition.includes("moderate")) return "Moderately Played";
-  if (condition.includes("heavy")) return "Heavily Played";
+  if (condition.includes("near mint") || condition === "new" || condition.includes("like new")) return "Near Mint";
+  if (condition.includes("light") || condition.includes("excellent")) return "Lightly Played";
+  if (condition.includes("moderate") || condition.includes("very good")) return "Moderately Played";
+  if (condition.includes("heavy") || condition.includes("acceptable")) return "Heavily Played";
   if (condition.includes("damage")) return "Damaged";
   return "Unknown";
 }

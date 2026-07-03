@@ -90,6 +90,42 @@ type BrowsePokemonCardsOptions = {
 
 const POKEMON_TCG_API_BASE_URL = "https://api.pokemontcg.io/v2";
 
+// The catalog's first (cold) request intermittently fails or times out, which
+// used to surface "card catalog temporarily unavailable" on a user's very first
+// search. Retry transient failures (network errors, 429, 5xx) with exponential
+// backoff before giving up; 4xx responses are returned immediately.
+const CATALOG_RETRY_DELAYS_MS = [400, 900];
+
+async function catalogFetchWithRetry(
+  url: URL,
+  init: RequestInit & { next: { revalidate: number } },
+  fetcher: typeof fetch,
+  timeoutMs: number,
+): Promise<Response> {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= CATALOG_RETRY_DELAYS_MS.length; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, CATALOG_RETRY_DELAYS_MS[attempt - 1]));
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetcher(url, { ...init, signal: controller.signal });
+      if (response.ok || (response.status < 500 && response.status !== 429)) {
+        return response;
+      }
+      lastError = new Error(`Pokemon TCG API request failed with ${response.status}.`);
+    } catch (error) {
+      lastError = error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Pokemon TCG API request failed.");
+}
+
 export async function searchPokemonCards({
   query,
   cardNumber = "",
@@ -135,16 +171,15 @@ export async function getPokemonCard({
   const normalizedId = id.trim();
   if (!normalizedId) throw new Error("Pokemon card id is required.");
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  const response = await fetcher(
+  const response = await catalogFetchWithRetry(
     new URL(`${POKEMON_TCG_API_BASE_URL}/cards/${encodeURIComponent(normalizedId)}`),
     {
       headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
       next: { revalidate: 3600 },
-      signal: controller.signal,
     } as RequestInit & { next: { revalidate: number } },
-  ).finally(() => clearTimeout(timeout));
+    fetcher,
+    timeoutMs,
+  );
 
   if (!response.ok) {
     throw new Error(`Pokemon TCG API card lookup failed with ${response.status}.`);
@@ -197,14 +232,10 @@ async function fetchPokemonCards({
   url.searchParams.set("pageSize", String(Math.min(Math.max(pageSize, 1), 250)));
   url.searchParams.set("orderBy", "-set.releaseDate,name");
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  const response = await fetcher(url, {
+  const response = await catalogFetchWithRetry(url, {
     headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
     next: { revalidate: 3600 },
-    signal: controller.signal,
-  } as RequestInit & { next: { revalidate: number } }).finally(() => clearTimeout(timeout));
+  } as RequestInit & { next: { revalidate: number } }, fetcher, timeoutMs);
 
   if (!response.ok) {
     throw new Error(`Pokemon TCG API request failed with ${response.status}.`);

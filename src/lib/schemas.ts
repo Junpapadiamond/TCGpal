@@ -22,6 +22,10 @@ export const conditionClaimSchema = z.enum([
 
 export const confidenceSchema = z.enum(["low", "medium", "high"]);
 
+// Evidence-based risk stays separate from data coverage: a listing with no
+// seller track record is "unverified" (neutral), never "higher_risk".
+export const riskLabelSchema = z.enum(["low_risk", "some_risk", "higher_risk", "unverified"]);
+
 export const moneySchema = z.object({
   value: z.number().min(0),
   currency: z.literal("USD").default("USD"),
@@ -116,6 +120,12 @@ export const cardIdentityCandidateSchema = z.object({
   marketLow: z.number().nullable().optional(),
   marketMid: z.number().nullable().optional(),
   marketHigh: z.number().nullable().optional(),
+  // Where the anchor came from and how fresh it is ("tcgcsv" daily feed vs the
+  // inline pokemontcg.io approximation), so the UI can show freshness honestly.
+  marketSource: z.enum(["tcgcsv", "pokemontcg"]).nullable().optional(),
+  marketAsOf: z.string().nullable().optional(),
+  // Crosswalk: canonical card id ↔ TCGplayer product id (null when unmapped).
+  tcgplayerProductId: z.number().int().nullable().optional(),
 });
 
 export const normalizedListingSchema = z.object({
@@ -141,10 +151,15 @@ export const normalizedListingSchema = z.object({
   sellerTrustScore: z.number().int().min(0).max(100),
   evidenceCompletenessScore: z.number().int().min(0).max(100),
   safetyScore: z.number().int().min(0).max(100),
+  riskLabel: riskLabelSchema,
+  // Plain-language notes documenting how missing data and platform baselines
+  // were applied — the "check the math" trail for the trust score.
+  trustNotes: z.array(z.string()).default([]),
   eligible: z.boolean(),
   exclusionReasons: z.array(z.string()),
   observedAt: z.string(),
   demo: z.boolean().default(false),
+  userSupplied: z.boolean().default(false),
 });
 
 export const rankedChoiceRoleSchema = z.enum([
@@ -166,6 +181,10 @@ export const comparisonReferenceSchema = z.object({
   status: z.enum(["used", "unavailable", "missing"]),
   observedAt: z.string(),
   url: z.string().url().nullable().default(null),
+  links: z.array(z.object({
+    label: z.string(),
+    url: z.string().url(),
+  })).default([]),
   note: z.string(),
   rawLow: z.number().nullable().default(null),
   rawMid: z.number().nullable().default(null),
@@ -177,6 +196,19 @@ export const comparisonTraceSchema = z.object({
   actor: z.string(),
   summary: z.string(),
   status: z.enum(["complete", "fallback", "skipped"]),
+});
+
+// Per-source outcome so the UI can show exactly which sources were checked,
+// which failed, and which returned nothing ("0 found" is shown, not hidden).
+export const sourceStatusSchema = z.object({
+  platform: z.string(),
+  // "blocked" = the platform's robots.txt or access controls prevent automated
+  // search — an expected outcome for the public-search pilot, not a failure.
+  status: z.enum(["ok", "empty", "failed", "blocked", "not_configured", "no_match", "user_added"]),
+  count: z.number().int().min(0).nullable().default(null),
+  note: z.string().default(""),
+  durationMs: z.number().int().min(0).nullable().default(null),
+  asOf: z.string().nullable().default(null),
 });
 
 export const comparisonNarrativeSchema = z.object({
@@ -192,6 +224,7 @@ export const comparisonReportSchema = z.object({
   candidates: z.array(normalizedListingSchema),
   rankedChoices: z.array(rankedChoiceSchema),
   references: z.array(comparisonReferenceSchema),
+  sources: z.array(sourceStatusSchema).default([]),
   narrative: comparisonNarrativeSchema,
   warnings: z.array(z.string()),
   trace: z.array(comparisonTraceSchema),
@@ -243,6 +276,24 @@ export const rawVsSlabResultSchema = z.object({
 
 export type Marketplace = z.infer<typeof marketplaceSchema>;
 export type ConditionClaim = z.infer<typeof conditionClaimSchema>;
+export type RiskLabel = z.infer<typeof riskLabelSchema>;
+export type SourceStatus = z.infer<typeof sourceStatusSchema>;
+
+// The pre-normalization listing every platform adapter produces. Deterministic
+// ranking derives the remaining fields; the ranker never sees platform branches.
+export type ListingSeed = Omit<
+  NormalizedListing,
+  | "estimatedTax"
+  | "preTaxTotal"
+  | "estimatedLandedCost"
+  | "sellerTrustScore"
+  | "evidenceCompletenessScore"
+  | "safetyScore"
+  | "riskLabel"
+  | "trustNotes"
+  | "eligible"
+  | "exclusionReasons"
+>;
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;

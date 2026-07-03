@@ -1,4 +1,4 @@
-import type { CardIdentityCandidate, NormalizedListing } from "@/lib/schemas";
+import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 
 export const demoIdentities: CardIdentityCandidate[] = [
   {
@@ -25,17 +25,7 @@ export const demoIdentities: CardIdentityCandidate[] = [
   },
 ];
 
-export const demoListingSeeds: Array<Omit<
-  NormalizedListing,
-  | "estimatedTax"
-  | "preTaxTotal"
-  | "estimatedLandedCost"
-  | "sellerTrustScore"
-  | "evidenceCompletenessScore"
-  | "safetyScore"
-  | "eligible"
-  | "exclusionReasons"
->> = [
+export const demoListingSeeds: ListingSeed[] = [
   {
     id: "demo-ebay-value",
     marketplace: "eBay",
@@ -69,6 +59,7 @@ export const demoListingSeeds: Array<Omit<
     },
     observedAt: new Date().toISOString(),
     demo: true,
+    userSupplied: false,
   },
   {
     id: "demo-ebay-safe",
@@ -103,6 +94,7 @@ export const demoListingSeeds: Array<Omit<
     },
     observedAt: new Date().toISOString(),
     demo: true,
+    userSupplied: false,
   },
   {
     id: "demo-ebay-evidence",
@@ -137,5 +129,6 @@ export const demoListingSeeds: Array<Omit<
     },
     observedAt: new Date().toISOString(),
     demo: true,
+    userSupplied: false,
   },
 ];

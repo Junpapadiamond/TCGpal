@@ -94,6 +94,14 @@ class UnavailableProvider implements AiProvider {
   }
 }
 
+// A model round-trip must never hang the comparison: every provider call gets
+// a hard timeout, and the orchestration layer falls back to the deterministic
+// summary when it fires. Configurable because proxy latencies vary widely.
+function aiTimeoutMs() {
+  const parsed = Number(process.env.AI_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
+}
+
 class OpenAiResponsesProvider implements AiProvider {
   constructor(private readonly config: AiConfig) {}
 
@@ -101,6 +109,7 @@ class OpenAiResponsesProvider implements AiProvider {
     const model = getModelForStep(role, this.config);
     const response = await fetch(`${this.config.baseUrl}/responses`, {
       method: "POST",
+      signal: AbortSignal.timeout(aiTimeoutMs()),
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
@@ -160,6 +169,7 @@ class AnthropicMessagesProvider implements AiProvider {
     const model = this.config.anthropicModel;
     const response = await fetch(`${this.config.anthropicBaseUrl}/v1/messages`, {
       method: "POST",
+      signal: AbortSignal.timeout(aiTimeoutMs()),
       headers: anthropicHeaders(),
       body: JSON.stringify({
         model,
