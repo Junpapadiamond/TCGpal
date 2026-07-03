@@ -153,7 +153,14 @@ export function buildPlatformTools(
       try {
         const seeds = await searchPlatformWithTimeout(agent, { card: ctx.card, buyer: ctx.buyer, fetcher: ctx.fetcher, plan: { query } });
         collector.seeds.set(agent.id, seeds);
-        return { ok: true, data: { marketplace: agent.marketplace, count: seeds.length } };
+        return {
+          ok: true,
+          data: {
+            marketplace: agent.marketplace,
+            count: seeds.length,
+            sample: sampleSeedsForAllocator(seeds),
+          },
+        };
       } catch (error) {
         const detail = error instanceof Error ? error.message : "Unknown marketplace error.";
         collector.error.set(agent.id, detail);
@@ -176,9 +183,13 @@ async function runAgentFanout(input: {
 
   const goal = [
     `Find active raw-single listings for ${input.card.name} (${input.card.setName} ${input.card.cardNumber}).`,
+    `Identity hints: set ${input.card.setCode || "unknown"}, language ${input.card.language || "unknown"}, rarity ${input.card.rarity ?? "unknown"}.`,
+    input.card.tcgplayerProductId ? `TCGplayer product hint: #${input.card.tcgplayerProductId}.` : "",
+    input.buyer.desiredCondition !== "Unknown" ? `Buyer prefers ${input.buyer.desiredCondition} condition.` : "",
     `Search every available marketplace tool: ${input.configured.map((a) => a.marketplace).join(", ")}.`,
+    "Use the exact collector number and set/code in the query; if a tool sample looks thin, wrong-language, or off-version, re-query once with a tighter query within the budget.",
     "Refine each query so it targets the exact card and version. When you have searched the marketplaces, finalize.",
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 
   const run = await runAgent({ model: input.model, tools, goal, maxSteps: 3 });
 
@@ -226,6 +237,18 @@ async function runAgentFanout(input: {
   }
 
   return { seeds, traces, warnings, results, configuredCount: input.configured.length };
+}
+
+function sampleSeedsForAllocator(seeds: PlatformSeed[]) {
+  return seeds.slice(0, 3).map((seed) => ({
+    title: seed.title,
+    marketplace: seed.marketplace,
+    price: seed.price,
+    shipping: seed.shipping,
+    condition: seed.claimedCondition,
+    matchConfidence: seed.matchConfidence,
+    reasons: seed.matchReasons.slice(0, 2),
+  }));
 }
 
 const AGENT_SYSTEM_PROMPT = [

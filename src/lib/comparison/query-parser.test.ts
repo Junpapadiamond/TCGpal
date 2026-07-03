@@ -29,6 +29,15 @@ describe("parseCardQuery", () => {
     expect(result.game).toBe("pokemon"); // fraction collector numbers exist only in Pokémon
   });
 
+  it("maps the common Moonbreon nickname to the exact Pokémon print", () => {
+    const result = parseCardQuery("Japanese moonbreon");
+    expect(result.game).toBe("pokemon");
+    expect(result.name).toBe("Umbreon VMAX");
+    expect(result.cardNumber).toBe("215/203");
+    expect(result.language).toBe("Japanese");
+    expect(result.variant).toBe("Alternate Art");
+  });
+
   it("prefers the fraction pattern over the letter-prefix pattern when both could apply", () => {
     const result = parseCardQuery("TG23/TG30 Umbreon VMAX");
     expect(result.cardNumber).toBe("TG23/TG30");

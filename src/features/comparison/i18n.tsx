@@ -173,6 +173,11 @@ const en = {
     japanPriceChecks: "Japan price checks",
     japanPriceChecksBody:
       "Open these Japanese search pages to inspect yen prices and buy paths yourself. TCGpal has not fetched or ranked those pages; paste a specific listing back here to compare it.",
+    askTitle: "Ask about this result",
+    askBody: "Ask why one listing won, why another lost, or what evidence is missing.",
+    askPlaceholder: "Why not the $12 one?",
+    askSubmit: "Ask",
+    askLoading: "Checking evidence…",
     beforeYouBuy: "Before you buy",
     howWeChecked: "How we checked — sources, reference pricing, and the validation trace",
     technicalTrace: "Technical validation trace",
@@ -420,6 +425,11 @@ const zh: Dict = {
     japanPriceChecks: "日本价格参考",
     japanPriceChecksBody:
       "打开这些日本站内搜索，自己查看日元价格和购买路径。TCGpal 没有抓取或排序这些页面；如果看到具体商品，可以把链接粘回来再比对。",
+    askTitle: "追问这次结果",
+    askBody: "可以问为什么某个商品排第一、另一个没选上，或还缺哪些证据。",
+    askPlaceholder: "为什么不选 12 美元那张？",
+    askSubmit: "询问",
+    askLoading: "正在核对证据…",
     beforeYouBuy: "下单前注意",
     howWeChecked: "核验过程——来源、参考价与完整记录",
     technicalTrace: "技术核验记录",

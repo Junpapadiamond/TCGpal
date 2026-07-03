@@ -4,6 +4,7 @@ import {
   inferTcgplayerCategoryId,
   isTcgcsvStale,
   resolveTcgplayerProduct,
+  resolveTcgplayerProductVariants,
   searchTcgplayerListings,
   type TcgplayerProductMatch,
 } from "@/lib/external/tcgcsv";
@@ -150,15 +151,27 @@ describe("TCGCSV TCGplayer connector", () => {
   it("routes One Piece cards through TCGCSV category 68", async () => {
     const fetcher = mixedTcgcsvFetcher();
     const product = await resolveTcgplayerProduct(onePieceCard, fetcher);
+    const variants = await resolveTcgplayerProductVariants(onePieceCard, fetcher);
     const result = await searchTcgplayerListings(onePieceCard, product as TcgplayerProductMatch, fetcher);
 
     expect(inferTcgplayerCategoryId(onePieceCard)).toBe(68);
+    expect(variants.map((variant) => variant.productId)).toEqual([453508, 453509]);
     expect(product?.categoryId).toBe(68);
     expect(product?.groupId).toBe(23293);
     expect(product?.productId).toBe(453508);
     expect(result.seeds).toHaveLength(1);
     expect(result.seeds[0].id).toBe("tcgplayer-453508-normal-low");
     expect(result.anchor?.mid).toBe(1.76);
+  });
+
+  it("can resolve a requested TCGplayer product variant instead of the base product", async () => {
+    const product = await resolveTcgplayerProduct(
+      { ...onePieceCard, tcgplayerProductId: 453509 },
+      mixedTcgcsvFetcher(),
+    );
+
+    expect(product?.productId).toBe(453509);
+    expect(product?.productName).toContain("Parallel");
   });
 
   it("returns null for a card missing from the feed instead of failing", async () => {

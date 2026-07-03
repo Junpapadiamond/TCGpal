@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
+  buildPlatformTools,
   createChatCompletionsAgentModel,
   createOpenAiAgentModel,
   getAllocatorConfig,
@@ -105,6 +106,21 @@ describe("runMarketSearch", () => {
     const allocator = result.traces.find((t) => t.step === "agent_allocation");
     expect(allocator?.status).toBe("complete");
     expect(result.results.find((r) => r.id === "ebay")?.status).toBe("complete");
+  });
+
+  it("returns listing samples from platform tools so the allocator can re-query", async () => {
+    const agents = [ebayMock(async () => [seed("ebay-1", "eBay")])];
+    const collector = { seeds: new Map(), error: new Map() };
+    const tools = buildPlatformTools({ card, buyer, fetcher }, agents, collector);
+
+    const result = await tools[0]!.execute({ query: "Umbreon VMAX 215/203" });
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({
+      marketplace: "eBay",
+      count: 1,
+      sample: [expect.objectContaining({ title: expect.stringContaining("Umbreon VMAX"), price: 1200 })],
+    });
   });
 
   it("covers any platform the model ignored with a deterministic search (safety net)", async () => {

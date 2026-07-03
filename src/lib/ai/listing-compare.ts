@@ -15,13 +15,19 @@ import {
   isCacheableRequest,
   setCachedComparison,
 } from "@/lib/comparison/report-cache";
-import { isTcgcsvStale, searchTcgplayerListings, type TcgplayerSearchResult } from "@/lib/external/tcgcsv";
+import {
+  isTcgcsvStale,
+  resolveTcgplayerProductVariants,
+  searchTcgplayerListings,
+  type TcgplayerProductMatch,
+  type TcgplayerSearchResult,
+} from "@/lib/external/tcgcsv";
 import {
   fetchUniversalListing,
   UniversalListingBlockedError,
   type UniversalListingResult,
 } from "@/lib/external/universal-listing";
-import { parseCardQuery } from "@/lib/comparison/query-parser";
+import { parsedCardQuerySchema, parseCardQuery, type ParsedCardQuery } from "@/lib/comparison/query-parser";
 import { runMarketSearch } from "@/lib/ai/agent/market-agent";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
 import { buildJapanReferenceLinks } from "@/lib/comparison/japan-references";
@@ -75,7 +81,7 @@ export async function runListingComparison(
   const trace: ComparisonTrace[] = [];
   let demoMode = false;
 
-  const request = applyQueryParser(comparisonRequestSchema.parse(rawRequest), trace);
+  const request = await applyQueryParserWithAi(comparisonRequestSchema.parse(rawRequest), trace);
 
   const { source: sourceResult, universal } = await ingestSourceListing(request, fetcher, warnings, trace);
   const identities = await identifyCards(request, sourceResult, fetcher, warnings, trace);
@@ -305,6 +311,29 @@ export function applyQueryParser(request: ComparisonRequest, trace: ComparisonTr
   if (!query) return request;
 
   const parsed = parseCardQuery(query);
+  return applyParsedCardQuery(request, query, parsed, trace, "Smart query parser");
+}
+
+export async function applyQueryParserWithAi(request: ComparisonRequest, trace: ComparisonTrace[]): Promise<ComparisonRequest> {
+  const query = request.query?.trim();
+  if (!query) return request;
+
+  const parsed = parseCardQuery(query);
+  if (hasStructuredQuerySignal(parsed)) {
+    return applyParsedCardQuery(request, query, parsed, trace, "Smart query parser");
+  }
+
+  const aiParsed = await parseCardQueryWithAi(query, trace);
+  return applyParsedCardQuery(request, query, aiParsed ?? parsed, trace, aiParsed ? "AI query parser" : "Smart query parser");
+}
+
+function applyParsedCardQuery(
+  request: ComparisonRequest,
+  query: string,
+  parsed: ParsedCardQuery,
+  trace: ComparisonTrace[],
+  actor: string,
+): ComparisonRequest {
   const cardHint: CardHint = {
     game: request.cardHint.game !== "pokemon" ? request.cardHint.game : (parsed.game ?? request.cardHint.game),
     name: request.cardHint.name || parsed.name,
@@ -326,7 +355,7 @@ export function applyQueryParser(request: ComparisonRequest, trace: ComparisonTr
 
   trace.push({
     step: "query_parsing",
-    actor: "Smart query parser",
+    actor,
     summary: derived.length
       ? `Parsed "${query}" into ${derived.join(", ")}.`
       : `Could not derive structured fields from "${query}"; treating it as a plain name search.`,
@@ -334,6 +363,52 @@ export function applyQueryParser(request: ComparisonRequest, trace: ComparisonTr
   });
 
   return { ...request, cardHint };
+}
+
+function hasStructuredQuerySignal(parsed: ParsedCardQuery) {
+  return Boolean(
+    parsed.game
+    || parsed.cardNumber
+    || parsed.language
+    || parsed.variant
+    || parsed.gradingClaim,
+  );
+}
+
+async function parseCardQueryWithAi(query: string, trace: ComparisonTrace[]): Promise<ParsedCardQuery | null> {
+  const config = getAiConfig();
+  const provider = createAiProvider(config);
+
+  try {
+    const response = await provider.completeJson({
+      role: "classifier",
+      schemaName: "card_query_hint",
+      schema: parsedCardQuerySchema,
+      system: [
+        "You convert a short trading-card search string into card identity hints.",
+        "Return only fields the buyer stated or a very common nickname/alias you are confident about.",
+        "Do not choose a final card identity, product id, listing, price, grade, or seller.",
+        "If a field is not stated or confidently implied, leave it blank/null.",
+        "Use game onePiece only for One Piece Card Game, pokemon only for Pokemon TCG.",
+      ].join("\n"),
+      user: { query },
+    });
+    trace.push({
+      step: "query_parsing",
+      actor: `AI query parser · ${response.model}`,
+      summary: `Filled unstructured search hints for "${query}" with the cheap model; catalog confirmation still decides the exact card.`,
+      status: "complete",
+    });
+    return response.data;
+  } catch (error) {
+    trace.push({
+      step: "query_parsing",
+      actor: "AI query parser",
+      summary: `Could not enrich unstructured search text; using deterministic plain-name parsing: ${errorMessage(error)}`,
+      status: "fallback",
+    });
+    return null;
+  }
 }
 
 async function ingestSourceListing(
@@ -557,16 +632,27 @@ async function identifyOnePieceCards(
   trace: ComparisonTrace[],
 ): Promise<CardIdentityCandidate[]> {
   if (request.confirmedCardId) {
+    const requestedVariant = parseOnePieceVariantIdentityId(request.confirmedCardId);
     try {
-      const card = await getOnePieceCard({ cardSetId: request.confirmedCardId, fetcher, timeoutMs: 15000 });
+      const card = await getOnePieceCard({ cardSetId: requestedVariant.cardId, fetcher, timeoutMs: 15000 });
       if (card) {
+        const base = mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["User confirmed this version."] });
+        const identities = await expandOnePieceTcgplayerVariants([base], requestedVariant.cardId, fetcher);
+        const confirmed = requestedVariant.productId
+          ? identities.find((identity) => identity.tcgplayerProductId === requestedVariant.productId)
+            ?? withOnePieceVariant(base, {
+              productId: requestedVariant.productId,
+              productName: `TCGplayer product #${requestedVariant.productId}`,
+              productUrl: base.marketUrl ?? "",
+            })
+          : identities[0] ?? base;
         trace.push({
           step: "card_identification",
           actor: "One Piece catalog adapter",
           summary: "Reloaded the user-confirmed One Piece card by its card id.",
           status: "complete",
         });
-        return [mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["User confirmed this version."] })];
+        return [confirmed];
       }
     } catch (error) {
       warnings.push(`Confirmed One Piece card lookup unavailable: ${errorMessage(error)}`);
@@ -585,13 +671,14 @@ async function identifyOnePieceCards(
         timeoutMs: 15000,
       });
       const order: Record<CardIdentityCandidate["confidence"], number> = { high: 0, medium: 1, low: 2 };
-      const matches = result.cards
+      const catalogMatches = result.cards
         .map((card) => mapOnePieceCardToIdentity(card, evaluateOnePieceMatch(card, request, searchName)))
         .sort((a, b) => order[a.confidence] - order[b.confidence]);
+      const matches = await expandOnePieceTcgplayerVariants(catalogMatches, directId, fetcher);
       trace.push({
         step: "card_identification",
         actor: "One Piece catalog adapter",
-        summary: `Found ${matches.length} possible One Piece identities and ranked exact id and name matches first.`,
+        summary: `Found ${matches.length} possible One Piece identities, including TCGplayer same-number variants when available, and ranked exact id and name matches first.`,
         status: "complete",
       });
       return dedupeIdentities(matches).slice(0, MAX_IDENTITY_CANDIDATES);
@@ -607,6 +694,72 @@ async function identifyOnePieceCards(
     status: "fallback",
   });
   return [];
+}
+
+async function expandOnePieceTcgplayerVariants(
+  identities: CardIdentityCandidate[],
+  directId: string,
+  fetcher: typeof fetch,
+): Promise<CardIdentityCandidate[]> {
+  const expanded: CardIdentityCandidate[] = [];
+  const requestedId = normalizeText(directId);
+  for (const identity of identities) {
+    if (!requestedId || identity.confidence !== "high" || normalizeText(identity.cardNumber) !== requestedId) {
+      expanded.push(identity);
+      continue;
+    }
+    try {
+      const products = await resolveTcgplayerProductVariants(identity, fetcher);
+      if (products.length <= 1) {
+        expanded.push(products[0] ? withOnePieceVariant(identity, products[0]) : identity);
+        continue;
+      }
+      expanded.push(...products.slice(0, 8).map((product) => withOnePieceVariant(identity, product)));
+    } catch {
+      expanded.push(identity);
+    }
+  }
+  return expanded;
+}
+
+function withOnePieceVariant(
+  identity: CardIdentityCandidate,
+  product: Pick<TcgplayerProductMatch, "productId" | "productName" | "productUrl">,
+): CardIdentityCandidate {
+  const variant = describeTcgplayerVariant(identity, product.productName);
+  return {
+    ...identity,
+    id: onePieceVariantIdentityId(identity.id, product.productId),
+    variant,
+    rarity: [identity.rarity, variant].filter(Boolean).join(" · ") || identity.rarity,
+    marketUrl: product.productUrl || identity.marketUrl,
+    tcgplayerProductId: product.productId,
+    matchReasons: [
+      ...identity.matchReasons,
+      `TCGplayer product variant: ${product.productName} (#${product.productId}).`,
+    ],
+  };
+}
+
+function describeTcgplayerVariant(identity: CardIdentityCandidate, productName: string) {
+  const suffix = productName
+    .replace(identity.name, "")
+    .replace(/\b\d{1,4}\b/g, "")
+    .replace(/[()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return suffix || "Base TCGplayer product";
+}
+
+function onePieceVariantIdentityId(cardId: string, productId: number) {
+  return `${cardId}#tcgplayer-${productId}`;
+}
+
+function parseOnePieceVariantIdentityId(value: string) {
+  const match = value.match(/^(.+?)#tcgplayer-(\d+)$/);
+  return match
+    ? { cardId: match[1], productId: Number(match[2]) }
+    : { cardId: value, productId: null };
 }
 
 // Every candidate here already passed the name search, so the baseline is "medium"

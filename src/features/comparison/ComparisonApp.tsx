@@ -36,6 +36,7 @@ import {
   comparisonReportSchema,
   type CardIdentityCandidate,
   type ComparisonReport,
+  type ComparisonQuestionResponse,
   type ComparisonRequest,
   type ConditionClaim,
   type ListingEvidence,
@@ -845,6 +846,11 @@ function CardIdentityRail({ identity, className = "" }: { identity: CardIdentity
           {identity.rarity}
         </span>
       )}
+      {identity.variant && (
+        <span className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
+          {identity.variant}
+        </span>
+      )}
       {identity.language && (
         <span className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1.5 text-xs font-bold text-[#52635c]">
           {identity.language}
@@ -1032,6 +1038,31 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
 
   const eligibleCount = report.candidates.filter((candidate) => candidate.eligible).length;
   const japanReferences = report.references.filter((reference) => isJapanReferenceLabel(reference.label));
+  const [qaQuestion, setQaQuestion] = useState("");
+  const [qaAnswer, setQaAnswer] = useState<ComparisonQuestionResponse | null>(null);
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaError, setQaError] = useState<string | null>(null);
+
+  async function askQuestion() {
+    const question = qaQuestion.trim();
+    if (!question || qaLoading) return;
+    setQaLoading(true);
+    setQaError(null);
+    try {
+      const response = await fetch("/api/agent/listing-compare/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ report, question }),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error || "Question could not be answered.");
+      setQaAnswer(json as ComparisonQuestionResponse);
+    } catch (error) {
+      setQaError(error instanceof Error ? error.message : "Question could not be answered.");
+    } finally {
+      setQaLoading(false);
+    }
+  }
 
   return (
     <section id="comparison-result" className="mt-6 scroll-mt-6 space-y-5">
@@ -1192,6 +1223,14 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
 
         <aside className="space-y-5">
           {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
+          <ComparisonQuestionBox
+            question={qaQuestion}
+            answer={qaAnswer}
+            error={qaError}
+            loading={qaLoading}
+            onQuestionChange={setQaQuestion}
+            onAsk={askQuestion}
+          />
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
               <IconCaution className="h-4 w-4" />
@@ -1314,6 +1353,61 @@ function JapanReferencePanel({ references }: { references: ComparisonReport["ref
           </a>
         ))}
       </div>
+    </section>
+  );
+}
+
+function ComparisonQuestionBox({
+  question,
+  answer,
+  error,
+  loading,
+  onQuestionChange,
+  onAsk,
+}: {
+  question: string;
+  answer: ComparisonQuestionResponse | null;
+  error: string | null;
+  loading: boolean;
+  onQuestionChange: (value: string) => void;
+  onAsk: () => void;
+}) {
+  const t = useT();
+  return (
+    <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+      <p className="eyebrow">
+        <IconCardSearch className="h-4 w-4" />
+        {t.result.askTitle}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-[#52635c]">{t.result.askBody}</p>
+      <div className="mt-4 grid gap-2">
+        <textarea
+          className="min-h-24 rounded-md border border-[#c9d7ce] bg-[#fffef9] px-3 py-2 text-sm text-[#24312f] outline-none transition focus:border-[#2f6f73] focus:ring-2 focus:ring-[#2f6f73]/20"
+          value={question}
+          onChange={(event) => onQuestionChange(event.target.value)}
+          placeholder={t.result.askPlaceholder}
+        />
+        <button className="secondary-button justify-center" type="button" disabled={loading || !question.trim()} onClick={onAsk}>
+          {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
+          {loading ? t.result.askLoading : t.result.askSubmit}
+        </button>
+      </div>
+      {answer && (
+        <div className="mt-4 rounded-md border border-[#c9d7ce] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
+          <p>{answer.answer}</p>
+          {answer.cautions.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {answer.cautions.map((caution) => (
+                <li key={caution} className="flex gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b26a4c]" />
+                  {caution}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {error && <p className="mt-3 text-sm font-bold text-[#9a4a2c]">{error}</p>}
     </section>
   );
 }

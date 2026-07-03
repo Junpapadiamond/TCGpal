@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { applyQueryParser, runListingComparison } from "@/lib/ai/listing-compare";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { applyQueryParser, applyQueryParserWithAi, runListingComparison } from "@/lib/ai/listing-compare";
 import { cardIdentityCandidateSchema, comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
 
 // Keep the orchestration tests hermetic: stub the Pokémon catalog response so we
@@ -93,6 +93,11 @@ const request: ComparisonRequest = {
   },
   manualCandidates: [],
 };
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 // A 2-party rendezvous: each side blocks in `arrive()` until BOTH have arrived. If two async
 // operations are dispatched sequentially rather than concurrently, the second never starts
@@ -274,6 +279,47 @@ describe("listing comparison agent", () => {
     expect(merged.cardHint.cardNumber).toBe("25/102");
   });
 
+  it("hero search box: AI fills hints only when deterministic parsing has no structured signal", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    vi.stubEnv("OPENAI_WIRE_API", "chat");
+    vi.stubEnv("OPENAI_BASE_URL", "https://ai.test/v1");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ game: "pokemon", name: "Umbreon VMAX", cardNumber: "", language: "", variant: "Alternate Art", gradingClaim: "" }) } }],
+    }))));
+    const trace: Parameters<typeof applyQueryParserWithAi>[1] = [];
+
+    const merged = await applyQueryParserWithAi(
+      {
+        ...request,
+        query: "big moon cat",
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      trace,
+    );
+
+    expect(merged.cardHint.name).toBe("Umbreon VMAX");
+    expect(merged.cardHint.variant).toBe("Alternate Art");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(trace.some((entry) => entry.actor.toString().includes("AI query parser"))).toBe(true);
+  });
+
+  it("hero search box: structured regex parses skip the AI fallback", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    vi.stubGlobal("fetch", vi.fn());
+
+    const merged = await applyQueryParserWithAi(
+      {
+        ...request,
+        query: "Umbreon VMAX 215/203",
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      [],
+    );
+
+    expect(merged.cardHint.cardNumber).toBe("215/203");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it("routes One Piece requests to the bundled OPTCG catalog and confirms offline", async () => {
     // A throwing fetcher proves the One Piece path resolves with zero network:
     // the bundled catalog answers the confirm-by-id without any live call.
@@ -437,6 +483,52 @@ describe("listing comparison agent", () => {
         .filter((card) => card.confidence === "high")
         .every((card) => card.setCode === "EB-02"),
     ).toBe(true);
+  });
+
+  it("surfaces same-number One Piece TCGplayer variants before auto-confirming", async () => {
+    const variantFetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("tcgcsv.com/last-updated")) return new Response("2026-07-03T20:05:17+0000");
+      if (url.endsWith("/68/groups")) {
+        return new Response(JSON.stringify({
+          results: [{ groupId: 23293, name: "OP-01: Romance Dawn", abbreviation: "OP-01" }],
+        }));
+      }
+      if (url.endsWith("/68/23293/products")) {
+        return new Response(JSON.stringify({
+          results: [
+            {
+              productId: 453508,
+              name: "Monkey.D.Luffy (024)",
+              cleanName: "MonkeyDLuffy 024",
+              url: "https://www.tcgplayer.com/product/453508/one-piece-card-game-romance-dawn-monkeydluffy-024",
+              extendedData: [{ name: "Number", value: "OP01-024" }],
+            },
+            {
+              productId: 453509,
+              name: "Monkey.D.Luffy (024) (Parallel)",
+              cleanName: "MonkeyDLuffy 024 Parallel",
+              url: "https://www.tcgplayer.com/product/453509/one-piece-card-game-romance-dawn-monkeydluffy-024-parallel",
+              extendedData: [{ name: "Number", value: "OP01-024" }],
+            },
+          ],
+        }));
+      }
+      throw new Error(`unexpected fetch in One Piece variant test: ${url}`);
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+        cardHint: { game: "onePiece", name: "Monkey.D.Luffy", setCode: "OP-01", cardNumber: "OP01-024", language: "English", variant: "", gradingClaim: "" },
+      },
+      { fetcher: variantFetcher },
+    );
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates.map((card) => card.tcgplayerProductId)).toEqual([453508, 453509]);
+    expect(response.identityCandidates.map((card) => card.variant)).toEqual(["Base TCGplayer product", "Parallel"]);
   });
 
   it("without a set, a One Piece name stays a set-grouped pick (no false high confidence)", async () => {

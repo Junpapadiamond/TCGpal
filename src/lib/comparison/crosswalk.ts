@@ -46,7 +46,7 @@ export async function resolveCardCrosswalk(
   };
 
   try {
-    const product = await resolveTcgplayerProduct(card, fetcher);
+    const product = await resolveTcgplayerProduct(card, fetcher, { preferredProductId: card.tcgplayerProductId ?? null });
     if (product) {
       entry = {
         ...entry,

@@ -167,6 +167,7 @@ export const cardIdentityCandidateSchema = z.object({
   language: z.string(),
   imageUrl: z.string().url().nullable().default(null),
   rarity: z.string().nullable().optional(),
+  variant: z.string().nullable().optional(),
   setSymbolUrl: z.string().url().nullable().optional(),
   confidence: confidenceSchema,
   matchReasons: z.array(z.string()),
@@ -293,6 +294,17 @@ export const comparisonReportSchema = z.object({
   generatedAt: z.string(),
 });
 
+export const comparisonQuestionRequestSchema = z.object({
+  report: comparisonReportSchema,
+  question: z.string().trim().min(1).max(500),
+});
+
+export const comparisonQuestionResponseSchema = z.object({
+  answer: z.string().trim().min(1),
+  cautions: z.array(z.string()).default([]),
+  usedAi: z.boolean().default(false),
+});
+
 export const listingRiskInputSchema = z.object({
   title: z.string().trim().min(1),
   description: z.string().trim().default(""),
@@ -368,6 +380,7 @@ export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
 export type ComparisonReport = z.infer<typeof comparisonReportSchema>;
+export type ComparisonQuestionResponse = z.infer<typeof comparisonQuestionResponseSchema>;
 export type ComparisonTrace = z.infer<typeof comparisonTraceSchema>;
 export type ComparisonPlatformResult = z.infer<typeof comparisonPlatformResultSchema>;
 export type PlatformSourceMode = z.infer<typeof platformSourceModeSchema>;

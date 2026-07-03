@@ -1,4 +1,5 @@
-import type { TcgGame } from "@/lib/schemas";
+import { z } from "zod";
+import { tcgGameSchema, type TcgGame } from "@/lib/schemas";
 
 // Deterministic-first extraction from one free-text search string (the hero
 // search box) into structured card-identity hints. This is the "one box, one
@@ -18,6 +19,15 @@ export type ParsedCardQuery = {
   variant: string;
   gradingClaim: string;
 };
+
+export const parsedCardQuerySchema = z.object({
+  game: tcgGameSchema.nullable(),
+  name: z.string().trim().default(""),
+  cardNumber: z.string().trim().default(""),
+  language: z.string().trim().default(""),
+  variant: z.string().trim().default(""),
+  gradingClaim: z.string().trim().default(""),
+});
 
 const GAME_TOKENS: Array<{ pattern: RegExp; game: TcgGame }> = [
   { pattern: /\bone\s*piece\b/i, game: "onePiece" },
@@ -56,6 +66,22 @@ const VARIANT_KEYWORDS = [
   "Promo",
 ];
 
+const COMMON_ALIAS_HINTS: Array<{
+  pattern: RegExp;
+  game: TcgGame;
+  name: string;
+  cardNumber: string;
+  variant: string;
+}> = [
+  {
+    pattern: /\bmoon\s*breon\b/i,
+    game: "pokemon",
+    name: "Umbreon VMAX",
+    cardNumber: "215/203",
+    variant: "Alternate Art",
+  },
+];
+
 // Fraction-style collector numbers (215/203, TG23/TG30) — mirrors the pattern
 // used for auto-fetched eBay titles elsewhere in the comparison pipeline.
 const FRACTION_CODE_PATTERN = /\b(?:[A-Za-z]{1,4})?\d{1,3}\s*\/\s*(?:[A-Za-z]{1,4})?\d{1,3}\b/;
@@ -66,6 +92,7 @@ const PREFIX_CODE_PATTERN = /\b[A-Za-z]{1,4}-?\d{1,4}(?:-\d{1,3})?\b/;
 
 export function parseCardQuery(query: string): ParsedCardQuery {
   let remaining = query;
+  const alias = COMMON_ALIAS_HINTS.find((hint) => hint.pattern.test(query)) ?? null;
 
   const grading = extractFirst(remaining, [GRADING_COMPANY_PATTERN]);
   if (grading) {
@@ -100,12 +127,13 @@ export function parseCardQuery(query: string): ParsedCardQuery {
       game = "pokemon";
     }
   }
+  if (game === null && alias) game = alias.game;
 
   // A real card has one collector-number format; only try the letter-prefix
   // pattern (which could otherwise collide with a language/variant word that
   // happens to end in digits) once the fraction style has had first refusal.
   const codeMatch = remaining.match(FRACTION_CODE_PATTERN) ?? remaining.match(PREFIX_CODE_PATTERN);
-  const cardNumber = codeMatch ? normalizeWhitespace(codeMatch[0]) : "";
+  const cardNumber = codeMatch ? normalizeWhitespace(codeMatch[0]) : alias?.cardNumber ?? "";
   if (codeMatch) {
     remaining = removeMatch(remaining, codeMatch);
   }
@@ -120,14 +148,14 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     }
   }
 
-  return {
+  return parsedCardQuerySchema.parse({
     game,
-    name: normalizeWhitespace(remaining),
+    name: alias?.name ?? normalizeWhitespace(remaining),
     cardNumber,
     language,
-    variant,
+    variant: variant || alias?.variant || "",
     gradingClaim,
-  };
+  });
 }
 
 function extractFirst(text: string, patterns: RegExp[]): RegExpMatchArray | null {

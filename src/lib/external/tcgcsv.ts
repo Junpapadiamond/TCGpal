@@ -60,6 +60,8 @@ export type TcgplayerProductMatch = {
   imageUrl: string | null;
 };
 
+type TcgcsvProduct = z.infer<typeof tcgcsvProductSchema>;
+
 export type TcgplayerPriceRow = z.infer<typeof tcgcsvPriceSchema>;
 
 export type TcgplayerMarketAnchor = {
@@ -99,12 +101,26 @@ export function isTcgcsvStale(asOf: string | null, now: Date = new Date()) {
 // Group is matched by set name, product by printed collector number; a name
 // sanity check prevents a wrong-number data glitch from crossing sets.
 export async function resolveTcgplayerProduct(
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId">>,
+  fetcher: typeof fetch = fetch,
+  options: { preferredProductId?: number | null } = {},
+): Promise<TcgplayerProductMatch | null> {
+  const matches = await resolveTcgplayerProductVariants(card, fetcher);
+  if (matches.length === 0) return null;
+  const preferredProductId = options.preferredProductId ?? card.tcgplayerProductId ?? null;
+  if (preferredProductId) {
+    return matches.find((product) => product.productId === preferredProductId) ?? matches[0];
+  }
+  return matches[0];
+}
+
+export async function resolveTcgplayerProductVariants(
   card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber">,
   fetcher: typeof fetch = fetch,
-): Promise<TcgplayerProductMatch | null> {
+): Promise<TcgplayerProductMatch[]> {
   const categoryId = inferTcgplayerCategoryId(card);
   const group = await findTcgplayerGroup(categoryId, card.setName, fetcher);
-  if (!group) return null;
+  if (!group) return [];
 
   const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 21600);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer product feed failed with ${response.status}.`);
@@ -112,7 +128,7 @@ export async function resolveTcgplayerProduct(
 
   const wantedNumber = collectorNumberKey(card.cardNumber);
   const wantedPrefix = collectorPrefixKey(card.cardNumber);
-  if (!wantedPrefix) return null;
+  if (!wantedPrefix) return [];
 
   const candidates = products.filter((product) => {
     const number = product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "";
@@ -120,19 +136,23 @@ export async function resolveTcgplayerProduct(
   });
 
   const nameMatches = candidates.filter((product) => productNameMatchesCard(product.cleanName || product.name, card.name));
-  const match = nameMatches.find((product) => !isParallelProduct(product))
-    ?? nameMatches[0]
-    ?? (candidates.length === 1 ? candidates[0] : null);
-  if (!match) return null;
+  const matches = nameMatches.length > 0 ? nameMatches : candidates.length === 1 ? candidates : [];
+  return sortTcgplayerProducts(matches).map((product) => toProductMatch(categoryId, group, product));
+}
 
+function toProductMatch(
+  categoryId: number,
+  group: { groupId: number; name: string },
+  product: TcgcsvProduct,
+): TcgplayerProductMatch {
   return {
     categoryId,
     groupId: group.groupId,
     groupName: group.name,
-    productId: match.productId,
-    productName: match.name,
-    productUrl: match.url || `https://www.tcgplayer.com/product/${match.productId}`,
-    imageUrl: match.imageUrl || null,
+    productId: product.productId,
+    productName: product.name,
+    productUrl: product.url || `https://www.tcgplayer.com/product/${product.productId}`,
+    imageUrl: product.imageUrl || null,
   };
 }
 
@@ -353,6 +373,17 @@ function productNameMatchesCard(productName: string, cardName: string) {
 function isParallelProduct(product: Pick<TcgplayerProductMatch, "productName"> | { name: string; cleanName?: string | null }) {
   const name = "productName" in product ? product.productName : `${product.name} ${product.cleanName ?? ""}`;
   return /\b(parallel|alternate\s+art|alt\s+art)\b/i.test(name);
+}
+
+function sortTcgplayerProducts<T extends { name: string; cleanName?: string | null; productId: number }>(products: T[]) {
+  return [...products].sort((a, b) =>
+    productVariantRank(a) - productVariantRank(b)
+    || a.productId - b.productId,
+  );
+}
+
+function productVariantRank(product: { name: string; cleanName?: string | null }) {
+  return isParallelProduct(product) ? 1 : 0;
 }
 
 function tokenize(value: string) {
