@@ -61,7 +61,9 @@ export function createAiProvider(config: AiConfig): AiProvider {
     return new UnavailableProvider("openai");
   }
 
-  return new OpenAiResponsesProvider(config);
+  return config.wireApi === "chat"
+    ? new OpenAiChatCompletionsProvider(config)
+    : new OpenAiResponsesProvider(config);
 }
 
 export async function probeAnthropicModel(config: AiConfig): Promise<AiProbeResult> {
@@ -174,6 +176,61 @@ class OpenAiResponsesProvider implements AiProvider {
   }
 }
 
+class OpenAiChatCompletionsProvider implements AiProvider {
+  constructor(private readonly config: AiConfig) {}
+
+  async completeJson<T>({ role, schemaName, schema, system, user }: CompleteJsonInput<T>): Promise<AiProviderResult<T>> {
+    const model = getModelForStep(role, this.config);
+    const response = await fetchWithTimeout(`${this.config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        messages: [
+          {
+            role: "system",
+            content: system,
+          },
+          {
+            role: "user",
+            content: [
+              "Return one JSON object only. Do not wrap it in markdown.",
+              `JSON schema name: ${schemaName}`,
+              JSON.stringify(z.toJSONSchema(schema)),
+              "Input:",
+              JSON.stringify(user, null, 2),
+            ].join("\n\n"),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(`OpenAI ${response.status}: ${message.slice(0, 500)}`);
+    }
+
+    const payload = (await response.json()) as unknown;
+    const text = extractChatCompletionText(payload);
+    const parsedJson = parseJsonObject(text);
+    const parsed = schema.safeParse(parsedJson);
+
+    if (!parsed.success) {
+      throw new Error(`AI output failed ${schemaName} validation: ${parsed.error.message}`);
+    }
+
+    return {
+      data: parsed.data,
+      model,
+      provider: "openai",
+    };
+  }
+}
+
 class AnthropicMessagesProvider implements AiProvider {
   constructor(private readonly config: AiConfig) {}
 
@@ -270,24 +327,31 @@ export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
   try {
     const config = {
       baseUrl: normalizeProbeBaseUrl(process.env.OPENAI_BASE_URL),
+      wireApi: normalizeProbeWireApi(process.env.OPENAI_WIRE_API || process.env.OPENAI_API),
       reasoningEffort: normalizeProbeReasoningEffort(process.env.OPENAI_REASONING_EFFORT),
       disableResponseStorage: process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "true" || process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "1",
     };
-    const response = await fetch(`${config.baseUrl}/responses`, {
+    const response = await fetch(`${config.baseUrl}/${config.wireApi === "chat" ? "chat/completions" : "responses"}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model,
-        input: "Return the word ok.",
-        reasoning: {
-          effort: config.reasoningEffort,
-        },
-        store: !config.disableResponseStorage,
-        max_output_tokens: 16,
-      }),
+      body: JSON.stringify(config.wireApi === "chat"
+        ? {
+          model,
+          messages: [{ role: "user", content: "Return the word ok." }],
+          max_tokens: 16,
+        }
+        : {
+          model,
+          input: "Return the word ok.",
+          reasoning: {
+            effort: config.reasoningEffort,
+          },
+          store: !config.disableResponseStorage,
+          max_output_tokens: 16,
+        }),
     });
 
     if (!response.ok) {
@@ -334,6 +398,26 @@ function extractResponseText(payload: unknown) {
   return text;
 }
 
+function extractChatCompletionText(payload: unknown) {
+  if (typeof payload !== "object" || !payload || !("choices" in payload) || !Array.isArray(payload.choices)) {
+    throw new Error("Chat Completions response did not include choices.");
+  }
+
+  const first = payload.choices[0];
+  if (typeof first !== "object" || !first || !("message" in first)) {
+    throw new Error("Chat Completions response did not include a message.");
+  }
+
+  const message = first.message;
+  if (typeof message !== "object" || !message || !("content" in message) || typeof message.content !== "string") {
+    throw new Error("Chat Completions response text was empty.");
+  }
+
+  const text = message.content.trim();
+  if (!text) throw new Error("Chat Completions response text was empty.");
+  return text;
+}
+
 function parseJsonObject(text: string) {
   const trimmed = text.trim();
   const withoutFence = trimmed
@@ -346,6 +430,12 @@ function parseJsonObject(text: string) {
 
 function normalizeProbeBaseUrl(value: string | undefined) {
   return (value?.trim() || "https://api.openai.com/v1").replace(/\/+$/, "");
+}
+
+function normalizeProbeWireApi(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase().replace(/[_-]/g, "");
+  if (normalized === "chat" || normalized === "chatcompletions" || normalized === "openaicompletions" || normalized === "completions") return "chat";
+  return "responses";
 }
 
 function normalizeProbeReasoningEffort(value: string | undefined) {

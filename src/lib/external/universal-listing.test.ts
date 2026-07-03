@@ -33,6 +33,9 @@ describe("universal paste-a-URL adapter", () => {
 
   it("detects the marketplace from the pasted hostname", () => {
     expect(detectMarketplaceFromUrl("https://www.mercari.com/us/item/m1/")).toBe("Mercari");
+    expect(detectMarketplaceFromUrl("https://jp.mercari.com/item/m1")).toBe("Mercari");
+    expect(detectMarketplaceFromUrl("https://snkrdunk.com/products/abc")).toBe("SNKRDUNK");
+    expect(detectMarketplaceFromUrl("https://page.auctions.yahoo.co.jp/jp/auction/abc")).toBe("Yahoo Auctions JP");
     expect(detectMarketplaceFromUrl("https://www.whatnot.com/listing/1")).toBe("Whatnot");
     expect(detectMarketplaceFromUrl("https://www.comc.com/Cards/x")).toBe("Other");
   });

@@ -24,6 +24,7 @@ import {
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { runMarketSearch } from "@/lib/ai/agent/market-agent";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
+import { buildJapanReferenceLinks } from "@/lib/comparison/japan-references";
 import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
 import {
   getOnePieceCard,
@@ -232,6 +233,7 @@ export async function runListingComparison(
     ...(marketReference ? [marketReference] : []),
     await priceChartingPromise,
     buildSoldReference(confirmedCard, generatedAt),
+    ...buildJapanReferenceLinks(confirmedCard, generatedAt),
   ];
   const narrative = await buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
   const partial = normalized.filter((listing) => listing.eligible).length === 0

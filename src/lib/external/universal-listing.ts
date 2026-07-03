@@ -33,6 +33,9 @@ export type UniversalListingResult = {
 
 const hostMarketplaces: Array<{ pattern: RegExp; marketplace: Marketplace }> = [
   { pattern: /(^|\.)mercari\.com$/i, marketplace: "Mercari" },
+  { pattern: /(^|\.)mercari\.jp$/i, marketplace: "Mercari" },
+  { pattern: /(^|\.)snkrdunk\.com$/i, marketplace: "SNKRDUNK" },
+  { pattern: /(^|\.)yahoo\.co\.jp$/i, marketplace: "Yahoo Auctions JP" },
   { pattern: /(^|\.)whatnot\.com$/i, marketplace: "Whatnot" },
   { pattern: /(^|\.)tcgplayer\.com$/i, marketplace: "TCGplayer" },
   { pattern: /(^|\.)facebook\.com$/i, marketplace: "Facebook" },

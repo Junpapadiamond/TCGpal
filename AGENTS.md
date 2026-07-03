@@ -32,7 +32,8 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - Pure card searches (no user-supplied listing facts) are cached 15 minutes keyed by card + condition + delivery context (`src/lib/comparison/report-cache.ts`).
 - Ranked choices state above-market context explicitly ("+N% over the market reference"); when everything is above market the cheapest lens says supply is thin.
 - PriceCharting is optional secondary reference behind `PRICECHARTING_API_TOKEN`, not a transaction price.
-- Facebook, Reddit, Mercari, Whatnot, local shops, and other connector-less sources join via paste-a-URL or the manual ledger until an approved provider/API is connected. Roadmap platform agents remain visible as skipped/not connected.
+- Japan reference searches (Yahoo Auctions JP, Mercari JP, SNKRDUNK, and game-specific shop links) are shown as one-click outbound manual checks. They are not fetched, parsed, ranked, or counted as live source rows until an approved provider/API is connected.
+- Facebook, Reddit, Mercari, Whatnot, Japan marketplaces, local shops, and other connector-less sources join via paste-a-URL or the manual ledger until an approved provider/API is connected. Roadmap platform agents remain visible as skipped/not connected.
 - When no live source returns a single listing, labeled fixtures load with `demoMode:true`. Demo listings never show the per-listing vs-market read.
 - OpenAI is optional. Without it, the deterministic evidence summary remains usable.
 - The configured/default OpenAI model is `gpt-5.5-2026-04-23`.
@@ -64,7 +65,7 @@ Not allowed:
 
 - Marketplace scraping, crawling, or browser automation inside product routes.
 - Server-side fetching of URLs the user did not explicitly paste.
-- Automated search/browse of Facebook, Mercari, Reddit, or Whatnot without an approved/licensed provider (paste-a-URL covers single listings there).
+- Automated search/browse of Facebook, Mercari, Reddit, Whatnot, Yahoo Auctions JP, SNKRDUNK, Japanese shop pages, or other marketplaces without an approved/licensed provider (paste-a-URL covers single user-provided listings where robots allows it).
 - Claims that manual search links were fetched or analyzed.
 - Client-side API secrets.
 
@@ -96,7 +97,8 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 - `src/lib/comparison/platforms.ts`: each marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation, so the system "works as long as you have the APIs" — adding a marketplace is one adapter. eBay and TCGplayer/TCGCSV are live today; other roadmap agents stay skipped/manual-ledger until an approved API/provider is connected.
 - `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), One Piece catalog, TCGCSV/TCGplayer, paste-a-URL universal listing, and PriceCharting adapters.
 - `src/lib/ai/agent/harness.ts`: provider-agnostic `runAgent` loop (model decides tools, deterministic execute, budget hard-stop).
-- `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an allocator key is set, exposes the same platform adapters to `runAgent` as tools (Chat Completions by default, Responses when `COMPARISON_AGENT_API=responses`). Deterministic fan-out is always the floor and fallback; a configured platform the model skips is still searched deterministically.
+- `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an allocator key is set, exposes the same platform adapters to `runAgent` as tools (Chat Completions by default, Responses when `COMPARISON_AGENT_API=responses`). Deterministic fan-out is always the floor and fallback; a configured platform the model skips is still searched deterministically. Main narrative/model enrichment can use `OPENAI_WIRE_API=responses` or `OPENAI_WIRE_API=chat` for OpenAI-compatible providers.
+- `src/lib/comparison/japan-references.ts`: one-click Japan price/buy reference links. These are manual outbound checks only; they must never be counted as fetched inventory or analyzed prices.
 - `src/lib/ai/listing-compare.ts`: comparison orchestration — identity + TCGplayer-price extraction, the cross-platform market search (`runMarketSearch`), synthesis, fallback, and trace.
 - `src/app/api/agent/listing-compare`: the public comparison route.
 - `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
@@ -156,6 +158,7 @@ Then run `npm run dev` and verify:
 - Searching a card resolves real catalog identities and the TCGplayer market anchor; name-only pauses for one-tap confirmation, name + number auto-confirms.
 - With eBay creds, a card search returns live listings; novelty/replica titles and items priced below the market floor are excluded; the recommended buy defaults to Best Value with working Cheapest / Safest / Best-documented toggles and a real listing link.
 - One Piece cards resolve through the bundled/OPTCG catalog, use TCGCSV category `68` for TCGplayer crosswalk/prices when available, and degrade visibly when no TCGCSV product match exists.
+- Japan price checks appear as outbound manual reference buttons, open the relevant Japanese search pages, and remain labeled as not fetched/analyzed.
 - The labeled demo (no live source rows) still reaches distinct ranked choices and hides the per-listing vs-market read.
 - A manual Facebook/local listing is never fetched server-side.
 - Tax-known and tax-unknown totals use the correct language.

@@ -28,6 +28,7 @@ import {
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { calculatePriceComponent, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
+import { isJapanReferenceLabel } from "@/lib/comparison/japan-references";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
@@ -47,10 +48,16 @@ import {
 const marketplaces: Marketplace[] = [
   "eBay",
   "TCGplayer",
+  "Cardmarket",
   "Facebook",
   "Reddit",
   "Mercari",
   "Whatnot",
+  "SNKRDUNK",
+  "Yahoo Auctions JP",
+  "Xianyu",
+  "集换社",
+  "Shopee Taiwan",
   "Local shop",
   "Other",
 ];
@@ -1024,6 +1031,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
   const selectedListing = selectedChoice ? listingMap.get(selectedChoice.listingId) ?? null : null;
 
   const eligibleCount = report.candidates.filter((candidate) => candidate.eligible).length;
+  const japanReferences = report.references.filter((reference) => isJapanReferenceLabel(reference.label));
 
   return (
     <section id="comparison-result" className="mt-6 scroll-mt-6 space-y-5">
@@ -1182,7 +1190,8 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           )}
         </section>
 
-        <aside>
+        <aside className="space-y-5">
+          {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
               <IconCaution className="h-4 w-4" />
@@ -1278,6 +1287,33 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           </div>
         )}
       </section>
+    </section>
+  );
+}
+
+function JapanReferencePanel({ references }: { references: ComparisonReport["references"] }) {
+  const t = useT();
+  return (
+    <section className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5">
+      <p className="eyebrow text-[#2f6f73]">
+        <IconExternal className="h-4 w-4" />
+        {t.result.japanPriceChecks}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-[#52635c]">{t.result.japanPriceChecksBody}</p>
+      <div className="mt-4 grid gap-2">
+        {references.map((reference) => (
+          <a
+            key={reference.label}
+            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#2f6f73] transition hover:border-[#2f6f73]"
+            href={reference.url ?? "#"}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span>{reference.label.replace(" price check", "")}</span>
+            <IconArrowUpRight className="h-4 w-4 shrink-0" />
+          </a>
+        ))}
+      </div>
     </section>
   );
 }

@@ -170,6 +170,9 @@ const en = {
     referenceContext: "Reference context",
     reference: (value: string) => `$${value} reference`,
     openManualCheck: "Open manual check",
+    japanPriceChecks: "Japan price checks",
+    japanPriceChecksBody:
+      "Open these Japanese search pages to inspect yen prices and buy paths yourself. TCGpal has not fetched or ranked those pages; paste a specific listing back here to compare it.",
     beforeYouBuy: "Before you buy",
     howWeChecked: "How we checked — sources, reference pricing, and the validation trace",
     technicalTrace: "Technical validation trace",
@@ -414,6 +417,9 @@ const zh: Dict = {
     referenceContext: "参考背景",
     reference: (value: string) => `参考价 $${value}`,
     openManualCheck: "打开手动查询",
+    japanPriceChecks: "日本价格参考",
+    japanPriceChecksBody:
+      "打开这些日本站内搜索，自己查看日元价格和购买路径。TCGpal 没有抓取或排序这些页面；如果看到具体商品，可以把链接粘回来再比对。",
     beforeYouBuy: "下单前注意",
     howWeChecked: "核验过程——来源、参考价与完整记录",
     technicalTrace: "技术核验记录",

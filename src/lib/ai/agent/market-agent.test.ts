@@ -66,6 +66,7 @@ const config: AiConfig = {
   primaryModel: "gpt-test",
   cheapModel: "gpt-test",
   baseUrl: "https://api.test/v1",
+  wireApi: "responses",
   anthropicBaseUrl: "https://a/v1",
   anthropicModel: "claude",
   reasoningEffort: "low",
