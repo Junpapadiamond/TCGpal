@@ -7,6 +7,7 @@ import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 const TCGCSV_BASE = "https://tcgcsv.com/tcgplayer";
 const TCGCSV_LAST_UPDATED_URL = "https://tcgcsv.com/last-updated.txt";
 const POKEMON_CATEGORY_ID = 3;
+const ONE_PIECE_CATEGORY_ID = 68;
 
 export const TCGCSV_STALE_AFTER_MS = 48 * 60 * 60 * 1000;
 
@@ -50,6 +51,7 @@ const tcgcsvEnvelope = <T extends z.ZodTypeAny>(item: T) => z.object({
 }).passthrough();
 
 export type TcgplayerProductMatch = {
+  categoryId: number;
   groupId: number;
   groupName: string;
   productId: number;
@@ -100,10 +102,11 @@ export async function resolveTcgplayerProduct(
   card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber">,
   fetcher: typeof fetch = fetch,
 ): Promise<TcgplayerProductMatch | null> {
-  const group = await findTcgplayerGroup(card.setName, fetcher);
+  const categoryId = inferTcgplayerCategoryId(card);
+  const group = await findTcgplayerGroup(categoryId, card.setName, fetcher);
   if (!group) return null;
 
-  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${POKEMON_CATEGORY_ID}/${group.groupId}/products`), fetcher, 21600);
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 21600);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer product feed failed with ${response.status}.`);
   const products = tcgcsvEnvelope(tcgcsvProductSchema).parse(await response.json()).results;
 
@@ -116,11 +119,14 @@ export async function resolveTcgplayerProduct(
     return collectorNumberKey(number) === wantedNumber || collectorPrefixKey(number) === wantedPrefix;
   });
 
-  const match = candidates.find((product) => nameOverlap(product.cleanName || product.name, card.name) >= 0.5)
+  const nameMatches = candidates.filter((product) => productNameMatchesCard(product.cleanName || product.name, card.name));
+  const match = nameMatches.find((product) => !isParallelProduct(product))
+    ?? nameMatches[0]
     ?? (candidates.length === 1 ? candidates[0] : null);
   if (!match) return null;
 
   return {
+    categoryId,
     groupId: group.groupId,
     groupName: group.name,
     productId: match.productId,
@@ -131,11 +137,12 @@ export async function resolveTcgplayerProduct(
 }
 
 export async function getTcgplayerPrices(
+  categoryId: number,
   groupId: number,
   productId: number,
   fetcher: typeof fetch = fetch,
 ): Promise<TcgplayerPriceRow[]> {
-  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${POKEMON_CATEGORY_ID}/${groupId}/prices`), fetcher, 3600);
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${groupId}/prices`), fetcher, 3600);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer price feed failed with ${response.status}.`);
   const rows = tcgcsvEnvelope(tcgcsvPriceSchema).parse(await response.json()).results;
   return rows.filter((row) => row.productId === productId);
@@ -158,7 +165,7 @@ export async function searchTcgplayerListings(
   }
 
   const [rows, asOf] = await Promise.all([
-    getTcgplayerPrices(product.groupId, product.productId, fetcher),
+    getTcgplayerPrices(product.categoryId, product.groupId, product.productId, fetcher),
     getTcgcsvLastUpdated(fetcher),
   ]);
 
@@ -251,8 +258,8 @@ function toTcgplayerSeed(
   };
 }
 
-async function findTcgplayerGroup(setName: string, fetcher: typeof fetch) {
-  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${POKEMON_CATEGORY_ID}/groups`), fetcher, 21600);
+async function findTcgplayerGroup(categoryId: number, setName: string, fetcher: typeof fetch) {
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/groups`), fetcher, 21600);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer group feed failed with ${response.status}.`);
   const groups = tcgcsvEnvelope(tcgcsvGroupSchema).parse(await response.json()).results;
 
@@ -271,6 +278,13 @@ async function findTcgplayerGroup(setName: string, fetcher: typeof fetch) {
     .map((group) => ({ group, overlap: nameOverlap(group.name, setName) }))
     .sort((a, b) => b.overlap - a.overlap)[0];
   return bestTokens && bestTokens.overlap >= 0.8 ? bestTokens.group : null;
+}
+
+export function inferTcgplayerCategoryId(card: Pick<CardIdentityCandidate, "cardNumber"> & Partial<Pick<CardIdentityCandidate, "id" | "setCode">>) {
+  const key = `${card.id ?? ""} ${card.setCode ?? ""} ${card.cardNumber}`.toUpperCase();
+  return /\b(?:OP|ST|EB|PRB|P)-?\d{0,3}-\d{1,4}\b/.test(key)
+    ? ONE_PIECE_CATEGORY_ID
+    : POKEMON_CATEGORY_ID;
 }
 
 // Prefer the variants that usually represent the card's primary printing so
@@ -327,6 +341,18 @@ function nameOverlap(left: string, right: string) {
   if (!leftTokens.size || !rightTokens.size) return 0;
   const shared = [...rightTokens].filter((token) => leftTokens.has(token)).length;
   return shared / rightTokens.size;
+}
+
+function productNameMatchesCard(productName: string, cardName: string) {
+  const compactProduct = normalize(productName);
+  const compactCard = normalize(cardName);
+  return nameOverlap(productName, cardName) >= 0.5
+    || Boolean(compactCard && (compactProduct.includes(compactCard) || compactCard.includes(compactProduct)));
+}
+
+function isParallelProduct(product: Pick<TcgplayerProductMatch, "productName"> | { name: string; cleanName?: string | null }) {
+  const name = "productName" in product ? product.productName : `${product.name} ${product.cleanName ?? ""}`;
+  return /\b(parallel|alternate\s+art|alt\s+art)\b/i.test(name);
 }
 
 function tokenize(value: string) {

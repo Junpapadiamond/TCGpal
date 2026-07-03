@@ -12,10 +12,10 @@ TCGpal is an evidence-backed listing comparison tool for U.S. trading-card raw-s
 
 The primary flow is intentionally narrow and **card-first** (the buyer already knows the card; we find and rank the listings):
 
-1. Enter the Pokémon card you want — name, optionally collector number. Pasting a specific eBay URL is an optional secondary path.
+1. Enter the card you want — name, optionally collector number/card id and game. Pasting a specific listing URL is an optional secondary path.
 2. Confirm the exact card/version (one-tap when the name is ambiguous; auto-confirmed when name + number are explicit).
-3. The agent searches eBay and ranks eligible listings against the card's market price.
-4. Return **one recommended buy** (default: the safest verified listing) with a lens toggle to **Cheapest / Safest / Best-documented**. Each shows landed cost vs the TCGplayer market anchor and a one-tap link to the live listing.
+3. The agent fans out over configured platform agents (eBay Browse + TCGplayer/TCGCSV today), ranks eligible listings against the card's market price, and shows skipped/failed sources instead of hiding them.
+4. Return **one recommended buy** (default: Best Value: price, seller trust, and evidence combined) with a lens toggle to **Cheapest / Safest / Best-documented**. Each shows landed cost vs the TCGplayer market anchor and a one-tap link to the live listing.
 
 TCGpal is not a price predictor, grading app, investment advisor, marketplace scraper, or generic collecting dashboard. It accelerates a decision the buyer has already made; it does not make the choice for them.
 
@@ -23,8 +23,8 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 
 - The app opens directly to the card-search form; there is no login or onboarding gate.
 - Raw singles in USD are the supported product category, across multiple TCGs. Pokémon (Pokémon TCG API) and One Piece (OPTCG adapter + bundled catalog) are wired end-to-end; the game toggle selects which. More games are planned.
-- **Two live sources per comparison.** eBay Browse `item_summary/search` (production keyset: `EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`; validate with `node scripts/check-ebay.mjs`) plus **TCGplayer via the TCGCSV daily price dump** (`tcgcsv.com`, keyless — requires a User-Agent header). Both run through the platform-agent fan-out.
-- A **canonical card crosswalk** (`src/lib/comparison/crosswalk.ts`, 6h in-memory cache) maps the confirmed catalog card id → TCGplayer product id + eBay query template. A card missing from the crosswalk degrades TCGplayer to a "no match" source row — never a hard failure. (One Piece sets are not yet mapped to TCGCSV category 68; they degrade the same way.)
+- **Two live API-backed sources per comparison.** eBay Browse `item_summary/search` (production keyset: `EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`; validate with `node scripts/check-ebay.mjs`) plus **TCGplayer via the TCGCSV daily price dump** (`tcgcsv.com`, keyless — requires a User-Agent header). Both run through the platform-agent fan-out.
+- A **canonical card crosswalk** (`src/lib/comparison/crosswalk.ts`, 6h in-memory cache) maps the confirmed catalog card id → TCGplayer product id + eBay query template. TCGCSV category is inferred from the confirmed card: Pokémon uses category `3`; One Piece uses category `68`. A missing crosswalk match degrades TCGplayer to a "no match"/0-row source outcome — never a hard failure.
 - The **market anchor** is the TCGplayer daily feed ("prices as of" freshness shown; >48h stale warns visibly) when the crosswalk resolves, else the inline pokemontcg.io TCGplayer price (`marketSource: "tcgcsv" | "pokemontcg"` on the confirmed card). It powers the vs-market read and the below-market eligibility filter.
 - **Paste-a-URL** (`src/lib/external/universal-listing.ts`): a listing URL from any marketplace is fetched once — user-initiated, exactly that page, robots.txt honored, https/public hosts only, size/time bounded — extracted deterministically (JSON-LD/meta first) with optional LLM gap-filling, identity-checked against the confirmed card (mismatch → excluded from the recommendation with a warning), and labeled "user-added". Extraction failure falls back to the user's typed facts.
 - **Risk calibration: unknown ≠ risky.** Missing seller data yields a neutral `unverified` risk label plus a platform-baseline trust prior (`getPlatformTrustPrior` in `ranking.ts`, documented in per-listing `trustNotes`) — never "higher risk". Known signals earn their points; unknown signals earn at the platform's prior rate. The risk label tracks seller track record only; evidence thinness has its own verdict.
@@ -32,7 +32,7 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - Pure card searches (no user-supplied listing facts) are cached 15 minutes keyed by card + condition + delivery context (`src/lib/comparison/report-cache.ts`).
 - Ranked choices state above-market context explicitly ("+N% over the market reference"); when everything is above market the cheapest lens says supply is thin.
 - PriceCharting is optional secondary reference behind `PRICECHARTING_API_TOKEN`, not a transaction price.
-- Facebook, Reddit, Mercari, Whatnot, local shops, and other connector-less sources join via paste-a-URL or the manual ledger.
+- Facebook, Reddit, Mercari, Whatnot, local shops, and other connector-less sources join via paste-a-URL or the manual ledger until an approved provider/API is connected. Roadmap platform agents remain visible as skipped/not connected.
 - When no live source returns a single listing, labeled fixtures load with `demoMode:true`. Demo listings never show the per-listing vs-market read.
 - OpenAI is optional. Without it, the deterministic evidence summary remains usable.
 - The configured/default OpenAI model is `gpt-5.5-2026-04-23`.
@@ -54,7 +54,7 @@ Allowed:
 
 - Official eBay Browse API for active listings and item details.
 - Pokémon TCG API for catalog identity, card images, and the inline TCGplayer market price (fallback fair-price anchor).
-- TCGCSV daily TCGplayer catalog/price dumps (`tcgcsv.com`) for the crosswalk, the TCGplayer source rows, and the market anchor with explicit freshness. (Open legal question tracked in the PRD: whether a public app needs its own TCGplayer partner agreement — build unblocked, launch review pending.)
+- TCGCSV daily TCGplayer catalog/price dumps (`tcgcsv.com`) for the crosswalk, the TCGplayer source rows, and the market anchor with explicit freshness. Pokémon uses category `3`; One Piece uses category `68`. (Open legal question tracked in the PRD: whether a public app needs its own TCGplayer partner agreement — build unblocked, launch review pending.)
 - **One user-initiated fetch of exactly the listing URL the user pasted** (https, public hosts, robots.txt honored, size/time bounded). This is the paste-a-URL boundary: per-URL, on explicit user action — never crawling, never scheduled, never link-following.
 - PriceCharting API behind `PRICECHARTING_API_TOKEN` (optional secondary reference).
 - User-entered facts from other marketplaces.
@@ -93,10 +93,10 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 
 - `src/features/comparison/ComparisonApp.tsx`: the card-first comparison experience — search → confirm version → one recommended buy (`RecommendationBody` inside the verdict hero) with a lens toggle; verdict-led plain-language tags with the numeric scores de-emphasized; market-anchor chip and per-listing vs-market read.
 - `src/lib/comparison/*`: fixtures, scoring, landed-cost math, deterministic ranking (incl. `exclusionPatterns` and the `MARKET_FLOOR_RATIO` below-market gate), and the cross-platform **platform-agent registry + fan-out** (`platforms.ts`).
-- `src/lib/comparison/platforms.ts`: each marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation, so the system "works as long as you have the APIs" — adding a marketplace is one adapter. eBay is the only live agent today; others stay manual-ledger until a licensed API is connected.
-- `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), and PriceCharting adapters.
+- `src/lib/comparison/platforms.ts`: each marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation, so the system "works as long as you have the APIs" — adding a marketplace is one adapter. eBay and TCGplayer/TCGCSV are live today; other roadmap agents stay skipped/manual-ledger until an approved API/provider is connected.
+- `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), One Piece catalog, TCGCSV/TCGplayer, paste-a-URL universal listing, and PriceCharting adapters.
 - `src/lib/ai/agent/harness.ts`: provider-agnostic `runAgent` loop (model decides tools, deterministic execute, budget hard-stop).
-- `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an AI key is set, exposes the same platform adapters to `runAgent` as tools (`createOpenAiAgentModel` is the OpenAI Responses function-calling model). Deterministic fan-out is always the floor and fallback; a configured platform the model skips is still searched deterministically.
+- `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an allocator key is set, exposes the same platform adapters to `runAgent` as tools (Chat Completions by default, Responses when `COMPARISON_AGENT_API=responses`). Deterministic fan-out is always the floor and fallback; a configured platform the model skips is still searched deterministically.
 - `src/lib/ai/listing-compare.ts`: comparison orchestration — identity + TCGplayer-price extraction, the cross-platform market search (`runMarketSearch`), synthesis, fallback, and trace.
 - `src/app/api/agent/listing-compare`: the public comparison route.
 - `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
@@ -154,8 +154,9 @@ Then run `npm run dev` and verify:
 
 - First open goes directly to the card-search form.
 - Searching a card resolves real catalog identities and the TCGplayer market anchor; name-only pauses for one-tap confirmation, name + number auto-confirms.
-- With eBay creds, a card search returns live listings; novelty/replica titles and items priced below the market floor are excluded; the recommended buy defaults to Safest with a working Cheapest / Best-documented toggle and a real listing link.
-- The labeled demo (no eBay creds) still reaches distinct ranked choices and hides the per-listing vs-market read.
+- With eBay creds, a card search returns live listings; novelty/replica titles and items priced below the market floor are excluded; the recommended buy defaults to Best Value with working Cheapest / Safest / Best-documented toggles and a real listing link.
+- One Piece cards resolve through the bundled/OPTCG catalog, use TCGCSV category `68` for TCGplayer crosswalk/prices when available, and degrade visibly when no TCGCSV product match exists.
+- The labeled demo (no live source rows) still reaches distinct ranked choices and hides the per-listing vs-market read.
 - A manual Facebook/local listing is never fetched server-side.
 - Tax-known and tax-unknown totals use the correct language.
 - Missing provider credentials remain clearly labeled (`demoMode:true`).

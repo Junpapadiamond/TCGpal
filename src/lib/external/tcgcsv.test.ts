@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   getTcgcsvLastUpdated,
+  inferTcgplayerCategoryId,
   isTcgcsvStale,
   resolveTcgplayerProduct,
   searchTcgplayerListings,
@@ -61,6 +62,57 @@ const pricesPayload = {
   ],
 };
 
+const onePieceCard: CardIdentityCandidate = {
+  id: "OP01-024",
+  name: "Monkey.D.Luffy",
+  setName: "Romance Dawn",
+  setCode: "OP-01",
+  cardNumber: "OP01-024",
+  language: "EN",
+  imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP01-024.png",
+  confidence: "high",
+  matchReasons: [],
+};
+
+const onePieceGroupsPayload = {
+  results: [
+    { groupId: 23293, name: "OP-01: Romance Dawn", abbreviation: "OP-01" },
+  ],
+};
+
+const onePieceProductsPayload = {
+  results: [
+    {
+      productId: 453508,
+      name: "Monkey.D.Luffy (024)",
+      cleanName: "MonkeyDLuffy 024",
+      url: "https://www.tcgplayer.com/product/453508/one-piece-card-game-romance-dawn-monkeydluffy-024",
+      extendedData: [{ name: "Number", value: "OP01-024" }],
+    },
+    {
+      productId: 453509,
+      name: "Monkey.D.Luffy (024) (Parallel)",
+      cleanName: "MonkeyDLuffy 024 Parallel",
+      url: "https://www.tcgplayer.com/product/453509/one-piece-card-game-romance-dawn-monkeydluffy-024-parallel",
+      extendedData: [{ name: "Number", value: "OP01-024" }],
+    },
+  ],
+};
+
+const onePiecePricesPayload = {
+  results: [
+    {
+      productId: 453508,
+      lowPrice: 1.21,
+      midPrice: 2.5,
+      highPrice: 8,
+      marketPrice: 1.76,
+      directLowPrice: null,
+      subTypeName: "Normal",
+    },
+  ],
+};
+
 function tcgcsvFetcher(lastUpdated = "2026-07-02T20:06:28+0000") {
   return vi.fn(async (url: URL | RequestInfo) => {
     const href = String(url);
@@ -72,12 +124,41 @@ function tcgcsvFetcher(lastUpdated = "2026-07-02T20:06:28+0000") {
   }) as unknown as typeof fetch;
 }
 
+function mixedTcgcsvFetcher(lastUpdated = "2026-07-02T20:06:28+0000") {
+  return vi.fn(async (url: URL | RequestInfo) => {
+    const href = String(url);
+    if (href.includes("last-updated")) return new Response(lastUpdated);
+    if (href.endsWith("/3/groups")) return new Response(JSON.stringify(groupsPayload));
+    if (href.endsWith("/3/2848/products")) return new Response(JSON.stringify(productsPayload));
+    if (href.endsWith("/3/2848/prices")) return new Response(JSON.stringify(pricesPayload));
+    if (href.endsWith("/68/groups")) return new Response(JSON.stringify(onePieceGroupsPayload));
+    if (href.endsWith("/68/23293/products")) return new Response(JSON.stringify(onePieceProductsPayload));
+    if (href.endsWith("/68/23293/prices")) return new Response(JSON.stringify(onePiecePricesPayload));
+    throw new Error(`unexpected fetch ${href}`);
+  }) as unknown as typeof fetch;
+}
+
 describe("TCGCSV TCGplayer connector", () => {
   it("resolves the crosswalk product by set name and collector number", async () => {
     const product = await resolveTcgplayerProduct(card, tcgcsvFetcher());
+    expect(product?.categoryId).toBe(3);
     expect(product?.productId).toBe(246723);
     expect(product?.groupId).toBe(2848);
     expect(product?.productUrl).toContain("246723");
+  });
+
+  it("routes One Piece cards through TCGCSV category 68", async () => {
+    const fetcher = mixedTcgcsvFetcher();
+    const product = await resolveTcgplayerProduct(onePieceCard, fetcher);
+    const result = await searchTcgplayerListings(onePieceCard, product as TcgplayerProductMatch, fetcher);
+
+    expect(inferTcgplayerCategoryId(onePieceCard)).toBe(68);
+    expect(product?.categoryId).toBe(68);
+    expect(product?.groupId).toBe(23293);
+    expect(product?.productId).toBe(453508);
+    expect(result.seeds).toHaveLength(1);
+    expect(result.seeds[0].id).toBe("tcgplayer-453508-normal-low");
+    expect(result.anchor?.mid).toBe(1.76);
   });
 
   it("returns null for a card missing from the feed instead of failing", async () => {
