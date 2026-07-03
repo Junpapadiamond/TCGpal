@@ -388,7 +388,8 @@ describe("listing comparison agent", () => {
 
   it("surfaces a lookup-unavailable warning (and retries) instead of a silent 'no match'", async () => {
     // The Pokémon catalog API is down: a transient failure must not look like
-    // "this card doesn't exist". It should retry once, then report the real reason.
+    // "this card doesn't exist". It should retry (3 attempts with backoff), then
+    // report the real reason.
     let pokemonCalls = 0;
     const failing = (async (input: RequestInfo | URL) => {
       if (String(input).includes("api.pokemontcg.io")) {
@@ -409,7 +410,7 @@ describe("listing comparison agent", () => {
 
     expect(response.status).toBe("needs_confirmation");
     expect(response.identityCandidates).toEqual([]);
-    expect(pokemonCalls).toBe(2); // one retry on transient failure
+    expect(pokemonCalls).toBe(3); // one retry on transient failure
     expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(true);
   });
 

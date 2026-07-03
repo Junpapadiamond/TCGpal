@@ -2,13 +2,15 @@ import {
   hasEbayCredentials,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
+import { resolveCardCrosswalk } from "@/lib/comparison/crosswalk";
+import { searchTcgplayerListings } from "@/lib/external/tcgcsv";
 import type {
   BuyerContext,
   CardIdentityCandidate,
   ComparisonPlatformResult,
   ComparisonTrace,
+  ListingSeed,
   Marketplace,
-  NormalizedListing,
   PlatformSourceMode,
 } from "@/lib/schemas";
 
@@ -21,18 +23,7 @@ import type {
 // The seed shape is the pre-scored listing: deterministic normalization, tax,
 // and ranking are applied uniformly afterwards, so every platform reconciles in
 // the same ledger regardless of where it came from.
-export type PlatformSeed = Omit<
-  NormalizedListing,
-  | "estimatedTax"
-  | "preTaxTotal"
-  | "estimatedLandedCost"
-  | "sellerTrustScore"
-  | "evidenceCompletenessScore"
-  | "safetyScore"
-  | "valueScore"
-  | "eligible"
-  | "exclusionReasons"
->;
+export type PlatformSeed = ListingSeed;
 
 // Optional per-search hints. Today only a model-refined query string; kept as an
 // object so future hints (price ceiling, condition floor) extend without churning
@@ -80,15 +71,32 @@ export const ebayPlatformAgent: PlatformAgent = {
     searchEbayAlternatives(card, buyer, fetcher, plan?.query),
 };
 
+// TCGplayer via the TCGCSV daily price dump (keyless): the second live source.
+// The canonical crosswalk maps the confirmed card to its TCGplayer product id;
+// a card missing from the crosswalk degrades to zero seeds ("no match"), never
+// a hard failure. Price rows are aggregates (lowest listed / TCGplayer Direct),
+// labeled honestly — no invented seller, condition, or shipping claims.
+export const tcgplayerPlatformAgent: PlatformAgent = {
+  id: "tcgplayer",
+  marketplace: "TCGplayer",
+  label: "TCGplayer daily price feed (TCGCSV)",
+  sourceMode: "cached_index",
+  requiredEnv: [],
+  isConfigured: () => true,
+  search: async ({ card, fetcher }) => {
+    const crosswalk = await resolveCardCrosswalk(card, fetcher);
+    const result = await searchTcgplayerListings(card, crosswalk.tcgplayerProduct, fetcher);
+    return result.seeds;
+  },
+};
+
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
 // proving the fanout, ranking, and "sources checked" UI are fully provider-agnostic
 // today — but stays permanently unconfigured (search() is unreachable) until a real
 // adapter (official API, partner feed, or licensed data provider) is wired behind
 // it. Turning one on then is "one adapter," exactly as intended: implement search(),
-// flip isConfigured() to check the new env key, done. TCGplayer's inline market
-// price already appears in the References panel via the Pokémon catalog adapter —
-// it is deliberately NOT duplicated here as a fake purchasable listing; a live
-// TCGplayer listings feed would need its own licensed marketplace-data adapter.
+// flip isConfigured() to check the new env key, done — the TCGplayer agent above
+// is the worked example (TCGCSV daily dump, zero env keys).
 function stubPlatformAgent(config: {
   id: string;
   marketplace: Marketplace;
@@ -104,7 +112,6 @@ function stubPlatformAgent(config: {
 }
 
 const ROADMAP_AGENTS: PlatformAgent[] = [
-  stubPlatformAgent({ id: "tcgplayer", marketplace: "TCGplayer", label: "TCGplayer listings feed", sourceMode: "cached_index", requiredEnv: ["TCGPLAYER_API_KEY"] }),
   stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket adapter", sourceMode: "licensed_provider", requiredEnv: ["CARDMARKET_API_KEY"] }),
   stubPlatformAgent({ id: "snkrdunk", marketplace: "SNKRDUNK", label: "SNKRDUNK adapter", sourceMode: "licensed_provider", requiredEnv: ["SNKRDUNK_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "mercari", marketplace: "Mercari", label: "Mercari adapter", sourceMode: "licensed_provider", requiredEnv: ["MERCARI_PROVIDER_KEY"] }),
@@ -115,7 +122,7 @@ const ROADMAP_AGENTS: PlatformAgent[] = [
   stubPlatformAgent({ id: "shopee-tw", marketplace: "Shopee Taiwan", label: "Shopee Taiwan adapter", sourceMode: "partner_feed", requiredEnv: ["SHOPEE_TW_PARTNER_KEY"] }),
 ];
 
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, ...ROADMAP_AGENTS];
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, tcgplayerPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {

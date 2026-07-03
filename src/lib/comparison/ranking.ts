@@ -3,8 +3,11 @@ import {
   rankedChoiceSchema,
   type BuyerContext,
   type ListingEvidence,
+  type ListingSeed,
+  type Marketplace,
   type NormalizedListing,
   type RankedChoice,
+  type RiskLabel,
   type SellerTrustSignals,
 } from "@/lib/schemas";
 
@@ -36,27 +39,69 @@ const exclusionPatterns = [
   /\bnon[\s-]?textured\b/i,
 ];
 
-export function calculateSellerTrustScore(signals: SellerTrustSignals) {
-  let score = 0;
+// Platform baseline trust (a data-driven table, not a ranking branch):
+// marketplaces with built-in buyer protection earn a floor so that missing
+// seller data is neutral coverage, never a systematic penalty ("unknown ≠ risky").
+const platformTrustPriors: Partial<Record<Marketplace, number>> = {
+  TCGplayer: 55,
+  eBay: 45,
+  Mercari: 40,
+  Whatnot: 35,
+  Cardmarket: 45,
+  SNKRDUNK: 35,
+  "Local shop": 30,
+  Facebook: 20,
+  Reddit: 20,
+  Other: 20,
+};
+
+export function getPlatformTrustPrior(marketplace: Marketplace) {
+  return platformTrustPriors[marketplace] ?? platformTrustPriors.Other ?? 20;
+}
+
+// True when we have no seller track record at all — the listing is scored with
+// the platform baseline and labeled "unverified" instead of "higher risk".
+export function isSellerUnverified(signals: SellerTrustSignals) {
+  return signals.feedbackPercentage === null && signals.feedbackCount === null;
+}
+
+// Coverage-aware trust: known signals earn their points; unknown signals earn
+// at the platform's baseline rate instead of counting as zero. Full data gives
+// a pure evidence score; no data gives exactly the platform prior.
+export function calculateSellerTrustScore(signals: SellerTrustSignals, marketplace: Marketplace = "Other") {
+  let earned = 0;
+  let covered = 0;
 
   if (signals.feedbackPercentage !== null) {
-    if (signals.feedbackPercentage >= 99.5) score += 40;
-    else if (signals.feedbackPercentage >= 99) score += 30;
-    else if (signals.feedbackPercentage >= 98) score += 20;
-    else if (signals.feedbackPercentage >= 95) score += 10;
+    covered += 40;
+    if (signals.feedbackPercentage >= 99.5) earned += 40;
+    else if (signals.feedbackPercentage >= 99) earned += 30;
+    else if (signals.feedbackPercentage >= 98) earned += 20;
+    else if (signals.feedbackPercentage >= 95) earned += 10;
   }
 
   if (signals.feedbackCount !== null) {
-    if (signals.feedbackCount >= 1000) score += 20;
-    else if (signals.feedbackCount >= 100) score += 15;
-    else if (signals.feedbackCount >= 10) score += 10;
+    covered += 20;
+    if (signals.feedbackCount >= 1000) earned += 20;
+    else if (signals.feedbackCount >= 100) earned += 15;
+    else if (signals.feedbackCount >= 10) earned += 10;
   }
 
-  score += signals.returnsAccepted === true ? 20 : signals.returnsAccepted === null ? 5 : 0;
-  if (signals.topRated) score += 10;
-  if (signals.buyerProtection) score += 10;
+  if (signals.returnsAccepted !== null) {
+    covered += 20;
+    if (signals.returnsAccepted) earned += 20;
+  }
+  if (signals.topRated !== null) {
+    covered += 10;
+    if (signals.topRated) earned += 10;
+  }
+  if (signals.buyerProtection !== null) {
+    covered += 10;
+    if (signals.buyerProtection) earned += 10;
+  }
 
-  return Math.min(100, score);
+  const prior = getPlatformTrustPrior(marketplace);
+  return Math.min(100, Math.round(earned + (prior / 100) * (100 - covered)));
 }
 
 // Maps a listing's price relative to the market anchor onto a 0-100 component: at
@@ -115,18 +160,7 @@ export function calculateEvidenceCompletenessScore(evidence: ListingEvidence) {
 }
 
 export function normalizeListing(input: {
-  listing: Omit<
-    NormalizedListing,
-    | "estimatedTax"
-    | "preTaxTotal"
-    | "estimatedLandedCost"
-    | "sellerTrustScore"
-    | "evidenceCompletenessScore"
-    | "safetyScore"
-    | "valueScore"
-    | "eligible"
-    | "exclusionReasons"
-  >;
+  listing: ListingSeed;
   buyer: BuyerContext;
   marketPrice?: number | null;
 }) {
@@ -138,13 +172,30 @@ export function normalizeListing(input: {
   // landed total now satisfy landed === preTax × (1 + rate).
   const estimatedTax = buyer.taxRate === null ? null : roundMoney(preTaxTotal * buyer.taxRate);
   const estimatedLandedCost = estimatedTax === null ? null : roundMoney(preTaxTotal + estimatedTax);
-  const sellerTrustScore = calculateSellerTrustScore(listing.seller);
+  const sellerTrustScore = calculateSellerTrustScore(listing.seller, listing.marketplace);
   const evidenceCompletenessScore = calculateEvidenceCompletenessScore(listing.evidence);
   const safetyScore = Math.round((sellerTrustScore * SAFETY_WEIGHTS.seller) + (evidenceCompletenessScore * SAFETY_WEIGHTS.evidence));
   const marketPrice = input.marketPrice ?? null;
   const priceComponent = calculatePriceComponent(estimatedLandedCost ?? preTaxTotal, marketPrice);
   const valueScore = calculateValueScore({ priceComponent, safetyScore, evidenceCompletenessScore });
   const exclusionReasons = getExclusionReasons(listing, marketPrice);
+
+  // The risk label reflects the seller's track record, not evidence volume:
+  // search-API rows legitimately carry thin evidence (no full description or
+  // photo data), and that thinness has its own verdict. Grading risk on it
+  // would systematically mislabel a whole platform's listings "higher risk".
+  const unverified = isSellerUnverified(listing.seller);
+  const riskLabel: RiskLabel = unverified
+    ? "unverified"
+    : sellerTrustScore >= 75
+      ? "low_risk"
+      : sellerTrustScore >= 50
+        ? "some_risk"
+        : "higher_risk";
+  const prior = getPlatformTrustPrior(listing.marketplace);
+  const trustNotes = unverified
+    ? [`No seller track record was available, so this listing is unverified — scored with the ${listing.marketplace} platform baseline (${prior}/100), not marked higher risk.`]
+    : [];
 
   return normalizedListingSchema.parse({
     ...listing,
@@ -155,15 +206,21 @@ export function normalizeListing(input: {
     evidenceCompletenessScore,
     safetyScore,
     valueScore,
+    riskLabel,
+    trustNotes,
     eligible: exclusionReasons.length === 0,
     exclusionReasons,
   });
 }
 
-export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
+export function rankListings(
+  listings: NormalizedListing[],
+  context: { marketPrice?: number | null } = {},
+): RankedChoice[] {
   const eligible = listings.filter((listing) => listing.eligible);
   if (!eligible.length) return [];
 
+  const marketPrice = context.marketPrice ?? null;
   const selected = new Set<string>();
   const choices: RankedChoice[] = [];
 
@@ -175,7 +232,8 @@ export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
     "best_value",
     bestValue,
     "Best value",
-    `Best combination of price vs. market, seller trust, and evidence (${bestValue.valueScore}/100).`,
+    `Best combination of price vs. market, seller trust, and evidence (${bestValue.valueScore}/100).`
+      + aboveMarketContext(bestValue, marketPrice),
   ));
   selected.add(bestValue.id);
 
@@ -192,9 +250,10 @@ export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
       "lowest_landed_cost",
       cheapest,
       "Cheapest usable",
-      cheapest.estimatedTax === null
+      (cheapest.estimatedTax === null
         ? `Lowest pre-tax total at $${cheapest.preTaxTotal.toFixed(2)}; tax is not included.`
-        : `Lowest estimated landed cost at $${cheapest.estimatedLandedCost?.toFixed(2)}.`,
+        : `Lowest estimated landed cost at $${cheapest.estimatedLandedCost?.toFixed(2)}.`)
+        + aboveMarketContext(cheapest, marketPrice, true),
     ));
     selected.add(cheapest.id);
   }
@@ -208,7 +267,8 @@ export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
       "safest_listing",
       safest,
       "Safest buy",
-      `Highest combined seller and listing-evidence score (${safest.safetyScore}/100).`,
+      `Highest combined seller and listing-evidence score (${safest.safetyScore}/100).`
+        + aboveMarketContext(safest, marketPrice),
     ));
     selected.add(safest.id);
   }
@@ -226,11 +286,25 @@ export function rankListings(listings: NormalizedListing[]): RankedChoice[] {
       "best_condition_evidence",
       bestEvidence,
       "Best documented",
-      `Most complete photo and condition evidence (${bestEvidence.evidenceCompletenessScore}/100); this is not a grade prediction.`,
+      `Most complete photo and condition evidence (${bestEvidence.evidenceCompletenessScore}/100); this is not a grade prediction.`
+        + aboveMarketContext(bestEvidence, marketPrice),
     ));
   }
 
   return choices;
+}
+
+// Honesty label (R8): a pick that beats the field but not the market must say
+// so. For the cheapest lens this means supply is thin right now.
+function aboveMarketContext(listing: NormalizedListing, marketPrice: number | null, cheapestLens = false) {
+  if (marketPrice === null || marketPrice <= 0 || listing.demo) return "";
+  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const delta = (total - marketPrice) / marketPrice;
+  if (delta <= 0.02) return "";
+  const pct = Math.round(delta * 100);
+  return cheapestLens
+    ? ` Supply is thin right now — even the cheapest eligible copy is +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference.`
+    : ` Note: this copy costs +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference; it leads the field, not the market.`;
 }
 
 // A genuine raw single never costs a tiny fraction of its catalog market price;

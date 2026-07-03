@@ -37,6 +37,7 @@ function seed(id: string, marketplace: Marketplace): PlatformSeed {
     cardId: card.id,
     matchConfidence: "high",
     matchReasons: [],
+    userSupplied: false,
     active: true,
     raw: true,
     currency: "USD",

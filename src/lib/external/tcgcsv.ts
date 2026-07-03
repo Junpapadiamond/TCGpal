@@ -1,0 +1,338 @@
+import { z } from "zod";
+import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
+
+// TCGCSV republishes the official TCGplayer catalog and daily price dump.
+// It is the second live source (R3) and the market-reference feed. Data is
+// daily, so freshness is surfaced and >48h-stale data triggers a warning.
+const TCGCSV_BASE = "https://tcgcsv.com/tcgplayer";
+const TCGCSV_LAST_UPDATED_URL = "https://tcgcsv.com/last-updated.txt";
+const POKEMON_CATEGORY_ID = 3;
+
+export const TCGCSV_STALE_AFTER_MS = 48 * 60 * 60 * 1000;
+
+export class TcgcsvUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TcgcsvUnavailableError";
+  }
+}
+
+const tcgcsvGroupSchema = z.object({
+  groupId: z.number().int(),
+  name: z.string(),
+  abbreviation: z.string().nullable().optional(),
+}).passthrough();
+
+const tcgcsvProductSchema = z.object({
+  productId: z.number().int(),
+  name: z.string(),
+  cleanName: z.string().nullable().optional(),
+  imageUrl: z.string().optional(),
+  url: z.string().optional(),
+  extendedData: z.array(z.object({
+    name: z.string(),
+    value: z.string(),
+  }).passthrough()).optional(),
+}).passthrough();
+
+const tcgcsvPriceSchema = z.object({
+  productId: z.number().int(),
+  lowPrice: z.number().nullable().optional(),
+  midPrice: z.number().nullable().optional(),
+  highPrice: z.number().nullable().optional(),
+  marketPrice: z.number().nullable().optional(),
+  directLowPrice: z.number().nullable().optional(),
+  subTypeName: z.string(),
+}).passthrough();
+
+const tcgcsvEnvelope = <T extends z.ZodTypeAny>(item: T) => z.object({
+  results: z.array(item),
+}).passthrough();
+
+export type TcgplayerProductMatch = {
+  groupId: number;
+  groupName: string;
+  productId: number;
+  productName: string;
+  productUrl: string;
+  imageUrl: string | null;
+};
+
+export type TcgplayerPriceRow = z.infer<typeof tcgcsvPriceSchema>;
+
+export type TcgplayerMarketAnchor = {
+  low: number | null;
+  mid: number | null;
+  high: number | null;
+  subTypeName: string;
+  url: string;
+};
+
+export type TcgplayerSearchResult = {
+  seeds: ListingSeed[];
+  anchor: TcgplayerMarketAnchor | null;
+  product: TcgplayerProductMatch | null;
+  asOf: string | null;
+};
+
+export async function getTcgcsvLastUpdated(fetcher: typeof fetch = fetch): Promise<string | null> {
+  try {
+    const response = await tcgcsvFetch(new URL(TCGCSV_LAST_UPDATED_URL), fetcher, 1800);
+    if (!response.ok) return null;
+    const text = (await response.text()).trim();
+    const parsed = new Date(text);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  } catch {
+    return null;
+  }
+}
+
+export function isTcgcsvStale(asOf: string | null, now: Date = new Date()) {
+  if (!asOf) return false;
+  const at = new Date(asOf).getTime();
+  return Number.isFinite(at) && now.getTime() - at > TCGCSV_STALE_AFTER_MS;
+}
+
+// Crosswalk leg: canonical card (pokemontcg.io identity) → TCGplayer product.
+// Group is matched by set name, product by printed collector number; a name
+// sanity check prevents a wrong-number data glitch from crossing sets.
+export async function resolveTcgplayerProduct(
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber">,
+  fetcher: typeof fetch = fetch,
+): Promise<TcgplayerProductMatch | null> {
+  const group = await findTcgplayerGroup(card.setName, fetcher);
+  if (!group) return null;
+
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${POKEMON_CATEGORY_ID}/${group.groupId}/products`), fetcher, 21600);
+  if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer product feed failed with ${response.status}.`);
+  const products = tcgcsvEnvelope(tcgcsvProductSchema).parse(await response.json()).results;
+
+  const wantedNumber = collectorNumberKey(card.cardNumber);
+  const wantedPrefix = collectorPrefixKey(card.cardNumber);
+  if (!wantedPrefix) return null;
+
+  const candidates = products.filter((product) => {
+    const number = product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "";
+    return collectorNumberKey(number) === wantedNumber || collectorPrefixKey(number) === wantedPrefix;
+  });
+
+  const match = candidates.find((product) => nameOverlap(product.cleanName || product.name, card.name) >= 0.5)
+    ?? (candidates.length === 1 ? candidates[0] : null);
+  if (!match) return null;
+
+  return {
+    groupId: group.groupId,
+    groupName: group.name,
+    productId: match.productId,
+    productName: match.name,
+    productUrl: match.url || `https://www.tcgplayer.com/product/${match.productId}`,
+    imageUrl: match.imageUrl || null,
+  };
+}
+
+export async function getTcgplayerPrices(
+  groupId: number,
+  productId: number,
+  fetcher: typeof fetch = fetch,
+): Promise<TcgplayerPriceRow[]> {
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${POKEMON_CATEGORY_ID}/${groupId}/prices`), fetcher, 3600);
+  if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer price feed failed with ${response.status}.`);
+  const rows = tcgcsvEnvelope(tcgcsvPriceSchema).parse(await response.json()).results;
+  return rows.filter((row) => row.productId === productId);
+}
+
+// The full second-source search: crosswalk product → daily price rows →
+// listing seeds. Each priced variant becomes one comparable row (lowest listed
+// price, plus a TCGplayer Direct row when present). Prices are aggregate rows,
+// not a specific seller, so seller metrics stay null → "unverified" with the
+// platform baseline. The product comes from the crosswalk (R1): connectors
+// receive their platform-native identifier, no free-text re-matching.
+export async function searchTcgplayerListings(
+  card: CardIdentityCandidate,
+  product: TcgplayerProductMatch | null,
+  fetcher: typeof fetch = fetch,
+  now: () => Date = () => new Date(),
+): Promise<TcgplayerSearchResult> {
+  if (!product) {
+    return { seeds: [], anchor: null, product: null, asOf: await getTcgcsvLastUpdated(fetcher) };
+  }
+
+  const [rows, asOf] = await Promise.all([
+    getTcgplayerPrices(product.groupId, product.productId, fetcher),
+    getTcgcsvLastUpdated(fetcher),
+  ]);
+
+  const observedAt = now().toISOString();
+  const seeds: ListingSeed[] = [];
+
+  for (const row of sortByVariantPreference(rows)) {
+    const lowest = row.lowPrice ?? row.marketPrice ?? row.midPrice ?? null;
+    if (lowest !== null) {
+      seeds.push(toTcgplayerSeed(card, product, row, {
+        idSuffix: "low",
+        price: lowest,
+        titleNote: "lowest listed",
+        observedAt,
+      }));
+    }
+    if (row.directLowPrice !== null && row.directLowPrice !== undefined) {
+      seeds.push(toTcgplayerSeed(card, product, row, {
+        idSuffix: "direct",
+        price: row.directLowPrice,
+        titleNote: "TCGplayer Direct",
+        observedAt,
+        direct: true,
+      }));
+    }
+  }
+
+  const anchorRow = sortByVariantPreference(rows).find((row) => row.marketPrice !== null || row.midPrice !== null) ?? null;
+  const anchor = anchorRow
+    ? {
+      low: anchorRow.lowPrice ?? null,
+      mid: anchorRow.marketPrice ?? anchorRow.midPrice ?? null,
+      high: anchorRow.highPrice ?? null,
+      subTypeName: anchorRow.subTypeName,
+      url: product.productUrl,
+    }
+    : null;
+
+  return { seeds, anchor, product, asOf };
+}
+
+function toTcgplayerSeed(
+  card: CardIdentityCandidate,
+  product: TcgplayerProductMatch,
+  row: TcgplayerPriceRow,
+  options: { idSuffix: string; price: number; titleNote: string; observedAt: string; direct?: boolean },
+): ListingSeed {
+  return {
+    id: `tcgplayer-${product.productId}-${slug(row.subTypeName)}-${options.idSuffix}`,
+    marketplace: "TCGplayer",
+    url: product.productUrl,
+    title: `${card.name} ${card.cardNumber} ${row.subTypeName} — TCGplayer ${options.titleNote}`,
+    cardId: card.id,
+    matchConfidence: "high",
+    matchReasons: [
+      `Matched through the TCGplayer product crosswalk (product #${product.productId}, ${product.groupName}).`,
+    ],
+    active: true,
+    raw: true,
+    currency: "USD",
+    price: options.price,
+    // Shipping varies by TCGplayer seller and is not in the daily feed; the
+    // total stays pre-tax/pre-shipping and is labeled that way.
+    shipping: null,
+    claimedCondition: "Unknown",
+    imageUrl: card.imageUrl ?? null,
+    seller: {
+      feedbackPercentage: null,
+      feedbackCount: null,
+      returnsAccepted: null,
+      topRated: null,
+      buyerProtection: true,
+    },
+    evidence: {
+      photoCount: 0,
+      frontBackExplicit: false,
+      closeupsExplicit: false,
+      surfaceExplicit: false,
+      identityExplicit: true,
+      substantiveConditionNotes: false,
+      missing: [
+        "TCGplayer price rows are aggregates, not a specific seller's photos.",
+        "Shipping varies by seller and is not included in this price.",
+        ...(options.direct ? [] : ["Condition depends on the individual seller's listing."]),
+      ],
+    },
+    observedAt: options.observedAt,
+    demo: false,
+    userSupplied: false,
+  };
+}
+
+async function findTcgplayerGroup(setName: string, fetcher: typeof fetch) {
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${POKEMON_CATEGORY_ID}/groups`), fetcher, 21600);
+  if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer group feed failed with ${response.status}.`);
+  const groups = tcgcsvEnvelope(tcgcsvGroupSchema).parse(await response.json()).results;
+
+  const wanted = normalize(setName);
+  if (!wanted) return null;
+
+  // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies"), so
+  // containment of the catalog set name is the primary match.
+  const exact = groups.find((group) => {
+    const name = normalize(group.name);
+    return name === wanted || name.endsWith(wanted) || name.includes(wanted);
+  });
+  if (exact) return exact;
+
+  const bestTokens = groups
+    .map((group) => ({ group, overlap: nameOverlap(group.name, setName) }))
+    .sort((a, b) => b.overlap - a.overlap)[0];
+  return bestTokens && bestTokens.overlap >= 0.8 ? bestTokens.group : null;
+}
+
+// Prefer the variants that usually represent the card's primary printing so
+// the anchor and the first listing rows match the version the buyer confirmed.
+const variantPreference = ["holofoil", "normal", "reverse holofoil", "1st edition holofoil", "unlimited holofoil"];
+
+function sortByVariantPreference(rows: TcgplayerPriceRow[]) {
+  return [...rows].sort((a, b) => variantRank(a.subTypeName) - variantRank(b.subTypeName));
+}
+
+function variantRank(subTypeName: string) {
+  const index = variantPreference.indexOf(subTypeName.toLowerCase());
+  return index === -1 ? variantPreference.length : index;
+}
+
+async function tcgcsvFetch(url: URL, fetcher: typeof fetch, revalidateSeconds: number, timeoutMs = 9000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetcher(url, {
+      // TCGCSV rejects requests without a User-Agent with 401.
+      headers: {
+        "User-Agent": "TCGpal/0.1 (+https://tcgpal.vercel.app)",
+        Accept: "application/json, text/plain",
+      },
+      next: { revalidate: revalidateSeconds },
+      signal: controller.signal,
+    } as RequestInit & { next: { revalidate: number } });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function collectorNumberKey(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9/]/g, "").split("/").map(stripLeadingZeros).join("/");
+}
+
+function collectorPrefixKey(value: string) {
+  return collectorNumberKey(value).split("/")[0] ?? "";
+}
+
+function stripLeadingZeros(segment: string) {
+  const match = segment.match(/^([A-Z]*)0*(\d+)$/);
+  return match ? `${match[1]}${match[2]}` : segment;
+}
+
+function normalize(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function nameOverlap(left: string, right: string) {
+  const leftTokens = new Set(tokenize(left));
+  const rightTokens = new Set(tokenize(right));
+  if (!leftTokens.size || !rightTokens.size) return 0;
+  const shared = [...rightTokens].filter((token) => leftTokens.has(token)).length;
+  return shared / rightTokens.size;
+}
+
+function tokenize(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter(Boolean);
+}
+
+function slug(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}

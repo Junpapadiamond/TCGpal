@@ -40,6 +40,10 @@ export const conditionClaimSchema = z.enum([
 
 export const confidenceSchema = z.enum(["low", "medium", "high"]);
 
+// Evidence-based risk stays separate from data coverage: a listing with no
+// seller track record is "unverified" (neutral), never "higher_risk".
+export const riskLabelSchema = z.enum(["low_risk", "some_risk", "higher_risk", "unverified"]);
+
 export const moneySchema = z.object({
   value: z.number().min(0),
   currency: z.literal("USD").default("USD"),
@@ -172,6 +176,12 @@ export const cardIdentityCandidateSchema = z.object({
   marketLow: z.number().nullable().optional(),
   marketMid: z.number().nullable().optional(),
   marketHigh: z.number().nullable().optional(),
+  // Where the anchor came from and how fresh it is ("tcgcsv" daily feed vs the
+  // inline pokemontcg.io approximation), so the UI can show freshness honestly.
+  marketSource: z.enum(["tcgcsv", "pokemontcg"]).nullable().optional(),
+  marketAsOf: z.string().nullable().optional(),
+  // Crosswalk: canonical card id ↔ TCGplayer product id (null when unmapped).
+  tcgplayerProductId: z.number().int().nullable().optional(),
 });
 
 export const normalizedListingSchema = z.object({
@@ -200,10 +210,19 @@ export const normalizedListingSchema = z.object({
   // Composite "best value" score: price-vs-market + safety + evidence. Deterministic —
   // computed alongside the other scores in normalizeListing(), never AI-assigned.
   valueScore: z.number().int().min(0).max(100),
+  // Seller-track-record risk, kept separate from evidence volume (search-API rows
+  // legitimately carry thin evidence). Missing seller data → "unverified", neutral.
+  riskLabel: riskLabelSchema,
+  // Plain-language notes documenting how missing data and platform baselines were
+  // applied — the "check the math" trail for the trust score.
+  trustNotes: z.array(z.string()).default([]),
   eligible: z.boolean(),
   exclusionReasons: z.array(z.string()),
   observedAt: z.string(),
   demo: z.boolean().default(false),
+  // True for listings the buyer supplied (pasted URL, manual entry) rather than a
+  // live platform search — labeled "user-added" in the ledger.
+  userSupplied: z.boolean().default(false),
 });
 
 export const rankedChoiceRoleSchema = z.enum([
@@ -318,6 +337,24 @@ export const rawVsSlabResultSchema = z.object({
 
 export type Marketplace = z.infer<typeof marketplaceSchema>;
 export type ConditionClaim = z.infer<typeof conditionClaimSchema>;
+export type RiskLabel = z.infer<typeof riskLabelSchema>;
+
+// The pre-scored listing every source produces (platform agents, fixtures,
+// manual entries, pasted URLs). Deterministic normalization computes the rest.
+export type ListingSeed = Omit<
+  NormalizedListing,
+  | "estimatedTax"
+  | "preTaxTotal"
+  | "estimatedLandedCost"
+  | "sellerTrustScore"
+  | "evidenceCompletenessScore"
+  | "safetyScore"
+  | "valueScore"
+  | "riskLabel"
+  | "trustNotes"
+  | "eligible"
+  | "exclusionReasons"
+>;
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;

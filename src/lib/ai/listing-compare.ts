@@ -8,6 +8,19 @@ import {
   parseEbayUrl,
 } from "@/lib/external/ebay";
 import { getConfiguredPlatformAgents } from "@/lib/comparison/platforms";
+import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
+import {
+  comparisonCacheKey,
+  getCachedComparison,
+  isCacheableRequest,
+  setCachedComparison,
+} from "@/lib/comparison/report-cache";
+import { isTcgcsvStale, searchTcgplayerListings, type TcgplayerSearchResult } from "@/lib/external/tcgcsv";
+import {
+  fetchUniversalListing,
+  UniversalListingBlockedError,
+  type UniversalListingResult,
+} from "@/lib/external/universal-listing";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { runMarketSearch } from "@/lib/ai/agent/market-agent";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
@@ -63,9 +76,9 @@ export async function runListingComparison(
 
   const request = applyQueryParser(comparisonRequestSchema.parse(rawRequest), trace);
 
-  const sourceResult = await ingestSourceListing(request, fetcher, warnings, trace);
+  const { source: sourceResult, universal } = await ingestSourceListing(request, fetcher, warnings, trace);
   const identities = await identifyCards(request, sourceResult, fetcher, warnings, trace);
-  const confirmedCard = resolveConfirmedCard(request, identities);
+  let confirmedCard = resolveConfirmedCard(request, identities);
 
   if (!confirmedCard) {
     trace.push({
@@ -101,14 +114,59 @@ export async function runListingComparison(
     status: "complete",
   });
 
-  // References only need the confirmed card, not the ranked listings, so kick them off
-  // now to overlap with the marketplace fan-out below instead of waiting for it — this
-  // removes the PriceCharting round trip from the critical path entirely.
-  const referencesPromise = getReferences(confirmedCard, fetcher, trace, generatedAt);
+  // R7: pure card searches are served from a 15-minute cache keyed by
+  // card + condition + delivery context.
+  const cacheable = isCacheableRequest(request);
+  const cacheKey = comparisonCacheKey(request, confirmedCard.id);
+  if (cacheable) {
+    const cached = getCachedComparison(cacheKey, now());
+    if (cached) {
+      return {
+        ...cached,
+        trace: [...cached.trace, {
+          step: "cache",
+          actor: "Comparison cache",
+          summary: "Served from the 15-minute comparison cache for this card, condition, and delivery context.",
+          status: "complete" as const,
+        }],
+      };
+    }
+  }
+
+  // R1: resolve the crosswalk once (module-cached 6h) so every connector gets
+  // its platform-native identifier; the TCGplayer agent reuses this entry.
+  let crosswalk: CardCrosswalkEntry | null = null;
+  try {
+    crosswalk = await resolveCardCrosswalk(confirmedCard, fetcher, now);
+  } catch {
+    /* the eBay leg still works from the card fields */
+  }
+  trace.push({
+    step: "card_crosswalk",
+    actor: "Catalog crosswalk",
+    summary: crosswalk?.tcgplayerProductId
+      ? `Mapped ${confirmedCard.id} → TCGplayer product #${crosswalk.tcgplayerProductId} and an eBay query template.`
+      : `Mapped ${confirmedCard.id} → eBay query template; no TCGplayer product match (that source degrades to "no match").`,
+    status: crosswalk?.tcgplayerProductId ? "complete" : "fallback",
+  });
+
+  // R3: the daily-feed market anchor resolves in parallel with the fan-out.
+  const anchorPromise: Promise<TcgplayerSearchResult | null> = crosswalk?.tcgplayerProduct
+    ? searchTcgplayerListings(confirmedCard, crosswalk.tcgplayerProduct, fetcher, now).catch(() => null)
+    : Promise.resolve(null);
+
+  // PriceCharting only needs the confirmed card, so it overlaps with the
+  // marketplace fan-out — the round trip stays off the critical path.
+  const priceChartingPromise = getPriceChartingReference(confirmedCard, fetcher, trace, generatedAt);
 
   const seeds: DemoListingSeed[] = [];
-  const manualSeed = sourceToSeed(sourceResult, confirmedCard, generatedAt);
-  if (manualSeed) seeds.push(manualSeed);
+  const manualSeed = sourceToSeed(sourceResult, confirmedCard, generatedAt, universal);
+  if (manualSeed) {
+    seeds.push(manualSeed);
+    if (manualSeed.matchConfidence === "low") {
+      warnings.push("The pasted listing appears to describe a different card or version than the one you confirmed, so it is excluded from the recommendation.");
+    }
+  }
 
   const ledgerSeeds = manualCandidatesToSeeds(request.manualCandidates, confirmedCard, generatedAt);
   if (ledgerSeeds.length > 0) {
@@ -131,17 +189,28 @@ export async function runListingComparison(
   trace.push(...fanout.traces);
   const platformResults = fanout.results;
 
-  if (fanout.configuredCount === 0) {
-    // No live marketplace API is configured at all, so there is no real source to
-    // fail — fall back to labeled demo inventory the buyer cannot mistake for real
-    // offers, rather than masking the gap.
+  // R3: prefer the daily TCGplayer feed (explicit as-of timestamp) as the
+  // market anchor; the inline catalog price stays as the fallback anchor.
+  const tcgplayerData = await anchorPromise;
+  confirmedCard = applyMarketAnchor(confirmedCard, crosswalk, tcgplayerData);
+  if (confirmedCard.marketSource === "tcgcsv" && isTcgcsvStale(confirmedCard.marketAsOf ?? null, now())) {
+    warnings.push(`TCGplayer prices are more than 48 hours old (as of ${formatAnchorDate(confirmedCard.marketAsOf)}). Treat the market reference with extra care.`);
+  }
+
+  if (fanout.seeds.length === 0) {
+    // No live source produced a single listing (nothing configured, or every
+    // configured source failed or found no match) — fall back to labeled demo
+    // inventory the buyer cannot mistake for real offers, rather than masking
+    // the gap. A manual/pasted candidate still gets labeled context to rank against.
     demoMode = true;
     seeds.push(...demoListingSeedsFor(confirmedCard));
-    warnings.push("No live marketplace API is configured. Showing labeled demo inventory instead.");
+    warnings.push(fanout.configuredCount === 0
+      ? "No live marketplace API is configured. Showing labeled demo inventory instead."
+      : "No live marketplace source returned a listing. Showing labeled demo inventory instead.");
     trace.push({
       step: "marketplace_search",
       actor: "Platform fan-out",
-      summary: "No marketplace API is configured; loaded labeled fixtures.",
+      summary: "No live source returned listings; loaded labeled fixtures.",
       status: "fallback",
     });
   }
@@ -150,7 +219,7 @@ export async function runListingComparison(
   // fabricated, so any market-derived score would be a fake vs-market read.
   const marketAnchor = demoMode ? null : confirmedCard.marketMid ?? null;
   const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: marketAnchor }));
-  const rankedChoices = rankListings(normalized);
+  const rankedChoices = rankListings(normalized, { marketPrice: marketAnchor });
   trace.push({
     step: "validation_and_ranking",
     actor: "Deterministic TypeScript",
@@ -158,12 +227,17 @@ export async function runListingComparison(
     status: "complete",
   });
 
-  const references = await referencesPromise;
+  const marketReference = buildMarketReference(confirmedCard, generatedAt);
+  const references: ComparisonReference[] = [
+    ...(marketReference ? [marketReference] : []),
+    await priceChartingPromise,
+    buildSoldReference(confirmedCard, generatedAt),
+  ];
   const narrative = await buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
   const partial = normalized.filter((listing) => listing.eligible).length === 0
     || (!demoMode && references.every((reference) => reference.status !== "used"));
 
-  return comparisonReportSchema.parse({
+  const report = comparisonReportSchema.parse({
     status: partial ? "partial" : "complete",
     request: { ...request, sourceListing: sourceResult },
     identityCandidates: identities,
@@ -178,6 +252,41 @@ export async function runListingComparison(
     demoMode,
     generatedAt,
   });
+
+  if (cacheable) setCachedComparison(cacheKey, report, now());
+  return report;
+}
+
+// Prefer the daily TCGplayer feed over the inline catalog approximation, but
+// never drop an existing anchor for nothing.
+function applyMarketAnchor(
+  card: CardIdentityCandidate,
+  crosswalk: CardCrosswalkEntry | null,
+  tcgplayer: TcgplayerSearchResult | null,
+): CardIdentityCandidate {
+  const tcgplayerProductId = crosswalk?.tcgplayerProductId ?? null;
+  if (tcgplayer?.anchor && tcgplayer.anchor.mid !== null) {
+    return {
+      ...card,
+      marketLow: tcgplayer.anchor.low,
+      marketMid: tcgplayer.anchor.mid,
+      marketHigh: tcgplayer.anchor.high,
+      marketUrl: tcgplayer.anchor.url,
+      marketSource: "tcgcsv",
+      marketAsOf: tcgplayer.asOf,
+      tcgplayerProductId,
+    };
+  }
+  if (typeof card.marketMid === "number") {
+    return { ...card, marketSource: card.marketSource ?? "pokemontcg", tcgplayerProductId };
+  }
+  return { ...card, tcgplayerProductId };
+}
+
+function formatAnchorDate(value: string | null | undefined) {
+  if (!value) return "unknown";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString().slice(0, 10);
 }
 
 // The hero search box entry point: deterministically decompose one free-text
@@ -230,7 +339,7 @@ async function ingestSourceListing(
   fetcher: typeof fetch,
   warnings: string[],
   trace: ComparisonTrace[],
-) {
+): Promise<{ source: SourceListing; universal: UniversalListingResult | null }> {
   const url = request.sourceListing.url?.trim();
   if (!url) {
     trace.push({
@@ -239,39 +348,85 @@ async function ingestSourceListing(
       summary: "Accepted user-supplied listing facts without fetching an external URL.",
       status: "complete",
     });
-    return request.sourceListing;
+    return { source: request.sourceListing, universal: null };
   }
 
   const parsed = parseEbayUrl(url);
-  if (!parsed.supported) {
-    trace.push({
-      step: "source_ingestion",
-      actor: "URL allowlist",
-      summary: "Unsupported marketplace URL was not fetched; only user-supplied facts are used.",
-      status: "complete",
-    });
-    return request.sourceListing;
+  if (parsed.supported) {
+    try {
+      const source = await getEbayListingByUrl(url, request.buyer, fetcher);
+      trace.push({
+        step: "source_ingestion",
+        actor: "eBay Browse adapter",
+        summary: "Fetched the source listing through the official eBay API.",
+        status: "complete",
+      });
+      return { source, universal: null };
+    } catch (error) {
+      if (!(error instanceof EbayUnavailableError)) warnings.push(errorMessage(error));
+      trace.push({
+        step: "source_ingestion",
+        actor: "eBay Browse adapter",
+        summary: "Live source lookup was unavailable; retained only user-supplied facts.",
+        status: "fallback",
+      });
+      return { source: request.sourceListing, universal: null };
+    }
   }
 
+  // R6: any other pasted marketplace URL is fetched once — user-initiated,
+  // exactly that page, robots.txt honored — and extracted into the same
+  // listing shape. User-typed facts stay source truth; extraction fills gaps.
   try {
-    const source = await getEbayListingByUrl(url, request.buyer, fetcher);
+    const universal = await fetchUniversalListing(url, fetcher);
+    const merged = mergeSourceFacts(request.sourceListing, universal.listing);
+    warnings.push(...universal.notes);
     trace.push({
       step: "source_ingestion",
-      actor: "eBay Browse adapter",
-      summary: "Fetched the source listing through the official eBay API.",
+      actor: "Paste-a-URL adapter",
+      summary: `Fetched the pasted ${universal.marketplace} listing you provided (single user-initiated fetch) and extracted its stated facts${universal.usedAi ? " with AI assistance" : " from structured page data"}.`,
       status: "complete",
     });
-    return source;
+    return { source: merged, universal };
   } catch (error) {
-    if (!(error instanceof EbayUnavailableError)) warnings.push(errorMessage(error));
+    if (error instanceof UniversalListingBlockedError) {
+      warnings.push(error.message);
+    } else {
+      warnings.push(`The pasted listing page could not be read (${errorMessage(error)}). Only your typed facts are used.`);
+    }
     trace.push({
       step: "source_ingestion",
-      actor: "eBay Browse adapter",
-      summary: "Live source lookup was unavailable; retained only user-supplied facts.",
+      actor: "Paste-a-URL adapter",
+      summary: "The pasted URL was not fetched or could not be extracted; retained only user-supplied facts.",
       status: "fallback",
     });
-    return request.sourceListing;
+    return { source: request.sourceListing, universal: null };
   }
+}
+
+// User-typed facts always win over page extraction; extraction fills blanks.
+function mergeSourceFacts(typed: SourceListing, extracted: SourceListing): SourceListing {
+  return {
+    // The hostname of the pasted URL is authoritative for the platform label.
+    marketplace: extracted.marketplace,
+    url: typed.url,
+    title: typed.title.trim() || extracted.title,
+    description: typed.description.trim() || extracted.description,
+    price: typed.price ?? extracted.price,
+    shipping: typed.shipping ?? extracted.shipping,
+    claimedCondition: typed.claimedCondition !== "Unknown" ? typed.claimedCondition : extracted.claimedCondition,
+    active: true,
+    seller: {
+      feedbackPercentage: typed.seller.feedbackPercentage ?? extracted.seller.feedbackPercentage,
+      feedbackCount: typed.seller.feedbackCount ?? extracted.seller.feedbackCount,
+      returnsAccepted: typed.seller.returnsAccepted ?? extracted.seller.returnsAccepted,
+      topRated: typed.seller.topRated ?? extracted.seller.topRated,
+      buyerProtection: typed.seller.buyerProtection ?? extracted.seller.buyerProtection,
+    },
+    evidence: typed.evidence.photoCount > 0 || typed.evidence.frontBackExplicit
+      ? typed.evidence
+      : extracted.evidence,
+  };
 }
 
 async function identifyCards(
@@ -368,15 +523,23 @@ async function identifyCards(
 // One retry on a transient Pokémon catalog failure. Returns null (and records a
 // user-facing warning) only when both attempts fail, so the caller can distinguish
 // "lookup unavailable" from a genuine empty result.
+// R5: the catalog's cold-start hiccup must not surface as "card catalog
+// temporarily unavailable" on a buyer's very first search — retry transient
+// failures with exponential backoff before giving up.
+const CATALOG_RETRY_DELAYS_MS = [400, 900];
+
 async function searchPokemonWithRetry(
   options: Parameters<typeof searchPokemonCards>[0],
   warnings: string[],
 ): Promise<Awaited<ReturnType<typeof searchPokemonCards>> | null> {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt <= CATALOG_RETRY_DELAYS_MS.length; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, CATALOG_RETRY_DELAYS_MS[attempt - 1]));
+    }
     try {
       return await searchPokemonCards(options);
     } catch (error) {
-      if (attempt === 1) {
+      if (attempt === CATALOG_RETRY_DELAYS_MS.length) {
         warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
       }
     }
@@ -501,18 +664,30 @@ function sourceToSeed(
   source: SourceListing,
   card: CardIdentityCandidate,
   observedAt: string,
+  universal: UniversalListingResult | null = null,
 ): DemoListingSeed | null {
   if (source.price === null) return null;
   const titleText = `${source.title} ${source.description}`;
   const explicitNumber = normalizeText(titleText).includes(normalizeText(card.cardNumber));
+
+  // R6 identity critic (deterministic): if the pasted page states a card name
+  // or collector number that disagrees with the confirmed version, the listing
+  // is flagged and drops out of recommendation eligibility instead of being
+  // silently included.
+  const mismatch = universal ? detectIdentityMismatch(universal, card) : null;
+
   return {
     id: "source-listing",
     marketplace: source.marketplace,
     url: source.url || null,
     title: source.title || `${card.name} ${card.cardNumber}`,
     cardId: card.id,
-    matchConfidence: explicitNumber ? "high" : "medium",
-    matchReasons: explicitNumber ? ["Confirmed collector number appears in the listing."] : ["User confirmed the card identity."],
+    matchConfidence: mismatch ? "low" : explicitNumber ? "high" : "medium",
+    matchReasons: mismatch
+      ? [mismatch]
+      : explicitNumber
+        ? ["Confirmed collector number appears in the listing."]
+        : ["User confirmed the card identity."],
     active: source.active,
     raw: !/\b(psa|bgs|cgc|sgc)\s*\d|\bslab(?:bed)?\b/i.test(titleText),
     currency: "USD",
@@ -524,7 +699,21 @@ function sourceToSeed(
     evidence: source.evidence,
     observedAt,
     demo: false,
+    userSupplied: true,
   };
+}
+
+function detectIdentityMismatch(universal: UniversalListingResult, card: CardIdentityCandidate) {
+  const extractedNumber = collectorNumberParts(universal.extractedCard.number).number;
+  const confirmedNumber = collectorNumberParts(card.cardNumber).number;
+  if (extractedNumber && confirmedNumber && extractedNumber !== confirmedNumber) {
+    return `The pasted page states collector number ${universal.extractedCard.number}, which does not match the confirmed ${card.cardNumber}.`;
+  }
+  const extractedName = normalizeWords(universal.extractedCard.name);
+  if (extractedName && tokenOverlap(extractedName, normalizeWords(card.name)) < 0.5) {
+    return `The pasted page appears to describe "${universal.extractedCard.name}", not the confirmed ${card.name}.`;
+  }
+  return null;
 }
 
 // Cross-platform ledger: turn each hand-entered listing into a ranked seed.
@@ -572,40 +761,53 @@ function manualCandidatesToSeeds(
       },
       observedAt,
       demo: false,
+      userSupplied: true,
     }];
   });
 }
 
-async function getReferences(
+// The fair-price anchor reference is built from the FINAL anchored card (daily
+// feed when the crosswalk resolved, inline catalog price otherwise), with its
+// freshness always stated.
+function buildMarketReference(card: CardIdentityCandidate, observedAt: string): ComparisonReference | null {
+  if (typeof card.marketMid !== "number") return null;
+  const freshness = card.marketSource === "tcgcsv"
+    ? `TCGplayer prices as of ${formatAnchorDate(card.marketAsOf)} (daily feed).`
+    : "Inline catalog price from the card catalog (approximate freshness).";
+  const stale = card.marketSource === "tcgcsv" && isTcgcsvStale(card.marketAsOf ?? null)
+    ? " Warning: this feed is more than 48 hours old."
+    : "";
+  return {
+    label: "TCGplayer market price",
+    status: "used",
+    observedAt,
+    url: card.marketUrl ?? null,
+    note: `${freshness}${stale} A fair-price reference for this exact version — not a guaranteed sale.`,
+    rawLow: card.marketLow ?? null,
+    rawMid: card.marketMid,
+    rawHigh: card.marketHigh ?? null,
+  };
+}
+
+async function getPriceChartingReference(
   card: CardIdentityCandidate,
   fetcher: typeof fetch,
   trace: ComparisonTrace[],
   observedAt: string,
-) {
-  const references: ComparisonReference[] = [];
-
-  // Primary fair-price anchor: live TCGplayer market price carried on the
-  // confirmed card from the Pokémon catalog. No extra request needed.
-  if (typeof card.marketMid === "number") {
-    references.push({
-      label: "TCGplayer market price",
-      status: "used",
-      observedAt,
-      url: card.marketUrl ?? null,
-      note: "Live TCGplayer market price for this exact version — a fair-price reference, not a guaranteed sale.",
-      rawLow: card.marketLow ?? null,
-      rawMid: card.marketMid,
-      rawHigh: card.marketHigh ?? null,
-    });
-  }
-
+): Promise<ComparisonReference> {
   try {
     const result = await searchPriceChartingProducts({
       query: `${card.name} ${card.setName} ${card.cardNumber}`,
       fetcher,
     });
     const match = result.products[0];
-    references.push({
+    trace.push({
+      step: "reference_pricing",
+      actor: "PriceCharting adapter",
+      summary: match ? "Loaded optional reference pricing." : "No reference-price match was found.",
+      status: "complete",
+    });
+    return {
       label: "PriceCharting reference",
       status: match ? "used" : "missing",
       observedAt,
@@ -616,19 +818,19 @@ async function getReferences(
       rawLow: match?.loosePrice ?? null,
       rawMid: match?.completeInBoxPrice ?? match?.loosePrice ?? null,
       rawHigh: match?.newPrice ?? null,
-    });
-    trace.push({
-      step: "reference_pricing",
-      actor: "PriceCharting adapter",
-      summary: match ? "Loaded optional reference pricing." : "No reference-price match was found.",
-      status: "complete",
-    });
+    };
   } catch (error) {
     // PriceCharting is an optional reference-price enrichment, not a required source.
     // Its absence is already shown honestly in the references panel (status pill +
     // note), so keep the reason in the trace rather than the alarming result banner.
     const unavailable = error instanceof PriceChartingUnavailableError;
-    references.push({
+    trace.push({
+      step: "reference_pricing",
+      actor: "PriceCharting adapter",
+      summary: `Reference pricing was unavailable and was not fabricated: ${errorMessage(error)}`,
+      status: "fallback",
+    });
+    return {
       label: "PriceCharting reference",
       status: unavailable ? "unavailable" : "missing",
       observedAt,
@@ -637,15 +839,12 @@ async function getReferences(
       rawLow: null,
       rawMid: null,
       rawHigh: null,
-    });
-    trace.push({
-      step: "reference_pricing",
-      actor: "PriceCharting adapter",
-      summary: `Reference pricing was unavailable and was not fabricated: ${errorMessage(error)}`,
-      status: "fallback",
-    });
+    };
   }
-  references.push({
+}
+
+function buildSoldReference(card: CardIdentityCandidate, observedAt: string): ComparisonReference {
+  return {
     label: "Sold transactions",
     status: "unavailable",
     observedAt,
@@ -654,8 +853,7 @@ async function getReferences(
     rawLow: null,
     rawMid: null,
     rawHigh: null,
-  });
-  return references;
+  };
 }
 
 async function buildNarrative(
@@ -942,7 +1140,8 @@ type TcgplayerVariantPrice = { low?: number | null; mid?: number | null; high?: 
 // variant keys. Pick the first variant with a usable market/mid value so we have
 // a single fair-price anchor for the confirmed card.
 function extractTcgplayerPricing(tcgplayer: PokemonTcgCard["tcgplayer"]) {
-  const empty = { marketUrl: tcgplayer?.url ?? null, marketLow: null, marketMid: null, marketHigh: null };
+  const asOf = tcgplayer?.updatedAt ? toIsoDateOrNull(tcgplayer.updatedAt) : null;
+  const empty = { marketUrl: tcgplayer?.url ?? null, marketLow: null, marketMid: null, marketHigh: null, marketSource: null, marketAsOf: null };
   const prices = (tcgplayer?.prices ?? {}) as Record<string, TcgplayerVariantPrice | undefined>;
   const preferred = ["holofoil", "normal", "reverseHolofoil", "reverse-holofoil", "1stEditionHolofoil", "unlimitedHolofoil"];
   const keys = [...preferred.filter((key) => prices[key]), ...Object.keys(prices).filter((key) => !preferred.includes(key))];
@@ -951,9 +1150,21 @@ function extractTcgplayerPricing(tcgplayer: PokemonTcgCard["tcgplayer"]) {
     if (!variant) continue;
     const mid = numberOrNull(variant.market) ?? numberOrNull(variant.mid);
     if (mid === null) continue;
-    return { marketUrl: tcgplayer?.url ?? null, marketLow: numberOrNull(variant.low), marketMid: mid, marketHigh: numberOrNull(variant.high) };
+    return {
+      marketUrl: tcgplayer?.url ?? null,
+      marketLow: numberOrNull(variant.low),
+      marketMid: mid,
+      marketHigh: numberOrNull(variant.high),
+      marketSource: "pokemontcg" as const,
+      marketAsOf: asOf,
+    };
   }
   return empty;
+}
+
+function toIsoDateOrNull(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 function numberOrNull(value: unknown) {

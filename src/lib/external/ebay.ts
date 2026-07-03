@@ -2,7 +2,7 @@ import { z } from "zod";
 import type {
   BuyerContext,
   CardIdentityCandidate,
-  NormalizedListing,
+  ListingSeed,
   SourceListing,
 } from "@/lib/schemas";
 
@@ -122,18 +122,7 @@ export async function searchEbayAlternatives(
   // Optional model-refined query. The deterministic default below is always the
   // fallback, so a missing or empty override never weakens the search.
   queryOverride?: string,
-): Promise<Array<Omit<
-  NormalizedListing,
-  | "estimatedTax"
-  | "preTaxTotal"
-  | "estimatedLandedCost"
-  | "sellerTrustScore"
-  | "evidenceCompletenessScore"
-  | "safetyScore"
-  | "valueScore"
-  | "eligible"
-  | "exclusionReasons"
->>> {
+): Promise<ListingSeed[]> {
   const token = await getEbayToken(fetcher);
   const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item_summary/search`);
   // Recall-first query: name + collector number. Set names are the token real
@@ -311,6 +300,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     evidence: source.evidence,
     observedAt: new Date().toISOString(),
     demo: false,
+    userSupplied: false,
   };
 }
 

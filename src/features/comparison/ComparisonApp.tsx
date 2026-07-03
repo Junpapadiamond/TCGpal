@@ -326,19 +326,51 @@ function ComparisonExperience() {
 
   async function confirmIdentity(identity: CardIdentityCandidate) {
     if (!pendingRequest) return;
+    const confirmedRequest = { ...pendingRequest, confirmedCardId: identity.id };
+    setPendingRequest(confirmedRequest);
     setLoading(true);
     setError(null);
     try {
       const response = await fetch("/api/agent/listing-compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...pendingRequest, confirmedCardId: identity.id }),
+        body: JSON.stringify(confirmedRequest),
       });
       const json = await response.json();
       if (!response.ok) throw new Error(json?.error || "Comparison failed.");
       const parsed = comparisonReportSchema.parse(json);
       setReport(parsed);
       trackEvent("card_identity_confirmed", { confidence: identity.confidence });
+      trackEvent("comparison_completed", {
+        marketplace: pendingRequest.sourceListing.marketplace,
+        status: parsed.status,
+        demo_mode: parsed.demoMode,
+        candidate_count: parsed.candidates.length,
+      });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Comparison failed.");
+      trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // R5: a failed comparison keeps the exact request around so one tap retries
+  // it — the buyer never re-types anything after a backend hiccup.
+  async function retryComparison() {
+    if (!pendingRequest || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/agent/listing-compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pendingRequest),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error || "Comparison failed.");
+      const parsed = comparisonReportSchema.parse(json);
+      setReport(parsed);
       trackEvent("comparison_completed", {
         marketplace: pendingRequest.sourceListing.marketplace,
         status: parsed.status,
@@ -703,7 +735,7 @@ function ComparisonExperience() {
         {!report && !loading && <HowItWorks />}
 
         {loading && <LoadingLoop />}
-        {error && <ErrorNotice message={error} />}
+        {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
         {report?.status === "needs_confirmation" && !loading && (
           <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
         )}
@@ -873,7 +905,7 @@ function LoadingLoop() {
   );
 }
 
-function ErrorNotice({ message }: { message: string }) {
+function ErrorNotice({ message, onRetry }: { message: string; onRetry?: () => void }) {
   const t = useT();
   return (
     <div className="mt-6 flex items-start gap-3 rounded-md border border-[#e4c0ad] bg-[#fff7f0] p-5 text-sm leading-6 text-[#7e4934]" role="alert">
@@ -881,6 +913,11 @@ function ErrorNotice({ message }: { message: string }) {
       <div>
         <p className="font-bold">{t.error.title}</p>
         <p>{message}</p>
+        {onRetry && (
+          <button className="secondary-button mt-3" type="button" onClick={onRetry}>
+            {t.error.retry}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1072,6 +1109,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
                   {typeof report.confirmedCard.marketLow === "number" && typeof report.confirmedCard.marketHigh === "number" && (
                     <span className="font-medium text-[#64736c]">({formatMoney(report.confirmedCard.marketLow)}–{formatMoney(report.confirmedCard.marketHigh)})</span>
                   )}
+                  <MarketFreshness card={report.confirmedCard} generatedAt={report.generatedAt} />
                   {report.confirmedCard.marketUrl && (
                     <a className="underline" href={report.confirmedCard.marketUrl} target="_blank" rel="noreferrer">{t.result.view}</a>
                   )}
@@ -1262,11 +1300,36 @@ function roleToggleHint(role: RankedChoice["role"], t: Dict) {
   }
 }
 
-type VerdictTone = "good" | "ok" | "bad";
+// R3: the market anchor states where it came from and how fresh it is.
+// Staleness is measured against the report's own timestamp so render stays pure.
+function MarketFreshness({ card, generatedAt }: { card: CardIdentityCandidate; generatedAt: string }) {
+  const t = useT();
+  const { lang } = useLang();
+  if (card.marketSource === "tcgcsv" && card.marketAsOf) {
+    const asOf = new Date(card.marketAsOf);
+    const stale = new Date(generatedAt).getTime() - asOf.getTime() > 48 * 60 * 60 * 1000;
+    return (
+      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${stale ? "bg-[#fff0d5] text-[#8d6032]" : "bg-[#ecefeb] text-[#64736c]"}`}>
+        {t.result.marketAsOf(asOf.toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US"))}
+        {stale ? ` · ${t.result.marketStale}` : ""}
+      </span>
+    );
+  }
+  return (
+    <span className="rounded bg-[#ecefeb] px-1.5 py-0.5 text-[10px] font-bold text-[#64736c]">
+      {t.result.marketCatalogApprox}
+    </span>
+  );
+}
 
-function sellerVerdict(score: number, t: Dict): { label: string; tone: VerdictTone } {
-  if (score >= 80) return { label: t.card.trustedSeller, tone: "good" };
-  if (score >= 60) return { label: t.card.decentSeller, tone: "ok" };
+type VerdictTone = "good" | "ok" | "bad" | "neutral";
+
+// R4: "unverified" (no seller data at all) renders as a neutral coverage note,
+// never as a red risk verdict — unknown is not risky.
+function sellerVerdict(listing: NormalizedListing, t: Dict): { label: string; tone: VerdictTone } {
+  if (listing.riskLabel === "unverified") return { label: t.card.unverifiedSeller, tone: "neutral" };
+  if (listing.sellerTrustScore >= 80) return { label: t.card.trustedSeller, tone: "good" };
+  if (listing.sellerTrustScore >= 60) return { label: t.card.decentSeller, tone: "ok" };
   return { label: t.card.unprovenSeller, tone: "bad" };
 }
 
@@ -1277,10 +1340,13 @@ function evidenceVerdict(score: number, t: Dict): { label: string; tone: Verdict
   return { label: t.card.thinEvidence, tone: "bad" };
 }
 
-function riskVerdict(score: number, t: Dict): { label: string; tone: VerdictTone } {
-  if (score >= 80) return { label: t.card.lowRisk, tone: "good" };
-  if (score >= 60) return { label: t.card.someRisk, tone: "ok" };
-  return { label: t.card.higherRisk, tone: "bad" };
+function riskVerdict(listing: NormalizedListing, t: Dict): { label: string; tone: VerdictTone } {
+  switch (listing.riskLabel) {
+    case "low_risk": return { label: t.card.lowRisk, tone: "good" };
+    case "some_risk": return { label: t.card.someRisk, tone: "ok" };
+    case "unverified": return { label: t.card.unverified, tone: "neutral" };
+    default: return { label: t.card.higherRisk, tone: "bad" };
+  }
 }
 
 function VerdictTag({ verdict, icon: Icon, hint }: { verdict: { label: string; tone: VerdictTone }; icon: IconComponent; hint?: string }) {
@@ -1288,7 +1354,9 @@ function VerdictTag({ verdict, icon: Icon, hint }: { verdict: { label: string; t
     ? "bg-[#dcecdf] text-[#2f6f73]"
     : verdict.tone === "ok"
       ? "bg-[#fff0d5] text-[#8d6032]"
-      : "bg-[#f6dcd0] text-[#9a4a2c]";
+      : verdict.tone === "neutral"
+        ? "bg-[#ecefeb] text-[#64736c]"
+        : "bg-[#f6dcd0] text-[#9a4a2c]";
   return (
     <span title={hint} className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.04em] ${cls}`}>
       <Icon className="h-3.5 w-3.5" />
@@ -1431,9 +1499,21 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
           </span>
         )}
         <span className="text-xs font-black uppercase tracking-[0.1em] text-[#b26a4c]">{listing.marketplace}</span>
+        {listing.userSupplied && (
+          <span className="rounded-md border border-[#c9d7ce] bg-[#f7f9f5] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.card.userAdded}</span>
+        )}
       </div>
       <h3 className="mt-2 line-clamp-2 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{listing.title}</h3>
-      <p className="mt-1 text-sm text-[#64736c]">{t.card.sellerSays(t.conditions[listing.claimedCondition])}</p>
+      <p className="mt-1 text-sm text-[#64736c]">
+        {listing.claimedCondition === "Unknown"
+          ? t.card.conditionNotStated
+          : t.card.sellerSays(t.conditions[listing.claimedCondition])}
+      </p>
+      <p className="mt-0.5 text-sm text-[#64736c]">
+        {listing.seller.feedbackPercentage !== null && listing.seller.feedbackCount !== null
+          ? t.card.sellerTrack(listing.seller.feedbackPercentage.toString(), listing.seller.feedbackCount.toLocaleString())
+          : t.card.noSellerTrack}
+      </p>
 
       <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
         <span className="font-mono text-3xl font-black text-[#24312f]">{formatMoney(total)}</span>
@@ -1454,7 +1534,7 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
 
       <div className="mt-4 flex flex-wrap gap-2">
         <VerdictTag
-          verdict={sellerVerdict(listing.sellerTrustScore, t)}
+          verdict={sellerVerdict(listing, t)}
           icon={IconSeal}
           hint={`${sellerInputsLine(listing, t)} → ${listing.sellerTrustScore}/100 (${t.card.thTrusted})`}
         />
@@ -1464,12 +1544,15 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
           hint={`${evidenceInputsLine(listing, t)} → ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
         />
         <VerdictTag
-          verdict={riskVerdict(listing.safetyScore, t)}
+          verdict={riskVerdict(listing, t)}
           icon={IconCardCheck}
           hint={`${riskFormula(t)} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
         />
       </div>
       <EvidenceChecklist evidence={listing.evidence} />
+      {listing.trustNotes.length > 0 && (
+        <p className="mt-2 text-xs leading-5 text-[#94a59c]">{listing.trustNotes.join(" ")}</p>
+      )}
 
       <p className="mt-4 text-sm leading-6 text-[#52635c]">
         <span className="font-bold text-[#2f6f73]">{t.card.whyLeads}: </span>
@@ -1563,11 +1646,12 @@ function CandidateRow({ listing }: { listing: NormalizedListing }) {
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-[#24312f]">{listing.marketplace}</span>
           {listing.demo && <span className="rounded bg-[#fff0b8] px-2 py-0.5 text-xs font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
+          {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.card.userAdded}</span>}
           {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.candidate.rawSingle}</span>}
           <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.conditions[listing.claimedCondition]}</span>
           <span title={listing.matchReasons.join(" ")} className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{t.candidate.match(listing.matchConfidence)}</span>
           <VerdictTag
-            verdict={riskVerdict(listing.safetyScore, t)}
+            verdict={riskVerdict(listing, t)}
             icon={IconCardCheck}
             hint={`${sellerInputsLine(listing, t)} · ${evidenceInputsLine(listing, t)} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
           />

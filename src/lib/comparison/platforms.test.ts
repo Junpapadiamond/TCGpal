@@ -36,6 +36,7 @@ function seed(id: string, marketplace: Marketplace): PlatformSeed {
     cardId: card.id,
     matchConfidence: "high",
     matchReasons: [],
+    userSupplied: false,
     active: true,
     raw: true,
     currency: "USD",
@@ -150,7 +151,7 @@ describe("default registry (roadmap adapters)", () => {
 
   it("registers roadmap marketplaces behind the same interface, all self-gated off until wired", async () => {
     const agents = getPlatformAgents();
-    const roadmap = agents.filter((agent) => agent.id !== "ebay");
+    const roadmap = agents.filter((agent) => agent.id !== "ebay" && agent.id !== "tcgplayer");
 
     // Proves the fanout/UI are provider-agnostic today: every roadmap agent implements
     // search() and is registered, but none is configured, so none joins a real fan-out.
@@ -163,12 +164,13 @@ describe("default registry (roadmap adapters)", () => {
     const result = await runPlatformFanout({ card, buyer, fetcher: fetcher as unknown as typeof fetch, agents: [ebayPlatformAgent, ...roadmap] });
     expect(result.configuredCount).toBe(0); // eBay unconfigured too (no env creds in this test)
     const skipped = result.results.filter((r) => r.status === "skipped");
-    expect(skipped.length).toBe(agents.length);
+    expect(skipped.length).toBe(1 + roadmap.length);
   });
 
-  it("does not duplicate the TCGplayer reference price as a fake purchasable listing", () => {
+  it("serves TCGplayer as a live keyless agent backed by the TCGCSV daily dump", () => {
     const tcgplayer = getPlatformAgents().find((agent) => agent.id === "tcgplayer");
     expect(tcgplayer?.sourceMode).toBe("cached_index");
-    expect(tcgplayer?.isConfigured()).toBe(false);
+    expect(tcgplayer?.requiredEnv).toEqual([]);
+    expect(tcgplayer?.isConfigured()).toBe(true);
   });
 });

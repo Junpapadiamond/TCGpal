@@ -23,11 +23,17 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 
 - The app opens directly to the card-search form; there is no login or onboarding gate.
 - Raw singles in USD are the supported product category, across multiple TCGs. Pokémon (Pokémon TCG API) and One Piece (OPTCG adapter + bundled catalog) are wired end-to-end; the game toggle selects which. More games are planned.
-- eBay is the only automated buying source. A **production Browse API keyset is configured** (`EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`); live `item_summary/search` is the listing source. Validate creds with `node scripts/check-ebay.mjs`.
-- Card identity, images, and the **TCGplayer market price** come from the Pokémon TCG API (`api.pokemontcg.io`, works keyless; `POKEMON_TCG_API_KEY` set for higher limits). The TCGplayer market price is the primary fair-price anchor and also powers the below-market eligibility filter.
+- **Two live sources per comparison.** eBay Browse `item_summary/search` (production keyset: `EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`; validate with `node scripts/check-ebay.mjs`) plus **TCGplayer via the TCGCSV daily price dump** (`tcgcsv.com`, keyless — requires a User-Agent header). Both run through the platform-agent fan-out.
+- A **canonical card crosswalk** (`src/lib/comparison/crosswalk.ts`, 6h in-memory cache) maps the confirmed catalog card id → TCGplayer product id + eBay query template. A card missing from the crosswalk degrades TCGplayer to a "no match" source row — never a hard failure. (One Piece sets are not yet mapped to TCGCSV category 68; they degrade the same way.)
+- The **market anchor** is the TCGplayer daily feed ("prices as of" freshness shown; >48h stale warns visibly) when the crosswalk resolves, else the inline pokemontcg.io TCGplayer price (`marketSource: "tcgcsv" | "pokemontcg"` on the confirmed card). It powers the vs-market read and the below-market eligibility filter.
+- **Paste-a-URL** (`src/lib/external/universal-listing.ts`): a listing URL from any marketplace is fetched once — user-initiated, exactly that page, robots.txt honored, https/public hosts only, size/time bounded — extracted deterministically (JSON-LD/meta first) with optional LLM gap-filling, identity-checked against the confirmed card (mismatch → excluded from the recommendation with a warning), and labeled "user-added". Extraction failure falls back to the user's typed facts.
+- **Risk calibration: unknown ≠ risky.** Missing seller data yields a neutral `unverified` risk label plus a platform-baseline trust prior (`getPlatformTrustPrior` in `ranking.ts`, documented in per-listing `trustNotes`) — never "higher risk". Known signals earn their points; unknown signals earn at the platform's prior rate. The risk label tracks seller track record only; evidence thinness has its own verdict.
+- Catalog lookups retry 3x with exponential backoff (cold-start mitigation); a failed comparison shows a one-tap Retry that reuses the exact request.
+- Pure card searches (no user-supplied listing facts) are cached 15 minutes keyed by card + condition + delivery context (`src/lib/comparison/report-cache.ts`).
+- Ranked choices state above-market context explicitly ("+N% over the market reference"); when everything is above market the cheapest lens says supply is thin.
 - PriceCharting is optional secondary reference behind `PRICECHARTING_API_TOKEN`, not a transaction price.
-- TCGplayer, Facebook, Reddit, Mercari, Whatnot, local shops, and other sources are user-supplied candidates.
-- Missing eBay credentials fall back to labeled fixtures with `demoMode:true`. Demo listings never show the per-listing vs-market read.
+- Facebook, Reddit, Mercari, Whatnot, local shops, and other connector-less sources join via paste-a-URL or the manual ledger.
+- When no live source returns a single listing, labeled fixtures load with `demoMode:true`. Demo listings never show the per-listing vs-market read.
 - OpenAI is optional. Without it, the deterministic evidence summary remains usable.
 - The configured/default OpenAI model is `gpt-5.5-2026-04-23`.
 - The technical trace stays collapsed for normal users.
@@ -47,20 +53,22 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 Allowed:
 
 - Official eBay Browse API for active listings and item details.
-- Pokémon TCG API for catalog identity, card images, and the inline TCGplayer market price (used as the fair-price anchor; surfaced as the primary reference).
+- Pokémon TCG API for catalog identity, card images, and the inline TCGplayer market price (fallback fair-price anchor).
+- TCGCSV daily TCGplayer catalog/price dumps (`tcgcsv.com`) for the crosswalk, the TCGplayer source rows, and the market anchor with explicit freshness. (Open legal question tracked in the PRD: whether a public app needs its own TCGplayer partner agreement — build unblocked, launch review pending.)
+- **One user-initiated fetch of exactly the listing URL the user pasted** (https, public hosts, robots.txt honored, size/time bounded). This is the paste-a-URL boundary: per-URL, on explicit user action — never crawling, never scheduled, never link-following.
 - PriceCharting API behind `PRICECHARTING_API_TOKEN` (optional secondary reference).
 - User-entered facts from other marketplaces.
 - Manual eBay sold-search links.
 
 Not allowed:
 
-- Marketplace scraping or browser automation inside product routes.
-- Arbitrary server-side URL fetching.
-- Automated TCGplayer, Facebook, Mercari, Reddit, or Whatnot access without an approved/licensed provider.
+- Marketplace scraping, crawling, or browser automation inside product routes.
+- Server-side fetching of URLs the user did not explicitly paste.
+- Automated search/browse of Facebook, Mercari, Reddit, or Whatnot without an approved/licensed provider (paste-a-URL covers single listings there).
 - Claims that manual search links were fetched or analyzed.
 - Client-side API secrets.
 
-Only allowlisted marketplace adapters may fetch external URLs. Unsupported URLs remain user-supplied text and must never be fetched.
+Only the bounded adapters in `src/lib/external/*` may fetch external URLs. Anything they refuse (robots-blocked, non-https, private hosts, non-USD) remains user-supplied text.
 
 ## Agent and Rules Boundary
 

@@ -1,4 +1,4 @@
-import type { CardIdentityCandidate, NormalizedListing } from "@/lib/schemas";
+import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 
 export const demoIdentities: CardIdentityCandidate[] = [
   {
@@ -25,18 +25,9 @@ export const demoIdentities: CardIdentityCandidate[] = [
   },
 ];
 
-export type DemoListingSeed = Omit<
-  NormalizedListing,
-  | "estimatedTax"
-  | "preTaxTotal"
-  | "estimatedLandedCost"
-  | "sellerTrustScore"
-  | "evidenceCompletenessScore"
-  | "safetyScore"
-  | "valueScore"
-  | "eligible"
-  | "exclusionReasons"
->;
+// Kept as an alias so existing imports read naturally; every seed shares the
+// canonical pre-scored shape.
+export type DemoListingSeed = ListingSeed;
 
 // Demo inventory must never impersonate offers for a different card than the
 // one the buyer confirmed (searching Zoro must not surface Umbreon fixtures).
@@ -66,6 +57,7 @@ export function demoListingSeedsFor(
     imageUrl: card.imageUrl,
     observedAt: new Date().toISOString(),
     demo: true,
+    userSupplied: false,
   };
   return [
     {
@@ -159,6 +151,7 @@ export const demoListingSeeds: DemoListingSeed[] = [
     },
     observedAt: new Date().toISOString(),
     demo: true,
+    userSupplied: false,
   },
   {
     id: "demo-ebay-safe",
@@ -193,6 +186,7 @@ export const demoListingSeeds: DemoListingSeed[] = [
     },
     observedAt: new Date().toISOString(),
     demo: true,
+    userSupplied: false,
   },
   {
     id: "demo-ebay-evidence",
@@ -227,5 +221,6 @@ export const demoListingSeeds: DemoListingSeed[] = [
     },
     observedAt: new Date().toISOString(),
     demo: true,
+    userSupplied: false,
   },
 ];
