@@ -107,4 +107,42 @@ describe("comparison question answering", () => {
     expect(answer.answer).toContain("excluded from winner selection");
     expect(answer.cautions).toContain("Title suggests a novelty or replica card.");
   });
+
+  it("targets the cheapest listing when the question asks why it is risky", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const cheapestReport = {
+      ...report,
+      rankedChoices: [
+        { role: "best_value", listingId: "best", label: "Best Value", reason: "Best value.", confidence: "high" },
+        { role: "lowest_landed_cost", listingId: "twelve", label: "Cheapest", reason: "Lowest total.", confidence: "medium" },
+      ],
+    } as ComparisonReport;
+
+    const answer = await answerComparisonQuestion(cheapestReport, "why is the cheapest one risky?");
+
+    expect(answer.usedAi).toBe(false);
+    expect(answer.answer).toContain("The $12 listing");
+    expect(answer.answer).toContain("seller risk label");
+    expect(answer.answer).toContain("seller trust 35/100");
+  });
+
+  it("uses an explicit listing id instead of guessing from price text", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+
+    const answer = await answerComparisonQuestion(report, "why not this one?", "twelve");
+
+    expect(answer.usedAi).toBe(false);
+    expect(answer.answer).toContain("The $12 listing");
+    expect(answer.answer).toContain("42/100");
+  });
+
+  it("answers directly when the explicit target is the recommendation", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+
+    const answer = await answerComparisonQuestion(report, "why this one?", "best");
+
+    expect(answer.usedAi).toBe(false);
+    expect(answer.answer).toContain("current recommendation");
+    expect(answer.answer).toContain("82/100");
+  });
 });

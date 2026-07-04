@@ -297,6 +297,7 @@ export const comparisonReportSchema = z.object({
 export const comparisonQuestionRequestSchema = z.object({
   report: comparisonReportSchema,
   question: z.string().trim().min(1).max(500),
+  targetListingId: z.string().trim().min(1).max(200).optional(),
 });
 
 export const comparisonQuestionResponseSchema = z.object({

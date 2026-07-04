@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = comparisonQuestionRequestSchema.parse(body);
-    return NextResponse.json(await answerComparisonQuestion(parsed.report, parsed.question));
+    return NextResponse.json(await answerComparisonQuestion(parsed.report, parsed.question, parsed.targetListingId));
   } catch (error) {
     return NextResponse.json(
       {

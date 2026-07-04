@@ -39,7 +39,6 @@ import {
   type ComparisonQuestionResponse,
   type ComparisonRequest,
   type ConditionClaim,
-  type ListingEvidence,
   type Marketplace,
   type NormalizedListing,
   type RankedChoice,
@@ -80,6 +79,8 @@ const conditions: ConditionClaim[] = [
   "Heavily Played",
   "Damaged",
 ];
+
+const LEDGER_PREVIEW_COUNT = 8;
 
 type ComparisonForm = {
   // The hero search box: one free-text query, deterministically parsed server-side
@@ -477,12 +478,12 @@ function ComparisonExperience() {
                         aria-label={t.form.games[id]}
                         onClick={() => form.setValue("game", id)}
                         style={active ? { borderColor: accent, background: tint } : undefined}
-                        className={`relative flex min-h-16 items-center justify-center overflow-hidden rounded-md border-2 px-4 py-2 transition sm:min-w-44 ${
+                        className={`relative flex min-h-20 flex-col items-center justify-center gap-1 overflow-hidden rounded-md border-2 px-4 py-2 transition sm:min-w-44 ${
                           active ? "shadow-[0_2px_0_rgba(36,49,47,0.12)]" : "border-[#d6ded5] bg-[#fffef9] opacity-70 grayscale-[0.35] hover:opacity-100 hover:grayscale-0"
                         }`}
                       >
                         {/* multiply lets flat-white logo backgrounds melt into the paper tile */}
-                        <span className="relative block h-11 w-full">
+                        <span className="relative block h-10 w-full">
                           <Image
                             src={logo}
                             alt={t.form.games[id]}
@@ -492,6 +493,7 @@ function ComparisonExperience() {
                             style={logoZoom !== 1 ? { transform: `scale(${logoZoom})` } : undefined}
                           />
                         </span>
+                        <span className="relative z-10 text-xs font-black uppercase tracking-[0.08em] text-[#24312f]">{t.form.games[id]}</span>
                         {active && <IconCheck className="absolute right-2 top-2 h-4 w-4 shrink-0 text-[#24312f]" />}
                       </button>
                     );
@@ -1017,7 +1019,9 @@ function IdentityCard({ identity, onConfirm, titleAs }: { identity: CardIdentity
 
 function ComparisonResult({ report, feedbackSent, onFeedback }: { report: ComparisonReport; feedbackSent: boolean; onFeedback: (changedDecision: boolean) => void }) {
   const t = useT();
+  const { lang } = useLang();
   const listingMap = useMemo(() => new Map(report.candidates.map((candidate) => [candidate.id, candidate])), [report.candidates]);
+  const eligibleListings = useMemo(() => report.candidates.filter((candidate) => candidate.eligible), [report.candidates]);
   const excluded = report.candidates.filter((candidate) => !candidate.eligible);
 
   // Default to Best Value — the flagship "which one do I buy" recommendation,
@@ -1036,32 +1040,62 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
   const selectedChoice = report.rankedChoices.find((choice) => choice.role === selectedRole) ?? null;
   const selectedListing = selectedChoice ? listingMap.get(selectedChoice.listingId) ?? null : null;
 
-  const eligibleCount = report.candidates.filter((candidate) => candidate.eligible).length;
+  const eligibleCount = eligibleListings.length;
+  const [showAllCandidates, setShowAllCandidates] = useState(false);
+  const visibleEligibleListings = showAllCandidates ? eligibleListings : eligibleListings.slice(0, LEDGER_PREVIEW_COUNT);
+  const hiddenEligibleCount = Math.max(0, eligibleCount - visibleEligibleListings.length);
+  const ledgerMeta = ledgerHeaderMeta(eligibleListings, excluded.length, report.generatedAt, t, lang);
   const japanReferences = report.references.filter((reference) => isJapanReferenceLabel(reference.label));
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<ComparisonQuestionResponse | null>(null);
   const [qaLoading, setQaLoading] = useState(false);
   const [qaError, setQaError] = useState<string | null>(null);
+  const [qaTarget, setQaTarget] = useState<{ id: string; label: string } | null>(null);
 
-  async function askQuestion() {
-    const question = qaQuestion.trim();
+  async function askQuestion(options: { question?: string; targetListing?: NormalizedListing | null } = {}) {
+    const question = (options.question ?? qaQuestion).trim();
     if (!question || qaLoading) return;
+    const targetListing = options.targetListing ?? null;
+    if (targetListing) {
+      setQaQuestion(question);
+      setQaTarget({ id: targetListing.id, label: `${targetListing.marketplace} · ${formatMoney(targetListing.estimatedLandedCost ?? targetListing.preTaxTotal)}` });
+    } else if (!options.question) {
+      setQaTarget(null);
+    }
     setQaLoading(true);
     setQaError(null);
     try {
-      const response = await fetch("/api/agent/listing-compare/explain", {
+      const requestBody = JSON.stringify({ report, question, targetListingId: targetListing?.id });
+      const requestInit = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ report, question }),
-      });
+        body: requestBody,
+      };
+      let response: Response;
+      try {
+        response = await fetch("/api/agent/listing-compare/explain", requestInit);
+      } catch {
+        await new globalThis.Promise<void>((resolve) => {
+          setTimeout(resolve, 500);
+        });
+        response = await fetch("/api/agent/listing-compare/explain", requestInit);
+      }
       const json = await response.json();
-      if (!response.ok) throw new Error(json?.error || "Question could not be answered.");
+      if (!response.ok) throw new Error(json?.error || t.result.askError);
       setQaAnswer(json as ComparisonQuestionResponse);
     } catch (error) {
-      setQaError(error instanceof Error ? error.message : "Question could not be answered.");
+      setQaError(error instanceof Error && error.message !== "Failed to fetch" ? error.message : t.result.askError);
     } finally {
       setQaLoading(false);
     }
+  }
+
+  function askAboutListing(listing: NormalizedListing) {
+    const bestListingId = report.rankedChoices.find((choice) => choice.role === "best_value")?.listingId ?? report.rankedChoices[0]?.listingId;
+    const question = listing.id === bestListingId
+      ? t.result.askWhyThis
+      : t.result.askWhyNotListing(listing.marketplace, formatMoney(listing.estimatedLandedCost ?? listing.preTaxTotal));
+    void askQuestion({ question, targetListing: listing });
   }
 
   return (
@@ -1102,8 +1136,11 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
               {report.confirmedCard && <CardIdentityRail identity={report.confirmedCard} className="mt-3" />}
             </div>
             {report.rankedChoices.length > 0 && (
-              <div className="max-w-sm">
-                <div className="inline-flex flex-wrap gap-1 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-1">
+              <div className="w-full max-w-xl">
+                <div
+                  className="grid grid-cols-2 gap-1 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-1 sm:grid-cols-4"
+                  style={report.rankedChoices.length === 4 ? undefined : { gridTemplateColumns: `repeat(${report.rankedChoices.length}, minmax(0, 1fr))` }}
+                >
                   {report.rankedChoices.map((choice) => {
                     const active = choice.role === selectedRole;
                     return (
@@ -1113,14 +1150,13 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
                         onClick={() => setRoleOverride(choice.role)}
                         aria-pressed={active}
                         title={roleToggleHint(choice.role, t)}
-                        className={`rounded px-3 py-2 text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
+                        className={`min-h-10 rounded px-2 py-2 text-center text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:bg-[#e7efe8] hover:text-[#2f6f73]"}`}
                       >
                         {roleToggleLabel(choice.role, t)}
                       </button>
                     );
                   })}
                 </div>
-                <p className="mt-2 text-xs leading-5 text-[#64736c]">{t.result.defaultLensNote}</p>
               </div>
             )}
           </div>
@@ -1167,43 +1203,50 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
               )}
             </div>
           </div>
-
-          <div className="mt-6 border-t border-[#c9d7ce] pt-4">
-            <p className="max-w-3xl leading-7 text-[#52635c]">{report.narrative.summary}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-1.5 text-[#2f6f73]">
-                <IconCardFan className="h-3.5 w-3.5 shrink-0" />
-                {t.result.eligibleSummary(eligibleCount)}
-              </span>
-              {excluded.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-1.5 text-[#2f6f73]">
-                  <IconCardCheck className="h-3.5 w-3.5 shrink-0" />
-                  {t.result.avoidedTraps(excluded.length)}
-                </span>
-              )}
-              {report.platforms.length > 0 && (
-                <a href="#method" className="inline-flex items-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-1.5 text-[#2f6f73] underline-offset-2 hover:underline">
-                  <IconCardFan className="h-3.5 w-3.5 shrink-0" />
-                  {t.result.sourcesInline(
-                    report.platforms.filter((platform) => platform.status === "complete").length,
-                    report.platforms.length,
-                  )}
-                </a>
-              )}
-            </div>
-          </div>
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_0.72fr]">
-        <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-6">
-          <p className="eyebrow">
-            <IconReceipt className="h-4 w-4" />
-            {t.result.evidenceLedger}
-          </p>
-          <h3 className="mt-2 font-serif text-2xl font-bold text-[#2f6f73]">{t.result.everyCandidate}</h3>
-          <div className="mt-5 space-y-3">
-            {report.candidates.filter((candidate) => candidate.eligible).map((listing) => <CandidateRow key={listing.id} listing={listing} />)}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4 sm:p-5 lg:col-start-1">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="eyebrow">
+                <IconReceipt className="h-4 w-4" />
+                {t.result.evidenceLedger}
+              </p>
+              <h3 className="mt-2 font-serif text-2xl font-bold text-[#2f6f73]">{t.result.allCandidates(eligibleCount)}</h3>
+            </div>
+            <p className="max-w-2xl text-xs font-bold leading-5 text-[#64736c]">{ledgerMeta}</p>
+          </div>
+          <div className="mt-4 overflow-hidden rounded-md border border-[#d6ded5] bg-[#f7f9f5]">
+            <div className="hidden grid-cols-[44px_minmax(0,1fr)_116px_86px_112px_76px] gap-3 border-b border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-[10px] font-black uppercase tracking-[0.09em] text-[#64736c] sm:grid">
+              <span />
+              <span>{t.candidate.listing}</span>
+              <span>{t.candidate.risk}</span>
+              <span className="text-right">{t.candidate.photosHeader}</span>
+              <span className="text-right">{t.candidate.total}</span>
+              <span className="text-right">{t.candidate.ask}</span>
+            </div>
+            {visibleEligibleListings.map((listing) => <CandidateRow key={listing.id} listing={listing} onAsk={askAboutListing} />)}
+            {hiddenEligibleCount > 0 && !showAllCandidates && (
+              <button
+                className="flex min-h-11 w-full items-center justify-center gap-2 border-t border-[#d6ded5] bg-[#fcfbf6] px-3 py-3 text-sm font-bold text-[#2f6f73] transition hover:bg-[#e7efe8]"
+                type="button"
+                onClick={() => setShowAllCandidates(true)}
+              >
+                {t.result.showAll(eligibleCount)}
+                <IconChevronDown className="h-4 w-4" />
+              </button>
+            )}
+            {showAllCandidates && eligibleCount > LEDGER_PREVIEW_COUNT && (
+              <button
+                className="flex min-h-11 w-full items-center justify-center gap-2 border-t border-[#d6ded5] bg-[#fcfbf6] px-3 py-3 text-sm font-bold text-[#2f6f73] transition hover:bg-[#e7efe8]"
+                type="button"
+                onClick={() => setShowAllCandidates(false)}
+              >
+                {t.result.showFewer}
+              </button>
+            )}
           </div>
           {excluded.length > 0 && (
             <details className="mt-4 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
@@ -1221,16 +1264,17 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           )}
         </section>
 
-        <aside className="space-y-5">
-          {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
+        <aside className="space-y-5 lg:sticky lg:top-5 lg:col-start-2 lg:row-span-3 lg:row-start-1">
           <ComparisonQuestionBox
             question={qaQuestion}
             answer={qaAnswer}
             error={qaError}
             loading={qaLoading}
+            targetLabel={qaTarget?.label ?? null}
             onQuestionChange={setQaQuestion}
             onAsk={askQuestion}
           />
+          {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
               <IconCaution className="h-4 w-4" />
@@ -1246,14 +1290,13 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
             </ul>
           </section>
         </aside>
-      </div>
 
       {/*
         One quiet methodology drawer instead of three competing sections:
         which sources were queried, what reference pricing said, and the full
         validation trace all live here, collapsed by default.
       */}
-      <details id="method" className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
+      <details id="method" className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 lg:col-start-1">
         <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
 
         {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
@@ -1309,7 +1352,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
         )}
       </details>
 
-      <section className="rounded-md border border-[#d6ded5] bg-[#24312f] p-6 text-[#fcfbf6] sm:flex sm:items-center sm:justify-between sm:gap-6">
+      <section className="rounded-md border border-[#d6ded5] bg-[#24312f] p-6 text-[#fcfbf6] sm:flex sm:items-center sm:justify-between sm:gap-6 lg:col-start-1">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.12em] text-[#b9cbc1]">{t.result.helpValidate}</p>
           <h3 className="mt-2 font-serif text-2xl font-bold">{t.result.feedbackQuestion}</h3>
@@ -1326,6 +1369,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
           </div>
         )}
       </section>
+      </div>
     </section>
   );
 }
@@ -1362,6 +1406,7 @@ function ComparisonQuestionBox({
   answer,
   error,
   loading,
+  targetLabel,
   onQuestionChange,
   onAsk,
 }: {
@@ -1369,8 +1414,9 @@ function ComparisonQuestionBox({
   answer: ComparisonQuestionResponse | null;
   error: string | null;
   loading: boolean;
+  targetLabel: string | null;
   onQuestionChange: (value: string) => void;
-  onAsk: () => void;
+  onAsk: () => void | Promise<void>;
 }) {
   const t = useT();
   return (
@@ -1380,6 +1426,12 @@ function ComparisonQuestionBox({
         {t.result.askTitle}
       </p>
       <p className="mt-3 text-sm leading-6 text-[#52635c]">{t.result.askBody}</p>
+      {targetLabel && (
+        <p className="mt-3 inline-flex max-w-full items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
+          <IconReceipt className="h-3.5 w-3.5 shrink-0" />
+          <span className="min-w-0 truncate">{t.result.askTarget(targetLabel)}</span>
+        </p>
+      )}
       <div className="mt-4 grid gap-2">
         <textarea
           className="min-h-24 rounded-md border border-[#c9d7ce] bg-[#fffef9] px-3 py-2 text-sm text-[#24312f] outline-none transition focus:border-[#2f6f73] focus:ring-2 focus:ring-[#2f6f73]/20"
@@ -1387,7 +1439,7 @@ function ComparisonQuestionBox({
           onChange={(event) => onQuestionChange(event.target.value)}
           placeholder={t.result.askPlaceholder}
         />
-        <button className="secondary-button justify-center" type="button" disabled={loading || !question.trim()} onClick={onAsk}>
+        <button className="secondary-button justify-center" type="button" disabled={loading || !question.trim()} onClick={() => onAsk()}>
           {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
           {loading ? t.result.askLoading : t.result.askSubmit}
         </button>
@@ -1485,7 +1537,7 @@ function VerdictTag({ verdict, icon: Icon, hint }: { verdict: { label: string; t
     : verdict.tone === "ok"
       ? "bg-[#fff0d5] text-[#8d6032]"
       : verdict.tone === "neutral"
-        ? "bg-[#ecefeb] text-[#64736c]"
+        ? "border border-[#c9d7ce] bg-transparent text-[#64736c]"
         : "bg-[#f6dcd0] text-[#9a4a2c]";
   return (
     <span title={hint} className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.04em] ${cls}`}>
@@ -1522,8 +1574,15 @@ function sellerInputsLine(listing: NormalizedListing, t: Dict) {
   return bits.length ? bits.join(" · ") : t.card.mathNoSellerData;
 }
 
+function conditionInputsLine(listing: NormalizedListing, t: Dict) {
+  return listing.claimedCondition === "Unknown"
+    ? t.card.conditionNotStated
+    : t.card.sellerSays(t.conditions[listing.claimedCondition]);
+}
+
 function evidenceInputsLine(listing: NormalizedListing, t: Dict) {
   const bits = [
+    conditionInputsLine(listing, t),
     t.card.photos(listing.evidence.photoCount),
     listing.evidence.frontBackExplicit && t.card.frontBack,
     listing.evidence.closeupsExplicit && t.card.corners,
@@ -1580,36 +1639,6 @@ function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; mar
   );
 }
 
-function EvidenceChecklist({ evidence, compact = false }: { evidence: ListingEvidence; compact?: boolean }) {
-  const t = useT();
-  // Show photo count (the verified signal) plus only the content items that are
-  // positively known — never a red ✗ for things we simply didn't verify.
-  const items = [
-    { label: t.card.photos(evidence.photoCount), available: evidence.photoCount > 0, icon: IconPhotoProof },
-    ...(evidence.frontBackExplicit ? [{ label: t.card.frontBack, available: true, icon: IconCardFan }] : []),
-    ...(evidence.closeupsExplicit ? [{ label: t.card.corners, available: true, icon: IconCardSearch }] : []),
-    ...(evidence.surfaceExplicit ? [{ label: t.card.surface, available: true, icon: IconFoil }] : []),
-  ];
-
-  return (
-    <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : "mt-4"}`} aria-label={t.card.photoEvidenceAria}>
-      {items.map(({ label, available, icon: Icon }) => (
-        <span
-          key={label}
-          className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-bold ${
-            available
-              ? "border-[#c9d7ce] bg-[#e7efe8] text-[#2f6f73]"
-              : "border-[#d6ded5] bg-[#f7f9f5] text-[#7a8982]"
-          }`}
-        >
-          <Icon className="h-3 w-3" />
-          {label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 // The recommended-listing body lives inside the verdict hero, which already
 // shows the confirmed card's art — so this renders only the listing facts:
 // badge, title, landed cost, verdicts, evidence, reason, and the CTA.
@@ -1634,16 +1663,6 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
         )}
       </div>
       <h3 className="mt-2 line-clamp-2 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{listing.title}</h3>
-      <p className="mt-1 text-sm text-[#64736c]">
-        {listing.claimedCondition === "Unknown"
-          ? t.card.conditionNotStated
-          : t.card.sellerSays(t.conditions[listing.claimedCondition])}
-      </p>
-      <p className="mt-0.5 text-sm text-[#64736c]">
-        {listing.seller.feedbackPercentage !== null && listing.seller.feedbackCount !== null
-          ? t.card.sellerTrack(listing.seller.feedbackPercentage.toString(), listing.seller.feedbackCount.toLocaleString())
-          : t.card.noSellerTrack}
-      </p>
 
       <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
         <span className="font-mono text-3xl font-black text-[#24312f]">{formatMoney(total)}</span>
@@ -1657,7 +1676,7 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
       <p className="mt-1 text-xs text-[#64736c]">
         {t.card.priceBreakdown(
           formatMoney(listing.price),
-          shipping > 0 ? formatMoney(shipping) : t.card.freeShipping,
+          formatShippingLabel(shipping, t),
           listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
         )}
       </p>
@@ -1666,23 +1685,19 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
         <VerdictTag
           verdict={sellerVerdict(listing, t)}
           icon={IconSeal}
-          hint={`${sellerInputsLine(listing, t)} → ${listing.sellerTrustScore}/100 (${t.card.thTrusted})`}
+          hint={`${sellerInputsLine(listing, t)} -> ${listing.sellerTrustScore}/100 (${t.card.thTrusted})`}
         />
         <VerdictTag
           verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)}
           icon={IconPhotoProof}
-          hint={`${evidenceInputsLine(listing, t)} → ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
+          hint={`${evidenceInputsLine(listing, t)} -> ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
         />
         <VerdictTag
           verdict={riskVerdict(listing, t)}
           icon={IconCardCheck}
-          hint={`${riskFormula(t)} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
+          hint={`${riskFormula(t)} -> ${listing.safetyScore}/100 (${t.card.thRisk})`}
         />
       </div>
-      <EvidenceChecklist evidence={listing.evidence} />
-      {listing.trustNotes.length > 0 && (
-        <p className="mt-2 text-xs leading-5 text-[#94a59c]">{listing.trustNotes.join(" ")}</p>
-      )}
 
       <p className="mt-4 text-sm leading-6 text-[#52635c]">
         <span className="font-bold text-[#2f6f73]">{t.card.whyLeads}: </span>
@@ -1759,57 +1774,57 @@ function HoloCardArt({
   );
 }
 
-function CandidateRow({ listing }: { listing: NormalizedListing }) {
+function CandidateRow({ listing, onAsk }: { listing: NormalizedListing; onAsk: (listing: NormalizedListing) => void }) {
   const t = useT();
-  const { lang } = useLang();
   const shipping = listing.shipping ?? 0;
+  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const totalLabel = listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
+  const shippingLabel = formatShippingLabel(shipping, t);
   return (
-    <article className="grid gap-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4 sm:grid-cols-[52px_minmax(0,1fr)] lg:grid-cols-[52px_minmax(0,1fr)_auto] lg:items-center">
-      <div className="relative aspect-[2.5/3.5] w-[52px] overflow-hidden rounded border border-[#d6ded5] bg-[#e7efe8]">
+    <article className="grid gap-3 border-t border-[#d6ded5] px-3 py-3 first:border-t-0 sm:grid-cols-[44px_minmax(0,1fr)_116px_86px_112px_76px] sm:items-center">
+      <div className="relative aspect-[2.5/3.5] w-11 overflow-hidden rounded border border-[#d6ded5] bg-[#e7efe8]">
         {listing.imageUrl ? (
-          <Image src={listing.imageUrl} alt="" fill sizes="52px" className="object-contain" />
+          <Image src={listing.imageUrl} alt="" fill sizes="44px" className="object-contain" />
         ) : (
           <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-5 w-5" /></span>
         )}
       </div>
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-bold text-[#24312f]">{listing.marketplace}</span>
-          {listing.demo && <span className="rounded bg-[#fff0b8] px-2 py-0.5 text-xs font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
-          {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.card.userAdded}</span>}
-          {listing.raw && <span className="rounded border border-[#c9d7ce] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.candidate.rawSingle}</span>}
-          <span className="rounded border border-[#d6ded5] bg-[#fcfbf6] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.conditions[listing.claimedCondition]}</span>
-          <span title={listing.matchReasons.join(" ")} className="rounded bg-[#e7efe8] px-2 py-0.5 text-xs font-bold text-[#2f6f73]">{t.candidate.match(listing.matchConfidence)}</span>
-          <VerdictTag
-            verdict={riskVerdict(listing, t)}
-            icon={IconCardCheck}
-            hint={`${sellerInputsLine(listing, t)} · ${evidenceInputsLine(listing, t)} → ${listing.safetyScore}/100 (${t.card.thRisk})`}
-          />
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="min-w-0 truncate text-sm font-bold text-[#24312f]">{listing.title}</p>
+          {listing.demo && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
+          {listing.userSupplied && <span className="shrink-0 rounded border border-[#c9d7ce] bg-[#fcfbf6] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
         </div>
-        <p className="mt-1 line-clamp-1 text-sm text-[#64736c]">{listing.title}</p>
-        <EvidenceChecklist evidence={listing.evidence} compact />
-        <p className="mt-1 text-xs text-[#64736c]">
-          {t.card.priceBreakdown(
-            formatMoney(listing.price),
-            shipping > 0 ? formatMoney(shipping) : t.card.freeShipping,
-            listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
-          )}
-        </p>
-        <p className="mt-2 text-xs text-[#64736c]">{t.candidate.observed(new Date(listing.observedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}</p>
+        <p className="mt-1 text-xs text-[#64736c]">{t.candidate.priceLine(formatMoney(listing.price), shippingLabel)}</p>
       </div>
-      <div className="col-span-2 border-t border-[#d6ded5] pt-3 text-right lg:col-span-1 lg:border-0 lg:pt-0">
-        <Metric compact label={t.candidate.preTax} value={formatMoney(listing.preTaxTotal)} />
+      <div className="flex flex-wrap items-center gap-2 sm:block">
+        <span className="sm:hidden text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">{t.candidate.risk}</span>
+        <VerdictTag
+          verdict={riskVerdict(listing, t)}
+          icon={IconCardCheck}
+          hint={`${sellerInputsLine(listing, t)} · ${evidenceInputsLine(listing, t)} -> ${listing.safetyScore}/100 (${t.card.thRisk})`}
+        />
+      </div>
+      <div className="text-sm font-bold text-[#52635c] sm:text-right">
+        <span className="sm:hidden text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">{t.candidate.photosHeader}: </span>
+        {t.card.photos(listing.evidence.photoCount)}
+      </div>
+      <div className="sm:text-right">
+        <p className="font-mono text-sm font-black text-[#2f6f73]">{formatMoney(total)}</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">{totalLabel}</p>
+      </div>
+      <div className="sm:text-right">
+        <button
+          className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-2.5 text-xs font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+          type="button"
+          title={t.candidate.askAbout(listing.title)}
+          onClick={() => onAsk(listing)}
+        >
+          <IconCardSearch className="h-3.5 w-3.5" />
+          {t.candidate.ask}
+        </button>
       </div>
     </article>
-  );
-}
-
-function Metric({ label, value, compact = false }: { label: string; value: string; compact?: boolean }) {
-  return (
-    <div className={compact ? "" : "rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-3"}>
-      <p className="text-[10px] font-black uppercase tracking-[0.09em] text-[#64736c]">{label}</p>
-      <p className={`${compact ? "text-sm" : "text-lg"} mt-1 font-mono font-black text-[#2f6f73]`}>{value}</p>
-    </div>
   );
 }
 
@@ -1864,6 +1879,35 @@ function StatusPill({ status }: { status: "used" | "unavailable" | "missing" }) 
       ? "bg-[#fff0d5] text-[#8d6032]"
       : "bg-[#ecefeb] text-[#64736c]";
   return <span className={`rounded px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${className}`}>{t.status[status]}</span>;
+}
+
+function formatShippingLabel(shipping: number, t: Dict) {
+  return shipping > 0 ? t.card.shippingCost(formatMoney(shipping)) : t.card.freeShipping;
+}
+
+function ledgerHeaderMeta(listings: NormalizedListing[], excludedCount: number, generatedAt: string, t: Dict, lang: Lang) {
+  const sources = unique(listings.map((listing) => listing.marketplace)).join(", ") || t.result.noLiveCandidates;
+  const format = listings.length > 0 && listings.every((listing) => listing.raw)
+    ? t.result.rawSingles
+    : t.result.mixedListings;
+  const observedAt = listings[0]?.observedAt ?? generatedAt;
+  return t.result.ledgerMeta(sources, format, formatObservedShort(observedAt, generatedAt, lang), excludedCount);
+}
+
+function formatObservedShort(observedAt: string, generatedAt: string, lang: Lang) {
+  const observed = new Date(observedAt);
+  const generated = new Date(generatedAt);
+  if (Number.isNaN(observed.getTime())) return observedAt;
+
+  const sameDay = observed.toDateString() === generated.toDateString();
+  const locale = lang === "zh" ? "zh-CN" : "en-US";
+  const time = observed.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+  if (sameDay) return lang === "zh" ? `今天 ${time}` : `${time} today`;
+  return observed.toLocaleString(locale, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function unique<T>(values: T[]) {
+  return [...new Set(values)];
 }
 
 function buildRequest(values: ComparisonForm, confirmedCardId?: string): ComparisonRequest {

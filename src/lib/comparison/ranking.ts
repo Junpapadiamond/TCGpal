@@ -249,7 +249,7 @@ export function rankListings(
     choices.push(makeChoice(
       "lowest_landed_cost",
       cheapest,
-      "Cheapest usable",
+      "Cheapest",
       (cheapest.estimatedTax === null
         ? `Lowest pre-tax total at $${cheapest.preTaxTotal.toFixed(2)}; tax is not included.`
         : `Lowest estimated landed cost at $${cheapest.estimatedLandedCost?.toFixed(2)}.`)
