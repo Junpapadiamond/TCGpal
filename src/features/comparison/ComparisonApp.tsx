@@ -1119,7 +1119,7 @@ function Promise({ icon: Icon, label }: { icon: IconComponent; label: string }) 
 
 function StepPips({ active, total, label }: { active: number; total: number; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5" aria-label={label}>
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap" aria-label={label}>
       {Array.from({ length: total }, (_, index) => (
         <span
           key={index}
@@ -1127,7 +1127,9 @@ function StepPips({ active, total, label }: { active: number; total: number; lab
           aria-hidden="true"
         />
       ))}
-      <span className="ml-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{label}</span>
+      <span className="ml-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]" aria-hidden="true">
+        {active} / {total}
+      </span>
     </span>
   );
 }
