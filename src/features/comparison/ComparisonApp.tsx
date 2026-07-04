@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
+import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
   IconCardCheck,
@@ -265,6 +265,7 @@ function ComparisonExperience() {
   const t = useT();
   const form = useForm<ComparisonForm>({ defaultValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
+  const [confirmedIdentityForSettings, setConfirmedIdentityForSettings] = useState<CardIdentityCandidate | null>(null);
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -355,6 +356,7 @@ function ComparisonExperience() {
     }
 
     const request = buildRequest(values, confirmedCardId);
+    if (!confirmedCardId) setConfirmedIdentityForSettings(null);
     setPendingRequest(request);
     setLoading(true);
     setError(null);
@@ -394,25 +396,14 @@ function ComparisonExperience() {
     if (!pendingRequest) return;
     const confirmedRequest = { ...pendingRequest, confirmedCardId: identity.id };
     setPendingRequest(confirmedRequest);
-    setLoading(true);
+    setConfirmedIdentityForSettings(identity);
+    setReport(null);
     setError(null);
-    try {
-      const parsed = await requestComparisonReport(confirmedRequest, t.error.temporary);
-      setReport(parsed);
-      trackEvent("card_identity_confirmed", { confidence: identity.confidence });
-      trackEvent("comparison_completed", {
-        marketplace: pendingRequest.sourceListing.marketplace,
-        status: parsed.status,
-        demo_mode: parsed.demoMode,
-        candidate_count: parsed.candidates.length,
-      });
-      focusComparisonTarget();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t.error.temporary);
-      trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
-    } finally {
-      setLoading(false);
-    }
+    form.setValue("cardName", identity.name);
+    form.setValue("setCode", identity.setCode);
+    form.setValue("cardNumber", identity.cardNumber);
+    trackEvent("card_identity_confirmed", { confidence: identity.confidence });
+    focusComparisonTarget();
   }
 
   // R5: a failed comparison keeps the exact request around so one tap retries
@@ -535,7 +526,7 @@ function ComparisonExperience() {
     trackEvent("decision_feedback_submitted", { changed_decision: changedDecision });
   }
 
-  const compactMode = Boolean(pendingRequest || report);
+  const compactMode = Boolean(pendingRequest || report || confirmedIdentityForSettings);
   const activeCard = report?.confirmedCard ?? null;
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
@@ -547,16 +538,16 @@ function ComparisonExperience() {
       ? t.form.anyCondition
       : t.conditions[pendingRequest?.buyer.desiredCondition ?? desiredCondition],
   ].filter(Boolean).join(" · ");
-  const hasCardStarter = Boolean(
-    heroQuery.trim().length >= 2
-    || cardName.trim().length >= 2
-    || cardNumber.trim()
-    || heroPreview?.cardNumber
+  const hasCardStarter = Boolean(heroQuery.trim().length >= 2 || cardName.trim().length >= 2 || cardNumber.trim());
+  const hasExplicitCardKey = Boolean(
+    hasCardStarter
+    && (heroPreview?.cardNumber || cardNumber.trim())
   );
 
   function startNewSearch() {
     setReport(null);
     setPendingRequest(null);
+    setConfirmedIdentityForSettings(null);
     setError(null);
     setCompactSearchOpen(false);
     window.requestAnimationFrame(() => {
@@ -609,7 +600,7 @@ function ComparisonExperience() {
       ) : (
         <Header />
       )}
-      <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-8"}`}>
+      <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-6 sm:pt-8"}`}>
         {!compactMode && (
           <>
         <section id="compare" className="paper-panel overflow-hidden shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
@@ -698,7 +689,7 @@ function ComparisonExperience() {
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <button className="primary-button flex-1 justify-center" type="submit" disabled={loading}>
                     {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-                    {loading ? t.form.submitLoading : t.form.submitIdle}
+                    {loading ? t.form.submitLoading : hasExplicitCardKey ? t.form.submitIdle : t.form.findExactCard}
                   </button>
                   <button
                     className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-2 text-sm font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4 hover:text-[#24585c]"
@@ -712,7 +703,7 @@ function ComparisonExperience() {
                 </div>
               </section>
 
-              {hasCardStarter && (
+              {hasExplicitCardKey && (
               <section className="stage-reveal rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
                 <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
                 <h2 className="mt-2 font-serif text-2xl font-black leading-none text-[#24312f]">
@@ -993,8 +984,18 @@ function ComparisonExperience() {
 
         {loading && <LoadingLoop />}
         {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
-        {report?.status === "needs_confirmation" && !loading && (
+        {report?.status === "needs_confirmation" && !loading && !confirmedIdentityForSettings && (
           <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
+        )}
+        {confirmedIdentityForSettings && !loading && !report && (
+          <ConfirmedSettingsStage
+            identity={confirmedIdentityForSettings}
+            form={form}
+            onRun={form.handleSubmit((values) => {
+              void submitComparison(values, confirmedIdentityForSettings.id);
+            })}
+            loading={loading}
+          />
         )}
         {report && report.status !== "needs_confirmation" && !loading && (
           <ComparisonResult
@@ -1415,6 +1416,119 @@ function ErrorNotice({ message, onRetry }: { message: string; onRetry?: () => vo
         )}
       </div>
     </div>
+  );
+}
+
+function ConfirmedSettingsStage({
+  identity,
+  form,
+  onRun,
+  loading,
+}: {
+  identity: CardIdentityCandidate;
+  form: UseFormReturn<ComparisonForm>;
+  onRun: () => void;
+  loading: boolean;
+}) {
+  const t = useT();
+  const preferredRole = useWatch({ control: form.control, name: "preferredRole" });
+  return (
+    <section
+      id="comparison-result"
+      tabIndex={-1}
+      className="stage-reveal mt-6 scroll-mt-6 rounded-md border border-[#2f6f73] bg-[#fcfbf6] p-5 outline-none shadow-[0_14px_34px_rgba(36,49,47,0.08)] sm:p-7"
+    >
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-start">
+        <article className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
+          <p className="eyebrow text-[#2f6f73]">
+            <IconCheck className="h-4 w-4" />
+            {t.form.confirmedSettingsEyebrow}
+          </p>
+          <div className="mt-4 grid grid-cols-[72px_minmax(0,1fr)] gap-4">
+            {identity.imageUrl ? (
+              <HoloCardArt
+                src={identity.imageUrl}
+                alt={`${identity.name} ${identity.cardNumber}`}
+                sizes="72px"
+                className="w-[72px]"
+              />
+            ) : (
+              <div className="aspect-[2.5/3.5] w-[72px] rounded-md bg-[#e7efe8]" />
+            )}
+            <div className="min-w-0">
+              <h2 className="font-serif text-2xl font-black leading-tight text-[#2f6f73]">{identity.name}</h2>
+              <p className="mt-1 text-sm font-black text-[#24312f]">#{identity.cardNumber}</p>
+              <CardIdentityRail identity={identity} className="mt-3" />
+            </div>
+          </div>
+        </article>
+
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
+          <h3 className="mt-2 font-serif text-3xl font-black leading-none text-[#24312f]">
+            {t.form.confirmedSettingsHeading}
+          </h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64736c]">{t.form.confirmedSettingsHelp}</p>
+
+          <fieldset className="mt-5 grid gap-2 sm:grid-cols-2">
+            <legend className="sr-only">{t.form.preferenceQuestion}</legend>
+            {(["best_value", "lowest_landed_cost", "safest_listing", "best_condition_evidence"] as LensRole[]).map((role) => {
+              const active = preferredRole === role;
+              return (
+                <label
+                  key={role}
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
+                    active ? "border-2 border-[#2f6f73] bg-[#eef7ef]" : "border-[#d6ded5] bg-[#fffef9] hover:border-[#9fb3a8]"
+                  }`}
+                >
+                  <input className="sr-only" type="radio" value={role} {...form.register("preferredRole")} />
+                  <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-[#2f6f73]" : "border-[#c9d7ce]"}`}>
+                    {active && <span className="h-2 w-2 rounded-full bg-[#2f6f73]" />}
+                  </span>
+                  <span>
+                    <span className="block text-sm font-black text-[#24312f]">{rolePreferenceLabel(role, t)}</span>
+                    <span className="mt-0.5 block text-xs leading-5 text-[#64736c]">{roleToggleHint(role, t)}</span>
+                  </span>
+                </label>
+              );
+            })}
+          </fieldset>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <label className="field">
+              <span>{t.form.deliveryZip}</span>
+              <div className="input-with-icon">
+                <IconPin className="h-4 w-4" />
+                <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
+              </div>
+              <small>{t.form.deliveryZipHelp}</small>
+            </label>
+            <label className="field">
+              <span>{t.form.desiredCondition}</span>
+              <select {...form.register("desiredCondition")}>
+                {conditions.map((value) => (
+                  <option key={value} value={value}>
+                    {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>{t.form.optionalTaxRate}</span>
+              <div className="input-suffix">
+                <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
+                <span>%</span>
+              </div>
+            </label>
+          </div>
+
+          <button className="primary-button mt-5 w-full justify-center sm:w-auto" type="button" disabled={loading} onClick={onRun}>
+            {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
+            {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 

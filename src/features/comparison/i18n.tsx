@@ -57,6 +57,11 @@ const en = {
     cardQuestionHelp: "Name plus number is fastest. If it is ambiguous, you choose the exact version before listings rank.",
     preferenceQuestion: "Comparison defaults",
     preferenceHelp: "Set condition, tax context, and the first result lens. You can change lenses after results load.",
+    confirmedSettingsEyebrow: "Exact version confirmed",
+    confirmedSettingsHeading: "Choose how to compare it",
+    confirmedSettingsHelp:
+      "Now that the exact print is locked, set your delivery and condition context before TCGpal ranks live listings.",
+    confirmedSettingsSubmit: "Rank live listings",
     heroSearchLabel: "Search for a card",
     heroSearchPlaceholder: "Type the card, e.g. \"Greninja Gold Star SWSH144\" or \"P-096 Japanese Promo\"",
     heroSearchRequired: "Type a card to search, or fill in the details below.",
@@ -102,6 +107,7 @@ const en = {
     evSurface: "Surface, foil, or video evidence exists",
     evNotes: "Condition notes mention specific defects",
     submitIdle: "Compare exact listings",
+    findExactCard: "Find exact card",
     submitLoading: "Validating evidence…",
     ph: {
       cardName: "Umbreon VMAX",
@@ -418,6 +424,11 @@ const zh: Dict = {
     cardQuestionHelp: "卡名加编号最快。若有歧义，会先让你选择确切版本，再排序商品。",
     preferenceQuestion: "比对默认设置",
     preferenceHelp: "设置品相、税费上下文和结果页第一视角。结果出来后仍可切换。",
+    confirmedSettingsEyebrow: "确切版本已确认",
+    confirmedSettingsHeading: "选择这张卡的比对方式",
+    confirmedSettingsHelp:
+      "确切版本已经锁定。现在设置配送、税费和最低品相，再让 TCGpal 排序在售商品。",
+    confirmedSettingsSubmit: "排序在售商品",
     heroSearchLabel: "搜索卡片",
     heroSearchPlaceholder: "直接输入卡片，例如「Greninja Gold Star SWSH144」或「P-096 日版 Promo」",
     heroSearchRequired: "请输入要搜索的卡片，或者在下面分别填写详细信息。",
@@ -463,6 +474,7 @@ const zh: Dict = {
     evSurface: "有表面 / 闪膜 / 视频证据",
     evNotes: "品相说明提到具体瑕疵",
     submitIdle: "比较确切商品",
+    findExactCard: "查找确切版本",
     submitLoading: "正在核验证据…",
     ph: {
       cardName: "Umbreon VMAX",
