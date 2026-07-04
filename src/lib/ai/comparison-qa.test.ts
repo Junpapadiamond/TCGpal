@@ -63,6 +63,7 @@ const report = {
   warnings: [],
   trace: [],
   platforms: [],
+  webDiscoveries: [],
   demoMode: false,
   generatedAt: "2026-07-04T00:00:00.000Z",
 } as ComparisonReport;

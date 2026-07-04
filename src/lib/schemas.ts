@@ -278,6 +278,20 @@ export const comparisonPlatformResultSchema = z.object({
   detail: z.string().default(""),
 });
 
+export const webDiscoveryProviderSchema = z.enum(["exa", "tavily"]);
+
+export const webDiscoverySchema = z.object({
+  id: z.string(),
+  marketplace: marketplaceSchema,
+  platformLabel: z.string(),
+  title: z.string().trim().min(1),
+  url: z.string().url(),
+  providers: z.array(webDiscoveryProviderSchema).min(1),
+  listingLike: z.boolean().default(false),
+  discoveredAt: z.string(),
+  note: z.string(),
+});
+
 export const comparisonReportSchema = z.object({
   status: z.enum(["needs_confirmation", "complete", "partial"]),
   request: comparisonRequestSchema,
@@ -290,6 +304,7 @@ export const comparisonReportSchema = z.object({
   warnings: z.array(z.string()),
   trace: z.array(comparisonTraceSchema),
   platforms: z.array(comparisonPlatformResultSchema).default([]),
+  webDiscoveries: z.array(webDiscoverySchema).default([]),
   demoMode: z.boolean(),
   generatedAt: z.string(),
 });
@@ -399,6 +414,8 @@ export type WebCitation = z.infer<typeof webCitationSchema>;
 export type ComparisonTrace = z.infer<typeof comparisonTraceSchema>;
 export type ComparisonPlatformResult = z.infer<typeof comparisonPlatformResultSchema>;
 export type PlatformSourceMode = z.infer<typeof platformSourceModeSchema>;
+export type WebDiscovery = z.infer<typeof webDiscoverySchema>;
+export type WebDiscoveryProvider = z.infer<typeof webDiscoveryProviderSchema>;
 export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;

@@ -1046,6 +1046,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
   const hiddenEligibleCount = Math.max(0, eligibleCount - visibleEligibleListings.length);
   const ledgerMeta = ledgerHeaderMeta(eligibleListings, excluded.length, report.generatedAt, t, lang);
   const japanReferences = report.references.filter((reference) => isJapanReferenceLabel(reference.label));
+  const webDiscoveries = report.webDiscoveries ?? [];
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<ComparisonQuestionResponse | null>(null);
   const [qaLoading, setQaLoading] = useState(false);
@@ -1274,6 +1275,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
             onQuestionChange={setQaQuestion}
             onAsk={askQuestion}
           />
+          {webDiscoveries.length > 0 && <WebDiscoveryPanel discoveries={webDiscoveries} />}
           {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
@@ -1394,6 +1396,48 @@ function JapanReferencePanel({ references }: { references: ComparisonReport["ref
           >
             <span>{reference.label.replace(" price check", "")}</span>
             <IconArrowUpRight className="h-4 w-4 shrink-0" />
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WebDiscoveryPanel({ discoveries }: { discoveries: ComparisonReport["webDiscoveries"] }) {
+  const t = useT();
+  return (
+    <section className="rounded-md border border-[#e2c879] bg-[#fff8dc] p-5">
+      <p className="eyebrow text-[#6f5a22]">
+        <IconCardSearch className="h-4 w-4" />
+        {t.result.webDiscoveryTitle}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-[#6f5a22]">{t.result.webDiscoveryBody}</p>
+      <div className="mt-4 grid gap-2">
+        {discoveries.slice(0, 12).map((discovery) => (
+          <a
+            key={discovery.id}
+            className="block rounded-md border border-[#d9c27b] bg-[#fcfbf6] px-3 py-2 text-sm text-[#52635c] transition hover:border-[#b88a28]"
+            href={discovery.url}
+            target="_blank"
+            rel="noreferrer"
+            title={discovery.note}
+          >
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-[10px] font-black uppercase tracking-[0.09em] text-[#8d6032]">
+                  {discovery.platformLabel} · {discovery.listingLike ? t.result.webDiscoveryPossibleListing : t.result.webDiscoveryReference}
+                </span>
+                <span className="mt-1 line-clamp-2 font-bold leading-5 text-[#2f6f73]">{discovery.title}</span>
+              </span>
+              <IconArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
+            </span>
+            <span className="mt-2 flex flex-wrap gap-1.5">
+              {discovery.providers.map((provider) => (
+                <span key={provider} className="rounded border border-[#d9c27b] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#8d6032]">
+                  {provider}
+                </span>
+              ))}
+            </span>
           </a>
         ))}
       </div>

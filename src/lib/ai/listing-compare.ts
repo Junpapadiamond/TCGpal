@@ -27,6 +27,10 @@ import {
   UniversalListingBlockedError,
   type UniversalListingResult,
 } from "@/lib/external/universal-listing";
+import {
+  discoverWebMarketplaceLinks,
+  isWebMarketplaceDiscoveryConfigured,
+} from "@/lib/external/web-marketplace-discovery";
 import { parsedCardQuerySchema, parseCardQuery, type ParsedCardQuery } from "@/lib/comparison/query-parser";
 import { runMarketSearch } from "@/lib/ai/agent/market-agent";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
@@ -109,6 +113,7 @@ export async function runListingComparison(
       warnings,
       trace,
       platforms: [],
+      webDiscoveries: [],
       demoMode: getConfiguredPlatformAgents().length === 0,
       generatedAt,
     });
@@ -139,6 +144,13 @@ export async function runListingComparison(
       };
     }
   }
+
+  const webDiscoveryPromise = isWebMarketplaceDiscoveryConfigured()
+    ? discoverWebMarketplaceLinks({ card: confirmedCard, fetcher, now }).catch((error) => ({
+      results: [],
+      warnings: [`Web marketplace discovery unavailable: ${errorMessage(error)}`],
+    }))
+    : Promise.resolve({ results: [], warnings: [] });
 
   // R1: resolve the crosswalk once (module-cached 6h) so every connector gets
   // its platform-native identifier; the TCGplayer agent reuses this entry.
@@ -195,6 +207,17 @@ export async function runListingComparison(
   warnings.push(...fanout.warnings);
   trace.push(...fanout.traces);
   const platformResults = fanout.results;
+  const webDiscovery = await webDiscoveryPromise;
+  if (webDiscovery.results.length > 0 || webDiscovery.warnings.length > 0) {
+    trace.push({
+      step: "web_marketplace_discovery",
+      actor: "Exa/Tavily web discovery",
+      summary: webDiscovery.results.length > 0
+        ? `Found ${webDiscovery.results.length} possible marketplace/reference links as unverified manual checks; they were not fetched, scored, or ranked.`
+        : `No web-discovered marketplace links were added (${webDiscovery.warnings.join("; ") || "no results"}).`,
+      status: webDiscovery.results.length > 0 ? "complete" : "fallback",
+    });
+  }
 
   // R3: prefer the daily TCGplayer feed (explicit as-of timestamp) as the
   // market anchor; the inline catalog price stays as the fallback anchor.
@@ -257,6 +280,7 @@ export async function runListingComparison(
     warnings,
     trace,
     platforms: platformResults,
+    webDiscoveries: webDiscovery.results,
     demoMode,
     generatedAt,
   });
