@@ -7,6 +7,22 @@ export type Lang = "en" | "zh";
 
 const STORAGE_KEY = "tcgpal:lang";
 
+function confidenceLabel(level: string) {
+  const normalized = level.toLowerCase();
+  if (normalized === "high") return "High";
+  if (normalized === "medium") return "Medium";
+  if (normalized === "low") return "Low";
+  return level;
+}
+
+function zhConfidenceLabel(level: string) {
+  const normalized = level.toLowerCase();
+  if (normalized === "high") return "高";
+  if (normalized === "medium") return "中";
+  if (normalized === "low") return "低";
+  return level;
+}
+
 // English is the source dictionary; `Dict = typeof en` forces the Chinese
 // dictionary to cover every key (and matching function signatures) at compile time.
 const en = {
@@ -23,30 +39,31 @@ const en = {
   },
   hero: {
     eyebrow: "Compare the exact copy, not just the card name",
-    title: "Know which listing holds up — and when to pass.",
+    title: "Find the exact card. Compare real listings.",
     subtitle:
-      "Confirm the exact card and minimum condition. TCGpal compares actionable listings by complete cost, seller track record, and reviewable evidence against a clearly labeled market reference.",
+      "Confirm the print, then compare live offers by cost, seller record, and evidence.",
     promiseTax: "Complete cost when shipping is known",
     promiseSeller: "Screens common mismatch signals",
     promiseEvidence: "One transparent recommendation",
   },
   form: {
     heading: "Start with the card",
-    stepOne: "Start with the card",
-    stepTwo: "Choose your default",
-    stepOneOfTwo: "Step 1 of 2",
-    stepTwoOfTwo: "Step 2 of 2",
+    stepOne: "Find the card",
+    stepTwo: "Settings unlocked",
+    stepOneOfTwo: "Card search",
+    stepTwoOfTwo: "Settings unlocked",
+    stepTwoLocked: "Type the card first. Sorting and delivery options unlock after that.",
     cardQuestion: "Which card are you checking?",
-    cardQuestionHelp: "One box does it — we read the game, set, and collector number when the text is explicit.",
-    preferenceQuestion: "How should we sort first?",
-    preferenceHelp: "This sets the first lens you see. You can switch lenses anytime in the results.",
+    cardQuestionHelp: "Name plus number is fastest. If it is ambiguous, you choose the exact version before listings rank.",
+    preferenceQuestion: "Comparison defaults",
+    preferenceHelp: "Set condition, tax context, and the first result lens. You can change lenses after results load.",
     heroSearchLabel: "Search for a card",
-    heroSearchPlaceholder: "Type the card — e.g. \"Greninja Gold Star SWSH144\" or \"P-096 Japanese Promo\"",
+    heroSearchPlaceholder: "Type the card, e.g. \"Greninja Gold Star SWSH144\" or \"P-096 Japanese Promo\"",
     heroSearchRequired: "Type a card to search, or fill in the details below.",
     heroParsedPrefix: "We understood:",
-    heroParsedNothing: "Treating this as a plain name search — add details below if it needs narrowing.",
+    heroParsedNothing: "Treating this as a plain name search. Add details below if it needs narrowing.",
     pasteListingInstead: "or paste a listing link instead",
-    refineToggle: "Refine the search — set, number, condition, tax",
+    refineToggle: "Refine the search: set, number, condition, tax",
     gameLabel: "Card game",
     games: { pokemon: "Pokémon", onePiece: "One Piece" } as Record<TcgGame, string>,
     cardName: "Card name",
@@ -57,22 +74,22 @@ const en = {
     optionalTaxRate: "Optional tax rate",
     desiredCondition: "Minimum seller-stated condition",
     anyCondition: "Any condition (wider search)",
-    listingToggle: "Already found a listing? Add it — with evidence — for the comparison",
+    listingToggle: "Already found a listing? Add it with evidence for the comparison",
     ledgerSubhead: "On a marketplace we don't search yet? Add it by hand",
     ledgerHelp:
-      "Paste the details of a listing you found on TCGplayer, Facebook, Mercari, Whatnot, or a local shop. We never fetch it — it ranks in the same comparison from what you enter. This is a fallback for the platforms we don't search automatically yet.",
+      "Paste the details of a listing you found on TCGplayer, Facebook, Mercari, Whatnot, or a local shop. We never fetch it. It ranks in the same comparison from what you enter. This is a fallback for the platforms we don't search automatically yet.",
     ledgerAdd: "Add a listing",
     ledgerRemove: "Remove",
     listingUrl: "Listing URL",
     listingUrlHelp:
-      "eBay links use the official API. Any other marketplace link is fetched once — just the page you paste — and read automatically; if it can't be read, your typed facts below are used instead.",
+      "eBay links use the official API. Any other marketplace link is fetched once, only the page you paste, and read automatically; if it can't be read, your typed facts below are used instead.",
     marketplace: "Marketplace",
     ebayAutoDetected: "eBay · auto-detected from URL",
     listingTitle: "Listing title",
     askingPrice: "Asking price",
     shipping: "Shipping",
     sellerClaimedCondition: "Seller-claimed condition",
-    evidenceSubhead: "Seller & photo evidence — optional, strengthens the ranking",
+    evidenceSubhead: "Seller & photo evidence. Optional, but strengthens the ranking",
     sellerNotes: "Seller description / condition notes",
     feedbackPct: "Feedback %",
     feedbackCount: "Feedback count",
@@ -139,6 +156,13 @@ const en = {
   loading: {
     title: "TCGpal is validating the comparison",
     steps: "Identity → marketplace evidence → deterministic ranking → claim critic",
+    checks: [
+      "Confirming exact card identity",
+      "Checking live listing sources",
+      "Filtering wrong versions and replicas",
+      "Ranking comparable offers",
+    ],
+    cardLabels: ["Identity", "eBay", "Filter", "Rank"],
   },
   error: {
     title: "The comparison needs another try.",
@@ -150,19 +174,21 @@ const en = {
     eyebrow: "Version confirmation required",
     heading: "Which exact card do you want?",
     desc: "TCGpal pauses here because same-art reprints and similar versions can make the wrong price look convincing. Pick the version, and we'll rank live listings for it.",
-    confidence: (level: string) => `${level} confidence`,
+    confidence: (level: string) => `${confidenceLabel(level)} confidence`,
+    bestMatches: "Most likely matches",
+    otherVersions: "Other versions by set",
     versions: (n: number) => `${n} version${n === 1 ? "" : "s"}`,
     confirm: "Confirm this version",
     noMatch:
       "No catalog match was found. Check the card name, then add the printed collector number (for example, 215/203) or a set name/code and try again.",
     lookupUnavailable:
-      "The card catalog is temporarily unavailable, so we couldn't list versions. This is a lookup hiccup, not a missing card — please try again in a moment.",
+      "The card catalog is temporarily unavailable, so we couldn't list versions. This is a lookup hiccup, not a missing card. Please try again in a moment.",
   },
   result: {
     demoTitle: "Labeled demo inventory.",
     demoBody:
-      " eBay credentials are not configured, so these candidate listings are fixtures—not live offers.",
-    liveDataIssue: "Some live data couldn't load — the ranking below uses only what was available.",
+      " eBay credentials are not configured, so these candidate listings are fixtures, not live offers.",
+    liveDataIssue: "Some live data couldn't load. The ranking below uses only what was available.",
     noRecommendationTitle: "No recommendation yet",
     noRecommendationBody: "No listing has both a compatible seller-stated condition and a complete comparable cost. Review the skipped rows or paste a specific listing instead of guessing.",
     sourcesTitle: "Sources checked",
@@ -187,14 +213,14 @@ const en = {
     versionConfirmed: "Exact version confirmed",
     marketApprox: "TCGplayer market ≈",
     marketAsOf: (date: string) => `prices as of ${date}`,
-    marketStale: "over 48h old — treat with care",
+    marketStale: "over 48h old. Treat with care",
     marketCatalogApprox: "catalog price (approximate freshness)",
     view: "view",
     eligibleSummary: (n: number) => `Compared ${n} eligible listing${n === 1 ? "" : "s"} across marketplaces`,
     sourcesInline: (queried: number, total: number) => `Sources: ${queried} queried live · ${total - queried} not connected`,
-    defaultLensNote: "We open on Best Value — complete cost, condition fit, seller trust, and evidence. One listing may lead several lenses.",
+    defaultLensNote: "We open on Best Value: complete cost, condition fit, seller trust, and evidence. One listing may lead several lenses.",
     avoidedTraps: (n: number) =>
-      `Screened out ${n} risky listing${n === 1 ? "" : "s"} — look-alikes, far-below-market, or wrong version.`,
+      `Screened out ${n} risky listing${n === 1 ? "" : "s"}: look-alikes, far-below-market, or wrong version.`,
     evidenceLedger: "Evidence ledger",
     everyCandidate: "Every eligible candidate",
     allCandidates: (n: number) => `All ${n} candidate${n === 1 ? "" : "s"}`,
@@ -206,7 +232,7 @@ const en = {
     showAll: (n: number) => `Show all ${n}`,
     showFewer: "Show fewer",
     excluded: (n: number) => `See why ${n} listing${n === 1 ? " was" : "s were"} excluded`,
-    tooRiskySkip: "Not comparable — skipped",
+    tooRiskySkip: "Not comparable. Skipped",
     referenceContext: "Reference context",
     reference: (value: string) => `$${value} reference`,
     openManualCheck: "Open manual check",
@@ -240,7 +266,7 @@ const en = {
     cautionSoldManual: "Recent sold transactions still require manual verification.",
     cautionReferenceLag: "Reference prices can lag the market.",
     cautionFewLenses: "Fewer than three decision lenses had enough comparable evidence.",
-    howWeChecked: "How we checked — sources, reference pricing, and the validation trace",
+    howWeChecked: "How we checked: sources, reference pricing, and the validation trace",
     technicalTrace: "Technical validation trace",
     helpValidate: "Help validate the product",
     feedbackQuestion: "Did this evidence change what you would do?",
@@ -255,7 +281,7 @@ const en = {
     candidateCount: (n: number) => `${n} candidate${n === 1 ? "" : "s"}`,
     copyReceipt: "Copy result",
     receiptCopied: "Copied",
-    lensNote: "Risk labels are rule-based — not grade predictions",
+    lensNote: "Risk labels are rule-based, not grade predictions",
     unavailableRange: "No comparable range",
   },
   lens: {
@@ -271,7 +297,7 @@ const en = {
     cheapestHint: "Lowest comparable total after excluding mismatches and likely non-comparable listings.",
     safestHint: "Prioritizes seller track record and listing evidence; not an authenticity guarantee.",
     bestDocumentedHint:
-      "Most item-specific photos and explicit condition details — not a grade prediction or photo-content inspection.",
+      "Most item-specific photos and explicit condition details, not a grade prediction or photo-content inspection.",
   },
   card: {
     recommended: "Top pick",
@@ -313,14 +339,14 @@ const en = {
     surface: "Surface",
     photoEvidenceAria: "Listing photo evidence",
     checkMath: "Check the math behind these labels",
-    mathHint: "Every label above is computed from these inputs by fixed rules — no model opinion. Verify any line against the listing itself.",
+    mathHint: "Every label above is computed from these inputs by fixed rules. No model opinion. Verify any line against the listing itself.",
     mathPrice: "Price reference",
     mathSeller: "Seller trust",
     mathEvidence: "Photo & condition evidence",
     mathRisk: "Safest-lens score",
     mathValue: "Best Value composite",
     mathNoMarket: "priced against compatible listings in this result",
-    mathDemoHidden: "demo listing — market comparison hidden",
+    mathDemoHidden: "demo listing, market comparison hidden",
     mathRiskFormula: (seller: number, evidence: number) => `= ${seller}% seller trust + ${evidence}% evidence`,
     mathValueFormula: (price: number, condition: number, seller: number, evidence: number) => `= ${price}% price + ${condition}% condition + ${seller}% seller + ${evidence}% evidence`,
     mathVs: (total: string, market: string) => `${total} vs ${market} aggregate reference`,
@@ -374,30 +400,31 @@ const zh: Dict = {
   },
   hero: {
     eyebrow: "比较同一版本的具体商品，而不只看卡名",
-    title: "看清哪条商品值得买，也知道何时该放弃。",
+    title: "先锁定确切卡片，再比较真实商品。",
     subtitle:
-      "确认确切卡片和最低品相。TCGpal 只对可下单商品比较完整总价、卖家记录与可核实证据，并把参考市价单独标明。",
+      "确认版本后，再按总价、卖家记录和证据比较在售商品。",
     promiseTax: "运费明确才比较完整总价",
     promiseSeller: "筛查常见错版与异常信号",
     promiseEvidence: "给出一项透明推荐",
   },
   form: {
     heading: "从卡名开始",
-    stepOne: "先确认卡片",
-    stepTwo: "选择默认视角",
-    stepOneOfTwo: "第 1 步 / 共 2 步",
-    stepTwoOfTwo: "第 2 步 / 共 2 步",
+    stepOne: "查找卡片",
+    stepTwo: "设置已解锁",
+    stepOneOfTwo: "卡片搜索",
+    stepTwoOfTwo: "设置已解锁",
+    stepTwoLocked: "先输入卡片，排序和配送选项会在之后解锁。",
     cardQuestion: "你想查哪张卡？",
-    cardQuestionHelp: "一个输入框就够了——文本明确时，我们会自动读出游戏、系列和收藏编号。",
-    preferenceQuestion: "先按什么排序？",
-    preferenceHelp: "这只决定结果页一打开先看哪个角度；之后随时可以切换。",
+    cardQuestionHelp: "卡名加编号最快。若有歧义，会先让你选择确切版本，再排序商品。",
+    preferenceQuestion: "比对默认设置",
+    preferenceHelp: "设置品相、税费上下文和结果页第一视角。结果出来后仍可切换。",
     heroSearchLabel: "搜索卡片",
-    heroSearchPlaceholder: "直接输入卡片——比如「Greninja Gold Star SWSH144」或「P-096 日版 Promo」",
+    heroSearchPlaceholder: "直接输入卡片，例如「Greninja Gold Star SWSH144」或「P-096 日版 Promo」",
     heroSearchRequired: "请输入要搜索的卡片，或者在下面分别填写详细信息。",
     heroParsedPrefix: "我们理解为：",
-    heroParsedNothing: "按普通名称搜索处理——如果需要缩小范围，请在下面补充详细信息。",
+    heroParsedNothing: "按普通名称搜索处理。如果需要缩小范围，请在下面补充详细信息。",
     pasteListingInstead: "或改为粘贴商品链接",
-    refineToggle: "细化搜索——系列、编号、品相、税率",
+    refineToggle: "细化搜索：系列、编号、品相、税率",
     gameLabel: "卡牌游戏",
     games: { pokemon: "宝可梦", onePiece: "海贼王" },
     cardName: "卡名",
@@ -423,7 +450,7 @@ const zh: Dict = {
     askingPrice: "标价",
     shipping: "运费",
     sellerClaimedCondition: "卖家标注品相",
-    evidenceSubhead: "卖家与照片证据——选填，能让排序更可靠",
+    evidenceSubhead: "卖家与照片证据。选填，但能让排序更可靠",
     sellerNotes: "卖家描述 / 品相说明",
     feedbackPct: "好评率 %",
     feedbackCount: "评价数",
@@ -487,6 +514,13 @@ const zh: Dict = {
   loading: {
     title: "TCGpal 正在核验比对",
     steps: "确认卡片 → 平台证据 → 确定性排序 → 结论复核",
+    checks: [
+      "确认确切卡片版本",
+      "查询实时商品来源",
+      "过滤错版与仿品",
+      "排序可比商品",
+    ],
+    cardLabels: ["版本", "eBay", "过滤", "排序"],
   },
   error: {
     title: "这次比对需要再试一次。",
@@ -498,13 +532,15 @@ const zh: Dict = {
     eyebrow: "需要确认版本",
     heading: "你要找的是哪一张？",
     desc: "这里先停一下：同图再版和相似版本太多，价格很容易看走眼。选好版本，我们再按它来排在售商品。",
-    confidence: (level: string) => `可信度 ${level}`,
+    confidence: (level: string) => `可信度${zhConfidenceLabel(level)}`,
+    bestMatches: "最可能匹配",
+    otherVersions: "按系列查看其他版本",
     versions: (n: number) => `${n} 个版本`,
     confirm: "确认这个版本",
     noMatch:
       "没找到对得上的卡片。先核对一下卡片名称，再补上卡面上的收藏编号（比如 215/203）或系列名称 / 代码，然后重试。",
     lookupUnavailable:
-      "卡片库暂时连不上，没能列出版本。这是查询出了点小问题，不是没有这张卡——过一会儿再试一下。",
+      "卡片库暂时连不上，没能列出版本。这是查询出了点小问题，不是没有这张卡。过一会儿再试一下。",
   },
   result: {
     demoTitle: "标注的示例库存。",
@@ -534,12 +570,12 @@ const zh: Dict = {
     versionConfirmed: "已确认确切版本",
     marketApprox: "TCGplayer 市价 ≈",
     marketAsOf: (date: string) => `价格更新于 ${date}`,
-    marketStale: "已超过 48 小时 —— 谨慎参考",
+    marketStale: "已超过 48 小时，请谨慎参考",
     marketCatalogApprox: "目录价格（时效近似）",
     view: "查看",
     eligibleSummary: (n: number) => `已跨平台比对 ${n} 个符合条件的商品`,
     sourcesInline: (queried: number, total: number) => `来源：已实时查询 ${queried} 个 · ${total - queried} 个未接入`,
-    defaultLensNote: "默认展示最划算——完整总价、品相匹配、卖家与证据综合最优。同一商品可以同时赢得多个角度。",
+    defaultLensNote: "默认展示最划算：完整总价、品相匹配、卖家与证据综合最优。同一商品可以同时赢得多个角度。",
     avoidedTraps: (n: number) => `已经帮你筛掉 ${n} 个有问题的商品：仿品、价格低得离谱，或版本对不上。`,
     evidenceLedger: "证据清单",
     everyCandidate: "每个符合条件的候选",
@@ -552,7 +588,7 @@ const zh: Dict = {
     showAll: (n: number) => `显示全部 ${n} 个`,
     showFewer: "收起",
     excluded: (n: number) => `看看为什么排除了这 ${n} 个`,
-    tooRiskySkip: "不可直接比较——已跳过",
+    tooRiskySkip: "不可直接比较，已跳过",
     referenceContext: "参考背景",
     reference: (value: string) => `参考价 $${value}`,
     openManualCheck: "打开手动查询",
@@ -586,7 +622,7 @@ const zh: Dict = {
     cautionSoldManual: "近期成交记录仍需手动核实。",
     cautionReferenceLag: "参考价可能滞后于当前市场。",
     cautionFewLenses: "可比证据不足，少于三个角度能给出结果。",
-    howWeChecked: "核验过程——来源、参考价与完整记录",
+    howWeChecked: "核验过程：来源、参考价与完整记录",
     technicalTrace: "技术核验记录",
     helpValidate: "帮助我们验证产品",
     feedbackQuestion: "这些证据改变了你的决定吗？",
@@ -665,7 +701,7 @@ const zh: Dict = {
     mathRisk: "最稳妥角度得分",
     mathValue: "最划算综合分",
     mathNoMarket: "按本次结果中的同类可比商品计分",
-    mathDemoHidden: "示例商品——不展示市价对比",
+    mathDemoHidden: "示例商品，不展示市价对比",
     mathRiskFormula: (seller: number, evidence: number) => `= ${seller}% 卖家可信度 + ${evidence}% 证据`,
     mathValueFormula: (price: number, condition: number, seller: number, evidence: number) => `= ${price}% 价格 + ${condition}% 品相 + ${seller}% 卖家 + ${evidence}% 证据`,
     mathVs: (total: string, market: string) => `${total}，汇总参考价 ${market}`,

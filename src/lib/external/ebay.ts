@@ -315,12 +315,18 @@ export function assessTitleMatch(
 // Does the title spell out a collector number of the card's OWN scheme that isn't
 // the card's number? Used only when the card's number is absent from the title, to
 // catch a same-name, same-set sibling ("OP01-003" in an "OP01-024" search). Kept to
-// the two schemes with distinctive shapes — set codes ("OP01-024") and fractions
-// ("215/203") — so number-less titles and other formats are never falsely demoted.
+// schemes with distinctive shapes - set codes, promo codes, and fractions - so
+// number-less titles and other formats are never falsely demoted.
 function titleNamesADifferentCollectorNumber(title: string, cardNumber: string): boolean {
   const trimmed = cardNumber.trim();
   if (/^[A-Za-z]{1,4}\d{0,2}-\d{1,4}$/.test(trimmed)) {
     return /\b[A-Za-z]{1,4}\d{0,2}-\d{1,4}\b/i.test(title);
+  }
+  const promoCode = trimmed.match(/^([A-Za-z]{1,6})[-\s]*0*(\d{1,4})$/);
+  if (promoCode) {
+    const [, prefix, ownDigits] = promoCode;
+    const titleCode = title.match(new RegExp(`(?<![a-z0-9])${escapeRegExp(prefix)}[-\\s]*0*(\\d{1,4})(?![0-9])`, "i"));
+    return Boolean(titleCode && stripLeadingZeros(titleCode[1]) !== stripLeadingZeros(ownDigits));
   }
   const compact = trimmed.replace(/\s+/g, "");
   if (/^[A-Za-z]{0,4}\d{1,3}\/[A-Za-z]{0,4}\d{1,3}$/.test(compact)) {
@@ -358,6 +364,10 @@ function collectorNumberPattern(cardNumber: string): RegExp | null {
 
 function stripLeadingZeros(token: string) {
   return /^\d+$/.test(token) ? token.replace(/^0+(?=\d)/, "") : token;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdentityCandidate) {

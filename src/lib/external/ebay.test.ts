@@ -236,6 +236,12 @@ describe("assessTitleMatch (listing-title identity confidence)", () => {
     expect(assessTitleMatch("Greninja SWSH144 Gold Star", promo).confidence).toBe("low");
   });
 
+  it("rejects a same-promo-series sibling when both use compact promo codes", () => {
+    const promo = { name: "Greninja", setName: "SWSH Black Star Promos", setCode: "SWSHP", cardNumber: "SWSH305" };
+    expect(assessTitleMatch("Greninja Star SWSH144 Black Star Promo", promo).confidence).toBe("low");
+    expect(assessTitleMatch("Greninja SWSH305 Black Star Promo", promo).confidence).toBe("high");
+  });
+
   it("requires set corroboration for short bare numerators (cross-set collision guard)", () => {
     const pikachu = { name: "Pikachu", setName: "Vivid Voltage", setCode: "SWSH4", cardNumber: "025/185" };
     expect(assessTitleMatch("Pikachu 25 NM", pikachu).confidence).toBe("low");

@@ -23,7 +23,6 @@ import {
   IconSpinner,
   IconTag,
   IconX,
-  type IconComponent,
 } from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
@@ -240,6 +239,16 @@ function sleep(ms: number) {
   });
 }
 
+function focusComparisonTarget() {
+  window.requestAnimationFrame(() => {
+    const target = document.getElementById("comparison-result");
+    if (!target) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    target.focus({ preventScroll: true });
+  });
+}
+
 function readTimestamp() {
   return Date.now();
 }
@@ -371,9 +380,7 @@ function ComparisonExperience() {
         candidate_count: parsed.candidates.length,
         duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
       });
-      window.requestAnimationFrame(() => {
-        document.getElementById("comparison-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+      focusComparisonTarget();
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : t.error.temporary;
       setError(message);
@@ -399,6 +406,7 @@ function ComparisonExperience() {
         demo_mode: parsed.demoMode,
         candidate_count: parsed.candidates.length,
       });
+      focusComparisonTarget();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t.error.temporary);
       trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
@@ -422,6 +430,7 @@ function ComparisonExperience() {
         demo_mode: parsed.demoMode,
         candidate_count: parsed.candidates.length,
       });
+      focusComparisonTarget();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t.error.temporary);
       trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
@@ -511,9 +520,7 @@ function ComparisonExperience() {
         candidate_count: parsed.candidates.length,
         duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
       });
-      window.requestAnimationFrame(() => {
-        document.getElementById("comparison-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+      focusComparisonTarget();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t.error.temporary);
       trackEvent("comparison_failed", { marketplace: discovery.marketplace });
@@ -540,6 +547,12 @@ function ComparisonExperience() {
       ? t.form.anyCondition
       : t.conditions[pendingRequest?.buyer.desiredCondition ?? desiredCondition],
   ].filter(Boolean).join(" · ");
+  const hasCardStarter = Boolean(
+    heroQuery.trim().length >= 2
+    || cardName.trim().length >= 2
+    || cardNumber.trim()
+    || heroPreview?.cardNumber
+  );
 
   function startNewSearch() {
     setReport(null);
@@ -599,38 +612,34 @@ function ComparisonExperience() {
       <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-8"}`}>
         {!compactMode && (
           <>
-        <section className="paper-panel p-5 sm:p-7">
-          <div className="eyebrow">
-            <IconCardSearch className="h-4 w-4" />
-            {t.hero.eyebrow}
-          </div>
-          <h1 className="display-soft mt-3 max-w-3xl font-serif text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#2f6f73] sm:text-5xl">
-            {t.hero.title}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#52635c] sm:text-base sm:leading-7">
-            {t.hero.subtitle}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#52635c] sm:text-sm">
-            <Promise icon={IconReceipt} label={t.hero.promiseTax} />
-            <Promise icon={IconCardCheck} label={t.hero.promiseSeller} />
-            <Promise icon={IconCardFan} label={t.hero.promiseEvidence} />
-          </div>
-        </section>
-
-        <section id="compare" className="mt-4 rounded-xl border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
-          <form className="p-5 sm:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-              <section className="rounded-xl border border-[#d6ded5] bg-[#fffef9] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepOne}</p>
-                  <StepPips active={1} total={2} label={t.form.stepOneOfTwo} />
+        <section id="compare" className="paper-panel overflow-hidden shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
+          <form className="p-4 sm:p-6 lg:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-start">
+              <div className="flex min-h-full min-w-0 flex-col justify-between gap-5">
+                <div>
+                  <div className="hidden items-center gap-2 text-[0.72rem] font-black uppercase tracking-[0.12em] text-[#64736c] sm:inline-flex">
+                    <IconCardSearch className="h-4 w-4" />
+                    {t.hero.eyebrow}
+                  </div>
+                  <h1 className="display-soft mt-3 max-w-2xl font-serif text-3xl font-black leading-[1.04] tracking-[-0.03em] text-[#2f6f73] sm:text-4xl lg:text-5xl">
+                    {t.hero.title}
+                  </h1>
+                  <p className="mt-3 max-w-lg text-sm leading-6 text-[#52635c] sm:text-base">
+                    {t.hero.subtitle}
+                  </p>
                 </div>
-                <h2 className="mt-3 font-serif text-3xl font-black leading-none text-[#24312f] sm:text-4xl">
+                <CardMarquee />
+              </div>
+
+              <div className="min-w-0 space-y-4">
+              <section className="rounded-xl border border-[#d6ded5] bg-[#fffef9] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
+                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepOne}</p>
+                <h2 className="mt-2 font-serif text-2xl font-black leading-none text-[#24312f] sm:text-3xl">
                   {t.form.cardQuestion}
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-[#64736c]">{t.form.cardQuestionHelp}</p>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-[#64736c]">{t.form.cardQuestionHelp}</p>
 
-                <label className="field mt-5">
+                <label className="field mt-4">
                   <span className="sr-only">{t.form.heroSearchLabel}</span>
                   <div className="input-with-icon rounded-lg border-[#2f6f73] bg-[#fffef9] px-3 py-1.5 shadow-[0_0_0_3px_rgba(47,111,115,0.09)]">
                     <IconCardSearch className="h-5 w-5 text-[#2f6f73]" />
@@ -648,7 +657,7 @@ function ComparisonExperience() {
 
                 <ParsedPreview preview={heroPreview} game={game} t={t} />
 
-                <fieldset className="mt-5">
+                <fieldset className="mt-4">
                   <legend className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.gameLabel}</legend>
                   {/* Each game gets its own branded tile (TCGpal-drawn emblem +
                       signature accent), Collectr-style, instead of a plain text
@@ -686,28 +695,32 @@ function ComparisonExperience() {
                   </div>
                 </fieldset>
 
-                <button
-                  className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-md px-1 text-sm font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4 hover:text-[#24585c]"
-                  type="button"
-                  aria-expanded={listingOpen}
-                  onClick={() => setListingOpen((current) => !current)}
-                >
-                  <IconLink className="h-4 w-4" />
-                  {t.form.pasteListingInstead}
-                </button>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button className="primary-button flex-1 justify-center" type="submit" disabled={loading}>
+                    {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
+                    {loading ? t.form.submitLoading : t.form.submitIdle}
+                  </button>
+                  <button
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-2 text-sm font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4 hover:text-[#24585c]"
+                    type="button"
+                    aria-expanded={listingOpen}
+                    onClick={() => setListingOpen((current) => !current)}
+                  >
+                    <IconLink className="h-4 w-4" />
+                    {t.form.pasteListingInstead}
+                  </button>
+                </div>
               </section>
 
-              <section className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
-                  <StepPips active={2} total={2} label={t.form.stepTwoOfTwo} />
-                </div>
-                <h2 className="mt-3 font-serif text-3xl font-black leading-none text-[#24312f]">
+              {hasCardStarter && (
+              <section className="stage-reveal rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
+                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
+                <h2 className="mt-2 font-serif text-2xl font-black leading-none text-[#24312f]">
                   {t.form.preferenceQuestion}
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-[#64736c]">{t.form.preferenceHelp}</p>
+                <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.form.preferenceHelp}</p>
 
-                <fieldset className="mt-4 grid gap-2">
+                <fieldset className="mt-4 grid gap-2 sm:grid-cols-2">
                   <legend className="sr-only">{t.form.preferenceQuestion}</legend>
                   {(["best_value", "lowest_landed_cost", "safest_listing", "best_condition_evidence"] as LensRole[]).map((role) => {
                     const active = preferredRole === role;
@@ -731,7 +744,7 @@ function ComparisonExperience() {
                   })}
                 </fieldset>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <label className="field">
                     <span>{t.form.deliveryZip}</span>
                     <div className="input-with-icon">
@@ -751,12 +764,9 @@ function ComparisonExperience() {
                     </select>
                   </label>
                 </div>
-
-                <button className="primary-button mt-5 w-full justify-center" type="submit" disabled={loading}>
-                  {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-                  {loading ? t.form.submitLoading : t.form.submitIdle}
-                </button>
               </section>
+              )}
+              </div>
             </div>
 
             <button
@@ -1108,29 +1118,35 @@ function Footer() {
   );
 }
 
-function Promise({ icon: Icon, label }: { icon: IconComponent; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1.5">
-      <Icon className="h-3.5 w-3.5 text-[#2f6f73]" />
-      {label}
-    </span>
-  );
-}
+// Stylized card backs (no real card art, so nothing to license) rolling in a
+// seamless CSS marquee. Purely decorative: hidden from assistive tech and
+// frozen automatically under prefers-reduced-motion via the global rule.
+const marqueeCards = [
+  "linear-gradient(150deg, #2f6f73, #24585c)",
+  "linear-gradient(150deg, #d8a03a, #b97f24)",
+  "linear-gradient(150deg, #9a4a2c, #7c3a22)",
+  "linear-gradient(150deg, #4a7d55, #38623f)",
+  "linear-gradient(150deg, #3d5a80, #2c4360)",
+  "linear-gradient(150deg, #6d5a8c, #544370)",
+];
 
-function StepPips({ active, total, label }: { active: number; total: number; label: string }) {
+function CardMarquee() {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap" aria-label={label}>
-      {Array.from({ length: total }, (_, index) => (
-        <span
-          key={index}
-          className={`h-1.5 w-7 rounded-full ${index < active ? "bg-[#2f6f73]" : "bg-[#d6ded5]"}`}
-          aria-hidden="true"
-        />
-      ))}
-      <span className="ml-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]" aria-hidden="true">
-        {active} / {total}
-      </span>
-    </span>
+    <div aria-hidden="true" className="card-marquee relative hidden h-[128px] overflow-hidden lg:block">
+      <div className="card-marquee-track flex w-max items-center">
+        {[...marqueeCards, ...marqueeCards].map((background, index) => (
+          <span
+            key={index}
+            className="relative mx-1.5 block h-[104px] w-[74px] shrink-0 rounded-[9px] border border-[rgba(255,255,255,0.55)] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
+            style={{ background, transform: `rotate(${index % 2 ? 3 : -3}deg)` }}
+          >
+            <span className="absolute inset-[6px] rounded-[6px] border border-[rgba(255,255,255,0.35)]" />
+            <span className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(255,255,255,0.45)]" />
+            <span className="absolute inset-0 rounded-[9px] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1279,16 +1295,108 @@ function CheckField({ label, registration }: { label: string; registration: UseF
 function LoadingLoop() {
   const t = useT();
   return (
-    <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-6" aria-live="polite">
-      <div className="flex items-center gap-3">
-        <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73]" />
+    <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
         <div>
-          <p className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.title}</p>
-          <p className="mt-1 text-sm text-[#64736c]">{t.loading.steps}</p>
+          <div className="flex items-center gap-3">
+            <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73]" />
+            <div>
+              <p className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.title}</p>
+              <p className="mt-1 text-sm text-[#64736c]">{t.loading.steps}</p>
+            </div>
+          </div>
+          <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+            {t.loading.checks.map((check) => (
+              <li key={check} className="flex items-center gap-2 rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#52635c]">
+                <IconCheck className="h-4 w-4 text-[#2f6f73]" />
+                {check}
+              </li>
+            ))}
+          </ul>
+          <div className="agent-progress mt-5"><span /></div>
         </div>
+        <LoadingCardRail labels={t.loading.cardLabels} />
       </div>
-      <div className="agent-progress mt-5"><span /></div>
     </section>
+  );
+}
+
+function LoadingCardRail({ labels }: { labels: string[] }) {
+  return (
+    <div className="loading-card-rail" aria-hidden="true">
+      <style>{`
+        .loading-card-rail {
+          min-height: 9.5rem;
+          overflow: hidden;
+          border-radius: 0.75rem;
+          border: 1px solid #c9d7ce;
+          background: linear-gradient(135deg, rgba(255,255,255,.58), transparent 50%), #f7f9f5;
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 11%, #000 89%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 11%, #000 89%, transparent);
+        }
+        .loading-card-track {
+          display: flex;
+          min-height: 9.5rem;
+          align-items: center;
+          gap: .75rem;
+          padding-inline: 1rem;
+          animation: tcgpal-loading-card-roll 2.8s cubic-bezier(.22,1,.36,1) infinite;
+          will-change: transform;
+        }
+        .loading-card {
+          position: relative;
+          display: grid;
+          height: 7.4rem;
+          width: 5.25rem;
+          flex: 0 0 auto;
+          place-items: center;
+          overflow: hidden;
+          border-radius: .6rem;
+          border: 1px solid rgba(255,255,255,.62);
+          box-shadow: 0 14px 28px rgba(36,49,47,.18);
+        }
+        .loading-card:nth-child(odd) { transform: translateY(-.2rem) rotate(-2deg); }
+        .loading-card:nth-child(even) { transform: translateY(.2rem) rotate(2deg); }
+        .loading-card-inner {
+          position: absolute;
+          inset: .45rem;
+          border-radius: .42rem;
+          border: 1px solid rgba(255,255,255,.38);
+        }
+        .loading-card-label {
+          position: relative;
+          z-index: 2;
+          border-radius: 999px;
+          background: rgba(252,251,246,.86);
+          padding: .26rem .48rem;
+          color: #24312f;
+          font-size: .62rem;
+          font-weight: 900;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+        }
+        @keyframes tcgpal-loading-card-roll {
+          0% { transform: translateX(0); }
+          46% { transform: translateX(-3.4rem); }
+          100% { transform: translateX(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .loading-card-track { animation: none; }
+        }
+      `}</style>
+      <div className="loading-card-track">
+        {marqueeCards.slice(0, 4).map((background, index) => (
+          <span
+            key={`${background}-${index}`}
+            className="loading-card"
+            style={{ background, zIndex: marqueeCards.length - index }}
+          >
+            <span className="loading-card-inner" />
+            <span className="loading-card-label">{labels[index] ?? ""}</span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1314,11 +1422,22 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
   const t = useT();
   const grouped = identities.length > IDENTITY_GROUP_THRESHOLD;
   const groups = useMemo(() => (grouped ? groupIdentitiesBySet(identities) : []), [grouped, identities]);
+  const likelyMatches = useMemo(
+    () => (grouped ? identities.filter((identity) => identity.confidence !== "low").slice(0, 4) : []),
+    [grouped, identities],
+  );
+  const likelyMatchIds = useMemo(() => new Set(likelyMatches.map((identity) => identity.id)), [likelyMatches]);
+  const remainingGroups = useMemo(
+    () => groups
+      .map((group) => ({ ...group, items: group.items.filter((identity) => !likelyMatchIds.has(identity.id)) }))
+      .filter((group) => group.items.length > 0),
+    [groups, likelyMatchIds],
+  );
   // A failed catalog lookup must not read as "no such card" — distinguish it so the
   // empty state says "temporarily unavailable, try again" instead of "no match".
   const lookupUnavailable = identities.length === 0 && warnings.some((warning) => /catalog lookup unavailable/i.test(warning));
   return (
-    <section id="comparison-result" className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-7">
+    <section id="comparison-result" tabIndex={-1} className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 outline-none sm:p-7">
       <div className="max-w-2xl">
         <p className="eyebrow">
           <IconSeal className="h-4 w-4" />
@@ -1335,22 +1454,36 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
         </div>
       ) : grouped ? (
         <div className="mt-6 space-y-7">
-          {groups.map((group, index) => {
+          {likelyMatches.length > 0 && (
+            <section aria-labelledby="identity-likely-matches">
+              <h3 id="identity-likely-matches" className="text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
+                {t.identity.bestMatches}
+              </h3>
+              <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {likelyMatches.map((identity) => (
+                  <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" compact />
+                ))}
+              </div>
+            </section>
+          )}
+          <div aria-label={t.identity.otherVersions} className="space-y-3">
+          {remainingGroups.map((group, index) => {
             const headingId = `identity-set-${index}`;
             return (
-              <section key={group.setName} aria-labelledby={headingId}>
-                <h3 id={headingId} className="text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
+              <details key={group.setName} className="rounded-lg border border-[#d6ded5] bg-[#fffef9] p-3" open={index < 2}>
+                <summary id={headingId} className="cursor-pointer text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
                   {group.setName}
                   <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">{t.identity.versions(group.items.length)}</span>
-                </h3>
-                <div className="mt-3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                </summary>
+                <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {group.items.map((identity) => (
                     <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" />
                   ))}
                 </div>
-              </section>
+              </details>
             );
           })}
+          </div>
         </div>
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -1363,23 +1496,28 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
   );
 }
 
-function IdentityCard({ identity, onConfirm, titleAs }: { identity: CardIdentityCandidate; onConfirm: (identity: CardIdentityCandidate) => void; titleAs: "h3" | "h4" }) {
+function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { identity: CardIdentityCandidate; onConfirm: (identity: CardIdentityCandidate) => void; titleAs: "h3" | "h4"; compact?: boolean }) {
   const t = useT();
   const titleClass = "mt-1 font-serif text-xl font-bold text-[#2f6f73]";
+  const titleDetails = [
+    identity.cardNumber ? `#${identity.cardNumber}` : null,
+    identity.variant,
+  ].filter(Boolean).join(" / ");
   return (
     <article className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
       {identity.imageUrl ? (
         <HoloCardArt
           src={identity.imageUrl}
           alt={`${identity.name} ${identity.cardNumber}`}
-          sizes="144px"
-          className="mx-auto w-36"
+          sizes={compact ? "112px" : "144px"}
+          className={`mx-auto ${compact ? "w-28" : "w-36"}`}
         />
       ) : (
-        <div className="mx-auto aspect-[2.5/3.5] w-36 rounded-md bg-[#e7efe8]" />
+        <div className={`mx-auto aspect-[2.5/3.5] ${compact ? "w-28" : "w-36"} rounded-md bg-[#e7efe8]`} />
       )}
       <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{t.identity.confidence(identity.confidence)}</p>
       {titleAs === "h4" ? <h4 className={titleClass}>{identity.name}</h4> : <h3 className={titleClass}>{identity.name}</h3>}
+      {titleDetails && <p className="mt-1 text-sm font-black text-[#24312f]">{titleDetails}</p>}
       <CardIdentityRail identity={identity} className="mt-3" />
       <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
         <IconCheck className="h-4 w-4" />
@@ -1464,7 +1602,7 @@ function ComparisonResult({
     : [];
   const listingTotals = eligibleListings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
   const listedRange = listingTotals.length > 0
-    ? `${formatMoney(Math.min(...listingTotals))}–${formatMoney(Math.max(...listingTotals))}`
+    ? `${formatMoney(Math.min(...listingTotals))} to ${formatMoney(Math.max(...listingTotals))}`
     : t.result.unavailableRange;
   const observedTime = new Date(report.generatedAt).toLocaleTimeString(lang === "zh" ? "zh-CN" : "en-US", {
     hour: "numeric",
@@ -1476,6 +1614,9 @@ function ComparisonResult({
   const [qaError, setQaError] = useState<string | null>(null);
   const [qaTarget, setQaTarget] = useState<{ id: string; label: string } | null>(null);
   const [receiptCopied, setReceiptCopied] = useState(false);
+  const selectedChoiceReason = selectedChoice && selectedListing
+    ? choiceReasonText(selectedChoice, selectedListing, lang)
+    : null;
 
   async function copyComparisonReceipt() {
     if (!selectedListing || !selectedChoice) return;
@@ -1489,7 +1630,7 @@ function ComparisonResult({
       `${roleToggleLabel(selectedChoice.role, t)}: ${selectedListing.marketplace} · ${t.conditions[selectedListing.claimedCondition]}`,
       `${totalLabel}: ${formatMoney(total)}`,
       `Seller trust ${selectedListing.sellerTrustScore}/100 · Evidence ${selectedListing.evidenceCompletenessScore}/100`,
-      selectedChoice.reason,
+      selectedChoiceReason ?? selectedChoice.reason,
       selectedListing.url ? `Listing: ${selectedListing.url}` : "",
       `Generated ${new Date(report.generatedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}`,
     ].filter(Boolean).join("\n");
@@ -1538,7 +1679,7 @@ function ComparisonResult({
   }
 
   return (
-    <section id="comparison-result" className="scroll-mt-24 space-y-4">
+    <section id="comparison-result" tabIndex={-1} className="scroll-mt-24 space-y-4 outline-none">
       {report.demoMode && (
         <div className="flex items-start gap-3 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
           <IconInfo className="mt-1 h-4 w-4 shrink-0" />
@@ -1682,7 +1823,7 @@ function ComparisonResult({
                 {excluded.map((listing) => (
                   <p key={listing.id}>
                     <span className="font-black uppercase tracking-[0.04em] text-[#9a4a2c]">{t.result.tooRiskySkip}</span>
-                    {" — "}
+                    {": "}
                     <strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}
                   </p>
                 ))}
@@ -1992,6 +2133,36 @@ function roleToggleHint(role: RankedChoice["role"], t: Dict) {
   }
 }
 
+function choiceReasonText(choice: RankedChoice, listing: NormalizedListing, lang: Lang) {
+  if (lang === "en") return choice.reason;
+
+  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const base = (() => {
+    switch (choice.role) {
+      case "best_value":
+        return `完整总价、品相匹配、卖家可信度与证据的综合最优（${listing.valueScore}/100）。`;
+      case "lowest_landed_cost":
+        return listing.estimatedTax === null
+          ? `税前合计最低，为 ${formatMoney(listing.preTaxTotal)}；未包含税费。`
+          : `预估到手价最低，为 ${formatMoney(total)}。`;
+      case "safest_listing":
+        return `卖家记录与商品证据综合分最高（${listing.safetyScore}/100）。`;
+      case "best_condition_evidence":
+        return `照片与品相证据最完整（${listing.evidenceCompletenessScore}/100）；这不是评级预测。`;
+    }
+  })();
+
+  const overMarket = choice.reason.match(/\+(\d+)% over the \$([0-9.]+) TCGplayer market reference/i);
+  if (overMarket) {
+    return `${base} 注意：这张高于 $${overMarket[2]} TCGplayer 参考价 ${overMarket[1]}%，它领先本次候选，不代表低于市场。`;
+  }
+  const thinSupply = choice.reason.match(/cheapest eligible copy is \+(\d+)% over the \$([0-9.]+) TCGplayer market reference/i);
+  if (thinSupply) {
+    return `${base} 当前供应偏少，最低可比商品仍高于 $${thinSupply[2]} TCGplayer 参考价 ${thinSupply[1]}%。`;
+  }
+  return base;
+}
+
 function sortListingsForRole(listings: NormalizedListing[], role: RankedChoice["role"] | null) {
   return [...listings].sort((a, b) => {
     switch (role) {
@@ -2285,6 +2456,7 @@ function RecommendedBuyHero({
   onAsk: (listing: NormalizedListing) => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
@@ -2297,12 +2469,13 @@ function RecommendedBuyHero({
         ? listing.evidenceCompletenessScore
         : listing.valueScore;
   const imageUrl = listing.imageUrl ?? fallbackImageUrl;
+  const reason = choiceReasonText(choice, listing, lang);
 
   return (
     <article
       aria-live="polite"
       className="rounded-2xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_14px_34px_rgba(36,49,47,0.10)] sm:p-5"
-      title={choice.reason}
+      title={reason}
     >
       <div className="grid gap-4 sm:grid-cols-[68px_minmax(0,1fr)_auto] sm:items-center">
         <div className="relative aspect-[2.5/3.5] w-16 overflow-hidden rounded-lg border border-[#c9d7ce] bg-[#e7efe8]">
@@ -2343,7 +2516,7 @@ function RecommendedBuyHero({
       <div className="mt-4 border-t border-[#e4ebe3] pt-4">
         <p className="text-sm leading-6 text-[#52635c]">
           <strong className="text-[#24312f]">{t.result.whyThisPick}</strong>{" "}
-          {choice.reason}
+          {reason}
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <VerdictMath listing={listing} marketPrice={marketPrice} />
@@ -2386,7 +2559,7 @@ function MarketReferenceLine({
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d6ded5] bg-[#f7f9f5] px-4 py-3 text-sm text-[#64736c]">
       <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[#64736c]">{t.result.marketReferenceShort}</span>
       <strong className="font-mono text-[#24312f]">
-        {typeof card?.marketMid === "number" ? formatMoney(card.marketMid) : "—"}
+        {typeof card?.marketMid === "number" ? formatMoney(card.marketMid) : t.result.unavailableRange}
       </strong>
       {card && <MarketFreshness card={card} generatedAt={generatedAt} />}
       <span className="text-[#7a8982]">· {t.result.listedRange}: {listedRange}</span>
@@ -2444,6 +2617,7 @@ function CandidateRow({
   onAsk: (listing: NormalizedListing) => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
@@ -2456,6 +2630,7 @@ function CandidateRow({
         ? listing.evidenceCompletenessScore
         : listing.valueScore;
   const imageUrl = listing.imageUrl ?? fallbackImageUrl;
+  const reason = choice ? choiceReasonText(choice, listing, lang) : null;
 
   return (
     <article
@@ -2465,7 +2640,7 @@ function CandidateRow({
           ? "border-2 border-[#2f6f73] p-4 shadow-[0_10px_28px_rgba(36,49,47,0.08)] sm:p-5"
           : "border border-[#d6ded5] p-3.5 hover:border-[#9fb3a8] hover:shadow-[0_6px_18px_rgba(36,49,47,0.06)] sm:p-4"
       }`}
-      title={choice?.reason}
+      title={reason ?? undefined}
     >
       <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3.5 sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:items-center">
         <div className={`relative aspect-[2.5/3.5] overflow-hidden rounded-md border border-[#d6ded5] bg-[#e7efe8] ${lead ? "w-14" : "w-[52px]"}`}>
