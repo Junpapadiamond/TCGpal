@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   detectMarketplaceFromUrl,
   extractDeterministic,
@@ -21,6 +21,10 @@ const productHtml = `
 </head><body>Pokemon card listing page</body></html>`;
 
 describe("universal paste-a-URL adapter", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("gates non-https, credentialed, and private-host URLs before any fetch", () => {
     expect(isFetchableListingUrl("http://mercari.com/item/1").ok).toBe(false);
     expect(isFetchableListingUrl("https://user:pass@mercari.com/item/1").ok).toBe(false);
@@ -104,5 +108,42 @@ describe("universal paste-a-URL adapter", () => {
 
     await expect(fetchUniversalListing("https://eur-site.example.com/item/1", fetcher))
       .rejects.toThrow(/EUR/);
+  });
+
+  it("uses Tavily Extract as an exact-URL fallback when page structure lacks price facts", async () => {
+    vi.stubEnv("TAVILY_API_KEY", "tavily-test");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const requestedBodies: unknown[] = [];
+    const fetcher = vi.fn(async (url: URL | RequestInfo, init?: RequestInit) => {
+      const href = String(url);
+      if (href.endsWith("/robots.txt")) return new Response("", { status: 404 });
+      if (href === "https://api.tavily.com/extract") {
+        requestedBodies.push(JSON.parse(String(init?.body ?? "{}")));
+        return new Response(JSON.stringify({
+          results: [{
+            url: "https://www.mercari.com/us/item/mfallback/",
+            title: "Umbreon VMAX 215/203 Evolving Skies Near Mint",
+            content: "Price $1,850.00. Shipping $5.00. Front and back photos. Clean surface.",
+          }],
+          failed_results: [],
+        }));
+      }
+      return new Response("<html><body>Login-gated marketplace shell</body></html>");
+    }) as unknown as typeof fetch;
+
+    const result = await fetchUniversalListing("https://www.mercari.com/us/item/mfallback/", fetcher);
+
+    expect(result.listing.title).toContain("Umbreon VMAX");
+    expect(result.listing.price).toBe(1850);
+    expect(result.listing.shipping).toBe(5);
+    expect(result.listing.claimedCondition).toBe("Near Mint");
+    expect(result.listing.evidence.photoCount).toBe(2);
+    expect(result.extractedCard.number).toBe("215/203");
+    expect(result.notes.some((note) => note.includes("Tavily Extract filled missing listing facts"))).toBe(true);
+    expect(requestedBodies).toHaveLength(1);
+    expect(requestedBodies[0]).toMatchObject({
+      urls: ["https://www.mercari.com/us/item/mfallback/"],
+      extract_depth: "basic",
+    });
   });
 });

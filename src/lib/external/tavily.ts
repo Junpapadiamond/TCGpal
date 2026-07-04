@@ -40,6 +40,12 @@ export type TavilyWebContext = {
   citations: WebCitation[];
 };
 
+export type TavilyExtractedPage = {
+  url: string;
+  title: string;
+  content: string;
+};
+
 type TavilySearchOptions = {
   query: string;
   maxResults?: number;
@@ -113,6 +119,43 @@ export async function extractTavilyUrl({
       .map((result): WebCitation | null => toCitation(result, "tavily_extract"))
       .filter((citation): citation is WebCitation => citation !== null)
       .slice(0, 1),
+  };
+}
+
+export async function extractTavilyListingPage({
+  url,
+  query = "Extract seller-stated trading-card listing facts from this exact URL: title, price, shipping, condition, card name, card number, set, photos, and evidence notes. Use only the page content.",
+  fetcher = fetch,
+}: TavilyExtractOptions): Promise<TavilyExtractedPage | null> {
+  const parsed = parsePublicHttpsUrl(url);
+  const response = await tavilyPost(
+    "extract",
+    {
+      urls: [parsed.href],
+      query,
+      chunks_per_source: 3,
+      extract_depth: "basic",
+      format: "text",
+      include_images: false,
+      include_favicon: false,
+      timeout: Math.ceil(TAVILY_TIMEOUT_MS / 1000),
+    },
+    tavilyExtractResponseSchema,
+    fetcher,
+  );
+
+  const result = response.results[0];
+  if (!result?.url) return null;
+  const resultUrl = parsePublicHttpsUrlOrNull(result.url);
+  if (!resultUrl || resultUrl.href !== parsed.href) return null;
+  const title = cleanText(result.title ?? parsed.hostname.replace(/^www\./, ""));
+  const content = cleanText(result.raw_content ?? result.content ?? "");
+  if (!title && !content) return null;
+
+  return {
+    url: resultUrl.href,
+    title: title.slice(0, 300),
+    content: content.slice(0, 6000),
   };
 }
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
+import { extractTavilyListingPage, isTavilyConfigured } from "@/lib/external/tavily";
 import type { ConditionClaim, Marketplace, SourceListing } from "@/lib/schemas";
 
 // R6: the paste-a-URL universal adapter. A user pastes one listing URL from any
@@ -180,6 +181,67 @@ const aiExtractionSchema = z.object({
 
 type AiExtraction = z.infer<typeof aiExtractionSchema>;
 
+type TextExtraction = {
+  title: string | null;
+  price: number | null;
+  shipping: number | null;
+  currency: string | null;
+  condition: string | null;
+  description: string | null;
+  photoCount: number | null;
+  cardName: string | null;
+  cardNumber: string | null;
+  setName: string | null;
+};
+
+function needsTavilyFallback(deterministic: DeterministicExtraction, ai: AiExtraction | null) {
+  return !(deterministic.title ?? ai?.title) || (deterministic.price ?? ai?.price) === null;
+}
+
+function extractFromText(text: string): TextExtraction {
+  const clean = text.replace(/\s+/g, " ").trim();
+  const priceMatch = clean.match(/(?:price|item|asking|ask|sale)?[^$]{0,24}(?:US\s*)?\$\s*([1-9][0-9,]*(?:\.\d{1,2})?)/i);
+  const shippingMatch = clean.match(/(?:shipping|postage|delivery)[^$]{0,32}(?:US\s*)?\$\s*([0-9][0-9,]*(?:\.\d{1,2})?)/i);
+  const nonUsdCurrency = !priceMatch && /\b(?:JPY|YEN)\b|[¥￥]|円/.test(clean);
+  const cardNumber = extractCollectorNumber(clean);
+  const title = firstUsefulLine(text) ?? null;
+  const condition = clean.match(/\b(near\s*mint|nm|mint|like\s+new|light(?:ly)?\s*played|lp|moderate(?:ly)?\s*played|mp|heavy|heavily\s*played|hp|damaged|damage|poor)\b/i)?.[0] ?? null;
+
+  return {
+    title,
+    price: moneyMatch(priceMatch),
+    shipping: moneyMatch(shippingMatch),
+    currency: priceMatch ? "USD" : nonUsdCurrency ? "JPY" : null,
+    condition,
+    description: clean.slice(0, 2000) || null,
+    photoCount: photoCountFromText(clean),
+    cardName: title ? title.replace(cardNumber, "").replace(/\s+/g, " ").trim() || null : null,
+    cardNumber: cardNumber || null,
+    setName: clean.match(/\b(Evolving Skies|Romance Dawn|Pillars of Strength|Paramount War|Awakening of the New Era)\b/i)?.[0] ?? null,
+  };
+}
+
+function firstUsefulLine(text: string) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .find((line) => line.length >= 8 && !/^https?:\/\//i.test(line))
+    ?.slice(0, 300);
+}
+
+function moneyMatch(match: RegExpMatchArray | null) {
+  const raw = match?.[1];
+  if (!raw) return null;
+  const parsed = Number(raw.replace(/,/g, ""));
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : null;
+}
+
+function photoCountFromText(text: string) {
+  if (/front.{0,16}back|back.{0,16}front/i.test(text)) return 2;
+  if (/\b(photo|photos|pictures|pics|images)\b/i.test(text)) return 1;
+  return null;
+}
+
 export async function fetchUniversalListing(
   rawUrl: string,
   fetcher: typeof fetch = fetch,
@@ -224,14 +286,27 @@ export async function fetchUniversalListing(
   try {
     ai = await extractWithAi(html, rawUrl);
   } catch (error) {
-    notes.push(`AI extraction unavailable (${error instanceof Error ? error.message.slice(0, 120) : "unknown error"}); structured page data only.`);
+    notes.push(`AI extraction unavailable (${error instanceof Error ? error.message.slice(0, 120) : "unknown error"}).`);
+  }
+
+  let tavily: TextExtraction | null = null;
+  if (needsTavilyFallback(deterministic, ai) && isTavilyConfigured()) {
+    try {
+      const page = await extractTavilyListingPage({ url: rawUrl, fetcher });
+      if (page) {
+        tavily = extractFromText(`${page.title}\n${page.content}`);
+        notes.push("Tavily Extract filled missing listing facts from the exact pasted URL only.");
+      }
+    } catch (error) {
+      notes.push(`Tavily exact-URL extraction unavailable (${error instanceof Error ? error.message.slice(0, 120) : "unknown error"}).`);
+    }
   }
 
   // Deterministic page data (JSON-LD / meta tags) is source truth; the model
-  // only fills gaps the structured markup does not cover.
-  const title = deterministic.title ?? ai?.title ?? "";
-  const price = deterministic.price ?? ai?.price ?? null;
-  const currency = (deterministic.currency ?? ai?.currency ?? "USD").toUpperCase();
+  // and exact-URL Tavily text only fill gaps the structured markup does not cover.
+  const title = deterministic.title ?? ai?.title ?? tavily?.title ?? "";
+  const price = deterministic.price ?? ai?.price ?? tavily?.price ?? null;
+  const currency = (deterministic.currency ?? ai?.currency ?? tavily?.currency ?? "USD").toUpperCase();
   if (currency && currency !== "USD") {
     throw new Error(`The pasted listing is priced in ${currency}; TCGpal compares USD listings only.`);
   }
@@ -240,9 +315,12 @@ export async function fetchUniversalListing(
   }
 
   const marketplace = detectMarketplaceFromUrl(rawUrl);
-  const description = (deterministic.description ?? ai?.conditionNotes ?? "").slice(0, 2000);
-  const conditionText = deterministic.condition ?? ai?.condition ?? "";
-  const photoCount = deterministic.photoCount ?? (typeof ai?.photoCount === "number" ? Math.max(0, Math.round(ai.photoCount)) : 0);
+  const description = (deterministic.description ?? tavily?.description ?? ai?.conditionNotes ?? "").slice(0, 2000);
+  const conditionText = deterministic.condition ?? ai?.condition ?? tavily?.condition ?? "";
+  const photoCount = deterministic.photoCount
+    ?? (typeof ai?.photoCount === "number" ? Math.max(0, Math.round(ai.photoCount)) : null)
+    ?? tavily?.photoCount
+    ?? 0;
 
   const listing: SourceListing = {
     marketplace,
@@ -250,7 +328,7 @@ export async function fetchUniversalListing(
     title: title.slice(0, 300),
     description,
     price,
-    shipping: ai?.shipping ?? null,
+    shipping: ai?.shipping ?? tavily?.shipping ?? null,
     claimedCondition: normalizeConditionText(conditionText),
     active: true,
     seller: {
@@ -269,12 +347,12 @@ export async function fetchUniversalListing(
     marketplace,
     listing,
     extractedCard: {
-      name: ai?.cardName ?? "",
-      number: ai?.cardNumber ?? extractCollectorNumber(`${title} ${description}`),
-      setName: ai?.setName ?? "",
+      name: ai?.cardName ?? tavily?.cardName ?? "",
+      number: ai?.cardNumber ?? tavily?.cardNumber ?? extractCollectorNumber(`${title} ${description}`),
+      setName: ai?.setName ?? tavily?.setName ?? "",
     },
     notes,
-    usedAi: ai !== null,
+    usedAi: ai !== null || tavily !== null,
   };
 }
 
