@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
@@ -82,7 +82,7 @@ const conditions: ConditionClaim[] = [
   "Damaged",
 ];
 
-const LEDGER_PREVIEW_COUNT = 8;
+const LEDGER_PREVIEW_COUNT = 4;
 
 type ComparisonForm = {
   // The hero search box: one free-text query, deterministically parsed server-side
@@ -125,6 +125,69 @@ type LedgerRow = {
   title: string;
   url: string;
 };
+
+type SavedCardRecord = {
+  id: string;
+  label: string;
+  query: string;
+  saved: boolean;
+  tracked: boolean;
+};
+
+const SAVED_CARDS_KEY = "tcgpal:saved-cards";
+const EMPTY_SAVED_CARDS: SavedCardRecord[] = [];
+const savedCardListeners = new Set<() => void>();
+let savedCardsSnapshot: SavedCardRecord[] | null = null;
+
+function isSavedCardRecord(entry: unknown): entry is SavedCardRecord {
+  return Boolean(
+    entry
+    && typeof entry === "object"
+    && "id" in entry
+    && typeof entry.id === "string"
+    && "label" in entry
+    && typeof entry.label === "string"
+    && "query" in entry
+    && typeof entry.query === "string"
+    && "saved" in entry
+    && typeof entry.saved === "boolean"
+    && "tracked" in entry
+    && typeof entry.tracked === "boolean",
+  );
+}
+
+function getSavedCardsSnapshot() {
+  if (savedCardsSnapshot === null) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SAVED_CARDS_KEY) ?? "[]");
+      savedCardsSnapshot = Array.isArray(saved) ? saved.filter(isSavedCardRecord) : [];
+    } catch {
+      savedCardsSnapshot = [];
+    }
+  }
+  return savedCardsSnapshot;
+}
+
+function getSavedCardsServerSnapshot() {
+  return EMPTY_SAVED_CARDS;
+}
+
+function subscribeSavedCards(listener: () => void) {
+  savedCardListeners.add(listener);
+  return () => {
+    savedCardListeners.delete(listener);
+  };
+}
+
+function writeSavedCards(next: SavedCardRecord[]) {
+  savedCardsSnapshot = next;
+  try {
+    localStorage.setItem(SAVED_CARDS_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore unavailable storage */
+  }
+  savedCardListeners.forEach((listener) => listener());
+}
 
 const emptyLedgerRow: LedgerRow = {
   marketplace: "TCGplayer",
@@ -239,6 +302,10 @@ function sleep(ms: number) {
   });
 }
 
+function readTimestamp() {
+  return Date.now();
+}
+
 export function ComparisonApp() {
   return (
     <LanguageProvider>
@@ -261,6 +328,9 @@ function ComparisonExperience() {
   const [listingOpen, setListingOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [comparingDiscoveryId, setComparingDiscoveryId] = useState<string | null>(null);
+  const [compactSearchOpen, setCompactSearchOpen] = useState(false);
+  const [savedCardsOpen, setSavedCardsOpen] = useState(false);
+  const savedCards = useSyncExternalStore(subscribeSavedCards, getSavedCardsSnapshot, getSavedCardsServerSnapshot);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
 
   const heroQuery = useWatch({ control: form.control, name: "heroQuery" });
@@ -343,7 +413,7 @@ function ComparisonExperience() {
     setLoading(true);
     setError(null);
     setFeedbackSent(false);
-    const startedAt = Date.now();
+    const startedAt = readTimestamp();
 
     trackEvent(confirmedCardId ? "card_identity_confirmed" : "comparison_started", {
       marketplace: request.sourceListing.marketplace,
@@ -356,7 +426,7 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
-      const duration = Date.now() - startedAt;
+      const duration = readTimestamp() - startedAt;
       trackEvent("comparison_completed", {
         marketplace: request.sourceListing.marketplace,
         status: parsed.status,
@@ -518,7 +588,7 @@ function ComparisonExperience() {
     setError(null);
     setFeedbackSent(false);
     setComparingDiscoveryId(discovery.id);
-    const startedAt = Date.now();
+    const startedAt = readTimestamp();
     trackEvent("second_comparison_started", { marketplace: discovery.marketplace });
     trackEvent("source_detected", { marketplace: discovery.marketplace });
     if (discovery.marketplace !== "eBay") {
@@ -528,7 +598,7 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
-      const duration = Date.now() - startedAt;
+      const duration = readTimestamp() - startedAt;
       trackEvent("comparison_completed", {
         marketplace: discovery.marketplace,
         status: parsed.status,
@@ -553,10 +623,101 @@ function ComparisonExperience() {
     trackEvent("decision_feedback_submitted", { changed_decision: changedDecision });
   }
 
+  const compactMode = Boolean(pendingRequest || report);
+  const activeCard = report?.confirmedCard ?? null;
+  const activeCardId = activeCard?.id ?? null;
+  const activeCardRecord = activeCardId ? savedCards.find((entry) => entry.id === activeCardId) ?? null : null;
+  const headerQuery = activeCard
+    ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
+    : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
+  const headerContext = [
+    t.form.games[pendingRequest?.cardHint.game ?? game],
+    (pendingRequest?.buyer.postalCode ?? postalCode) ? `ZIP ${pendingRequest?.buyer.postalCode ?? postalCode}` : null,
+  ].filter(Boolean).join(" · ");
+
+  function persistSavedCards(next: SavedCardRecord[]) {
+    writeSavedCards(next);
+  }
+
+  function updateActiveCardState(kind: "saved" | "tracked", value: boolean) {
+    if (!activeCard) return;
+    const existing = savedCards.find((entry) => entry.id === activeCard.id);
+    const nextRecord: SavedCardRecord = {
+      id: activeCard.id,
+      label: [activeCard.name, activeCard.cardNumber].filter(Boolean).join(" · "),
+      query: heroQuery.trim() || [activeCard.name, activeCard.cardNumber].filter(Boolean).join(" "),
+      saved: kind === "saved" ? value : existing?.saved ?? false,
+      tracked: kind === "tracked" ? value : existing?.tracked ?? false,
+    };
+    const withoutActive = savedCards.filter((entry) => entry.id !== activeCard.id);
+    persistSavedCards(nextRecord.saved || nextRecord.tracked ? [...withoutActive, nextRecord] : withoutActive);
+  }
+
+  function startNewSearch() {
+    setReport(null);
+    setPendingRequest(null);
+    setError(null);
+    setCompactSearchOpen(false);
+    setSavedCardsOpen(false);
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
+    });
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f7f3] text-[#24312f]">
-      <Header />
-      <div className="mx-auto max-w-[1180px] px-4 pb-24 pt-8 sm:px-6 lg:px-8">
+      {compactMode ? (
+        <ResultsHeader
+          query={headerQuery}
+          context={headerContext}
+          editOpen={compactSearchOpen}
+          saved={activeCardRecord?.saved ?? false}
+          saveDisabled={!activeCard}
+          savedCards={savedCards.filter((entry) => entry.saved)}
+          savedCardsOpen={savedCardsOpen}
+          onEditToggle={() => setCompactSearchOpen((current) => !current)}
+          onSaveToggle={() => updateActiveCardState("saved", !(activeCardRecord?.saved ?? false))}
+          onSavedCardsToggle={() => setSavedCardsOpen((current) => !current)}
+          onNewSearch={startNewSearch}
+          editPanel={compactSearchOpen ? (
+            <form
+              className="mx-auto grid max-w-[1180px] gap-3 border-t border-[#d6ded5] px-4 py-4 sm:grid-cols-[minmax(0,1fr)_160px_140px_auto] sm:items-end sm:px-6 lg:px-8"
+              onSubmit={form.handleSubmit((values) => {
+                setCompactSearchOpen(false);
+                void submitComparison(values);
+              })}
+            >
+              <label className="field">
+                <span>{t.form.heroSearchLabel}</span>
+                <div className="input-with-icon">
+                  <IconCardSearch className="h-4 w-4" />
+                  <input {...form.register("heroQuery")} autoFocus />
+                </div>
+              </label>
+              <label className="field">
+                <span>{t.form.gameLabel}</span>
+                <select {...form.register("game")}>
+                  <option value="pokemon">{t.form.games.pokemon}</option>
+                  <option value="onePiece">{t.form.games.onePiece}</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>{t.form.deliveryZip}</span>
+                <input {...form.register("postalCode")} inputMode="numeric" />
+              </label>
+              <button className="primary-button" type="submit" disabled={loading}>
+                {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
+                {t.form.submitIdle}
+              </button>
+            </form>
+          ) : null}
+        />
+      ) : (
+        <Header />
+      )}
+      <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-8"}`}>
+        {!compactMode && (
+          <>
         <section className="paper-panel p-5 sm:p-7">
           <div className="eyebrow">
             <IconCardSearch className="h-4 w-4" />
@@ -912,7 +1073,9 @@ function ComparisonExperience() {
           </form>
         </section>
 
-        {!report && !loading && <HowItWorks />}
+        {!loading && <HowItWorks />}
+          </>
+        )}
 
         {loading && <LoadingLoop />}
         {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
@@ -926,9 +1089,12 @@ function ComparisonExperience() {
             onFeedback={sendFeedback}
             onCompareDiscovery={compareWebDiscovery}
             comparingDiscoveryId={comparingDiscoveryId}
+            tracking={activeCardRecord?.tracked ?? false}
+            onTrackingChange={(value) => updateActiveCardState("tracked", value)}
           />
         )}
       </div>
+      <Footer />
     </main>
   );
 }
@@ -955,6 +1121,100 @@ function Header() {
   );
 }
 
+function ResultsHeader({
+  query,
+  context,
+  editOpen,
+  saved,
+  saveDisabled,
+  savedCards,
+  savedCardsOpen,
+  editPanel,
+  onEditToggle,
+  onSaveToggle,
+  onSavedCardsToggle,
+  onNewSearch,
+}: {
+  query: string;
+  context: string;
+  editOpen: boolean;
+  saved: boolean;
+  saveDisabled: boolean;
+  savedCards: SavedCardRecord[];
+  savedCardsOpen: boolean;
+  editPanel: ReactNode;
+  onEditToggle: () => void;
+  onSaveToggle: () => void;
+  onSavedCardsToggle: () => void;
+  onNewSearch: () => void;
+}) {
+  const t = useT();
+  const { lang, setLang } = useLang();
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fcfbf6]/95 shadow-[0_1px_10px_rgba(36,49,47,0.04)] backdrop-blur">
+      <div className="relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-2 px-4 py-2.5 sm:gap-3 sm:px-6 lg:flex-nowrap lg:px-8">
+        <a className="shrink-0" href="#" aria-label={t.header.home}>
+          <Image src="/tcgpal-logo-horizontal.svg" alt="TCGpal" width={104} height={30} priority />
+        </a>
+        <button
+          className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-full border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
+          type="button"
+          aria-expanded={editOpen}
+          onClick={onEditToggle}
+        >
+          <IconCardSearch className="h-4 w-4 shrink-0 text-[#2f6f73]" />
+          <span className="min-w-0 truncate text-sm font-black text-[#24312f]">{query}</span>
+          {context && <span className="hidden truncate text-xs font-bold text-[#64736c] md:inline">· {context}</span>}
+          <span className="ml-auto shrink-0 text-xs font-black text-[#2f6f73]">{editOpen ? t.header.closeSearch : t.header.editSearch}</span>
+        </button>
+        <button
+          className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-black transition ${
+            saved
+              ? "border-[#2f6f73] bg-[#e7efe8] text-[#2f6f73]"
+              : "border-[#d6ded5] bg-[#fcfbf6] text-[#52635c] hover:border-[#2f6f73] hover:text-[#2f6f73]"
+          }`}
+          type="button"
+          disabled={saveDisabled}
+          aria-pressed={saved}
+          onClick={onSaveToggle}
+        >
+          <IconFoil className="h-3.5 w-3.5" />
+          {saved ? t.header.savedCard : t.header.saveCard}
+        </button>
+        <nav className="ml-auto flex items-center gap-2 text-xs font-black text-[#64736c] sm:gap-4">
+          <button className="relative hover:text-[#2f6f73]" type="button" aria-expanded={savedCardsOpen} onClick={onSavedCardsToggle}>
+            {t.header.myCards}{savedCards.length > 0 ? ` ${savedCards.length}` : ""}
+          </button>
+          <a className="hidden hover:text-[#2f6f73] sm:inline" href="#method">{t.header.method}</a>
+          <LanguageToggle lang={lang} setLang={setLang} t={t} />
+        </nav>
+        {savedCardsOpen && (
+          <div className="absolute right-4 top-[54px] z-10 w-[min(320px,calc(100vw-2rem))] rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3 shadow-[0_14px_36px_rgba(36,49,47,0.14)] sm:right-6">
+            {savedCards.length > 0 ? (
+              <div className="space-y-2">
+                {savedCards.map((card) => (
+                  <div key={card.id} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-2">
+                    <p className="truncate text-sm font-black text-[#24312f]">{card.label}</p>
+                    <p className="mt-0.5 truncate text-xs text-[#64736c]">{card.tracked ? t.result.trackingCard : card.query}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm leading-6 text-[#64736c]">{t.header.savedEmpty}</p>
+            )}
+            <button className="secondary-button mt-3 w-full" type="button" onClick={onNewSearch}>
+              <IconPlus className="h-4 w-4" />
+              {t.header.newSearch}
+            </button>
+          </div>
+        )}
+      </div>
+      {editPanel}
+    </header>
+  );
+}
+
 function LanguageToggle({ lang, setLang, t }: { lang: Lang; setLang: (lang: Lang) => void; t: Dict }) {
   return (
     <div
@@ -977,6 +1237,19 @@ function LanguageToggle({ lang, setLang, t }: { lang: Lang; setLang: (lang: Lang
         );
       })}
     </div>
+  );
+}
+
+function Footer() {
+  const t = useT();
+  return (
+    <footer className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-6 gap-y-2 border-t border-[#d6ded5] px-4 py-6 text-xs font-bold text-[#7a8982] sm:px-6 lg:px-8">
+      <span>{t.footer.copyright}</span>
+      <a className="hover:text-[#2f6f73]" href="/method">{t.header.method}</a>
+      <a className="hover:text-[#2f6f73]" href="#method">{t.footer.dataSources}</a>
+      <a className="hover:text-[#2f6f73]" href="#method">{t.footer.boundaries}</a>
+      <a className="hover:text-[#2f6f73]" href="#feedback">{t.footer.feedback}</a>
+    </footer>
   );
 }
 
@@ -1199,12 +1472,16 @@ function ComparisonResult({
   onFeedback,
   onCompareDiscovery,
   comparingDiscoveryId,
+  tracking,
+  onTrackingChange,
 }: {
   report: ComparisonReport;
   feedbackSent: boolean;
   onFeedback: (changedDecision: boolean) => void;
   onCompareDiscovery: (discovery: WebDiscovery) => void;
   comparingDiscoveryId: string | null;
+  tracking: boolean;
+  onTrackingChange: (value: boolean) => void;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -1230,11 +1507,23 @@ function ComparisonResult({
 
   const eligibleCount = eligibleListings.length;
   const [showAllCandidates, setShowAllCandidates] = useState(false);
-  const visibleEligibleListings = showAllCandidates ? eligibleListings : eligibleListings.slice(0, LEDGER_PREVIEW_COUNT);
+  const orderedEligibleListings = selectedListing
+    ? [selectedListing, ...eligibleListings.filter((listing) => listing.id !== selectedListing.id)]
+    : eligibleListings;
+  const visibleEligibleListings = showAllCandidates ? orderedEligibleListings : orderedEligibleListings.slice(0, LEDGER_PREVIEW_COUNT);
   const hiddenEligibleCount = Math.max(0, eligibleCount - visibleEligibleListings.length);
-  const ledgerMeta = ledgerHeaderMeta(eligibleListings, excluded.length, report.generatedAt, t, lang);
   const japanReferences = report.references.filter((reference) => isJapanReferenceLabel(reference.label));
   const webDiscoveries = report.webDiscoveries ?? [];
+  const livePlatforms = report.platforms.filter((platform) => platform.status === "complete");
+  const connectedSourceLabels = livePlatforms.map((platform) => platform.marketplace).join(" + ");
+  const listingTotals = eligibleListings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
+  const listedRange = listingTotals.length > 0
+    ? `${formatMoney(Math.min(...listingTotals))}–${formatMoney(Math.max(...listingTotals))}`
+    : t.result.unavailableRange;
+  const observedTime = new Date(report.generatedAt).toLocaleTimeString(lang === "zh" ? "zh-CN" : "en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<ComparisonQuestionResponse | null>(null);
   const [qaLoading, setQaLoading] = useState(false);
@@ -1276,7 +1565,7 @@ function ComparisonResult({
   }
 
   return (
-    <section id="comparison-result" className="mt-6 scroll-mt-6 space-y-5">
+    <section id="comparison-result" className="scroll-mt-24 space-y-4">
       {report.demoMode && (
         <div className="flex items-start gap-3 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
           <IconInfo className="mt-1 h-4 w-4 shrink-0" />
@@ -1294,120 +1583,95 @@ function ComparisonResult({
         </div>
       )}
 
-      {/*
-        The one loud element on the page: confirmed version and the recommended
-        listing merged into a single verdict hero. Everything below it (ledger,
-        cautions, methodology drawer) is visibly subordinate.
-      */}
-      <div className="evidence-spotlight rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-8">
-        <div className="relative z-10">
-          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-            <div className="min-w-0">
-              <p className="eyebrow text-[#2f6f73]">
-                <IconSeal className="h-4 w-4" />
-                {t.result.versionConfirmed}
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73] sm:text-4xl">
-                {report.confirmedCard?.name ?? selectedListing?.title}
-              </h2>
-              {report.confirmedCard && <CardIdentityRail identity={report.confirmedCard} className="mt-3" />}
-            </div>
-            {report.rankedChoices.length > 0 && (
-              <div className="w-full max-w-xl">
-                <div
-                  className="grid grid-cols-2 gap-1 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-1 sm:grid-cols-4"
-                  style={report.rankedChoices.length === 4 ? undefined : { gridTemplateColumns: `repeat(${report.rankedChoices.length}, minmax(0, 1fr))` }}
-                >
-                  {report.rankedChoices.map((choice) => {
-                    const active = choice.role === selectedRole;
-                    return (
-                      <button
-                        key={choice.role}
-                        type="button"
-                        onClick={() => setRoleOverride(choice.role)}
-                        aria-pressed={active}
-                        title={roleToggleHint(choice.role, t)}
-                        className={`min-h-10 rounded px-2 py-2 text-center text-sm font-bold transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:bg-[#e7efe8] hover:text-[#2f6f73]"}`}
-                      >
-                        {roleToggleLabel(choice.role, t)}
-                      </button>
-                    );
-                  })}
-                </div>
+      <div className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] px-4 py-3 shadow-[0_8px_28px_rgba(36,49,47,0.04)]">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <div className="min-w-0">
+            <h2 className="font-serif text-xl font-black text-[#24312f]">
+              {report.confirmedCard?.name ?? selectedListing?.title}
+            </h2>
+            {report.confirmedCard && (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <span className="rounded-md border border-[#d6ded5] bg-[#f4f3ec] px-2 py-0.5 font-mono text-[11px] font-black text-[#52635c]">
+                  {report.confirmedCard.setCode} #{report.confirmedCard.cardNumber}
+                </span>
+                {(report.confirmedCard.rarity || report.confirmedCard.language) && (
+                  <span className="rounded-md border border-[#d6ded5] bg-[#f4f3ec] px-2 py-0.5 text-[11px] font-black text-[#52635c]">
+                    {[report.confirmedCard.rarity, report.confirmedCard.language].filter(Boolean).join(" · ")}
+                  </span>
+                )}
               </div>
             )}
           </div>
-
-          <div className="mt-6 grid gap-6 md:grid-cols-[168px_1fr] md:items-start">
-            <div className="flex flex-col items-center gap-3">
-              {report.confirmedCard?.imageUrl ? (
-                <HoloCardArt
-                  src={report.confirmedCard.imageUrl}
-                  alt={`${report.confirmedCard.name} ${report.confirmedCard.cardNumber}`}
-                  sizes="168px"
-                  className="w-40"
-                />
-              ) : (
-                <div className="aspect-[2.5/3.5] w-40 rounded-md bg-[#fcfbf6]" />
-              )}
-              <span className="holo-hint items-center gap-1.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#52635c]">
-                <IconFoil className="h-3.5 w-3.5 text-[#b26a4c]" />
-                {t.result.moveFoil}
-              </span>
-              {typeof report.confirmedCard?.marketMid === "number" && (
-                <p className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-2 text-center text-xs font-bold text-[#2f6f73]">
-                  <IconTag className="h-3.5 w-3.5" />
-                  {t.result.marketApprox} {formatMoney(report.confirmedCard.marketMid)}
-                  {typeof report.confirmedCard.marketLow === "number" && typeof report.confirmedCard.marketHigh === "number" && (
-                    <span className="font-medium text-[#64736c]">({formatMoney(report.confirmedCard.marketLow)}–{formatMoney(report.confirmedCard.marketHigh)})</span>
-                  )}
-                  <MarketFreshness card={report.confirmedCard} generatedAt={report.generatedAt} />
-                  {report.confirmedCard.marketUrl && (
-                    <a className="underline" href={report.confirmedCard.marketUrl} target="_blank" rel="noreferrer">{t.result.view}</a>
-                  )}
-                </p>
-              )}
-            </div>
-            <div className="min-w-0">
-              {selectedChoice && selectedListing && (
-                <RecommendationBody
-                  choice={selectedChoice}
-                  listing={selectedListing}
-                  demoMode={report.demoMode}
-                  marketPrice={report.confirmedCard?.marketMid ?? null}
-                  recommended={selectedRole === defaultRole}
-                />
-              )}
-            </div>
+          <div className="grid min-w-[120px] gap-0.5">
+            <strong className="font-mono text-base text-[#24312f]">
+              {typeof report.confirmedCard?.marketMid === "number" ? formatMoney(report.confirmedCard.marketMid) : "—"}
+            </strong>
+            <span className="text-[11px] font-bold text-[#7a8982]">{t.result.marketPrice}</span>
+            {report.confirmedCard && <MarketFreshness card={report.confirmedCard} generatedAt={report.generatedAt} />}
           </div>
+          <div className="grid min-w-[130px] gap-0.5">
+            <strong className="font-mono text-sm text-[#24312f]">{listedRange}</strong>
+            <span className="text-[11px] font-bold text-[#7a8982]">{t.result.listedRange}</span>
+          </div>
+          <div className="grid min-w-[190px] gap-0.5">
+            <strong className="text-sm text-[#24312f]">{t.result.liveAndScreened(eligibleCount, excluded.length)}</strong>
+            <span className="text-[11px] font-bold text-[#7a8982]">
+              {t.result.sourcesAt(connectedSourceLabels || t.result.noLiveCandidates, observedTime)}
+            </span>
+          </div>
+          <span className="ml-auto text-xs font-bold text-[#7a8982]">
+            {t.result.sourcesLive(livePlatforms.length, Math.max(0, report.platforms.length - livePlatforms.length))}
+          </span>
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4 sm:p-5 lg:col-start-1">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="eyebrow">
-                <IconReceipt className="h-4 w-4" />
-                {t.result.evidenceLedger}
-              </p>
-              <h3 className="mt-2 font-serif text-2xl font-bold text-[#2f6f73]">{t.result.allCandidates(eligibleCount)}</h3>
-            </div>
-            <p className="max-w-2xl text-xs font-bold leading-5 text-[#64736c]">{ledgerMeta}</p>
+      <div className="flex flex-wrap items-center gap-3">
+        {report.rankedChoices.length > 0 && (
+          <div
+            className="grid w-full grid-cols-2 gap-1 rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-1 sm:w-[480px] sm:grid-cols-4"
+            style={report.rankedChoices.length === 4 ? undefined : { gridTemplateColumns: `repeat(${report.rankedChoices.length}, minmax(0, 1fr))` }}
+          >
+            {report.rankedChoices.map((choice) => {
+              const active = choice.role === selectedRole;
+              return (
+                <button
+                  key={choice.role}
+                  type="button"
+                  onClick={() => setRoleOverride(choice.role)}
+                  aria-pressed={active}
+                  title={roleToggleHint(choice.role, t)}
+                  className={`min-h-9 rounded-lg px-2 py-2 text-center text-xs font-black transition sm:text-sm ${
+                    active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:bg-[#e7efe8] hover:text-[#2f6f73]"
+                  }`}
+                >
+                  {roleToggleLabel(choice.role, t)}
+                </button>
+              );
+            })}
           </div>
-          <div className="mt-4 overflow-hidden rounded-md border border-[#d6ded5] bg-[#f7f9f5]">
-            <div className="hidden grid-cols-[44px_minmax(0,1fr)_116px_86px_112px_76px] gap-3 border-b border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-[10px] font-black uppercase tracking-[0.09em] text-[#64736c] sm:grid">
-              <span />
-              <span>{t.candidate.listing}</span>
-              <span>{t.candidate.risk}</span>
-              <span className="text-right">{t.candidate.photosHeader}</span>
-              <span className="text-right">{t.candidate.total}</span>
-              <span className="text-right">{t.candidate.ask}</span>
-            </div>
-            {visibleEligibleListings.map((listing) => <CandidateRow key={listing.id} listing={listing} onAsk={askAboutListing} />)}
+        )}
+        <span className="text-xs font-bold text-[#64736c]">{t.result.candidateCount(eligibleCount)}</span>
+        <span className="ml-auto hidden text-xs font-bold text-[#7a8982] md:inline">{t.result.lensNote}</span>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div className="space-y-3">
+          <div className="space-y-2.5">
+            {visibleEligibleListings.map((listing, index) => (
+              <CandidateRow
+                key={listing.id}
+                listing={listing}
+                fallbackImageUrl={report.confirmedCard?.imageUrl ?? null}
+                marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
+                choice={index === 0 ? selectedChoice : null}
+                lead={index === 0}
+                demoMode={report.demoMode}
+                onAsk={askAboutListing}
+              />
+            ))}
             {hiddenEligibleCount > 0 && !showAllCandidates && (
               <button
-                className="flex min-h-11 w-full items-center justify-center gap-2 border-t border-[#d6ded5] bg-[#fcfbf6] px-3 py-3 text-sm font-bold text-[#2f6f73] transition hover:bg-[#e7efe8]"
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#c9d7ce] px-3 py-3 text-sm font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8]"
                 type="button"
                 onClick={() => setShowAllCandidates(true)}
               >
@@ -1417,7 +1681,7 @@ function ComparisonResult({
             )}
             {showAllCandidates && eligibleCount > LEDGER_PREVIEW_COUNT && (
               <button
-                className="flex min-h-11 w-full items-center justify-center gap-2 border-t border-[#d6ded5] bg-[#fcfbf6] px-3 py-3 text-sm font-bold text-[#2f6f73] transition hover:bg-[#e7efe8]"
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#c9d7ce] px-3 py-3 text-sm font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8]"
                 type="button"
                 onClick={() => setShowAllCandidates(false)}
               >
@@ -1425,8 +1689,9 @@ function ComparisonResult({
               </button>
             )}
           </div>
+
           {excluded.length > 0 && (
-            <details className="mt-4 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+            <details className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
               <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.excluded(excluded.length)}</summary>
               <div className="mt-3 space-y-2 text-sm text-[#64736c]">
                 {excluded.map((listing) => (
@@ -1439,9 +1704,96 @@ function ComparisonResult({
               </div>
             </details>
           )}
-        </section>
 
-        <aside className="space-y-5 lg:sticky lg:top-5 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+          <details id="method" className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
+            <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
+
+            {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
+
+            {report.references.length > 0 && (
+              <div className="mt-5">
+                <p className="text-sm font-black text-[#24312f]">{t.result.referenceContext}</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {report.references.map((reference) => (
+                    <div key={reference.label} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-bold">{reference.label}</p>
+                        <StatusPill status={reference.status} />
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-[#64736c]">{reference.note}</p>
+                      {reference.rawMid !== null && <p className="mt-2 font-mono text-lg font-black text-[#2f6f73]">{t.result.reference(reference.rawMid.toFixed(2))}</p>}
+                      {reference.url && (
+                        <a className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#2f6f73] underline" href={reference.url} target="_blank" rel="noreferrer">
+                          {t.result.openManualCheck} <IconExternal className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-5">
+              <p className="text-sm font-black text-[#24312f]">{t.result.technicalTrace}</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {report.trace.map((step) => (
+                  <div key={`${step.step}-${step.actor}`} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-black text-[#64736c]">{step.step.replaceAll("_", " ")}</p>
+                      <StatusPill status={step.status === "complete" ? "used" : step.status === "fallback" ? "unavailable" : "missing"} />
+                    </div>
+                    <p className="mt-2 font-bold text-[#24312f]">{step.actor}</p>
+                    <p className="mt-1 text-sm leading-6 text-[#64736c]">{step.summary}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {report.warnings.length > 0 && (
+              <div className="mt-4 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
+                {report.warnings.map((warning) => <p key={warning}>{warning}</p>)}
+              </div>
+            )}
+          </details>
+
+          <section id="feedback" className="rounded-xl border border-[#d6ded5] bg-[#24312f] p-5 text-[#fcfbf6] sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <h3 className="font-serif text-xl font-bold">{t.result.feedbackQuestion}</h3>
+            {feedbackSent ? (
+              <p className="mt-4 inline-flex items-center gap-2 font-bold text-[#d7a84e] sm:mt-0">
+                <IconCheck className="h-5 w-5" />
+                {t.result.feedbackSaved}
+              </p>
+            ) : (
+              <div className="mt-4 flex gap-3 sm:mt-0">
+                <button className="dark-button" type="button" onClick={() => onFeedback(true)}>{t.result.yes}</button>
+                <button className="dark-button" type="button" onClick={() => onFeedback(false)}>{t.result.notYet}</button>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <aside className="space-y-3 lg:sticky lg:top-24">
+          <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
+            <div className="flex items-center gap-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-black text-[#24312f]">{tracking ? t.result.trackingCard : t.result.trackCard}</h3>
+                <p className="mt-1 text-xs leading-5 text-[#7a8982]">
+                  {t.result.trackBody(formatMoney(selectedListing?.estimatedLandedCost ?? selectedListing?.preTaxTotal ?? 0))}
+                </p>
+              </div>
+              <button
+                className={`relative ml-auto h-6 w-11 shrink-0 rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${
+                  tracking ? "bg-[#2f6f73]" : "bg-[#c9d7ce]"
+                }`}
+                type="button"
+                role="switch"
+                aria-checked={tracking}
+                aria-label={t.result.trackCard}
+                onClick={() => onTrackingChange(!tracking)}
+              >
+                <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${tracking ? "left-6" : "left-1"}`} />
+              </button>
+            </div>
+          </section>
           <ComparisonQuestionBox
             question={qaQuestion}
             answer={qaAnswer}
@@ -1459,12 +1811,9 @@ function ComparisonResult({
             />
           )}
           {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
-          <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
-            <p className="eyebrow">
-              <IconCaution className="h-4 w-4" />
-              {t.result.beforeYouBuy}
-            </p>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-[#52635c]">
+          <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
+            <h3 className="text-sm font-black text-[#24312f]">{t.result.beforeYouBuy}</h3>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-[#52635c]">
               {report.narrative.cautions.map((caution) => (
                 <li key={caution} className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b26a4c]" />
@@ -1474,85 +1823,6 @@ function ComparisonResult({
             </ul>
           </section>
         </aside>
-
-      {/*
-        One quiet methodology drawer instead of three competing sections:
-        which sources were queried, what reference pricing said, and the full
-        validation trace all live here, collapsed by default.
-      */}
-      <details id="method" className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 lg:col-start-1">
-        <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
-
-        {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
-
-        {report.references.length > 0 && (
-          <div className="mt-5">
-            <p className="eyebrow">
-              <IconTag className="h-4 w-4" />
-              {t.result.referenceContext}
-            </p>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              {report.references.map((reference) => (
-                <div key={reference.label} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-bold">{reference.label}</p>
-                    <StatusPill status={reference.status} />
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-[#64736c]">{reference.note}</p>
-                  {reference.rawMid !== null && <p className="mt-2 font-mono text-lg font-black text-[#2f6f73]">{t.result.reference(reference.rawMid.toFixed(2))}</p>}
-                  {reference.url && (
-                    <a className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#2f6f73] underline" href={reference.url} target="_blank" rel="noreferrer">
-                      {t.result.openManualCheck} <IconExternal className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-5">
-          <p className="eyebrow">
-            <IconCardSearch className="h-4 w-4" />
-            {t.result.technicalTrace}
-          </p>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {report.trace.map((step) => (
-              <div key={`${step.step}-${step.actor}`} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-black uppercase tracking-[0.1em] text-[#64736c]">{step.step.replaceAll("_", " ")}</p>
-                  <StatusPill status={step.status === "complete" ? "used" : step.status === "fallback" ? "unavailable" : "missing"} />
-                </div>
-                <p className="mt-2 font-bold text-[#24312f]">{step.actor}</p>
-                <p className="mt-1 text-sm leading-6 text-[#64736c]">{step.summary}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        {report.warnings.length > 0 && (
-          <div className="mt-4 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
-            {report.warnings.map((warning) => <p key={warning}>{warning}</p>)}
-          </div>
-        )}
-      </details>
-
-      <section className="rounded-md border border-[#d6ded5] bg-[#24312f] p-6 text-[#fcfbf6] sm:flex sm:items-center sm:justify-between sm:gap-6 lg:col-start-1">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[#b9cbc1]">{t.result.helpValidate}</p>
-          <h3 className="mt-2 font-serif text-2xl font-bold">{t.result.feedbackQuestion}</h3>
-        </div>
-        {feedbackSent ? (
-          <p className="mt-4 inline-flex items-center gap-2 font-bold text-[#d7a84e] sm:mt-0">
-            <IconCheck className="h-5 w-5" />
-            {t.result.feedbackSaved}
-          </p>
-        ) : (
-          <div className="mt-4 flex gap-3 sm:mt-0">
-            <button className="dark-button" type="button" onClick={() => onFeedback(true)}>{t.result.yes}</button>
-            <button className="dark-button" type="button" onClick={() => onFeedback(false)}>{t.result.notYet}</button>
-          </div>
-        )}
-      </section>
       </div>
     </section>
   );
@@ -1561,17 +1831,13 @@ function ComparisonResult({
 function JapanReferencePanel({ references }: { references: ComparisonReport["references"] }) {
   const t = useT();
   return (
-    <section className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5">
-      <p className="eyebrow text-[#2f6f73]">
-        <IconExternal className="h-4 w-4" />
-        {t.result.japanPriceChecks}
-      </p>
-      <p className="mt-3 text-sm leading-6 text-[#52635c]">{t.result.japanPriceChecksBody}</p>
-      <div className="mt-4 grid gap-2">
+    <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
+      <h3 className="text-sm font-black text-[#24312f]">{t.result.japanPriceChecks}</h3>
+      <div className="mt-3 grid grid-cols-2 gap-2">
         {references.map((reference) => (
           <a
             key={reference.label}
-            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#2f6f73] transition hover:border-[#2f6f73]"
+            className="inline-flex min-h-10 items-center justify-between gap-2 rounded-md border border-[#d6ded5] bg-[#fffef9] px-2.5 py-2 text-xs font-bold text-[#2f6f73] transition hover:border-[#2f6f73]"
             href={reference.url ?? "#"}
             target="_blank"
             rel="noreferrer"
@@ -1581,6 +1847,7 @@ function JapanReferencePanel({ references }: { references: ComparisonReport["ref
           </a>
         ))}
       </div>
+      <p className="mt-3 text-xs leading-5 text-[#7a8982]">{t.result.japanPriceChecksBody}</p>
     </section>
   );
 }
@@ -1596,11 +1863,8 @@ function WebDiscoveryPanel({
 }) {
   const t = useT();
   return (
-    <section className="rounded-md border border-[#e2c879] bg-[#fff8dc] p-5">
-      <p className="eyebrow text-[#6f5a22]">
-        <IconCardSearch className="h-4 w-4" />
-        {t.result.webDiscoveryTitle}
-      </p>
+    <section className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-4">
+      <h3 className="text-sm font-black text-[#6f5a22]">{t.result.webDiscoveryTitle}</h3>
       <p className="mt-3 text-sm leading-6 text-[#6f5a22]">{t.result.webDiscoveryBody}</p>
       <div className="mt-4 grid gap-2">
         {discoveries.slice(0, 12).map((discovery) => (
@@ -1694,26 +1958,22 @@ function ComparisonQuestionBox({
 }) {
   const t = useT();
   return (
-    <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
-      <p className="eyebrow">
-        <IconCardSearch className="h-4 w-4" />
-        {t.result.askTitle}
-      </p>
-      <p className="mt-3 text-sm leading-6 text-[#52635c]">{t.result.askBody}</p>
+    <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
+      <h3 className="text-sm font-black text-[#24312f]">{t.result.askTitle}</h3>
       {targetLabel && (
         <p className="mt-3 inline-flex max-w-full items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
           <IconReceipt className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 truncate">{t.result.askTarget(targetLabel)}</span>
         </p>
       )}
-      <div className="mt-4 grid gap-2">
+      <div className="mt-3 grid gap-2">
         <textarea
-          className="min-h-24 rounded-md border border-[#c9d7ce] bg-[#fffef9] px-3 py-2 text-sm text-[#24312f] outline-none transition focus:border-[#2f6f73] focus:ring-2 focus:ring-[#2f6f73]/20"
+          className="min-h-20 rounded-md border border-[#c9d7ce] bg-[#fffef9] px-3 py-2 text-sm text-[#24312f] outline-none transition focus:border-[#2f6f73] focus:ring-2 focus:ring-[#2f6f73]/20"
           value={question}
           onChange={(event) => onQuestionChange(event.target.value)}
           placeholder={t.result.askPlaceholder}
         />
-        <button className="secondary-button justify-center" type="button" disabled={loading || !question.trim()} onClick={() => onAsk()}>
+        <button className="primary-button justify-center" type="button" disabled={loading || !question.trim()} onClick={() => onAsk()}>
           {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
           {loading ? t.result.askLoading : t.result.askSubmit}
         </button>
@@ -1921,113 +2181,26 @@ function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; mar
   ];
 
   return (
-    <details className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] px-4 py-3">
-      <summary className="cursor-pointer text-sm font-bold text-[#52635c]">{t.card.checkMath}</summary>
-      <div className="mt-3 divide-y divide-dashed divide-[#c9d7ce]">
-        {rows.map((row) => (
-          <div key={row.label} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
-            <div className="min-w-0">
-              <span className="font-bold text-[#24312f]">{row.label}</span>
-              <span className="ml-2 text-[#64736c]">{row.inputs}</span>
-              {row.note && <span className="ml-2 text-xs text-[#8a978f]">({row.note})</span>}
+    <details className="mt-2">
+      <summary className="w-fit cursor-pointer text-xs font-bold text-[#52635c] underline decoration-[#9fb3a8] underline-offset-2">
+        {t.card.checkMath}
+      </summary>
+      <div className="mt-3 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] px-4 py-2">
+        <div className="divide-y divide-dashed divide-[#c9d7ce]">
+          {rows.map((row) => (
+            <div key={row.label} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
+              <div className="min-w-0">
+                <span className="font-bold text-[#24312f]">{row.label}</span>
+                <span className="ml-2 text-[#64736c]">{row.inputs}</span>
+                {row.note && <span className="ml-2 text-xs text-[#8a978f]">({row.note})</span>}
+              </div>
+              <span className="font-mono font-bold text-[#2f6f73]">{row.score}/100</span>
             </div>
-            <span className="font-mono font-bold text-[#2f6f73]">{row.score}/100</span>
-          </div>
-        ))}
+          ))}
+        </div>
+        <p className="mt-2 text-xs leading-5 text-[#64736c]">{t.card.mathHint}</p>
       </div>
-      <p className="mt-2 text-xs leading-5 text-[#64736c]">{t.card.mathHint}</p>
     </details>
-  );
-}
-
-// The recommended-listing body lives inside the verdict hero, which already
-// shows the confirmed card's art — so this renders only the listing facts:
-// badge, title, landed cost, verdicts, evidence, reason, and the CTA.
-function RecommendationBody({ choice, listing, demoMode, marketPrice, recommended }: { choice: RankedChoice; listing: NormalizedListing; demoMode: boolean; marketPrice: number | null; recommended: boolean }) {
-  const t = useT();
-  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
-  const totalLabel = listing.shipping === null
-    ? t.card.estBeforeShipping
-    : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
-
-  return (
-    <article className="choice-card min-w-0 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-5 shadow-[0_18px_40px_rgba(36,49,47,0.06)] sm:p-6">
-      <div className="flex flex-wrap items-center gap-2">
-        {recommended && (
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-[#2f6f73] px-2.5 py-1 text-xs font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
-            <IconSeal className="h-3.5 w-3.5" />
-            {t.card.recommended}
-          </span>
-        )}
-        <span className="text-xs font-black uppercase tracking-[0.1em] text-[#b26a4c]">{listing.marketplace}</span>
-        {listing.userSupplied && (
-          <span className="rounded-md border border-[#c9d7ce] bg-[#f7f9f5] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.card.userAdded}</span>
-        )}
-        {listing.webDiscovered && (
-          <span className="rounded-md border border-[#e2c879] bg-[#fff8dc] px-2 py-0.5 text-xs font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>
-        )}
-      </div>
-      <h3 className="mt-2 line-clamp-2 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{listing.title}</h3>
-
-      <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
-        <span className="font-mono text-3xl font-black text-[#24312f]">{formatMoney(total)}</span>
-        <span className="pb-1 text-xs font-bold uppercase tracking-[0.08em] text-[#64736c]">{totalLabel}</span>
-        {marketDelta !== null && !listing.demo && (
-          <span className={`mb-0.5 inline-flex items-center rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.05em] ${marketDelta <= 0.02 ? "bg-[#dcecdf] text-[#2f6f73]" : marketDelta <= 0.15 ? "bg-[#fff0d5] text-[#8d6032]" : "bg-[#f6dcd0] text-[#9a4a2c]"}`}>
-            {marketDelta <= 0 ? t.card.underMarket(Math.round(Math.abs(marketDelta) * 100)) : t.card.aboveMarket(Math.round(marketDelta * 100))}
-          </span>
-        )}
-      </div>
-      <p className="mt-1 text-xs text-[#64736c]">
-        {t.card.priceBreakdown(
-          formatMoney(listing.price),
-          formatShippingLabel(listing.shipping, t),
-          listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
-        )}
-      </p>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <VerdictTag
-          verdict={sellerVerdict(listing, t)}
-          icon={IconSeal}
-          hint={`${sellerInputsLine(listing, t)} -> ${listing.sellerTrustScore}/100 (${t.card.thTrusted})`}
-        />
-        <VerdictTag
-          verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)}
-          icon={IconPhotoProof}
-          hint={`${evidenceInputsLine(listing, t)} -> ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
-        />
-        <VerdictTag
-          verdict={riskVerdict(listing, t)}
-          icon={IconCardCheck}
-          hint={`${riskFormula(t)} -> ${listing.safetyScore}/100 (${t.card.thRisk})`}
-        />
-      </div>
-
-      <p className="mt-4 text-sm leading-6 text-[#52635c]">
-        <span className="font-bold text-[#2f6f73]">{t.card.whyLeads}: </span>
-        {choice.reason}
-      </p>
-
-      <VerdictMath listing={listing} marketPrice={marketPrice} />
-
-      <div className="mt-5">
-        {listing.url ? (
-          <a
-            className="primary-button w-full sm:w-auto"
-            href={listing.url}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode })}
-          >
-            {t.card.goToListing} <IconArrowUpRight className="h-4 w-4" />
-          </a>
-        ) : (
-          <span className="flex min-h-11 items-center justify-center rounded-md border border-[#d6ded5] bg-[#f7f9f5] text-sm font-bold text-[#64736c]">{t.card.userSupplied}</span>
-        )}
-      </div>
-    </article>
   );
 }
 
@@ -2080,58 +2253,127 @@ function HoloCardArt({
   );
 }
 
-function CandidateRow({ listing, onAsk }: { listing: NormalizedListing; onAsk: (listing: NormalizedListing) => void }) {
+function CandidateRow({
+  listing,
+  fallbackImageUrl,
+  marketPrice,
+  choice,
+  lead,
+  demoMode,
+  onAsk,
+}: {
+  listing: NormalizedListing;
+  fallbackImageUrl: string | null;
+  marketPrice: number | null;
+  choice: RankedChoice | null;
+  lead: boolean;
+  demoMode: boolean;
+  onAsk: (listing: NormalizedListing) => void;
+}) {
   const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
-  const shippingLabel = formatShippingLabel(listing.shipping, t);
+  const roleScore = choice?.role === "lowest_landed_cost"
+    ? Math.round(calculatePriceComponent(total, marketPrice))
+    : choice?.role === "safest_listing"
+      ? listing.safetyScore
+      : choice?.role === "best_condition_evidence"
+        ? listing.evidenceCompletenessScore
+        : listing.valueScore;
+  const imageUrl = listing.imageUrl ?? fallbackImageUrl;
+
   return (
-    <article className="grid gap-3 border-t border-[#d6ded5] px-3 py-3 first:border-t-0 sm:grid-cols-[44px_minmax(0,1fr)_116px_86px_112px_76px] sm:items-center">
-      <div className="relative aspect-[2.5/3.5] w-11 overflow-hidden rounded border border-[#d6ded5] bg-[#e7efe8]">
-        {listing.imageUrl ? (
-          <Image src={listing.imageUrl} alt="" fill sizes="44px" className="object-contain" />
-        ) : (
-          <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-5 w-5" /></span>
-        )}
-      </div>
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="min-w-0 truncate text-sm font-bold text-[#24312f]">{listing.title}</p>
-          {listing.demo && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
-          {listing.userSupplied && <span className="shrink-0 rounded border border-[#c9d7ce] bg-[#fcfbf6] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
-          {listing.webDiscovered && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
+    <article
+      className={`result-row rounded-xl bg-[#fcfbf6] transition ${
+        lead
+          ? "border-2 border-[#2f6f73] p-4 shadow-[0_10px_28px_rgba(36,49,47,0.08)] sm:p-5"
+          : "border border-[#d6ded5] p-3.5 hover:border-[#9fb3a8] hover:shadow-[0_6px_18px_rgba(36,49,47,0.06)] sm:p-4"
+      }`}
+      title={choice?.reason}
+    >
+      <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3.5 sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:items-center">
+        <div className={`relative aspect-[2.5/3.5] overflow-hidden rounded-md border border-[#d6ded5] bg-[#e7efe8] ${lead ? "w-14" : "w-[52px]"}`}>
+          {imageUrl ? (
+            <Image src={imageUrl} alt="" fill sizes="56px" className="object-contain" />
+          ) : (
+            <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-5 w-5" /></span>
+          )}
         </div>
-        <p className="mt-1 text-xs text-[#64736c]">{t.candidate.priceLine(formatMoney(listing.price), shippingLabel)}</p>
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {lead && (
+              <span className="rounded-md bg-[#2f6f73] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
+                {roleToggleLabel(choice?.role ?? "best_value", t)}
+              </span>
+            )}
+            {listing.demo && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
+            {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
+            {listing.webDiscovered && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
+          </div>
+          <h3 className={`mt-1.5 min-w-0 font-bold leading-snug text-[#24312f] ${lead ? "font-serif text-lg sm:text-xl" : "truncate text-sm sm:text-[15px]"}`}>
+            {listing.title}
+          </h3>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <VerdictTag
+              verdict={sellerVerdict(listing, t)}
+              icon={IconSeal}
+              hint={`${sellerInputsLine(listing, t)} -> ${listing.sellerTrustScore}/100 (${t.card.thTrusted})`}
+            />
+            <VerdictTag
+              verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)}
+              icon={IconPhotoProof}
+              hint={`${evidenceInputsLine(listing, t)} -> ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
+            />
+            <VerdictTag
+              verdict={riskVerdict(listing, t)}
+              icon={IconCardCheck}
+              hint={`${riskFormula(t)} -> ${listing.safetyScore}/100 (${t.card.thRisk})`}
+            />
+            <span className="rounded-full border border-[#d6ded5] bg-[#f7f9f5] px-2 py-1 text-[10px] font-black text-[#64736c]">
+              {listing.marketplace} · {t.card.photos(listing.evidence.photoCount)}
+            </span>
+          </div>
+          {lead && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-[#64736c]">
+              <span>{roleToggleLabel(choice?.role ?? "best_value", t)} {roleScore}/100</span>
+              <button className="underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
+                {t.candidate.ask}
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="col-span-2 flex items-end justify-between gap-3 sm:col-span-1 sm:grid sm:min-w-[142px] sm:justify-items-end sm:gap-1.5">
+          <div className="sm:text-right">
+            <p className={`font-mono font-black text-[#24312f] ${lead ? "text-2xl" : "text-lg"}`}>{formatMoney(total)}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.06em] text-[#7a8982]">{totalLabel}</p>
+          </div>
+          {marketDelta !== null && !listing.demo && (
+            <p className={`text-xs font-black ${marketDelta <= 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}>
+              {marketDelta <= 0 ? "▼ " : "▲ "}
+              {marketDelta <= 0
+                ? t.card.underMarket(Math.round(Math.abs(marketDelta) * 100))
+                : t.card.aboveMarket(Math.round(marketDelta * 100))}
+            </p>
+          )}
+          {listing.url ? (
+            <a
+              className={`result-row-cta inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md bg-[#2f6f73] px-3 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${lead ? "is-lead" : ""}`}
+              href={listing.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => trackEvent("choice_opened", { choice_role: choice?.role ?? "candidate", marketplace: listing.marketplace, demo_mode: demoMode })}
+            >
+              {t.card.viewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <span className="text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
+          )}
+        </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2 sm:block">
-        <span className="sm:hidden text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">{t.candidate.risk}</span>
-        <VerdictTag
-          verdict={riskVerdict(listing, t)}
-          icon={IconCardCheck}
-          hint={`${sellerInputsLine(listing, t)} · ${evidenceInputsLine(listing, t)} -> ${listing.safetyScore}/100 (${t.card.thRisk})`}
-        />
-      </div>
-      <div className="text-sm font-bold text-[#52635c] sm:text-right">
-        <span className="sm:hidden text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">{t.candidate.photosHeader}: </span>
-        {t.card.photos(listing.evidence.photoCount)}
-      </div>
-      <div className="sm:text-right">
-        <p className="font-mono text-sm font-black text-[#2f6f73]">{formatMoney(total)}</p>
-        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">{totalLabel}</p>
-      </div>
-      <div className="sm:text-right">
-        <button
-          className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-2.5 text-xs font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
-          type="button"
-          title={t.candidate.askAbout(listing.title)}
-          onClick={() => onAsk(listing)}
-        >
-          <IconCardSearch className="h-3.5 w-3.5" />
-          {t.candidate.ask}
-        </button>
-      </div>
+      {lead && <VerdictMath listing={listing} marketPrice={marketPrice} />}
     </article>
   );
 }
@@ -2187,36 +2429,6 @@ function StatusPill({ status }: { status: "used" | "unavailable" | "missing" }) 
       ? "bg-[#fff0d5] text-[#8d6032]"
       : "bg-[#ecefeb] text-[#64736c]";
   return <span className={`rounded px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${className}`}>{t.status[status]}</span>;
-}
-
-function formatShippingLabel(shipping: number | null, t: Dict) {
-  if (shipping === null) return t.card.shippingUnknown;
-  return shipping > 0 ? t.card.shippingCost(formatMoney(shipping)) : t.card.freeShipping;
-}
-
-function ledgerHeaderMeta(listings: NormalizedListing[], excludedCount: number, generatedAt: string, t: Dict, lang: Lang) {
-  const sources = unique(listings.map((listing) => listing.marketplace)).join(", ") || t.result.noLiveCandidates;
-  const format = listings.length > 0 && listings.every((listing) => listing.raw)
-    ? t.result.rawSingles
-    : t.result.mixedListings;
-  const observedAt = listings[0]?.observedAt ?? generatedAt;
-  return t.result.ledgerMeta(sources, format, formatObservedShort(observedAt, generatedAt, lang), excludedCount);
-}
-
-function formatObservedShort(observedAt: string, generatedAt: string, lang: Lang) {
-  const observed = new Date(observedAt);
-  const generated = new Date(generatedAt);
-  if (Number.isNaN(observed.getTime())) return observedAt;
-
-  const sameDay = observed.toDateString() === generated.toDateString();
-  const locale = lang === "zh" ? "zh-CN" : "en-US";
-  const time = observed.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
-  if (sameDay) return lang === "zh" ? `今天 ${time}` : `${time} today`;
-  return observed.toLocaleString(locale, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-}
-
-function unique<T>(values: T[]) {
-  return [...new Set(values)];
 }
 
 function buildRequest(values: ComparisonForm, confirmedCardId?: string): ComparisonRequest {

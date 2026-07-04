@@ -418,6 +418,11 @@ a {
   transform: scaleX(1);
 }
 
+.result-row-cta {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .holo-card {
     will-change: transform;
@@ -425,6 +430,17 @@ a {
 
   .holo-hint {
     display: inline-flex;
+  }
+
+  .result-row-cta:not(.is-lead) {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+
+  .result-row:hover .result-row-cta,
+  .result-row:focus-within .result-row-cta {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
