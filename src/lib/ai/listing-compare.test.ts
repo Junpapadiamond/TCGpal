@@ -269,7 +269,7 @@ describe("listing comparison agent", () => {
     expect(rescued?.shipping).toBe(5);
     expect(response.warnings.some((warning) => /Tavily|HTTP 403|pasted listing/i.test(warning))).toBe(false);
     const ingestion = response.trace.find((step) => step.step === "source_ingestion");
-    expect(ingestion?.status).toBe("fallback");
+    expect(ingestion?.status).toBe("complete");
     expect(ingestion?.summary).toContain("Tavily Extract recovered stated facts");
   });
 

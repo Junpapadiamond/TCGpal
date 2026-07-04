@@ -500,7 +500,7 @@ async function ingestSourceListing(
       summary: usedTavilyFallback
         ? `The direct listing page was unavailable; Tavily Extract recovered stated facts from the exact pasted ${universal.marketplace} URL only.${extractionDetails}`
         : `Fetched the pasted ${universal.marketplace} listing you provided (single user-initiated fetch) and extracted its stated facts${universal.usedAi ? " with AI assistance" : " from structured page data"}.${extractionDetails}`,
-      status: usedTavilyFallback ? "fallback" : "complete",
+      status: "complete",
     });
     return { source: merged, universal };
   } catch (error) {
