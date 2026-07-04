@@ -70,6 +70,7 @@ const report = {
 describe("comparison question answering", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
   it("falls back to deterministic evidence when AI is unavailable", async () => {
@@ -144,5 +145,47 @@ describe("comparison question answering", () => {
     expect(answer.usedAi).toBe(false);
     expect(answer.answer).toContain("current recommendation");
     expect(answer.answer).toContain("82/100");
+  });
+
+  it("does not use Tavily for report-only ranking questions in auto mode", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("TAVILY_API_KEY", "test-key");
+    const fetchStub = vi.fn(async () => {
+      throw new Error("Tavily should not be called");
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    const answer = await answerComparisonQuestion(report, "why not this one?", "twelve", { webContext: "auto" });
+
+    expect(answer.webContextChecked).toBe(false);
+    expect(fetchStub).not.toHaveBeenCalled();
+    expect(answer.answer).toContain("The $12 listing");
+  });
+
+  it("returns separate Tavily citations for outside-context questions", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("TAVILY_API_KEY", "test-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      results: [
+        {
+          title: "Card Rush One Piece",
+          url: "https://www.cardrush-op.jp/",
+          content: "Japanese One Piece Card Game shop reference page.",
+          score: 0.9,
+        },
+      ],
+    }))));
+
+    const answer = await answerComparisonQuestion(report, "where else can I verify this card?", undefined, { webContext: "auto" });
+
+    expect(answer.usedAi).toBe(false);
+    expect(answer.webContextChecked).toBe(true);
+    expect(answer.webCitations).toHaveLength(1);
+    expect(answer.webCitations[0]).toMatchObject({
+      title: "Card Rush One Piece",
+      url: "https://www.cardrush-op.jp/",
+      source: "tavily_search",
+    });
+    expect(answer.answer).toContain("context only");
   });
 });

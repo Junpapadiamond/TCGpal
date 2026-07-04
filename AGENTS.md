@@ -34,6 +34,7 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - PriceCharting is optional secondary reference behind `PRICECHARTING_API_TOKEN`, not a transaction price.
 - Japan reference searches (Yahoo Auctions JP, Mercari JP, SNKRDUNK, and game-specific shop links) are shown as one-click outbound manual checks. They are not fetched, parsed, ranked, or counted as live source rows until an approved provider/API is connected.
 - Facebook, Reddit, Mercari, Whatnot, Japan marketplaces, local shops, and other connector-less sources join via paste-a-URL or the manual ledger until an approved provider/API is connected. Roadmap platform agents remain visible as skipped/not connected.
+- Tavily is optional test infrastructure behind `TAVILY_API_KEY`. Its first approved slot is the conversational assistant (`/api/agent/listing-compare/explain`) for cited web context on source-legitimacy, translation, manual-reference, and identity-help questions. Tavily citations must stay separate from listing evidence and must never feed the ranking core.
 - When no live source returns a single listing, labeled fixtures load with `demoMode:true`. Demo listings never show the per-listing vs-market read.
 - OpenAI is optional. Without it, the deterministic evidence summary remains usable.
 - The configured/default OpenAI-compatible model is `gpt-5.5`; `gpt-5.4` is the review/cheap fallback. The dated slug `gpt-5.5-2026-04-23` is not available on the current zjapi channel.
@@ -58,6 +59,10 @@ Allowed:
 - TCGCSV daily TCGplayer catalog/price dumps (`tcgcsv.com`) for the crosswalk, the TCGplayer source rows, and the market anchor with explicit freshness. Pokémon uses category `3`; One Piece uses category `68`. (Open legal question tracked in the PRD: whether a public app needs its own TCGplayer partner agreement — build unblocked, launch review pending.)
 - **One user-initiated fetch of exactly the listing URL the user pasted** (https, public hosts, robots.txt honored, size/time bounded). This is the paste-a-URL boundary: per-URL, on explicit user action — never crawling, never scheduled, never link-following.
 - PriceCharting API behind `PRICECHARTING_API_TOKEN` (optional secondary reference).
+- Tavily Search/Extract behind `TAVILY_API_KEY` for testing only in bounded contexts:
+  - `/explain` may use Tavily Search when the buyer asks for outside context such as "is this Japanese source legit?", "what does this JP title mean?", "where else can I verify this card?", or ambiguous Japanese promo/set identity help.
+  - Paste-a-URL extraction may test Tavily Extract only against the exact user-pasted public HTTPS URL, after the normal boundary checks, as a fallback when JSON-LD/meta extraction is insufficient.
+  - Japan/manual-reference discovery may use Tavily Search to surface pages to open manually (Card Rush, Yuyutei, SNKRDUNK, Yahoo Auctions, official/trusted references), but the result must be labeled as context/reference discovery, not fetched inventory or analyzed prices.
 - User-entered facts from other marketplaces.
 - Manual eBay sold-search links.
 
@@ -66,6 +71,8 @@ Not allowed:
 - Marketplace scraping, crawling, or browser automation inside product routes.
 - Server-side fetching of URLs the user did not explicitly paste.
 - Automated search/browse of Facebook, Mercari, Reddit, Whatnot, Yahoo Auctions JP, SNKRDUNK, Japanese shop pages, or other marketplaces without an approved/licensed provider (paste-a-URL covers single user-provided listings where robots allows it).
+- Tavily Crawl in product routes, scheduled jobs, or ranking paths.
+- Tavily Search/Extract as a proxy for automated marketplace inventory search, price scraping, seller-history scraping, sold-comps claims, or ranking Mercari/Facebook/Reddit/Whatnot/eBay/Japan marketplace listings.
 - Claims that manual search links were fetched or analyzed.
 - Client-side API secrets.
 
@@ -78,6 +85,7 @@ The AI layer may:
 - Reconcile ambiguous structured evidence.
 - Explain why deterministic rankings differ.
 - Produce cautious, schema-shaped summaries.
+- Use Tavily citations for bounded assistant web context, translation, manual reference suggestions, and identity help when explicitly routed through the web-context path.
 
 Deterministic TypeScript must own:
 
@@ -96,6 +104,7 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 - `src/lib/comparison/*`: fixtures, scoring, landed-cost math, deterministic ranking (incl. `exclusionPatterns` and the `MARKET_FLOOR_RATIO` below-market gate), and the cross-platform **platform-agent registry + fan-out** (`platforms.ts`).
 - `src/lib/comparison/platforms.ts`: each marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation, so the system "works as long as you have the APIs" — adding a marketplace is one adapter. eBay and TCGplayer/TCGCSV are live today; other roadmap agents stay skipped/manual-ledger until an approved API/provider is connected.
 - `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), One Piece catalog, TCGCSV/TCGplayer, paste-a-URL universal listing, and PriceCharting adapters.
+- `src/lib/external/tavily.ts`: bounded Tavily Search/Extract helper for cited assistant context and exact-URL extraction experiments. No crawl support; no ranking-core integration.
 - `src/lib/ai/agent/harness.ts`: provider-agnostic `runAgent` loop (model decides tools, deterministic execute, budget hard-stop).
 - `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an allocator key is set, exposes the same platform adapters to `runAgent` as tools (Chat Completions by default, Responses when `COMPARISON_AGENT_API=responses`). The allocator defaults to `gpt-5.5` and can fall back to `gpt-5.4`; deterministic fan-out is always the floor, and a configured platform the model skips is still searched deterministically. Main narrative/model enrichment can use `OPENAI_WIRE_API=responses` or `OPENAI_WIRE_API=chat` for OpenAI-compatible providers.
 - `src/lib/comparison/japan-references.ts`: one-click Japan price/buy reference links. These are manual outbound checks only; they must never be counted as fetched inventory or analyzed prices.

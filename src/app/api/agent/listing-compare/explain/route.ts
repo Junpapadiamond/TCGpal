@@ -8,7 +8,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = comparisonQuestionRequestSchema.parse(body);
-    return NextResponse.json(await answerComparisonQuestion(parsed.report, parsed.question, parsed.targetListingId));
+    return NextResponse.json(
+      await answerComparisonQuestion(parsed.report, parsed.question, parsed.targetListingId, {
+        webContext: parsed.webContext,
+      }),
+    );
   } catch (error) {
     return NextResponse.json(
       {

@@ -298,12 +298,25 @@ export const comparisonQuestionRequestSchema = z.object({
   report: comparisonReportSchema,
   question: z.string().trim().min(1).max(500),
   targetListingId: z.string().trim().min(1).max(200).optional(),
+  // "auto" lets the assistant add cited web context for source legitimacy,
+  // translation, reference-discovery, and identity-help questions. Report/ranking
+  // questions remain report-only.
+  webContext: z.enum(["auto", "off", "force"]).default("off"),
+});
+
+export const webCitationSchema = z.object({
+  title: z.string().trim().min(1),
+  url: z.string().url(),
+  snippet: z.string().trim().default(""),
+  source: z.enum(["tavily_search", "tavily_extract"]),
 });
 
 export const comparisonQuestionResponseSchema = z.object({
   answer: z.string().trim().min(1),
   cautions: z.array(z.string()).default([]),
   usedAi: z.boolean().default(false),
+  webContextChecked: z.boolean().default(false),
+  webCitations: z.array(webCitationSchema).default([]),
 });
 
 export const listingRiskInputSchema = z.object({
@@ -382,6 +395,7 @@ export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
 export type ComparisonReport = z.infer<typeof comparisonReportSchema>;
 export type ComparisonQuestionResponse = z.infer<typeof comparisonQuestionResponseSchema>;
+export type WebCitation = z.infer<typeof webCitationSchema>;
 export type ComparisonTrace = z.infer<typeof comparisonTraceSchema>;
 export type ComparisonPlatformResult = z.infer<typeof comparisonPlatformResultSchema>;
 export type PlatformSourceMode = z.infer<typeof platformSourceModeSchema>;

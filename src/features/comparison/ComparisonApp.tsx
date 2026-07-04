@@ -1065,7 +1065,7 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
     setQaLoading(true);
     setQaError(null);
     try {
-      const requestBody = JSON.stringify({ report, question, targetListingId: targetListing?.id });
+      const requestBody = JSON.stringify({ report, question, targetListingId: targetListing?.id, webContext: "auto" });
       const requestInit = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1446,7 +1446,34 @@ function ComparisonQuestionBox({
       </div>
       {answer && (
         <div className="mt-4 rounded-md border border-[#c9d7ce] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
+          {answer.webContextChecked && (
+            <p className="mb-2 inline-flex items-center gap-2 rounded-md border border-[#d9c27b] bg-[#fff8dc] px-2.5 py-1 text-xs font-black uppercase tracking-[0.08em] text-[#6f5a22]">
+              <IconExternal className="h-3.5 w-3.5" />
+              {t.result.webContextChecked}
+            </p>
+          )}
           <p>{answer.answer}</p>
+          {answer.webCitations.length > 0 && (
+            <div className="mt-3 border-t border-[#d6ded5] pt-3">
+              <p className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.webSources}</p>
+              <ul className="mt-2 space-y-2">
+                {answer.webCitations.map((citation) => (
+                  <li key={citation.url}>
+                    <a
+                      className="inline-flex max-w-full items-center gap-1.5 font-bold text-[#2f6f73] underline-offset-4 hover:underline"
+                      href={citation.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span className="min-w-0 truncate">{citation.title}</span>
+                      <IconArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+                    </a>
+                    {citation.snippet && <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#64736c]">{citation.snippet}</p>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {answer.cautions.length > 0 && (
             <ul className="mt-3 space-y-2">
               {answer.cautions.map((caution) => (
