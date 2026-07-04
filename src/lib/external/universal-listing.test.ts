@@ -143,7 +143,7 @@ describe("universal paste-a-URL adapter", () => {
     expect(requestedBodies).toHaveLength(1);
     expect(requestedBodies[0]).toMatchObject({
       urls: ["https://www.mercari.com/us/item/mfallback/"],
-      extract_depth: "basic",
+      extract_depth: "advanced",
     });
   });
 
@@ -177,5 +177,92 @@ describe("universal paste-a-URL adapter", () => {
     expect(result.extractedCard.number).toBe("215/203");
     expect(result.notes.join(" ")).toContain("Direct fetch returned HTTP 403");
     expect(fetched).toContain("https://api.tavily.com/extract");
+  });
+
+  it("accepts harmless Tavily canonicalization while keeping the exact listing path", async () => {
+    vi.stubEnv("TAVILY_API_KEY", "tavily-test");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const fetcher = vi.fn(async (url: URL | RequestInfo) => {
+      const href = String(url);
+      if (href.endsWith("/robots.txt")) return new Response("User-agent: *\nAllow: /\n");
+      if (href === "https://api.tavily.com/extract") {
+        return new Response(JSON.stringify({
+          results: [{
+            // Tavily commonly strips www, a trailing slash, and tracking params.
+            url: "https://mercari.com/us/item/mcanonical",
+            title: "Tyranitar 135/193 Paldea Evolved Near Mint",
+            raw_content: "Price $5.00. Shipping $0.49. Front and back photos.",
+          }],
+          failed_results: [],
+        }));
+      }
+      return new Response("blocked", { status: 403 });
+    }) as unknown as typeof fetch;
+
+    const result = await fetchUniversalListing(
+      "https://www.mercari.com/us/item/mcanonical/?utm_source=share&ref=listing",
+      fetcher,
+    );
+
+    expect(result.listing.price).toBe(5);
+    expect(result.extractedCard.number).toBe("135/193");
+    expect(result.notes.join(" ")).toContain("Direct fetch returned HTTP 403");
+  });
+
+  it("rejects Tavily content when the returned listing path is different", async () => {
+    vi.stubEnv("TAVILY_API_KEY", "tavily-test");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const fetcher = vi.fn(async (url: URL | RequestInfo) => {
+      const href = String(url);
+      if (href.endsWith("/robots.txt")) return new Response("User-agent: *\nAllow: /\n");
+      if (href === "https://api.tavily.com/extract") {
+        return new Response(JSON.stringify({
+          results: [{
+            url: "https://www.mercari.com/us/item/mdifferent/",
+            title: "Wrong listing",
+            raw_content: "Price $1.00.",
+          }],
+          failed_results: [],
+        }));
+      }
+      return new Response("blocked", { status: 403 });
+    }) as unknown as typeof fetch;
+
+    await expect(fetchUniversalListing("https://www.mercari.com/us/item/mexpected/", fetcher))
+      .rejects.toThrow(/different URL/);
+  });
+
+  it("surfaces Tavily failed-result diagnostics after a blocked direct fetch", async () => {
+    vi.stubEnv("TAVILY_API_KEY", "tavily-test");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const fetcher = vi.fn(async (url: URL | RequestInfo) => {
+      const href = String(url);
+      if (href.endsWith("/robots.txt")) return new Response("User-agent: *\nAllow: /\n");
+      if (href === "https://api.tavily.com/extract") {
+        return new Response(JSON.stringify({
+          results: [],
+          failed_results: [{
+            url: "https://www.mercari.com/us/item/mfailed/",
+            error: "Unable to access the requested page",
+          }],
+        }));
+      }
+      return new Response("blocked", { status: 403 });
+    }) as unknown as typeof fetch;
+
+    await expect(fetchUniversalListing("https://www.mercari.com/us/item/mfailed/", fetcher))
+      .rejects.toThrow(/Unable to access the requested page/);
+  });
+
+  it("reports missing Tavily configuration after a blocked direct fetch", async () => {
+    vi.stubEnv("TAVILY_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const fetcher = vi.fn(async (url: URL | RequestInfo) => {
+      if (String(url).endsWith("/robots.txt")) return new Response("User-agent: *\nAllow: /\n");
+      return new Response("blocked", { status: 403 });
+    }) as unknown as typeof fetch;
+
+    await expect(fetchUniversalListing("https://www.mercari.com/us/item/mnoconfig/", fetcher))
+      .rejects.toThrow(/not configured/);
   });
 });

@@ -3,6 +3,7 @@ import type { WebCitation } from "@/lib/schemas";
 
 const TAVILY_BASE_URL = "https://api.tavily.com";
 const TAVILY_TIMEOUT_MS = 8000;
+const TAVILY_LISTING_TIMEOUT_MS = 20000;
 
 const contextBlockedDomains = [
   "ebay.com",
@@ -33,7 +34,10 @@ const tavilyExtractResultSchema = z.object({
 
 const tavilyExtractResponseSchema = z.object({
   results: z.array(tavilyExtractResultSchema).default([]),
-  failed_results: z.array(z.unknown()).default([]),
+  failed_results: z.array(z.object({
+    url: z.string().optional(),
+    error: z.string().optional(),
+  }).passthrough()).default([]),
 });
 
 export type TavilyWebContext = {
@@ -134,20 +138,30 @@ export async function extractTavilyListingPage({
       urls: [parsed.href],
       query,
       chunks_per_source: 3,
-      extract_depth: "basic",
+      // Marketplace pages are commonly JavaScript-rendered or bot-gated.
+      // Tavily documents advanced extraction as the higher-success path for
+      // embedded/JS content, so use it only for this explicit exact-URL fallback.
+      extract_depth: "advanced",
       format: "text",
       include_images: false,
       include_favicon: false,
-      timeout: Math.ceil(TAVILY_TIMEOUT_MS / 1000),
+      timeout: Math.ceil(TAVILY_LISTING_TIMEOUT_MS / 1000),
     },
     tavilyExtractResponseSchema,
     fetcher,
+    TAVILY_LISTING_TIMEOUT_MS,
   );
 
   const result = response.results[0];
-  if (!result?.url) return null;
+  if (!result?.url) {
+    const failure = cleanText(response.failed_results[0]?.error ?? "");
+    if (failure) throw new Error(`Tavily could not extract the exact URL: ${failure.slice(0, 180)}`);
+    return null;
+  }
   const resultUrl = parsePublicHttpsUrlOrNull(result.url);
-  if (!resultUrl || resultUrl.href !== parsed.href) return null;
+  if (!resultUrl || !isSameExactResource(parsed, resultUrl)) {
+    throw new Error("Tavily returned content for a different URL, so it was discarded.");
+  }
   const title = cleanText(result.title ?? parsed.hostname.replace(/^www\./, ""));
   const content = cleanText(result.raw_content ?? result.content ?? "");
   if (!title && !content) return null;
@@ -164,12 +178,13 @@ async function tavilyPost<T>(
   body: Record<string, unknown>,
   schema: z.ZodType<T>,
   fetcher: typeof fetch,
+  timeoutMs = TAVILY_TIMEOUT_MS,
 ): Promise<T> {
   const apiKey = process.env.TAVILY_API_KEY?.trim();
   if (!apiKey) throw new Error("Tavily is not configured.");
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TAVILY_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetcher(`${TAVILY_BASE_URL}/${path}`, {
       method: "POST",
@@ -194,6 +209,36 @@ async function tavilyPost<T>(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function isSameExactResource(expected: URL, received: URL) {
+  if (canonicalHost(expected) !== canonicalHost(received)) return false;
+  if (canonicalPath(expected.pathname) !== canonicalPath(received.pathname)) return false;
+  return canonicalSearch(expected) === canonicalSearch(received);
+}
+
+function canonicalHost(url: URL) {
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+  return `${hostname}${url.port ? `:${url.port}` : ""}`;
+}
+
+function canonicalPath(pathname: string) {
+  const withoutTrailingSlash = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return withoutTrailingSlash || "/";
+}
+
+function canonicalSearch(url: URL) {
+  const params = [...url.searchParams.entries()]
+    .filter(([key]) => !isTrackingParameter(key))
+    .sort(([leftKey, leftValue], [rightKey, rightValue]) =>
+      leftKey.localeCompare(rightKey) || leftValue.localeCompare(rightValue));
+  return new URLSearchParams(params).toString();
+}
+
+function isTrackingParameter(key: string) {
+  const normalized = key.toLowerCase();
+  return normalized.startsWith("utm_")
+    || ["fbclid", "gclid", "ref", "referrer", "source"].includes(normalized);
 }
 
 function toCitation(

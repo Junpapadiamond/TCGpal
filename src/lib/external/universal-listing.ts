@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
+import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { extractTavilyListingPage, isTavilyConfigured } from "@/lib/external/tavily";
 import type { ConditionClaim, Marketplace, SourceListing } from "@/lib/schemas";
+
+export { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 
 // R6: the paste-a-URL universal adapter. A user pastes one listing URL from any
 // marketplace; TCGpal performs a single user-initiated fetch of exactly that
@@ -31,27 +34,6 @@ export type UniversalListingResult = {
   notes: string[];
   usedAi: boolean;
 };
-
-const hostMarketplaces: Array<{ pattern: RegExp; marketplace: Marketplace }> = [
-  { pattern: /(^|\.)mercari\.com$/i, marketplace: "Mercari" },
-  { pattern: /(^|\.)mercari\.jp$/i, marketplace: "Mercari" },
-  { pattern: /(^|\.)snkrdunk\.com$/i, marketplace: "SNKRDUNK" },
-  { pattern: /(^|\.)yahoo\.co\.jp$/i, marketplace: "Yahoo Auctions JP" },
-  { pattern: /(^|\.)whatnot\.com$/i, marketplace: "Whatnot" },
-  { pattern: /(^|\.)tcgplayer\.com$/i, marketplace: "TCGplayer" },
-  { pattern: /(^|\.)facebook\.com$/i, marketplace: "Facebook" },
-  { pattern: /(^|\.)reddit\.com$/i, marketplace: "Reddit" },
-  { pattern: /(^|\.)ebay\.com$/i, marketplace: "eBay" },
-];
-
-export function detectMarketplaceFromUrl(value: string): Marketplace {
-  try {
-    const host = new URL(value).hostname.toLowerCase();
-    return hostMarketplaces.find(({ pattern }) => pattern.test(host))?.marketplace ?? "Other";
-  } catch {
-    return "Other";
-  }
-}
 
 export function isFetchableListingUrl(value: string): { ok: boolean; reason?: string } {
   let url: URL;
@@ -319,7 +301,9 @@ async function tavilyOnlyListing(
   notes: string[],
   reason: string,
 ): Promise<UniversalListingResult | null> {
-  if (!isTavilyConfigured()) return null;
+  if (!isTavilyConfigured()) {
+    throw new Error(`${reason} Tavily exact-URL extraction is not configured.`);
+  }
   try {
     const page = await extractTavilyListingPage({ url: rawUrl, fetcher });
     if (!page) return null;
@@ -327,8 +311,9 @@ async function tavilyOnlyListing(
     notes.push(`${reason} Tavily Extract filled missing listing facts from the exact pasted URL only.`);
     return buildUniversalListingResult(rawUrl, emptyDeterministicExtraction(), null, tavily, notes);
   } catch (error) {
-    notes.push(`Tavily exact-URL extraction unavailable (${error instanceof Error ? error.message.slice(0, 120) : "unknown error"}).`);
-    return null;
+    throw new Error(
+      `${reason} Tavily exact-URL extraction was unavailable (${error instanceof Error ? error.message.slice(0, 180) : "unknown error"}).`,
+    );
   }
 }
 

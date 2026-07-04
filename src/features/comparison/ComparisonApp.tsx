@@ -30,6 +30,7 @@ import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { calculatePriceComponent, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { isJapanReferenceLabel } from "@/lib/comparison/japan-references";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
+import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import {
@@ -292,9 +293,8 @@ function ComparisonExperience() {
   }, []);
 
   useEffect(() => {
-    if (/^https:\/\/(?:www\.|m\.)?ebay\.com\//i.test(sourceUrl)) {
-      form.setValue("marketplace", "eBay");
-    }
+    if (!sourceUrl.trim()) return;
+    form.setValue("marketplace", detectMarketplaceFromUrl(sourceUrl));
   }, [form, sourceUrl]);
 
   // Remember buyer delivery context so it does not need re-typing each session.

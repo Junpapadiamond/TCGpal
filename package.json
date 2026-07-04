@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check:tavily": "node scripts/check-tavily.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
