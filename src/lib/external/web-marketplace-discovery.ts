@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CardIdentityCandidate, Marketplace, WebDiscovery, WebDiscoveryProvider } from "@/lib/schemas";
+import type { CardIdentityCandidate, ConditionClaim, ListingSeed, Marketplace, WebDiscovery, WebDiscoveryProvider } from "@/lib/schemas";
 
 const SEARCH_TIMEOUT_MS = 5000;
 const RESULTS_PER_TARGET = 3;
@@ -220,8 +220,10 @@ function mergeRawDiscoveries(items: RawDiscovery[], discoveredAt: string): WebDi
       continue;
     }
 
+    const hash = hashUrl(item.url);
+    const priceHintUsd = parseUsdPrice(`${item.title} ${item.snippet}`);
     byUrl.set(item.url, {
-      id: `web-${hashUrl(item.url)}`,
+      id: `web-${hash}`,
       marketplace: item.target.marketplace,
       platformLabel: item.target.platformLabel,
       title: item.title,
@@ -230,6 +232,10 @@ function mergeRawDiscoveries(items: RawDiscovery[], discoveredAt: string): WebDi
       listingLike: looksListingLike(item.url),
       freshness: item.target.volatile ? "within_3_days" : "not_time_sensitive",
       availability: hasAvailableSignal(`${item.title} ${item.snippet}`) ? "available_hint" : "unknown",
+      snippet: item.snippet,
+      priceHintUsd,
+      rankedCandidateId: priceHintUsd !== null && looksListingLike(item.url) ? `web-listing-${hash}` : null,
+      evidenceLevel: priceHintUsd !== null && looksListingLike(item.url) ? "price_hint" : "link_only",
       discoveredAt,
       note: discoveryNote(item),
     });
@@ -238,6 +244,65 @@ function mergeRawDiscoveries(items: RawDiscovery[], discoveredAt: string): WebDi
   return [...byUrl.values()].sort((a, b) => {
     if (a.listingLike !== b.listingLike) return a.listingLike ? -1 : 1;
     return a.platformLabel.localeCompare(b.platformLabel);
+  });
+}
+
+export function webDiscoveriesToListingSeeds({
+  discoveries,
+  card,
+  observedAt,
+}: {
+  discoveries: WebDiscovery[];
+  card: CardIdentityCandidate;
+  observedAt: string;
+}): ListingSeed[] {
+  return discoveries.flatMap((discovery) => {
+    if (!discovery.listingLike || discovery.priceHintUsd === null || !discovery.rankedCandidateId) return [];
+    const evidenceText = `${discovery.title} ${discovery.snippet}`;
+    const exactNumber = normalizeLoose(evidenceText).includes(normalizeLoose(card.cardNumber));
+    return [{
+      id: discovery.rankedCandidateId,
+      marketplace: discovery.marketplace,
+      url: discovery.url,
+      title: discovery.title,
+      cardId: card.id,
+      matchConfidence: exactNumber ? "high" : "medium",
+      matchReasons: [
+        `Found by optional expanded search on ${discovery.platformLabel}.`,
+        "USD price was inferred from search-result title/snippet, not a direct marketplace API.",
+      ],
+      active: true,
+      raw: !isGradedOrSlabResult(evidenceText),
+      currency: "USD",
+      price: discovery.priceHintUsd,
+      shipping: null,
+      claimedCondition: inferConditionClaim(evidenceText),
+      imageUrl: card.imageUrl,
+      seller: {
+        feedbackPercentage: null,
+        feedbackCount: null,
+        returnsAccepted: null,
+        topRated: null,
+        buyerProtection: null,
+      },
+      evidence: {
+        photoCount: inferPhotoCount(evidenceText),
+        frontBackExplicit: /front\s*(?:and|&|\+)\s*back|back\s*(?:and|&|\+)\s*front/i.test(evidenceText),
+        closeupsExplicit: /corner|edge|close[\s-]?up/i.test(evidenceText),
+        surfaceExplicit: /surface|foil|video|glare/i.test(evidenceText),
+        identityExplicit: exactNumber,
+        substantiveConditionNotes: hasConditionSignal(evidenceText),
+        missing: [
+          "Search-result candidate: open the listing to verify price, availability, shipping, seller history, and photos.",
+          discovery.availability === "available_hint" ? "" : "No reliable availability hint was found in the search snippet.",
+          discovery.freshness === "within_3_days" ? "" : "Search result is not time-bounded; confirm the listing is current.",
+        ].filter(Boolean),
+      },
+      observedAt,
+      demo: false,
+      userSupplied: false,
+      webDiscovered: true,
+    }];
   });
 }
 
@@ -296,6 +361,34 @@ function hasSoldOrClosedSignal(value: string) {
 
 function hasAvailableSignal(value: string) {
   return /\b(available|for\s+sale|fs\b|in\s+stock|buy\s+now|shop|add\s+to\s+cart)\b|販売中|在庫あり/i.test(value);
+}
+
+function parseUsdPrice(value: string) {
+  const match = value.match(/(?:US\s*)?\$\s*([1-9][0-9,]*(?:\.\d{1,2})?)|\bUSD\s*([1-9][0-9,]*(?:\.\d{1,2})?)/i);
+  const raw = match?.[1] ?? match?.[2];
+  if (!raw) return null;
+  const parsed = Number(raw.replace(/,/g, ""));
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.round(parsed * 100) / 100;
+}
+
+function inferConditionClaim(value: string): ConditionClaim {
+  if (/\b(near\s*mint|nm|mint|like\s+new)\b/i.test(value)) return "Near Mint";
+  if (/\b(light(?:ly)?\s*played|lp)\b/i.test(value)) return "Lightly Played";
+  if (/\b(moderate(?:ly)?\s*played|mp)\b/i.test(value)) return "Moderately Played";
+  if (/\b(heavy|heavily\s*played|hp)\b/i.test(value)) return "Heavily Played";
+  if (/\b(damaged|damage|dmaged|crease|creased)\b/i.test(value)) return "Damaged";
+  return "Unknown";
+}
+
+function hasConditionSignal(value: string) {
+  return /\b(near\s*mint|nm|mint|like\s+new|light(?:ly)?\s*played|lp|moderate(?:ly)?\s*played|mp|heavy|heavily\s*played|hp|damaged|scratch|whitening|dent|crease|print line|clean)\b/i.test(value);
+}
+
+function inferPhotoCount(value: string) {
+  if (/\b(video|front\s*(?:and|&|\+)\s*back|corner|edge|close[\s-]?up|surface)\b/i.test(value)) return 2;
+  if (/\b(photo|photos|pictures|pics|images)\b/i.test(value)) return 1;
+  return 0;
 }
 
 function discoveryNote(item: RawDiscovery) {

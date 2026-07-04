@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { discoverWebMarketplaceLinks } from "@/lib/external/web-marketplace-discovery";
+import { discoverWebMarketplaceLinks, webDiscoveriesToListingSeeds } from "@/lib/external/web-marketplace-discovery";
 import type { CardIdentityCandidate } from "@/lib/schemas";
 
 const card: CardIdentityCandidate = {
@@ -40,14 +40,14 @@ describe("web marketplace discovery", () => {
       if (url.includes("exa.ai")) {
         return new Response(JSON.stringify({
           results: [
-            { title: "Mercari Umbreon VMAX Evolving Skies listing", url: "https://www.mercari.com/us/item/m123/" },
+            { title: "Mercari Umbreon VMAX Evolving Skies listing $1200", url: "https://www.mercari.com/us/item/m123/" },
             { title: "Wrong host should be filtered", url: "https://example.com/item/nope" },
           ],
         }));
       }
       return new Response(JSON.stringify({
         results: [
-          { title: "Mercari Umbreon VMAX Evolving Skies listing", url: "https://www.mercari.com/us/item/m123/" },
+          { title: "Mercari Umbreon VMAX Evolving Skies listing $1200", url: "https://www.mercari.com/us/item/m123/" },
         ],
       }));
     });
@@ -62,9 +62,26 @@ describe("web marketplace discovery", () => {
     expect(mercari).toBeTruthy();
     expect(mercari?.marketplace).toBe("Mercari");
     expect(mercari?.listingLike).toBe(true);
+    expect(mercari?.priceHintUsd).toBe(1200);
+    expect(mercari?.rankedCandidateId).toMatch(/^web-listing-/);
     expect(mercari?.providers.sort()).toEqual(["exa", "tavily"]);
     expect(mercari?.note).toContain("Experimental web discovery");
     expect(result.results.some((item) => item.url.includes("example.com"))).toBe(false);
+
+    const seeds = webDiscoveriesToListingSeeds({
+      discoveries: result.results,
+      card,
+      observedAt: "2026-07-04T00:00:00.000Z",
+    });
+    expect(seeds).toHaveLength(1);
+    expect(seeds[0]).toMatchObject({
+      marketplace: "Mercari",
+      price: 1200,
+      shipping: null,
+      userSupplied: false,
+      webDiscovered: true,
+    });
+    expect(seeds[0]?.matchReasons.join(" ")).toContain("expanded search");
   });
 
   it("keeps volatile social discoveries recent and filters sold signals", async () => {

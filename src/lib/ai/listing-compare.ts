@@ -30,6 +30,7 @@ import {
 import {
   discoverWebMarketplaceLinks,
   isWebMarketplaceDiscoveryConfigured,
+  webDiscoveriesToListingSeeds,
 } from "@/lib/external/web-marketplace-discovery";
 import { parsedCardQuerySchema, parseCardQuery, type ParsedCardQuery } from "@/lib/comparison/query-parser";
 import { runMarketSearch } from "@/lib/ai/agent/market-agent";
@@ -209,12 +210,18 @@ export async function runListingComparison(
   trace.push(...fanout.traces);
   const platformResults = fanout.results;
   const webDiscovery = await webDiscoveryPromise;
+  const webDiscoverySeeds = webDiscoveriesToListingSeeds({
+    discoveries: webDiscovery.results,
+    card: confirmedCard,
+    observedAt: generatedAt,
+  });
+  if (webDiscoverySeeds.length > 0) seeds.push(...webDiscoverySeeds);
   if (wantsWebDiscovery && (webDiscovery.results.length > 0 || webDiscovery.warnings.length > 0)) {
     trace.push({
       step: "web_marketplace_discovery",
       actor: "Exa/Tavily web discovery",
       summary: webDiscovery.results.length > 0
-        ? `Found ${webDiscovery.results.length} possible marketplace/reference links as optional cross-platform checks; they were not fetched, scored, or ranked.`
+        ? `Found ${webDiscovery.results.length} possible marketplace/reference links and ${webDiscoverySeeds.length} price-hint candidate${webDiscoverySeeds.length === 1 ? "" : "s"} for optional ranking.`
         : `No web-discovered marketplace links were added (${webDiscovery.warnings.join("; ") || "no results"}).`,
       status: webDiscovery.results.length > 0 ? "complete" : "fallback",
     });
@@ -228,7 +235,7 @@ export async function runListingComparison(
     warnings.push(`TCGplayer prices are more than 48 hours old (as of ${formatAnchorDate(confirmedCard.marketAsOf)}). Treat the market reference with extra care.`);
   }
 
-  if (fanout.seeds.length === 0) {
+  if (fanout.seeds.length === 0 && webDiscoverySeeds.length === 0) {
     // No live source produced a single listing (nothing configured, or every
     // configured source failed or found no match) — fall back to labeled demo
     // inventory the buyer cannot mistake for real offers, rather than masking

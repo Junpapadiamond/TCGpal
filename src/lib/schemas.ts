@@ -228,6 +228,10 @@ export const normalizedListingSchema = z.object({
   // True for listings the buyer supplied (pasted URL, manual entry) rather than a
   // live platform search — labeled "user-added" in the ledger.
   userSupplied: z.boolean().default(false),
+  // True for approximate candidates inferred from the optional Exa/Tavily
+  // expanded-search lane. They rank only when a USD price hint exists and stay
+  // visibly distinct from official platform inventory.
+  webDiscovered: z.boolean().default(false),
 });
 
 export const rankedChoiceRoleSchema = z.enum([
@@ -294,6 +298,10 @@ export const webDiscoverySchema = z.object({
   listingLike: z.boolean().default(false),
   freshness: z.enum(["within_3_days", "unknown", "not_time_sensitive"]).default("unknown"),
   availability: z.enum(["available_hint", "unknown"]).default("unknown"),
+  snippet: z.string().trim().default(""),
+  priceHintUsd: z.number().min(0).nullable().default(null),
+  rankedCandidateId: z.string().nullable().default(null),
+  evidenceLevel: z.enum(["price_hint", "link_only"]).default("link_only"),
   discoveredAt: z.string(),
   note: z.string(),
 });
@@ -401,7 +409,8 @@ export type ListingSeed = Omit<
   | "trustNotes"
   | "eligible"
   | "exclusionReasons"
->;
+  | "webDiscovered"
+> & { webDiscovered?: boolean };
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;

@@ -169,6 +169,43 @@ describe("listing comparison agent", () => {
     expect(response.trace.some((step) => step.step === "web_marketplace_discovery")).toBe(false);
   });
 
+  it("adds price-hint expanded discoveries to the deterministic ranking", async () => {
+    vi.stubEnv("EXA_API_KEY", "exa-test");
+    vi.stubEnv("TAVILY_API_KEY", "");
+    vi.stubEnv("WEB_DISCOVERY", "1");
+    const expandedFetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("api.exa.ai")) {
+        const body = JSON.parse(String(init?.body ?? "{}")) as { includeDomains?: string[] };
+        const domains = body.includeDomains ?? [];
+        return new Response(JSON.stringify({
+          results: domains.includes("mercari.com")
+            ? [{
+              title: "Mercari Umbreon VMAX 215/203 Evolving Skies Near Mint $1200",
+              url: "https://www.mercari.com/us/item/m123",
+              text: "Available raw single. Front and back photos shown.",
+            }]
+            : [],
+        }));
+      }
+      return fetcher(input);
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison({
+      ...request,
+      webDiscoveryMode: "expanded",
+    }, { fetcher: expandedFetcher, now: () => new Date("2026-07-04T00:00:00.000Z") });
+
+    const webCandidate = response.candidates.find((candidate) => candidate.webDiscovered);
+    expect(webCandidate).toBeTruthy();
+    expect(webCandidate?.marketplace).toBe("Mercari");
+    expect(webCandidate?.price).toBe(1200);
+    expect(webCandidate?.shipping).toBeNull();
+    expect(response.rankedChoices.some((choice) => choice.listingId === webCandidate?.id)).toBe(true);
+    expect(response.webDiscoveries.some((discovery) => discovery.rankedCandidateId === webCandidate?.id)).toBe(true);
+    expect(response.trace.find((step) => step.step === "web_marketplace_discovery")?.summary).toContain("price-hint candidate");
+  });
+
   it("keeps optional/by-design degradations out of the result banner, in the trace only", async () => {
     // PriceCharting (optional reference pricing) and the AI->deterministic narrative
     // fallback are expected degradations, not live-data failures the buyer must act

@@ -34,6 +34,7 @@ function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
     observedAt: "2026-07-04T00:00:00.000Z",
     demo: false,
     userSupplied: false,
+    webDiscovered: false,
     ...overrides,
   };
 }

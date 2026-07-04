@@ -1508,6 +1508,16 @@ function WebDiscoveryPanel({ discoveries }: { discoveries: ComparisonReport["web
                   {t.result.webDiscoveryAvailable}
                 </span>
               )}
+              {discovery.rankedCandidateId && (
+                <span className="rounded border border-[#c9d7ce] bg-[#e7efe8] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
+                  {t.result.webDiscoveryRanked}
+                </span>
+              )}
+              {discovery.priceHintUsd !== null && (
+                <span className="rounded border border-[#d9c27b] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#8d6032]">
+                  {formatMoney(discovery.priceHintUsd)}
+                </span>
+              )}
             </span>
           </a>
         ))}
@@ -1787,8 +1797,10 @@ function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; mar
 function RecommendationBody({ choice, listing, demoMode, marketPrice, recommended }: { choice: RankedChoice; listing: NormalizedListing; demoMode: boolean; marketPrice: number | null; recommended: boolean }) {
   const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const shipping = listing.shipping ?? 0;
   const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
+  const totalLabel = listing.shipping === null
+    ? t.card.estBeforeShipping
+    : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
 
   return (
     <article className="choice-card min-w-0 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] p-5 shadow-[0_18px_40px_rgba(36,49,47,0.06)] sm:p-6">
@@ -1803,12 +1815,15 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
         {listing.userSupplied && (
           <span className="rounded-md border border-[#c9d7ce] bg-[#f7f9f5] px-2 py-0.5 text-xs font-bold text-[#52635c]">{t.card.userAdded}</span>
         )}
+        {listing.webDiscovered && (
+          <span className="rounded-md border border-[#e2c879] bg-[#fff8dc] px-2 py-0.5 text-xs font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>
+        )}
       </div>
       <h3 className="mt-2 line-clamp-2 font-serif text-2xl font-bold leading-tight text-[#2f6f73]">{listing.title}</h3>
 
       <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
         <span className="font-mono text-3xl font-black text-[#24312f]">{formatMoney(total)}</span>
-        <span className="pb-1 text-xs font-bold uppercase tracking-[0.08em] text-[#64736c]">{listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded}</span>
+        <span className="pb-1 text-xs font-bold uppercase tracking-[0.08em] text-[#64736c]">{totalLabel}</span>
         {marketDelta !== null && !listing.demo && (
           <span className={`mb-0.5 inline-flex items-center rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.05em] ${marketDelta <= 0.02 ? "bg-[#dcecdf] text-[#2f6f73]" : marketDelta <= 0.15 ? "bg-[#fff0d5] text-[#8d6032]" : "bg-[#f6dcd0] text-[#9a4a2c]"}`}>
             {marketDelta <= 0 ? t.card.underMarket(Math.round(Math.abs(marketDelta) * 100)) : t.card.aboveMarket(Math.round(marketDelta * 100))}
@@ -1818,7 +1833,7 @@ function RecommendationBody({ choice, listing, demoMode, marketPrice, recommende
       <p className="mt-1 text-xs text-[#64736c]">
         {t.card.priceBreakdown(
           formatMoney(listing.price),
-          formatShippingLabel(shipping, t),
+          formatShippingLabel(listing.shipping, t),
           listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
         )}
       </p>
@@ -1918,10 +1933,11 @@ function HoloCardArt({
 
 function CandidateRow({ listing, onAsk }: { listing: NormalizedListing; onAsk: (listing: NormalizedListing) => void }) {
   const t = useT();
-  const shipping = listing.shipping ?? 0;
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const totalLabel = listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
-  const shippingLabel = formatShippingLabel(shipping, t);
+  const totalLabel = listing.shipping === null
+    ? t.card.estBeforeShipping
+    : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
+  const shippingLabel = formatShippingLabel(listing.shipping, t);
   return (
     <article className="grid gap-3 border-t border-[#d6ded5] px-3 py-3 first:border-t-0 sm:grid-cols-[44px_minmax(0,1fr)_116px_86px_112px_76px] sm:items-center">
       <div className="relative aspect-[2.5/3.5] w-11 overflow-hidden rounded border border-[#d6ded5] bg-[#e7efe8]">
@@ -1936,6 +1952,7 @@ function CandidateRow({ listing, onAsk }: { listing: NormalizedListing; onAsk: (
           <p className="min-w-0 truncate text-sm font-bold text-[#24312f]">{listing.title}</p>
           {listing.demo && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
           {listing.userSupplied && <span className="shrink-0 rounded border border-[#c9d7ce] bg-[#fcfbf6] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
+          {listing.webDiscovered && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
         </div>
         <p className="mt-1 text-xs text-[#64736c]">{t.candidate.priceLine(formatMoney(listing.price), shippingLabel)}</p>
       </div>
@@ -2023,7 +2040,8 @@ function StatusPill({ status }: { status: "used" | "unavailable" | "missing" }) 
   return <span className={`rounded px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${className}`}>{t.status[status]}</span>;
 }
 
-function formatShippingLabel(shipping: number, t: Dict) {
+function formatShippingLabel(shipping: number | null, t: Dict) {
+  if (shipping === null) return t.card.shippingUnknown;
   return shipping > 0 ? t.card.shippingCost(formatMoney(shipping)) : t.card.freeShipping;
 }
 
