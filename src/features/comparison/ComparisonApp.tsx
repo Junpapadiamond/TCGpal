@@ -43,6 +43,7 @@ import {
   type NormalizedListing,
   type RankedChoice,
   type TcgGame,
+  type WebDiscovery,
 } from "@/lib/schemas";
 
 const marketplaces: Marketplace[] = [
@@ -258,6 +259,7 @@ function ComparisonExperience() {
   const [refineOpen, setRefineOpen] = useState(false);
   const [listingOpen, setListingOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [comparingDiscoveryId, setComparingDiscoveryId] = useState<string | null>(null);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
 
   const heroQuery = useWatch({ control: form.control, name: "heroQuery" });
@@ -448,6 +450,101 @@ function ComparisonExperience() {
       trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function compareWebDiscovery(discovery: WebDiscovery) {
+    if (loading || !report?.confirmedCard) return;
+    const confirmedCard = report.confirmedCard;
+    const cardQuery = `${confirmedCard.name} ${confirmedCard.setCode} ${confirmedCard.cardNumber}`.trim();
+    const currentValues = form.getValues();
+    const baseRequest = pendingRequest ?? buildRequest(currentValues, confirmedCard.id);
+    const request: ComparisonRequest = {
+      ...baseRequest,
+      query: baseRequest.query || cardQuery,
+      sourceListing: {
+        marketplace: discovery.marketplace,
+        url: discovery.url,
+        title: discovery.title,
+        description: discovery.snippet,
+        price: discovery.priceHintUsd,
+        shipping: null,
+        claimedCondition: "Unknown",
+        active: true,
+        seller: {
+          feedbackPercentage: null,
+          feedbackCount: null,
+          returnsAccepted: null,
+          topRated: null,
+          buyerProtection: null,
+        },
+        evidence: {
+          photoCount: 0,
+          frontBackExplicit: false,
+          closeupsExplicit: false,
+          surfaceExplicit: false,
+          identityExplicit: Boolean(confirmedCard.cardNumber && discovery.title.includes(confirmedCard.cardNumber)),
+          substantiveConditionNotes: false,
+          missing: [],
+        },
+      },
+      cardHint: {
+        ...baseRequest.cardHint,
+        name: confirmedCard.name,
+        setCode: confirmedCard.setCode,
+        cardNumber: confirmedCard.cardNumber,
+        language: confirmedCard.language,
+        variant: confirmedCard.variant ?? "",
+        gradingClaim: "",
+      },
+      confirmedCardId: confirmedCard.id,
+      webDiscoveryMode: "off",
+    };
+
+    form.setValue("url", discovery.url);
+    form.setValue("marketplace", discovery.marketplace);
+    form.setValue("listingTitle", discovery.title);
+    form.setValue("description", discovery.snippet);
+    form.setValue("price", discovery.priceHintUsd === null ? "" : String(discovery.priceHintUsd));
+    form.setValue("shipping", "");
+    form.setValue("cardName", confirmedCard.name);
+    form.setValue("setCode", confirmedCard.setCode);
+    form.setValue("cardNumber", confirmedCard.cardNumber);
+    if (!currentValues.heroQuery.trim()) form.setValue("heroQuery", cardQuery);
+    form.setValue("expandedWebDiscovery", false);
+
+    setPendingRequest(request);
+    setLoading(true);
+    setError(null);
+    setFeedbackSent(false);
+    setComparingDiscoveryId(discovery.id);
+    const startedAt = Date.now();
+    trackEvent("second_comparison_started", { marketplace: discovery.marketplace });
+    trackEvent("source_detected", { marketplace: discovery.marketplace });
+    if (discovery.marketplace !== "eBay") {
+      trackEvent("manual_candidate_added", { marketplace: discovery.marketplace });
+    }
+
+    try {
+      const parsed = await requestComparisonReport(request, t.error.temporary);
+      setReport(parsed);
+      const duration = Date.now() - startedAt;
+      trackEvent("comparison_completed", {
+        marketplace: discovery.marketplace,
+        status: parsed.status,
+        demo_mode: parsed.demoMode,
+        candidate_count: parsed.candidates.length,
+        duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
+      });
+      window.requestAnimationFrame(() => {
+        document.getElementById("comparison-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : t.error.temporary);
+      trackEvent("comparison_failed", { marketplace: discovery.marketplace });
+    } finally {
+      setLoading(false);
+      setComparingDiscoveryId(null);
     }
   }
 
@@ -823,7 +920,13 @@ function ComparisonExperience() {
           <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
         )}
         {report && report.status !== "needs_confirmation" && !loading && (
-          <ComparisonResult report={report} feedbackSent={feedbackSent} onFeedback={sendFeedback} />
+          <ComparisonResult
+            report={report}
+            feedbackSent={feedbackSent}
+            onFeedback={sendFeedback}
+            onCompareDiscovery={compareWebDiscovery}
+            comparingDiscoveryId={comparingDiscoveryId}
+          />
         )}
       </div>
     </main>
@@ -1090,7 +1193,19 @@ function IdentityCard({ identity, onConfirm, titleAs }: { identity: CardIdentity
   );
 }
 
-function ComparisonResult({ report, feedbackSent, onFeedback }: { report: ComparisonReport; feedbackSent: boolean; onFeedback: (changedDecision: boolean) => void }) {
+function ComparisonResult({
+  report,
+  feedbackSent,
+  onFeedback,
+  onCompareDiscovery,
+  comparingDiscoveryId,
+}: {
+  report: ComparisonReport;
+  feedbackSent: boolean;
+  onFeedback: (changedDecision: boolean) => void;
+  onCompareDiscovery: (discovery: WebDiscovery) => void;
+  comparingDiscoveryId: string | null;
+}) {
   const t = useT();
   const { lang } = useLang();
   const listingMap = useMemo(() => new Map(report.candidates.map((candidate) => [candidate.id, candidate])), [report.candidates]);
@@ -1336,7 +1451,13 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
             onQuestionChange={setQaQuestion}
             onAsk={askQuestion}
           />
-          {webDiscoveries.length > 0 && <WebDiscoveryPanel discoveries={webDiscoveries} />}
+          {webDiscoveries.length > 0 && (
+            <WebDiscoveryPanel
+              discoveries={webDiscoveries}
+              onCompare={onCompareDiscovery}
+              comparingDiscoveryId={comparingDiscoveryId}
+            />
+          )}
           {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
           <section className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <p className="eyebrow">
@@ -1464,7 +1585,15 @@ function JapanReferencePanel({ references }: { references: ComparisonReport["ref
   );
 }
 
-function WebDiscoveryPanel({ discoveries }: { discoveries: ComparisonReport["webDiscoveries"] }) {
+function WebDiscoveryPanel({
+  discoveries,
+  onCompare,
+  comparingDiscoveryId,
+}: {
+  discoveries: ComparisonReport["webDiscoveries"];
+  onCompare: (discovery: WebDiscovery) => void;
+  comparingDiscoveryId: string | null;
+}) {
   const t = useT();
   return (
     <section className="rounded-md border border-[#e2c879] bg-[#fff8dc] p-5">
@@ -1475,23 +1604,27 @@ function WebDiscoveryPanel({ discoveries }: { discoveries: ComparisonReport["web
       <p className="mt-3 text-sm leading-6 text-[#6f5a22]">{t.result.webDiscoveryBody}</p>
       <div className="mt-4 grid gap-2">
         {discoveries.slice(0, 12).map((discovery) => (
-          <a
+          <article
             key={discovery.id}
-            className="block rounded-md border border-[#d9c27b] bg-[#fcfbf6] px-3 py-2 text-sm text-[#52635c] transition hover:border-[#b88a28]"
-            href={discovery.url}
-            target="_blank"
-            rel="noreferrer"
-            title={discovery.note}
+            className="rounded-md border border-[#d9c27b] bg-[#fcfbf6] px-3 py-2 text-sm text-[#52635c]"
           >
-            <span className="flex items-start justify-between gap-3">
-              <span className="min-w-0">
-                <span className="block text-[10px] font-black uppercase tracking-[0.09em] text-[#8d6032]">
-                  {discovery.platformLabel} · {discovery.listingLike ? t.result.webDiscoveryPossibleListing : t.result.webDiscoveryReference}
+            <a
+              className="block transition hover:text-[#2f6f73]"
+              href={discovery.url}
+              target="_blank"
+              rel="noreferrer"
+              title={discovery.note}
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-black uppercase tracking-[0.09em] text-[#8d6032]">
+                    {discovery.platformLabel} · {discovery.listingLike ? t.result.webDiscoveryPossibleListing : t.result.webDiscoveryReference}
+                  </span>
+                  <span className="mt-1 line-clamp-2 font-bold leading-5 text-[#2f6f73]">{discovery.title}</span>
                 </span>
-                <span className="mt-1 line-clamp-2 font-bold leading-5 text-[#2f6f73]">{discovery.title}</span>
+                <IconArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
               </span>
-              <IconArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
-            </span>
+            </a>
             <span className="mt-2 flex flex-wrap gap-1.5">
               {discovery.providers.map((provider) => (
                 <span key={provider} className="rounded border border-[#d9c27b] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#8d6032]">
@@ -1519,7 +1652,23 @@ function WebDiscoveryPanel({ discoveries }: { discoveries: ComparisonReport["web
                 </span>
               )}
             </span>
-          </a>
+            {discovery.listingLike && (
+              <button
+                className="mt-3 flex min-h-9 w-full items-center justify-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-3 py-2 text-xs font-black uppercase tracking-[0.06em] text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#dcecdf] disabled:cursor-not-allowed disabled:opacity-60"
+                type="button"
+                disabled={comparingDiscoveryId !== null}
+                onClick={() => onCompare(discovery)}
+                title={t.result.webDiscoveryCompareTitle}
+              >
+                {comparingDiscoveryId === discovery.id ? (
+                  <IconSpinner className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <IconCardCheck className="h-3.5 w-3.5" />
+                )}
+                {comparingDiscoveryId === discovery.id ? t.result.webDiscoveryCompareLoading : t.result.webDiscoveryCompare}
+              </button>
+            )}
+          </article>
         ))}
       </div>
     </section>
