@@ -146,4 +146,36 @@ describe("universal paste-a-URL adapter", () => {
       extract_depth: "basic",
     });
   });
+
+  it("uses Tavily Extract when the exact page fetch is robots-allowed but HTTP-blocked", async () => {
+    vi.stubEnv("TAVILY_API_KEY", "tavily-test");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const fetched: string[] = [];
+    const fetcher = vi.fn(async (url: URL | RequestInfo, init?: RequestInit) => {
+      const href = String(url);
+      fetched.push(href);
+      if (href.endsWith("/robots.txt")) return new Response("User-agent: *\nAllow: /\n");
+      if (href === "https://api.tavily.com/extract") {
+        const body = JSON.parse(String(init?.body ?? "{}")) as { urls?: string[] };
+        expect(body.urls).toEqual(["https://www.mercari.com/us/item/mblocked/"]);
+        return new Response(JSON.stringify({
+          results: [{
+            url: "https://www.mercari.com/us/item/mblocked/",
+            title: "Umbreon VMAX 215/203 Evolving Skies",
+            raw_content: "Asking $1,925.00. Shipping $0.00. NM. Photos included.",
+          }],
+          failed_results: [],
+        }));
+      }
+      return new Response("blocked", { status: 403 });
+    }) as unknown as typeof fetch;
+
+    const result = await fetchUniversalListing("https://www.mercari.com/us/item/mblocked/", fetcher);
+
+    expect(result.listing.price).toBe(1925);
+    expect(result.listing.shipping).toBe(0);
+    expect(result.extractedCard.number).toBe("215/203");
+    expect(result.notes.join(" ")).toContain("Direct fetch returned HTTP 403");
+    expect(fetched).toContain("https://api.tavily.com/extract");
+  });
 });

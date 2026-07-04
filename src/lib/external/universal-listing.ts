@@ -249,6 +249,7 @@ export async function fetchUniversalListing(
   const fetchable = isFetchableListingUrl(rawUrl);
   if (!fetchable.ok) throw new UniversalListingBlockedError(fetchable.reason ?? "This URL cannot be fetched.");
   const url = new URL(rawUrl);
+  const notes: string[] = [];
 
   if (!(await isPathAllowedByRobots(url, fetcher))) {
     throw new UniversalListingBlockedError(
@@ -268,11 +269,19 @@ export async function fetchUniversalListing(
       cache: "no-store",
       signal: controller.signal,
     });
+  } catch (error) {
+    const fallback = await tavilyOnlyListing(rawUrl, fetcher, notes, `Direct fetch unavailable (${errorMessage(error)}).`);
+    if (fallback) return fallback;
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
 
-  if (!response.ok) throw new Error(`The listing page responded with ${response.status}.`);
+  if (!response.ok) {
+    const fallback = await tavilyOnlyListing(rawUrl, fetcher, notes, `Direct fetch returned HTTP ${response.status}.`);
+    if (fallback) return fallback;
+    throw new Error(`The listing page responded with ${response.status}.`);
+  }
   const finalUrl = response.url ? new URL(response.url) : url;
   if (isBlockedHost(finalUrl.hostname)) {
     throw new UniversalListingBlockedError("The listing URL redirected to a non-public host and was discarded.");
@@ -280,7 +289,6 @@ export async function fetchUniversalListing(
 
   const html = (await response.text()).slice(0, MAX_HTML_BYTES);
   const deterministic = extractDeterministic(html);
-  const notes: string[] = [];
 
   let ai: AiExtraction | null = null;
   try {
@@ -302,6 +310,35 @@ export async function fetchUniversalListing(
     }
   }
 
+  return buildUniversalListingResult(rawUrl, deterministic, ai, tavily, notes);
+}
+
+async function tavilyOnlyListing(
+  rawUrl: string,
+  fetcher: typeof fetch,
+  notes: string[],
+  reason: string,
+): Promise<UniversalListingResult | null> {
+  if (!isTavilyConfigured()) return null;
+  try {
+    const page = await extractTavilyListingPage({ url: rawUrl, fetcher });
+    if (!page) return null;
+    const tavily = extractFromText(`${page.title}\n${page.content}`);
+    notes.push(`${reason} Tavily Extract filled missing listing facts from the exact pasted URL only.`);
+    return buildUniversalListingResult(rawUrl, emptyDeterministicExtraction(), null, tavily, notes);
+  } catch (error) {
+    notes.push(`Tavily exact-URL extraction unavailable (${error instanceof Error ? error.message.slice(0, 120) : "unknown error"}).`);
+    return null;
+  }
+}
+
+function buildUniversalListingResult(
+  rawUrl: string,
+  deterministic: DeterministicExtraction,
+  ai: AiExtraction | null,
+  tavily: TextExtraction | null,
+  notes: string[],
+): UniversalListingResult {
   // Deterministic page data (JSON-LD / meta tags) is source truth; the model
   // and exact-URL Tavily text only fill gaps the structured markup does not cover.
   const title = deterministic.title ?? ai?.title ?? tavily?.title ?? "";
@@ -353,6 +390,17 @@ export async function fetchUniversalListing(
     },
     notes,
     usedAi: ai !== null || tavily !== null,
+  };
+}
+
+function emptyDeterministicExtraction(): DeterministicExtraction {
+  return {
+    title: null,
+    price: null,
+    currency: null,
+    condition: null,
+    description: null,
+    photoCount: null,
   };
 }
 
@@ -559,4 +607,8 @@ function stringOrNull(value: unknown): string | null {
 function clampNullable(value: number | null | undefined, min: number, max: number) {
   if (value === null || value === undefined || !Number.isFinite(value)) return null;
   return Math.min(max, Math.max(min, value));
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
