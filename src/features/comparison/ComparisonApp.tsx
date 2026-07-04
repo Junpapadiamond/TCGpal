@@ -83,6 +83,8 @@ const conditions: ConditionClaim[] = [
 
 const LEDGER_PREVIEW_COUNT = 4;
 
+type LensRole = RankedChoice["role"];
+
 type ComparisonForm = {
   // The hero search box: one free-text query, deterministically parsed server-side
   // into game/name/collector number/language/variant/grading claim. This is the
@@ -101,6 +103,7 @@ type ComparisonForm = {
   shipping: string;
   postalCode: string;
   taxRatePercent: string;
+  preferredRole: LensRole;
   claimedCondition: ConditionClaim;
   desiredCondition: ConditionClaim;
   feedbackPercentage: string;
@@ -147,6 +150,7 @@ const defaultValues: ComparisonForm = {
   shipping: "",
   postalCode: "",
   taxRatePercent: "",
+  preferredRole: "best_value",
   claimedCondition: "Unknown",
   desiredCondition: "Near Mint",
   feedbackPercentage: "",
@@ -275,6 +279,7 @@ function ComparisonExperience() {
   const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
   const game = useWatch({ control: form.control, name: "game" });
   const desiredCondition = useWatch({ control: form.control, name: "desiredCondition" });
+  const preferredRole = useWatch({ control: form.control, name: "preferredRole" });
   const ph = game === "onePiece" ? t.form.phOnePiece : t.form.ph;
   const isManual = marketplace !== "eBay" || !sourceUrl.trim();
   // Live, client-side preview of the same deterministic parse the server runs —
@@ -612,98 +617,146 @@ function ComparisonExperience() {
           </div>
         </section>
 
-        <section id="compare" className="mt-4 rounded-md border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
-          <div className="px-5 pt-5 sm:px-7">
-            <p className="text-sm font-bold uppercase tracking-[0.08em] text-[#64736c]">{t.form.heading}</p>
-          </div>
-
+        <section id="compare" className="mt-4 rounded-xl border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
           <form className="p-5 sm:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
-            <label className="field">
-              <span className="sr-only">{t.form.heroSearchLabel}</span>
-              <div className="input-with-icon">
-                <IconCardSearch className="h-5 w-5" />
-                <input
-                  {...form.register("heroQuery")}
-                  placeholder={t.form.heroSearchPlaceholder}
-                  className="text-lg"
-                  autoFocus
-                />
-              </div>
-            </label>
-            {form.formState.errors.heroQuery && (
-              <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
-            )}
-            {heroPreview && (
-              <p className="mt-2 text-sm leading-6 text-[#64736c]">
-                <span className="font-bold text-[#2f6f73]">{t.form.heroParsedPrefix}</span>{" "}
-                {[
-                  heroPreview.game && t.form.games[heroPreview.game],
-                  heroPreview.name,
-                  heroPreview.cardNumber,
-                  heroPreview.language,
-                  heroPreview.variant,
-                  heroPreview.gradingClaim,
-                ].filter(Boolean).join(" · ") || t.form.heroParsedNothing}
-              </p>
-            )}
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+              <section className="rounded-xl border border-[#d6ded5] bg-[#fffef9] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepOne}</p>
+                  <StepPips active={1} total={2} label={t.form.stepOneOfTwo} />
+                </div>
+                <h2 className="mt-3 font-serif text-3xl font-black leading-none text-[#24312f] sm:text-4xl">
+                  {t.form.cardQuestion}
+                </h2>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-[#64736c]">{t.form.cardQuestionHelp}</p>
 
-            <div className="mt-5 flex flex-wrap items-end gap-x-6 gap-y-4">
-              <fieldset className="field grow sm:grow-0">
-                <legend className="sr-only">{t.form.gameLabel}</legend>
-                <span aria-hidden="true">{t.form.gameLabel}</span>
-                {/* Each game gets its own branded tile (TCGpal-drawn emblem +
-                    signature accent), Collectr-style, instead of a plain text
-                    toggle. The parser still auto-selects from the search text. */}
-                <div className="grid grid-cols-2 gap-2">
-                  {gameTiles.map(({ id, logo, accent, tint, logoZoom }) => {
-                    const active = game === id;
+                <label className="field mt-5">
+                  <span className="sr-only">{t.form.heroSearchLabel}</span>
+                  <div className="input-with-icon rounded-lg border-[#2f6f73] bg-[#fffef9] px-3 py-1.5 shadow-[0_0_0_3px_rgba(47,111,115,0.09)]">
+                    <IconCardSearch className="h-5 w-5 text-[#2f6f73]" />
+                    <input
+                      {...form.register("heroQuery")}
+                      placeholder={t.form.heroSearchPlaceholder}
+                      className="text-lg font-semibold"
+                      autoFocus
+                    />
+                  </div>
+                </label>
+                {form.formState.errors.heroQuery && (
+                  <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
+                )}
+
+                <ParsedPreview preview={heroPreview} game={game} t={t} />
+
+                <fieldset className="mt-5">
+                  <legend className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.gameLabel}</legend>
+                  {/* Each game gets its own branded tile (TCGpal-drawn emblem +
+                      signature accent), Collectr-style, instead of a plain text
+                      toggle. The parser still auto-selects from the search text. */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {gameTiles.map(({ id, logo, accent, tint, logoZoom }) => {
+                      const active = game === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          aria-pressed={active}
+                          aria-label={t.form.games[id]}
+                          onClick={() => form.setValue("game", id)}
+                          style={active ? { borderColor: accent, background: tint } : undefined}
+                          className={`relative flex min-h-16 flex-col items-center justify-center gap-1 overflow-hidden rounded-md border-2 px-3 py-2 transition ${
+                            active ? "shadow-[0_2px_0_rgba(36,49,47,0.12)]" : "border-[#d6ded5] bg-[#fffef9] opacity-70 grayscale-[0.35] hover:opacity-100 hover:grayscale-0"
+                          }`}
+                        >
+                          <span className="relative block h-8 w-full">
+                            <Image
+                              src={logo}
+                              alt={t.form.games[id]}
+                              fill
+                              sizes="176px"
+                              className="object-contain mix-blend-multiply"
+                              style={logoZoom !== 1 ? { transform: `scale(${logoZoom})` } : undefined}
+                            />
+                          </span>
+                          <span className="relative z-10 text-[11px] font-black uppercase tracking-[0.08em] text-[#24312f]">{t.form.games[id]}</span>
+                          {active && <IconCheck className="absolute right-2 top-2 h-4 w-4 shrink-0 text-[#24312f]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
+                <button
+                  className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-md px-1 text-sm font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4 hover:text-[#24585c]"
+                  type="button"
+                  aria-expanded={listingOpen}
+                  onClick={() => setListingOpen((current) => !current)}
+                >
+                  <IconLink className="h-4 w-4" />
+                  {t.form.pasteListingInstead}
+                </button>
+              </section>
+
+              <section className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
+                  <StepPips active={2} total={2} label={t.form.stepTwoOfTwo} />
+                </div>
+                <h2 className="mt-3 font-serif text-3xl font-black leading-none text-[#24312f]">
+                  {t.form.preferenceQuestion}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-[#64736c]">{t.form.preferenceHelp}</p>
+
+                <fieldset className="mt-4 grid gap-2">
+                  <legend className="sr-only">{t.form.preferenceQuestion}</legend>
+                  {(["best_value", "lowest_landed_cost", "safest_listing", "best_condition_evidence"] as LensRole[]).map((role) => {
+                    const active = preferredRole === role;
                     return (
-                      <button
-                        key={id}
-                        type="button"
-                        aria-pressed={active}
-                        aria-label={t.form.games[id]}
-                        onClick={() => form.setValue("game", id)}
-                        style={active ? { borderColor: accent, background: tint } : undefined}
-                        className={`relative flex min-h-20 flex-col items-center justify-center gap-1 overflow-hidden rounded-md border-2 px-4 py-2 transition sm:min-w-44 ${
-                          active ? "shadow-[0_2px_0_rgba(36,49,47,0.12)]" : "border-[#d6ded5] bg-[#fffef9] opacity-70 grayscale-[0.35] hover:opacity-100 hover:grayscale-0"
+                      <label
+                        key={role}
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
+                          active ? "border-2 border-[#2f6f73] bg-[#eef7ef]" : "border-[#d6ded5] bg-[#fcfbf6] hover:border-[#9fb3a8]"
                         }`}
                       >
-                        {/* multiply lets flat-white logo backgrounds melt into the paper tile */}
-                        <span className="relative block h-10 w-full">
-                          <Image
-                            src={logo}
-                            alt={t.form.games[id]}
-                            fill
-                            sizes="176px"
-                            className="object-contain mix-blend-multiply"
-                            style={logoZoom !== 1 ? { transform: `scale(${logoZoom})` } : undefined}
-                          />
+                        <input className="sr-only" type="radio" value={role} {...form.register("preferredRole")} />
+                        <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-[#2f6f73]" : "border-[#c9d7ce]"}`}>
+                          {active && <span className="h-2 w-2 rounded-full bg-[#2f6f73]" />}
                         </span>
-                        <span className="relative z-10 text-xs font-black uppercase tracking-[0.08em] text-[#24312f]">{t.form.games[id]}</span>
-                        {active && <IconCheck className="absolute right-2 top-2 h-4 w-4 shrink-0 text-[#24312f]" />}
-                      </button>
+                        <span>
+                          <span className="block text-sm font-black text-[#24312f]">{rolePreferenceLabel(role, t)}</span>
+                          <span className="mt-0.5 block text-xs leading-5 text-[#64736c]">{roleToggleHint(role, t)}</span>
+                        </span>
+                      </label>
                     );
                   })}
+                </fieldset>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  <label className="field">
+                    <span>{t.form.deliveryZip}</span>
+                    <div className="input-with-icon">
+                      <IconPin className="h-4 w-4" />
+                      <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
+                    </div>
+                    <small>{t.form.deliveryZipHelp}</small>
+                  </label>
+                  <label className="field">
+                    <span>{t.form.desiredCondition}</span>
+                    <select {...form.register("desiredCondition")}>
+                      {conditions.map((value) => (
+                        <option key={value} value={value}>
+                          {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
-              </fieldset>
-              <label className="field w-full max-w-56">
-                <span>{t.form.deliveryZip}</span>
-                <div className="input-with-icon">
-                  <IconPin className="h-4 w-4" />
-                  <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
-                </div>
-              </label>
-              <label className="field w-full max-w-56">
-                <span>{t.form.desiredCondition}</span>
-                <select {...form.register("desiredCondition")}>
-                  {conditions.map((value) => (
-                    <option key={value} value={value}>
-                      {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+
+                <button className="primary-button mt-5 w-full justify-center" type="submit" disabled={loading}>
+                  {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
+                  {loading ? t.form.submitLoading : t.form.submitIdle}
+                </button>
+              </section>
             </div>
 
             <button
@@ -747,20 +800,17 @@ function ComparisonExperience() {
               </div>
             )}
 
-            <button
-              className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
-              type="button"
-              aria-expanded={listingOpen}
-              onClick={() => setListingOpen((current) => !current)}
-            >
-              <span className="flex items-center gap-2">
-                <IconLink className="h-4 w-4 text-[#2f6f73]" />
-                {t.form.listingToggle}
-              </span>
-              <IconChevronDown className={`h-4 w-4 transition ${listingOpen ? "rotate-180" : ""}`} />
-            </button>
             {listingOpen && (
             <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">
+                  <IconLink className="h-4 w-4 text-[#2f6f73]" />
+                  {t.form.listingToggle}
+                </p>
+                <button className="text-xs font-black text-[#2f6f73] hover:text-[#24585c]" type="button" onClick={() => setListingOpen(false)}>
+                  {t.header.closeSearch}
+                </button>
+              </div>
               <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
                 <label className="field">
                   <span>{t.form.listingUrl}</span>
@@ -924,12 +974,6 @@ function ComparisonExperience() {
             </div>
             )}
 
-            <div className="mt-6 flex justify-end">
-              <button className="primary-button shrink-0" type="submit" disabled={loading}>
-                {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-                {loading ? t.form.submitLoading : t.form.submitIdle}
-              </button>
-            </div>
           </form>
         </section>
 
@@ -945,6 +989,7 @@ function ComparisonExperience() {
         {report && report.status !== "needs_confirmation" && !loading && (
           <ComparisonResult
             report={report}
+            preferredRole={preferredRole}
             feedbackSent={feedbackSent}
             onFeedback={sendFeedback}
             onCompareDiscovery={compareWebDiscovery}
@@ -1069,6 +1114,72 @@ function Promise({ icon: Icon, label }: { icon: IconComponent; label: string }) 
       <Icon className="h-3.5 w-3.5 text-[#2f6f73]" />
       {label}
     </span>
+  );
+}
+
+function StepPips({ active, total, label }: { active: number; total: number; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5" aria-label={label}>
+      {Array.from({ length: total }, (_, index) => (
+        <span
+          key={index}
+          className={`h-1.5 w-7 rounded-full ${index < active ? "bg-[#2f6f73]" : "bg-[#d6ded5]"}`}
+          aria-hidden="true"
+        />
+      ))}
+      <span className="ml-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{label}</span>
+    </span>
+  );
+}
+
+function ParsedPreview({
+  preview,
+  game,
+  t,
+}: {
+  preview: ReturnType<typeof parseCardQuery> | null;
+  game: TcgGame;
+  t: Dict;
+}) {
+  if (!preview) {
+    return <p className="mt-3 text-sm leading-6 text-[#7a8982]">{t.form.heroParsedNothing}</p>;
+  }
+
+  const chips = [
+    preview.game && { label: t.form.games[preview.game], tone: "blue" },
+    preview.name && { label: preview.name, tone: "green" },
+    preview.cardNumber && { label: `#${preview.cardNumber}`, tone: "gold" },
+    preview.language && { label: preview.language, tone: "neutral" },
+    preview.variant && { label: preview.variant, tone: "neutral" },
+    preview.gradingClaim && { label: preview.gradingClaim, tone: "neutral" },
+  ].filter(Boolean) as Array<{ label: string; tone: "blue" | "green" | "gold" | "neutral" }>;
+
+  if (chips.length === 0) {
+    chips.push({ label: t.form.games[game], tone: "blue" });
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-dashed border-[#c9d7ce] bg-[#f7f9f5] px-3 py-2.5">
+      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.heroParsedPrefix}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {chips.map((chip) => (
+          <span
+            key={`${chip.tone}-${chip.label}`}
+            className={`rounded-md px-2.5 py-1 text-xs font-black ${
+              chip.tone === "blue"
+                ? "border border-[#cfe0f2] bg-[#eef4fb] text-[#2a6099]"
+                : chip.tone === "gold"
+                  ? "border border-[#e2c879] bg-[#fff8dc] font-mono text-[#6f5a22]"
+                  : chip.tone === "green"
+                    ? "border border-[#c9d7ce] bg-[#e7efe8] text-[#2f6f73]"
+                    : "border border-[#d6ded5] bg-[#fcfbf6] text-[#52635c]"
+            }`}
+          >
+            {chip.label}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1278,12 +1389,14 @@ function IdentityCard({ identity, onConfirm, titleAs }: { identity: CardIdentity
 
 function ComparisonResult({
   report,
+  preferredRole,
   feedbackSent,
   onFeedback,
   onCompareDiscovery,
   comparingDiscoveryId,
 }: {
   report: ComparisonReport;
+  preferredRole: LensRole;
   feedbackSent: boolean;
   onFeedback: (changedDecision: boolean) => void;
   onCompareDiscovery: (discovery: WebDiscovery) => void;
@@ -1300,8 +1413,14 @@ function ComparisonResult({
   // lens (Cheapest / Safest / Best-documented) one tap away.
   const defaultRole = useMemo<RankedChoice["role"] | null>(() => {
     const roles = report.rankedChoices.map((choice) => choice.role);
-    return roles.includes("best_value") ? "best_value" : roles.includes("safest_listing") ? "safest_listing" : roles[0] ?? null;
-  }, [report.rankedChoices]);
+    return roles.includes(preferredRole)
+      ? preferredRole
+      : roles.includes("best_value")
+        ? "best_value"
+        : roles.includes("safest_listing")
+          ? "safest_listing"
+          : roles[0] ?? null;
+  }, [preferredRole, report.rankedChoices]);
   const [roleOverride, setRoleOverride] = useState<RankedChoice["role"] | null>(null);
   // Honor the user's chosen lens, but fall back to the default when it is not
   // present in the current report (e.g. after a new comparison) — no effect/reset.
@@ -1317,12 +1436,30 @@ function ComparisonResult({
     () => sortListingsForRole(eligibleListings, selectedRole),
     [eligibleListings, selectedRole],
   );
-  const visibleEligibleListings = showAllCandidates ? orderedEligibleListings : orderedEligibleListings.slice(0, LEDGER_PREVIEW_COUNT);
-  const hiddenEligibleCount = Math.max(0, eligibleCount - visibleEligibleListings.length);
+  const prioritizedEligibleListings = useMemo(
+    () => selectedListing
+      ? [selectedListing, ...orderedEligibleListings.filter((listing) => listing.id !== selectedListing.id)]
+      : orderedEligibleListings,
+    [orderedEligibleListings, selectedListing],
+  );
+  const alternativeListings = selectedListing
+    ? prioritizedEligibleListings.filter((listing) => listing.id !== selectedListing.id)
+    : prioritizedEligibleListings;
+  const visibleAlternativeListings = showAllCandidates
+    ? alternativeListings
+    : alternativeListings.slice(0, selectedListing ? Math.max(1, LEDGER_PREVIEW_COUNT - 1) : LEDGER_PREVIEW_COUNT);
+  const hiddenEligibleCount = Math.max(0, alternativeListings.length - visibleAlternativeListings.length);
   const webDiscoveries = report.webDiscoveries ?? [];
   const visiblePlatforms = report.platforms.filter((platform) => platform.configured || platform.status === "fallback");
   const livePlatforms = visiblePlatforms.filter((platform) => platform.status === "complete");
   const connectedSourceLabels = livePlatforms.map((platform) => platform.marketplace).join(" + ");
+  const unavailablePlatformCount = visiblePlatforms.filter((platform) => platform.status !== "complete").length;
+  const marketReferenceAvailable = typeof report.confirmedCard?.marketMid === "number";
+  const samePickRoles = selectedChoice
+    ? report.rankedChoices
+      .filter((choice) => choice.listingId === selectedChoice.listingId && choice.role !== selectedChoice.role)
+      .map((choice) => roleToggleLabel(choice.role, t))
+    : [];
   const listingTotals = eligibleListings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
   const listedRange = listingTotals.length > 0
     ? `${formatMoney(Math.min(...listingTotals))}–${formatMoney(Math.max(...listingTotals))}`
@@ -1407,62 +1544,18 @@ function ComparisonResult({
         </div>
       )}
 
-      {!report.demoMode && report.warnings.length > 0 && (
-        <div className="flex items-start gap-3 rounded-md border border-[#e5b8a3] bg-[#fcefe8] p-4 text-sm leading-6 text-[#8a4a2c]">
-          <IconCaution className="mt-1 h-4 w-4 shrink-0" />
-          <div>
-            <strong>{t.result.liveDataIssue}</strong>
-            {report.warnings.map((warning) => <p key={warning} className="mt-1">{warning}</p>)}
-          </div>
-        </div>
-      )}
-
-      <div className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] px-4 py-3 shadow-[0_8px_28px_rgba(36,49,47,0.04)]">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+      <div className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-3 shadow-[0_8px_28px_rgba(36,49,47,0.04)] sm:p-4">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0">
-            <h2 className="font-serif text-xl font-black text-[#24312f]">
-              {report.confirmedCard?.name ?? selectedListing?.title}
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#7a8982]">{t.result.showingYou}</p>
+            <h2 className="mt-1 font-serif text-xl font-black text-[#24312f]">
+              {selectedRole ? roleToggleLabel(selectedRole, t) : t.card.recommended}
+              <span className="font-sans text-sm font-bold text-[#7a8982]"> · {t.result.yourDefault}</span>
             </h2>
-            {report.confirmedCard && (
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                <span className="rounded-md border border-[#d6ded5] bg-[#f4f3ec] px-2 py-0.5 font-mono text-[11px] font-black text-[#52635c]">
-                  {report.confirmedCard.setCode} #{report.confirmedCard.cardNumber}
-                </span>
-                {(report.confirmedCard.rarity || report.confirmedCard.language) && (
-                  <span className="rounded-md border border-[#d6ded5] bg-[#f4f3ec] px-2 py-0.5 text-[11px] font-black text-[#52635c]">
-                    {[report.confirmedCard.rarity, report.confirmedCard.language].filter(Boolean).join(" · ")}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
-          <div className="grid min-w-[120px] gap-0.5">
-            <strong className="font-mono text-base text-[#24312f]">
-              {typeof report.confirmedCard?.marketMid === "number" ? formatMoney(report.confirmedCard.marketMid) : "—"}
-            </strong>
-            <span className="text-[11px] font-bold text-[#7a8982]">{t.result.marketPrice}</span>
-            {report.confirmedCard && <MarketFreshness card={report.confirmedCard} generatedAt={report.generatedAt} />}
-          </div>
-          <div className="grid min-w-[130px] gap-0.5">
-            <strong className="font-mono text-sm text-[#24312f]">{listedRange}</strong>
-            <span className="text-[11px] font-bold text-[#7a8982]">{t.result.listedRange}</span>
-          </div>
-          <div className="grid min-w-[190px] gap-0.5">
-            <strong className="text-sm text-[#24312f]">{t.result.liveAndScreened(eligibleCount, excluded.length)}</strong>
-            <span className="text-[11px] font-bold text-[#7a8982]">
-              {t.result.sourcesAt(connectedSourceLabels || t.result.noLiveCandidates, observedTime)}
-            </span>
-          </div>
-          <span className="ml-auto text-xs font-bold text-[#7a8982]">
-            {t.result.sourcesLive(livePlatforms.length, Math.max(0, visiblePlatforms.length - livePlatforms.length))}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
         {report.rankedChoices.length > 0 && (
           <div
-            className="grid w-full grid-cols-2 gap-1 rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-1 sm:w-[480px] sm:grid-cols-4"
+            className="grid w-full grid-cols-2 gap-1 rounded-xl border border-[#d6ded5] bg-[#fffef9] p-1 sm:ml-auto sm:w-[480px] sm:grid-cols-4"
             style={report.rankedChoices.length === 4 ? undefined : { gridTemplateColumns: `repeat(${report.rankedChoices.length}, minmax(0, 1fr))` }}
           >
             {report.rankedChoices.map((choice) => {
@@ -1491,14 +1584,25 @@ function ComparisonResult({
             })}
           </div>
         )}
-        <span className="text-xs font-bold text-[#64736c]">{t.result.candidateCount(eligibleCount)}</span>
-        {selectedListing && selectedChoice && (
-          <button className="text-button" type="button" onClick={() => void copyComparisonReceipt()}>
-            <IconReceipt className="h-4 w-4" />
-            {receiptCopied ? t.result.receiptCopied : t.result.copyReceipt}
-          </button>
-        )}
-        <span className="ml-auto hidden text-xs font-bold text-[#7a8982] md:inline">{t.result.lensNote}</span>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm leading-6 text-[#52635c]">
+          <p className="flex min-w-0 items-start gap-2">
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#2f6f73] font-mono text-[11px] font-black text-white">?</span>
+            <span>{selectedRole ? roleToggleHint(selectedRole, t) : t.result.defaultLensNote}</span>
+          </p>
+          {samePickRoles.length > 0 && (
+            <span className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1 text-xs font-bold text-[#64736c]">
+              {t.result.samePickAs(samePickRoles.join(" · "))}
+            </span>
+          )}
+          <span className="text-xs font-bold text-[#64736c]">{t.result.candidateCount(eligibleCount)}</span>
+          {selectedListing && selectedChoice && (
+            <button className="text-button min-h-0 py-0 text-xs" type="button" onClick={() => void copyComparisonReceipt()}>
+              <IconReceipt className="h-4 w-4" />
+              {receiptCopied ? t.result.receiptCopied : t.result.copyReceipt}
+            </button>
+          )}
+        </div>
       </div>
 
       {report.rankedChoices.length === 0 && (
@@ -1510,15 +1614,26 @@ function ComparisonResult({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div className="space-y-3">
+          {selectedListing && selectedChoice && (
+            <RecommendedBuyHero
+              listing={selectedListing}
+              choice={selectedChoice}
+              fallbackImageUrl={report.confirmedCard?.imageUrl ?? null}
+              marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
+              demoMode={report.demoMode}
+              onAsk={askAboutListing}
+            />
+          )}
+
           <div className="space-y-2.5">
-            {visibleEligibleListings.map((listing, index) => (
+            {visibleAlternativeListings.map((listing) => (
               <CandidateRow
                 key={listing.id}
                 listing={listing}
                 fallbackImageUrl={report.confirmedCard?.imageUrl ?? null}
                 marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
                 choice={listing.id === selectedChoice?.listingId ? selectedChoice : null}
-                lead={index === 0}
+                lead={!selectedListing && listing.id === prioritizedEligibleListings[0]?.id}
                 demoMode={report.demoMode}
                 onAsk={askAboutListing}
               />
@@ -1543,6 +1658,20 @@ function ComparisonResult({
               </button>
             )}
           </div>
+
+          <MarketReferenceLine
+            card={report.confirmedCard}
+            generatedAt={report.generatedAt}
+            listedRange={listedRange}
+          />
+
+          <SourceStatusLine
+            liveSources={connectedSourceLabels}
+            hasMarketReference={marketReferenceAvailable}
+            unavailableCount={unavailablePlatformCount}
+            observedTime={observedTime}
+            warningsCount={report.warnings.length}
+          />
 
           {excluded.length > 0 && (
             <details className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
@@ -1843,6 +1972,15 @@ function roleToggleLabel(role: RankedChoice["role"], t: Dict) {
   }
 }
 
+function rolePreferenceLabel(role: RankedChoice["role"], t: Dict) {
+  switch (role) {
+    case "best_value": return t.lens.bestValuePreference;
+    case "lowest_landed_cost": return t.lens.cheapestPreference;
+    case "safest_listing": return t.lens.safestPreference;
+    case "best_condition_evidence": return t.lens.bestDocumentedPreference;
+  }
+}
+
 function roleToggleHint(role: RankedChoice["role"], t: Dict) {
   switch (role) {
     case "best_value": return t.lens.bestValueHint;
@@ -1919,22 +2057,6 @@ function evidenceVerdict(score: number, t: Dict): { label: string; tone: Verdict
   if (score >= 50) return { label: t.card.wellDocumented, tone: "good" };
   if (score >= 25) return { label: t.card.partlyDocumented, tone: "ok" };
   return { label: t.card.thinEvidence, tone: "bad" };
-}
-
-function VerdictTag({ verdict, icon: Icon, hint }: { verdict: { label: string; tone: VerdictTone }; icon: IconComponent; hint?: string }) {
-  const cls = verdict.tone === "good"
-    ? "bg-[#dcecdf] text-[#2f6f73]"
-    : verdict.tone === "ok"
-      ? "bg-[#fff0d5] text-[#8d6032]"
-      : verdict.tone === "neutral"
-        ? "border border-[#c9d7ce] bg-transparent text-[#64736c]"
-        : "bg-[#f6dcd0] text-[#9a4a2c]";
-  return (
-    <span title={hint} className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-black uppercase tracking-[0.04em] ${cls}`}>
-      <Icon className="h-3.5 w-3.5" />
-      {verdict.label}
-    </span>
-  );
 }
 
 // The displayed formulas derive from the same exported weight constants the
@@ -2088,6 +2210,220 @@ function HoloCardArt({
   );
 }
 
+function ListingMetaLine({ listing }: { listing: NormalizedListing }) {
+  const t = useT();
+  const seller = sellerVerdict(listing, t).label;
+  const evidence = evidenceVerdict(listing.evidenceCompletenessScore, t).label;
+  return (
+    <span>
+      {listing.marketplace} · {t.conditions[listing.claimedCondition]} · {t.card.photos(listing.evidence.photoCount)} ·{" "}
+      <span className={listing.riskLabel === "unverified" ? "text-[#64736c]" : "text-[#2f6f73]"}>{seller}</span> ·{" "}
+      <span className={listing.evidenceCompletenessScore < 25 ? "text-[#9a4a2c]" : "text-[#2f6f73]"}>{evidence}</span>
+      {listing.listingLanguage ? ` · ${listing.listingLanguage}` : ""}
+    </span>
+  );
+}
+
+function MarketDeltaBadge({
+  listing,
+  marketPrice,
+  compact = false,
+}: {
+  listing: NormalizedListing;
+  marketPrice: number | null;
+  compact?: boolean;
+}) {
+  const t = useT();
+  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const marketDelta = listing.marketComparable && listing.costComplete && marketPrice && marketPrice > 0
+    ? (total - marketPrice) / marketPrice
+    : null;
+  if (marketDelta === null || listing.demo) return null;
+  const nearMarket = Math.abs(marketDelta) < 0.005;
+  const label = nearMarket
+    ? t.card.nearMarket
+    : marketDelta < 0
+      ? t.card.underMarket(Math.max(1, Math.round(Math.abs(marketDelta) * 100)))
+      : t.card.aboveMarket(Math.max(1, Math.round(marketDelta * 100)));
+  const prefix = nearMarket ? "≈" : marketDelta < 0 ? "▼" : "▲";
+  const tone = nearMarket
+    ? "border-[#d6ded5] bg-[#f7f9f5] text-[#64736c]"
+    : marketDelta < 0
+      ? "border-[#c9d7ce] bg-[#dcecdf] text-[#2f6f73]"
+      : "border-[#e5b8a3] bg-[#fcefe8] text-[#9a4a2c]";
+
+  if (compact) {
+    return (
+      <span className={`text-xs font-black ${nearMarket ? "text-[#64736c]" : marketDelta < 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}>
+        {prefix} {label}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-sm font-black ${tone}`}>
+      {prefix} {label}
+    </span>
+  );
+}
+
+function RecommendedBuyHero({
+  listing,
+  choice,
+  fallbackImageUrl,
+  marketPrice,
+  demoMode,
+  onAsk,
+}: {
+  listing: NormalizedListing;
+  choice: RankedChoice;
+  fallbackImageUrl: string | null;
+  marketPrice: number | null;
+  demoMode: boolean;
+  onAsk: (listing: NormalizedListing) => void;
+}) {
+  const t = useT();
+  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
+  const totalLabel = listing.shipping === null
+    ? t.card.estBeforeShipping
+    : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
+  const roleScore = choice.role === "lowest_landed_cost"
+    ? Math.round(calculatePriceComponent(total, marketPrice))
+    : choice.role === "safest_listing"
+      ? listing.safetyScore
+      : choice.role === "best_condition_evidence"
+        ? listing.evidenceCompletenessScore
+        : listing.valueScore;
+  const imageUrl = listing.imageUrl ?? fallbackImageUrl;
+
+  return (
+    <article
+      aria-live="polite"
+      className="rounded-2xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_14px_34px_rgba(36,49,47,0.10)] sm:p-5"
+      title={choice.reason}
+    >
+      <div className="grid gap-4 sm:grid-cols-[68px_minmax(0,1fr)_auto] sm:items-center">
+        <div className="relative aspect-[2.5/3.5] w-16 overflow-hidden rounded-lg border border-[#c9d7ce] bg-[#e7efe8]">
+          {imageUrl ? (
+            <Image src={imageUrl} alt="" fill sizes="68px" className="object-contain" />
+          ) : (
+            <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-6 w-6" /></span>
+          )}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-md bg-[#2f6f73] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
+              {roleToggleLabel(choice.role, t)}
+            </span>
+            <span className="text-xs font-bold text-[#7a8982]">{t.result.score(roleScore)}</span>
+            {listing.demo && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
+            {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
+            {listing.webDiscovered && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
+          </div>
+          <h3 className="mt-2 font-serif text-xl font-bold leading-tight text-[#24312f] sm:text-2xl">
+            {listing.title}
+          </h3>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#52635c]">
+            <ListingMetaLine listing={listing} />
+          </p>
+        </div>
+
+        <div className="grid gap-2 sm:min-w-[170px] sm:justify-items-end sm:text-right">
+          <div>
+            <p className="font-mono text-3xl font-black leading-none text-[#24312f]">{formatMoney(total)}</p>
+            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{totalLabel}</p>
+          </div>
+          <MarketDeltaBadge listing={listing} marketPrice={marketPrice} />
+        </div>
+      </div>
+
+      <div className="mt-4 border-t border-[#e4ebe3] pt-4">
+        <p className="text-sm leading-6 text-[#52635c]">
+          <strong className="text-[#24312f]">{t.result.whyThisPick}</strong>{" "}
+          {choice.reason}
+        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <VerdictMath listing={listing} marketPrice={marketPrice} />
+          <div className="flex flex-wrap gap-2">
+            <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={() => onAsk(listing)}>
+              <IconInfo className="h-4 w-4" />
+              {t.result.askWhyThis}
+            </button>
+            {listing.url ? (
+              <a
+                className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#2f6f73] px-4 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+                href={listing.url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode })}
+              >
+                {t.card.viewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+            ) : (
+              <span className="inline-flex min-h-10 items-center text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MarketReferenceLine({
+  card,
+  generatedAt,
+  listedRange,
+}: {
+  card: CardIdentityCandidate | null;
+  generatedAt: string;
+  listedRange: string;
+}) {
+  const t = useT();
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d6ded5] bg-[#f7f9f5] px-4 py-3 text-sm text-[#64736c]">
+      <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[#64736c]">{t.result.marketReferenceShort}</span>
+      <strong className="font-mono text-[#24312f]">
+        {typeof card?.marketMid === "number" ? formatMoney(card.marketMid) : "—"}
+      </strong>
+      {card && <MarketFreshness card={card} generatedAt={generatedAt} />}
+      <span className="text-[#7a8982]">· {t.result.listedRange}: {listedRange}</span>
+    </div>
+  );
+}
+
+function SourceStatusLine({
+  liveSources,
+  hasMarketReference,
+  unavailableCount,
+  observedTime,
+  warningsCount,
+}: {
+  liveSources: string;
+  hasMarketReference: boolean;
+  unavailableCount: number;
+  observedTime: string;
+  warningsCount: number;
+}) {
+  const t = useT();
+  const summary = liveSources
+    ? t.result.sourceCalmSummary(liveSources, hasMarketReference, observedTime)
+    : t.result.sourceNoLiveSummary(hasMarketReference, observedTime);
+  return (
+    <div className="flex items-start gap-2 rounded-xl border border-[#dcecdf] bg-[#f2f7f2] px-4 py-3 text-sm leading-6 text-[#52635c]">
+      <IconCheck className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
+      <p>
+        {summary}
+        {(unavailableCount > 0 || warningsCount > 0) && <> {t.result.someSourcesSatOut}</>}
+        {" "}
+        <a className="font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4" href="#method">
+          {t.result.seeHowChecked}
+        </a>
+      </p>
+    </div>
+  );
+}
+
 function CandidateRow({
   listing,
   fallbackImageUrl,
@@ -2107,10 +2443,6 @@ function CandidateRow({
 }) {
   const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const marketDelta = listing.marketComparable && listing.costComplete && marketPrice && marketPrice > 0
-    ? (total - marketPrice) / marketPrice
-    : null;
-  const nearMarket = marketDelta !== null && Math.abs(marketDelta) < 0.005;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
@@ -2155,22 +2487,9 @@ function CandidateRow({
           <h3 className={`mt-1.5 min-w-0 font-bold leading-snug text-[#24312f] ${lead ? "font-serif text-lg sm:text-xl" : "truncate text-sm sm:text-[15px]"}`}>
             {listing.title}
           </h3>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <VerdictTag
-              verdict={sellerVerdict(listing, t)}
-              icon={IconSeal}
-              hint={`${sellerInputsLine(listing, t)} -> ${listing.sellerTrustScore}/100 (${t.card.thTrusted})`}
-            />
-            <VerdictTag
-              verdict={evidenceVerdict(listing.evidenceCompletenessScore, t)}
-              icon={IconPhotoProof}
-              hint={`${evidenceInputsLine(listing, t)} -> ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
-            />
-            <span className="rounded-full border border-[#d6ded5] bg-[#f7f9f5] px-2 py-1 text-[10px] font-black text-[#64736c]">
-              {listing.marketplace} · {t.conditions[listing.claimedCondition]}
-              {listing.listingLanguage ? ` · ${listing.listingLanguage}` : ""}
-            </span>
-          </div>
+          <p className="mt-2 text-xs font-semibold leading-5 text-[#64736c]">
+            <ListingMetaLine listing={listing} />
+          </p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-[#64736c]">
             {lead && <span>{roleToggleLabel(choice?.role ?? "best_value", t)} {roleScore}/100</span>}
             <button className="underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
@@ -2183,16 +2502,7 @@ function CandidateRow({
             <p className={`font-mono font-black text-[#24312f] ${lead ? "text-2xl" : "text-lg"}`}>{formatMoney(total)}</p>
             <p className="text-[10px] font-black uppercase tracking-[0.06em] text-[#7a8982]">{totalLabel}</p>
           </div>
-          {marketDelta !== null && !listing.demo && (
-            <p className={`text-xs font-black ${nearMarket ? "text-[#64736c]" : marketDelta < 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}>
-              {nearMarket ? "≈ " : marketDelta < 0 ? "▼ " : "▲ "}
-              {nearMarket
-                ? t.card.nearMarket
-                : marketDelta < 0
-                  ? t.card.underMarket(Math.max(1, Math.round(Math.abs(marketDelta) * 100)))
-                  : t.card.aboveMarket(Math.max(1, Math.round(marketDelta * 100)))}
-            </p>
-          )}
+          <MarketDeltaBadge listing={listing} marketPrice={marketPrice} compact />
           {listing.url ? (
             <a
               className={`result-row-cta inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#2f6f73] px-3 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${lead ? "is-lead" : ""}`}
