@@ -33,8 +33,8 @@ import type {
 // Either way the budget hard-stop and deterministic ranking are unchanged, and
 // any agent failure degrades to the deterministic result — this only ever adds.
 //
-// The allocator is a cheap-model, tool-routing job backstopped by deterministic
-// code, so it is configured INDEPENDENTLY of the (best-model) narrative provider:
+// The allocator is a model-routed tool job backstopped by deterministic code, so
+// it is configured INDEPENDENTLY of the narrative provider:
 // point COMPARISON_AGENT_* at any OpenAI-compatible endpoint — including a
 // Chinese provider (GLM/Kimi/DeepSeek), which speak Chat Completions, the default
 // dialect here. The user-facing evidence narrative stays on its own provider.
@@ -48,10 +48,10 @@ const AGENT_REQUEST_TIMEOUT_MS = 9000;
 // unbounded — on deadline we abandon it and return the deterministic fan-out.
 const ALLOCATOR_DEADLINE_MS = 15000;
 
-// Independent config for the allocator model. Falls back to the main AI config's
-// CHEAP model (never the primary/best model — tool routing doesn't need it), so by
-// default the allocator reuses the OpenAI-compatible endpoint, and a Chinese cheap
-// model is a matter of setting COMPARISON_AGENT_BASE_URL / _MODEL / _API_KEY.
+// Independent config for the allocator model. It defaults to the primary model,
+// with cheaper configured fallbacks available when the primary endpoint/model
+// fails. A different provider is still just COMPARISON_AGENT_BASE_URL / _MODEL /
+// _API_KEY.
 export type AllocatorDialect = "chat" | "responses";
 
 export type AllocatorConfig = {
@@ -59,6 +59,7 @@ export type AllocatorConfig = {
   // "responses" = OpenAI Responses API (OpenAI only).
   dialect: AllocatorDialect;
   model: string;
+  fallbackModels: string[];
   baseUrl: string;
   apiKey: string | undefined;
   reasoningEffort: AiReasoningEffort;
@@ -67,14 +68,26 @@ export type AllocatorConfig = {
 
 export function getAllocatorConfig(base: AiConfig = getAiConfig()): AllocatorConfig {
   const explicitBase = process.env.COMPARISON_AGENT_BASE_URL?.trim();
+  const primaryModel = process.env.COMPARISON_AGENT_MODEL?.trim() || base.primaryModel;
+  const fallbackModels = parseFallbackModels(process.env.COMPARISON_AGENT_FALLBACK_MODELS || process.env.COMPARISON_AGENT_FALLBACK_MODEL)
+    .concat(base.cheapModel && base.cheapModel !== primaryModel ? [base.cheapModel] : [])
+    .filter((model, index, models) => model !== primaryModel && models.indexOf(model) === index);
   return {
     dialect: process.env.COMPARISON_AGENT_API === "responses" ? "responses" : "chat",
-    model: process.env.COMPARISON_AGENT_MODEL?.trim() || base.cheapModel,
+    model: primaryModel,
+    fallbackModels,
     baseUrl: explicitBase ? explicitBase.replace(/\/+$/, "") : base.baseUrl,
     apiKey: process.env.COMPARISON_AGENT_API_KEY || process.env.OPENAI_API_KEY,
     reasoningEffort: base.reasoningEffort,
     disableResponseStorage: base.disableResponseStorage,
   };
+}
+
+function parseFallbackModels(value: string | undefined) {
+  return (value ?? "")
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
 }
 
 export type RunMarketSearchInput = {
@@ -188,20 +201,22 @@ async function runAgentFanout(input: {
     input.buyer.desiredCondition !== "Unknown" ? `Buyer prefers ${input.buyer.desiredCondition} condition.` : "",
     `Search every available marketplace tool: ${input.configured.map((a) => a.marketplace).join(", ")}.`,
     "Use the exact collector number and set/code in the query; if a tool sample looks thin, wrong-language, or off-version, re-query once with a tighter query within the budget.",
-    "Refine each query so it targets the exact card and version. When you have searched the marketplaces, finalize.",
+    "Refine each query so it targets the exact card and version. Prefer calling every marketplace tool in one turn.",
   ].filter(Boolean).join(" ");
 
-  const run = await runAgent({ model: input.model, tools, goal, maxSteps: 3 });
+  const run = await runAgent({ model: input.model, tools, goal, maxSteps: 1 });
+  const modelCalledTools = run.steps.some((step) => step.type === "tool_call");
+  const allocationComplete = run.stoppedReason === "final" || modelCalledTools;
 
   const traces: ComparisonTrace[] = [
     {
       step: "agent_allocation",
-      actor: `Market allocator · ${input.model.name}`,
+      actor: `Market allocator · ${input.model.activeName?.() ?? input.model.name}`,
       summary:
-        run.stoppedReason === "final"
-          ? "The model allocated the cross-platform search across the marketplace tools."
+        allocationComplete
+          ? "The model allocated the cross-platform search across the marketplace tools; deterministic coverage filled any skipped source."
           : `The allocator stopped early (${run.stoppedReason}); deterministic search covered the rest.`,
-      status: run.stoppedReason === "final" ? "complete" : "fallback",
+      status: allocationComplete ? "complete" : "fallback",
     },
   ];
 
@@ -255,13 +270,40 @@ const AGENT_SYSTEM_PROMPT = [
   "You are TCGpal's cross-platform market allocator.",
   "You decide how to search each marketplace tool for the exact confirmed card.",
   "Only use the provided tools. Never invent listings, prices, or sold comps.",
-  "After searching the available marketplaces, stop and finalize with a one-line summary.",
+  "Call every relevant marketplace tool in one turn when possible; deterministic TypeScript handles ranking and final prose.",
 ].join("\n");
 
 // Build the harness's AgentModel from the allocator config, in whichever dialect
 // the configured endpoint speaks.
 export function createAgentModel(cfg: AllocatorConfig = getAllocatorConfig()): AgentModel {
-  return cfg.dialect === "responses" ? createResponsesAgentModel(cfg) : createChatCompletionsAgentModel(cfg);
+  const modelNames = [cfg.model, ...cfg.fallbackModels];
+  const models = modelNames.map((model) => cfg.dialect === "responses"
+    ? createResponsesAgentModel({ ...cfg, model, fallbackModels: [] })
+    : createChatCompletionsAgentModel({ ...cfg, model, fallbackModels: [] }));
+  let activeIndex = 0;
+  let activeName = models[0]?.name ?? cfg.model;
+
+  return {
+    name: cfg.model,
+    activeName: () => activeName,
+    decide: async (input) => {
+      const errors: string[] = [];
+      for (let index = activeIndex; index < models.length; index += 1) {
+        const model = models[index];
+        if (!model) continue;
+        try {
+          const decision = await model.decide(input);
+          activeIndex = index;
+          activeName = model.name;
+          return decision;
+        } catch (error) {
+          errors.push(`${model.name}: ${error instanceof Error ? error.message : String(error)}`);
+          activeIndex = Math.min(index + 1, models.length - 1);
+        }
+      }
+      throw new Error(`All allocator models failed: ${errors.join(" | ")}`);
+    },
+  };
 }
 
 // OpenAI Chat Completions function-calling — the broadly-compatible dialect
@@ -340,6 +382,7 @@ export function createOpenAiAgentModel(config: AiConfig = getAiConfig()): AgentM
   return createResponsesAgentModel({
     dialect: "responses",
     model: config.cheapModel,
+    fallbackModels: [],
     baseUrl: config.baseUrl,
     apiKey: process.env.OPENAI_API_KEY,
     reasoningEffort: config.reasoningEffort,

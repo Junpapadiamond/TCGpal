@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAiConfig } from "@/lib/ai/config";
-import { probeAnthropicModel, probeOpenAiModel } from "@/lib/ai/provider";
+import { getAllocatorConfig, isComparisonAgentEnabled } from "@/lib/ai/agent/market-agent";
+import { probeAnthropicModel, probeOpenAiCompatibleModel, probeOpenAiModel } from "@/lib/ai/provider";
 
 export async function GET() {
   const config = getAiConfig();
@@ -43,7 +44,28 @@ export async function GET() {
 
   const primary = await probeOpenAiModel(config.primaryModel);
   const cheap = config.cheapModel === config.primaryModel ? primary : await probeOpenAiModel(config.cheapModel);
-  const ok = primary.ok && cheap.ok;
+  const allocator = getAllocatorConfig(config);
+  const allocatorPrimary = isComparisonAgentEnabled()
+    ? await probeOpenAiCompatibleModel({
+      model: allocator.model,
+      apiKey: allocator.apiKey,
+      baseUrl: allocator.baseUrl,
+      wireApi: allocator.dialect,
+      reasoningEffort: allocator.reasoningEffort,
+      disableResponseStorage: allocator.disableResponseStorage,
+    })
+    : null;
+  const allocatorFallback = isComparisonAgentEnabled() && allocator.fallbackModels[0]
+    ? await probeOpenAiCompatibleModel({
+      model: allocator.fallbackModels[0],
+      apiKey: allocator.apiKey,
+      baseUrl: allocator.baseUrl,
+      wireApi: allocator.dialect,
+      reasoningEffort: allocator.reasoningEffort,
+      disableResponseStorage: allocator.disableResponseStorage,
+    })
+    : null;
+  const ok = primary.ok && cheap.ok && (!allocatorPrimary || allocatorPrimary.ok);
 
   return NextResponse.json({
     ok,
@@ -53,5 +75,22 @@ export async function GET() {
       { role: "primary", model: config.primaryModel, ok: primary.ok, status: primary.status, warning: primary.warning },
       { role: "cheap", model: config.cheapModel, ok: cheap.ok, status: cheap.status, warning: cheap.warning },
     ],
+    allocator: {
+      enabled: isComparisonAgentEnabled(),
+      dialect: allocator.dialect,
+      model: allocator.model,
+      fallbackModels: allocator.fallbackModels,
+      ok: allocatorPrimary?.ok ?? false,
+      status: allocatorPrimary?.status,
+      warning: allocatorPrimary?.warning,
+      fallbackCheck: allocatorFallback
+        ? {
+          model: allocator.fallbackModels[0],
+          ok: allocatorFallback.ok,
+          status: allocatorFallback.status,
+          warning: allocatorFallback.warning,
+        }
+        : null,
+    },
   });
 }

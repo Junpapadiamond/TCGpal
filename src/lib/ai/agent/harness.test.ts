@@ -38,6 +38,38 @@ describe("agent harness", () => {
     expect(run.steps.at(-1)).toMatchObject({ type: "final" });
   });
 
+  it("runs same-turn tool calls in parallel", async () => {
+    let running = 0;
+    let maxRunning = 0;
+    const makeSlowTool = (name: string): AgentTool => ({
+      name,
+      description: name,
+      parameters: z.object({}),
+      execute: async () => {
+        running += 1;
+        maxRunning = Math.max(maxRunning, running);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        running -= 1;
+        return { ok: true, data: { name } };
+      },
+    });
+    const model = scriptedModel([
+      {
+        kind: "tool_calls",
+        toolCalls: [
+          { id: "a", name: "search_a", args: {} },
+          { id: "b", name: "search_b", args: {} },
+        ],
+      },
+      { kind: "final", output: "done" },
+    ]);
+
+    const run = await runAgent({ model, tools: [makeSlowTool("search_a"), makeSlowTool("search_b")], goal: "search both" });
+
+    expect(run.stoppedReason).toBe("final");
+    expect(maxRunning).toBe(2);
+  });
+
   it("enforces the budget hard-stop when the model never finalizes", async () => {
     const model = scriptedModel([
       { kind: "tool_calls", toolCalls: [{ id: "c", name: "search_listings", args: { query: "x" } }] },

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   buildPlatformTools,
+  createAgentModel,
   createChatCompletionsAgentModel,
   createOpenAiAgentModel,
   getAllocatorConfig,
@@ -76,6 +77,7 @@ const config: AiConfig = {
 };
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
@@ -203,6 +205,7 @@ describe("createChatCompletionsAgentModel (Chinese / OpenAI-compatible)", () => 
   const allocator: AllocatorConfig = {
     dialect: "chat",
     model: "glm-4-flash",
+    fallbackModels: [],
     baseUrl: "https://open.bigmodel.test/v4",
     apiKey: "sk-glm",
     reasoningEffort: "low",
@@ -254,11 +257,53 @@ describe("createChatCompletionsAgentModel (Chinese / OpenAI-compatible)", () => 
   });
 });
 
+describe("createAgentModel fallback chain", () => {
+  const tools: AgentTool[] = [
+    { name: "search_ebay", description: "Search eBay", parameters: z.object({ query: z.string().optional() }), execute: () => ({ ok: true }) },
+  ];
+
+  it("tries the primary allocator model first, then sticks to a configured fallback", async () => {
+    const seenModels: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init) => {
+      const body = JSON.parse(String(init?.body ?? "{}")) as { model?: string };
+      seenModels.push(body.model ?? "");
+      if (body.model === "gpt-5.5") {
+        return { ok: false, status: 503, json: async () => ({}), text: async () => "model unavailable" };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ choices: [{ message: { role: "assistant", content: "searched" } }] }),
+        text: async () => "",
+      };
+    }) as unknown as typeof fetch);
+
+    const model = createAgentModel({
+      dialect: "chat",
+      model: "gpt-5.5",
+      fallbackModels: ["gpt-5.4"],
+      baseUrl: "https://zjapi.test/v1",
+      apiKey: "sk-test",
+      reasoningEffort: "low",
+      disableResponseStorage: true,
+    });
+
+    const first = await model.decide({ goal: "g", messages: [{ role: "user", content: "g" }], tools });
+    const second = await model.decide({ goal: "g", messages: [{ role: "user", content: "g" }], tools });
+
+    expect(first.kind).toBe("final");
+    expect(second.kind).toBe("final");
+    expect(model.activeName?.()).toBe("gpt-5.4");
+    expect(seenModels).toEqual(["gpt-5.5", "gpt-5.4", "gpt-5.4"]);
+  });
+});
+
 describe("getAllocatorConfig", () => {
-  it("defaults the allocator to the cheap model and the main base URL", () => {
+  it("defaults the allocator to the primary model, with the cheap model as fallback, on the main base URL", () => {
     const cfg = getAllocatorConfig(config);
     expect(cfg.dialect).toBe("chat");
-    expect(cfg.model).toBe(config.cheapModel);
+    expect(cfg.model).toBe(config.primaryModel);
+    expect(cfg.fallbackModels).toEqual([]);
     expect(cfg.baseUrl).toBe(config.baseUrl);
   });
 
@@ -270,5 +315,13 @@ describe("getAllocatorConfig", () => {
     expect(cfg.model).toBe("glm-4-flash");
     expect(cfg.baseUrl).toBe("https://open.bigmodel.test/v4"); // trailing slash trimmed
     expect(cfg.apiKey).toBe("sk-glm");
+  });
+
+  it("uses explicit allocator fallbacks before the base cheap model", () => {
+    vi.stubEnv("COMPARISON_AGENT_MODEL", "gpt-5.5");
+    vi.stubEnv("COMPARISON_AGENT_FALLBACK_MODELS", "gpt-5.4, gpt-5.3");
+    const cfg = getAllocatorConfig({ ...config, primaryModel: "gpt-5.5", cheapModel: "gpt-5.4" });
+    expect(cfg.model).toBe("gpt-5.5");
+    expect(cfg.fallbackModels).toEqual(["gpt-5.4", "gpt-5.3"]);
   });
 });

@@ -21,8 +21,8 @@ export function getAiConfig(): AiConfig {
 
   return {
     provider,
-    primaryModel: process.env.OPENAI_MODEL || process.env.OPENAI_MODEL_PRIMARY || "gpt-5.5-2026-04-23",
-    cheapModel: process.env.OPENAI_MODEL_REVIEW || process.env.OPENAI_MODEL_CHEAP || process.env.OPENAI_MODEL || "gpt-5.5-2026-04-23",
+    primaryModel: process.env.OPENAI_MODEL || process.env.OPENAI_MODEL_PRIMARY || "gpt-5.5",
+    cheapModel: process.env.OPENAI_MODEL_REVIEW || process.env.OPENAI_MODEL_CHEAP || process.env.OPENAI_MODEL || "gpt-5.4",
     baseUrl: normalizeBaseUrl(process.env.OPENAI_BASE_URL),
     wireApi: parseWireApi(process.env.OPENAI_WIRE_API || process.env.OPENAI_API),
     anthropicBaseUrl: normalizeAnthropicBaseUrl(process.env.ANTHROPIC_BASE_URL),

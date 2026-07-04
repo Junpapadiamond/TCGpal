@@ -40,6 +40,7 @@ export type AgentMessage =
 
 export type AgentModel = {
   name: string;
+  activeName?: () => string;
   decide: (input: { goal: string; messages: AgentMessage[]; tools: AgentTool[] }) => Promise<AgentDecision>;
 };
 
@@ -93,8 +94,13 @@ export async function runAgent({ model, tools, goal, maxSteps = DEFAULT_MAX_STEP
 
     messages.push({ role: "assistant", reasoning: decision.reasoning, toolCalls: decision.toolCalls });
 
-    for (const call of decision.toolCalls) {
-      const result = await runTool(toolByName.get(call.name), call.args);
+    const toolResults = await Promise.all(
+      decision.toolCalls.map(async (call) => ({
+        call,
+        result: await runTool(toolByName.get(call.name), call.args),
+      })),
+    );
+    for (const { call, result } of toolResults) {
       steps.push({ type: "tool_call", tool: call.name, args: call.args, result });
       messages.push({ role: "tool", toolCallId: call.id, name: call.name, result });
     }

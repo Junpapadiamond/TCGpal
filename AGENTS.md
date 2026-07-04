@@ -36,7 +36,7 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - Facebook, Reddit, Mercari, Whatnot, Japan marketplaces, local shops, and other connector-less sources join via paste-a-URL or the manual ledger until an approved provider/API is connected. Roadmap platform agents remain visible as skipped/not connected.
 - When no live source returns a single listing, labeled fixtures load with `demoMode:true`. Demo listings never show the per-listing vs-market read.
 - OpenAI is optional. Without it, the deterministic evidence summary remains usable.
-- The configured/default OpenAI model is `gpt-5.5-2026-04-23`.
+- The configured/default OpenAI-compatible model is `gpt-5.5`; `gpt-5.4` is the review/cheap fallback. The dated slug `gpt-5.5-2026-04-23` is not available on the current zjapi channel.
 - The technical trace stays collapsed for normal users.
 
 ## Product Guardrails
@@ -97,7 +97,7 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 - `src/lib/comparison/platforms.ts`: each marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation, so the system "works as long as you have the APIs" — adding a marketplace is one adapter. eBay and TCGplayer/TCGCSV are live today; other roadmap agents stay skipped/manual-ledger until an approved API/provider is connected.
 - `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), One Piece catalog, TCGCSV/TCGplayer, paste-a-URL universal listing, and PriceCharting adapters.
 - `src/lib/ai/agent/harness.ts`: provider-agnostic `runAgent` loop (model decides tools, deterministic execute, budget hard-stop).
-- `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an allocator key is set, exposes the same platform adapters to `runAgent` as tools (Chat Completions by default, Responses when `COMPARISON_AGENT_API=responses`). Deterministic fan-out is always the floor and fallback; a configured platform the model skips is still searched deterministically. Main narrative/model enrichment can use `OPENAI_WIRE_API=responses` or `OPENAI_WIRE_API=chat` for OpenAI-compatible providers.
+- `src/lib/ai/agent/market-agent.ts`: the multi-agent layer — `runMarketSearch` runs the deterministic fan-out by default and, when `COMPARISON_AGENT=1` and an allocator key is set, exposes the same platform adapters to `runAgent` as tools (Chat Completions by default, Responses when `COMPARISON_AGENT_API=responses`). The allocator defaults to `gpt-5.5` and can fall back to `gpt-5.4`; deterministic fan-out is always the floor, and a configured platform the model skips is still searched deterministically. Main narrative/model enrichment can use `OPENAI_WIRE_API=responses` or `OPENAI_WIRE_API=chat` for OpenAI-compatible providers.
 - `src/lib/comparison/japan-references.ts`: one-click Japan price/buy reference links. These are manual outbound checks only; they must never be counted as fetched inventory or analyzed prices.
 - `src/lib/ai/listing-compare.ts`: comparison orchestration — identity + TCGplayer-price extraction, the cross-platform market search (`runMarketSearch`), synthesis, fallback, and trace.
 - `src/app/api/agent/listing-compare`: the public comparison route.

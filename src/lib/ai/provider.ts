@@ -190,6 +190,7 @@ class OpenAiChatCompletionsProvider implements AiProvider {
       body: JSON.stringify({
         model,
         temperature: 0,
+        response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
@@ -324,27 +325,52 @@ export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
     };
   }
 
+  return probeOpenAiCompatibleModel({
+    model,
+    apiKey: process.env.OPENAI_API_KEY,
+    baseUrl: process.env.OPENAI_BASE_URL,
+    wireApi: process.env.OPENAI_WIRE_API || process.env.OPENAI_API,
+    reasoningEffort: process.env.OPENAI_REASONING_EFFORT,
+    disableResponseStorage: process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "true" || process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "1",
+  });
+}
+
+export async function probeOpenAiCompatibleModel(input: {
+  model: string;
+  apiKey: string | undefined;
+  baseUrl: string | undefined;
+  wireApi: string | undefined;
+  reasoningEffort?: string | undefined;
+  disableResponseStorage?: boolean | undefined;
+}): Promise<AiProbeResult> {
+  if (!input.apiKey) {
+    return {
+      ok: false,
+      warning: "OpenAI-compatible API key is missing. AI actions will use local fallback.",
+    };
+  }
+
   try {
     const config = {
-      baseUrl: normalizeProbeBaseUrl(process.env.OPENAI_BASE_URL),
-      wireApi: normalizeProbeWireApi(process.env.OPENAI_WIRE_API || process.env.OPENAI_API),
-      reasoningEffort: normalizeProbeReasoningEffort(process.env.OPENAI_REASONING_EFFORT),
-      disableResponseStorage: process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "true" || process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "1",
+      baseUrl: normalizeProbeBaseUrl(input.baseUrl),
+      wireApi: normalizeProbeWireApi(input.wireApi),
+      reasoningEffort: normalizeProbeReasoningEffort(input.reasoningEffort),
+      disableResponseStorage: Boolean(input.disableResponseStorage),
     };
     const response = await fetch(`${config.baseUrl}/${config.wireApi === "chat" ? "chat/completions" : "responses"}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${input.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(config.wireApi === "chat"
         ? {
-          model,
+          model: input.model,
           messages: [{ role: "user", content: "Return the word ok." }],
           max_tokens: 16,
         }
         : {
-          model,
+          model: input.model,
           input: "Return the word ok.",
           reasoning: {
             effort: config.reasoningEffort,
@@ -359,7 +385,7 @@ export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
       return {
         ok: false,
         status: response.status,
-        warning: `OpenAI ${response.status}: ${message.slice(0, 240)}`,
+        warning: `OpenAI-compatible ${response.status}: ${message.slice(0, 240)}`,
       };
     }
 
@@ -367,7 +393,7 @@ export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
   } catch (error) {
     return {
       ok: false,
-      warning: error instanceof Error ? error.message : "Unknown OpenAI health check error.",
+      warning: error instanceof Error ? error.message : "Unknown OpenAI-compatible health check error.",
     };
   }
 }
