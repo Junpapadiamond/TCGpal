@@ -195,4 +195,18 @@ describe("assessTitleMatch (listing-title identity confidence)", () => {
     expect(assessTitleMatch("Monkey D Luffy OP01-003 Romance Dawn", op).confidence).toBe("high");
     expect(assessTitleMatch("One Piece Luffy OP01 003 alt", op).confidence).toBe("high");
   });
+
+  it("rejects a same-name sibling that spells out a different collector number", () => {
+    // A set holds many cards of one character. An OP01-024 search must not accept an
+    // OP01-003 listing on the strength of name + set alone (the old medium path).
+    const luffy024 = { name: "Monkey.D.Luffy", setName: "Romance Dawn", setCode: "OP-01", cardNumber: "OP01-024" };
+    expect(assessTitleMatch("Monkey.D.Luffy (003) OP01-003 Romance Dawn", luffy024).confidence).toBe("low");
+    // The correct number still matches, and a number-less title stays comparable.
+    expect(assessTitleMatch("Monkey.D.Luffy OP01-024 Romance Dawn SR", luffy024).confidence).toBe("high");
+    expect(assessTitleMatch("Monkey.D.Luffy Romance Dawn SR Foil", luffy024).confidence).toBe("medium");
+
+    // Same guard for fraction-numbered games (Pokémon 215/203 vs 209/203).
+    const umbreon = { name: "Umbreon VMAX", setName: "Evolving Skies", setCode: "SWSH7", cardNumber: "215/203" };
+    expect(assessTitleMatch("Umbreon VMAX 209/203 Evolving Skies", umbreon).confidence).toBe("low");
+  });
 });

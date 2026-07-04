@@ -30,8 +30,12 @@ function card(
     set_id: setId,
     set_name: setName,
     rarity,
+    // The curated seed is base prints only; the print id equals the card number.
+    is_alternate_art: false,
+    variant: null,
     card_type: cardType,
     card_image: `${IMAGE_BASE}/${cardSetId}.png`,
+    card_image_id: cardSetId,
     market_price: null,
     inventory_price: null,
   };
@@ -72,10 +76,11 @@ const curated: OnePieceTcgCard[] = [
 ];
 
 // Full-catalog snapshot produced by `node scripts/build-optcg-catalog.mjs` from the
-// maintained `one-piece-card-game-json` dataset (one fully-tagged entry per card
-// number). This is the primary source and is bundled in the repo, so coverage works
-// with zero network. The curated seed above is only an offline safety net for the
-// rare case the snapshot is missing/empty.
+// maintained `one-piece-card-game-json` dataset (one fully-tagged entry per PRINT —
+// base art plus every alternate art / parallel / manga / treasure rare / promo).
+// This is the primary source and is bundled in the repo, so coverage works with zero
+// network. The curated seed above is only an offline safety net for the rare case
+// the snapshot is missing/empty.
 function loadSnapshot(): OnePieceTcgCard[] {
   if (!Array.isArray(generatedSnapshot)) return [];
   return (generatedSnapshot as Partial<OnePieceTcgCard>[]).filter(
@@ -84,19 +89,60 @@ function loadSnapshot(): OnePieceTcgCard[] {
   );
 }
 
+// The stable per-print key: the image id keeps alternate arts of one number distinct.
+function printKey(entry: OnePieceTcgCard): string {
+  return (entry.card_image_id?.trim() || entry.card_set_id).trim().toUpperCase();
+}
+
 export const onePieceCatalog: OnePieceTcgCard[] = (() => {
-  const byId = new Map<string, OnePieceTcgCard>();
-  // Snapshot first (authoritative, fully tagged); curated only fills ids it lacks.
-  for (const entry of loadSnapshot()) byId.set(entry.card_set_id.toUpperCase(), entry);
+  const byPrint = new Map<string, OnePieceTcgCard>();
+  // Snapshot first (authoritative, fully tagged); curated only fills prints it lacks.
+  for (const entry of loadSnapshot()) byPrint.set(printKey(entry), entry);
   for (const entry of curated) {
-    const key = entry.card_set_id.toUpperCase();
-    if (!byId.has(key)) byId.set(key, entry);
+    const key = printKey(entry);
+    if (!byPrint.has(key)) byPrint.set(key, entry);
   }
-  return Array.from(byId.values());
+  return Array.from(byPrint.values());
 })();
 
-const catalogById = new Map(onePieceCatalog.map((entry) => [entry.card_set_id.toUpperCase(), entry]));
+// Exact-print index (used to reload a user-confirmed alternate art with no network).
+const catalogByPrint = new Map(onePieceCatalog.map((entry) => [printKey(entry), entry]));
 
+// Card number → all its prints, base art first, so a number search surfaces every
+// variant and a bare-number lookup still returns the canonical base print.
+const catalogByNumber = (() => {
+  const byNumber = new Map<string, OnePieceTcgCard[]>();
+  for (const entry of onePieceCatalog) {
+    const number = entry.card_set_id.trim().toUpperCase();
+    const list = byNumber.get(number);
+    if (list) list.push(entry);
+    else byNumber.set(number, [entry]);
+  }
+  for (const list of byNumber.values()) {
+    list.sort(
+      (a, b) =>
+        Number(Boolean(a.is_alternate_art)) - Number(Boolean(b.is_alternate_art))
+        || printKey(a).localeCompare(printKey(b)),
+    );
+  }
+  return byNumber;
+})();
+
+// Resolve a card NUMBER to its canonical (base) print. Also accepts a full print id
+// so callers that pass either form still resolve.
 export function findOnePieceCatalogCard(cardSetId: string): OnePieceTcgCard | undefined {
-  return catalogById.get(cardSetId.trim().toUpperCase());
+  const key = cardSetId.trim().toUpperCase();
+  const prints = catalogByNumber.get(key);
+  if (prints && prints.length > 0) return prints[0];
+  return catalogByPrint.get(key);
+}
+
+// Resolve an exact print id (e.g. "OP01-024_p1") to that specific alternate art.
+export function findOnePieceCatalogVariant(printId: string): OnePieceTcgCard | undefined {
+  return catalogByPrint.get(printId.trim().toUpperCase());
+}
+
+// Every print of a card number, base art first (drives the number-search fan-out).
+export function findOnePieceCatalogVariants(cardSetId: string): OnePieceTcgCard[] {
+  return catalogByNumber.get(cardSetId.trim().toUpperCase()) ?? [];
 }

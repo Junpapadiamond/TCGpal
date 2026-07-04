@@ -12,7 +12,13 @@ import {
 } from "@/lib/schemas";
 
 const exclusionPatterns = [
-  /\b(psa|bgs|cgc|sgc)\s*\d/i,
+  // Graded slabs. The grade can be joined to the grader by a space, colon, hash,
+  // or nothing at all in real titles ("PSA 10", "CGC: 9", "BGS9.5", "PSA#10"), so
+  // the separator is optional and permissive — but a digit must follow so a bare
+  // brand mention never trips it. A separate "graded 9" guard covers the spelled-out
+  // form without catching "ungraded"/"not graded" (no digit follows those).
+  /\b(psa|bgs|cgc|sgc|ace)[\s:._#-]*\d/i,
+  /\bgraded\s*\d/i,
   /\bslab(?:bed)?\b/i,
   /\bsealed\b/i,
   /\bbooster\b/i,
@@ -38,6 +44,36 @@ const exclusionPatterns = [
   /\bplush\b/i,
   /\bnon[\s-]?textured\b/i,
 ];
+
+// Which print the buyer confirmed: the plain base card, or an alternate-art /
+// parallel / manga / treasure print. The same card number spans both at very
+// different prices, so a comparison must stay on the confirmed side of that line.
+export type VariantIntent = "base" | "alt";
+
+// Free-text markers that a listing is an alternate art / parallel / special print
+// rather than the base. Kept deliberately specific so a base comparison is not
+// polluted by (pricier) alt-art listings, and an alt-art comparison does not show
+// base copies. Titles that merely say "holo"/"foil" are NOT alt-art signals.
+const altArtTitlePattern = /\b(alt(?:ernate)?[\s.]*art|parallel|manga|full[\s-]*art|special[\s-]*art|art\s*rare|treasure\s*rare)\b/i;
+
+// The variant gate, applied only to listings whose print must be inferred from free
+// text (eBay and future auto-sourced marketplaces). TCGplayer rows are resolved to
+// the exact product upstream, and a user-pasted listing is an explicit choice — so
+// neither is second-guessed from its title.
+function variantMismatchReason(
+  listing: Pick<NormalizedListing, "title" | "marketplace" | "userSupplied">,
+  intent: VariantIntent | null,
+): string | null {
+  if (!intent || listing.userSupplied || listing.marketplace === "TCGplayer") return null;
+  const looksAlt = altArtTitlePattern.test(listing.title);
+  if (intent === "base" && looksAlt) {
+    return "Title looks like an alternate-art / parallel print — you're comparing the base version.";
+  }
+  if (intent === "alt" && !looksAlt) {
+    return "Title has no alternate-art marker — you're comparing an alternate-art print.";
+  }
+  return null;
+}
 
 // Platform baseline trust (a data-driven table, not a ranking branch):
 // marketplaces with built-in buyer protection earn a floor so that missing
@@ -163,6 +199,7 @@ export function normalizeListing(input: {
   listing: ListingSeed;
   buyer: BuyerContext;
   marketPrice?: number | null;
+  variantIntent?: VariantIntent | null;
 }) {
   const { listing, buyer } = input;
   const shipping = listing.shipping ?? 0;
@@ -178,7 +215,7 @@ export function normalizeListing(input: {
   const marketPrice = input.marketPrice ?? null;
   const priceComponent = calculatePriceComponent(estimatedLandedCost ?? preTaxTotal, marketPrice);
   const valueScore = calculateValueScore({ priceComponent, safetyScore, evidenceCompletenessScore });
-  const exclusionReasons = getExclusionReasons(listing, marketPrice);
+  const exclusionReasons = getExclusionReasons(listing, marketPrice, input.variantIntent ?? null);
 
   // The risk label reflects the seller's track record, not evidence volume:
   // search-API rows legitimately carry thin evidence (no full description or
@@ -313,8 +350,9 @@ function aboveMarketContext(listing: NormalizedListing, marketPrice: number | nu
 const MARKET_FLOOR_RATIO = 0.25;
 
 function getExclusionReasons(
-  listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price">,
+  listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "marketplace" | "userSupplied">,
   marketPrice: number | null,
+  variantIntent: VariantIntent | null = null,
 ) {
   const reasons: string[] = [];
   if (!listing.active) reasons.push("Listing is not active.");
@@ -325,6 +363,8 @@ function getExclusionReasons(
   if (marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO) {
     reasons.push("Priced far below market — likely a replica, proxy, or mislabeled item.");
   }
+  const variantReason = variantMismatchReason(listing, variantIntent);
+  if (variantReason) reasons.push(variantReason);
   return reasons;
 }
 

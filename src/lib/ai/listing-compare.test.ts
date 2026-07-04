@@ -541,36 +541,12 @@ describe("listing comparison agent", () => {
     ).toBe(true);
   });
 
-  it("surfaces same-number One Piece TCGplayer variants before auto-confirming", async () => {
-    const variantFetcher = (async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("tcgcsv.com/last-updated")) return new Response("2026-07-03T20:05:17+0000");
-      if (url.endsWith("/68/groups")) {
-        return new Response(JSON.stringify({
-          results: [{ groupId: 23293, name: "OP-01: Romance Dawn", abbreviation: "OP-01" }],
-        }));
-      }
-      if (url.endsWith("/68/23293/products")) {
-        return new Response(JSON.stringify({
-          results: [
-            {
-              productId: 453508,
-              name: "Monkey.D.Luffy (024)",
-              cleanName: "MonkeyDLuffy 024",
-              url: "https://www.tcgplayer.com/product/453508/one-piece-card-game-romance-dawn-monkeydluffy-024",
-              extendedData: [{ name: "Number", value: "OP01-024" }],
-            },
-            {
-              productId: 453509,
-              name: "Monkey.D.Luffy (024) (Parallel)",
-              cleanName: "MonkeyDLuffy 024 Parallel",
-              url: "https://www.tcgplayer.com/product/453509/one-piece-card-game-romance-dawn-monkeydluffy-024-parallel",
-              extendedData: [{ name: "Number", value: "OP01-024" }],
-            },
-          ],
-        }));
-      }
-      throw new Error(`unexpected fetch in One Piece variant test: ${url}`);
+  it("surfaces every same-number One Piece art variant before auto-confirming", async () => {
+    // A number with alternate arts must open the version picker (not auto-confirm the
+    // base) so the buyer can pick the exact print — and it must do so with zero
+    // network, straight from the bundled variant catalog.
+    const offline = (async () => {
+      throw new Error("network disabled in test");
     }) as unknown as typeof fetch;
 
     const response = await runListingComparison(
@@ -579,12 +555,25 @@ describe("listing comparison agent", () => {
         sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
         cardHint: { game: "onePiece", name: "Monkey.D.Luffy", setCode: "OP-01", cardNumber: "OP01-024", language: "English", variant: "", gradingClaim: "" },
       },
-      { fetcher: variantFetcher },
+      { fetcher: offline },
     );
 
     expect(response.status).toBe("needs_confirmation");
-    expect(response.identityCandidates.map((card) => card.tcgplayerProductId)).toEqual([453508, 453509]);
-    expect(response.identityCandidates.map((card) => card.variant)).toEqual(["Base TCGplayer product", "Parallel"]);
+
+    const prints = response.identityCandidates.filter((card) => card.cardNumber === "OP01-024");
+    // Base art plus at least one alternate art, every one its own selectable print.
+    expect(prints.length).toBeGreaterThan(1);
+    expect(new Set(prints.map((card) => card.id)).size).toBe(prints.length);
+    expect(new Set(prints.map((card) => card.imageUrl)).size).toBe(prints.length);
+
+    // The base print carries no variant label; the parallels do.
+    const base = prints.find((card) => card.id === "OP01-024");
+    expect(base?.variant ?? null).toBeNull();
+    const alts = prints.filter((card) => card.id !== "OP01-024");
+    expect(alts.length).toBeGreaterThan(0);
+    expect(alts.every((card) => Boolean(card.variant))).toBe(true);
+    // Each parallel's SAMPLE image is wired to its own print id (e.g. OP01-024_p1.png).
+    expect(alts.every((card) => card.imageUrl?.endsWith(`${card.id}.png`))).toBe(true);
   });
 
   it("without a set, a One Piece name stays a set-grouped pick (no false high confidence)", async () => {

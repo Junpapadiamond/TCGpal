@@ -174,6 +174,20 @@ describe("TCGCSV TCGplayer connector", () => {
     expect(product?.productName).toContain("Parallel");
   });
 
+  it("anchors a confirmed alternate-art print to the parallel SKU, not the base", async () => {
+    // Same card number, different art and price: a confirmed alt-art print (carries a
+    // `variant` label) must price against the parallel product, never the cheaper base.
+    const altArt = { ...onePieceCard, id: "OP01-024_p1", variant: "Alternate Art (P1)" };
+    const product = await resolveTcgplayerProduct(altArt, mixedTcgcsvFetcher());
+    expect(product?.productId).toBe(453509);
+    expect(product?.productName).toContain("Parallel");
+
+    // And the base print (no variant) still anchors to the base product.
+    const base = await resolveTcgplayerProduct(onePieceCard, mixedTcgcsvFetcher());
+    expect(base?.productId).toBe(453508);
+    expect(base?.productName).not.toContain("Parallel");
+  });
+
   it("returns null for a card missing from the feed instead of failing", async () => {
     const product = await resolveTcgplayerProduct(
       { ...card, name: "Missingmon", cardNumber: "999/203" },

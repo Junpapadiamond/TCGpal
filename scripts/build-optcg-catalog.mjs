@@ -6,8 +6,11 @@
 //
 // Why this exists: the live optcgapi.com dump is often unreachable (and is blocked
 // by some egress policies), so we snapshot an accurate, fully-tagged catalog from a
-// packaged dataset instead. One entry per card NUMBER (base art preferred); the
-// number is the stable id the comparison flow keys on. Commit the generated JSON.
+// packaged dataset instead. One entry per PRINT — every base art AND every alternate
+// art / parallel / manga (SP) / treasure rare (TR) / promo — deduped by the stable
+// per-print image id. The card NUMBER stays the crosswalk/eBay key; the print id
+// (card_image_id) is what distinguishes the alt arts the buyer wants to choose
+// between. Commit the generated JSON.
 //
 // Prices are intentionally null — TCGpal never invents a market price.
 import { createRequire } from "node:module";
@@ -56,14 +59,44 @@ function joinTag(value) {
   return value ? String(value) : null;
 }
 
+// The trailing marker that distinguishes a parallel from the base print, derived
+// from the image name: "OP01-024_p1" → "P1", "ST01-007_p3" → "P3". Empty for a
+// base print (image name === card number).
+function variantSuffix(cardNumber, imageName) {
+  const number = String(cardNumber || "").toUpperCase();
+  const name = String(imageName || "").toUpperCase();
+  if (!name || !number) return "";
+  const marker = name.startsWith(number) ? name.slice(number.length).replace(/^_/, "") : "";
+  return marker;
+}
+
+// Human label for a print's art variation (null for the base print). The printed
+// rarity (SR/SEC/SP CARD/TR/P) is carried separately in `rarity`; this names the
+// ART so the picker can tell parallels of one number apart. Treasure Rare and the
+// special/manga prints get their well-known chase labels; everything else reads as
+// "Alternate Art", with the parallel marker appended so distinct alts stay distinct.
+function variantLabel(card) {
+  if (!card.is_alternate_art) return null;
+  const rarity = String(card.rarity || "").toUpperCase();
+  const suffix = variantSuffix(card.card_number, card.image_name);
+  let base;
+  if (rarity === "TR") base = "Treasure Rare";
+  else if (rarity === "SP CARD") base = "Special Art";
+  else if (rarity === "SEC") base = "Secret Rare Alt";
+  else base = "Alternate Art";
+  return suffix ? `${base} (${suffix})` : base;
+}
+
 function toCatalogCard(card) {
   const { setId, setName } = parseSet(card);
   return {
     card_name: card.card_name,
-    card_set_id: card.card_number, // stable per-number id the flow keys on
+    card_set_id: card.card_number, // card NUMBER — the crosswalk/eBay/display key
     set_id: setId,
     set_name: setName,
     rarity: card.rarity ?? null,
+    is_alternate_art: Boolean(card.is_alternate_art),
+    variant: variantLabel(card),
     card_color: joinTag(card.colors),
     card_type: titleType(card.card_type),
     card_cost: card.cost && card.cost !== "-" ? String(card.cost) : null,
@@ -73,7 +106,7 @@ function toCatalogCard(card) {
     attribute: joinTag(card.attributes),
     sub_types: joinTag(card.types),
     card_image: card.image_url ?? null,
-    card_image_id: card.image_name ?? card.card_number,
+    card_image_id: card.image_name ?? card.card_number, // stable per-PRINT id
     market_price: null,
     inventory_price: null,
   };
@@ -85,21 +118,27 @@ function main() {
     process.exit(1);
   }
 
-  // One entry per card number; prefer the base print (non-alternate art) so the
-  // canonical art/number wins. Alternate-art prints share the number and fold in.
-  const byNumber = new Map();
+  // One entry per PRINT, deduped by the stable image id so every alternate art,
+  // parallel, manga (SP), treasure rare (TR), and promo keeps its own row and its
+  // own SAMPLE image. The dataset carries a couple of exact-duplicate prints; the
+  // image-id key folds those together (first wins) without dropping real variants.
+  const byPrint = new Map();
   for (const card of source) {
     if (!card || typeof card.card_name !== "string" || typeof card.card_number !== "string") continue;
-    const key = card.card_number.toUpperCase();
-    const existing = byNumber.get(key);
-    if (!existing || (existing.is_alternate_art && !card.is_alternate_art)) {
-      byNumber.set(key, card);
-    }
+    const key = String(card.image_name || card.card_number).toUpperCase();
+    if (!byPrint.has(key)) byPrint.set(key, card);
   }
 
-  const cards = Array.from(byNumber.values())
+  // Sort by number, then base art before its parallels, then by print id so the
+  // canonical print leads each group and alt ordering stays stable across rebuilds.
+  const cards = Array.from(byPrint.values())
     .map(toCatalogCard)
-    .sort((a, b) => a.card_set_id.localeCompare(b.card_set_id));
+    .sort(
+      (a, b) =>
+        a.card_set_id.localeCompare(b.card_set_id)
+        || Number(Boolean(a.is_alternate_art)) - Number(Boolean(b.is_alternate_art))
+        || String(a.card_image_id).localeCompare(String(b.card_image_id)),
+    );
 
   writeFileSync(OUT, `${JSON.stringify(cards, null, 0)}\n`);
   process.stdout.write(`✓ Wrote ${cards.length} cards to ${OUT.pathname}\n`);

@@ -101,7 +101,7 @@ export function isTcgcsvStale(asOf: string | null, now: Date = new Date()) {
 // Group is matched by set name, product by printed collector number; a name
 // sanity check prevents a wrong-number data glitch from crossing sets.
 export async function resolveTcgplayerProduct(
-  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId">>,
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId" | "variant">>,
   fetcher: typeof fetch = fetch,
   options: { preferredProductId?: number | null } = {},
 ): Promise<TcgplayerProductMatch | null> {
@@ -111,7 +111,14 @@ export async function resolveTcgplayerProduct(
   if (preferredProductId) {
     return matches.find((product) => product.productId === preferredProductId) ?? matches[0];
   }
-  return matches[0];
+  // Anchor to the print the buyer actually confirmed: an alternate-art / parallel
+  // card must not be priced against the (cheaper) base SKU, and a base card must
+  // not be priced against the pricier parallel. `variant` is set only for alt-art
+  // prints. Falls back to the best available product when that class isn't listed
+  // separately, so a missing parallel SKU still yields a (base) anchor, never null.
+  const wantsAlt = Boolean(card.variant);
+  const sameClass = matches.filter((product) => isParallelProduct(product) === wantsAlt);
+  return sameClass[0] ?? matches[0];
 }
 
 export async function resolveTcgplayerProductVariants(

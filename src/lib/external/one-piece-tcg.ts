@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { CardIdentityCandidate } from "@/lib/schemas";
-import { findOnePieceCatalogCard, onePieceCatalog } from "./one-piece-catalog";
+import { findOnePieceCatalogCard, findOnePieceCatalogVariants, onePieceCatalog } from "./one-piece-catalog";
 
 // OPTCG API (https://www.optcgapi.com) is a free, no-key community catalog for the
 // One Piece Trading Card Game. It exposes static-ish JSON dumps plus per-card
@@ -26,6 +26,13 @@ const onePieceCardSchema = z.object({
   set_id: z.string().optional(), // e.g. "OP-01"
   set_name: z.string().optional(),
   rarity: z.string().nullable().optional(),
+  // True for a parallel / alternate art / manga (SP) / treasure rare print, so the
+  // number-search path can keep every art variant distinct instead of collapsing
+  // to the base. Live OPTCG responses omit it (treated as base).
+  is_alternate_art: z.boolean().optional(),
+  // Human label for the art variation ("Alternate Art (P1)", "Treasure Rare", ...);
+  // null/absent for the base print.
+  variant: z.string().nullable().optional(),
   card_color: z.string().nullable().optional(),
   card_type: z.string().nullable().optional(),
   card_text: z.string().nullable().optional(),
@@ -148,9 +155,15 @@ export async function searchOnePieceCards({
   const directId = cardNumber.trim().toUpperCase();
   const limit = Math.min(Math.max(pageSize, 1), 50);
 
-  // Fast path: a concrete card id (OP01-001) resolves to a single print. This is
-  // bundled-first inside getOnePieceCard, so it works with no network.
+  // Fast path: a concrete card number (OP01-024) resolves to EVERY print of that
+  // number — base art plus each alternate art / parallel / manga / treasure rare —
+  // so the buyer can pick the exact version. Bundled-first, so it works with no
+  // network; only an unbundled number falls back to a single live lookup.
   if (directId && CARD_SET_ID_PATTERN.test(directId)) {
+    const prints = findOnePieceCatalogVariants(directId);
+    if (prints.length > 0) {
+      return { source: "optcg-api", query: normalizedQuery, cards: prints.slice(0, limit), count: prints.length };
+    }
     const card = await getOnePieceCard({ cardSetId: directId, baseUrl, fetcher, timeoutMs });
     if (card) {
       return { source: "optcg-api", query: normalizedQuery, cards: [card], count: 1 };
@@ -212,7 +225,10 @@ function rankOnePieceCards(cards: OnePieceTcgCard[], query: string, limit: numbe
       (a, b) =>
         b.score - a.score
         || a.card.card_name.length - b.card.card_name.length
-        || a.card.card_set_id.localeCompare(b.card.card_set_id),
+        || a.card.card_set_id.localeCompare(b.card.card_set_id)
+        // Keep a number's prints together with the base art leading its parallels.
+        || Number(Boolean(a.card.is_alternate_art)) - Number(Boolean(b.card.is_alternate_art))
+        || variantKey(a.card).localeCompare(variantKey(b.card)),
     )
     .slice(0, limit)
     .map((entry) => entry.card);
@@ -301,6 +317,13 @@ export function scoreOnePieceCard(card: OnePieceTcgCard, query: string): number 
   return 50;
 }
 
+// The stable per-PRINT id: the image id distinguishes alternate arts that share a
+// card number ("OP01-024" vs "OP01-024_p1"). Falls back to the card number for
+// live-API / curated entries that predate variant tagging.
+export function variantKey(card: OnePieceTcgCard): string {
+  return (card.card_image_id?.trim() || card.card_set_id).trim();
+}
+
 function toMarketPrice(card: OnePieceTcgCard): number | null {
   return card.market_price ?? card.inventory_price ?? null;
 }
@@ -335,7 +358,9 @@ export function mapOnePieceCardToIdentity(
   const market = toMarketPrice(card);
 
   return {
-    id: card.card_set_id,
+    // Per-print id so alternate arts of one number stay distinct in the picker and
+    // round-trip through confirmation; the card NUMBER stays the display/crosswalk key.
+    id: variantKey(card),
     name: card.card_name,
     setName: card.set_name ?? deriveSetCode(card),
     setCode: deriveSetCode(card),
@@ -343,6 +368,7 @@ export function mapOnePieceCardToIdentity(
     language: "EN",
     imageUrl,
     rarity: card.rarity ?? null,
+    variant: card.variant ?? null,
     confidence: options.confidence,
     matchReasons: options.matchReasons,
     marketLow: market,

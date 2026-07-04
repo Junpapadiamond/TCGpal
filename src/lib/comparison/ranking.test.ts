@@ -129,4 +129,57 @@ describe("comparison ranking", () => {
     expect(slab.eligible).toBe(false);
     expect(slab.exclusionReasons.length).toBeGreaterThan(0);
   });
+
+  it("excludes graded slabs even when the grade is joined by a colon or hash", () => {
+    // Real eBay titles write the grade many ways; a raw-single comparison must catch
+    // every one so a slab never lands as the recommended raw buy.
+    for (const title of [
+      "1x V2176: 2022: Monkey D. Luffy: OP01-024: Alternate Art: Romance Dawn: CGC: 9.",
+      "Charizard VMAX PSA#10 Gem Mint",
+      "Umbreon VMAX Alt Art graded 9.5",
+    ]) {
+      const graded = normalizeListing({ listing: { ...demoListingSeeds[0], id: title, title }, buyer });
+      expect(graded.eligible, title).toBe(false);
+    }
+  });
+
+  // The same card number spans a base print and its (pricier) alternate arts, so a
+  // comparison must stay on the confirmed side of that line.
+  const ebayListing = {
+    ...demoListingSeeds[0],
+    marketplace: "eBay" as const,
+    userSupplied: false,
+    raw: true,
+    active: true,
+    currency: "USD" as const,
+    matchConfidence: "high" as const,
+  };
+
+  it("keeps a base comparison off alt-art listings and vice versa", () => {
+    const alt = { ...ebayListing, id: "alt", title: "Monkey.D.Luffy OP01-024 Alternate Art Parallel" };
+    const base = { ...ebayListing, id: "base", title: "Monkey.D.Luffy OP01-024 Romance Dawn SR" };
+
+    // Base comparison: the alt-art copy drops out; the plain one stays.
+    expect(normalizeListing({ listing: alt, buyer, variantIntent: "base" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: base, buyer, variantIntent: "base" }).eligible).toBe(true);
+
+    // Alt-art comparison: the plain copy drops out; only the alt-art one stays.
+    expect(normalizeListing({ listing: base, buyer, variantIntent: "alt" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: alt, buyer, variantIntent: "alt" }).eligible).toBe(true);
+  });
+
+  it("does not gate TCGplayer rows or user-pasted listings on title text", () => {
+    // TCGplayer rows are resolved to the exact product upstream; a pasted listing is
+    // an explicit user choice. Neither is second-guessed from its (marker-less) title.
+    const tcgRow = { ...ebayListing, id: "tcg", marketplace: "TCGplayer" as const, title: "Monkey.D.Luffy OP01-024 Normal — TCGplayer lowest listed" };
+    const pasted = { ...ebayListing, id: "pasted", userSupplied: true, title: "Monkey.D.Luffy OP01-024 Romance Dawn" };
+    expect(normalizeListing({ listing: tcgRow, buyer, variantIntent: "alt" }).eligible).toBe(true);
+    expect(normalizeListing({ listing: pasted, buyer, variantIntent: "alt" }).eligible).toBe(true);
+  });
+
+  it("leaves listings ungated when no variant is confirmed (demo / null intent)", () => {
+    const alt = { ...ebayListing, id: "alt2", title: "Monkey.D.Luffy OP01-024 Alternate Art" };
+    expect(normalizeListing({ listing: alt, buyer, variantIntent: null }).eligible).toBe(true);
+    expect(normalizeListing({ listing: alt, buyer }).eligible).toBe(true);
+  });
 });

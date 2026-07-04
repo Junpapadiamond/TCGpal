@@ -17,9 +17,7 @@ import {
 } from "@/lib/comparison/report-cache";
 import {
   isTcgcsvStale,
-  resolveTcgplayerProductVariants,
   searchTcgplayerListings,
-  type TcgplayerProductMatch,
   type TcgplayerSearchResult,
 } from "@/lib/external/tcgcsv";
 import {
@@ -44,6 +42,7 @@ import {
   searchOnePieceCards,
   type OnePieceTcgCard,
 } from "@/lib/external/one-piece-tcg";
+import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
 import {
   cardIdentityCandidateSchema,
   comparisonNarrativeSchema,
@@ -256,7 +255,11 @@ export async function runListingComparison(
   // Demo fixtures are never scored against the market anchor: their prices are
   // fabricated, so any market-derived score would be a fake vs-market read.
   const marketAnchor = demoMode ? null : confirmedCard.marketMid ?? null;
-  const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: marketAnchor }));
+  // Keep the ranked listings on the confirmed side of the base ↔ alternate-art line:
+  // the same card number spans both at very different prices. Demo fixtures aren't
+  // gated (they're labeled, not real offers). `variant` is set only on alt-art prints.
+  const variantIntent = demoMode ? null : confirmedCard.variant ? "alt" : "base";
+  const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: marketAnchor, variantIntent }));
   const rankedChoices = rankListings(normalized, { marketPrice: marketAnchor });
   trace.push({
     step: "validation_and_ranking",
@@ -664,27 +667,29 @@ async function identifyOnePieceCards(
   trace: ComparisonTrace[],
 ): Promise<CardIdentityCandidate[]> {
   if (request.confirmedCardId) {
-    const requestedVariant = parseOnePieceVariantIdentityId(request.confirmedCardId);
+    // The buyer picked an exact print at the version step. Reload that specific art
+    // from the bundled catalog (zero network) so the confirmed image, rarity, and
+    // variant label are exactly what they chose — not the base art of the number.
+    const exact = findOnePieceCatalogVariant(request.confirmedCardId);
+    if (exact) {
+      trace.push({
+        step: "card_identification",
+        actor: "One Piece catalog adapter",
+        summary: "Reloaded the user-confirmed One Piece print from the bundled catalog.",
+        status: "complete",
+      });
+      return [mapOnePieceCardToIdentity(exact, { confidence: "high", matchReasons: ["User confirmed this version."] })];
+    }
     try {
-      const card = await getOnePieceCard({ cardSetId: requestedVariant.cardId, fetcher, timeoutMs: 15000 });
+      const card = await getOnePieceCard({ cardSetId: request.confirmedCardId, fetcher, timeoutMs: 15000 });
       if (card) {
-        const base = mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["User confirmed this version."] });
-        const identities = await expandOnePieceTcgplayerVariants([base], requestedVariant.cardId, fetcher);
-        const confirmed = requestedVariant.productId
-          ? identities.find((identity) => identity.tcgplayerProductId === requestedVariant.productId)
-            ?? withOnePieceVariant(base, {
-              productId: requestedVariant.productId,
-              productName: `TCGplayer product #${requestedVariant.productId}`,
-              productUrl: base.marketUrl ?? "",
-            })
-          : identities[0] ?? base;
         trace.push({
           step: "card_identification",
           actor: "One Piece catalog adapter",
           summary: "Reloaded the user-confirmed One Piece card by its card id.",
           status: "complete",
         });
-        return [confirmed];
+        return [mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["User confirmed this version."] })];
       }
     } catch (error) {
       warnings.push(`Confirmed One Piece card lookup unavailable: ${errorMessage(error)}`);
@@ -703,14 +708,13 @@ async function identifyOnePieceCards(
         timeoutMs: 15000,
       });
       const order: Record<CardIdentityCandidate["confidence"], number> = { high: 0, medium: 1, low: 2 };
-      const catalogMatches = result.cards
+      const matches = result.cards
         .map((card) => mapOnePieceCardToIdentity(card, evaluateOnePieceMatch(card, request, searchName)))
         .sort((a, b) => order[a.confidence] - order[b.confidence]);
-      const matches = await expandOnePieceTcgplayerVariants(catalogMatches, directId, fetcher);
       trace.push({
         step: "card_identification",
         actor: "One Piece catalog adapter",
-        summary: `Found ${matches.length} possible One Piece identities, including TCGplayer same-number variants when available, and ranked exact id and name matches first.`,
+        summary: `Found ${matches.length} possible One Piece identities — base art plus every alternate art, treasure rare, and promo print — ranked with exact id and name matches first.`,
         status: "complete",
       });
       return dedupeIdentities(matches).slice(0, MAX_IDENTITY_CANDIDATES);
@@ -726,72 +730,6 @@ async function identifyOnePieceCards(
     status: "fallback",
   });
   return [];
-}
-
-async function expandOnePieceTcgplayerVariants(
-  identities: CardIdentityCandidate[],
-  directId: string,
-  fetcher: typeof fetch,
-): Promise<CardIdentityCandidate[]> {
-  const expanded: CardIdentityCandidate[] = [];
-  const requestedId = normalizeText(directId);
-  for (const identity of identities) {
-    if (!requestedId || identity.confidence !== "high" || normalizeText(identity.cardNumber) !== requestedId) {
-      expanded.push(identity);
-      continue;
-    }
-    try {
-      const products = await resolveTcgplayerProductVariants(identity, fetcher);
-      if (products.length <= 1) {
-        expanded.push(products[0] ? withOnePieceVariant(identity, products[0]) : identity);
-        continue;
-      }
-      expanded.push(...products.slice(0, 8).map((product) => withOnePieceVariant(identity, product)));
-    } catch {
-      expanded.push(identity);
-    }
-  }
-  return expanded;
-}
-
-function withOnePieceVariant(
-  identity: CardIdentityCandidate,
-  product: Pick<TcgplayerProductMatch, "productId" | "productName" | "productUrl">,
-): CardIdentityCandidate {
-  const variant = describeTcgplayerVariant(identity, product.productName);
-  return {
-    ...identity,
-    id: onePieceVariantIdentityId(identity.id, product.productId),
-    variant,
-    rarity: [identity.rarity, variant].filter(Boolean).join(" · ") || identity.rarity,
-    marketUrl: product.productUrl || identity.marketUrl,
-    tcgplayerProductId: product.productId,
-    matchReasons: [
-      ...identity.matchReasons,
-      `TCGplayer product variant: ${product.productName} (#${product.productId}).`,
-    ],
-  };
-}
-
-function describeTcgplayerVariant(identity: CardIdentityCandidate, productName: string) {
-  const suffix = productName
-    .replace(identity.name, "")
-    .replace(/\b\d{1,4}\b/g, "")
-    .replace(/[()]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return suffix || "Base TCGplayer product";
-}
-
-function onePieceVariantIdentityId(cardId: string, productId: number) {
-  return `${cardId}#tcgplayer-${productId}`;
-}
-
-function parseOnePieceVariantIdentityId(value: string) {
-  const match = value.match(/^(.+?)#tcgplayer-(\d+)$/);
-  return match
-    ? { cardId: match[1], productId: Number(match[2]) }
-    : { cardId: value, productId: null };
 }
 
 // Every candidate here already passed the name search, so the baseline is "medium"

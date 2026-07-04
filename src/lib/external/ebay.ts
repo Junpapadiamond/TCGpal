@@ -224,6 +224,12 @@ export function assessTitleMatch(
   // the set corroborates it.
   const partialStrong = fullNumber
     || (partialNumber && stripLeadingZeros(numerator).replace(/\D/g, "").length >= 3);
+  // A title that spells out a DIFFERENT collector number of the same scheme is a
+  // different card, however well the name and set line up — a set holds many cards
+  // of one character (One Piece "OP01-024" vs "OP01-003"; Pokémon "215/203" vs
+  // "44/203"). Only fires when the card's own number is absent from the title, so a
+  // correct listing that also mentions another number is never demoted.
+  const differentPrint = !fullNumber && titleNamesADifferentCollectorNumber(title, card.cardNumber);
 
   // Set: full set name or the set code ("Evolving Skies" or "SWSH7").
   const setMatch = (Boolean(card.setName) && squashedTitle.includes(normalizeText(card.setName)))
@@ -232,17 +238,39 @@ export function assessTitleMatch(
   const reasons = [
     fullNumber
       ? "Collector number matches."
-      : partialNumber
-        ? "Card number appears without the full collector code."
-        : "Collector number is not explicit.",
+      : differentPrint
+        ? "Title lists a different collector number — likely a different print."
+        : partialNumber
+          ? "Card number appears without the full collector code."
+          : "Collector number is not explicit.",
     nameMatch ? "Card name matches." : namePartial ? "Card name partially matches." : "Card name is not explicit.",
     setMatch ? "Set matches." : "Set is not explicit.",
   ];
 
+  // An explicit, contradicting collector number overrides an otherwise-strong
+  // name+set match: it is a different print, so it must not rank as this card.
+  if (differentPrint) return { confidence: "low", reasons };
   if (namePartial && fullNumber) return { confidence: "high", reasons };
   if (nameMatch && (partialStrong || setMatch)) return { confidence: "medium", reasons };
   if (fullNumber && setMatch) return { confidence: "medium", reasons };
   return { confidence: "low", reasons };
+}
+
+// Does the title spell out a collector number of the card's OWN scheme that isn't
+// the card's number? Used only when the card's number is absent from the title, to
+// catch a same-name, same-set sibling ("OP01-003" in an "OP01-024" search). Kept to
+// the two schemes with distinctive shapes — set codes ("OP01-024") and fractions
+// ("215/203") — so number-less titles and other formats are never falsely demoted.
+function titleNamesADifferentCollectorNumber(title: string, cardNumber: string): boolean {
+  const trimmed = cardNumber.trim();
+  if (/^[A-Za-z]{1,4}\d{0,2}-\d{1,4}$/.test(trimmed)) {
+    return /\b[A-Za-z]{1,4}\d{0,2}-\d{1,4}\b/i.test(title);
+  }
+  const compact = trimmed.replace(/\s+/g, "");
+  if (/^[A-Za-z]{0,4}\d{1,3}\/[A-Za-z]{0,4}\d{1,3}$/.test(compact)) {
+    return /\b[A-Za-z]{0,4}\d{1,3}\s*\/\s*[A-Za-z]{0,4}\d{2,3}\b/i.test(title);
+  }
+  return false;
 }
 
 function splitCollectorNumber(cardNumber: string) {
@@ -290,7 +318,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     matchConfidence: match.confidence,
     matchReasons: match.reasons,
     active: source.active,
-    raw: !/\b(psa|bgs|cgc|sgc)\s*\d|\bslab(?:bed)?\b/i.test(title),
+    raw: !/\b(psa|bgs|cgc|sgc|ace)[\s:._#-]*\d|\bgraded\s*\d|\bslab(?:bed)?\b/i.test(title),
     currency: "USD" as const,
     price: source.price ?? 0,
     shipping: source.shipping,
