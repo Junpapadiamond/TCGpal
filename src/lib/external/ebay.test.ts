@@ -61,6 +61,9 @@ describe("eBay active-listing search", () => {
       if (url.includes("/identity/v1/oauth2/token")) {
         return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 7200 }) } as Response;
       }
+      if (!url.includes("/item_summary/search")) {
+        return { ok: false, status: 404, json: async () => ({}) } as Response;
+      }
       captured.searchUrl = url;
       return {
         ok: true,
@@ -117,6 +120,55 @@ describe("eBay active-listing search", () => {
 
     const results = await searchEbayAlternatives(card, buyer, fetcher);
     expect(results[0]?.shipping).toBe(0);
+  });
+
+  it("uses the item-detail Card Condition descriptor instead of treating Ungraded as unknown", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [{
+              itemId: "v1|123|0",
+              title: "Umbreon VMAX 215/203 Evolving Skies",
+              condition: "Ungraded",
+              price: { value: "420.00", currency: "USD" },
+              shippingOptions: [{ shippingCost: { value: "8.00", currency: "USD" } }],
+            }],
+          }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          itemId: "v1|123|0",
+          title: "Umbreon VMAX 215/203 Evolving Skies",
+          condition: "Ungraded",
+          conditionDescriptors: [{
+            name: "Card Condition",
+            values: [{
+              content: "Lightly played (Excellent)",
+              additionalInfo: ["Moderate surface scuffing"],
+            }],
+          }],
+          localizedAspects: [{ name: "Language", value: "English" }],
+          price: { value: "420.00", currency: "USD" },
+          shippingOptions: [{ shippingCost: { value: "8.00", currency: "USD" } }],
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(card, buyer, fetcher);
+
+    expect(results[0]?.claimedCondition).toBe("Lightly Played");
+    expect(results[0]?.listingLanguage).toBe("English");
+    expect(results[0]?.evidence.substantiveConditionNotes).toBe(true);
   });
 
   it("caches the OAuth token across requests instead of refetching it every time", async () => {

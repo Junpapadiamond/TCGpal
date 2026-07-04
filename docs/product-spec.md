@@ -2,42 +2,47 @@
 
 ## Product thesis
 
-TCGpal finds safer ways to buy an exact Pokémon card by comparing landed cost, seller signals, and condition evidence. It compresses a workflow buyers already perform across eBay, TCGplayer, PriceCharting, social groups, and local sellers.
+TCGpal is the fastest trustworthy way to compare condition-compatible raw copies and know when the data is insufficient to recommend one. It compresses the manual workflow buyers already perform: confirm the exact print, check the TCGplayer reference, inspect eBay photos and seller history, calculate checkout cost, and decide whether the evidence is good enough.
 
-The product does not compete on scanning or a single magic price. It competes on evidence reconciliation and source honesty.
+The honest launch promise is: compare concrete eBay listings against a clearly labeled TCGplayer market reference, plus exact listings the buyer supplies. TCGCSV aggregate rows and web-discovered links are never presented as seller inventory.
+
+### Proven, Better, New
+
+- Proven: high-intent buyers already compare TCGplayer price context with eBay listing photos, seller records, and shipping.
+- Better: TCGpal keeps exact version, minimum condition, complete comparable cost, seller trust, and evidence in one transparent receipt.
+- New: a grounded per-listing decision assistant explains the deterministic result without overriding it.
 
 ## Primary user
 
-U.S. Pokémon collectors buying raw singles online, especially purchases where exact version, condition, seller credibility, shipping, and tax can materially change the decision.
-
-One Piece is the next candidate category, but only after Pokémon validation.
+U.S. Pokémon and One Piece raw-single buyers, beginning with higher-consideration purchases where exact version, condition, seller credibility, shipping, and tax materially change the decision.
 
 ## Core journey
 
-1. User pastes an eBay URL or enters a listing manually.
-2. TCGpal identifies possible card versions.
-3. Ambiguous identities require user confirmation.
-4. TCGpal gathers supported active listings and reference data.
-5. Deterministic rules remove ineligible products and calculate totals.
-6. TCGpal returns up to three distinct choices:
-   - Lowest estimated landed cost
-   - Safest listing
-   - Best condition evidence
-7. The user can inspect sources, missing evidence, and the validation trace.
+1. The buyer enters a card name, ideally with collector number, and chooses a minimum seller-stated condition.
+2. TCGpal auto-confirms explicit identities or pauses for one-tap version confirmation.
+3. The official eBay adapter returns concrete active listings; TCGCSV resolves a separate aggregate market reference.
+4. Deterministic rules remove incompatible, incomplete, and ineligible rows.
+5. TCGpal returns one recommendation with four independently computed lenses:
+   - Best Value
+   - Cheapest complete comparable cost
+   - Safest seller-and-evidence profile
+   - Best documented / most reviewable evidence
+6. One listing may win multiple lenses. If no row has compatible condition and known shipping, TCGpal abstains.
+7. Every listing can open a listing-and-lens-specific explanation. Sources, assumptions, skipped rows, and the technical trace remain inspectable.
 
 ## Ranking definitions
 
-Eligible candidates must be active raw singles in USD with a high-confidence or user-confirmed exact match. Slabs, lots, sealed products, proxies, custom cards, digital products, and wrong versions are excluded.
+Eligible candidates must be concrete active raw singles in USD with a high-confidence or user-confirmed exact match, compatible seller-stated condition, and known shipping. Aggregate references and discovered links cannot rank. Slabs, lots, sealed products, proxies, custom cards, digital products, and wrong versions are excluded.
 
 `preTaxTotal = price + shipping`
 
-When the user supplies a rate:
+When shipping is known and the user supplies or TCGpal estimates a rate:
 
-`estimatedTax = price × taxRate`
+`estimatedTax = preTaxTotal × taxRate`
 
 `estimatedLandedCost = preTaxTotal + estimatedTax`
 
-Without a rate, the UI must say “pre-tax total.”
+Without a rate, the UI says “pre-tax total.” Without shipping, the UI says “before shipping” and the row cannot win a recommendation.
 
 Seller trust uses explicit score bands for feedback percentage, feedback volume, returns, top-rated status, and buyer protection.
 
@@ -49,21 +54,34 @@ Safety is:
 
 “Best condition evidence” never means “best condition” or a likely grade.
 
+Best Value uses independent components:
+
+`0.40 × price + 0.25 × conditionCompatibility + 0.20 × sellerTrust + 0.15 × evidenceCompleteness`
+
+Each lens ranks the full eligible set independently; uniqueness is never forced.
+
 ## Non-goals
 
 - Card scanning or image upload
 - NM/LP/grade prediction from photos
 - Automated marketplace scraping
 - Sold-history claims without an approved provider
-- Auth, payments, journals, collections, planning, or recommendation feeds
+- Auth, payments, monitoring, saved collections, journals, planning, or recommendation feeds
 - Investment, profit, or guaranteed-condition advice
 
 ## Pilot success
 
-With 10 target buyers and 30 real listings:
+Before self-serve launch, pass a human-adjudicated corpus of at least 30 real listings covering NM/LP/MP/HP/damaged, unknown shipping, wrong versions, novelty items, and multiple price bands:
 
-- 60% complete a comparison within 90 seconds.
-- 30% say the evidence changed their next action.
-- 40% return with another listing within 14 days.
+- Every lens satisfies its mathematical invariant.
+- No incompatible or incomplete-cost row becomes the recommendation.
+- Aggregate references and web discoveries never appear as active listings.
+- Expert agreement on buy/pass reaches at least 90%, with every disagreement reviewed.
+
+Then, with 10 target buyers:
+
+- 80% complete a comparison within 60 seconds.
+- 30% say the evidence changed or confirmed their next action.
+- 40% return with another card within 14 days.
 - Fewer than 10% correct the confirmed card/version.
-- At least three users voluntarily share a result or request saved history.
+- At least three users voluntarily share a comparison receipt.

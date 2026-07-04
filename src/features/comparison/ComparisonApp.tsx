@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
@@ -28,7 +28,6 @@ import {
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { calculatePriceComponent, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
-import { isJapanReferenceLabel } from "@/lib/comparison/japan-references";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
@@ -113,7 +112,6 @@ type ComparisonForm = {
   closeupsExplicit: boolean;
   surfaceExplicit: boolean;
   substantiveConditionNotes: boolean;
-  expandedWebDiscovery: boolean;
   manualCandidates: LedgerRow[];
 };
 
@@ -125,69 +123,6 @@ type LedgerRow = {
   title: string;
   url: string;
 };
-
-type SavedCardRecord = {
-  id: string;
-  label: string;
-  query: string;
-  saved: boolean;
-  tracked: boolean;
-};
-
-const SAVED_CARDS_KEY = "tcgpal:saved-cards";
-const EMPTY_SAVED_CARDS: SavedCardRecord[] = [];
-const savedCardListeners = new Set<() => void>();
-let savedCardsSnapshot: SavedCardRecord[] | null = null;
-
-function isSavedCardRecord(entry: unknown): entry is SavedCardRecord {
-  return Boolean(
-    entry
-    && typeof entry === "object"
-    && "id" in entry
-    && typeof entry.id === "string"
-    && "label" in entry
-    && typeof entry.label === "string"
-    && "query" in entry
-    && typeof entry.query === "string"
-    && "saved" in entry
-    && typeof entry.saved === "boolean"
-    && "tracked" in entry
-    && typeof entry.tracked === "boolean",
-  );
-}
-
-function getSavedCardsSnapshot() {
-  if (savedCardsSnapshot === null) {
-    try {
-      const saved = JSON.parse(localStorage.getItem(SAVED_CARDS_KEY) ?? "[]");
-      savedCardsSnapshot = Array.isArray(saved) ? saved.filter(isSavedCardRecord) : [];
-    } catch {
-      savedCardsSnapshot = [];
-    }
-  }
-  return savedCardsSnapshot;
-}
-
-function getSavedCardsServerSnapshot() {
-  return EMPTY_SAVED_CARDS;
-}
-
-function subscribeSavedCards(listener: () => void) {
-  savedCardListeners.add(listener);
-  return () => {
-    savedCardListeners.delete(listener);
-  };
-}
-
-function writeSavedCards(next: SavedCardRecord[]) {
-  savedCardsSnapshot = next;
-  try {
-    localStorage.setItem(SAVED_CARDS_KEY, JSON.stringify(next));
-  } catch {
-    /* ignore unavailable storage */
-  }
-  savedCardListeners.forEach((listener) => listener());
-}
 
 const emptyLedgerRow: LedgerRow = {
   marketplace: "TCGplayer",
@@ -213,7 +148,7 @@ const defaultValues: ComparisonForm = {
   postalCode: "",
   taxRatePercent: "",
   claimedCondition: "Unknown",
-  desiredCondition: "Unknown",
+  desiredCondition: "Near Mint",
   feedbackPercentage: "",
   feedbackCount: "",
   returnsAccepted: false,
@@ -223,7 +158,6 @@ const defaultValues: ComparisonForm = {
   closeupsExplicit: false,
   surfaceExplicit: false,
   substantiveConditionNotes: false,
-  expandedWebDiscovery: false,
   manualCandidates: [],
 };
 
@@ -329,8 +263,6 @@ function ComparisonExperience() {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [comparingDiscoveryId, setComparingDiscoveryId] = useState<string | null>(null);
   const [compactSearchOpen, setCompactSearchOpen] = useState(false);
-  const [savedCardsOpen, setSavedCardsOpen] = useState(false);
-  const savedCards = useSyncExternalStore(subscribeSavedCards, getSavedCardsSnapshot, getSavedCardsServerSnapshot);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
 
   const heroQuery = useWatch({ control: form.control, name: "heroQuery" });
@@ -342,7 +274,7 @@ function ComparisonExperience() {
   const setCode = useWatch({ control: form.control, name: "setCode" });
   const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
   const game = useWatch({ control: form.control, name: "game" });
-  const expandedWebDiscovery = useWatch({ control: form.control, name: "expandedWebDiscovery" });
+  const desiredCondition = useWatch({ control: form.control, name: "desiredCondition" });
   const ph = game === "onePiece" ? t.form.phOnePiece : t.form.ph;
   const isManual = marketplace !== "eBay" || !sourceUrl.trim();
   // Live, client-side preview of the same deterministic parse the server runs —
@@ -444,36 +376,6 @@ function ComparisonExperience() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function useDemo() {
-    const demo: ComparisonForm = {
-      ...defaultValues,
-      url: "https://www.ebay.com/itm/123456789012",
-      marketplace: "eBay",
-      cardName: "Umbreon VMAX",
-      setCode: "SWSH7",
-      cardNumber: "215/203",
-      listingTitle: "Umbreon VMAX Evolving Skies 215/203 raw",
-      description: "Front and back photos with corner closeups. Seller notes one tiny white dot.",
-      price: "1240",
-      shipping: "9.95",
-      postalCode: "10001",
-      taxRatePercent: "8.0",
-      claimedCondition: "Near Mint",
-      desiredCondition: "Unknown",
-      feedbackPercentage: "99.4",
-      feedbackCount: "482",
-      returnsAccepted: true,
-      buyerProtection: true,
-      photoCount: "6",
-      frontBackExplicit: true,
-      closeupsExplicit: true,
-      surfaceExplicit: false,
-      substantiveConditionNotes: true,
-    };
-    form.reset(demo);
-    void submitComparison(demo, "swsh7-215");
   }
 
   async function confirmIdentity(identity: CardIdentityCandidate) {
@@ -581,8 +483,6 @@ function ComparisonExperience() {
     form.setValue("setCode", confirmedCard.setCode);
     form.setValue("cardNumber", confirmedCard.cardNumber);
     if (!currentValues.heroQuery.trim()) form.setValue("heroQuery", cardQuery);
-    form.setValue("expandedWebDiscovery", false);
-
     setPendingRequest(request);
     setLoading(true);
     setError(null);
@@ -625,40 +525,22 @@ function ComparisonExperience() {
 
   const compactMode = Boolean(pendingRequest || report);
   const activeCard = report?.confirmedCard ?? null;
-  const activeCardId = activeCard?.id ?? null;
-  const activeCardRecord = activeCardId ? savedCards.find((entry) => entry.id === activeCardId) ?? null : null;
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
   const headerContext = [
     t.form.games[pendingRequest?.cardHint.game ?? game],
     (pendingRequest?.buyer.postalCode ?? postalCode) ? `ZIP ${pendingRequest?.buyer.postalCode ?? postalCode}` : null,
+    (pendingRequest?.buyer.desiredCondition ?? desiredCondition) === "Unknown"
+      ? t.form.anyCondition
+      : t.conditions[pendingRequest?.buyer.desiredCondition ?? desiredCondition],
   ].filter(Boolean).join(" · ");
-
-  function persistSavedCards(next: SavedCardRecord[]) {
-    writeSavedCards(next);
-  }
-
-  function updateActiveCardState(kind: "saved" | "tracked", value: boolean) {
-    if (!activeCard) return;
-    const existing = savedCards.find((entry) => entry.id === activeCard.id);
-    const nextRecord: SavedCardRecord = {
-      id: activeCard.id,
-      label: [activeCard.name, activeCard.cardNumber].filter(Boolean).join(" · "),
-      query: heroQuery.trim() || [activeCard.name, activeCard.cardNumber].filter(Boolean).join(" "),
-      saved: kind === "saved" ? value : existing?.saved ?? false,
-      tracked: kind === "tracked" ? value : existing?.tracked ?? false,
-    };
-    const withoutActive = savedCards.filter((entry) => entry.id !== activeCard.id);
-    persistSavedCards(nextRecord.saved || nextRecord.tracked ? [...withoutActive, nextRecord] : withoutActive);
-  }
 
   function startNewSearch() {
     setReport(null);
     setPendingRequest(null);
     setError(null);
     setCompactSearchOpen(false);
-    setSavedCardsOpen(false);
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
     });
@@ -671,13 +553,7 @@ function ComparisonExperience() {
           query={headerQuery}
           context={headerContext}
           editOpen={compactSearchOpen}
-          saved={activeCardRecord?.saved ?? false}
-          saveDisabled={!activeCard}
-          savedCards={savedCards.filter((entry) => entry.saved)}
-          savedCardsOpen={savedCardsOpen}
           onEditToggle={() => setCompactSearchOpen((current) => !current)}
-          onSaveToggle={() => updateActiveCardState("saved", !(activeCardRecord?.saved ?? false))}
-          onSavedCardsToggle={() => setSavedCardsOpen((current) => !current)}
           onNewSearch={startNewSearch}
           editPanel={compactSearchOpen ? (
             <form
@@ -737,12 +613,8 @@ function ComparisonExperience() {
         </section>
 
         <section id="compare" className="mt-4 rounded-md border border-[#d6ded5] bg-[#fcfbf6] shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
-          <div className="flex items-center justify-between gap-3 px-5 pt-5 sm:px-7">
+          <div className="px-5 pt-5 sm:px-7">
             <p className="text-sm font-bold uppercase tracking-[0.08em] text-[#64736c]">{t.form.heading}</p>
-            <button className="text-button" type="button" onClick={useDemo} disabled={loading}>
-              <IconFoil className="h-4 w-4" />
-              {t.form.runDemo}
-            </button>
           </div>
 
           <form className="p-5 sm:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
@@ -822,6 +694,16 @@ function ComparisonExperience() {
                   <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
                 </div>
               </label>
+              <label className="field w-full max-w-56">
+                <span>{t.form.desiredCondition}</span>
+                <select {...form.register("desiredCondition")}>
+                  {conditions.map((value) => (
+                    <option key={value} value={value}>
+                      {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
             <button
@@ -853,19 +735,13 @@ function ComparisonExperience() {
                   </label>
                 </div>
                 <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="mt-4 grid gap-4">
                   <label className="field">
                     <span>{t.form.optionalTaxRate}</span>
                     <div className="input-suffix">
                       <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
                       <span>%</span>
                     </div>
-                  </label>
-                  <label className="field">
-                    <span>{t.form.desiredCondition}</span>
-                    <select {...form.register("desiredCondition")}>
-                      {conditions.map((value) => <option key={value} value={value}>{t.conditions[value]}</option>)}
-                    </select>
                   </label>
                 </div>
               </div>
@@ -1048,22 +924,6 @@ function ComparisonExperience() {
             </div>
             )}
 
-            <label className={`mt-6 flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition ${
-              expandedWebDiscovery
-                ? "border-[#e2c879] bg-[#fff8dc]"
-                : "border-[#d6ded5] bg-[#f7f9f5] hover:border-[#c9d7ce]"
-            }`}>
-              <input
-                className="mt-1 h-4 w-4 shrink-0 accent-[#2f6f73]"
-                type="checkbox"
-                {...form.register("expandedWebDiscovery")}
-              />
-              <span>
-                <span className="block text-sm font-black text-[#2f6f73]">{t.form.expandedWebDiscoveryLabel}</span>
-                <span className="mt-1 block text-sm leading-6 text-[#64736c]">{t.form.expandedWebDiscoveryHelp}</span>
-              </span>
-            </label>
-
             <div className="mt-6 flex justify-end">
               <button className="primary-button shrink-0" type="submit" disabled={loading}>
                 {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
@@ -1089,8 +949,6 @@ function ComparisonExperience() {
             onFeedback={sendFeedback}
             onCompareDiscovery={compareWebDiscovery}
             comparingDiscoveryId={comparingDiscoveryId}
-            tracking={activeCardRecord?.tracked ?? false}
-            onTrackingChange={(value) => updateActiveCardState("tracked", value)}
           />
         )}
       </div>
@@ -1125,27 +983,15 @@ function ResultsHeader({
   query,
   context,
   editOpen,
-  saved,
-  saveDisabled,
-  savedCards,
-  savedCardsOpen,
   editPanel,
   onEditToggle,
-  onSaveToggle,
-  onSavedCardsToggle,
   onNewSearch,
 }: {
   query: string;
   context: string;
   editOpen: boolean;
-  saved: boolean;
-  saveDisabled: boolean;
-  savedCards: SavedCardRecord[];
-  savedCardsOpen: boolean;
   editPanel: ReactNode;
   onEditToggle: () => void;
-  onSaveToggle: () => void;
-  onSavedCardsToggle: () => void;
   onNewSearch: () => void;
 }) {
   const t = useT();
@@ -1168,47 +1014,11 @@ function ResultsHeader({
           {context && <span className="hidden truncate text-xs font-bold text-[#64736c] md:inline">· {context}</span>}
           <span className="ml-auto shrink-0 text-xs font-black text-[#2f6f73]">{editOpen ? t.header.closeSearch : t.header.editSearch}</span>
         </button>
-        <button
-          className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-black transition ${
-            saved
-              ? "border-[#2f6f73] bg-[#e7efe8] text-[#2f6f73]"
-              : "border-[#d6ded5] bg-[#fcfbf6] text-[#52635c] hover:border-[#2f6f73] hover:text-[#2f6f73]"
-          }`}
-          type="button"
-          disabled={saveDisabled}
-          aria-pressed={saved}
-          onClick={onSaveToggle}
-        >
-          <IconFoil className="h-3.5 w-3.5" />
-          {saved ? t.header.savedCard : t.header.saveCard}
-        </button>
         <nav className="ml-auto flex items-center gap-2 text-xs font-black text-[#64736c] sm:gap-4">
-          <button className="relative hover:text-[#2f6f73]" type="button" aria-expanded={savedCardsOpen} onClick={onSavedCardsToggle}>
-            {t.header.myCards}{savedCards.length > 0 ? ` ${savedCards.length}` : ""}
-          </button>
+          <button className="hover:text-[#2f6f73]" type="button" onClick={onNewSearch}>{t.header.newSearch}</button>
           <a className="hidden hover:text-[#2f6f73] sm:inline" href="#method">{t.header.method}</a>
           <LanguageToggle lang={lang} setLang={setLang} t={t} />
         </nav>
-        {savedCardsOpen && (
-          <div className="absolute right-4 top-[54px] z-10 w-[min(320px,calc(100vw-2rem))] rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3 shadow-[0_14px_36px_rgba(36,49,47,0.14)] sm:right-6">
-            {savedCards.length > 0 ? (
-              <div className="space-y-2">
-                {savedCards.map((card) => (
-                  <div key={card.id} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-2">
-                    <p className="truncate text-sm font-black text-[#24312f]">{card.label}</p>
-                    <p className="mt-0.5 truncate text-xs text-[#64736c]">{card.tracked ? t.result.trackingCard : card.query}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm leading-6 text-[#64736c]">{t.header.savedEmpty}</p>
-            )}
-            <button className="secondary-button mt-3 w-full" type="button" onClick={onNewSearch}>
-              <IconPlus className="h-4 w-4" />
-              {t.header.newSearch}
-            </button>
-          </div>
-        )}
       </div>
       {editPanel}
     </header>
@@ -1472,16 +1282,12 @@ function ComparisonResult({
   onFeedback,
   onCompareDiscovery,
   comparingDiscoveryId,
-  tracking,
-  onTrackingChange,
 }: {
   report: ComparisonReport;
   feedbackSent: boolean;
   onFeedback: (changedDecision: boolean) => void;
   onCompareDiscovery: (discovery: WebDiscovery) => void;
   comparingDiscoveryId: string | null;
-  tracking: boolean;
-  onTrackingChange: (value: boolean) => void;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -1507,14 +1313,15 @@ function ComparisonResult({
 
   const eligibleCount = eligibleListings.length;
   const [showAllCandidates, setShowAllCandidates] = useState(false);
-  const orderedEligibleListings = selectedListing
-    ? [selectedListing, ...eligibleListings.filter((listing) => listing.id !== selectedListing.id)]
-    : eligibleListings;
+  const orderedEligibleListings = useMemo(
+    () => sortListingsForRole(eligibleListings, selectedRole),
+    [eligibleListings, selectedRole],
+  );
   const visibleEligibleListings = showAllCandidates ? orderedEligibleListings : orderedEligibleListings.slice(0, LEDGER_PREVIEW_COUNT);
   const hiddenEligibleCount = Math.max(0, eligibleCount - visibleEligibleListings.length);
-  const japanReferences = report.references.filter((reference) => isJapanReferenceLabel(reference.label));
   const webDiscoveries = report.webDiscoveries ?? [];
-  const livePlatforms = report.platforms.filter((platform) => platform.status === "complete");
+  const visiblePlatforms = report.platforms.filter((platform) => platform.configured || platform.status === "fallback");
+  const livePlatforms = visiblePlatforms.filter((platform) => platform.status === "complete");
   const connectedSourceLabels = livePlatforms.map((platform) => platform.marketplace).join(" + ");
   const listingTotals = eligibleListings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
   const listedRange = listingTotals.length > 0
@@ -1529,23 +1336,50 @@ function ComparisonResult({
   const [qaLoading, setQaLoading] = useState(false);
   const [qaError, setQaError] = useState<string | null>(null);
   const [qaTarget, setQaTarget] = useState<{ id: string; label: string } | null>(null);
+  const [receiptCopied, setReceiptCopied] = useState(false);
+
+  async function copyComparisonReceipt() {
+    if (!selectedListing || !selectedChoice) return;
+    const total = selectedListing.estimatedLandedCost ?? selectedListing.preTaxTotal;
+    const totalLabel = selectedListing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
+    const receipt = [
+      "TCGpal comparison",
+      report.confirmedCard
+        ? `${report.confirmedCard.name} · ${report.confirmedCard.setCode} #${report.confirmedCard.cardNumber}`
+        : selectedListing.title,
+      `${roleToggleLabel(selectedChoice.role, t)}: ${selectedListing.marketplace} · ${t.conditions[selectedListing.claimedCondition]}`,
+      `${totalLabel}: ${formatMoney(total)}`,
+      `Seller trust ${selectedListing.sellerTrustScore}/100 · Evidence ${selectedListing.evidenceCompletenessScore}/100`,
+      selectedChoice.reason,
+      selectedListing.url ? `Listing: ${selectedListing.url}` : "",
+      `Generated ${new Date(report.generatedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}`,
+    ].filter(Boolean).join("\n");
+    try {
+      await navigator.clipboard.writeText(receipt);
+      setReceiptCopied(true);
+      trackEvent("comparison_receipt_copied");
+      window.setTimeout(() => setReceiptCopied(false), 2000);
+    } catch {
+      setReceiptCopied(false);
+    }
+  }
 
   async function askQuestion(options: { question?: string; targetListing?: NormalizedListing | null } = {}) {
     const question = (options.question ?? qaQuestion).trim();
     if (!question || qaLoading) return;
-    const targetListing = options.targetListing ?? null;
+    const targetListing = options.targetListing === undefined
+      ? qaTarget ? listingMap.get(qaTarget.id) ?? null : null
+      : options.targetListing;
     if (targetListing) {
       setQaQuestion(question);
       setQaTarget({ id: targetListing.id, label: `${targetListing.marketplace} · ${formatMoney(targetListing.estimatedLandedCost ?? targetListing.preTaxTotal)}` });
-    } else if (!options.question) {
-      setQaTarget(null);
     }
     setQaLoading(true);
     setQaError(null);
     try {
       const json = await postJsonWithRetry(
         "/api/agent/listing-compare/explain",
-        { report, question, targetListingId: targetListing?.id, webContext: "auto" },
+        { report, question, targetListingId: targetListing?.id, activeRole: selectedRole ?? undefined, webContext: "auto" },
         t.result.askError,
       );
       setQaAnswer(json as ComparisonQuestionResponse);
@@ -1557,8 +1391,8 @@ function ComparisonResult({
   }
 
   function askAboutListing(listing: NormalizedListing) {
-    const bestListingId = report.rankedChoices.find((choice) => choice.role === "best_value")?.listingId ?? report.rankedChoices[0]?.listingId;
-    const question = listing.id === bestListingId
+    const selectedListingId = selectedChoice?.listingId;
+    const question = listing.id === selectedListingId
       ? t.result.askWhyThis
       : t.result.askWhyNotListing(listing.marketplace, formatMoney(listing.estimatedLandedCost ?? listing.preTaxTotal));
     void askQuestion({ question, targetListing: listing });
@@ -1620,7 +1454,7 @@ function ComparisonResult({
             </span>
           </div>
           <span className="ml-auto text-xs font-bold text-[#7a8982]">
-            {t.result.sourcesLive(livePlatforms.length, Math.max(0, report.platforms.length - livePlatforms.length))}
+            {t.result.sourcesLive(livePlatforms.length, Math.max(0, visiblePlatforms.length - livePlatforms.length))}
           </span>
         </div>
       </div>
@@ -1637,7 +1471,14 @@ function ComparisonResult({
                 <button
                   key={choice.role}
                   type="button"
-                  onClick={() => setRoleOverride(choice.role)}
+                  onClick={() => {
+                    setRoleOverride(choice.role);
+                    setQaQuestion("");
+                    setQaAnswer(null);
+                    setQaError(null);
+                    setQaTarget(null);
+                    trackEvent("lens_selected", { choice_role: choice.role });
+                  }}
                   aria-pressed={active}
                   title={roleToggleHint(choice.role, t)}
                   className={`min-h-9 rounded-lg px-2 py-2 text-center text-xs font-black transition sm:text-sm ${
@@ -1651,8 +1492,21 @@ function ComparisonResult({
           </div>
         )}
         <span className="text-xs font-bold text-[#64736c]">{t.result.candidateCount(eligibleCount)}</span>
+        {selectedListing && selectedChoice && (
+          <button className="text-button" type="button" onClick={() => void copyComparisonReceipt()}>
+            <IconReceipt className="h-4 w-4" />
+            {receiptCopied ? t.result.receiptCopied : t.result.copyReceipt}
+          </button>
+        )}
         <span className="ml-auto hidden text-xs font-bold text-[#7a8982] md:inline">{t.result.lensNote}</span>
       </div>
+
+      {report.rankedChoices.length === 0 && (
+        <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
+          <h3 className="font-serif text-xl font-black">{t.result.noRecommendationTitle}</h3>
+          <p className="mt-2 text-sm leading-6">{t.result.noRecommendationBody}</p>
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div className="space-y-3">
@@ -1663,7 +1517,7 @@ function ComparisonResult({
                 listing={listing}
                 fallbackImageUrl={report.confirmedCard?.imageUrl ?? null}
                 marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
-                choice={index === 0 ? selectedChoice : null}
+                choice={listing.id === selectedChoice?.listingId ? selectedChoice : null}
                 lead={index === 0}
                 demoMode={report.demoMode}
                 onAsk={askAboutListing}
@@ -1772,28 +1626,6 @@ function ComparisonResult({
         </div>
 
         <aside className="space-y-3 lg:sticky lg:top-24">
-          <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
-            <div className="flex items-center gap-3">
-              <div className="min-w-0">
-                <h3 className="text-sm font-black text-[#24312f]">{tracking ? t.result.trackingCard : t.result.trackCard}</h3>
-                <p className="mt-1 text-xs leading-5 text-[#7a8982]">
-                  {t.result.trackBody(formatMoney(selectedListing?.estimatedLandedCost ?? selectedListing?.preTaxTotal ?? 0))}
-                </p>
-              </div>
-              <button
-                className={`relative ml-auto h-6 w-11 shrink-0 rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${
-                  tracking ? "bg-[#2f6f73]" : "bg-[#c9d7ce]"
-                }`}
-                type="button"
-                role="switch"
-                aria-checked={tracking}
-                aria-label={t.result.trackCard}
-                onClick={() => onTrackingChange(!tracking)}
-              >
-                <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${tracking ? "left-6" : "left-1"}`} />
-              </button>
-            </div>
-          </section>
           <ComparisonQuestionBox
             question={qaQuestion}
             answer={qaAnswer}
@@ -1810,44 +1642,19 @@ function ComparisonResult({
               comparingDiscoveryId={comparingDiscoveryId}
             />
           )}
-          {japanReferences.length > 0 && <JapanReferencePanel references={japanReferences} />}
           <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
             <h3 className="text-sm font-black text-[#24312f]">{t.result.beforeYouBuy}</h3>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-[#52635c]">
               {report.narrative.cautions.map((caution) => (
                 <li key={caution} className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b26a4c]" />
-                  {caution}
+                  {localizedCaution(caution, t)}
                 </li>
               ))}
             </ul>
           </section>
         </aside>
       </div>
-    </section>
-  );
-}
-
-function JapanReferencePanel({ references }: { references: ComparisonReport["references"] }) {
-  const t = useT();
-  return (
-    <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
-      <h3 className="text-sm font-black text-[#24312f]">{t.result.japanPriceChecks}</h3>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {references.map((reference) => (
-          <a
-            key={reference.label}
-            className="inline-flex min-h-10 items-center justify-between gap-2 rounded-md border border-[#d6ded5] bg-[#fffef9] px-2.5 py-2 text-xs font-bold text-[#2f6f73] transition hover:border-[#2f6f73]"
-            href={reference.url ?? "#"}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span>{reference.label.replace(" price check", "")}</span>
-            <IconArrowUpRight className="h-4 w-4 shrink-0" />
-          </a>
-        ))}
-      </div>
-      <p className="mt-3 text-xs leading-5 text-[#7a8982]">{t.result.japanPriceChecksBody}</p>
     </section>
   );
 }
@@ -1967,7 +1774,9 @@ function ComparisonQuestionBox({
         </p>
       )}
       <div className="mt-3 grid gap-2">
+        <label className="sr-only" htmlFor="comparison-question">{t.result.askTitle}</label>
         <textarea
+          id="comparison-question"
           className="min-h-20 rounded-md border border-[#c9d7ce] bg-[#fffef9] px-3 py-2 text-sm text-[#24312f] outline-none transition focus:border-[#2f6f73] focus:ring-2 focus:ring-[#2f6f73]/20"
           value={question}
           onChange={(event) => onQuestionChange(event.target.value)}
@@ -1979,7 +1788,7 @@ function ComparisonQuestionBox({
         </button>
       </div>
       {answer && (
-        <div className="mt-4 rounded-md border border-[#c9d7ce] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
+        <div aria-live="polite" className="mt-4 rounded-md border border-[#c9d7ce] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
           {answer.webContextChecked && (
             <p className="mb-2 inline-flex items-center gap-2 rounded-md border border-[#d9c27b] bg-[#fff8dc] px-2.5 py-1 text-xs font-black uppercase tracking-[0.08em] text-[#6f5a22]">
               <IconExternal className="h-3.5 w-3.5" />
@@ -2043,6 +1852,35 @@ function roleToggleHint(role: RankedChoice["role"], t: Dict) {
   }
 }
 
+function sortListingsForRole(listings: NormalizedListing[], role: RankedChoice["role"] | null) {
+  return [...listings].sort((a, b) => {
+    switch (role) {
+      case "lowest_landed_cost":
+        return listingCost(a) - listingCost(b) || b.safetyScore - a.safetyScore;
+      case "safest_listing":
+        return b.safetyScore - a.safetyScore || listingCost(a) - listingCost(b);
+      case "best_condition_evidence":
+        return b.evidenceCompletenessScore - a.evidenceCompletenessScore
+          || b.sellerTrustScore - a.sellerTrustScore
+          || listingCost(a) - listingCost(b);
+      default:
+        return b.valueScore - a.valueScore || listingCost(a) - listingCost(b);
+    }
+  });
+}
+
+function listingCost(listing: NormalizedListing) {
+  return listing.estimatedLandedCost ?? listing.preTaxTotal;
+}
+
+function localizedCaution(caution: string, t: Dict) {
+  if (caution.startsWith("One listing may lead several lenses")) return t.result.cautionMultiLens;
+  if (caution.startsWith("Recent sold transactions")) return t.result.cautionSoldManual;
+  if (caution.startsWith("Reference prices can lag")) return t.result.cautionReferenceLag;
+  if (caution.startsWith("Fewer than three decision lenses")) return t.result.cautionFewLenses;
+  return caution;
+}
+
 // R3: the market anchor states where it came from and how fresh it is.
 // Staleness is measured against the report's own timestamp so render stays pure.
 function MarketFreshness({ card, generatedAt }: { card: CardIdentityCandidate; generatedAt: string }) {
@@ -2083,15 +1921,6 @@ function evidenceVerdict(score: number, t: Dict): { label: string; tone: Verdict
   return { label: t.card.thinEvidence, tone: "bad" };
 }
 
-function riskVerdict(listing: NormalizedListing, t: Dict): { label: string; tone: VerdictTone } {
-  switch (listing.riskLabel) {
-    case "low_risk": return { label: t.card.lowRisk, tone: "good" };
-    case "some_risk": return { label: t.card.someRisk, tone: "ok" };
-    case "unverified": return { label: t.card.unverified, tone: "neutral" };
-    default: return { label: t.card.higherRisk, tone: "bad" };
-  }
-}
-
 function VerdictTag({ verdict, icon: Icon, hint }: { verdict: { label: string; tone: VerdictTone }; icon: IconComponent; hint?: string }) {
   const cls = verdict.tone === "good"
     ? "bg-[#dcecdf] text-[#2f6f73]"
@@ -2117,7 +1946,8 @@ function riskFormula(t: Dict) {
 function valueFormula(t: Dict) {
   return t.card.mathValueFormula(
     Math.round(VALUE_WEIGHTS.price * 100),
-    Math.round(VALUE_WEIGHTS.safety * 100),
+    Math.round(VALUE_WEIGHTS.condition * 100),
+    Math.round(VALUE_WEIGHTS.seller * 100),
     Math.round(VALUE_WEIGHTS.evidence * 100),
   );
 }
@@ -2163,16 +1993,21 @@ function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; mar
   // same way), so no vs-market read — not even a bare score — can be
   // reconstructed from fabricated demo prices.
   const anchor = listing.demo ? null : marketPrice;
-  const priceComponent = calculatePriceComponent(total, anchor);
+  const priceComponent = listing.priceScore;
   const rows: Array<{ label: string; inputs: string; score: number; note?: string }> = [
     {
       label: t.card.mathPrice,
       inputs: listing.demo
         ? t.card.mathDemoHidden
-        : anchor && anchor > 0
+        : listing.marketComparable && anchor && anchor > 0
           ? t.card.mathVs(formatMoney(total), formatMoney(anchor))
-          : t.card.mathNoMarket,
+          : listing.costComplete ? t.card.mathNoMarket : t.card.estBeforeShipping,
       score: priceComponent,
+    },
+    {
+      label: t.form.desiredCondition,
+      inputs: conditionInputsLine(listing, t),
+      score: listing.conditionCompatibilityScore,
     },
     { label: t.card.mathSeller, inputs: sellerInputsLine(listing, t), score: listing.sellerTrustScore, note: t.card.thTrusted },
     { label: t.card.mathEvidence, inputs: evidenceInputsLine(listing, t), score: listing.evidenceCompletenessScore, note: t.card.thDocumented },
@@ -2272,7 +2107,10 @@ function CandidateRow({
 }) {
   const t = useT();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const marketDelta = marketPrice && marketPrice > 0 ? (total - marketPrice) / marketPrice : null;
+  const marketDelta = listing.marketComparable && listing.costComplete && marketPrice && marketPrice > 0
+    ? (total - marketPrice) / marketPrice
+    : null;
+  const nearMarket = marketDelta !== null && Math.abs(marketDelta) < 0.005;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
@@ -2287,6 +2125,7 @@ function CandidateRow({
 
   return (
     <article
+      aria-live={lead ? "polite" : undefined}
       className={`result-row rounded-xl bg-[#fcfbf6] transition ${
         lead
           ? "border-2 border-[#2f6f73] p-4 shadow-[0_10px_28px_rgba(36,49,47,0.08)] sm:p-5"
@@ -2327,23 +2166,17 @@ function CandidateRow({
               icon={IconPhotoProof}
               hint={`${evidenceInputsLine(listing, t)} -> ${listing.evidenceCompletenessScore}/100 (${t.card.thDocumented})`}
             />
-            <VerdictTag
-              verdict={riskVerdict(listing, t)}
-              icon={IconCardCheck}
-              hint={`${riskFormula(t)} -> ${listing.safetyScore}/100 (${t.card.thRisk})`}
-            />
             <span className="rounded-full border border-[#d6ded5] bg-[#f7f9f5] px-2 py-1 text-[10px] font-black text-[#64736c]">
-              {listing.marketplace} · {t.card.photos(listing.evidence.photoCount)}
+              {listing.marketplace} · {t.conditions[listing.claimedCondition]}
+              {listing.listingLanguage ? ` · ${listing.listingLanguage}` : ""}
             </span>
           </div>
-          {lead && (
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-[#64736c]">
-              <span>{roleToggleLabel(choice?.role ?? "best_value", t)} {roleScore}/100</span>
-              <button className="underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
-                {t.candidate.ask}
-              </button>
-            </div>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-[#64736c]">
+            {lead && <span>{roleToggleLabel(choice?.role ?? "best_value", t)} {roleScore}/100</span>}
+            <button className="underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
+              {t.candidate.ask}
+            </button>
+          </div>
         </div>
         <div className="col-span-2 flex items-end justify-between gap-3 sm:col-span-1 sm:grid sm:min-w-[142px] sm:justify-items-end sm:gap-1.5">
           <div className="sm:text-right">
@@ -2351,16 +2184,18 @@ function CandidateRow({
             <p className="text-[10px] font-black uppercase tracking-[0.06em] text-[#7a8982]">{totalLabel}</p>
           </div>
           {marketDelta !== null && !listing.demo && (
-            <p className={`text-xs font-black ${marketDelta <= 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}>
-              {marketDelta <= 0 ? "▼ " : "▲ "}
-              {marketDelta <= 0
-                ? t.card.underMarket(Math.round(Math.abs(marketDelta) * 100))
-                : t.card.aboveMarket(Math.round(marketDelta * 100))}
+            <p className={`text-xs font-black ${nearMarket ? "text-[#64736c]" : marketDelta < 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}>
+              {nearMarket ? "≈ " : marketDelta < 0 ? "▼ " : "▲ "}
+              {nearMarket
+                ? t.card.nearMarket
+                : marketDelta < 0
+                  ? t.card.underMarket(Math.max(1, Math.round(Math.abs(marketDelta) * 100)))
+                  : t.card.aboveMarket(Math.max(1, Math.round(marketDelta * 100)))}
             </p>
           )}
           {listing.url ? (
             <a
-              className={`result-row-cta inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md bg-[#2f6f73] px-3 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${lead ? "is-lead" : ""}`}
+              className={`result-row-cta inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#2f6f73] px-3 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${lead ? "is-lead" : ""}`}
               href={listing.url}
               target="_blank"
               rel="noreferrer"
@@ -2384,6 +2219,8 @@ function CandidateRow({
 // competing with the verdict.
 function SourcesChecked({ platforms }: { platforms: ComparisonReport["platforms"] }) {
   const t = useT();
+  const visiblePlatforms = platforms.filter((platform) => platform.configured || platform.status === "fallback");
+  if (visiblePlatforms.length === 0) return null;
   return (
     <div className="mt-5">
       <p className="eyebrow">
@@ -2391,7 +2228,7 @@ function SourcesChecked({ platforms }: { platforms: ComparisonReport["platforms"
         {t.result.sourcesTitle}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {platforms.map((platform) => {
+        {visiblePlatforms.map((platform) => {
           const tone = platform.status === "complete"
             ? "bg-[#dcecdf] text-[#2f6f73]"
             : platform.status === "fallback"
@@ -2490,7 +2327,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
         shipping: nullableNumber(row.shipping),
         claimedCondition: row.claimedCondition,
       })),
-    webDiscoveryMode: values.expandedWebDiscovery ? "expanded" : "off",
+    webDiscoveryMode: "off",
     confirmedCardId,
   };
 }

@@ -2,6 +2,7 @@ import {
   normalizedListingSchema,
   rankedChoiceSchema,
   type BuyerContext,
+  type ConditionClaim,
   type ListingEvidence,
   type ListingSeed,
   type Marketplace,
@@ -39,6 +40,7 @@ const exclusionPatterns = [
   /\breplica\b/i,
   /\bacrylic\b/i,
   /\bfan[\s-]?made\b/i,
+  /\baltered\b/i,
   /\bmagnet\b/i,
   /\bkeychain\b/i,
   /\bplush\b/i,
@@ -156,22 +158,52 @@ export function calculatePriceComponent(landedOrPreTaxTotal: number, marketPrice
   return 0;
 }
 
-// Best Value is a deterministic composite, not a fourth independent signal: price
-// leads (below-market is the strongest "best value" tell), safety and evidence
-// keep it from picking a cheap-but-risky listing. Weights are a product choice,
-// not a derived constant — tune here if the default lens starts feeling wrong.
-export const VALUE_WEIGHTS = { price: 0.5, safety: 0.3, evidence: 0.2 };
+// Best Value uses four independent signals. Evidence is deliberately not hidden
+// inside a second "safety" input and counted twice.
+export const VALUE_WEIGHTS = { price: 0.4, condition: 0.25, seller: 0.2, evidence: 0.15 };
 
 // Safety blends the two trust signals; exported so the UI's "check the math"
 // receipt derives its displayed formula from the same constants.
 export const SAFETY_WEIGHTS = { seller: 0.6, evidence: 0.4 };
 
-export function calculateValueScore(input: { priceComponent: number; safetyScore: number; evidenceCompletenessScore: number }) {
+export function calculateValueScore(input: {
+  priceComponent: number;
+  conditionCompatibilityScore: number;
+  sellerTrustScore: number;
+  evidenceCompletenessScore: number;
+}) {
   return Math.round(
     input.priceComponent * VALUE_WEIGHTS.price
-    + input.safetyScore * VALUE_WEIGHTS.safety
+    + input.conditionCompatibilityScore * VALUE_WEIGHTS.condition
+    + input.sellerTrustScore * VALUE_WEIGHTS.seller
     + input.evidenceCompletenessScore * VALUE_WEIGHTS.evidence,
   );
+}
+
+const CONDITION_RANK: Record<Exclude<ConditionClaim, "Unknown">, number> = {
+  Damaged: 1,
+  "Heavily Played": 2,
+  "Moderately Played": 3,
+  "Lightly Played": 4,
+  "Near Mint": 5,
+};
+
+const CONDITION_SCORE: Record<ConditionClaim, number> = {
+  Unknown: 25,
+  Damaged: 10,
+  "Heavily Played": 30,
+  "Moderately Played": 55,
+  "Lightly Played": 80,
+  "Near Mint": 100,
+};
+
+export function calculateConditionCompatibilityScore(
+  claimed: ConditionClaim,
+  desired: ConditionClaim,
+) {
+  if (desired === "Unknown") return CONDITION_SCORE[claimed];
+  if (claimed === "Unknown") return 0;
+  return CONDITION_RANK[claimed] >= CONDITION_RANK[desired] ? 100 : 0;
 }
 
 export function calculateEvidenceCompletenessScore(evidence: ListingEvidence) {
@@ -200,22 +232,48 @@ export function normalizeListing(input: {
   buyer: BuyerContext;
   marketPrice?: number | null;
   variantIntent?: VariantIntent | null;
+  cardLanguage?: string | null;
 }) {
   const { listing, buyer } = input;
+  const costComplete = listing.shipping !== null;
   const shipping = listing.shipping ?? 0;
   const preTaxTotal = roundMoney(listing.price + shipping);
   // Tax the pre-tax total (item + shipping), not the item alone: that is what eBay
   // charges in most states and it keeps the math reconcilable — pre-tax, tax, and the
   // landed total now satisfy landed === preTax × (1 + rate).
-  const estimatedTax = buyer.taxRate === null ? null : roundMoney(preTaxTotal * buyer.taxRate);
+  const estimatedTax = !costComplete || buyer.taxRate === null ? null : roundMoney(preTaxTotal * buyer.taxRate);
   const estimatedLandedCost = estimatedTax === null ? null : roundMoney(preTaxTotal + estimatedTax);
   const sellerTrustScore = calculateSellerTrustScore(listing.seller, listing.marketplace);
   const evidenceCompletenessScore = calculateEvidenceCompletenessScore(listing.evidence);
+  const conditionCompatibilityScore = calculateConditionCompatibilityScore(listing.claimedCondition, buyer.desiredCondition);
   const safetyScore = Math.round((sellerTrustScore * SAFETY_WEIGHTS.seller) + (evidenceCompletenessScore * SAFETY_WEIGHTS.evidence));
   const marketPrice = input.marketPrice ?? null;
-  const priceComponent = calculatePriceComponent(estimatedLandedCost ?? preTaxTotal, marketPrice);
-  const valueScore = calculateValueScore({ priceComponent, safetyScore, evidenceCompletenessScore });
-  const exclusionReasons = getExclusionReasons(listing, marketPrice, input.variantIntent ?? null);
+  // A condition-sensitive request may use the exact-print market anchor after
+  // incompatible copies have been removed. "Any condition" deliberately does
+  // not compare played copies against one blended anchor.
+  // TCGCSV does not expose condition-level SKUs. Only an explicit NM request
+  // paired with an NM seller claim gets the approximate aggregate-market read;
+  // played-condition rows never borrow that anchor or appear "under market."
+  const marketComparable = marketPrice !== null
+    && marketPrice > 0
+    && buyer.desiredCondition === "Near Mint"
+    && listing.claimedCondition === "Near Mint";
+  const priceScore = costComplete
+    ? calculatePriceComponent(estimatedLandedCost ?? preTaxTotal, marketComparable ? marketPrice : null)
+    : 0;
+  const valueScore = calculateValueScore({
+    priceComponent: priceScore,
+    conditionCompatibilityScore,
+    sellerTrustScore,
+    evidenceCompletenessScore,
+  });
+  const exclusionReasons = getExclusionReasons(
+    listing,
+    buyer,
+    marketPrice,
+    input.variantIntent ?? null,
+    input.cardLanguage ?? null,
+  );
 
   // The risk label reflects the seller's track record, not evidence volume:
   // search-API rows legitimately carry thin evidence (no full description or
@@ -236,11 +294,15 @@ export function normalizeListing(input: {
 
   return normalizedListingSchema.parse({
     ...listing,
+    costComplete,
     estimatedTax,
     preTaxTotal,
     estimatedLandedCost,
     sellerTrustScore,
     evidenceCompletenessScore,
+    conditionCompatibilityScore,
+    marketComparable,
+    priceScore,
     safetyScore,
     valueScore,
     riskLabel,
@@ -250,38 +312,59 @@ export function normalizeListing(input: {
   });
 }
 
+// When a condition-level market anchor is unavailable, price still matters — but
+// only relative to the compatible listings in this report. This prevents a played
+// copy from borrowing an NM aggregate reference while keeping Best Value honest.
+export function finalizeListingScores(listings: NormalizedListing[]) {
+  const field = listings.filter((listing) =>
+    listing.eligible && listing.costComplete && !listing.marketComparable
+  );
+  const costs = field.map(comparableCost);
+  const min = costs.length > 0 ? Math.min(...costs) : null;
+  const max = costs.length > 0 ? Math.max(...costs) : null;
+
+  return listings.map((listing) => {
+    if (!listing.eligible || !listing.costComplete || listing.marketComparable || min === null || max === null) {
+      return listing;
+    }
+    const priceScore = max === min
+      ? 50
+      : Math.round(100 - ((comparableCost(listing) - min) / (max - min)) * 100);
+    const valueScore = calculateValueScore({
+      priceComponent: priceScore,
+      conditionCompatibilityScore: listing.conditionCompatibilityScore,
+      sellerTrustScore: listing.sellerTrustScore,
+      evidenceCompletenessScore: listing.evidenceCompletenessScore,
+    });
+    return normalizedListingSchema.parse({ ...listing, priceScore, valueScore });
+  });
+}
+
 export function rankListings(
   listings: NormalizedListing[],
   context: { marketPrice?: number | null } = {},
 ): RankedChoice[] {
-  const eligible = listings.filter((listing) => listing.eligible);
+  const eligible = finalizeListingScores(listings).filter((listing) => listing.eligible);
   if (!eligible.length) return [];
 
   const marketPrice = context.marketPrice ?? null;
-  const selected = new Set<string>();
   const choices: RankedChoice[] = [];
 
   // Best Value leads: the flagship recommendation — a deterministic composite of
   // price-vs-market, seller trust, and evidence, not just "cheapest." This is the
   // product's default answer to "which one do I buy."
-  const bestValue = [...eligible].sort((a, b) => b.valueScore - a.valueScore || a.preTaxTotal - b.preTaxTotal)[0];
+  const bestValue = [...eligible].sort((a, b) => b.valueScore - a.valueScore || comparableCost(a) - comparableCost(b))[0];
   choices.push(makeChoice(
     "best_value",
     bestValue,
     "Best value",
-    `Best combination of price vs. market, seller trust, and evidence (${bestValue.valueScore}/100).`
+    `Best combination of complete cost, condition fit, seller trust, and evidence (${bestValue.valueScore}/100).`
       + aboveMarketContext(bestValue, marketPrice),
   ));
-  selected.add(bestValue.id);
 
-  const cheapest = pickDistinct(
-    [...eligible].sort((a, b) => {
-      const aCost = a.estimatedLandedCost ?? a.preTaxTotal;
-      const bCost = b.estimatedLandedCost ?? b.preTaxTotal;
-      return aCost - bCost || b.safetyScore - a.safetyScore;
-    }),
-    selected,
-  );
+  const cheapest = [...eligible].sort((a, b) =>
+    comparableCost(a) - comparableCost(b) || b.safetyScore - a.safetyScore
+  )[0];
   if (cheapest) {
     choices.push(makeChoice(
       "lowest_landed_cost",
@@ -292,13 +375,11 @@ export function rankListings(
         : `Lowest estimated landed cost at $${cheapest.estimatedLandedCost?.toFixed(2)}.`)
         + aboveMarketContext(cheapest, marketPrice, true),
     ));
-    selected.add(cheapest.id);
   }
 
-  const safest = pickDistinct(
-    [...eligible].sort((a, b) => b.safetyScore - a.safetyScore || a.preTaxTotal - b.preTaxTotal),
-    selected,
-  );
+  const safest = [...eligible].sort((a, b) =>
+    b.safetyScore - a.safetyScore || comparableCost(a) - comparableCost(b)
+  )[0];
   if (safest) {
     choices.push(makeChoice(
       "safest_listing",
@@ -307,17 +388,13 @@ export function rankListings(
       `Highest combined seller and listing-evidence score (${safest.safetyScore}/100).`
         + aboveMarketContext(safest, marketPrice),
     ));
-    selected.add(safest.id);
   }
 
-  const bestEvidence = pickDistinct(
-    [...eligible].sort((a, b) =>
-      b.evidenceCompletenessScore - a.evidenceCompletenessScore
-      || b.sellerTrustScore - a.sellerTrustScore
-      || a.preTaxTotal - b.preTaxTotal
-    ),
-    selected,
-  );
+  const bestEvidence = [...eligible].sort((a, b) =>
+    b.evidenceCompletenessScore - a.evidenceCompletenessScore
+    || b.sellerTrustScore - a.sellerTrustScore
+    || comparableCost(a) - comparableCost(b)
+  )[0];
   if (bestEvidence) {
     choices.push(makeChoice(
       "best_condition_evidence",
@@ -334,7 +411,7 @@ export function rankListings(
 // Honesty label (R8): a pick that beats the field but not the market must say
 // so. For the cheapest lens this means supply is thin right now.
 function aboveMarketContext(listing: NormalizedListing, marketPrice: number | null, cheapestLens = false) {
-  if (marketPrice === null || marketPrice <= 0 || listing.demo) return "";
+  if (marketPrice === null || marketPrice <= 0 || listing.demo || !listing.marketComparable || !listing.costComplete) return "";
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const delta = (total - marketPrice) / marketPrice;
   if (delta <= 0.02) return "";
@@ -350,26 +427,55 @@ function aboveMarketContext(listing: NormalizedListing, marketPrice: number | nu
 const MARKET_FLOOR_RATIO = 0.25;
 
 function getExclusionReasons(
-  listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "marketplace" | "userSupplied">,
+  listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "shipping" | "claimedCondition" | "marketplace" | "userSupplied">
+    & { listingLanguage?: string | null },
+  buyer: BuyerContext,
   marketPrice: number | null,
   variantIntent: VariantIntent | null = null,
+  cardLanguage: string | null = null,
 ) {
   const reasons: string[] = [];
   if (!listing.active) reasons.push("Listing is not active.");
   if (!listing.raw) reasons.push("Listing is not a raw single card.");
   if (listing.currency !== "USD") reasons.push("Listing is not priced in USD.");
+  if (listing.shipping === null) reasons.push("Shipping cost is unknown, so the checkout total cannot be compared safely.");
   if (listing.matchConfidence === "low") reasons.push("Exact card/version match is low confidence.");
+  if (buyer.desiredCondition !== "Unknown") {
+    if (listing.claimedCondition === "Unknown") {
+      reasons.push(`Seller condition is not stated; the buyer requested ${buyer.desiredCondition} or better.`);
+    } else if (CONDITION_RANK[listing.claimedCondition] < CONDITION_RANK[buyer.desiredCondition]) {
+      reasons.push(`Seller claims ${listing.claimedCondition}; the buyer requested ${buyer.desiredCondition} or better.`);
+    }
+  }
   if (exclusionPatterns.some((pattern) => pattern.test(listing.title))) reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
-  if (marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO) {
+  const marketFloorApplies = buyer.desiredCondition === "Near Mint" || buyer.desiredCondition === "Lightly Played";
+  if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO) {
     reasons.push("Priced far below market — likely a replica, proxy, or mislabeled item.");
   }
   const variantReason = variantMismatchReason(listing, variantIntent);
   if (variantReason) reasons.push(variantReason);
+  const languageReason = languageMismatchReason(listing.title, cardLanguage, listing.listingLanguage ?? null);
+  if (languageReason) reasons.push(languageReason);
   return reasons;
 }
 
-function pickDistinct(listings: NormalizedListing[], selected: Set<string>) {
-  return listings.find((listing) => !selected.has(listing.id)) ?? null;
+function languageMismatchReason(title: string, targetLanguage: string | null, listingLanguage: string | null) {
+  if (!targetLanguage) return null;
+  const target = targetLanguage.toLowerCase();
+  const englishTarget = target === "en" || target.includes("english");
+  const japaneseTarget = target === "jp" || target === "jpn" || target.includes("japanese");
+  const languageEvidence = `${listingLanguage ?? ""} ${title}`;
+  const explicitJapanese = /\b(japanese|jpn|jp)\b|日本語|日版/i.test(languageEvidence);
+  const explicitEnglish = /\b(english|eng)\b/i.test(languageEvidence);
+  const explicitOther = /\b(korean|chinese|french|german|spanish|italian|portuguese)\b/i.test(languageEvidence);
+
+  if (englishTarget && (explicitJapanese || explicitOther)) {
+    return "Title explicitly names a non-English card; the confirmed version is English.";
+  }
+  if (japaneseTarget && (explicitEnglish || explicitOther)) {
+    return "Title explicitly names a non-Japanese card; the confirmed version is Japanese.";
+  }
+  return null;
 }
 
 function makeChoice(
@@ -383,8 +489,17 @@ function makeChoice(
     listingId: listing.id,
     label,
     reason,
-    confidence: listing.matchConfidence === "high" && listing.safetyScore >= 70 ? "high" : "medium",
+    confidence: listing.matchConfidence === "high"
+      && listing.costComplete
+      && listing.conditionCompatibilityScore === 100
+      && listing.safetyScore >= 70
+      ? "high"
+      : "medium",
   });
+}
+
+function comparableCost(listing: NormalizedListing) {
+  return listing.estimatedLandedCost ?? listing.preTaxTotal;
 }
 
 function roundMoney(value: number) {

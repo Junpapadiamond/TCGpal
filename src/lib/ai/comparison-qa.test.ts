@@ -16,15 +16,20 @@ function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
     currency: "USD",
     price: 10,
     shipping: 0,
+    costComplete: true,
     estimatedTax: null,
     preTaxTotal: 10,
     estimatedLandedCost: null,
     claimedCondition: "Unknown",
+    listingLanguage: null,
     imageUrl: null,
     seller: { feedbackPercentage: null, feedbackCount: null, returnsAccepted: null, topRated: null, buyerProtection: null },
     evidence: { photoCount: 0, frontBackExplicit: false, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: true, substantiveConditionNotes: false, missing: [] },
     sellerTrustScore: 50,
     evidenceCompletenessScore: 10,
+    conditionCompatibilityScore: 25,
+    marketComparable: false,
+    priceScore: 50,
     safetyScore: 30,
     valueScore: 40,
     riskLabel: "unverified",
@@ -145,8 +150,29 @@ describe("comparison question answering", () => {
     const answer = await answerComparisonQuestion(report, "why this one?", "best");
 
     expect(answer.usedAi).toBe(false);
-    expect(answer.answer).toContain("current recommendation");
+    expect(answer.answer).toContain("leads the Best Value lens");
     expect(answer.answer).toContain("82/100");
+  });
+
+  it("explains the selected lens instead of always falling back to Best Value", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const cheapestReport = {
+      ...report,
+      rankedChoices: [
+        { role: "best_value", listingId: "best", label: "Best Value", reason: "Best value.", confidence: "high" },
+        { role: "lowest_landed_cost", listingId: "twelve", label: "Cheapest", reason: "Lowest total.", confidence: "medium" },
+      ],
+    } as ComparisonReport;
+
+    const answer = await answerComparisonQuestion(
+      cheapestReport,
+      "why this one?",
+      "twelve",
+      { activeRole: "lowest_landed_cost" },
+    );
+
+    expect(answer.answer).toContain("leads the Cheapest lens");
+    expect(answer.answer).not.toContain("leads the Best Value lens");
   });
 
   it("does not use Tavily for report-only ranking questions in auto mode", async () => {

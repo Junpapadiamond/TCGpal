@@ -98,7 +98,7 @@ export const buyerContextSchema = z.object({
   country: z.literal("US").default("US"),
   postalCode: z.string().trim().max(10).default(""),
   taxRate: z.number().min(0).max(0.2).nullable().default(null),
-  desiredCondition: conditionClaimSchema.default("Unknown"),
+  desiredCondition: conditionClaimSchema.default("Near Mint"),
 });
 
 export const tcgGameSchema = z.enum(["pokemon", "onePiece"]);
@@ -202,15 +202,22 @@ export const normalizedListingSchema = z.object({
   currency: z.literal("USD"),
   price: z.number().min(0),
   shipping: z.number().min(0).nullable(),
+  // Shipping must be known before a row may compete for a recommendation.
+  // Tax may still be unknown, in which case the row is compared pre-tax.
+  costComplete: z.boolean(),
   estimatedTax: z.number().min(0).nullable(),
   preTaxTotal: z.number().min(0),
   estimatedLandedCost: z.number().min(0).nullable(),
   claimedCondition: conditionClaimSchema,
+  listingLanguage: z.string().trim().nullable().default(null),
   imageUrl: z.string().url().nullable().default(null),
   seller: sellerTrustSignalsSchema,
   evidence: listingEvidenceSchema,
   sellerTrustScore: z.number().int().min(0).max(100),
   evidenceCompletenessScore: z.number().int().min(0).max(100),
+  conditionCompatibilityScore: z.number().int().min(0).max(100),
+  marketComparable: z.boolean(),
+  priceScore: z.number().int().min(0).max(100),
   safetyScore: z.number().int().min(0).max(100),
   // Composite "best value" score: price-vs-market + safety + evidence. Deterministic —
   // computed alongside the other scores in normalizeListing(), never AI-assigned.
@@ -327,6 +334,7 @@ export const comparisonQuestionRequestSchema = z.object({
   report: comparisonReportSchema,
   question: z.string().trim().min(1).max(500),
   targetListingId: z.string().trim().min(1).max(200).optional(),
+  activeRole: rankedChoiceRoleSchema.optional(),
   // "auto" lets the assistant add cited web context for source legitimacy,
   // translation, reference-discovery, and identity-help questions. Report/ranking
   // questions remain report-only.
@@ -401,8 +409,12 @@ export type ListingSeed = Omit<
   | "estimatedTax"
   | "preTaxTotal"
   | "estimatedLandedCost"
+  | "costComplete"
   | "sellerTrustScore"
   | "evidenceCompletenessScore"
+  | "conditionCompatibilityScore"
+  | "marketComparable"
+  | "priceScore"
   | "safetyScore"
   | "valueScore"
   | "riskLabel"
@@ -410,7 +422,8 @@ export type ListingSeed = Omit<
   | "eligible"
   | "exclusionReasons"
   | "webDiscovered"
-> & { webDiscovered?: boolean };
+  | "listingLanguage"
+> & { webDiscovered?: boolean; listingLanguage?: string | null };
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;

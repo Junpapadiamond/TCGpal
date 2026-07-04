@@ -26,14 +26,14 @@ This is a lightweight 5-person probe, not the full 10-user × 30-listing pilot i
 ## What to log (drops straight into the tracker)
 
 - **Per comparison:** source, completed Y/N, time-to-result, completed <90s, identity corrected Y/N, decision changed Y/Maybe/N, most-useful lens, missing evidence, demo/live.
-- **Per user:** returned with a 2nd listing, shared a result or asked for saved history, baseline-workflow notes.
+- **Per user:** returned with a second card, voluntarily shared a comparison, baseline-workflow notes.
 
 ## Scaled gate (pass = keep investing)
 
 - **≥3 of ~15** comparisons change the next action (decision-change rate ≈20%+).
 - **≥10 of ~15** complete under 90 seconds.
 - Identity correction **<10%**.
-- **≥2 of 5** users return with another listing or ask for saved history.
+- **≥2 of 5** users return with another card or voluntarily share a comparison.
 
 ## Read-outs / pivots (pre-committed in `validation-plan.md`)
 

@@ -1,23 +1,25 @@
 # TCGpal
 
-TCGpal helps U.S. Pokémon collectors compare a specific raw-card listing against supported alternatives. It separates three questions that ordinary price apps collapse:
+TCGpal helps U.S. Pokémon and One Piece buyers compare condition-compatible raw singles without pretending incomplete data is comparable. It separates four questions ordinary price apps collapse:
 
-- What is the lowest estimated cost?
+- Which actionable listing has the best overall value?
+- What is the lowest complete comparable cost?
 - Which listing has the strongest seller and return signals?
-- Which listing provides the best condition evidence?
+- Which listing provides the most reviewable photo and condition evidence?
 
-The app shows its sources and does not predict grades or invent sold transactions.
+One listing may lead several lenses. The app can also abstain when condition or shipping data is insufficient.
 
 ## Current v1
 
-- Direct listing-first flow with no login
+- Card-first search and exact-version confirmation with no login
 - Official eBay active-listing adapter
+- TCGplayer/TCGCSV aggregate market reference with explicit freshness; it is not ranked as seller inventory
 - Manual candidates from TCGplayer, Facebook, Reddit, Mercari, Whatnot, shops, and shows
-- Optional Pokémon TCG catalog matching
+- Pokémon and One Piece catalog matching
 - Optional PriceCharting reference pricing
-- Deterministic landed-cost, seller-trust, evidence, eligibility, and ranking rules
-- Optional OpenAI evidence synthesis with deterministic fallback
-- Labeled demo inventory when eBay credentials are absent
+- Deterministic condition compatibility, complete-cost, seller-trust, evidence, eligibility, and ranking rules
+- Optional grounded listing Q&A; the initial comparison does not wait for model allocation or narrative
+- Labeled demo inventory only when no live or user-supplied listing exists
 - Privacy-restricted PostHog custom events
 
 ## Setup
@@ -30,7 +32,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The demo works without credentials. Add eBay credentials for live active listings and optional provider keys for richer evidence.
+The labeled demo works without credentials. Add eBay credentials for live active listings; TCGCSV is keyless reference data.
 
 ## Environment
 
@@ -44,7 +46,7 @@ PRICECHARTING_API_TOKEN=
 
 AI_PROVIDER=openai
 OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5.5-2026-04-23
+OPENAI_MODEL=gpt-5.5
 
 NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
@@ -75,4 +77,4 @@ npm run build
 
 ## Product boundaries
 
-No scraping, sold-history claims, image grading, auth, payments, or investment promises. Seller condition labels remain claims; TCGpal scores the evidence available to review them.
+No marketplace crawling, sold-history claims, image grading, auth, payments, saved collections, monitoring, or investment promises. Seller condition labels remain claims; unknown shipping and unknown condition remain unknown.

@@ -10,6 +10,8 @@ export type TcgpalAnalyticsEvent =
   | "comparison_completed"
   | "comparison_failed"
   | "choice_opened"
+  | "lens_selected"
+  | "comparison_receipt_copied"
   | "decision_feedback_submitted"
   | "second_comparison_started";
 

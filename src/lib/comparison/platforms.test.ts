@@ -167,10 +167,8 @@ describe("default registry (roadmap adapters)", () => {
     expect(skipped.length).toBe(1 + roadmap.length);
   });
 
-  it("serves TCGplayer as a live keyless agent backed by the TCGCSV daily dump", () => {
+  it("keeps TCGCSV out of the listing-agent registry because it is aggregate reference data", () => {
     const tcgplayer = getPlatformAgents().find((agent) => agent.id === "tcgplayer");
-    expect(tcgplayer?.sourceMode).toBe("cached_index");
-    expect(tcgplayer?.requiredEnv).toEqual([]);
-    expect(tcgplayer?.isConfigured()).toBe(true);
+    expect(tcgplayer).toBeUndefined();
   });
 });

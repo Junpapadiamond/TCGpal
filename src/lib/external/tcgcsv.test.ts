@@ -159,8 +159,7 @@ describe("TCGCSV TCGplayer connector", () => {
     expect(product?.categoryId).toBe(68);
     expect(product?.groupId).toBe(23293);
     expect(product?.productId).toBe(453508);
-    expect(result.seeds).toHaveLength(1);
-    expect(result.seeds[0].id).toBe("tcgplayer-453508-normal-low");
+    expect(result.seeds).toEqual([]);
     expect(result.anchor?.mid).toBe(1.76);
   });
 
@@ -196,23 +195,12 @@ describe("TCGCSV TCGplayer connector", () => {
     expect(product).toBeNull();
   });
 
-  it("builds listing seeds per priced variant plus a Direct row", async () => {
+  it("keeps daily aggregate prices as a market reference, never seller inventory", async () => {
     const fetcher = tcgcsvFetcher();
     const product = await resolveTcgplayerProduct(card, fetcher);
     const result = await searchTcgplayerListings(card, product as TcgplayerProductMatch, fetcher);
 
-    expect(result.seeds.map((seed) => seed.id)).toEqual([
-      "tcgplayer-246723-holofoil-low",
-      "tcgplayer-246723-holofoil-direct",
-    ]);
-    expect(result.seeds[0].price).toBe(1999.99);
-    expect(result.seeds[1].price).toBe(2499.93);
-    expect(result.seeds.every((seed) => seed.marketplace === "TCGplayer")).toBe(true);
-    // Aggregate rows carry no seller track record: unverified, never invented.
-    expect(result.seeds.every((seed) => seed.seller.feedbackPercentage === null)).toBe(true);
-    expect(result.seeds.every((seed) => seed.seller.buyerProtection === true)).toBe(true);
-    // No invented condition claim for aggregate price rows.
-    expect(result.seeds.every((seed) => seed.claimedCondition === "Unknown")).toBe(true);
+    expect(result.seeds).toEqual([]);
     expect(result.anchor?.mid).toBe(2204.86);
     expect(result.asOf).toBe("2026-07-02T20:06:28.000Z");
   });

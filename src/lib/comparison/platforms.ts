@@ -2,8 +2,6 @@ import {
   hasEbayCredentials,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
-import { resolveCardCrosswalk } from "@/lib/comparison/crosswalk";
-import { searchTcgplayerListings } from "@/lib/external/tcgcsv";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -71,32 +69,12 @@ export const ebayPlatformAgent: PlatformAgent = {
     searchEbayAlternatives(card, buyer, fetcher, plan?.query),
 };
 
-// TCGplayer via the TCGCSV daily price dump (keyless): the second live source.
-// The canonical crosswalk maps the confirmed card to its TCGplayer product id;
-// a card missing from the crosswalk degrades to zero seeds ("no match"), never
-// a hard failure. Price rows are aggregates (lowest listed / TCGplayer Direct),
-// labeled honestly — no invented seller, condition, or shipping claims.
-export const tcgplayerPlatformAgent: PlatformAgent = {
-  id: "tcgplayer",
-  marketplace: "TCGplayer",
-  label: "TCGplayer daily price feed (TCGCSV)",
-  sourceMode: "cached_index",
-  requiredEnv: [],
-  isConfigured: () => true,
-  search: async ({ card, fetcher }) => {
-    const crosswalk = await resolveCardCrosswalk(card, fetcher);
-    const result = await searchTcgplayerListings(card, crosswalk.tcgplayerProduct, fetcher);
-    return result.seeds;
-  },
-};
-
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
 // proving the fanout, ranking, and "sources checked" UI are fully provider-agnostic
 // today — but stays permanently unconfigured (search() is unreachable) until a real
 // adapter (official API, partner feed, or licensed data provider) is wired behind
-// it. Turning one on then is "one adapter," exactly as intended: implement search(),
-// flip isConfigured() to check the new env key, done — the TCGplayer agent above
-// is the worked example (TCGCSV daily dump, zero env keys).
+// it. Turning one on then is "one adapter," exactly as intended: implement search()
+// and flip isConfigured() to check the new env key.
 function stubPlatformAgent(config: {
   id: string;
   marketplace: Marketplace;
@@ -122,7 +100,9 @@ const ROADMAP_AGENTS: PlatformAgent[] = [
   stubPlatformAgent({ id: "shopee-tw", marketplace: "Shopee Taiwan", label: "Shopee Taiwan adapter", sourceMode: "partner_feed", requiredEnv: ["SHOPEE_TW_PARTNER_KEY"] }),
 ];
 
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, tcgplayerPlatformAgent, ...ROADMAP_AGENTS];
+// TCGCSV is intentionally absent: it is an aggregate market reference, not
+// seller-specific inventory. Only concrete active listings belong in this registry.
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {

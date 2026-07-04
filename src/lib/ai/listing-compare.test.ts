@@ -137,18 +137,38 @@ describe("listing comparison agent", () => {
     expect(parsed.setSymbolUrl).toBeUndefined();
   });
 
-  it("returns a schema-valid labeled demo report without marketplace credentials", async () => {
+  it("does not mix labeled demo inventory into a user-supplied comparison", async () => {
     const response = await runListingComparison(request, { fetcher });
     expect(comparisonReportSchema.safeParse(response).success).toBe(true);
     expect(response.confirmedCard?.id).toBe("swsh7-215");
     expect(response.confirmedCard?.cardNumber).toBe("215/203");
-    expect(response.demoMode).toBe(true);
-    // Best Value + Cheapest + Safest + Best-documented — 4 roles across the 4
-    // distinct eligible listings here (the manually-entered Facebook source seed
-    // plus the 3 demo eBay fixtures).
+    expect(response.demoMode).toBe(false);
     expect(response.rankedChoices.length).toBe(4);
     expect(response.rankedChoices[0]?.role).toBe("best_value");
-    expect(response.candidates.some((candidate) => candidate.demo)).toBe(true);
+    expect(response.candidates.some((candidate) => candidate.demo)).toBe(false);
+  });
+
+  it("uses labeled demo inventory only for a pure card search with no live rows", async () => {
+    const pureSearch: ComparisonRequest = {
+      ...request,
+      sourceListing: {
+        ...request.sourceListing,
+        marketplace: "eBay",
+        url: "",
+        title: "",
+        description: "",
+        price: null,
+        shipping: null,
+      },
+      manualCandidates: [],
+    };
+
+    const response = await runListingComparison(pureSearch, { fetcher });
+
+    expect(response.demoMode).toBe(true);
+    expect(response.candidates.length).toBeGreaterThan(0);
+    expect(response.candidates.every((candidate) => candidate.demo)).toBe(true);
+    expect(response.candidates.every((candidate) => candidate.marketComparable === false)).toBe(true);
   });
 
   it("does not run expanded web discovery unless the buyer opts in", async () => {
@@ -169,7 +189,7 @@ describe("listing comparison agent", () => {
     expect(response.trace.some((step) => step.step === "web_marketplace_discovery")).toBe(false);
   });
 
-  it("adds price-hint expanded discoveries to the deterministic ranking", async () => {
+  it("keeps expanded discoveries as manual links and out of deterministic ranking", async () => {
     vi.stubEnv("EXA_API_KEY", "exa-test");
     vi.stubEnv("TAVILY_API_KEY", "");
     vi.stubEnv("WEB_DISCOVERY", "1");
@@ -196,14 +216,10 @@ describe("listing comparison agent", () => {
       webDiscoveryMode: "expanded",
     }, { fetcher: expandedFetcher, now: () => new Date("2026-07-04T00:00:00.000Z") });
 
-    const webCandidate = response.candidates.find((candidate) => candidate.webDiscovered);
-    expect(webCandidate).toBeTruthy();
-    expect(webCandidate?.marketplace).toBe("Mercari");
-    expect(webCandidate?.price).toBe(1200);
-    expect(webCandidate?.shipping).toBeNull();
-    expect(response.rankedChoices.some((choice) => choice.listingId === webCandidate?.id)).toBe(true);
-    expect(response.webDiscoveries.some((discovery) => discovery.rankedCandidateId === webCandidate?.id)).toBe(true);
-    expect(response.trace.find((step) => step.step === "web_marketplace_discovery")?.summary).toContain("price-hint candidate");
+    expect(response.candidates.some((candidate) => candidate.webDiscovered)).toBe(false);
+    expect(response.webDiscoveries.some((discovery) => discovery.marketplace === "Mercari")).toBe(true);
+    expect(response.webDiscoveries.every((discovery) => discovery.rankedCandidateId === null)).toBe(true);
+    expect(response.trace.find((step) => step.step === "web_marketplace_discovery")?.summary).toContain("manual review");
   });
 
   it("keeps optional/by-design degradations out of the result banner, in the trace only", async () => {
@@ -219,8 +235,8 @@ describe("listing comparison agent", () => {
     const referenceStep = response.trace.find((step) => step.step === "reference_pricing");
     const synthesisStep = response.trace.find((step) => step.step === "evidence_synthesis");
     expect(referenceStep?.status).toBe("fallback");
-    expect(synthesisStep?.status).toBe("fallback");
-    expect(synthesisStep?.summary).toContain("local evidence summary");
+    expect(synthesisStep?.status).toBe("complete");
+    expect(synthesisStep?.summary).toContain("without adding a model round trip");
   });
 
   it("uses an exact-URL Tavily rescue without presenting the successful fallback as a live-data failure", async () => {

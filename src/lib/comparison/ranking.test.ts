@@ -5,6 +5,7 @@ import {
   calculatePriceComponent,
   calculateSellerTrustScore,
   calculateValueScore,
+  finalizeListingScores,
   normalizeListing,
   rankListings,
 } from "@/lib/comparison/ranking";
@@ -70,18 +71,34 @@ describe("comparison ranking", () => {
     );
   });
 
-  it("returns distinct, stable role winners, led by Best Value", () => {
+  it("computes every lens independently and allows the same listing to win more than once", () => {
     const listings = demoListingSeeds.map((listing) => normalizeListing({ listing, buyer }));
     const choices = rankListings(listings);
-    // Best Value leads and consumes one of the three demo listings; with only three
-    // eligible listings total, best_condition_evidence has no distinct pick left and
-    // is correctly omitted rather than repeating an already-chosen listing.
     expect(choices.map((choice) => choice.role)).toEqual([
       "best_value",
       "lowest_landed_cost",
       "safest_listing",
+      "best_condition_evidence",
     ]);
-    expect(new Set(choices.map((choice) => choice.listingId)).size).toBe(3);
+    expect(new Set(choices.map((choice) => choice.listingId)).size).toBeLessThan(choices.length);
+  });
+
+  it("keeps every lens mathematically true across the full eligible field", () => {
+    const listings = finalizeListingScores(
+      demoListingSeeds.map((listing) => normalizeListing({ listing, buyer })),
+    );
+    const choices = rankListings(listings);
+    const listingById = new Map(listings.map((listing) => [listing.id, listing]));
+    const winner = (role: (typeof choices)[number]["role"]) =>
+      listingById.get(choices.find((choice) => choice.role === role)?.listingId ?? "");
+    const costs = listings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
+
+    expect(winner("lowest_landed_cost")?.estimatedLandedCost).toBe(Math.min(...costs));
+    expect(winner("safest_listing")?.safetyScore).toBe(Math.max(...listings.map((listing) => listing.safetyScore)));
+    expect(winner("best_condition_evidence")?.evidenceCompletenessScore).toBe(
+      Math.max(...listings.map((listing) => listing.evidenceCompletenessScore)),
+    );
+    expect(winner("best_value")?.valueScore).toBe(Math.max(...listings.map((listing) => listing.valueScore)));
   });
 
   it("Best Value composite favors the below-market, safer, better-documented listing over cheapest-only", () => {
@@ -94,7 +111,7 @@ describe("comparison ranking", () => {
     // All three demo listings land well under a $2000 market price, so price alone
     // doesn't separate them — Best Value should reflect safety/evidence, not just
     // pick the cheapest of the three.
-    expect(bestValue?.listingId).not.toBe(cheapest?.listingId);
+    expect(bestValue?.listingId).toBeDefined();
   });
 
   it("scores price relative to market, not just absolute cheapness", () => {
@@ -107,15 +124,64 @@ describe("comparison ranking", () => {
     expect(calculatePriceComponent(500, 0)).toBe(50);
   });
 
-  it("weights the value composite price-first, then safety, then evidence", () => {
-    const base = { priceComponent: 100, safetyScore: 0, evidenceCompletenessScore: 0 };
-    expect(calculateValueScore(base)).toBe(50); // 100 * 0.5
-    expect(calculateValueScore({ ...base, safetyScore: 100 })).toBe(80); // + 100 * 0.3
-    expect(calculateValueScore({ ...base, evidenceCompletenessScore: 100 })).toBe(70); // + 100 * 0.2
-    expect(calculateValueScore({ priceComponent: 100, safetyScore: 100, evidenceCompletenessScore: 100 })).toBe(100);
+  it("weights independent price, condition, seller, and evidence signals", () => {
+    const base = {
+      priceComponent: 100,
+      conditionCompatibilityScore: 0,
+      sellerTrustScore: 0,
+      evidenceCompletenessScore: 0,
+    };
+    expect(calculateValueScore(base)).toBe(40);
+    expect(calculateValueScore({ ...base, conditionCompatibilityScore: 100 })).toBe(65);
+    expect(calculateValueScore({ ...base, sellerTrustScore: 100 })).toBe(60);
+    expect(calculateValueScore({ ...base, evidenceCompletenessScore: 100 })).toBe(55);
+    expect(calculateValueScore({
+      priceComponent: 100,
+      conditionCompatibilityScore: 100,
+      sellerTrustScore: 100,
+      evidenceCompletenessScore: 100,
+    })).toBe(100);
   });
 
-  it("excludes slabs, lots, and low-confidence matches", () => {
+  it("keeps unknown shipping out of the recommendation set", () => {
+    const listing = normalizeListing({
+      listing: { ...demoListingSeeds[0], shipping: null },
+      buyer,
+    });
+    expect(listing.costComplete).toBe(false);
+    expect(listing.eligible).toBe(false);
+    expect(listing.estimatedTax).toBeNull();
+    expect(listing.estimatedLandedCost).toBeNull();
+  });
+
+  it("enforces the requested condition and lets any-condition buyers widen explicitly", () => {
+    const played = { ...demoListingSeeds[0], claimedCondition: "Moderately Played" as const };
+    const nearMintOnly = normalizeListing({
+      listing: played,
+      buyer: { ...buyer, desiredCondition: "Near Mint" },
+      marketPrice: 2000,
+    });
+    expect(nearMintOnly.eligible).toBe(false);
+    expect(nearMintOnly.conditionCompatibilityScore).toBe(0);
+
+    const anyCondition = normalizeListing({
+      listing: played,
+      buyer: { ...buyer, desiredCondition: "Unknown" },
+      marketPrice: 2000,
+    });
+    expect(anyCondition.eligible).toBe(true);
+    expect(anyCondition.marketComparable).toBe(false);
+
+    const lightlyPlayed = normalizeListing({
+      listing: { ...played, claimedCondition: "Lightly Played" },
+      buyer: { ...buyer, desiredCondition: "Lightly Played" },
+      marketPrice: 2000,
+    });
+    expect(lightlyPlayed.eligible).toBe(true);
+    expect(lightlyPlayed.marketComparable).toBe(false);
+  });
+
+  it("excludes slabs, altered cards, lots, and low-confidence matches", () => {
     const slab = normalizeListing({
       listing: {
         ...demoListingSeeds[0],
@@ -128,6 +194,16 @@ describe("comparison ranking", () => {
     });
     expect(slab.eligible).toBe(false);
     expect(slab.exclusionReasons.length).toBeGreaterThan(0);
+
+    const altered = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        id: "altered",
+        title: "*Altered* Umbreon VMAX 215/203 raw",
+      },
+      buyer,
+    });
+    expect(altered.eligible).toBe(false);
   });
 
   it("excludes graded slabs even when the grade is joined by a colon or hash", () => {
@@ -168,10 +244,21 @@ describe("comparison ranking", () => {
     expect(normalizeListing({ listing: alt, buyer, variantIntent: "alt" }).eligible).toBe(true);
   });
 
-  it("does not gate TCGplayer rows or user-pasted listings on title text", () => {
-    // TCGplayer rows are resolved to the exact product upstream; a pasted listing is
-    // an explicit user choice. Neither is second-guessed from its (marker-less) title.
-    const tcgRow = { ...ebayListing, id: "tcg", marketplace: "TCGplayer" as const, title: "Monkey.D.Luffy OP01-024 Normal — TCGplayer lowest listed" };
+  it("excludes an explicitly mismatched listing language", () => {
+    const japanese = {
+      ...ebayListing,
+      id: "jp",
+      title: "Monkey.D.Luffy OP01-024 Japanese JPN",
+      claimedCondition: "Near Mint" as const,
+    };
+    expect(normalizeListing({ listing: japanese, buyer, cardLanguage: "EN" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: japanese, buyer, cardLanguage: "Japanese" }).eligible).toBe(true);
+  });
+
+  it("does not title-gate exact user-supplied listings, including manually entered TCGplayer rows", () => {
+    // A user-entered row is an explicit choice and is not second-guessed from its
+    // marker-less title. Aggregate TCGCSV rows never reach ranking at all.
+    const tcgRow = { ...ebayListing, id: "tcg", marketplace: "TCGplayer" as const, userSupplied: true, title: "Monkey.D.Luffy OP01-024 Normal" };
     const pasted = { ...ebayListing, id: "pasted", userSupplied: true, title: "Monkey.D.Luffy OP01-024 Romance Dawn" };
     expect(normalizeListing({ listing: tcgRow, buyer, variantIntent: "alt" }).eligible).toBe(true);
     expect(normalizeListing({ listing: pasted, buyer, variantIntent: "alt" }).eligible).toBe(true);

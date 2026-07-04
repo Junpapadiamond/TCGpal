@@ -1,9 +1,9 @@
 import { z } from "zod";
 import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 
-// TCGCSV republishes the official TCGplayer catalog and daily price dump.
-// It is the second live source (R3) and the market-reference feed. Data is
-// daily, so freshness is surfaced and >48h-stale data triggers a warning.
+// TCGCSV republishes the TCGplayer catalog and daily aggregate price dump.
+// It is a reference feed, never concrete seller inventory. Data is daily, so
+// freshness is surfaced and >48h-stale data triggers a warning.
 const TCGCSV_BASE = "https://tcgcsv.com/tcgplayer";
 const TCGCSV_LAST_UPDATED_URL = "https://tcgcsv.com/last-updated.txt";
 const POKEMON_CATEGORY_ID = 3;
@@ -129,7 +129,7 @@ export async function resolveTcgplayerProductVariants(
   const group = await findTcgplayerGroup(categoryId, card.setName, fetcher);
   if (!group) return [];
 
-  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 21600);
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 86400);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer product feed failed with ${response.status}.`);
   const products = tcgcsvEnvelope(tcgcsvProductSchema).parse(await response.json()).results;
 
@@ -169,24 +169,22 @@ export async function getTcgplayerPrices(
   productId: number,
   fetcher: typeof fetch = fetch,
 ): Promise<TcgplayerPriceRow[]> {
-  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${groupId}/prices`), fetcher, 3600);
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${groupId}/prices`), fetcher, 86400);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer price feed failed with ${response.status}.`);
   const rows = tcgcsvEnvelope(tcgcsvPriceSchema).parse(await response.json()).results;
   return rows.filter((row) => row.productId === productId);
 }
 
-// The full second-source search: crosswalk product → daily price rows →
-// listing seeds. Each priced variant becomes one comparable row (lowest listed
-// price, plus a TCGplayer Direct row when present). Prices are aggregate rows,
-// not a specific seller, so seller metrics stay null → "unverified" with the
-// platform baseline. The product comes from the crosswalk (R1): connectors
-// receive their platform-native identifier, no free-text re-matching.
+// Crosswalk product → daily aggregate reference. TCGCSV does not identify a
+// specific seller, condition, shipping amount, or buyable listing, so it never
+// produces ranking seeds. The empty `seeds` field remains for API compatibility
+// while callers migrate to the reference-only semantics.
 export async function searchTcgplayerListings(
   card: CardIdentityCandidate,
   product: TcgplayerProductMatch | null,
   fetcher: typeof fetch = fetch,
-  now: () => Date = () => new Date(),
 ): Promise<TcgplayerSearchResult> {
+  void card;
   if (!product) {
     return { seeds: [], anchor: null, product: null, asOf: await getTcgcsvLastUpdated(fetcher) };
   }
@@ -195,30 +193,6 @@ export async function searchTcgplayerListings(
     getTcgplayerPrices(product.categoryId, product.groupId, product.productId, fetcher),
     getTcgcsvLastUpdated(fetcher),
   ]);
-
-  const observedAt = now().toISOString();
-  const seeds: ListingSeed[] = [];
-
-  for (const row of sortByVariantPreference(rows)) {
-    const lowest = row.lowPrice ?? row.marketPrice ?? row.midPrice ?? null;
-    if (lowest !== null) {
-      seeds.push(toTcgplayerSeed(card, product, row, {
-        idSuffix: "low",
-        price: lowest,
-        titleNote: "lowest listed",
-        observedAt,
-      }));
-    }
-    if (row.directLowPrice !== null && row.directLowPrice !== undefined) {
-      seeds.push(toTcgplayerSeed(card, product, row, {
-        idSuffix: "direct",
-        price: row.directLowPrice,
-        titleNote: "TCGplayer Direct",
-        observedAt,
-        direct: true,
-      }));
-    }
-  }
 
   const anchorRow = sortByVariantPreference(rows).find((row) => row.marketPrice !== null || row.midPrice !== null) ?? null;
   const anchor = anchorRow
@@ -231,62 +205,11 @@ export async function searchTcgplayerListings(
     }
     : null;
 
-  return { seeds, anchor, product, asOf };
-}
-
-function toTcgplayerSeed(
-  card: CardIdentityCandidate,
-  product: TcgplayerProductMatch,
-  row: TcgplayerPriceRow,
-  options: { idSuffix: string; price: number; titleNote: string; observedAt: string; direct?: boolean },
-): ListingSeed {
-  return {
-    id: `tcgplayer-${product.productId}-${slug(row.subTypeName)}-${options.idSuffix}`,
-    marketplace: "TCGplayer",
-    url: product.productUrl,
-    title: `${card.name} ${card.cardNumber} ${row.subTypeName} — TCGplayer ${options.titleNote}`,
-    cardId: card.id,
-    matchConfidence: "high",
-    matchReasons: [
-      `Matched through the TCGplayer product crosswalk (product #${product.productId}, ${product.groupName}).`,
-    ],
-    active: true,
-    raw: true,
-    currency: "USD",
-    price: options.price,
-    // Shipping varies by TCGplayer seller and is not in the daily feed; the
-    // total stays pre-tax/pre-shipping and is labeled that way.
-    shipping: null,
-    claimedCondition: "Unknown",
-    imageUrl: card.imageUrl ?? null,
-    seller: {
-      feedbackPercentage: null,
-      feedbackCount: null,
-      returnsAccepted: null,
-      topRated: null,
-      buyerProtection: true,
-    },
-    evidence: {
-      photoCount: 0,
-      frontBackExplicit: false,
-      closeupsExplicit: false,
-      surfaceExplicit: false,
-      identityExplicit: true,
-      substantiveConditionNotes: false,
-      missing: [
-        "TCGplayer price rows are aggregates, not a specific seller's photos.",
-        "Shipping varies by seller and is not included in this price.",
-        ...(options.direct ? [] : ["Condition depends on the individual seller's listing."]),
-      ],
-    },
-    observedAt: options.observedAt,
-    demo: false,
-    userSupplied: false,
-  };
+  return { seeds: [], anchor, product, asOf };
 }
 
 async function findTcgplayerGroup(categoryId: number, setName: string, fetcher: typeof fetch) {
-  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/groups`), fetcher, 21600);
+  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/groups`), fetcher, 86400);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer group feed failed with ${response.status}.`);
   const groups = tcgcsvEnvelope(tcgcsvGroupSchema).parse(await response.json()).results;
 
@@ -395,8 +318,4 @@ function productVariantRank(product: { name: string; cleanName?: string | null }
 
 function tokenize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter(Boolean);
-}
-
-function slug(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }

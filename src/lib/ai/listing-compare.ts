@@ -1,13 +1,13 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
 import { demoIdentities, demoListingSeedsFor, type DemoListingSeed } from "@/lib/comparison/fixtures";
-import { normalizeListing, rankListings } from "@/lib/comparison/ranking";
+import { finalizeListingScores, normalizeListing, rankListings } from "@/lib/comparison/ranking";
 import {
   EbayUnavailableError,
   getEbayListingByUrl,
   parseEbayUrl,
 } from "@/lib/external/ebay";
-import { getConfiguredPlatformAgents } from "@/lib/comparison/platforms";
+import { getConfiguredPlatformAgents, runPlatformFanout } from "@/lib/comparison/platforms";
 import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
 import {
   comparisonCacheKey,
@@ -28,10 +28,8 @@ import {
 import {
   discoverWebMarketplaceLinks,
   isWebMarketplaceDiscoveryConfigured,
-  webDiscoveriesToListingSeeds,
 } from "@/lib/external/web-marketplace-discovery";
 import { parsedCardQuerySchema, parseCardQuery, type ParsedCardQuery } from "@/lib/comparison/query-parser";
-import { runMarketSearch } from "@/lib/ai/agent/market-agent";
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
 import { buildJapanReferenceLinks } from "@/lib/comparison/japan-references";
 import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
@@ -62,14 +60,6 @@ import {
 // let the buyer find the right version; the IdentityConfirmation UI groups these
 // by set so the list stays scannable.
 const MAX_IDENTITY_CANDIDATES = 24;
-
-const forbiddenNarrative = [
-  /\bguaranteed\b/i,
-  /\bscam\b/i,
-  /\bwill grade\b/i,
-  /\bpsa\s*10\b/i,
-  /\bsold comps? (show|prove|confirm)/i,
-];
 
 export async function runListingComparison(
   rawRequest: ComparisonRequest,
@@ -172,7 +162,7 @@ export async function runListingComparison(
 
   // R3: the daily-feed market anchor resolves in parallel with the fan-out.
   const anchorPromise: Promise<TcgplayerSearchResult | null> = crosswalk?.tcgplayerProduct
-    ? searchTcgplayerListings(confirmedCard, crosswalk.tcgplayerProduct, fetcher, now).catch(() => null)
+    ? searchTcgplayerListings(confirmedCard, crosswalk.tcgplayerProduct, fetcher).catch(() => null)
     : Promise.resolve(null);
 
   // PriceCharting only needs the confirmed card, so it overlaps with the
@@ -203,24 +193,18 @@ export async function runListingComparison(
   // parallel and reconciles into the same ledger. Each agent self-gates on its own
   // API credentials, so this scales to whatever platforms the operator has wired —
   // a failing one is isolated and never sinks the others.
-  const fanout = await runMarketSearch({ card: confirmedCard, buyer: request.buyer, fetcher });
+  const fanout = await runPlatformFanout({ card: confirmedCard, buyer: request.buyer, fetcher });
   seeds.push(...fanout.seeds);
   warnings.push(...fanout.warnings);
   trace.push(...fanout.traces);
   const platformResults = fanout.results;
   const webDiscovery = await webDiscoveryPromise;
-  const webDiscoverySeeds = webDiscoveriesToListingSeeds({
-    discoveries: webDiscovery.results,
-    card: confirmedCard,
-    observedAt: generatedAt,
-  });
-  if (webDiscoverySeeds.length > 0) seeds.push(...webDiscoverySeeds);
   if (wantsWebDiscovery && (webDiscovery.results.length > 0 || webDiscovery.warnings.length > 0)) {
     trace.push({
       step: "web_marketplace_discovery",
       actor: "Exa/Tavily web discovery",
       summary: webDiscovery.results.length > 0
-        ? `Found ${webDiscovery.results.length} possible marketplace/reference links and ${webDiscoverySeeds.length} price-hint candidate${webDiscoverySeeds.length === 1 ? "" : "s"} for optional ranking.`
+        ? `Found ${webDiscovery.results.length} possible marketplace/reference links for manual review. No discovery snippet was parsed or ranked.`
         : `No web-discovered marketplace links were added (${webDiscovery.warnings.join("; ") || "no results"}).`,
       status: webDiscovery.results.length > 0 ? "complete" : "fallback",
     });
@@ -234,7 +218,7 @@ export async function runListingComparison(
     warnings.push(`TCGplayer prices are more than 48 hours old (as of ${formatAnchorDate(confirmedCard.marketAsOf)}). Treat the market reference with extra care.`);
   }
 
-  if (fanout.seeds.length === 0 && webDiscoverySeeds.length === 0) {
+  if (fanout.seeds.length === 0 && seeds.length === 0) {
     // No live source produced a single listing (nothing configured, or every
     // configured source failed or found no match) — fall back to labeled demo
     // inventory the buyer cannot mistake for real offers, rather than masking
@@ -258,13 +242,25 @@ export async function runListingComparison(
   // Keep the ranked listings on the confirmed side of the base ↔ alternate-art line:
   // the same card number spans both at very different prices. Demo fixtures aren't
   // gated (they're labeled, not real offers). `variant` is set only on alt-art prints.
-  const variantIntent = demoMode ? null : confirmedCard.variant ? "alt" : "base";
-  const normalized = dedupeSeeds(seeds).map((listing) => normalizeListing({ listing, buyer: request.buyer, marketPrice: marketAnchor, variantIntent }));
+  // Pokémon collector numbers identify a unique print, so title wording such as
+  // "alternate art" must not contradict the catalog number. One Piece reuses a
+  // card number across base/parallel catalog variants, so only that catalog needs
+  // the additional title-side variant gate.
+  const onePieceVariant = /^(?:OP|ST|EB|PRB|P)-?\d/i.test(confirmedCard.cardNumber)
+    || /^(?:OP|ST|EB|PRB|P)\d/i.test(confirmedCard.id);
+  const variantIntent = demoMode || !onePieceVariant ? null : confirmedCard.variant ? "alt" : "base";
+  const normalized = finalizeListingScores(dedupeSeeds(seeds).map((listing) => normalizeListing({
+    listing,
+    buyer: request.buyer,
+    marketPrice: marketAnchor,
+    variantIntent,
+    cardLanguage: confirmedCard.language,
+  })));
   const rankedChoices = rankListings(normalized, { marketPrice: marketAnchor });
   trace.push({
     step: "validation_and_ranking",
     actor: "Deterministic TypeScript",
-    summary: `Validated ${normalized.length} candidates and ranked ${rankedChoices.length} distinct choices.`,
+    summary: `Validated ${normalized.length} candidates and computed ${rankedChoices.length} independent decision lenses.`,
     status: "complete",
   });
 
@@ -275,7 +271,7 @@ export async function runListingComparison(
     buildSoldReference(confirmedCard, generatedAt),
     ...buildJapanReferenceLinks(confirmedCard, generatedAt),
   ];
-  const narrative = await buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
+  const narrative = buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
   const partial = normalized.filter((listing) => listing.eligible).length === 0
     || (!demoMode && references.every((reference) => reference.status !== "used"));
 
@@ -984,7 +980,7 @@ function buildSoldReference(card: CardIdentityCandidate, observedAt: string): Co
   };
 }
 
-async function buildNarrative(
+function buildNarrative(
   card: CardIdentityCandidate,
   listings: NormalizedListing[],
   rankedChoices: ReturnType<typeof rankListings>,
@@ -992,45 +988,13 @@ async function buildNarrative(
   trace: ComparisonTrace[],
 ) {
   const local = localNarrative(card, listings, rankedChoices, references);
-  const config = getAiConfig();
-  const provider = createAiProvider(config);
-
-  try {
-    const response = await provider.completeJson({
-      role: "primary",
-      schemaName: "listing_comparison_narrative",
-      schema: comparisonNarrativeSchema,
-      system: [
-        "You are TCGpal's evidence synthesis agent.",
-        "Use only the supplied normalized listings, rankings, and references.",
-        "Never claim automated sold comps, call a seller a scam, predict a grade, or guarantee condition.",
-        "Do not use the words \"scam\", \"guaranteed\", or \"PSA 10\" anywhere, and never say sold comps prove, show, or confirm anything — describe missing evidence or risk signals in plain language instead.",
-        "Explain why the choices differ in two short sentences and add concise cautions.",
-      ].join("\n"),
-      user: { card, listings, rankedChoices, references },
-    });
-    if (forbiddenNarrative.some((pattern) => pattern.test(`${response.data.summary} ${response.data.cautions.join(" ")}`))) {
-      throw new Error("Critic rejected an unsupported claim.");
-    }
-    trace.push({
-      step: "evidence_synthesis",
-      actor: `TCGpal agent · ${response.model}`,
-      summary: "Synthesized the ranked evidence, then passed the unsupported-claim critic.",
-      status: "complete",
-    });
-    return response.data;
-  } catch (error) {
-    // Falling back to the deterministic narrative is by design (deterministic-first),
-    // not a live-data failure the buyer must act on. Keep the reason in the trace for
-    // debugging instead of raising it in the result-level "live data couldn't load" banner.
-    trace.push({
-      step: "evidence_synthesis",
-      actor: "Deterministic critic",
-      summary: `Used the local evidence summary because model synthesis was unavailable or rejected: ${errorMessage(error)}`,
-      status: "fallback",
-    });
-    return local;
-  }
+  trace.push({
+    step: "evidence_synthesis",
+    actor: "Deterministic evidence summary",
+    summary: "Built the buyer summary from validated listing facts without adding a model round trip.",
+    status: "complete",
+  });
+  return local;
 }
 
 function localNarrative(
@@ -1045,7 +1009,7 @@ function localNarrative(
       ? `TCGpal found ${eligible.length} eligible ${card.name} listings and separated price, seller safety, and condition evidence instead of collapsing them into one magic answer.`
       : `TCGpal could not find an eligible exact-match listing for ${card.name}.`,
     cautions: [
-      choices.length < 3 ? "Fewer than three distinct choices met the eligibility rules." : "Each choice wins for a different reason; none is a grade prediction.",
+      choices.length < 3 ? "Fewer than three decision lenses had enough eligible evidence." : "One listing may lead several lenses; none is a grade prediction.",
       references.some((reference) => reference.label === "Sold transactions" && reference.status !== "used")
         ? "Recent sold transactions still require manual verification."
         : "Reference prices can lag the market.",

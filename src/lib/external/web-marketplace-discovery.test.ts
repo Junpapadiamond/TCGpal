@@ -62,8 +62,8 @@ describe("web marketplace discovery", () => {
     expect(mercari).toBeTruthy();
     expect(mercari?.marketplace).toBe("Mercari");
     expect(mercari?.listingLike).toBe(true);
-    expect(mercari?.priceHintUsd).toBe(1200);
-    expect(mercari?.rankedCandidateId).toMatch(/^web-listing-/);
+    expect(mercari?.priceHintUsd).toBeNull();
+    expect(mercari?.rankedCandidateId).toBeNull();
     expect(mercari?.providers.sort()).toEqual(["exa", "tavily"]);
     expect(mercari?.note).toContain("Experimental web discovery");
     expect(result.results.some((item) => item.url.includes("example.com"))).toBe(false);
@@ -73,15 +73,7 @@ describe("web marketplace discovery", () => {
       card,
       observedAt: "2026-07-04T00:00:00.000Z",
     });
-    expect(seeds).toHaveLength(1);
-    expect(seeds[0]).toMatchObject({
-      marketplace: "Mercari",
-      price: 1200,
-      shipping: null,
-      userSupplied: false,
-      webDiscovered: true,
-    });
-    expect(seeds[0]?.matchReasons.join(" ")).toContain("expanded search");
+    expect(seeds).toEqual([]);
   });
 
   it("keeps volatile social discoveries recent and filters sold signals", async () => {

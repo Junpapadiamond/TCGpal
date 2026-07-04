@@ -26,6 +26,17 @@ const ebayItemSchema = z.object({
   shortDescription: z.string().optional(),
   price: ebayAmountSchema,
   condition: z.string().optional(),
+  conditionDescriptors: z.array(z.object({
+    name: z.string().optional(),
+    values: z.array(z.object({
+      content: z.string().optional(),
+      additionalInfo: z.array(z.string()).optional(),
+    }).passthrough()).optional(),
+  }).passthrough()).optional(),
+  localizedAspects: z.array(z.object({
+    name: z.string(),
+    value: z.string(),
+  }).passthrough()).optional(),
   image: ebayImageSchema.optional(),
   additionalImages: z.array(ebayImageSchema).optional(),
   thumbnailImages: z.array(ebayImageSchema).optional(),
@@ -148,15 +159,45 @@ export async function searchEbayAlternatives(
   }, fetcher);
   if (!response.ok) throw new Error(`eBay active-listing search failed with ${response.status}.`);
   const result = ebaySearchSchema.parse(await response.json());
-  return result.itemSummaries
-    .filter((item) => item.price.currency === "USD")
-    .map((item) => toNormalizedSeed(item, card));
+  const summaries = result.itemSummaries.filter((item) => item.price.currency === "USD");
+  // Browse search summaries usually say only "Ungraded". The item endpoint
+  // carries eBay's structured Card Condition descriptor (NM/LP/MP/HP/Damaged).
+  // Enrich a bounded exact-match shortlist in parallel so condition is a real
+  // deterministic input without turning the search into an unbounded crawl.
+  const detailTargets = summaries
+    .filter((item) => {
+      const match = assessTitleMatch(item.title, card);
+      return match.confidence !== "low"
+        && !/\b(psa|bgs|cgc|sgc|ace)[\s:._#-]*\d|\bgraded\s*\d|\bslab(?:bed)?\b/i.test(item.title);
+    })
+    .slice(0, 12);
+  const details = await Promise.all(detailTargets.map(async (item) => {
+    try {
+      return await getEbayItemDetail(item.itemId, token, buyer, fetcher);
+    } catch {
+      return null;
+    }
+  }));
+  const detailById = new Map(
+    details.filter((item): item is z.infer<typeof ebayItemSchema> => item !== null)
+      .map((item) => [item.itemId, item]),
+  );
+  return summaries.map((item) => toNormalizedSeed(detailById.get(item.itemId) ?? item, card));
 }
 
 function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: string): SourceListing {
-  const description = item.shortDescription ?? "";
+  const descriptorDetails = (item.conditionDescriptors ?? [])
+    .flatMap((descriptor) => descriptor.values ?? [])
+    .flatMap((value) => value.additionalInfo ?? [])
+    .filter(Boolean);
+  const descriptorText = (item.conditionDescriptors ?? [])
+    .flatMap((descriptor) => descriptor.values ?? [])
+    .flatMap((value) => [value.content ?? "", ...(value.additionalInfo ?? [])])
+    .filter(Boolean)
+    .join(". ");
+  const description = [item.shortDescription ?? "", descriptorText].filter(Boolean).join(". ");
   const photoCount = 1 + (item.additionalImages?.length ?? item.thumbnailImages?.length ?? 0);
-  const evidence = evidenceFromText(`${item.title} ${description}`, photoCount);
+  const evidence = evidenceFromText(`${item.title} ${description}`, photoCount, descriptorDetails.length > 0);
   return {
     marketplace: "eBay",
     url: item.itemWebUrl ?? item.itemAffiliateWebUrl ?? fallbackUrl,
@@ -164,7 +205,7 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     description,
     price: toUsd(item.price),
     shipping: cheapestUsdShipping(item.shippingOptions),
-    claimedCondition: normalizeCondition(item.condition),
+    claimedCondition: normalizeCondition(`${descriptorText} ${item.condition ?? ""} ${item.title}`),
     active: !item.itemEndDate || new Date(item.itemEndDate).getTime() > Date.now(),
     seller: {
       feedbackPercentage: numberOrNull(item.seller?.feedbackPercentage),
@@ -175,6 +216,21 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     },
     evidence,
   };
+}
+
+async function getEbayItemDetail(
+  itemId: string,
+  token: string,
+  buyer: BuyerContext,
+  fetcher: typeof fetch,
+) {
+  const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item/${encodeURIComponent(itemId)}`);
+  const response = await fetchWithTimeout(endpoint, {
+    headers: ebayHeaders(token, buyer),
+    cache: "no-store",
+  }, fetcher);
+  if (!response.ok) throw new Error(`eBay item detail failed with ${response.status}.`);
+  return ebayItemSchema.parse(await response.json());
 }
 
 // How confidently a live listing title identifies the confirmed card. Sellers
@@ -323,6 +379,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     price: source.price ?? 0,
     shipping: source.shipping,
     claimedCondition: source.claimedCondition,
+    listingLanguage: item.localizedAspects?.find((aspect) => aspect.name.toLowerCase() === "language")?.value ?? null,
     imageUrl: item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? null,
     seller: source.seller,
     evidence: source.evidence,
@@ -389,7 +446,7 @@ async function fetchWithTimeout(
   }
 }
 
-function evidenceFromText(text: string, photoCount: number) {
+function evidenceFromText(text: string, photoCount: number, substantiveConditionNotes = false) {
   // For an auto-fetched eBay listing we can verify the photo COUNT and whether the
   // collector number is in the title — but not what the photos actually show. We no
   // longer infer front/back, corner, or surface coverage from the seller's prose:
@@ -403,18 +460,18 @@ function evidenceFromText(text: string, photoCount: number) {
     closeupsExplicit: false,
     surfaceExplicit: false,
     identityExplicit,
-    substantiveConditionNotes: false,
+    substantiveConditionNotes,
     missing: ["Photo content isn't verified from the listing text — open the listing to review the photos."],
   };
 }
 
 function normalizeCondition(value: string | undefined): SourceListing["claimedCondition"] {
   const condition = value?.toLowerCase() ?? "";
-  if (condition.includes("near mint") || condition === "new") return "Near Mint";
-  if (condition.includes("light")) return "Lightly Played";
-  if (condition.includes("moderate")) return "Moderately Played";
-  if (condition.includes("heavy")) return "Heavily Played";
-  if (condition.includes("damage")) return "Damaged";
+  if (/\b(near[\s-]?mint|nm|mint)\b/.test(condition) || condition.trim() === "new") return "Near Mint";
+  if (/\b(light(?:ly)?[\s-]?played|lp)\b/.test(condition)) return "Lightly Played";
+  if (/\b(moderate(?:ly)?[\s-]?played|mp)\b/.test(condition)) return "Moderately Played";
+  if (/\b(heavy|heavily[\s-]?played|hp)\b/.test(condition)) return "Heavily Played";
+  if (/\b(damaged?|crease[ds]?)\b/.test(condition)) return "Damaged";
   return "Unknown";
 }
 
@@ -425,20 +482,18 @@ function toUsd(amount: z.infer<typeof ebayAmountSchema>) {
 }
 
 // eBay returns shipping options in no guaranteed order, so taking the first one can
-// quote an expedited rate and overstate the landed cost (a real cause of the price
-// not matching the listing page). Use the cheapest USD option; absent/free shipping
-// is 0. (Calculated shipping that depends on the buyer's address simply isn't in the
-// summary, so it reads as 0 here — the item-price line still reconciles with eBay.)
+// quote an expedited rate and overstate the landed cost. Use the cheapest explicit
+// USD option. Missing data stays unknown; it must never silently become free.
 function cheapestUsdShipping(
   options: z.infer<typeof ebayItemSchema>["shippingOptions"],
-): number {
+): number | null {
   const costs = (options ?? [])
     .map((option) => option.shippingCost)
     .filter((cost): cost is z.infer<typeof ebayAmountSchema> => cost !== undefined)
     .filter((cost) => cost.currency === "USD")
     .map((cost) => Number(cost.value))
     .filter((value) => Number.isFinite(value) && value >= 0);
-  return costs.length ? Math.min(...costs) : 0;
+  return costs.length ? Math.min(...costs) : null;
 }
 
 function numberOrNull(value: string | undefined) {

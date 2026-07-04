@@ -11,6 +11,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       await answerComparisonQuestion(parsed.report, parsed.question, parsed.targetListingId, {
         webContext: parsed.webContext,
+        activeRole: parsed.activeRole,
       }),
     );
   } catch (error) {

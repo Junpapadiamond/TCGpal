@@ -6,6 +6,7 @@ import {
   type ComparisonQuestionResponse,
   type ComparisonReport,
   type NormalizedListing,
+  type RankedChoice,
   type WebCitation,
 } from "@/lib/schemas";
 
@@ -24,9 +25,9 @@ export async function answerComparisonQuestion(
   report: ComparisonReport,
   question: string,
   targetListingId?: string,
-  options: { webContext?: "auto" | "off" | "force" } = {},
+  options: { webContext?: "auto" | "off" | "force"; activeRole?: RankedChoice["role"] } = {},
 ): Promise<ComparisonQuestionResponse> {
-  const local = localAnswer(report, question, targetListingId);
+  const local = localAnswer(report, question, targetListingId, options.activeRole);
   const webMode = options.webContext ?? "off";
   if (shouldUseWebContext(question, webMode)) {
     return answerWithWebContext(report, question, targetListingId, local);
@@ -51,7 +52,8 @@ export async function answerComparisonQuestion(
       ].join("\n"),
       user: {
         question,
-        report: sanitizeReportForQuestion(report, targetListingId),
+        activeRole: options.activeRole,
+        report: sanitizeReportForQuestion(report, targetListingId, options.activeRole),
       },
     });
     const parsed = comparisonQuestionResponseSchema.parse({ ...response.data, usedAi: true });
@@ -141,11 +143,20 @@ async function answerWithWebContext(
   }
 }
 
-function localAnswer(report: ComparisonReport, question: string, targetListingId?: string): ComparisonQuestionResponse {
+function localAnswer(
+  report: ComparisonReport,
+  question: string,
+  targetListingId?: string,
+  activeRole: RankedChoice["role"] = "best_value",
+): ComparisonQuestionResponse {
   const listingById = new Map(report.candidates.map((listing) => [listing.id, listing]));
-  const bestChoice = report.rankedChoices.find((choice) => choice.role === "best_value") ?? report.rankedChoices[0] ?? null;
-  const best = bestChoice ? listingById.get(bestChoice.listingId) ?? null : null;
+  const lensChoice = report.rankedChoices.find((choice) => choice.role === activeRole)
+    ?? report.rankedChoices.find((choice) => choice.role === "best_value")
+    ?? report.rankedChoices[0]
+    ?? null;
+  const best = lensChoice ? listingById.get(lensChoice.listingId) ?? null : null;
   const target = targetListingId ? listingById.get(targetListingId) ?? null : findQuestionTarget(report, question);
+  const lens = lensLabel(lensChoice?.role ?? activeRole);
 
   if (best && target && target.id !== best.id) {
     const exclusion = target.eligible
@@ -155,7 +166,7 @@ function localAnswer(report: ComparisonReport, question: string, targetListingId
       ? ` Its seller risk label is ${formatRiskLabel(target.riskLabel)}, with seller trust ${target.sellerTrustScore}/100 and evidence ${target.evidenceCompletenessScore}/100.`
       : "";
     return comparisonQuestionResponseSchema.parse({
-      answer: `${target.marketplace} "${target.title}" was not the top pick because its value score was ${target.valueScore}/100 versus ${best.valueScore}/100 for the recommendation. The main differences were seller trust (${target.sellerTrustScore}/100 vs ${best.sellerTrustScore}/100), evidence (${target.evidenceCompletenessScore}/100 vs ${best.evidenceCompletenessScore}/100), and total cost (${money(target.estimatedLandedCost ?? target.preTaxTotal)} vs ${money(best.estimatedLandedCost ?? best.preTaxTotal)}).${risk}${exclusion}`,
+      answer: `${target.marketplace} "${target.title}" does not lead the ${lens} lens: ${lensEvidence(target, lensChoice?.role ?? activeRole)} versus ${lensEvidence(best, lensChoice?.role ?? activeRole)} for the lens winner. Seller trust is ${target.sellerTrustScore}/100 versus ${best.sellerTrustScore}/100, evidence is ${target.evidenceCompletenessScore}/100 versus ${best.evidenceCompletenessScore}/100, and comparable cost is ${money(target.estimatedLandedCost ?? target.preTaxTotal)} versus ${money(best.estimatedLandedCost ?? best.preTaxTotal)}.${risk}${exclusion}`,
       cautions: [...target.exclusionReasons, ...target.trustNotes].slice(0, 2),
       usedAi: false,
     });
@@ -166,7 +177,7 @@ function localAnswer(report: ComparisonReport, question: string, targetListingId
       ? ` Its seller risk label is ${formatRiskLabel(target.riskLabel)}, with seller trust ${target.sellerTrustScore}/100 and evidence ${target.evidenceCompletenessScore}/100.`
       : "";
     return comparisonQuestionResponseSchema.parse({
-      answer: `${target.marketplace} "${target.title}" is the current recommendation because it has the best value score (${target.valueScore}/100) among eligible listings, with total cost ${money(target.estimatedLandedCost ?? target.preTaxTotal)}.${risk} Still inspect the live listing because TCGpal does not grade the card from photos.`,
+      answer: `${target.marketplace} "${target.title}" leads the ${lens} lens because it has ${lensEvidence(target, lensChoice?.role ?? activeRole)} among eligible listings, with comparable cost ${money(target.estimatedLandedCost ?? target.preTaxTotal)}.${risk} Still inspect the live listing because TCGpal does not grade the card from photos.`,
       cautions: [...target.trustNotes, ...report.narrative.cautions].slice(0, 2),
       usedAi: false,
     });
@@ -174,7 +185,7 @@ function localAnswer(report: ComparisonReport, question: string, targetListingId
 
   if (best) {
     return comparisonQuestionResponseSchema.parse({
-      answer: `The current recommendation is ${best.marketplace} "${best.title}" because it has the best value score (${best.valueScore}/100) among eligible listings, with seller trust ${best.sellerTrustScore}/100 and evidence ${best.evidenceCompletenessScore}/100. The result still depends on the listed evidence; TCGpal does not grade the card from photos.`,
+      answer: `The ${lens} leader is ${best.marketplace} "${best.title}" with ${lensEvidence(best, lensChoice?.role ?? activeRole)}, seller trust ${best.sellerTrustScore}/100, and evidence ${best.evidenceCompletenessScore}/100. The result still depends on the listed evidence; TCGpal does not grade the card from photos.`,
       cautions: [],
       usedAi: false,
     });
@@ -185,6 +196,28 @@ function localAnswer(report: ComparisonReport, question: string, targetListingId
     cautions: report.warnings.slice(0, 2),
     usedAi: false,
   });
+}
+
+function lensLabel(role: RankedChoice["role"]) {
+  switch (role) {
+    case "lowest_landed_cost": return "Cheapest";
+    case "safest_listing": return "Safest";
+    case "best_condition_evidence": return "Best documented";
+    default: return "Best Value";
+  }
+}
+
+function lensEvidence(listing: NormalizedListing, role: RankedChoice["role"]) {
+  switch (role) {
+    case "lowest_landed_cost":
+      return `${money(listing.estimatedLandedCost ?? listing.preTaxTotal)} ${listing.estimatedTax === null ? "pre-tax total" : "estimated checkout total"}`;
+    case "safest_listing":
+      return `the highest seller-and-evidence score (${listing.safetyScore}/100)`;
+    case "best_condition_evidence":
+      return `the strongest photo-and-condition evidence score (${listing.evidenceCompletenessScore}/100)`;
+    default:
+      return `the highest complete-cost, condition, seller, and evidence score (${listing.valueScore}/100)`;
+  }
 }
 
 function findQuestionTarget(report: ComparisonReport, question: string) {
@@ -285,9 +318,16 @@ function formatRiskLabel(label: NormalizedListing["riskLabel"]) {
   }
 }
 
-function sanitizeReportForQuestion(report: ComparisonReport, targetListingId?: string) {
+function sanitizeReportForQuestion(
+  report: ComparisonReport,
+  targetListingId?: string,
+  activeRole: RankedChoice["role"] = "best_value",
+) {
   const targetListing = targetListingId ? report.candidates.find((listing) => listing.id === targetListingId) ?? null : null;
-  const recommendationListingId = report.rankedChoices.find((choice) => choice.role === "best_value")?.listingId ?? report.rankedChoices[0]?.listingId ?? null;
+  const recommendationListingId = report.rankedChoices.find((choice) => choice.role === activeRole)?.listingId
+    ?? report.rankedChoices.find((choice) => choice.role === "best_value")?.listingId
+    ?? report.rankedChoices[0]?.listingId
+    ?? null;
   const recommendationListing = recommendationListingId ? report.candidates.find((listing) => listing.id === recommendationListingId) ?? null : null;
   return {
     status: report.status,
@@ -338,6 +378,9 @@ function sanitizeListingForQuestion(listing: NormalizedListing, recommendationLi
     estimatedLandedCost: listing.estimatedLandedCost,
     preTaxTotal: listing.preTaxTotal,
     claimedCondition: listing.claimedCondition,
+    listingLanguage: listing.listingLanguage,
+    costComplete: listing.costComplete,
+    conditionCompatibilityScore: listing.conditionCompatibilityScore,
     sellerTrustScore: listing.sellerTrustScore,
     evidenceCompletenessScore: listing.evidenceCompletenessScore,
     safetyScore: listing.safetyScore,
