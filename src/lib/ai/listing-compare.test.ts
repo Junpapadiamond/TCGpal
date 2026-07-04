@@ -223,6 +223,56 @@ describe("listing comparison agent", () => {
     expect(synthesisStep?.summary).toContain("local evidence summary");
   });
 
+  it("uses an exact-URL Tavily rescue without presenting the successful fallback as a live-data failure", async () => {
+    vi.stubEnv("TAVILY_API_KEY", "tavily-test");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const mercariUrl = "https://www.mercari.com/us/item/mblocked/";
+    const fallbackFetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "https://www.mercari.com/robots.txt") {
+        return new Response("User-agent: *\nAllow: /\n");
+      }
+      if (url === mercariUrl) return new Response("blocked", { status: 403 });
+      if (url === "https://api.tavily.com/extract") {
+        const body = JSON.parse(String(init?.body ?? "{}")) as { urls?: string[] };
+        expect(body.urls).toEqual([mercariUrl]);
+        return new Response(JSON.stringify({
+          results: [{
+            url: mercariUrl,
+            title: "Umbreon VMAX 215/203 Evolving Skies Near Mint",
+            raw_content: "Price $1,200.00. Shipping $5.00. Front and back photos.",
+          }],
+          failed_results: [],
+        }));
+      }
+      return fetcher(input);
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison({
+      ...request,
+      sourceListing: {
+        ...request.sourceListing,
+        marketplace: "Mercari",
+        url: mercariUrl,
+        title: "",
+        description: "",
+        price: null,
+        shipping: null,
+        claimedCondition: "Unknown",
+      },
+    }, { fetcher: fallbackFetcher });
+
+    const rescued = response.candidates.find((candidate) => candidate.userSupplied);
+    expect(rescued?.marketplace).toBe("Mercari");
+    expect(rescued?.title).toContain("Umbreon VMAX");
+    expect(rescued?.price).toBe(1200);
+    expect(rescued?.shipping).toBe(5);
+    expect(response.warnings.some((warning) => /Tavily|HTTP 403|pasted listing/i.test(warning))).toBe(false);
+    const ingestion = response.trace.find((step) => step.step === "source_ingestion");
+    expect(ingestion?.status).toBe("fallback");
+    expect(ingestion?.summary).toContain("Tavily Extract recovered stated facts");
+  });
+
   it("requires confirmation when identity input is ambiguous", async () => {
     const response = await runListingComparison({
       ...request,

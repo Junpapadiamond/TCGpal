@@ -492,12 +492,15 @@ async function ingestSourceListing(
   try {
     const universal = await fetchUniversalListing(url, fetcher);
     const merged = mergeSourceFacts(request.sourceListing, universal.listing);
-    warnings.push(...universal.notes);
+    const usedTavilyFallback = universal.notes.some((note) => note.includes("Tavily Extract filled"));
+    const extractionDetails = universal.notes.length > 0 ? ` ${universal.notes.join(" ")}` : "";
     trace.push({
       step: "source_ingestion",
       actor: "Paste-a-URL adapter",
-      summary: `Fetched the pasted ${universal.marketplace} listing you provided (single user-initiated fetch) and extracted its stated facts${universal.usedAi ? " with AI assistance" : " from structured page data"}.`,
-      status: "complete",
+      summary: usedTavilyFallback
+        ? `The direct listing page was unavailable; Tavily Extract recovered stated facts from the exact pasted ${universal.marketplace} URL only.${extractionDetails}`
+        : `Fetched the pasted ${universal.marketplace} listing you provided (single user-initiated fetch) and extracted its stated facts${universal.usedAi ? " with AI assistance" : " from structured page data"}.${extractionDetails}`,
+      status: usedTavilyFallback ? "fallback" : "complete",
     });
     return { source: merged, universal };
   } catch (error) {
