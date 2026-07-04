@@ -71,6 +71,9 @@ const en = {
     evCorners: "Corners and edges have closeups",
     evSurface: "Surface, foil, or video evidence exists",
     evNotes: "Condition notes mention specific defects",
+    expandedWebDiscoveryLabel: "Search more platforms",
+    expandedWebDiscoveryHelp:
+      "Optional Exa/Tavily pass for Mercari, Whatnot, Facebook, Reddit, Japan shops, and references. Results are labeled until they can be verified.",
     submitIdle: "Find best listings",
     submitLoading: "Validating evidence…",
     ph: {
@@ -127,7 +130,12 @@ const en = {
     title: "TCGpal is validating the comparison",
     steps: "Identity → marketplace evidence → deterministic ranking → claim critic",
   },
-  error: { title: "The comparison needs another try.", retry: "Retry now" },
+  error: {
+    title: "The comparison needs another try.",
+    retry: "Retry now",
+    temporary:
+      "The comparison service returned a temporary error instead of a report. Retry now; if it keeps happening, run without the expanded web search.",
+  },
   identity: {
     eyebrow: "Version confirmation required",
     heading: "Which exact card do you want?",
@@ -186,6 +194,8 @@ const en = {
       "These are possible links found by Exa/Tavily. They are not fetched inventory, price evidence, or ranked choices; open them manually or paste one exact URL back into TCGpal.",
     webDiscoveryPossibleListing: "possible listing",
     webDiscoveryReference: "reference/search",
+    webDiscoveryRecent: "≤3 days",
+    webDiscoveryAvailable: "availability hint",
     askTitle: "Ask about this result",
     askBody: "Ask why one listing won, why another lost, or what evidence is missing. Use a ledger Ask button to target a specific listing.",
     askPlaceholder: "Why not the $12 one?",
@@ -355,6 +365,9 @@ const zh: Dict = {
     evCorners: "边角有特写",
     evSurface: "有表面 / 闪膜 / 视频证据",
     evNotes: "品相说明提到具体瑕疵",
+    expandedWebDiscoveryLabel: "搜索更多平台",
+    expandedWebDiscoveryHelp:
+      "可选的 Exa/Tavily 扩展搜索：Mercari、Whatnot、Facebook、Reddit、日本卡店和参考页。结果会先标为待核验，确认后才作为证据。",
     submitIdle: "查找最佳商品",
     submitLoading: "正在核验证据…",
     ph: {
@@ -408,7 +421,12 @@ const zh: Dict = {
     title: "TCGpal 正在核验比对",
     steps: "确认卡片 → 平台证据 → 确定性排序 → 结论复核",
   },
-  error: { title: "这次比对需要再试一次。", retry: "立即重试" },
+  error: {
+    title: "这次比对需要再试一次。",
+    retry: "立即重试",
+    temporary:
+      "比对服务这次回传了临时错误，而不是正式报告。可以立即重试；如果持续发生，先关掉扩展网页搜索。",
+  },
   identity: {
     eyebrow: "需要确认版本",
     heading: "你要找的是哪一张？",
@@ -465,6 +483,8 @@ const zh: Dict = {
       "这些是 Exa/Tavily 找到的可能链接。它们不是已抓取库存、价格证据或排序结果；请手动打开检查，或把某个确切链接粘回 TCGpal 再比对。",
     webDiscoveryPossibleListing: "可能商品",
     webDiscoveryReference: "参考/搜索",
+    webDiscoveryRecent: "3 天内",
+    webDiscoveryAvailable: "有在售提示",
     askTitle: "追问这次结果",
     askBody: "可以问为什么某个商品排第一、另一个没选上，或还缺哪些证据。点清单里的「询问」会直接锁定那一行商品。",
     askPlaceholder: "为什么不选 12 美元那张？",

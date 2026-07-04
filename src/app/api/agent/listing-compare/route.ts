@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { runListingComparison } from "@/lib/ai/listing-compare";
 import { comparisonRequestSchema } from "@/lib/schemas";
 
-// Give the multi-provider comparison headroom beyond the platform's short
-// default so a slow upstream degrades to a result instead of a dropped
-// connection ("Load failed" in the browser).
-export const maxDuration = 30;
+// Give the multi-provider comparison enough headroom for cold provider paths and
+// optional expanded discovery, so upstream slowness can degrade into a JSON
+// result instead of Vercel's plain-text timeout body.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {

@@ -66,4 +66,46 @@ describe("web marketplace discovery", () => {
     expect(mercari?.note).toContain("Experimental web discovery");
     expect(result.results.some((item) => item.url.includes("example.com"))).toBe(false);
   });
+
+  it("keeps volatile social discoveries recent and filters sold signals", async () => {
+    vi.stubEnv("EXA_API_KEY", "exa-test");
+    vi.stubEnv("TAVILY_API_KEY", "");
+    vi.stubEnv("WEB_DISCOVERY", "1");
+
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({
+      results: [
+        {
+          title: "Umbreon VMAX 215/203 available Facebook Marketplace",
+          url: "https://www.facebook.com/marketplace/item/123",
+          text: "Available for sale today with front/back photos.",
+          publishedDate: "2026-07-03T12:00:00.000Z",
+        },
+        {
+          title: "Umbreon VMAX 215/203 sold Facebook Marketplace",
+          url: "https://www.facebook.com/marketplace/item/456",
+          text: "Sold yesterday.",
+          publishedDate: "2026-07-03T12:00:00.000Z",
+        },
+        {
+          title: "Umbreon VMAX 215/203 available Reddit trade",
+          url: "https://www.reddit.com/r/pkmntcgtrades/comments/abc/umbreon_vmax_215_203",
+          text: "Available for sale.",
+          publishedDate: "2020-01-01T00:00:00.000Z",
+        },
+      ],
+    })));
+
+    const result = await discoverWebMarketplaceLinks({
+      card,
+      fetcher: fetcher as unknown as typeof fetch,
+      now: () => new Date("2026-07-04T00:00:00.000Z"),
+    });
+
+    expect(result.results.some((item) => item.url.includes("/item/123"))).toBe(true);
+    expect(result.results.some((item) => item.url.includes("/item/456"))).toBe(false);
+    expect(result.results.some((item) => item.url.includes("reddit.com"))).toBe(false);
+    const facebook = result.results.find((item) => item.url.includes("/item/123"));
+    expect(facebook?.freshness).toBe("within_3_days");
+    expect(facebook?.availability).toBe("available_hint");
+  });
 });

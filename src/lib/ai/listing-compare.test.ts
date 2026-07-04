@@ -92,6 +92,7 @@ const request: ComparisonRequest = {
     gradingClaim: "",
   },
   manualCandidates: [],
+  webDiscoveryMode: "off",
 };
 
 afterEach(() => {
@@ -148,6 +149,24 @@ describe("listing comparison agent", () => {
     expect(response.rankedChoices.length).toBe(4);
     expect(response.rankedChoices[0]?.role).toBe("best_value");
     expect(response.candidates.some((candidate) => candidate.demo)).toBe(true);
+  });
+
+  it("does not run expanded web discovery unless the buyer opts in", async () => {
+    vi.stubEnv("EXA_API_KEY", "exa-test");
+    vi.stubEnv("TAVILY_API_KEY", "tavily-test");
+    vi.stubEnv("WEB_DISCOVERY", "1");
+    const guardedFetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("api.exa.ai") || url.includes("api.tavily.com")) {
+        throw new Error("web discovery should be opt-in");
+      }
+      return fetcher(input);
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(request, { fetcher: guardedFetcher });
+
+    expect(response.webDiscoveries).toEqual([]);
+    expect(response.trace.some((step) => step.step === "web_marketplace_discovery")).toBe(false);
   });
 
   it("keeps optional/by-design degradations out of the result banner, in the trace only", async () => {

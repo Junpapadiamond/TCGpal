@@ -155,6 +155,10 @@ export const comparisonRequestSchema = z.object({
   // Facebook, Mercari, Whatnot, local shop...). They are user-supplied facts —
   // never fetched server-side — and rank in the same ledger as eBay results.
   manualCandidates: z.array(manualCandidateSchema).default([]),
+  // Optional wider web-discovery pass. The default comparison stays focused on
+  // configured platform agents; "expanded" asks Exa/Tavily for candidate links
+  // that remain separately labeled until enough structured evidence exists.
+  webDiscoveryMode: z.enum(["off", "expanded"]).default("off"),
   confirmedCardId: z.string().trim().optional(),
 });
 
@@ -288,6 +292,8 @@ export const webDiscoverySchema = z.object({
   url: z.string().url(),
   providers: z.array(webDiscoveryProviderSchema).min(1),
   listingLike: z.boolean().default(false),
+  freshness: z.enum(["within_3_days", "unknown", "not_time_sensitive"]).default("unknown"),
+  availability: z.enum(["available_hint", "unknown"]).default("unknown"),
   discoveredAt: z.string(),
   note: z.string(),
 });

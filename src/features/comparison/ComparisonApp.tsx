@@ -111,6 +111,7 @@ type ComparisonForm = {
   closeupsExplicit: boolean;
   surfaceExplicit: boolean;
   substantiveConditionNotes: boolean;
+  expandedWebDiscovery: boolean;
   manualCandidates: LedgerRow[];
 };
 
@@ -157,8 +158,84 @@ const defaultValues: ComparisonForm = {
   closeupsExplicit: false,
   surfaceExplicit: false,
   substantiveConditionNotes: false,
+  expandedWebDiscovery: false,
   manualCandidates: [],
 };
+
+class ApiResponseError extends Error {
+  readonly retriable: boolean;
+
+  constructor(message: string, retriable: boolean) {
+    super(message);
+    this.name = "ApiResponseError";
+    this.retriable = retriable;
+  }
+}
+
+async function requestComparisonReport(request: ComparisonRequest, fallbackMessage: string) {
+  const json = await postJsonWithRetry("/api/agent/listing-compare", request, fallbackMessage);
+  return comparisonReportSchema.parse(json);
+}
+
+async function postJsonWithRetry(path: string, body: unknown, fallbackMessage: string) {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return await readJsonResponse(response, fallbackMessage);
+    } catch (error) {
+      lastError = error;
+      const retriable = error instanceof ApiResponseError ? error.retriable : error instanceof TypeError;
+      if (!retriable || attempt === 1) break;
+      await sleep(650);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(fallbackMessage);
+}
+
+async function readJsonResponse(response: Response, fallbackMessage: string) {
+  const text = await response.text();
+  let json: unknown = null;
+  if (text.trim()) {
+    try {
+      json = JSON.parse(text) as unknown;
+    } catch {
+      throw new ApiResponseError(nonJsonMessage(text, fallbackMessage), true);
+    }
+  }
+  if (!response.ok) {
+    throw new ApiResponseError(apiErrorMessage(json, fallbackMessage), isRetriableStatus(response.status));
+  }
+  return json;
+}
+
+function apiErrorMessage(json: unknown, fallbackMessage: string) {
+  if (json && typeof json === "object" && "error" in json) {
+    const message = String((json as { error?: unknown }).error ?? "").trim();
+    if (message) return message;
+  }
+  return fallbackMessage;
+}
+
+function nonJsonMessage(text: string, fallbackMessage: string) {
+  const compact = text.replace(/\s+/g, " ").trim();
+  if (!compact || /^an error/i.test(compact) || /^<!doctype/i.test(compact) || /^</.test(compact)) return fallbackMessage;
+  return `${fallbackMessage} (${compact.slice(0, 160)})`;
+}
+
+function isRetriableStatus(status: number) {
+  return status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
+}
+
+function sleep(ms: number) {
+  return new globalThis.Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 export function ComparisonApp() {
   return (
@@ -192,6 +269,7 @@ function ComparisonExperience() {
   const setCode = useWatch({ control: form.control, name: "setCode" });
   const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
   const game = useWatch({ control: form.control, name: "game" });
+  const expandedWebDiscovery = useWatch({ control: form.control, name: "expandedWebDiscovery" });
   const ph = game === "onePiece" ? t.form.phOnePiece : t.form.ph;
   const isManual = marketplace !== "eBay" || !sourceUrl.trim();
   // Live, client-side preview of the same deterministic parse the server runs —
@@ -274,14 +352,7 @@ function ComparisonExperience() {
     }
 
     try {
-      const response = await fetch("/api/agent/listing-compare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json?.error || "Comparison failed.");
-      const parsed = comparisonReportSchema.parse(json);
+      const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
       const duration = Date.now() - startedAt;
       trackEvent("comparison_completed", {
@@ -295,7 +366,7 @@ function ComparisonExperience() {
         document.getElementById("comparison-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Comparison failed.";
+      const message = caught instanceof Error ? caught.message : t.error.temporary;
       setError(message);
       trackEvent("comparison_failed", { marketplace: request.sourceListing.marketplace });
     } finally {
@@ -340,14 +411,7 @@ function ComparisonExperience() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/agent/listing-compare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(confirmedRequest),
-      });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json?.error || "Comparison failed.");
-      const parsed = comparisonReportSchema.parse(json);
+      const parsed = await requestComparisonReport(confirmedRequest, t.error.temporary);
       setReport(parsed);
       trackEvent("card_identity_confirmed", { confidence: identity.confidence });
       trackEvent("comparison_completed", {
@@ -357,7 +421,7 @@ function ComparisonExperience() {
         candidate_count: parsed.candidates.length,
       });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Comparison failed.");
+      setError(caught instanceof Error ? caught.message : t.error.temporary);
       trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
     } finally {
       setLoading(false);
@@ -371,14 +435,7 @@ function ComparisonExperience() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/agent/listing-compare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pendingRequest),
-      });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json?.error || "Comparison failed.");
-      const parsed = comparisonReportSchema.parse(json);
+      const parsed = await requestComparisonReport(pendingRequest, t.error.temporary);
       setReport(parsed);
       trackEvent("comparison_completed", {
         marketplace: pendingRequest.sourceListing.marketplace,
@@ -387,7 +444,7 @@ function ComparisonExperience() {
         candidate_count: parsed.candidates.length,
       });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Comparison failed.");
+      setError(caught instanceof Error ? caught.message : t.error.temporary);
       trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
     } finally {
       setLoading(false);
@@ -733,6 +790,22 @@ function ComparisonExperience() {
             </div>
             )}
 
+            <label className={`mt-6 flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition ${
+              expandedWebDiscovery
+                ? "border-[#e2c879] bg-[#fff8dc]"
+                : "border-[#d6ded5] bg-[#f7f9f5] hover:border-[#c9d7ce]"
+            }`}>
+              <input
+                className="mt-1 h-4 w-4 shrink-0 accent-[#2f6f73]"
+                type="checkbox"
+                {...form.register("expandedWebDiscovery")}
+              />
+              <span>
+                <span className="block text-sm font-black text-[#2f6f73]">{t.form.expandedWebDiscoveryLabel}</span>
+                <span className="mt-1 block text-sm leading-6 text-[#64736c]">{t.form.expandedWebDiscoveryHelp}</span>
+              </span>
+            </label>
+
             <div className="mt-6 flex justify-end">
               <button className="primary-button shrink-0" type="submit" disabled={loading}>
                 {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
@@ -1066,23 +1139,11 @@ function ComparisonResult({ report, feedbackSent, onFeedback }: { report: Compar
     setQaLoading(true);
     setQaError(null);
     try {
-      const requestBody = JSON.stringify({ report, question, targetListingId: targetListing?.id, webContext: "auto" });
-      const requestInit = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: requestBody,
-      };
-      let response: Response;
-      try {
-        response = await fetch("/api/agent/listing-compare/explain", requestInit);
-      } catch {
-        await new globalThis.Promise<void>((resolve) => {
-          setTimeout(resolve, 500);
-        });
-        response = await fetch("/api/agent/listing-compare/explain", requestInit);
-      }
-      const json = await response.json();
-      if (!response.ok) throw new Error(json?.error || t.result.askError);
+      const json = await postJsonWithRetry(
+        "/api/agent/listing-compare/explain",
+        { report, question, targetListingId: targetListing?.id, webContext: "auto" },
+        t.result.askError,
+      );
       setQaAnswer(json as ComparisonQuestionResponse);
     } catch (error) {
       setQaError(error instanceof Error && error.message !== "Failed to fetch" ? error.message : t.result.askError);
@@ -1437,6 +1498,16 @@ function WebDiscoveryPanel({ discoveries }: { discoveries: ComparisonReport["web
                   {provider}
                 </span>
               ))}
+              {discovery.freshness === "within_3_days" && (
+                <span className="rounded border border-[#c9d7ce] bg-[#e7efe8] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
+                  {t.result.webDiscoveryRecent}
+                </span>
+              )}
+              {discovery.availability === "available_hint" && (
+                <span className="rounded border border-[#c9d7ce] bg-[#e7efe8] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
+                  {t.result.webDiscoveryAvailable}
+                </span>
+              )}
             </span>
           </a>
         ))}
@@ -2040,6 +2111,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
         shipping: nullableNumber(row.shipping),
         claimedCondition: row.claimedCondition,
       })),
+    webDiscoveryMode: values.expandedWebDiscovery ? "expanded" : "off",
     confirmedCardId,
   };
 }

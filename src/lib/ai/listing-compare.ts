@@ -145,7 +145,8 @@ export async function runListingComparison(
     }
   }
 
-  const webDiscoveryPromise = isWebMarketplaceDiscoveryConfigured()
+  const wantsWebDiscovery = request.webDiscoveryMode === "expanded";
+  const webDiscoveryPromise = wantsWebDiscovery && isWebMarketplaceDiscoveryConfigured()
     ? discoverWebMarketplaceLinks({ card: confirmedCard, fetcher, now }).catch((error) => ({
       results: [],
       warnings: [`Web marketplace discovery unavailable: ${errorMessage(error)}`],
@@ -208,12 +209,12 @@ export async function runListingComparison(
   trace.push(...fanout.traces);
   const platformResults = fanout.results;
   const webDiscovery = await webDiscoveryPromise;
-  if (webDiscovery.results.length > 0 || webDiscovery.warnings.length > 0) {
+  if (wantsWebDiscovery && (webDiscovery.results.length > 0 || webDiscovery.warnings.length > 0)) {
     trace.push({
       step: "web_marketplace_discovery",
       actor: "Exa/Tavily web discovery",
       summary: webDiscovery.results.length > 0
-        ? `Found ${webDiscovery.results.length} possible marketplace/reference links as unverified manual checks; they were not fetched, scored, or ranked.`
+        ? `Found ${webDiscovery.results.length} possible marketplace/reference links as optional cross-platform checks; they were not fetched, scored, or ranked.`
         : `No web-discovered marketplace links were added (${webDiscovery.warnings.join("; ") || "no results"}).`,
       status: webDiscovery.results.length > 0 ? "complete" : "fallback",
     });

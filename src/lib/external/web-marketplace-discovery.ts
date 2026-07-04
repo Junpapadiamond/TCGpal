@@ -11,13 +11,14 @@ type DiscoveryTarget = {
   marketplace: Marketplace;
   domains: string[];
   localeHint: "us" | "jp";
+  volatile?: boolean;
 };
 
 const discoveryTargets: DiscoveryTarget[] = [
   { id: "ebay", platformLabel: "eBay", marketplace: "eBay", domains: ["ebay.com"], localeHint: "us" },
   { id: "mercari-us", platformLabel: "Mercari US", marketplace: "Mercari", domains: ["mercari.com"], localeHint: "us" },
-  { id: "facebook", platformLabel: "Facebook Marketplace", marketplace: "Facebook", domains: ["facebook.com"], localeHint: "us" },
-  { id: "reddit", platformLabel: "Reddit trades", marketplace: "Reddit", domains: ["reddit.com"], localeHint: "us" },
+  { id: "facebook", platformLabel: "Facebook Marketplace", marketplace: "Facebook", domains: ["facebook.com"], localeHint: "us", volatile: true },
+  { id: "reddit", platformLabel: "Reddit trades", marketplace: "Reddit", domains: ["reddit.com"], localeHint: "us", volatile: true },
   { id: "whatnot", platformLabel: "Whatnot", marketplace: "Whatnot", domains: ["whatnot.com"], localeHint: "us" },
   { id: "yahoo-jp", platformLabel: "Yahoo Auctions JP", marketplace: "Yahoo Auctions JP", domains: ["auctions.yahoo.co.jp"], localeHint: "jp" },
   { id: "mercari-jp", platformLabel: "Mercari JP", marketplace: "Mercari", domains: ["jp.mercari.com"], localeHint: "jp" },
@@ -30,6 +31,8 @@ const discoveryTargets: DiscoveryTarget[] = [
 const exaResultSchema = z.object({
   title: z.string().nullable().optional(),
   url: z.string(),
+  text: z.string().nullable().optional(),
+  publishedDate: z.string().nullable().optional(),
 });
 
 const exaSearchResponseSchema = z.object({
@@ -40,6 +43,7 @@ const tavilyResultSchema = z.object({
   title: z.string().nullable().optional(),
   url: z.string(),
   content: z.string().nullable().optional(),
+  published_date: z.string().nullable().optional(),
 });
 
 const tavilySearchResponseSchema = z.object({
@@ -50,8 +54,12 @@ type RawDiscovery = {
   target: DiscoveryTarget;
   title: string;
   url: string;
+  snippet: string;
+  publishedAt: string | null;
   provider: WebDiscoveryProvider;
 };
+
+type DiscoveryProviderResult = z.infer<typeof exaResultSchema> | z.infer<typeof tavilyResultSchema>;
 
 export function isWebMarketplaceDiscoveryConfigured() {
   if (process.env.WEB_DISCOVERY === "0" || process.env.WEB_DISCOVERY === "false") return false;
@@ -70,17 +78,18 @@ export async function discoverWebMarketplaceLinks({
   if (!isWebMarketplaceDiscoveryConfigured()) return { results: [], warnings: ["Web discovery skipped: no Exa or Tavily key is configured."] };
 
   const warnings: string[] = [];
+  const nowDate = now();
   const calls = discoveryTargetsForCard(card).flatMap((target) => {
     const query = buildDiscoveryQuery(card, target);
     const providerCalls: Array<Promise<RawDiscovery[]>> = [];
     if (process.env.EXA_API_KEY?.trim()) {
-      providerCalls.push(searchExa(target, query, fetcher).catch((error) => {
+      providerCalls.push(searchExa(target, query, fetcher, nowDate).catch((error) => {
         warnings.push(`${target.platformLabel} via Exa unavailable: ${errorMessage(error)}`);
         return [];
       }));
     }
     if (process.env.TAVILY_API_KEY?.trim()) {
-      providerCalls.push(searchTavily(target, query, fetcher).catch((error) => {
+      providerCalls.push(searchTavily(target, query, fetcher, nowDate).catch((error) => {
         warnings.push(`${target.platformLabel} via Tavily unavailable: ${errorMessage(error)}`);
         return [];
       }));
@@ -89,14 +98,14 @@ export async function discoverWebMarketplaceLinks({
   });
 
   const settled = await Promise.all(calls);
-  const discoveredAt = now().toISOString();
+  const discoveredAt = nowDate.toISOString();
   return {
     results: mergeRawDiscoveries(settled.flat(), discoveredAt).slice(0, MAX_DISCOVERY_RESULTS),
     warnings: warnings.slice(0, 8),
   };
 }
 
-async function searchExa(target: DiscoveryTarget, query: string, fetcher: typeof fetch): Promise<RawDiscovery[]> {
+async function searchExa(target: DiscoveryTarget, query: string, fetcher: typeof fetch, nowDate: Date): Promise<RawDiscovery[]> {
   const apiKey = process.env.EXA_API_KEY?.trim();
   if (!apiKey) return [];
   const payload = await postJsonWithTimeout(
@@ -112,16 +121,17 @@ async function searchExa(target: DiscoveryTarget, query: string, fetcher: typeof
         type: "auto",
         numResults: RESULTS_PER_TARGET,
         includeDomains: target.domains,
-        contents: { text: false, highlights: false },
+        contents: { text: target.volatile ? { maxCharacters: 600 } : false, highlights: false },
+        ...(target.volatile ? { startPublishedDate: isoDate(daysAgo(3, nowDate)) } : {}),
       }),
     },
     fetcher,
   );
   const parsed = exaSearchResponseSchema.parse(payload);
-  return parsed.results.map((result) => toRawDiscovery(result, target, "exa", query)).filter((result): result is RawDiscovery => result !== null);
+  return parsed.results.map((result) => toRawDiscovery(result, target, "exa", query, nowDate)).filter((result): result is RawDiscovery => result !== null);
 }
 
-async function searchTavily(target: DiscoveryTarget, query: string, fetcher: typeof fetch): Promise<RawDiscovery[]> {
+async function searchTavily(target: DiscoveryTarget, query: string, fetcher: typeof fetch, nowDate: Date): Promise<RawDiscovery[]> {
   const apiKey = process.env.TAVILY_API_KEY?.trim();
   if (!apiKey) return [];
   const payload = await postJsonWithTimeout(
@@ -138,6 +148,7 @@ async function searchTavily(target: DiscoveryTarget, query: string, fetcher: typ
         topic: "general",
         max_results: RESULTS_PER_TARGET,
         include_domains: target.domains,
+        ...(target.volatile ? { start_date: isoDate(daysAgo(3, nowDate)), end_date: isoDate(nowDate) } : {}),
         include_answer: false,
         include_raw_content: false,
         include_images: false,
@@ -147,7 +158,7 @@ async function searchTavily(target: DiscoveryTarget, query: string, fetcher: typ
     fetcher,
   );
   const parsed = tavilySearchResponseSchema.parse(payload);
-  return parsed.results.map((result) => toRawDiscovery(result, target, "tavily", query)).filter((result): result is RawDiscovery => result !== null);
+  return parsed.results.map((result) => toRawDiscovery(result, target, "tavily", query, nowDate)).filter((result): result is RawDiscovery => result !== null);
 }
 
 async function postJsonWithTimeout(url: string, init: RequestInit, fetcher: typeof fetch) {
@@ -169,10 +180,11 @@ async function postJsonWithTimeout(url: string, init: RequestInit, fetcher: type
 }
 
 function toRawDiscovery(
-  result: { title?: string | null; url: string },
+  result: DiscoveryProviderResult,
   target: DiscoveryTarget,
   provider: WebDiscoveryProvider,
   query: string,
+  nowDate: Date,
 ): RawDiscovery | null {
   const url = parsePublicHttpsUrl(result.url);
   if (!url) return null;
@@ -180,12 +192,21 @@ function toRawDiscovery(
   if (target.id === "reddit" && !url.pathname.toLowerCase().includes("/r/pkmntcgtrades/")) return null;
   const title = cleanText(result.title ?? url.hostname.replace(/^www\./, ""));
   if (!title) return null;
-  if (isGradedOrSlabResult(title)) return null;
-  if (!resultSeemsCardRelevant(`${title} ${url.href}`, query)) return null;
+  const tavilyResult = result as { content?: string | null; published_date?: string | null };
+  const exaResult = result as { text?: string | null; publishedDate?: string | null };
+  const snippet = cleanText(provider === "tavily" ? tavilyResult.content ?? "" : exaResult.text ?? "");
+  const publishedAt = provider === "tavily" ? tavilyResult.published_date ?? null : exaResult.publishedDate ?? null;
+  const searchableText = `${title} ${snippet} ${url.href}`;
+  if (isGradedOrSlabResult(searchableText)) return null;
+  if (hasSoldOrClosedSignal(searchableText)) return null;
+  if (target.volatile && !isWithinDays(publishedAt, 3, nowDate)) return null;
+  if (!resultSeemsCardRelevant(searchableText, query)) return null;
   return {
     target,
     title: title.slice(0, 160),
     url: url.href,
+    snippet: snippet.slice(0, 280),
+    publishedAt,
     provider,
   };
 }
@@ -207,8 +228,10 @@ function mergeRawDiscoveries(items: RawDiscovery[], discoveredAt: string): WebDi
       url: item.url,
       providers: [item.provider],
       listingLike: looksListingLike(item.url),
+      freshness: item.target.volatile ? "within_3_days" : "not_time_sensitive",
+      availability: hasAvailableSignal(`${item.title} ${item.snippet}`) ? "available_hint" : "unknown",
       discoveredAt,
-      note: "Experimental web discovery only: may be stale, sold, login-gated, region-blocked, or indirectly indexed. Open manually or paste the exact URL back into TCGpal before comparing.",
+      note: discoveryNote(item),
     });
   }
 
@@ -228,7 +251,8 @@ function buildDiscoveryQuery(card: CardIdentityCandidate, target: DiscoveryTarge
   ].filter(Boolean).join(" ");
   const tcg = card.id.toLowerCase().includes("op") || card.setCode.toLowerCase().startsWith("op") ? "One Piece Card Game" : "Pokemon card";
   const suffix = target.localeHint === "jp" ? "ポケカ ワンピースカード トレカ" : "raw single trading card listing";
-  return `${base} ${tcg} ${suffix}`.slice(0, 500);
+  const freshness = target.volatile ? "available for sale posted within 3 days -sold -closed -gone" : "";
+  return `${base} ${tcg} ${suffix} ${freshness}`.slice(0, 500);
 }
 
 function discoveryTargetsForCard(card: CardIdentityCandidate) {
@@ -264,6 +288,41 @@ function resultSeemsCardRelevant(text: string, query: string) {
 
 function isGradedOrSlabResult(value: string) {
   return /\b(psa|bgs|cgc|sgc|graded|slab|gem\s*mint)\b|鑑定/i.test(value);
+}
+
+function hasSoldOrClosedSignal(value: string) {
+  return /\b(sold|closed|gone|unavailable|out\s+of\s+stock|no\s+longer\s+available|pending|traded)\b|売り切れ|在庫なし|取引中/i.test(value);
+}
+
+function hasAvailableSignal(value: string) {
+  return /\b(available|for\s+sale|fs\b|in\s+stock|buy\s+now|shop|add\s+to\s+cart)\b|販売中|在庫あり/i.test(value);
+}
+
+function discoveryNote(item: RawDiscovery) {
+  const freshness = item.target.volatile
+    ? "Search result includes a provider date within the last 3 days."
+    : "Search result is not time-bounded; open manually to confirm it is current.";
+  const availability = hasAvailableSignal(`${item.title} ${item.snippet}`)
+    ? "Snippet/title has an availability hint."
+    : "No reliable availability hint was found in the snippet/title.";
+  return `${freshness} ${availability} Experimental web discovery only: it may still be sold, login-gated, region-blocked, stale, or indirectly indexed. Open manually or paste the exact URL back into TCGpal before comparing.`;
+}
+
+function isWithinDays(value: string | null, days: number, nowDate: Date) {
+  if (!value) return false;
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return false;
+  return nowDate.getTime() - time <= days * 24 * 60 * 60 * 1000;
+}
+
+function daysAgo(days: number, nowDate: Date) {
+  const date = new Date(nowDate);
+  date.setUTCDate(date.getUTCDate() - days);
+  return date;
+}
+
+function isoDate(date: Date) {
+  return date.toISOString().slice(0, 10);
 }
 
 function parsePublicHttpsUrl(value: string) {

@@ -24,7 +24,8 @@ export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: 
 // that submission and must never be served from — or written to — the cache.
 export function isCacheableRequest(request: ComparisonRequest) {
   const source = request.sourceListing;
-  return !source.url?.trim()
+  return request.webDiscoveryMode !== "expanded"
+    && !source.url?.trim()
     && !source.title.trim()
     && source.price === null
     && request.manualCandidates.length === 0;
