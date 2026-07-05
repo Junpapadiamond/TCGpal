@@ -46,6 +46,7 @@ Avoid asking whether the idea sounds useful. Record observed behavior, correctio
 
 Correctness gates come first:
 
+- The standard multi-card product flow completes at least five sequential searches in one session, covers Pokémon and One Piece, and uses both Edit and New search transitions without stale card/listing state leaking into the next comparison.
 - Cheapest equals the minimum complete comparable total.
 - Safest equals the maximum safety score.
 - Documented equals the maximum evidence score.

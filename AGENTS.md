@@ -166,9 +166,12 @@ npm run test
 npm run build
 ```
 
+The automated product-flow standard is part of `npm run test`: `src/lib/testing/standard-comparison-flow.ts` must cover at least five sequential card-first searches in one session, include both Pokémon and One Piece, and exercise both edit-search and new-search transitions. Keep it hermetic: injected fetchers only, no API secrets, no browser automation against marketplaces, and no unmocked external network.
+
 Then run `npm run dev` and verify:
 
 - First open goes directly to the card-search form.
+- Run the five-card sequential smoke flow manually in the UI when the change touches comparison flow: search one card, reach a result or confirmation, use Edit or New search to move to the next card, and alternate Pokémon and One Piece. New Search must clear stale card/listing facts while preserving buyer context such as ZIP, tax, preferred lens, and desired condition.
 - Searching a card resolves real catalog identities and the TCGplayer market anchor; name-only pauses for one-tap confirmation, name + number auto-confirms.
 - With eBay creds, a card search returns live listings; novelty/replica titles and items priced below the market floor are excluded; the recommended buy defaults to Best Value with working Cheapest / Safest / Best-documented toggles and a real listing link.
 - One Piece cards resolve through the bundled/OPTCG catalog, use TCGCSV category `68` for TCGplayer crosswalk/prices when available, and degrade visibly when no TCGCSV product match exists.
@@ -195,7 +198,7 @@ Design the codebase so Codex can inspect it through stable, explicit interfaces 
 - **Provider contracts:** `src/lib/comparison/platforms.ts` is the marketplace-agent interface. New live sources should join by implementing `PlatformAgent`, not by branching comparison orchestration.
 - **Decision contracts:** `src/lib/comparison/ranking.ts` owns eligibility, exclusions, scoring, and lens selection. AI may explain decisions but must not own ranking math.
 - **Ops contracts:** `src/lib/ops/*` owns rate limiting, cache, Sentry capture, and operational events. Add durable backends behind these interfaces instead of importing vendors through product code.
-- **Behavior contracts:** Tests live next to source and should describe observable behavior. Always use TDD for behavior changes: write or update a failing test first, make it pass, then refactor.
+- **Behavior contracts:** Tests live next to source and should describe observable behavior. Always use TDD for behavior changes: write or update a failing test first, make it pass, then refactor. `src/lib/testing/standard-comparison-flow.ts` is the reusable multi-card product-flow contract; update it whenever the comparison journey changes.
 
 ## Graphify
 

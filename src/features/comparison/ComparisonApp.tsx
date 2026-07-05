@@ -32,6 +32,13 @@ import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import {
+  defaultComparisonFormValues,
+  emptyLedgerRow,
+  resetForNewCardSearch,
+  type ComparisonForm,
+  type LensRole,
+} from "./comparison-form-state";
+import {
   comparisonReportSchema,
   type CardIdentityCandidate,
   type ComparisonReport,
@@ -85,8 +92,6 @@ const RECENT_CONFIRMED_CARDS_KEY = "tcgpal:recent-confirmed-cards";
 const MAX_RECENT_CONFIRMED_CARDS = 10;
 const MAX_MARQUEE_REAL_CARDS = 8;
 
-type LensRole = RankedChoice["role"];
-
 type RecentCarouselCard = {
   id: string;
   game: TcgGame;
@@ -96,86 +101,6 @@ type RecentCarouselCard = {
   cardNumber: string;
   imageUrl: string | null;
   lastSeenAt: number;
-};
-
-type ComparisonForm = {
-  // The hero search box: one free-text query, deterministically parsed server-side
-  // into game/name/collector number/language/variant/grading claim. This is the
-  // primary "one box, one click" entry point; the fields below stay available as
-  // progressive disclosure for a buyer who wants to fill them in separately.
-  heroQuery: string;
-  game: TcgGame;
-  url: string;
-  marketplace: Marketplace;
-  cardName: string;
-  setCode: string;
-  cardNumber: string;
-  listingTitle: string;
-  description: string;
-  price: string;
-  shipping: string;
-  postalCode: string;
-  taxRatePercent: string;
-  preferredRole: LensRole;
-  claimedCondition: ConditionClaim;
-  desiredCondition: ConditionClaim;
-  feedbackPercentage: string;
-  feedbackCount: string;
-  returnsAccepted: boolean;
-  buyerProtection: boolean;
-  photoCount: string;
-  frontBackExplicit: boolean;
-  closeupsExplicit: boolean;
-  surfaceExplicit: boolean;
-  substantiveConditionNotes: boolean;
-  manualCandidates: LedgerRow[];
-};
-
-type LedgerRow = {
-  marketplace: Marketplace;
-  price: string;
-  shipping: string;
-  claimedCondition: ConditionClaim;
-  title: string;
-  url: string;
-};
-
-const emptyLedgerRow: LedgerRow = {
-  marketplace: "TCGplayer",
-  price: "",
-  shipping: "",
-  claimedCondition: "Unknown",
-  title: "",
-  url: "",
-};
-
-const defaultValues: ComparisonForm = {
-  heroQuery: "",
-  game: "pokemon",
-  url: "",
-  marketplace: "eBay",
-  cardName: "",
-  setCode: "",
-  cardNumber: "",
-  listingTitle: "",
-  description: "",
-  price: "",
-  shipping: "",
-  postalCode: "",
-  taxRatePercent: "",
-  preferredRole: "best_value",
-  claimedCondition: "Unknown",
-  desiredCondition: "Near Mint",
-  feedbackPercentage: "",
-  feedbackCount: "",
-  returnsAccepted: false,
-  buyerProtection: false,
-  photoCount: "0",
-  frontBackExplicit: false,
-  closeupsExplicit: false,
-  surfaceExplicit: false,
-  substantiveConditionNotes: false,
-  manualCandidates: [],
 };
 
 class ApiResponseError extends Error {
@@ -357,7 +282,7 @@ export function ComparisonApp() {
 
 function ComparisonExperience() {
   const t = useT();
-  const form = useForm<ComparisonForm>({ defaultValues });
+  const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
   const [confirmedIdentityForSettings, setConfirmedIdentityForSettings] = useState<CardIdentityCandidate | null>(null);
   const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
@@ -681,6 +606,7 @@ function ComparisonExperience() {
     setConfirmedIdentityForSettings(null);
     setError(null);
     setCompactSearchOpen(false);
+    form.reset(resetForNewCardSearch(form.getValues()));
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
     });

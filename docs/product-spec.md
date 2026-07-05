@@ -71,6 +71,8 @@ Each lens ranks the full eligible set independently; uniqueness is never forced.
 
 ## Pilot success
 
+Before each release candidate, the automated standard comparison flow must pass: at least five sequential card-first searches in one session, both Pokémon and One Piece included, with edit-search and new-search transitions between results. New Search clears stale card/listing facts while preserving buyer context.
+
 Before self-serve launch, pass a human-adjudicated corpus of at least 30 real listings covering NM/LP/MP/HP/damaged, unknown shipping, wrong versions, novelty items, and multiple price bands:
 
 - Every lens satisfies its mathematical invariant.

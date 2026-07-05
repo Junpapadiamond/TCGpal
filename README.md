@@ -75,6 +75,8 @@ npm run test
 npm run build
 ```
 
+`npm run test` includes the standard multi-card product flow in `src/lib/testing/standard-comparison-flow.ts`: five sequential card searches across Pokémon and One Piece, exercising both Edit and New search transitions.
+
 ## Product boundaries
 
 No marketplace crawling, sold-history claims, image grading, auth, payments, saved collections, monitoring, or investment promises. Seller condition labels remain claims; unknown shipping and unknown condition remain unknown.
