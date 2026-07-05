@@ -1,5 +1,6 @@
 import {
   hasEbayCredentials,
+  type EbayProductResolution,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
 import type {
@@ -28,6 +29,7 @@ export type PlatformSeed = ListingSeed;
 // every agent signature.
 export type PlatformSearchPlan = {
   query?: string;
+  ebayProduct?: EbayProductResolution | null;
 };
 
 export type PlatformSearchInput = {
@@ -66,7 +68,7 @@ export const ebayPlatformAgent: PlatformAgent = {
   requiredEnv: ["EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET"],
   isConfigured: hasEbayCredentials,
   search: ({ card, buyer, fetcher, plan }) =>
-    searchEbayAlternatives(card, buyer, fetcher, plan?.query),
+    searchEbayAlternatives(card, buyer, fetcher, plan?.query, plan?.ebayProduct),
 };
 
 // Roadmap marketplaces: each already implements the PlatformAgent interface —

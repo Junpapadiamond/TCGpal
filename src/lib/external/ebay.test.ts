@@ -4,6 +4,7 @@ import {
   getEbayListingByUrl,
   parseEbayUrl,
   resetEbayTokenCacheForTests,
+  resolveEbayProductForCard,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
 import type { CardIdentityCandidate } from "@/lib/schemas";
@@ -26,6 +27,59 @@ describe("eBay URL boundary", () => {
       fetcher,
     )).rejects.toThrow("allowlisted eBay URLs");
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("normalizes structured seller sub-ratings from allowed eBay item responses", async () => {
+    process.env.EBAY_CLIENT_ID = "test-id";
+    process.env.EBAY_CLIENT_SECRET = "test-secret";
+    resetEbayTokenCacheForTests();
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item/get_item_by_legacy_id")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemId: "123456789012",
+            title: "Umbreon VMAX 215/203",
+            price: { value: "420.00", currency: "USD" },
+            seller: {
+              feedbackPercentage: "99.4",
+              feedbackScore: 350,
+              subRatings: {
+                accurateDescription: "4.9",
+                shippingCost: 4.8,
+                shippingSpeed: 4.7,
+                communication: 4.9,
+              },
+            },
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    try {
+      const listing = await getEbayListingByUrl(
+        "https://www.ebay.com/itm/Umbreon/123456789012",
+        { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
+        fetcher,
+      );
+
+      expect(listing.seller.subRatings).toEqual({
+        accurateDescription: 4.9,
+        shippingCost: 4.8,
+        shippingSpeed: 4.7,
+        communication: 4.9,
+      });
+    } finally {
+      delete process.env.EBAY_CLIENT_ID;
+      delete process.env.EBAY_CLIENT_SECRET;
+      resetEbayTokenCacheForTests();
+    }
   });
 });
 
@@ -84,6 +138,60 @@ describe("eBay active-listing search", () => {
     const filter = new URL(captured.searchUrl ?? "").searchParams.get("filter");
     expect(filter).toBe("buyingOptions:{FIXED_PRICE}");
     expect(filter).not.toContain("priceCurrency");
+  });
+
+  it("uses ePID Browse search without q when a resolved eBay product is available", async () => {
+    const captured: { searchUrl?: string } = {};
+    await searchEbayAlternatives(card, buyer, searchFetcher(captured), undefined, {
+      epid: "19049841301",
+      confidence: "high",
+      productTitle: "Umbreon VMAX Evolving Skies 215/203",
+      localizedAspects: [{ name: "Card Number", value: "215/203" }],
+      matchReasons: ["Catalog product name and collector number match."],
+    });
+
+    const url = new URL(captured.searchUrl ?? "");
+    expect(url.searchParams.get("epid")).toBe("19049841301");
+    expect(url.searchParams.has("q")).toBe(false);
+    expect(url.searchParams.get("filter")).toBe("buyingOptions:{FIXED_PRICE}");
+  });
+
+  it("falls back to the keyword query when ePID search returns no USD summaries", async () => {
+    const searchUrls: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        searchUrls.push(url);
+        const params = new URL(url).searchParams;
+        if (params.has("epid")) {
+          return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [{ itemId: "1", title: "Umbreon VMAX 215/203", price: { value: "420.00", currency: "USD" } }],
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(card, buyer, fetcher, undefined, {
+      epid: "19049841301",
+      confidence: "high",
+      productTitle: "Umbreon VMAX Evolving Skies 215/203",
+      localizedAspects: [],
+      matchReasons: [],
+    });
+
+    expect(searchUrls).toHaveLength(2);
+    expect(new URL(searchUrls[0] ?? "").searchParams.get("epid")).toBe("19049841301");
+    expect(new URL(searchUrls[1] ?? "").searchParams.get("q")).toBe("Umbreon VMAX 215/203");
+    expect(results.map((listing) => listing.id)).toEqual(["ebay-1"]);
   });
 
   it("keeps only USD summaries so non-USD prices never rank as $0", async () => {
@@ -186,6 +294,153 @@ describe("eBay active-listing search", () => {
     await searchEbayAlternatives(card, buyer, fetcher);
 
     expect(tokenCalls).toBe(1);
+  });
+});
+
+describe("eBay catalog ePID resolution", () => {
+  beforeEach(() => {
+    process.env.EBAY_CLIENT_ID = "test-id";
+    process.env.EBAY_CLIENT_SECRET = "test-secret";
+    resetEbayTokenCacheForTests();
+  });
+  afterEach(() => {
+    delete process.env.EBAY_CLIENT_ID;
+    delete process.env.EBAY_CLIENT_SECRET;
+    resetEbayTokenCacheForTests();
+  });
+
+  const card = {
+    id: "swsh7-215",
+    name: "Umbreon VMAX",
+    setName: "Evolving Skies",
+    setCode: "SWSH7",
+    cardNumber: "215/203",
+    language: "English",
+    imageUrl: null,
+    confidence: "high",
+    matchReasons: [],
+  } as CardIdentityCandidate;
+
+  const buyer = { country: "US" as const, postalCode: "", taxRate: null, desiredCondition: "Unknown" as const };
+
+  it("accepts a catalog ePID only when name and collector number match", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/") && url.includes("/product_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            productSummaries: [{
+              epid: "19049841301",
+              title: "Umbreon VMAX Evolving Skies 215/203",
+              localizedAspects: [
+                { name: "Game", value: "Pokemon TCG" },
+                { name: "Set", value: "Evolving Skies" },
+                { name: "Card Number", value: "215/203" },
+                { name: "Language", value: "English" },
+              ],
+            }],
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    const result = await resolveEbayProductForCard(card, buyer, fetcher);
+
+    expect(result?.epid).toBe("19049841301");
+    expect(result?.confidence).toBe("high");
+    expect(result?.localizedAspects).toContainEqual({ name: "Card Number", value: "215/203" });
+  });
+
+  it("returns null for wrong-number catalog hits instead of guessing an ePID", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/") && url.includes("/product_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            productSummaries: [{
+              epid: "wrong",
+              title: "Umbreon VMAX Evolving Skies 209/203",
+              localizedAspects: [
+                { name: "Set", value: "Evolving Skies" },
+                { name: "Card Number", value: "209/203" },
+              ],
+            }],
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    await expect(resolveEbayProductForCard(card, buyer, fetcher)).resolves.toBeNull();
+  });
+
+  it("falls back to Browse ePID consensus when Catalog metadata is not entitled", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/") && url.includes("/product_summary/search")) {
+        return { ok: false, status: 403, json: async () => ({}) } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [
+              { itemId: "1", epid: "24048923237", title: "Umbreon VMAX 215/203 Evolving Skies", price: { value: "420.00", currency: "USD" } },
+              { itemId: "2", epid: "24048923237", title: "Umbreon VMAX 215/203 Evolving Skies NM", price: { value: "425.00", currency: "USD" } },
+              { itemId: "3", epid: "noise", title: "Umbreon plush toy", price: { value: "10.00", currency: "USD" } },
+            ],
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    const result = await resolveEbayProductForCard(card, buyer, fetcher);
+
+    expect(result?.epid).toBe("24048923237");
+    expect(result?.matchReasons.some((reason) => reason.includes("Browse"))).toBe(true);
+  });
+
+  it("does not infer a Browse ePID when high-confidence listings disagree", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/") && url.includes("/product_summary/search")) {
+        return { ok: false, status: 403, json: async () => ({}) } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [
+              { itemId: "1", epid: "a", title: "Umbreon VMAX 215/203 Evolving Skies", price: { value: "420.00", currency: "USD" } },
+              { itemId: "2", epid: "b", title: "Umbreon VMAX 215/203 Evolving Skies NM", price: { value: "425.00", currency: "USD" } },
+            ],
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    await expect(resolveEbayProductForCard(card, buyer, fetcher)).resolves.toBeNull();
   });
 });
 

@@ -2,8 +2,8 @@
 
 ## Validation loop
 
-1. **Source ingestion:** use official eBay APIs for search; fetch exactly one user-pasted public HTTPS listing when the bounded adapter permits it; accept manual facts otherwise.
-2. **Identity:** reconcile title, set, collector number, and Pokémon or One Piece catalog candidates.
+1. **Source ingestion:** use official eBay Browse APIs for active-listing search; fetch exactly one user-pasted public HTTPS listing when the bounded adapter permits it; accept manual facts otherwise.
+2. **Identity:** reconcile title, set, collector number, and Pokémon or One Piece catalog candidates; use official eBay Catalog metadata only to resolve an ePID for the confirmed card.
 3. **Confirmation gate:** stop when the exact version is ambiguous.
 4. **Evidence gathering:** query official eBay active listings and optional PriceCharting references.
 5. **Normalization:** convert every candidate into one schema with source timestamp and confidence.
@@ -18,6 +18,7 @@ Every AI failure falls back to deterministic behavior.
 | Source | v1 use | Automated | Notes |
 |---|---|---:|---|
 | eBay Browse API | Active listings, shipping, seller and return signals, images | Yes | Requires server credentials |
+| eBay Catalog API | Product identity metadata/ePID and localized aspects for confirmed cards | Yes | Not seller inventory; only guides Browse ePID search |
 | Pokémon TCG API | Catalog identity and card images | Yes | Optional key |
 | One Piece catalog | Catalog identity and card images | Yes | Bundled catalog + adapter |
 | TCGCSV | TCGplayer product crosswalk and aggregate market reference | Yes | Keyless; never ranked as seller inventory |

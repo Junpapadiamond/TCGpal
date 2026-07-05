@@ -100,13 +100,23 @@ export function getPlatformTrustPrior(marketplace: Marketplace) {
 // True when we have no seller track record at all — the listing is scored with
 // the platform baseline and labeled "unverified" instead of "higher risk".
 export function isSellerUnverified(signals: SellerTrustSignals) {
-  return signals.feedbackPercentage === null && signals.feedbackCount === null;
+  return signals.feedbackPercentage === null
+    && signals.feedbackCount === null
+    && !hasKnownSellerSubRating(signals);
 }
 
 // Coverage-aware trust: known signals earn their points; unknown signals earn
 // at the platform's baseline rate instead of counting as zero. Full data gives
 // a pure evidence score; no data gives exactly the platform prior.
 export function calculateSellerTrustScore(signals: SellerTrustSignals, marketplace: Marketplace = "Other") {
+  const baseScore = calculateBaseSellerTrustScore(signals, marketplace);
+  if (!hasKnownSellerSubRating(signals)) return baseScore;
+
+  const subRatingScore = calculateSellerSubRatingScore(signals, marketplace);
+  return Math.min(100, Math.round(baseScore * 0.85 + subRatingScore * 0.15));
+}
+
+function calculateBaseSellerTrustScore(signals: SellerTrustSignals, marketplace: Marketplace = "Other") {
   let earned = 0;
   let covered = 0;
 
@@ -140,6 +150,33 @@ export function calculateSellerTrustScore(signals: SellerTrustSignals, marketpla
 
   const prior = getPlatformTrustPrior(marketplace);
   return Math.min(100, Math.round(earned + (prior / 100) * (100 - covered)));
+}
+
+function hasKnownSellerSubRating(signals: SellerTrustSignals) {
+  const ratings = signals.subRatings;
+  return Boolean(ratings && Object.values(ratings).some((value) => value !== null));
+}
+
+function calculateSellerSubRatingScore(signals: SellerTrustSignals, marketplace: Marketplace) {
+  const ratings = signals.subRatings;
+  const prior = getPlatformTrustPrior(marketplace);
+  if (!ratings) return prior;
+
+  const weights = {
+    accurateDescription: 0.7,
+    shippingCost: 0.1,
+    shippingSpeed: 0.1,
+    communication: 0.1,
+  } as const;
+
+  return Object.entries(weights).reduce((score, [key, weight]) => {
+    const value = ratings[key as keyof typeof weights];
+    return score + (value === null ? prior : sellerSubRatingToScore(value)) * weight;
+  }, 0);
+}
+
+function sellerSubRatingToScore(value: number) {
+  return Math.max(0, Math.min(100, ((value - 1) / 4) * 100));
 }
 
 // Maps a listing's price relative to the market anchor onto a 0-100 component: at
@@ -288,9 +325,12 @@ export function normalizeListing(input: {
         ? "some_risk"
         : "higher_risk";
   const prior = getPlatformTrustPrior(listing.marketplace);
-  const trustNotes = unverified
+  const trustNotes = [
+    ...(unverified
     ? [`No seller track record was available, so this listing is unverified — scored with the ${listing.marketplace} platform baseline (${prior}/100), not marked higher risk.`]
-    : [];
+      : []),
+    ...sellerSubRatingTrustNotes(listing.seller),
+  ];
 
   return normalizedListingSchema.parse({
     ...listing,
@@ -310,6 +350,25 @@ export function normalizeListing(input: {
     eligible: exclusionReasons.length === 0,
     exclusionReasons,
   });
+}
+
+function sellerSubRatingTrustNotes(signals: SellerTrustSignals) {
+  const ratings = signals.subRatings;
+  if (!ratings || !hasKnownSellerSubRating(signals)) return [];
+  const labels: Array<[keyof NonNullable<SellerTrustSignals["subRatings"]>, string]> = [
+    ["accurateDescription", "Accurate Description"],
+    ["shippingCost", "Reasonable Shipping Cost"],
+    ["shippingSpeed", "Shipping Speed"],
+    ["communication", "Communication"],
+  ];
+  const known = labels
+    .flatMap(([key, label]) => ratings[key] === null ? [] : `${label} ${formatRating(ratings[key])}/5`);
+  return known.length ? [`eBay seller sub-ratings used: ${known.join(", ")}.`] : [];
+}
+
+function formatRating(value: number | null) {
+  if (value === null) return "";
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 // When a condition-level market anchor is unavailable, price still matters — but

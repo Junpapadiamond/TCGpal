@@ -20,7 +20,7 @@ U.S. Pokémon and One Piece raw-single buyers, beginning with higher-considerati
 
 1. The buyer enters a card name, ideally with collector number, and chooses a minimum seller-stated condition.
 2. TCGpal auto-confirms explicit identities or pauses for one-tap version confirmation.
-3. The official eBay adapter returns concrete active listings; TCGCSV resolves a separate aggregate market reference.
+3. The official eBay adapter resolves an ePID when Catalog coverage exists, then returns concrete active Browse listings; TCGCSV resolves a separate aggregate market reference.
 4. Deterministic rules remove incompatible, incomplete, and ineligible rows.
 5. TCGpal returns one recommendation with four independently computed lenses:
    - Best Value
@@ -44,7 +44,7 @@ When shipping is known and the user supplies or TCGpal estimates a rate:
 
 Without a rate, the UI says “pre-tax total.” Without shipping, the UI says “before shipping” and the row cannot win a recommendation.
 
-Seller trust uses explicit score bands for feedback percentage, feedback volume, returns, top-rated status, and buyer protection.
+Seller trust uses explicit score bands for feedback percentage, feedback volume, returns, top-rated status, buyer protection, and nullable structured eBay seller sub-ratings when the allowed adapter response provides them. Missing sub-ratings stay unknown/neutral.
 
 Evidence completeness uses item-specific photo count, explicit front/back views, corner/edge closeups, surface evidence, exact identity details, and substantive defect notes.
 

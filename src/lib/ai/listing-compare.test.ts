@@ -65,6 +65,7 @@ const request: ComparisonRequest = {
       returnsAccepted: false,
       topRated: false,
       buyerProtection: false,
+      subRatings: null,
     },
     evidence: {
       photoCount: 8,
@@ -372,6 +373,90 @@ describe("listing comparison agent", () => {
     expect(response.confirmedCard?.id).toBe("swsh7-215");
     expect(response.confirmedCard?.rarity).toBe("Rare Rainbow");
     expect(response.confirmedCard?.setSymbolUrl).toBe("https://images.pokemontcg.io/swsh7/symbol.png");
+  });
+
+  it("passes a resolved eBay ePID through the crosswalk into Browse search", async () => {
+    process.env.EBAY_CLIENT_ID = "id";
+    process.env.EBAY_CLIENT_SECRET = "secret";
+    const { resetEbayTokenCacheForTests } = await import("@/lib/external/ebay");
+    resetEbayTokenCacheForTests();
+    const seen: string[] = [];
+    const ePidFetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      seen.push(url);
+      if (url.includes("api.pokemontcg.io")) {
+        return { ok: true, status: 200, json: async () => ({ data: catalogResponse.data[1] }) } as Response;
+      }
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 7200 }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/") && url.includes("/product_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            productSummaries: [{
+              epid: "19049841301",
+              title: "Umbreon VMAX Evolving Skies 215/203",
+              localizedAspects: [{ name: "Card Number", value: "215/203" }],
+            }],
+          }),
+        } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item_summary/search")) {
+        const params = new URL(url).searchParams;
+        expect(params.get("epid")).toBe("19049841301");
+        expect(params.has("q")).toBe(false);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [{
+              itemId: "v1|123|0",
+              title: "Umbreon VMAX 215/203 Evolving Skies",
+              condition: "Ungraded",
+              price: { value: "420.00", currency: "USD" },
+              shippingOptions: [{ shippingCost: { value: "6.00", currency: "USD" } }],
+            }],
+          }),
+        } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item/")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemId: "v1|123|0",
+            title: "Umbreon VMAX 215/203 Evolving Skies",
+            condition: "Ungraded",
+            conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
+            price: { value: "420.00", currency: "USD" },
+            shippingOptions: [{ shippingCost: { value: "6.00", currency: "USD" } }],
+          }),
+        } as Response;
+      }
+      throw new Error(`network disabled in test: ${url}`);
+    }) as unknown as typeof fetch;
+
+    try {
+      const response = await runListingComparison({
+        ...request,
+        sourceListing: { ...request.sourceListing, marketplace: "eBay", title: "", description: "", url: "", price: null, shipping: null },
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+        confirmedCardId: "swsh7-215",
+      }, { fetcher: ePidFetcher });
+
+      expect(seen.some((url) => url.includes("/commerce/catalog/"))).toBe(true);
+      expect(response.trace.find((entry) => entry.step === "card_crosswalk")?.summary).toContain("eBay ePID 19049841301");
+      expect(response.candidates.some((candidate) =>
+        candidate.matchReasons.some((reason) => reason.includes("ePID 19049841301"))
+      )).toBe(true);
+      expect(response.demoMode).toBe(false);
+    } finally {
+      delete process.env.EBAY_CLIENT_ID;
+      delete process.env.EBAY_CLIENT_SECRET;
+      resetEbayTokenCacheForTests();
+    }
   });
 
   it("hero search box: one free-text query auto-confirms exactly like the structured multi-field form", async () => {

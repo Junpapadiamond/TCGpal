@@ -361,6 +361,7 @@ function buildUniversalListingResult(
       returnsAccepted: null,
       topRated: null,
       buyerProtection: null,
+      subRatings: null,
     },
     evidence: evidenceFromExtraction(photoCount, `${title} ${description}`),
   };

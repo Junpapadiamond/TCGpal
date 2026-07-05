@@ -23,7 +23,7 @@ function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
     claimedCondition: "Unknown",
     listingLanguage: null,
     imageUrl: null,
-    seller: { feedbackPercentage: null, feedbackCount: null, returnsAccepted: null, topRated: null, buyerProtection: null },
+    seller: { feedbackPercentage: null, feedbackCount: null, returnsAccepted: null, topRated: null, buyerProtection: null, subRatings: null },
     evidence: { photoCount: 0, frontBackExplicit: false, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: true, substantiveConditionNotes: false, missing: [] },
     sellerTrustScore: 50,
     evidenceCompletenessScore: 10,

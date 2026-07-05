@@ -147,17 +147,21 @@ export async function runListingComparison(
   // its platform-native identifier; the TCGplayer agent reuses this entry.
   let crosswalk: CardCrosswalkEntry | null = null;
   try {
-    crosswalk = await resolveCardCrosswalk(confirmedCard, fetcher, now);
+    crosswalk = await resolveCardCrosswalk(confirmedCard, fetcher, now, request.buyer);
   } catch {
     /* the eBay leg still works from the card fields */
   }
+  const ebayCrosswalkSummary = crosswalk?.ebayProduct
+    ? `eBay ePID ${crosswalk.ebayProduct.epid}`
+    : "eBay keyword template";
+  const tcgplayerCrosswalkSummary = crosswalk?.tcgplayerProductId
+    ? `TCGplayer product #${crosswalk.tcgplayerProductId}`
+    : "no TCGplayer product match";
   trace.push({
     step: "card_crosswalk",
     actor: "Catalog crosswalk",
-    summary: crosswalk?.tcgplayerProductId
-      ? `Mapped ${confirmedCard.id} → TCGplayer product #${crosswalk.tcgplayerProductId} and an eBay query template.`
-      : `Mapped ${confirmedCard.id} → eBay query template; no TCGplayer product match (that source degrades to "no match").`,
-    status: crosswalk?.tcgplayerProductId ? "complete" : "fallback",
+    summary: `Mapped ${confirmedCard.id} → ${ebayCrosswalkSummary}; ${tcgplayerCrosswalkSummary}.`,
+    status: crosswalk?.tcgplayerProductId || crosswalk?.ebayProduct ? "complete" : "fallback",
   });
 
   // R3: the daily-feed market anchor resolves in parallel with the fan-out.
@@ -193,7 +197,15 @@ export async function runListingComparison(
   // parallel and reconciles into the same ledger. Each agent self-gates on its own
   // API credentials, so this scales to whatever platforms the operator has wired —
   // a failing one is isolated and never sinks the others.
-  const fanout = await runPlatformFanout({ card: confirmedCard, buyer: request.buyer, fetcher });
+  const fanout = await runPlatformFanout({
+    card: confirmedCard,
+    buyer: request.buyer,
+    fetcher,
+    plan: {
+      query: crosswalk?.ebayQueryTemplate,
+      ebayProduct: crosswalk?.ebayProduct ?? null,
+    },
+  });
   seeds.push(...fanout.seeds);
   warnings.push(...fanout.warnings);
   trace.push(...fanout.traces);
@@ -533,6 +545,7 @@ function mergeSourceFacts(typed: SourceListing, extracted: SourceListing): Sourc
       returnsAccepted: typed.seller.returnsAccepted ?? extracted.seller.returnsAccepted,
       topRated: typed.seller.topRated ?? extracted.seller.topRated,
       buyerProtection: typed.seller.buyerProtection ?? extracted.seller.buyerProtection,
+      subRatings: typed.seller.subRatings ?? extracted.seller.subRatings,
     },
     evidence: typed.evidence.photoCount > 0 || typed.evidence.frontBackExplicit
       ? typed.evidence
@@ -873,6 +886,7 @@ function manualCandidatesToSeeds(
         returnsAccepted: null,
         topRated: null,
         buyerProtection: null,
+        subRatings: null,
       },
       evidence: {
         photoCount: 0,

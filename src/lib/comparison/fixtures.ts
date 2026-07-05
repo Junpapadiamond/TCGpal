@@ -67,7 +67,7 @@ export function demoListingSeedsFor(
       price: scaled(0.93, 1225),
       shipping: 0,
       claimedCondition: "Lightly Played",
-      seller: { feedbackPercentage: 99.6, feedbackCount: 846, returnsAccepted: true, topRated: false, buyerProtection: true },
+      seller: { feedbackPercentage: 99.6, feedbackCount: 846, returnsAccepted: true, topRated: false, buyerProtection: true, subRatings: null },
       evidence: {
         photoCount: 4,
         frontBackExplicit: true,
@@ -85,7 +85,7 @@ export function demoListingSeedsFor(
       price: scaled(0.98, 1295),
       shipping: 8.95,
       claimedCondition: "Near Mint",
-      seller: { feedbackPercentage: 100, feedbackCount: 4200, returnsAccepted: true, topRated: true, buyerProtection: true },
+      seller: { feedbackPercentage: 100, feedbackCount: 4200, returnsAccepted: true, topRated: true, buyerProtection: true, subRatings: null },
       evidence: {
         photoCount: 5,
         frontBackExplicit: true,
@@ -103,7 +103,7 @@ export function demoListingSeedsFor(
       price: scaled(1, 1320),
       shipping: 5,
       claimedCondition: "Near Mint",
-      seller: { feedbackPercentage: 99.2, feedbackCount: 318, returnsAccepted: true, topRated: false, buyerProtection: true },
+      seller: { feedbackPercentage: 99.2, feedbackCount: 318, returnsAccepted: true, topRated: false, buyerProtection: true, subRatings: null },
       evidence: {
         photoCount: 9,
         frontBackExplicit: true,
@@ -139,6 +139,7 @@ export const demoListingSeeds: DemoListingSeed[] = [
       returnsAccepted: true,
       topRated: false,
       buyerProtection: true,
+      subRatings: null,
     },
     evidence: {
       photoCount: 4,
@@ -174,6 +175,7 @@ export const demoListingSeeds: DemoListingSeed[] = [
       returnsAccepted: true,
       topRated: true,
       buyerProtection: true,
+      subRatings: null,
     },
     evidence: {
       photoCount: 5,
@@ -209,6 +211,7 @@ export const demoListingSeeds: DemoListingSeed[] = [
       returnsAccepted: true,
       topRated: false,
       buyerProtection: true,
+      subRatings: null,
     },
     evidence: {
       photoCount: 9,

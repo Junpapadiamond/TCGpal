@@ -49,12 +49,20 @@ export const moneySchema = z.object({
   currency: z.literal("USD").default("USD"),
 });
 
+export const sellerSubRatingsSchema = z.object({
+  accurateDescription: z.number().min(0).max(5).nullable().default(null),
+  shippingCost: z.number().min(0).max(5).nullable().default(null),
+  shippingSpeed: z.number().min(0).max(5).nullable().default(null),
+  communication: z.number().min(0).max(5).nullable().default(null),
+});
+
 export const sellerTrustSignalsSchema = z.object({
   feedbackPercentage: z.number().min(0).max(100).nullable().default(null),
   feedbackCount: z.number().int().min(0).nullable().default(null),
   returnsAccepted: z.boolean().nullable().default(null),
   topRated: z.boolean().nullable().default(null),
   buyerProtection: z.boolean().nullable().default(null),
+  subRatings: sellerSubRatingsSchema.nullable().default(null),
 });
 
 export const listingEvidenceSchema = z.object({
@@ -82,6 +90,7 @@ export const sourceListingSchema = z.object({
     returnsAccepted: null,
     topRated: null,
     buyerProtection: null,
+    subRatings: null,
   }),
   evidence: listingEvidenceSchema.default({
     photoCount: 0,

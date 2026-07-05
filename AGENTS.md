@@ -23,8 +23,8 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 
 - The app opens directly to the card-search form; there is no login or onboarding gate.
 - Raw singles in USD are the supported product category, across multiple TCGs. Pokémon (Pokémon TCG API) and One Piece (OPTCG adapter + bundled catalog) are wired end-to-end; the game toggle selects which. More games are planned.
-- **One live concrete-listing source plus one aggregate reference today.** eBay Browse `item_summary/search` supplies active seller listings (production keyset: `EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`; validate with `node scripts/check-ebay.mjs`). TCGplayer via the keyless TCGCSV daily dump supplies the crosswalk and market reference only; it never becomes a seller listing or ranking candidate.
-- A **canonical card crosswalk** (`src/lib/comparison/crosswalk.ts`, 6h in-memory cache) maps the confirmed catalog card id → TCGplayer product id + eBay query template. TCGCSV category is inferred from the confirmed card: Pokémon uses category `3`; One Piece uses category `68`. A missing crosswalk match degrades the market reference visibly — never a hard failure.
+- **One live concrete-listing source plus one aggregate reference today.** eBay Browse `item_summary/search` supplies active seller listings (production keyset: `EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`; validate with `node scripts/check-ebay.mjs`). Official eBay Catalog `product_summary/search` is used only to resolve product identity metadata/ePID for confirmed cards; it is not a listing source. TCGplayer via the keyless TCGCSV daily dump supplies the crosswalk and market reference only; it never becomes a seller listing or ranking candidate.
+- A **canonical card crosswalk** (`src/lib/comparison/crosswalk.ts`, 6h in-memory cache) maps the confirmed catalog card id → eBay ePID + query fallback + TCGplayer product id. TCGCSV category is inferred from the confirmed card: Pokémon uses category `3`; One Piece uses category `68`. A missing crosswalk match degrades the market reference and/or eBay product-ID search visibly — never a hard failure.
 - The **market anchor** is the TCGplayer daily feed ("prices as of" freshness shown; >48h stale warns visibly) when the crosswalk resolves, else the inline pokemontcg.io TCGplayer price (`marketSource: "tcgcsv" | "pokemontcg"` on the confirmed card). It powers the vs-market read and the below-market eligibility filter.
 - **Paste-a-URL** (`src/lib/external/universal-listing.ts`): a listing URL from any marketplace is fetched once — user-initiated, exactly that page, robots.txt honored, https/public hosts only, size/time bounded — extracted deterministically (JSON-LD/meta first) with optional LLM gap-filling, identity-checked against the confirmed card (mismatch → excluded from the recommendation with a warning), and labeled "user-added". Extraction failure falls back to the user's typed facts.
 - **Risk calibration: unknown ≠ risky.** Missing seller data yields a neutral `unverified` risk label plus a platform-baseline trust prior (`getPlatformTrustPrior` in `ranking.ts`, documented in per-listing `trustNotes`) — never "higher risk". Known signals earn their points; unknown signals earn at the platform's prior rate. The risk label tracks seller track record only; evidence thinness has its own verdict.
@@ -55,6 +55,7 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 Allowed:
 
 - Official eBay Browse API for active listings and item details.
+- Official eBay Catalog API for confirmed-card product identity metadata only (`product_summary/search` ePID + localized aspects). It may guide the Browse search by ePID, but it is never seller inventory and never a ranking candidate.
 - Pokémon TCG API for catalog identity, card images, and the inline TCGplayer market price (fallback fair-price anchor).
 - TCGCSV daily TCGplayer catalog/price dumps (`tcgcsv.com`) for the crosswalk and aggregate market anchor with explicit freshness. They are reference data, not TCGplayer source rows. Pokémon uses category `3`; One Piece uses category `68`. (Open legal question tracked in the PRD: whether a public app needs its own TCGplayer partner agreement — build unblocked, launch review pending.)
 - **One user-initiated fetch of exactly the listing URL the user pasted** (https, public hosts, robots.txt honored, size/time bounded). This is the paste-a-URL boundary: per-URL, on explicit user action — never crawling, never scheduled, never link-following.
@@ -183,3 +184,34 @@ Then run `npm run dev` and verify:
 For any UI-affecting change, always verify visually before handing off: run the dev server, drive the changed flow in a real browser (Playwright with the preinstalled Chromium in remote sessions), capture screenshots of the affected screens in both English and 中文 plus a mobile viewport, and share those screenshots with the user.
 
 When the work is finished — gate green and visually verified — push it to `main` (fast-forward from the working branch) so Vercel deploys it. Don't leave finished work sitting on a side branch waiting to be asked.
+
+## Agent Navigation Interfaces
+
+Design the codebase so Codex can inspect it through stable, explicit interfaces before opening many raw files:
+
+- **Project map:** `AGENTS.md` is the highest-level product, boundary, and verification contract. Keep it current when source access, ranking ownership, provider policy, or launch gates change.
+- **Knowledge graph:** Graphify is installed for Codex. Use it as the first broad-navigation interface when the task is architectural, cross-file, or asks "where/how does this work?"
+- **Runtime contracts:** `src/lib/schemas.ts` is the public request/response contract. Zod schemas must stay authoritative for API boundaries and cached/shared payloads.
+- **Provider contracts:** `src/lib/comparison/platforms.ts` is the marketplace-agent interface. New live sources should join by implementing `PlatformAgent`, not by branching comparison orchestration.
+- **Decision contracts:** `src/lib/comparison/ranking.ts` owns eligibility, exclusions, scoring, and lens selection. AI may explain decisions but must not own ranking math.
+- **Ops contracts:** `src/lib/ops/*` owns rate limiting, cache, Sentry capture, and operational events. Add durable backends behind these interfaces instead of importing vendors through product code.
+- **Behavior contracts:** Tests live next to source and should describe observable behavior. Always use TDD for behavior changes: write or update a failing test first, make it pass, then refactor.
+
+## Graphify
+
+Graphify source: https://github.com/Graphify-Labs/graphify. The installed CLI is at `/Users/chenjunhsu/.codex/tools/graphify/bin/graphify`; the published PyPI package is `graphifyy`, while the command remains `graphify`.
+An initial AST-only graph exists at `graphify-out/graph.json` (created with `graphify update .`): 1,107 nodes, 2,128 edges, 60 communities; benchmarked at about 4.5x fewer tokens per query than reading the raw corpus.
+
+When the user types `/graphify`, use Graphify before doing anything else.
+
+Rules:
+- For broad codebase questions, architecture review, refactors touching multiple areas, or unfamiliar flows, first use Graphify when `graphify-out/graph.json` exists:
+  - `graphify query "<question>"` for scoped context.
+  - `graphify path "<A>" "<B>"` for relationships between concepts.
+  - `graphify explain "<concept>"` for a focused concept and neighbors.
+- Treat Graphify edge labels carefully: `EXTRACTED` is stronger than `INFERRED`; `AMBIGUOUS` requires source verification before acting.
+- If `graphify-out/wiki/index.md` exists, use it for broad navigation before raw source browsing.
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or when query/path/explain do not surface enough context.
+- If no graph exists yet, say so briefly, fall back to `rg`/source files, and do not pretend Graphify verified the answer.
+- Dirty `graphify-out/` files are expected after hooks or incremental updates. Dirty graph files are not a reason to skip Graphify.
+- After modifying code and when a graph exists, run `graphify update .` to keep the graph current (AST-only, no API cost). For documentation/image/semantic changes, prefer `graphify extract . --mode deep` only when the task explicitly needs semantic graph refresh and required LLM credentials are configured.

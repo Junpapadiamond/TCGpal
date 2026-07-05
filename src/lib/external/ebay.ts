@@ -14,12 +14,21 @@ const ebayAmountSchema = z.object({
 const ebaySellerSchema = z.object({
   feedbackPercentage: z.string().optional(),
   feedbackScore: z.number().optional(),
+  subRatings: z.unknown().optional(),
+  detailedSellerRatings: z.unknown().optional(),
+  sellerSubRatings: z.unknown().optional(),
 }).passthrough();
 
 const ebayImageSchema = z.object({ imageUrl: z.string().url() });
 
+const ebayLocalizedAspectSchema = z.object({
+  name: z.string(),
+  value: z.string(),
+}).passthrough();
+
 const ebayItemSchema = z.object({
   itemId: z.string(),
+  epid: z.string().optional(),
   itemWebUrl: z.string().url().optional(),
   itemAffiliateWebUrl: z.string().url().optional(),
   title: z.string(),
@@ -56,6 +65,27 @@ const ebaySearchSchema = z.object({
   itemSummaries: z.array(ebayItemSchema).default([]),
 }).passthrough();
 
+const ebayCatalogAspectSchema = z.object({
+  name: z.string(),
+  value: z.string().optional(),
+  values: z.array(z.string()).optional(),
+}).passthrough();
+
+const ebayCatalogProductSchema = z.object({
+  epid: z.string().optional(),
+  title: z.string().optional(),
+  localizedAspects: z.array(ebayLocalizedAspectSchema).optional(),
+  aspects: z.array(ebayCatalogAspectSchema).optional(),
+  aspectGroups: z.array(z.object({
+    localizedAspects: z.array(ebayLocalizedAspectSchema).optional(),
+    aspects: z.array(ebayCatalogAspectSchema).optional(),
+  }).passthrough()).optional(),
+}).passthrough();
+
+const ebayCatalogSearchSchema = z.object({
+  productSummaries: z.array(ebayCatalogProductSchema).default([]),
+}).passthrough();
+
 const ebayTokenSchema = z.object({
   access_token: z.string(),
   expires_in: z.number().optional(),
@@ -63,6 +93,20 @@ const ebayTokenSchema = z.object({
 
 const EBAY_HOSTS = new Set(["ebay.com", "www.ebay.com", "m.ebay.com"]);
 const EBAY_API = "https://api.ebay.com";
+const EBAY_CATALOG_API = `${EBAY_API}/commerce/catalog/v1_beta`;
+
+export type EbayLocalizedAspect = {
+  name: string;
+  value: string;
+};
+
+export type EbayProductResolution = {
+  epid: string;
+  confidence: "high";
+  productTitle: string;
+  localizedAspects: EbayLocalizedAspect[];
+  matchReasons: string[];
+};
 
 // eBay's client-credentials token is valid ~2h, but was refetched on every request — costing
 // ~1-2s per comparison for no reason. Cache it in module scope; the actual token HTTP call
@@ -133,33 +177,46 @@ export async function searchEbayAlternatives(
   // Optional model-refined query. The deterministic default below is always the
   // fallback, so a missing or empty override never weakens the search.
   queryOverride?: string,
+  ebayProduct?: EbayProductResolution | null,
 ): Promise<ListingSeed[]> {
   const token = await getEbayToken(fetcher);
-  const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item_summary/search`);
   // Recall-first query: name + collector number. Set names are the token real
   // titles most often omit, and Best Match treats extra terms as AND-ish — so
   // including the set silently drops listings that are fine. Set/name/number
   // agreement is verified deterministically per title in assessTitleMatch.
   const query = queryOverride?.trim()
     || [card.name, card.cardNumber || card.setName].filter(Boolean).join(" ").trim();
-  endpoint.searchParams.set("q", query);
-  endpoint.searchParams.set("limit", "50");
-  // Best Match (no price sort): price-ascending floods the top with cheap novelty
-  // replicas that name the card. Our deterministic ranking sorts on price after
-  // identity/eligibility filtering instead.
-  //
-  // Only FIXED_PRICE: eBay's Browse API rejects `priceCurrency` unless it is paired
-  // with a `price` range filter, returning HTTP 400 and zero listings. The marketplace
-  // is already scoped to a single country via X-EBAY-C-MARKETPLACE-ID, so currency is
-  // enforced below by dropping any non-USD summaries instead of via the request filter.
-  endpoint.searchParams.set("filter", "buyingOptions:{FIXED_PRICE}");
-  const response = await fetchWithTimeout(endpoint, {
-    headers: ebayHeaders(token, buyer),
-    cache: "no-store",
-  }, fetcher);
-  if (!response.ok) throw new Error(`eBay active-listing search failed with ${response.status}.`);
-  const result = ebaySearchSchema.parse(await response.json());
-  const summaries = result.itemSummaries.filter((item) => item.price.currency === "USD");
+
+  const attempts = ebayProduct?.epid
+    ? [
+      { mode: "epid" as const, epid: ebayProduct.epid, fallbackReason: "" },
+      { mode: "keyword" as const, query, fallbackReason: `eBay product-ID search for ePID ${ebayProduct.epid} returned no USD candidates; broadened to keyword fallback.` },
+    ]
+    : [{ mode: "keyword" as const, query, fallbackReason: "" }];
+
+  let summaries: z.infer<typeof ebayItemSchema>[] = [];
+  let searchNote = "";
+  for (const attempt of attempts) {
+    const endpoint = buildEbaySearchEndpoint(attempt);
+    const response = await fetchWithTimeout(endpoint, {
+      headers: ebayHeaders(token, buyer),
+      cache: "no-store",
+    }, fetcher);
+    if (!response.ok) {
+      if (attempt.mode === "epid") {
+        searchNote = `eBay product-ID search for ePID ${attempt.epid} failed with ${response.status}; broadened to keyword fallback.`;
+        continue;
+      }
+      throw new Error(`eBay active-listing search failed with ${response.status}.`);
+    }
+    const result = ebaySearchSchema.parse(await response.json());
+    summaries = result.itemSummaries.filter((item) => item.price.currency === "USD");
+    searchNote = attempt.mode === "epid"
+      ? `Searched eBay by product ID ePID ${attempt.epid}.`
+      : attempt.fallbackReason || "Searched eBay by keyword fallback.";
+    if (summaries.length > 0 || attempt.mode === "keyword") break;
+  }
+
   // Browse search summaries usually say only "Ungraded". The item endpoint
   // carries eBay's structured Card Condition descriptor (NM/LP/MP/HP/Damaged).
   // Enrich a bounded exact-match shortlist in parallel so condition is a real
@@ -182,7 +239,153 @@ export async function searchEbayAlternatives(
     details.filter((item): item is z.infer<typeof ebayItemSchema> => item !== null)
       .map((item) => [item.itemId, item]),
   );
-  return summaries.map((item) => toNormalizedSeed(detailById.get(item.itemId) ?? item, card));
+  return summaries.map((item) => toNormalizedSeed(detailById.get(item.itemId) ?? item, card, searchNote));
+}
+
+function buildEbaySearchEndpoint(attempt:
+  | { mode: "epid"; epid: string }
+  | { mode: "keyword"; query: string }
+) {
+  const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item_summary/search`);
+  if (attempt.mode === "epid") {
+    endpoint.searchParams.set("epid", attempt.epid);
+  } else {
+    endpoint.searchParams.set("q", attempt.query);
+  }
+  endpoint.searchParams.set("limit", "50");
+  // Best Match (no price sort): price-ascending floods the top with cheap novelty
+  // replicas that name the card. Our deterministic ranking sorts on price after
+  // identity/eligibility filtering instead.
+  //
+  // Only FIXED_PRICE: eBay's Browse API rejects `priceCurrency` unless it is paired
+  // with a `price` range filter, returning HTTP 400 and zero listings. The marketplace
+  // is already scoped to a single country via X-EBAY-C-MARKETPLACE-ID, so currency is
+  // enforced below by dropping any non-USD summaries instead of via the request filter.
+  endpoint.searchParams.set("filter", "buyingOptions:{FIXED_PRICE}");
+  return endpoint;
+}
+
+export async function resolveEbayProductForCard(
+  card: CardIdentityCandidate,
+  buyer: BuyerContext,
+  fetcher: typeof fetch = fetch,
+): Promise<EbayProductResolution | null> {
+  const token = await getEbayToken(fetcher);
+  const endpoint = new URL(`${EBAY_CATALOG_API}/product_summary/search`);
+  endpoint.searchParams.set("q", [card.name, card.cardNumber || card.setName].filter(Boolean).join(" ").trim());
+  endpoint.searchParams.set("limit", "10");
+
+  const response = await fetchWithTimeout(endpoint, {
+    headers: ebayHeaders(token, buyer),
+    cache: "no-store",
+  }, fetcher);
+  if (!response.ok) {
+    return resolveEbayProductFromBrowseConsensus(card, buyer, token, fetcher);
+  }
+
+  const result = ebayCatalogSearchSchema.parse(await response.json());
+  if (result.productSummaries.length === 0) {
+    return resolveEbayProductFromBrowseConsensus(card, buyer, token, fetcher);
+  }
+  const matches = result.productSummaries
+    .flatMap((product) => {
+      const epid = product.epid?.trim();
+      if (!epid) return [];
+      const localizedAspects = extractCatalogAspects(product);
+      const productTitle = product.title?.trim() || "";
+      const searchableText = [productTitle, ...localizedAspects.flatMap((aspect) => [aspect.name, aspect.value])]
+        .join(" ");
+      const match = assessTitleMatch(searchableText, card);
+      if (match.confidence !== "high") return [];
+      return [{
+        epid,
+        confidence: "high" as const,
+        productTitle,
+        localizedAspects,
+        matchReasons: [
+          "eBay Catalog product matched the confirmed card identity.",
+          ...match.reasons,
+        ],
+      }];
+    });
+
+  const uniqueByEpid = new Map(matches.map((match) => [match.epid, match]));
+  return uniqueByEpid.size === 1 ? [...uniqueByEpid.values()][0] : null;
+}
+
+async function resolveEbayProductFromBrowseConsensus(
+  card: CardIdentityCandidate,
+  buyer: BuyerContext,
+  token: string,
+  fetcher: typeof fetch,
+): Promise<EbayProductResolution | null> {
+  const query = [card.name, card.cardNumber || card.setName].filter(Boolean).join(" ").trim();
+  const endpoint = buildEbaySearchEndpoint({ mode: "keyword", query });
+  endpoint.searchParams.set("limit", "20");
+  const response = await fetchWithTimeout(endpoint, {
+    headers: ebayHeaders(token, buyer),
+    cache: "no-store",
+  }, fetcher);
+  if (!response.ok) return null;
+
+  const result = ebaySearchSchema.parse(await response.json());
+  const highConfidence = result.itemSummaries
+    .filter((item) => item.price.currency === "USD")
+    .flatMap((item) => {
+      const epid = item.epid?.trim();
+      if (!epid) return [];
+      const match = assessTitleMatch(item.title, card);
+      return match.confidence === "high" ? [{ epid, title: item.title, reasons: match.reasons }] : [];
+    });
+
+  if (highConfidence.length < 2) return null;
+
+  const counts = new Map<string, { count: number; title: string; reasons: string[] }>();
+  for (const match of highConfidence) {
+    const current = counts.get(match.epid);
+    counts.set(match.epid, {
+      count: (current?.count ?? 0) + 1,
+      title: current?.title ?? match.title,
+      reasons: current?.reasons ?? match.reasons,
+    });
+  }
+  const sorted = [...counts.entries()].sort((a, b) => b[1].count - a[1].count);
+  const [epid, winner] = sorted[0] ?? [];
+  if (!epid || !winner || winner.count / highConfidence.length < 0.75) return null;
+
+  return {
+    epid,
+    confidence: "high",
+    productTitle: winner.title,
+    localizedAspects: [],
+    matchReasons: [
+      `Browse exact-match listings showed a consistent ePID (${winner.count}/${highConfidence.length}); using product-ID search before keyword fallback.`,
+      ...winner.reasons,
+    ],
+  };
+}
+
+function extractCatalogAspects(product: z.infer<typeof ebayCatalogProductSchema>): EbayLocalizedAspect[] {
+  const direct = product.localizedAspects ?? [];
+  const fromAspects = normalizeCatalogAspects(product.aspects ?? []);
+  const fromGroups = (product.aspectGroups ?? []).flatMap((group) => [
+    ...(group.localizedAspects ?? []),
+    ...normalizeCatalogAspects(group.aspects ?? []),
+  ]);
+  const deduped = new Map<string, EbayLocalizedAspect>();
+  for (const aspect of [...direct, ...fromAspects, ...fromGroups]) {
+    const name = aspect.name.trim();
+    const value = aspect.value.trim();
+    if (name && value) deduped.set(`${name.toLowerCase()}:${value.toLowerCase()}`, { name, value });
+  }
+  return [...deduped.values()];
+}
+
+function normalizeCatalogAspects(aspects: z.infer<typeof ebayCatalogAspectSchema>[]): EbayLocalizedAspect[] {
+  return aspects.flatMap((aspect) => {
+    const values = aspect.values ?? (aspect.value ? [aspect.value] : []);
+    return values.flatMap((value) => value ? [{ name: aspect.name, value }] : []);
+  });
 }
 
 function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: string): SourceListing {
@@ -213,6 +416,7 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
       returnsAccepted: item.returnTerms?.returnsAccepted ?? null,
       topRated: item.topRatedBuyingExperience ?? null,
       buyerProtection: true,
+      subRatings: normalizeEbaySellerSubRatings(item.seller),
     },
     evidence,
   };
@@ -370,7 +574,7 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdentityCandidate) {
+function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdentityCandidate, searchNote = "") {
   const source = toSourceListing(item, item.itemWebUrl ?? item.itemAffiliateWebUrl ?? "https://www.ebay.com");
   const title = item.title;
   const match = assessTitleMatch(title, card);
@@ -382,7 +586,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     title,
     cardId: card.id,
     matchConfidence: match.confidence,
-    matchReasons: match.reasons,
+    matchReasons: searchNote ? [searchNote, ...match.reasons] : match.reasons,
     active: source.active,
     raw: !/\b(psa|bgs|cgc|sgc|ace)[\s:._#-]*\d|\bgraded\s*\d|\bslab(?:bed)?\b/i.test(title),
     currency: "USD" as const,
@@ -510,6 +714,29 @@ function numberOrNull(value: string | undefined) {
   if (!value) return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function normalizeEbaySellerSubRatings(seller: z.infer<typeof ebaySellerSchema> | undefined) {
+  if (!seller) return null;
+  const raw = seller.subRatings ?? seller.detailedSellerRatings ?? seller.sellerSubRatings;
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const subRatings = {
+    accurateDescription: ratingFromRecord(record, ["accurateDescription", "description", "itemAsDescribed", "item_description"]),
+    shippingCost: ratingFromRecord(record, ["shippingCost", "reasonableShippingCost", "shipping_cost"]),
+    shippingSpeed: ratingFromRecord(record, ["shippingSpeed", "shippingTime", "shipping_speed"]),
+    communication: ratingFromRecord(record, ["communication", "sellerCommunication", "seller_communication"]),
+  };
+  return Object.values(subRatings).some((value) => value !== null) ? subRatings : null;
+}
+
+function ratingFromRecord(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    const number = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
+    if (Number.isFinite(number)) return Math.max(0, Math.min(5, number));
+  }
+  return null;
 }
 
 function normalizeText(value: string) {

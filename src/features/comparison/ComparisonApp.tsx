@@ -574,6 +574,7 @@ function ComparisonExperience() {
           returnsAccepted: null,
           topRated: null,
           buyerProtection: null,
+          subRatings: null,
         },
         evidence: {
           photoCount: 0,
@@ -3083,6 +3084,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
         returnsAccepted: values.returnsAccepted ? true : null,
         topRated: null,
         buyerProtection: values.buyerProtection ? true : null,
+        subRatings: null,
       },
       evidence: {
         photoCount: nullableInteger(values.photoCount) ?? 0,

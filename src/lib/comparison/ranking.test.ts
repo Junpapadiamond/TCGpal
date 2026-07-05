@@ -50,6 +50,72 @@ describe("comparison ranking", () => {
     expect(calculateEvidenceCompletenessScore(demoListingSeeds[2].evidence)).toBe(100);
   });
 
+  it("keeps absent seller sub-ratings neutral", () => {
+    const seller = {
+      feedbackPercentage: 99,
+      feedbackCount: 100,
+      returnsAccepted: true,
+      topRated: false,
+      buyerProtection: true,
+      subRatings: null,
+    };
+
+    expect(calculateSellerTrustScore({ ...seller, subRatings: null }, "eBay")).toBe(
+      calculateSellerTrustScore(seller, "eBay"),
+    );
+  });
+
+  it("uses known eBay seller sub-ratings as bounded trust evidence", () => {
+    const base = {
+      ...demoListingSeeds[0],
+      marketplace: "eBay" as const,
+      seller: {
+        feedbackPercentage: 99.2,
+        feedbackCount: 250,
+        returnsAccepted: true,
+        topRated: false,
+        buyerProtection: true,
+        subRatings: null,
+      },
+    };
+    const strong = normalizeListing({
+      listing: {
+        ...base,
+        id: "strong-subratings",
+        seller: {
+          ...base.seller,
+          subRatings: {
+            accurateDescription: 5,
+            shippingCost: 4.9,
+            shippingSpeed: 4.9,
+            communication: 4.8,
+          },
+        },
+      },
+      buyer,
+    });
+    const weak = normalizeListing({
+      listing: {
+        ...base,
+        id: "weak-subratings",
+        seller: {
+          ...base.seller,
+          subRatings: {
+            accurateDescription: 3.2,
+            shippingCost: 4.8,
+            shippingSpeed: 4.9,
+            communication: 4.8,
+          },
+        },
+      },
+      buyer,
+    });
+
+    expect(strong.sellerTrustScore).toBeGreaterThan(weak.sellerTrustScore);
+    expect(strong.trustNotes.some((note) => note.includes("Accurate Description 5/5"))).toBe(true);
+    expect(weak.trustNotes.some((note) => note.includes("Accurate Description 3.2/5"))).toBe(true);
+  });
+
   it("scores evidence from the verifiable photo count, not from guessed content flags", () => {
     const base = {
       photoCount: 0,

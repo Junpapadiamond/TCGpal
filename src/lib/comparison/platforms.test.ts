@@ -44,7 +44,7 @@ function seed(id: string, marketplace: Marketplace): PlatformSeed {
     shipping: 0,
     claimedCondition: "Near Mint",
     imageUrl: null,
-    seller: { feedbackPercentage: 99, feedbackCount: 100, returnsAccepted: true, topRated: false, buyerProtection: true },
+    seller: { feedbackPercentage: 99, feedbackCount: 100, returnsAccepted: true, topRated: false, buyerProtection: true, subRatings: null },
     evidence: { photoCount: 3, frontBackExplicit: false, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: true, substantiveConditionNotes: false, missing: [] },
     observedAt: new Date().toISOString(),
     demo: false,

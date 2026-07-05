@@ -1,5 +1,6 @@
 import { resolveTcgplayerProduct, type TcgplayerProductMatch } from "@/lib/external/tcgcsv";
-import type { CardIdentityCandidate } from "@/lib/schemas";
+import { resolveEbayProductForCard, type EbayProductResolution } from "@/lib/external/ebay";
+import type { BuyerContext, CardIdentityCandidate } from "@/lib/schemas";
 
 // R1: the canonical card id (pokemontcg.io id, confirmed at the version step)
 // maps to each platform's native identifier so connectors never re-match free
@@ -9,6 +10,7 @@ import type { CardIdentityCandidate } from "@/lib/schemas";
 export type CardCrosswalkEntry = {
   canonicalCardId: string;
   ebayQueryTemplate: string;
+  ebayProduct: EbayProductResolution | null;
   tcgplayerProductId: number | null;
   tcgplayerGroupId: number | null;
   tcgplayerUrl: string | null;
@@ -24,6 +26,7 @@ export async function resolveCardCrosswalk(
   card: CardIdentityCandidate,
   fetcher: typeof fetch = fetch,
   now: () => Date = () => new Date(),
+  buyer: BuyerContext = { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
 ): Promise<CardCrosswalkEntry> {
   const cached = crosswalkCache.get(card.id);
   if (cached && now().getTime() - cached.at < CROSSWALK_TTL_MS) {
@@ -39,11 +42,22 @@ export async function resolveCardCrosswalk(
   let entry: CardCrosswalkEntry = {
     canonicalCardId: card.id,
     ebayQueryTemplate,
+    ebayProduct: null,
     tcgplayerProductId: null,
     tcgplayerGroupId: null,
     tcgplayerUrl: null,
     tcgplayerProduct: null,
   };
+
+  try {
+    entry = {
+      ...entry,
+      ebayProduct: await resolveEbayProductForCard(card, buyer, fetcher),
+    };
+  } catch {
+    // eBay Catalog metadata improves precision when available, but the Browse
+    // keyword path remains the deterministic fallback and must not hard-fail.
+  }
 
   try {
     const product = await resolveTcgplayerProduct(card, fetcher, { preferredProductId: card.tcgplayerProductId ?? null });
