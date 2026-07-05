@@ -15,6 +15,7 @@ import {
   isCacheableRequest,
   setCachedComparison,
 } from "@/lib/comparison/report-cache";
+import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import {
   isTcgcsvStale,
   searchTcgplayerListings,
@@ -66,10 +67,15 @@ export async function runListingComparison(
   dependencies: {
     fetcher?: typeof fetch;
     now?: () => Date;
+    opsContext?: {
+      requestId?: string;
+      route?: OpsRoute;
+    };
   } = {},
 ): Promise<ComparisonReport> {
   const fetcher = dependencies.fetcher ?? fetch;
   const now = dependencies.now ?? (() => new Date());
+  const opsContext = dependencies.opsContext;
   const generatedAt = now().toISOString();
   const warnings: string[] = [];
   const trace: ComparisonTrace[] = [];
@@ -121,8 +127,14 @@ export async function runListingComparison(
   const cacheable = isCacheableRequest(request);
   const cacheKey = comparisonCacheKey(request, confirmedCard.id);
   if (cacheable) {
-    const cached = getCachedComparison(cacheKey, now());
+    const cached = await getCachedComparison(cacheKey, now());
     if (cached) {
+      logOpsEvent({
+        event: "cache_lookup",
+        requestId: opsContext?.requestId,
+        route: opsContext?.route,
+        status: "hit",
+      });
       return {
         ...cached,
         trace: [...cached.trace, {
@@ -133,6 +145,12 @@ export async function runListingComparison(
         }],
       };
     }
+    logOpsEvent({
+      event: "cache_lookup",
+      requestId: opsContext?.requestId,
+      route: opsContext?.route,
+      status: "miss",
+    });
   }
 
   const wantsWebDiscovery = request.webDiscoveryMode === "expanded";
@@ -205,6 +223,7 @@ export async function runListingComparison(
       query: crosswalk?.ebayQueryTemplate,
       ebayProduct: crosswalk?.ebayProduct ?? null,
     },
+    opsContext,
   });
   seeds.push(...fanout.seeds);
   warnings.push(...fanout.warnings);
@@ -304,7 +323,7 @@ export async function runListingComparison(
     generatedAt,
   });
 
-  if (cacheable) setCachedComparison(cacheKey, report, now());
+  if (cacheable) await setCachedComparison(cacheKey, report, now());
   return report;
 }
 

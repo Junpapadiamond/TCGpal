@@ -55,6 +55,14 @@ The response includes:
 - Missing reference data produces a warning, not a fabricated value.
 - Existing localStorage keys from the previous product are ignored but not deleted.
 
+## Operations
+
+- `src/lib/ops/*` owns request IDs, rate limiting, shared JSON cache, structured operational events, and Sentry capture.
+- Upstash Redis is optional. When `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are absent or fail, rate limiting and report caching fall back to bounded in-process memory.
+- Cache and rate-limit keys hash buyer/card context before backend storage; raw ZIPs, card names, URLs, listing text, seller identifiers, and images are not operational keys or log fields.
+- Sentry initializes only when a DSN is configured; source maps upload only when `SENTRY_AUTH_TOKEN` is present.
+- The comparison and explain routes emit `x-request-id` and rate-limit headers so production failures can be correlated without logging request bodies.
+
 ## Analytics
 
 PostHog receives explicit funnel events only. Autocapture, session replay, pageview capture, and person profiles are disabled.

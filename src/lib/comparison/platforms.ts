@@ -3,6 +3,8 @@ import {
   type EbayProductResolution,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
+import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
+import { captureOperationalException } from "@/lib/ops/sentry";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -131,6 +133,10 @@ export type RunPlatformFanoutInput = {
   fetcher: typeof fetch;
   plan?: PlatformSearchPlan;
   agents?: PlatformAgent[];
+  opsContext?: {
+    requestId?: string;
+    route?: OpsRoute;
+  };
 };
 
 // A platform's outcome after it ran (or failed). The agent path and the
@@ -207,6 +213,7 @@ export async function runPlatformFanout({
   fetcher,
   plan,
   agents = getPlatformAgents(),
+  opsContext,
 }: RunPlatformFanoutInput): Promise<PlatformFanout> {
   const seeds: PlatformSeed[] = [];
   const traces: ComparisonTrace[] = [];
@@ -231,6 +238,33 @@ export async function runPlatformFanout({
     traces.push(summary.trace);
     results.push(summary.result);
     if (summary.warning) warnings.push(summary.warning);
+    logOpsEvent({
+      event: summary.warning ? "provider_failure" : "source_outcome",
+      level: summary.warning ? "warn" : "info",
+      requestId: opsContext?.requestId,
+      route: opsContext?.route,
+      provider: outcome.agent.id,
+      platformId: outcome.agent.id,
+      marketplace: outcome.agent.marketplace,
+      sourceMode: outcome.agent.sourceMode,
+      status: summary.result.status,
+      configured: true,
+      count: summary.result.count,
+      errorCode: summary.warning ? "PLATFORM_SEARCH_FAILED" : undefined,
+    });
+    if (summary.warning) {
+      captureOperationalException(new Error(`${outcome.agent.id} platform search failed`), {
+        requestId: opsContext?.requestId,
+        route: opsContext?.route,
+        provider: outcome.agent.id,
+        operation: "platform_search",
+        status: summary.result.status,
+        extra: {
+          marketplace: outcome.agent.marketplace,
+          sourceMode: outcome.agent.sourceMode,
+        },
+      });
+    }
   }
 
   for (const agent of agents) {
