@@ -672,7 +672,7 @@ function ComparisonExperience() {
                     {t.hero.subtitle}
                   </p>
                 </div>
-                <WorkedExample />
+                <CardMarquee cards={carouselCards} />
               </div>
 
               <div className="min-w-0 space-y-4">
@@ -1173,57 +1173,6 @@ function Footer() {
   );
 }
 
-function WorkedExample() {
-  const t = useT();
-  const rows = [
-    { label: t.workedExample.confirmedLabel, value: t.workedExample.confirmed, icon: IconCardCheck },
-    { label: t.workedExample.reviewedLabel, value: t.workedExample.reviewed, icon: IconCardFan },
-    { label: t.workedExample.recommendationLabel, value: t.workedExample.recommendation, icon: IconReceipt },
-  ];
-
-  return (
-    <aside
-      aria-label={t.workedExample.label}
-      className="overflow-hidden rounded-xl border border-[#d8c98f] bg-[#fffaf0] shadow-[0_6px_14px_rgba(36,49,47,0.04)]"
-    >
-      <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[88px_minmax(0,1fr)]">
-        <div className="relative aspect-[2.5/3.5] w-[76px] self-start overflow-hidden rounded-lg bg-[#efe8d7] sm:w-[88px]">
-          <Image
-            src="https://images.pokemontcg.io/swsh35/74_hires.png"
-            alt={`${t.workedExample.card} card art`}
-            fill
-            sizes="88px"
-            className="object-contain"
-          />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-bold text-[#8d6032]">{t.workedExample.label}</p>
-          <h2 className="mt-1 font-serif text-lg font-black text-[#24312f]">{t.workedExample.card}</h2>
-          <dl className="mt-3 space-y-2.5">
-            {rows.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="grid grid-cols-[18px_minmax(0,1fr)] gap-2 text-sm leading-5">
-                <Icon className="mt-0.5 h-4 w-4 text-[#2f6f73]" />
-                <div>
-                  <dt className="inline font-black text-[#24312f]">{label}: </dt>
-                  <dd className={`inline ${label === t.workedExample.recommendationLabel ? "font-bold text-[#2f6f73]" : "text-[#52635c]"}`}>
-                    {value}
-                  </dd>
-                </div>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 border-t border-[#e4d9b5] bg-[#fcf5e5] px-4 py-3 text-xs leading-5 text-[#64736c] sm:flex-row sm:items-center sm:justify-between">
-        <p>{t.workedExample.note}</p>
-        <a className="shrink-0 font-black text-[#2f6f73] underline decoration-[#b7c6bd] underline-offset-4" href="/method">
-          {t.workedExample.methodLink}
-        </a>
-      </div>
-    </aside>
-  );
-}
-
 // Stylized card backs stay as first-run fallback; real card art is used only
 // after a card has been confirmed, so the rail never reflects raw typed guesses.
 const fallbackCardBacks = [
@@ -1250,6 +1199,52 @@ function buildMarqueeItems(cards: RecentCarouselCard[], minimum = 8): MarqueeIte
   }
   const loopBase = base.slice(0, Math.max(minimum, source.length));
   return [...loopBase, ...loopBase];
+}
+
+function CardMarquee({ cards }: { cards: RecentCarouselCard[] }) {
+  const items = buildMarqueeItems(cards);
+  return (
+    <div aria-hidden="true" className="card-marquee relative hidden h-[128px] overflow-hidden lg:block">
+      <div className="card-marquee-track flex w-max items-center">
+        {items.map((item, index) => (
+          <CardMarqueeItem key={`${item.kind}-${item.kind === "real" ? item.card.id : item.background}-${index}`} item={item} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CardMarqueeItem({ item, index }: { item: MarqueeItem; index: number }) {
+  const rotation = `${index % 2 ? 3 : -3}deg`;
+  if (item.kind === "real") {
+    return (
+      <span
+        className="card-marquee-card card-marquee-card-real relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(36,49,47,0.13)] bg-[#fcfbf6] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
+        style={{ transform: `rotate(${rotation})` }}
+      >
+        {item.card.imageUrl && (
+          <Image
+            src={item.card.imageUrl}
+            alt=""
+            fill
+            sizes="80px"
+            className="object-contain"
+          />
+        )}
+        <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
+      </span>
+    );
+  }
+  return (
+    <span
+      className="card-marquee-card relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(255,255,255,0.55)] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
+      style={{ background: item.background, transform: `rotate(${rotation})` }}
+    >
+      <span className="card-marquee-inner absolute inset-[6px] rounded-[6px] border border-[rgba(255,255,255,0.35)]" />
+      <span className="card-marquee-orb absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(255,255,255,0.45)]" />
+      <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
+    </span>
+  );
 }
 
 function ParsedPreview({

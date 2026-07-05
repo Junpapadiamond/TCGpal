@@ -145,18 +145,6 @@ const en = {
     "Local shop": "Local shop",
     Other: "Other",
   } as Partial<Record<Marketplace, string>>,
-  workedExample: {
-    label: "Representative example, not live inventory",
-    card: "Charizard VMAX 074/073",
-    confirmedLabel: "Confirmed",
-    confirmed: "Champion's Path · Secret Rare · English",
-    reviewedLabel: "Reviewed",
-    reviewed: "8 comparable listings kept; 42 replicas or wrong prints omitted",
-    recommendationLabel: "Best-supported buy",
-    recommendation: "$163.86 pre-tax, 29% under the $231 reference",
-    note: "Real results show their sources, missing facts, and confidence. Unknown stays unknown.",
-    methodLink: "See how recommendations work",
-  },
   loading: {
     title: "TCGpal is validating the comparison",
     steps: "Identity → marketplace evidence → deterministic ranking → claim critic",
@@ -519,18 +507,6 @@ const zh: Dict = {
   marketplaces: {
     "Local shop": "本地店",
     Other: "其他",
-  },
-  workedExample: {
-    label: "示例数据，并非实时库存",
-    card: "Charizard VMAX 074/073",
-    confirmedLabel: "版本确认",
-    confirmed: "Champion's Path · Secret Rare · 英文",
-    reviewedLabel: "完成筛查",
-    reviewed: "保留 8 条可比商品；略过 42 条仿品或错版",
-    recommendationLabel: "证据最充分的选择",
-    recommendation: "税前 $163.86，比 $231 参考价低 29%",
-    note: "真实结果会列出来源、缺失信息与可信度。未知信息仍保持未知。",
-    methodLink: "查看推荐方法",
   },
   loading: {
     title: "TCGpal 正在核验比对",

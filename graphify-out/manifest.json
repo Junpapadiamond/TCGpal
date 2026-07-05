@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "src/features/comparison/ComparisonApp.tsx": {
-    "mtime": 1783236445.780673,
-    "ast_hash": "ce649e3c2e0b11e19b7465282efcc4a1",
+    "mtime": 1783238926.889267,
+    "ast_hash": "b6a244e425a1782539568f31fcd62e0a",
     "semantic_hash": ""
   },
   "src/features/comparison/comparison-form-state.test.ts": {
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "src/features/comparison/i18n.tsx": {
-    "mtime": 1783236445.782035,
-    "ast_hash": "0f2f6efb03205dfa0054b97e65514526",
+    "mtime": 1783239007.7204726,
+    "ast_hash": "8d10457a31df2ff73c7e7a46734a0f70",
     "semantic_hash": ""
   },
   "src/features/comparison/icons.tsx": {
@@ -782,6 +782,21 @@
   "output/playwright/before/results-zh-mobile.png": {
     "mtime": 1783232909.5525243,
     "ast_hash": "0d5fc7cb53683fc731d74a3a3e1047d1",
+    "semantic_hash": ""
+  },
+  "output/visual-checks/hero-chinese-desktop.png": {
+    "mtime": 1783239481.9950733,
+    "ast_hash": "5963d5c95ff1dcbf3cdd45cd8514793b",
+    "semantic_hash": ""
+  },
+  "output/visual-checks/hero-english-desktop.png": {
+    "mtime": 1783239478.6492684,
+    "ast_hash": "32779e2dac7fdc569313db528eb641c8",
+    "semantic_hash": ""
+  },
+  "output/visual-checks/hero-mobile-zh.png": {
+    "mtime": 1783239483.5297842,
+    "ast_hash": "d2d45fcea5fbf511132b73cebfa7fe61",
     "semantic_hash": ""
   }
 }

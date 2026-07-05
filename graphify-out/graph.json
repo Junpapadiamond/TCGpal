@@ -720,7 +720,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_api_agent_listing_compare_explain_route_test",
-      "community": 43,
+      "community": 37,
       "norm_label": "route.test.ts"
     },
     {
@@ -750,7 +750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_api_agent_listing_compare_route_test",
-      "community": 43,
+      "community": 37,
       "norm_label": "route.test.ts"
     },
     {
@@ -780,7 +780,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_api_ai_health_route",
-      "community": 36,
+      "community": 1,
       "norm_label": "route.ts"
     },
     {
@@ -790,7 +790,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_app_api_ai_health_route_get",
-      "community": 36,
+      "community": 1,
       "norm_label": "get()"
     },
     {
@@ -920,7 +920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_page",
-      "community": 47,
+      "community": 55,
       "norm_label": "page.tsx"
     },
     {
@@ -930,7 +930,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_app_page_page",
-      "community": 47,
+      "community": 55,
       "norm_label": "page()"
     },
     {
@@ -940,7 +940,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp",
-      "community": 47,
+      "community": 3,
       "norm_label": "comparisonapp.tsx"
     },
     {
@@ -950,7 +950,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_marketplaces",
-      "community": 47,
+      "community": 3,
       "norm_label": "marketplaces"
     },
     {
@@ -960,7 +960,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_gametiles",
-      "community": 47,
+      "community": 3,
       "norm_label": "gametiles"
     },
     {
@@ -970,7 +970,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_conditions",
-      "community": 47,
+      "community": 3,
       "norm_label": "conditions"
     },
     {
@@ -980,7 +980,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_recentcarouselcard",
-      "community": 47,
+      "community": 3,
       "norm_label": "recentcarouselcard"
     },
     {
@@ -990,7 +990,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_apiresponseerror",
-      "community": 47,
+      "community": 59,
       "norm_label": "apiresponseerror"
     },
     {
@@ -1000,7 +1000,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_apiresponseerror_constructor",
-      "community": 47,
+      "community": 59,
       "norm_label": ".constructor()"
     },
     {
@@ -1010,7 +1010,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_requestcomparisonreport",
-      "community": 47,
+      "community": 52,
       "norm_label": "requestcomparisonreport()"
     },
     {
@@ -1020,7 +1020,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_postjsonwithretry",
-      "community": 47,
+      "community": 52,
       "norm_label": "postjsonwithretry()"
     },
     {
@@ -1030,7 +1030,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_readjsonresponse",
-      "community": 47,
+      "community": 52,
       "norm_label": "readjsonresponse()"
     },
     {
@@ -1040,7 +1040,7 @@
       "source_location": "L157",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_apierrormessage",
-      "community": 47,
+      "community": 52,
       "norm_label": "apierrormessage()"
     },
     {
@@ -1050,7 +1050,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_nonjsonmessage",
-      "community": 47,
+      "community": 52,
       "norm_label": "nonjsonmessage()"
     },
     {
@@ -1060,7 +1060,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_isretriablestatus",
-      "community": 47,
+      "community": 52,
       "norm_label": "isretriablestatus()"
     },
     {
@@ -1070,7 +1070,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_sleep",
-      "community": 47,
+      "community": 52,
       "norm_label": "sleep()"
     },
     {
@@ -1120,7 +1120,7 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_writerecentcarouselcards",
-      "community": 47,
+      "community": 3,
       "norm_label": "writerecentcarouselcards()"
     },
     {
@@ -1130,7 +1130,7 @@
       "source_location": "L248",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_mergerecentcarouselcard",
-      "community": 47,
+      "community": 3,
       "norm_label": "mergerecentcarouselcard()"
     },
     {
@@ -1150,7 +1150,7 @@
       "source_location": "L261",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_focuscomparisontarget",
-      "community": 47,
+      "community": 3,
       "norm_label": "focuscomparisontarget()"
     },
     {
@@ -1160,7 +1160,7 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_readtimestamp",
-      "community": 47,
+      "community": 3,
       "norm_label": "readtimestamp()"
     },
     {
@@ -1170,7 +1170,7 @@
       "source_location": "L275",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_comparisonapp",
-      "community": 47,
+      "community": 55,
       "norm_label": "comparisonapp()"
     },
     {
@@ -1210,7 +1210,7 @@
       "source_location": "L1138",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_languagetoggle",
-      "community": 47,
+      "community": 3,
       "norm_label": "languagetoggle()"
     },
     {
@@ -1224,60 +1224,70 @@
       "norm_label": "footer()"
     },
     {
-      "label": "WorkedExample()",
-      "file_type": "code",
-      "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1176",
-      "_origin": "ast",
-      "id": "src_features_comparison_comparisonapp_workedexample",
-      "community": 3,
-      "norm_label": "workedexample()"
-    },
-    {
       "label": "fallbackCardBacks",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1229",
+      "source_location": "L1178",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_fallbackcardbacks",
-      "community": 47,
+      "community": 3,
       "norm_label": "fallbackcardbacks"
     },
     {
       "label": "MarqueeItem",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1238",
+      "source_location": "L1187",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_marqueeitem",
-      "community": 47,
+      "community": 3,
       "norm_label": "marqueeitem"
     },
     {
       "label": "buildMarqueeItems()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1242",
+      "source_location": "L1191",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_buildmarqueeitems",
-      "community": 47,
+      "community": 3,
       "norm_label": "buildmarqueeitems()"
+    },
+    {
+      "label": "CardMarquee()",
+      "file_type": "code",
+      "source_file": "src/features/comparison/ComparisonApp.tsx",
+      "source_location": "L1204",
+      "_origin": "ast",
+      "id": "src_features_comparison_comparisonapp_cardmarquee",
+      "community": 3,
+      "norm_label": "cardmarquee()"
+    },
+    {
+      "label": "CardMarqueeItem()",
+      "file_type": "code",
+      "source_file": "src/features/comparison/ComparisonApp.tsx",
+      "source_location": "L1217",
+      "_origin": "ast",
+      "id": "src_features_comparison_comparisonapp_cardmarqueeitem",
+      "community": 3,
+      "norm_label": "cardmarqueeitem()"
     },
     {
       "label": "ParsedPreview()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1255",
+      "source_location": "L1250",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_parsedpreview",
-      "community": 47,
+      "community": 3,
       "norm_label": "parsedpreview()"
     },
     {
       "label": "CardKeyPreview()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1306",
+      "source_location": "L1301",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_cardkeypreview",
       "community": 20,
@@ -1287,27 +1297,27 @@
       "label": "CardIdentityRail()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1321",
+      "source_location": "L1316",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_cardidentityrail",
-      "community": 47,
+      "community": 3,
       "norm_label": "cardidentityrail()"
     },
     {
       "label": "CheckField()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1355",
+      "source_location": "L1350",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_checkfield",
-      "community": 47,
+      "community": 3,
       "norm_label": "checkfield()"
     },
     {
       "label": "LoadingLoop()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1364",
+      "source_location": "L1359",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_loadingloop",
       "community": 20,
@@ -1317,17 +1327,17 @@
       "label": "LoadingCardRail()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1393",
+      "source_location": "L1388",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_loadingcardrail",
-      "community": 47,
+      "community": 3,
       "norm_label": "loadingcardrail()"
     },
     {
       "label": "ErrorNotice()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1493",
+      "source_location": "L1488",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_errornotice",
       "community": 20,
@@ -1337,7 +1347,7 @@
       "label": "ConfirmedSettingsStage()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1511",
+      "source_location": "L1506",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_confirmedsettingsstage",
       "community": 41,
@@ -1347,7 +1357,7 @@
       "label": "IdentityConfirmation()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1639",
+      "source_location": "L1634",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_identityconfirmation",
       "community": 60,
@@ -1357,7 +1367,7 @@
       "label": "IdentityCard()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1717",
+      "source_location": "L1712",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_identitycard",
       "community": 20,
@@ -1367,7 +1377,7 @@
       "label": "ComparisonResult()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1748",
+      "source_location": "L1743",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_comparisonresult",
       "community": 20,
@@ -1377,7 +1387,7 @@
       "label": "WebDiscoveryPanel()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2098",
+      "source_location": "L2093",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_webdiscoverypanel",
       "community": 20,
@@ -1387,7 +1397,7 @@
       "label": "ComparisonQuestionBox()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2185",
+      "source_location": "L2180",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_comparisonquestionbox",
       "community": 20,
@@ -1397,7 +1407,7 @@
       "label": "roleToggleLabel()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2273",
+      "source_location": "L2268",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_roletogglelabel",
       "community": 20,
@@ -1407,7 +1417,7 @@
       "label": "rolePreferenceLabel()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2282",
+      "source_location": "L2277",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_rolepreferencelabel",
       "community": 41,
@@ -1417,7 +1427,7 @@
       "label": "roleToggleHint()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2291",
+      "source_location": "L2286",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_roletogglehint",
       "community": 41,
@@ -1427,7 +1437,7 @@
       "label": "choiceReasonText()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2300",
+      "source_location": "L2295",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_choicereasontext",
       "community": 20,
@@ -1437,7 +1447,7 @@
       "label": "sortListingsForRole()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2330",
+      "source_location": "L2325",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_sortlistingsforrole",
       "community": 20,
@@ -1447,7 +1457,7 @@
       "label": "listingCost()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2347",
+      "source_location": "L2342",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_listingcost",
       "community": 20,
@@ -1457,17 +1467,17 @@
       "label": "localizedCaution()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2351",
+      "source_location": "L2346",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_localizedcaution",
-      "community": 47,
+      "community": 20,
       "norm_label": "localizedcaution()"
     },
     {
       "label": "MarketFreshness()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2361",
+      "source_location": "L2356",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_marketfreshness",
       "community": 18,
@@ -1477,117 +1487,117 @@
       "label": "VerdictTone",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2381",
+      "source_location": "L2376",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_verdicttone",
-      "community": 47,
+      "community": 3,
       "norm_label": "verdicttone"
     },
     {
       "label": "sellerVerdict()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2385",
+      "source_location": "L2380",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_sellerverdict",
-      "community": 47,
+      "community": 3,
       "norm_label": "sellerverdict()"
     },
     {
       "label": "evidenceVerdict()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2392",
+      "source_location": "L2387",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_evidenceverdict",
-      "community": 47,
+      "community": 3,
       "norm_label": "evidenceverdict()"
     },
     {
       "label": "riskFormula()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2401",
+      "source_location": "L2396",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_riskformula",
-      "community": 47,
+      "community": 54,
       "norm_label": "riskformula()"
     },
     {
       "label": "valueFormula()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2405",
+      "source_location": "L2400",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_valueformula",
-      "community": 47,
+      "community": 54,
       "norm_label": "valueformula()"
     },
     {
       "label": "sellerInputsLine()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2417",
+      "source_location": "L2412",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_sellerinputsline",
-      "community": 47,
+      "community": 54,
       "norm_label": "sellerinputsline()"
     },
     {
       "label": "conditionInputsLine()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2427",
+      "source_location": "L2422",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_conditioninputsline",
-      "community": 47,
+      "community": 54,
       "norm_label": "conditioninputsline()"
     },
     {
       "label": "evidenceInputsLine()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2433",
+      "source_location": "L2428",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_evidenceinputsline",
-      "community": 47,
+      "community": 54,
       "norm_label": "evidenceinputsline()"
     },
     {
       "label": "VerdictMath()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2448",
+      "source_location": "L2443",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_verdictmath",
-      "community": 47,
+      "community": 54,
       "norm_label": "verdictmath()"
     },
     {
       "label": "HoloCardArt()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2501",
+      "source_location": "L2496",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_holocardart",
-      "community": 47,
+      "community": 3,
       "norm_label": "holocardart()"
     },
     {
       "label": "ListingMetaLine()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2550",
+      "source_location": "L2545",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_listingmetaline",
-      "community": 47,
+      "community": 3,
       "norm_label": "listingmetaline()"
     },
     {
       "label": "MarketDeltaBadge()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2564",
+      "source_location": "L2559",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_marketdeltabadge",
       "community": 20,
@@ -1597,7 +1607,7 @@
       "label": "LensControls()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2607",
+      "source_location": "L2602",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_lenscontrols",
       "community": 41,
@@ -1607,7 +1617,7 @@
       "label": "RecommendedBuyHero()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2663",
+      "source_location": "L2658",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_recommendedbuyhero",
       "community": 20,
@@ -1617,17 +1627,17 @@
       "label": "DecisionReceipt()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2797",
+      "source_location": "L2792",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_decisionreceipt",
-      "community": 47,
+      "community": 20,
       "norm_label": "decisionreceipt()"
     },
     {
       "label": "MarketReferenceLine()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2889",
+      "source_location": "L2884",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_marketreferenceline",
       "community": 20,
@@ -1637,7 +1647,7 @@
       "label": "SourceStatusLine()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2911",
+      "source_location": "L2906",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_sourcestatusline",
       "community": 20,
@@ -1647,7 +1657,7 @@
       "label": "CandidateRow()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2943",
+      "source_location": "L2938",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_candidaterow",
       "community": 20,
@@ -1657,7 +1667,7 @@
       "label": "SourcesChecked()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3048",
+      "source_location": "L3043",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_sourceschecked",
       "community": 20,
@@ -1667,7 +1677,7 @@
       "label": "StatusPill()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3089",
+      "source_location": "L3084",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_statuspill",
       "community": 20,
@@ -1677,7 +1687,7 @@
       "label": "buildRequest()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3099",
+      "source_location": "L3094",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_buildrequest",
       "community": 40,
@@ -1687,7 +1697,7 @@
       "label": "nullableNumber()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3164",
+      "source_location": "L3159",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_nullablenumber",
       "community": 40,
@@ -1697,7 +1707,7 @@
       "label": "nullableInteger()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3170",
+      "source_location": "L3165",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_nullableinteger",
       "community": 40,
@@ -1707,7 +1717,7 @@
       "label": "hasSubstantiveConditionNotes()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3175",
+      "source_location": "L3170",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_hassubstantiveconditionnotes",
       "community": 40,
@@ -1717,7 +1727,7 @@
       "label": "formatMoney()",
       "file_type": "code",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3179",
+      "source_location": "L3174",
       "_origin": "ast",
       "id": "src_features_comparison_comparisonapp_formatmoney",
       "community": 20,
@@ -1857,7 +1867,7 @@
       "label": "Dict",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L404",
+      "source_location": "L392",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_dict",
       "community": 18,
@@ -1867,7 +1877,7 @@
       "label": "zh",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L406",
+      "source_location": "L394",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_zh",
       "community": 18,
@@ -1877,7 +1887,7 @@
       "label": "messages",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L776",
+      "source_location": "L752",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_messages",
       "community": 18,
@@ -1887,7 +1897,7 @@
       "label": "listeners",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L783",
+      "source_location": "L759",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_listeners",
       "community": 18,
@@ -1897,7 +1907,7 @@
       "label": "getSnapshot()",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L785",
+      "source_location": "L761",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_getsnapshot",
       "community": 18,
@@ -1907,7 +1917,7 @@
       "label": "getServerSnapshot()",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L796",
+      "source_location": "L772",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_getserversnapshot",
       "community": 18,
@@ -1917,7 +1927,7 @@
       "label": "subscribe()",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L800",
+      "source_location": "L776",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_subscribe",
       "community": 18,
@@ -1927,7 +1937,7 @@
       "label": "persistLang()",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L807",
+      "source_location": "L783",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_persistlang",
       "community": 18,
@@ -1937,7 +1947,7 @@
       "label": "useLang()",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L817",
+      "source_location": "L793",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_uselang",
       "community": 18,
@@ -1947,7 +1957,7 @@
       "label": "LanguageProvider()",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L824",
+      "source_location": "L800",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_languageprovider",
       "community": 18,
@@ -1957,7 +1967,7 @@
       "label": "useT()",
       "file_type": "code",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L832",
+      "source_location": "L808",
       "_origin": "ast",
       "id": "src_features_comparison_i18n_uset",
       "community": 20,
@@ -2650,7 +2660,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_ai_agent_harness_agentmessage",
-      "community": 26,
+      "community": 21,
       "norm_label": "agentmessage"
     },
     {
@@ -2720,7 +2730,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test",
-      "community": 26,
+      "community": 48,
       "norm_label": "market-agent.test.ts"
     },
     {
@@ -2730,7 +2740,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test_card",
-      "community": 26,
+      "community": 48,
       "norm_label": "card"
     },
     {
@@ -2740,7 +2750,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test_buyer",
-      "community": 26,
+      "community": 48,
       "norm_label": "buyer"
     },
     {
@@ -2750,7 +2760,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test_fetcher",
-      "community": 26,
+      "community": 48,
       "norm_label": "fetcher"
     },
     {
@@ -2760,7 +2770,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test_seed",
-      "community": 26,
+      "community": 48,
       "norm_label": "seed()"
     },
     {
@@ -2770,7 +2780,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test_ebaymock",
-      "community": 26,
+      "community": 48,
       "norm_label": "ebaymock()"
     },
     {
@@ -2780,7 +2790,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test_scriptedmodel",
-      "community": 26,
+      "community": 48,
       "norm_label": "scriptedmodel()"
     },
     {
@@ -2790,7 +2800,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_test_config",
-      "community": 26,
+      "community": 48,
       "norm_label": "config"
     },
     {
@@ -2800,7 +2810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent",
-      "community": 22,
+      "community": 21,
       "norm_label": "market-agent.ts"
     },
     {
@@ -2810,7 +2820,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_iscomparisonagentenabled",
-      "community": 36,
+      "community": 1,
       "norm_label": "iscomparisonagentenabled()"
     },
     {
@@ -2820,7 +2830,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_allocatordialect",
-      "community": 22,
+      "community": 21,
       "norm_label": "allocatordialect"
     },
     {
@@ -2830,7 +2840,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_allocatorconfig",
-      "community": 26,
+      "community": 48,
       "norm_label": "allocatorconfig"
     },
     {
@@ -2840,7 +2850,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_getallocatorconfig",
-      "community": 36,
+      "community": 1,
       "norm_label": "getallocatorconfig()"
     },
     {
@@ -2850,7 +2860,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_parsefallbackmodels",
-      "community": 36,
+      "community": 1,
       "norm_label": "parsefallbackmodels()"
     },
     {
@@ -2870,7 +2880,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_runmarketsearch",
-      "community": 22,
+      "community": 21,
       "norm_label": "runmarketsearch()"
     },
     {
@@ -2880,7 +2890,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_withdeadline",
-      "community": 22,
+      "community": 21,
       "norm_label": "withdeadline()"
     },
     {
@@ -2890,7 +2900,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_toolcollector",
-      "community": 22,
+      "community": 21,
       "norm_label": "toolcollector"
     },
     {
@@ -2900,7 +2910,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_buildplatformtools",
-      "community": 22,
+      "community": 48,
       "norm_label": "buildplatformtools()"
     },
     {
@@ -2920,7 +2930,7 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_sampleseedsforallocator",
-      "community": 22,
+      "community": 48,
       "norm_label": "sampleseedsforallocator()"
     },
     {
@@ -2930,7 +2940,7 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "src_lib_ai_agent_market_agent_agent_system_prompt",
-      "community": 22,
+      "community": 21,
       "norm_label": "agent_system_prompt"
     },
     {
@@ -3270,7 +3280,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_ai_config",
-      "community": 36,
+      "community": 1,
       "norm_label": "config.ts"
     },
     {
@@ -3280,7 +3290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_ai_config_aiprovidername",
-      "community": 36,
+      "community": 1,
       "norm_label": "aiprovidername"
     },
     {
@@ -3300,7 +3310,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_ai_config_aireasoningeffort",
-      "community": 36,
+      "community": 1,
       "norm_label": "aireasoningeffort"
     },
     {
@@ -3310,7 +3320,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_ai_config_aiwireapi",
-      "community": 36,
+      "community": 1,
       "norm_label": "aiwireapi"
     },
     {
@@ -3330,7 +3340,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_lib_ai_config_getaiconfig",
-      "community": 36,
+      "community": 1,
       "norm_label": "getaiconfig()"
     },
     {
@@ -3350,7 +3360,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_lib_ai_config_parseprovider",
-      "community": 36,
+      "community": 1,
       "norm_label": "parseprovider()"
     },
     {
@@ -3360,7 +3370,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_lib_ai_config_normalizebaseurl",
-      "community": 36,
+      "community": 1,
       "norm_label": "normalizebaseurl()"
     },
     {
@@ -3370,7 +3380,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_lib_ai_config_normalizeanthropicbaseurl",
-      "community": 36,
+      "community": 1,
       "norm_label": "normalizeanthropicbaseurl()"
     },
     {
@@ -3380,7 +3390,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_ai_config_parsereasoningeffort",
-      "community": 36,
+      "community": 1,
       "norm_label": "parsereasoningeffort()"
     },
     {
@@ -3390,7 +3400,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_ai_config_parsewireapi",
-      "community": 36,
+      "community": 1,
       "norm_label": "parsewireapi()"
     },
     {
@@ -3400,7 +3410,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_lib_ai_config_parseboolean",
-      "community": 36,
+      "community": 1,
       "norm_label": "parseboolean()"
     },
     {
@@ -3550,7 +3560,7 @@
       "source_location": "L476",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_ingestsourcelisting",
-      "community": 14,
+      "community": 49,
       "norm_label": "ingestsourcelisting()"
     },
     {
@@ -3560,7 +3570,7 @@
       "source_location": "L550",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_mergesourcefacts",
-      "community": 14,
+      "community": 49,
       "norm_label": "mergesourcefacts()"
     },
     {
@@ -3570,7 +3580,7 @@
       "source_location": "L575",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_identifycards",
-      "community": 29,
+      "community": 49,
       "norm_label": "identifycards()"
     },
     {
@@ -3590,7 +3600,7 @@
       "source_location": "L674",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_searchpokemonwithretry",
-      "community": 16,
+      "community": 49,
       "norm_label": "searchpokemonwithretry()"
     },
     {
@@ -3600,7 +3610,7 @@
       "source_location": "L693",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_identifyonepiececards",
-      "community": 29,
+      "community": 49,
       "norm_label": "identifyonepiececards()"
     },
     {
@@ -3670,7 +3680,7 @@
       "source_location": "L949",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_getpricechartingreference",
-      "community": 14,
+      "community": 31,
       "norm_label": "getpricechartingreference()"
     },
     {
@@ -3750,7 +3760,7 @@
       "source_location": "L1169",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_ranklocalidentities",
-      "community": 29,
+      "community": 49,
       "norm_label": "ranklocalidentities()"
     },
     {
@@ -3870,7 +3880,7 @@
       "source_location": "L1299",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_cleancardname",
-      "community": 29,
+      "community": 49,
       "norm_label": "cleancardname()"
     },
     {
@@ -3880,7 +3890,7 @@
       "source_location": "L1309",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_dedupeidentities",
-      "community": 29,
+      "community": 49,
       "norm_label": "dedupeidentities()"
     },
     {
@@ -3900,7 +3910,7 @@
       "source_location": "L1318",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_confidencerank",
-      "community": 29,
+      "community": 49,
       "norm_label": "confidencerank()"
     },
     {
@@ -3920,7 +3930,7 @@
       "source_location": "L1326",
       "_origin": "ast",
       "id": "src_lib_ai_listing_compare_errormessage",
-      "community": 14,
+      "community": 49,
       "norm_label": "errormessage()"
     },
     {
@@ -4020,7 +4030,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_lib_ai_provider_probeanthropicmodel",
-      "community": 36,
+      "community": 1,
       "norm_label": "probeanthropicmodel()"
     },
     {
@@ -4170,7 +4180,7 @@
       "source_location": "L320",
       "_origin": "ast",
       "id": "src_lib_ai_provider_probeopenaimodel",
-      "community": 36,
+      "community": 1,
       "norm_label": "probeopenaimodel()"
     },
     {
@@ -4720,7 +4730,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_lib_comparison_platforms_getplatformagents",
-      "community": 22,
+      "community": 21,
       "norm_label": "getplatformagents()"
     },
     {
@@ -5070,7 +5080,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "src_lib_comparison_ranking_calculatepricecomponent",
-      "community": 20,
+      "community": 7,
       "norm_label": "calculatepricecomponent()"
     },
     {
@@ -5260,7 +5270,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_test",
-      "community": 13,
+      "community": 36,
       "norm_label": "report-cache.test.ts"
     },
     {
@@ -5270,7 +5280,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_test_puresearch",
-      "community": 13,
+      "community": 36,
       "norm_label": "puresearch"
     },
     {
@@ -5280,7 +5290,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_test_reportstub",
-      "community": 13,
+      "community": 36,
       "norm_label": "reportstub()"
     },
     {
@@ -5290,7 +5300,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache",
-      "community": 13,
+      "community": 36,
       "norm_label": "report-cache.ts"
     },
     {
@@ -5300,7 +5310,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_comparisoncachekey",
-      "community": 13,
+      "community": 36,
       "norm_label": "comparisoncachekey()"
     },
     {
@@ -5310,7 +5320,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_iscacheablerequest",
-      "community": 13,
+      "community": 36,
       "norm_label": "iscacheablerequest()"
     },
     {
@@ -5320,7 +5330,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_getcachedcomparison",
-      "community": 13,
+      "community": 36,
       "norm_label": "getcachedcomparison()"
     },
     {
@@ -5330,7 +5340,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_setcachedcomparison",
-      "community": 13,
+      "community": 36,
       "norm_label": "setcachedcomparison()"
     },
     {
@@ -5340,7 +5350,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_lib_comparison_report_cache_clearcomparisoncache",
-      "community": 13,
+      "community": 36,
       "norm_label": "clearcomparisoncache()"
     },
     {
@@ -5590,7 +5600,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "src_lib_external_ebay_parseebayurl",
-      "community": 14,
+      "community": 4,
       "norm_label": "parseebayurl()"
     },
     {
@@ -5620,7 +5630,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "src_lib_external_ebay_getebaylistingbyurl",
-      "community": 14,
+      "community": 4,
       "norm_label": "getebaylistingbyurl()"
     },
     {
@@ -6010,7 +6020,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "src_lib_external_one_piece_catalog_findonepiececatalogvariant",
-      "community": 29,
+      "community": 49,
       "norm_label": "findonepiececatalogvariant()"
     },
     {
@@ -8430,7 +8440,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_lib_ops_cache_clearlocalcache",
-      "community": 13,
+      "community": 36,
       "norm_label": "clearlocalcache()"
     },
     {
@@ -8750,7 +8760,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_ops_rate_limit_ratelimitrequest",
-      "community": 15,
+      "community": 43,
       "norm_label": "ratelimitrequest()"
     },
     {
@@ -8800,7 +8810,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_lib_ops_rate_limit_clearlocalratelimitstore",
-      "community": 15,
+      "community": 37,
       "norm_label": "clearlocalratelimitstore()"
     },
     {
@@ -8870,7 +8880,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_ops_redis",
-      "community": 15,
+      "community": 13,
       "norm_label": "redis.ts"
     },
     {
@@ -8880,7 +8890,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_ops_redis_isredisconfigured",
-      "community": 15,
+      "community": 13,
       "norm_label": "isredisconfigured()"
     },
     {
@@ -8890,7 +8900,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_ops_redis_getredisclient",
-      "community": 15,
+      "community": 13,
       "norm_label": "getredisclient()"
     },
     {
@@ -8900,7 +8910,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_ops_redis_resetredisclientfortests",
-      "community": 15,
+      "community": 13,
       "norm_label": "resetredisclientfortests()"
     },
     {
@@ -9190,7 +9200,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "src_lib_schemas_comparisonrequestschema",
-      "community": 12,
+      "community": 43,
       "norm_label": "comparisonrequestschema"
     },
     {
@@ -9300,7 +9310,7 @@
       "source_location": "L325",
       "_origin": "ast",
       "id": "src_lib_schemas_comparisonreportschema",
-      "community": 13,
+      "community": 36,
       "norm_label": "comparisonreportschema"
     },
     {
@@ -9310,7 +9320,7 @@
       "source_location": "L342",
       "_origin": "ast",
       "id": "src_lib_schemas_comparisonquestionrequestschema",
-      "community": 12,
+      "community": 43,
       "norm_label": "comparisonquestionrequestschema"
     },
     {
@@ -9440,7 +9450,7 @@
       "source_location": "L438",
       "_origin": "ast",
       "id": "src_lib_schemas_sourcelisting",
-      "community": 4,
+      "community": 5,
       "norm_label": "sourcelisting"
     },
     {
@@ -9460,7 +9470,7 @@
       "source_location": "L440",
       "_origin": "ast",
       "id": "src_lib_schemas_comparisonrequest",
-      "community": 13,
+      "community": 36,
       "norm_label": "comparisonrequest"
     },
     {
@@ -9470,7 +9480,7 @@
       "source_location": "L441",
       "_origin": "ast",
       "id": "src_lib_schemas_tcggame",
-      "community": 32,
+      "community": 47,
       "norm_label": "tcggame"
     },
     {
@@ -9500,7 +9510,7 @@
       "source_location": "L444",
       "_origin": "ast",
       "id": "src_lib_schemas_cardidentitycandidate",
-      "community": 35,
+      "community": 60,
       "norm_label": "cardidentitycandidate"
     },
     {
@@ -9540,7 +9550,7 @@
       "source_location": "L448",
       "_origin": "ast",
       "id": "src_lib_schemas_comparisonreport",
-      "community": 13,
+      "community": 0,
       "norm_label": "comparisonreport"
     },
     {
@@ -10060,7 +10070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill",
-      "community": 49,
+      "community": 10,
       "norm_label": "skill.md"
     },
     {
@@ -10070,7 +10080,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_humanizer_make_ai_text_sound_human_english_\u4e2d\u6587",
-      "community": 48,
+      "community": 10,
       "norm_label": "humanizer \u2014 make ai text sound human (english + \u4e2d\u6587)"
     },
     {
@@ -10080,7 +10090,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_language_selection_how_to_switch_languages",
-      "community": 48,
+      "community": 10,
       "norm_label": "language selection \u2014 how to \"switch languages\""
     },
     {
@@ -10090,7 +10100,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_workflow",
-      "community": 48,
+      "community": 10,
       "norm_label": "workflow"
     },
     {
@@ -10100,7 +10110,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_core_principles_5",
-      "community": 48,
+      "community": 10,
       "norm_label": "core principles (5)"
     },
     {
@@ -10110,7 +10120,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_scene_default_intensity",
-      "community": 48,
+      "community": 10,
       "norm_label": "scene \u2192 default intensity"
     },
     {
@@ -10120,7 +10130,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_protected_zone_facts_first",
-      "community": 48,
+      "community": 10,
       "norm_label": "protected zone (facts first)"
     },
     {
@@ -10130,7 +10140,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_personality_and_soul",
-      "community": 48,
+      "community": 10,
       "norm_label": "personality and soul"
     },
     {
@@ -10140,7 +10150,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_24_vs_33_note_on_the_catalogs",
-      "community": 48,
+      "community": 10,
       "norm_label": "24 vs 33 \u2014 note on the catalogs"
     },
     {
@@ -10150,7 +10160,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_quick_checklist_before_delivering",
-      "community": 48,
+      "community": 10,
       "norm_label": "quick checklist (before delivering)"
     },
     {
@@ -10160,7 +10170,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_output_format",
-      "community": 48,
+      "community": 10,
       "norm_label": "output format"
     },
     {
@@ -10170,7 +10180,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_quality_self_check_optional",
-      "community": 48,
+      "community": 10,
       "norm_label": "quality self-check (optional)"
     },
     {
@@ -10180,7 +10190,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "claude_skills_humanizer_skill_sources",
-      "community": 48,
+      "community": 10,
       "norm_label": "sources"
     },
     {
@@ -10190,7 +10200,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en",
-      "community": 49,
+      "community": 10,
       "norm_label": "patterns-en.md"
     },
     {
@@ -10200,7 +10210,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_ai_writing_patterns_english_catalog",
-      "community": 49,
+      "community": 44,
       "norm_label": "ai-writing patterns \u00b7 english catalog"
     },
     {
@@ -10210,7 +10220,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_contents",
-      "community": 49,
+      "community": 44,
       "norm_label": "contents"
     },
     {
@@ -10220,7 +10230,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_content_patterns",
-      "community": 55,
+      "community": 44,
       "norm_label": "content patterns"
     },
     {
@@ -10230,7 +10240,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_1_a_1_undue_emphasis_on_significance_legacy_broader_trends",
-      "community": 55,
+      "community": 44,
       "norm_label": "<a id=\"1\"></a>1. undue emphasis on significance, legacy, broader trends"
     },
     {
@@ -10240,7 +10250,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_2_a_2_undue_emphasis_on_notability_media_coverage",
-      "community": 55,
+      "community": 44,
       "norm_label": "<a id=\"2\"></a>2. undue emphasis on notability / media coverage"
     },
     {
@@ -10250,7 +10260,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_3_a_3_superficial_analysis_with_ing_endings",
-      "community": 55,
+      "community": 44,
       "norm_label": "<a id=\"3\"></a>3. superficial analysis with -ing endings"
     },
     {
@@ -10260,7 +10270,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_4_a_4_promotional_advertisement_like_language",
-      "community": 55,
+      "community": 44,
       "norm_label": "<a id=\"4\"></a>4. promotional / advertisement-like language"
     },
     {
@@ -10270,7 +10280,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_5_a_5_vague_attribution_weasel_words",
-      "community": 55,
+      "community": 44,
       "norm_label": "<a id=\"5\"></a>5. vague attribution / weasel words"
     },
     {
@@ -10280,7 +10290,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_6_a_6_outline_like_challenges_and_future_prospects_sections",
-      "community": 55,
+      "community": 44,
       "norm_label": "<a id=\"6\"></a>6. outline-like \"challenges and future prospects\" sections"
     },
     {
@@ -10290,7 +10300,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_language_grammar_patterns",
-      "community": 52,
+      "community": 44,
       "norm_label": "language & grammar patterns"
     },
     {
@@ -10300,7 +10310,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_7_a_7_overused_ai_vocabulary",
-      "community": 52,
+      "community": 44,
       "norm_label": "<a id=\"7\"></a>7. overused \"ai vocabulary\""
     },
     {
@@ -10310,7 +10320,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_8_a_8_copula_avoidance_dodging_is_are",
-      "community": 52,
+      "community": 44,
       "norm_label": "<a id=\"8\"></a>8. copula avoidance (dodging \"is/are\")"
     },
     {
@@ -10320,7 +10330,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_9_a_9_negative_parallelism_tailing_negations",
-      "community": 52,
+      "community": 44,
       "norm_label": "<a id=\"9\"></a>9. negative parallelism & tailing negations"
     },
     {
@@ -10330,7 +10340,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_10_a_10_rule_of_three_overuse",
-      "community": 52,
+      "community": 44,
       "norm_label": "<a id=\"10\"></a>10. rule-of-three overuse"
     },
     {
@@ -10340,7 +10350,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_11_a_11_elegant_variation_synonym_cycling",
-      "community": 52,
+      "community": 44,
       "norm_label": "<a id=\"11\"></a>11. elegant variation (synonym cycling)"
     },
     {
@@ -10350,7 +10360,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_12_a_12_false_ranges",
-      "community": 52,
+      "community": 44,
       "norm_label": "<a id=\"12\"></a>12. false ranges"
     },
     {
@@ -10360,7 +10370,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_13_a_13_passive_voice_subjectless_fragments",
-      "community": 52,
+      "community": 44,
       "norm_label": "<a id=\"13\"></a>13. passive voice & subjectless fragments"
     },
     {
@@ -10370,7 +10380,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_style_patterns",
-      "community": 54,
+      "community": 44,
       "norm_label": "style patterns"
     },
     {
@@ -10380,7 +10390,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_14_a_14_em_en_dashes_cut_them",
-      "community": 54,
+      "community": 44,
       "norm_label": "<a id=\"14\"></a>14. em/en dashes \u2014 cut them"
     },
     {
@@ -10390,7 +10400,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_15_a_15_boldface_overuse",
-      "community": 54,
+      "community": 44,
       "norm_label": "<a id=\"15\"></a>15. boldface overuse"
     },
     {
@@ -10400,7 +10410,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_16_a_16_inline_header_vertical_lists",
-      "community": 54,
+      "community": 44,
       "norm_label": "<a id=\"16\"></a>16. inline-header vertical lists"
     },
     {
@@ -10410,7 +10420,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_17_a_17_title_case_in_headings",
-      "community": 54,
+      "community": 44,
       "norm_label": "<a id=\"17\"></a>17. title case in headings"
     },
     {
@@ -10420,7 +10430,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_18_a_18_emojis_as_decoration",
-      "community": 54,
+      "community": 44,
       "norm_label": "<a id=\"18\"></a>18. emojis as decoration"
     },
     {
@@ -10430,7 +10440,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_19_a_19_curly_quotation_marks",
-      "community": 54,
+      "community": 44,
       "norm_label": "<a id=\"19\"></a>19. curly quotation marks"
     },
     {
@@ -10440,7 +10450,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_communication_patterns",
-      "community": 59,
+      "community": 44,
       "norm_label": "communication patterns"
     },
     {
@@ -10450,7 +10460,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_20_a_20_collaborative_chat_artifacts",
-      "community": 59,
+      "community": 44,
       "norm_label": "<a id=\"20\"></a>20. collaborative chat artifacts"
     },
     {
@@ -10460,7 +10470,7 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_21_a_21_knowledge_cutoff_disclaimers_speculative_gap_filling",
-      "community": 59,
+      "community": 44,
       "norm_label": "<a id=\"21\"></a>21. knowledge-cutoff disclaimers & speculative gap-filling"
     },
     {
@@ -10470,7 +10480,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_22_a_22_sycophantic_servile_tone",
-      "community": 59,
+      "community": 44,
       "norm_label": "<a id=\"22\"></a>22. sycophantic / servile tone"
     },
     {
@@ -10480,7 +10490,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_filler_hedging",
-      "community": 49,
+      "community": 44,
       "norm_label": "filler & hedging"
     },
     {
@@ -10490,7 +10500,7 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_23_a_23_filler_phrases",
-      "community": 49,
+      "community": 44,
       "norm_label": "<a id=\"23\"></a>23. filler phrases"
     },
     {
@@ -10500,7 +10510,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_24_a_24_excessive_hedging",
-      "community": 49,
+      "community": 44,
       "norm_label": "<a id=\"24\"></a>24. excessive hedging"
     },
     {
@@ -10510,7 +10520,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_en_a_id_25_a_25_generic_positive_conclusions",
-      "community": 49,
+      "community": 44,
       "norm_label": "<a id=\"25\"></a>25. generic positive conclusions"
     },
     {
@@ -10610,7 +10620,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_humanizer_references_patterns_zh",
-      "community": 49,
+      "community": 10,
       "norm_label": "patterns-zh.md"
     },
     {
@@ -14224,7 +14234,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1242",
+      "source_location": "L1191",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_buildmarqueeitems",
@@ -14234,7 +14244,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3099",
+      "source_location": "L3094",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_buildrequest",
@@ -14244,7 +14254,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2943",
+      "source_location": "L2938",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_candidaterow",
@@ -14254,7 +14264,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1321",
+      "source_location": "L1316",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_cardidentityrail",
@@ -14264,7 +14274,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1306",
+      "source_location": "L1301",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_cardkeypreview",
@@ -14274,7 +14284,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1355",
+      "source_location": "L1204",
+      "weight": 1.0,
+      "source": "src_features_comparison_comparisonapp",
+      "target": "src_features_comparison_comparisonapp_cardmarquee",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/comparison/ComparisonApp.tsx",
+      "source_location": "L1217",
+      "weight": 1.0,
+      "source": "src_features_comparison_comparisonapp",
+      "target": "src_features_comparison_comparisonapp_cardmarqueeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/comparison/ComparisonApp.tsx",
+      "source_location": "L1350",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_checkfield",
@@ -14284,7 +14314,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2300",
+      "source_location": "L2295",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_choicereasontext",
@@ -14314,7 +14344,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2185",
+      "source_location": "L2180",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_comparisonquestionbox",
@@ -14324,7 +14354,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1748",
+      "source_location": "L1743",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_comparisonresult",
@@ -14344,7 +14374,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2427",
+      "source_location": "L2422",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_conditioninputsline",
@@ -14364,7 +14394,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1511",
+      "source_location": "L1506",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_confirmedsettingsstage",
@@ -14374,7 +14404,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2797",
+      "source_location": "L2792",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_decisionreceipt",
@@ -14384,7 +14414,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1493",
+      "source_location": "L1488",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_errornotice",
@@ -14394,7 +14424,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2433",
+      "source_location": "L2428",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_evidenceinputsline",
@@ -14404,7 +14434,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2392",
+      "source_location": "L2387",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_evidenceverdict",
@@ -14414,7 +14444,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1229",
+      "source_location": "L1178",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_fallbackcardbacks",
@@ -14444,7 +14474,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3179",
+      "source_location": "L3174",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -14464,7 +14494,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3175",
+      "source_location": "L3170",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_hassubstantiveconditionnotes",
@@ -14484,7 +14514,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2501",
+      "source_location": "L2496",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_holocardart",
@@ -14494,7 +14524,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1717",
+      "source_location": "L1712",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_identitycard",
@@ -14504,7 +14534,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1639",
+      "source_location": "L1634",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_identityconfirmation",
@@ -14544,7 +14574,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2607",
+      "source_location": "L2602",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_lenscontrols",
@@ -14554,7 +14584,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2347",
+      "source_location": "L2342",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_listingcost",
@@ -14564,7 +14594,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2550",
+      "source_location": "L2545",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_listingmetaline",
@@ -14574,7 +14604,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1393",
+      "source_location": "L1388",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_loadingcardrail",
@@ -14584,7 +14614,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1364",
+      "source_location": "L1359",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_loadingloop",
@@ -14594,7 +14624,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2351",
+      "source_location": "L2346",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_localizedcaution",
@@ -14604,7 +14634,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2564",
+      "source_location": "L2559",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_marketdeltabadge",
@@ -14614,7 +14644,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2361",
+      "source_location": "L2356",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_marketfreshness",
@@ -14634,7 +14664,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2889",
+      "source_location": "L2884",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_marketreferenceline",
@@ -14644,7 +14674,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1238",
+      "source_location": "L1187",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_marqueeitem",
@@ -14674,7 +14704,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3170",
+      "source_location": "L3165",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_nullableinteger",
@@ -14684,7 +14714,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3164",
+      "source_location": "L3159",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_nullablenumber",
@@ -14694,7 +14724,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1255",
+      "source_location": "L1250",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_parsedpreview",
@@ -14754,7 +14784,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2663",
+      "source_location": "L2658",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_recommendedbuyhero",
@@ -14784,7 +14814,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2401",
+      "source_location": "L2396",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_riskformula",
@@ -14794,7 +14824,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2282",
+      "source_location": "L2277",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_rolepreferencelabel",
@@ -14804,7 +14834,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2291",
+      "source_location": "L2286",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_roletogglehint",
@@ -14814,7 +14844,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2273",
+      "source_location": "L2268",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_roletogglelabel",
@@ -14834,7 +14864,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2417",
+      "source_location": "L2412",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_sellerinputsline",
@@ -14844,7 +14874,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2385",
+      "source_location": "L2380",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_sellerverdict",
@@ -14864,7 +14894,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2330",
+      "source_location": "L2325",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_sortlistingsforrole",
@@ -14874,7 +14904,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3048",
+      "source_location": "L3043",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_sourceschecked",
@@ -14884,7 +14914,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2911",
+      "source_location": "L2906",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_sourcestatusline",
@@ -14894,7 +14924,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3089",
+      "source_location": "L3084",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_statuspill",
@@ -14914,7 +14944,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2405",
+      "source_location": "L2400",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_valueformula",
@@ -14924,7 +14954,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2448",
+      "source_location": "L2443",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_verdictmath",
@@ -14934,7 +14964,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2381",
+      "source_location": "L2376",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_verdicttone",
@@ -14944,20 +14974,10 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2098",
+      "source_location": "L2093",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp",
       "target": "src_features_comparison_comparisonapp_webdiscoverypanel",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1176",
-      "weight": 1.0,
-      "source": "src_features_comparison_comparisonapp",
-      "target": "src_features_comparison_comparisonapp_workedexample",
       "confidence_score": 1.0
     },
     {
@@ -15581,7 +15601,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2516",
+      "source_location": "L2511",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_holocardart",
       "target": "src_features_comparison_comparisonapp_recentcarouselcard"
@@ -15861,56 +15881,12 @@
       "target": "src_features_comparison_i18n_uset"
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1177",
-      "weight": 1.0,
-      "source": "src_features_comparison_comparisonapp_workedexample",
-      "target": "src_features_comparison_i18n_uset"
-    },
-    {
       "relation": "indirect_call",
       "context": "collection",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1179",
-      "weight": 1.0,
-      "source": "src_features_comparison_comparisonapp_workedexample",
-      "target": "src_features_comparison_icons_iconcardcheck"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "collection",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1180",
-      "weight": 1.0,
-      "source": "src_features_comparison_comparisonapp_workedexample",
-      "target": "src_features_comparison_icons_iconcardfan"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "collection",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1181",
-      "weight": 1.0,
-      "source": "src_features_comparison_comparisonapp_workedexample",
-      "target": "src_features_comparison_icons_iconreceipt"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "collection",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1245",
+      "source_location": "L1194",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_buildmarqueeitems",
       "target": "src_lib_external_one_piece_catalog_card"
@@ -15920,7 +15896,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1394",
+      "source_location": "L1205",
+      "weight": 1.0,
+      "source": "src_features_comparison_comparisonapp_cardmarquee",
+      "target": "src_features_comparison_comparisonapp_buildmarqueeitems",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/comparison/ComparisonApp.tsx",
+      "source_location": "L1389",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_loadingcardrail",
       "target": "src_features_comparison_comparisonapp_buildmarqueeitems",
@@ -15932,7 +15919,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1307",
+      "source_location": "L1302",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_cardkeypreview",
       "target": "src_features_comparison_i18n_uset"
@@ -15943,7 +15930,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1365",
+      "source_location": "L1360",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_loadingloop",
       "target": "src_features_comparison_i18n_uset"
@@ -15954,7 +15941,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1494",
+      "source_location": "L1489",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_errornotice",
       "target": "src_features_comparison_i18n_uset"
@@ -15964,7 +15951,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1586",
+      "source_location": "L1581",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_confirmedsettingsstage",
       "target": "src_features_comparison_comparisonapp_rolepreferencelabel",
@@ -15975,7 +15962,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1587",
+      "source_location": "L1582",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_confirmedsettingsstage",
       "target": "src_features_comparison_comparisonapp_roletogglehint",
@@ -15987,7 +15974,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1522",
+      "source_location": "L1517",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_confirmedsettingsstage",
       "target": "src_features_comparison_i18n_uset"
@@ -15998,7 +15985,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1640",
+      "source_location": "L1635",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_identityconfirmation",
       "target": "src_features_comparison_i18n_uset"
@@ -16009,7 +15996,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1642",
+      "source_location": "L1637",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_identityconfirmation",
       "target": "src_features_comparison_identity_grouping_groupidentitiesbyset"
@@ -16020,7 +16007,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1718",
+      "source_location": "L1713",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_identitycard",
       "target": "src_features_comparison_i18n_uset"
@@ -16030,7 +16017,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1823",
+      "source_location": "L1818",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonresult",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -16041,7 +16028,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1819",
+      "source_location": "L1814",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonresult",
       "target": "src_features_comparison_comparisonapp_roletogglelabel",
@@ -16052,7 +16039,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1794",
+      "source_location": "L1789",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonresult",
       "target": "src_features_comparison_comparisonapp_sortlistingsforrole",
@@ -16064,7 +16051,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1764",
+      "source_location": "L1759",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonresult",
       "target": "src_features_comparison_i18n_uselang"
@@ -16075,7 +16062,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1763",
+      "source_location": "L1758",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonresult",
       "target": "src_features_comparison_i18n_uset"
@@ -16086,7 +16073,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1836",
+      "source_location": "L1831",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonresult",
       "target": "src_features_comparison_verdict_copy_buildverdictcopy"
@@ -16097,7 +16084,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L1954",
+      "source_location": "L1949",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonresult",
       "target": "src_lib_analytics_trackevent"
@@ -16107,7 +16094,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2158",
+      "source_location": "L2153",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_webdiscoverypanel",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -16119,7 +16106,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2107",
+      "source_location": "L2102",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_webdiscoverypanel",
       "target": "src_features_comparison_i18n_uset"
@@ -16130,7 +16117,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2202",
+      "source_location": "L2197",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_comparisonquestionbox",
       "target": "src_features_comparison_i18n_uset"
@@ -16140,7 +16127,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2998",
+      "source_location": "L2993",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_candidaterow",
       "target": "src_features_comparison_comparisonapp_roletogglelabel",
@@ -16151,7 +16138,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2651",
+      "source_location": "L2646",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_lenscontrols",
       "target": "src_features_comparison_comparisonapp_roletogglelabel",
@@ -16162,7 +16149,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2730",
+      "source_location": "L2725",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_recommendedbuyhero",
       "target": "src_features_comparison_comparisonapp_roletogglelabel",
@@ -16173,7 +16160,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2644",
+      "source_location": "L2639",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_lenscontrols",
       "target": "src_features_comparison_comparisonapp_roletogglehint",
@@ -16184,7 +16171,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2974",
+      "source_location": "L2969",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_candidaterow",
       "target": "src_features_comparison_comparisonapp_choicereasontext",
@@ -16195,7 +16182,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2310",
+      "source_location": "L2305",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_choicereasontext",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -16206,7 +16193,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2334",
+      "source_location": "L2329",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_sortlistingsforrole",
       "target": "src_features_comparison_comparisonapp_listingcost",
@@ -16217,7 +16204,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2864",
+      "source_location": "L2859",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_decisionreceipt",
       "target": "src_features_comparison_comparisonapp_localizedcaution",
@@ -16229,7 +16216,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2363",
+      "source_location": "L2358",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_marketfreshness",
       "target": "src_features_comparison_i18n_uselang"
@@ -16240,7 +16227,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2362",
+      "source_location": "L2357",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_marketfreshness",
       "target": "src_features_comparison_i18n_uset"
@@ -16250,7 +16237,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2552",
+      "source_location": "L2547",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_listingmetaline",
       "target": "src_features_comparison_comparisonapp_sellerverdict",
@@ -16261,7 +16248,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2553",
+      "source_location": "L2548",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_listingmetaline",
       "target": "src_features_comparison_comparisonapp_evidenceverdict",
@@ -16272,7 +16259,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2473",
+      "source_location": "L2468",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_verdictmath",
       "target": "src_features_comparison_comparisonapp_riskformula",
@@ -16283,7 +16270,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2474",
+      "source_location": "L2469",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_verdictmath",
       "target": "src_features_comparison_comparisonapp_valueformula",
@@ -16294,7 +16281,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2471",
+      "source_location": "L2466",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_verdictmath",
       "target": "src_features_comparison_comparisonapp_sellerinputsline",
@@ -16305,7 +16292,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2435",
+      "source_location": "L2430",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_evidenceinputsline",
       "target": "src_features_comparison_comparisonapp_conditioninputsline",
@@ -16316,7 +16303,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2468",
+      "source_location": "L2463",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_verdictmath",
       "target": "src_features_comparison_comparisonapp_conditioninputsline",
@@ -16327,7 +16314,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2472",
+      "source_location": "L2467",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_verdictmath",
       "target": "src_features_comparison_comparisonapp_evidenceinputsline",
@@ -16338,7 +16325,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2462",
+      "source_location": "L2457",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_verdictmath",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -16350,7 +16337,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2449",
+      "source_location": "L2444",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_verdictmath",
       "target": "src_features_comparison_i18n_uset"
@@ -16361,7 +16348,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2551",
+      "source_location": "L2546",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_listingmetaline",
       "target": "src_features_comparison_i18n_uset"
@@ -16372,7 +16359,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2573",
+      "source_location": "L2568",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_marketdeltabadge",
       "target": "src_features_comparison_i18n_uset"
@@ -16383,7 +16370,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2618",
+      "source_location": "L2613",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_lenscontrols",
       "target": "src_features_comparison_i18n_uset"
@@ -16393,7 +16380,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2748",
+      "source_location": "L2743",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_recommendedbuyhero",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -16405,7 +16392,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2682",
+      "source_location": "L2677",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_recommendedbuyhero",
       "target": "src_features_comparison_i18n_uset"
@@ -16416,7 +16403,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2783",
+      "source_location": "L2778",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_recommendedbuyhero",
       "target": "src_lib_analytics_trackevent"
@@ -16427,7 +16414,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2826",
+      "source_location": "L2821",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_decisionreceipt",
       "target": "src_features_comparison_i18n_uset"
@@ -16437,7 +16424,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2903",
+      "source_location": "L2898",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_marketreferenceline",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -16449,7 +16436,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2898",
+      "source_location": "L2893",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_marketreferenceline",
       "target": "src_features_comparison_i18n_uset"
@@ -16460,7 +16447,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2924",
+      "source_location": "L2919",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_sourcestatusline",
       "target": "src_features_comparison_i18n_uset"
@@ -16470,7 +16457,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3020",
+      "source_location": "L3015",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_candidaterow",
       "target": "src_features_comparison_comparisonapp_formatmoney",
@@ -16482,7 +16469,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2961",
+      "source_location": "L2956",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_candidaterow",
       "target": "src_features_comparison_i18n_uselang"
@@ -16493,7 +16480,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2960",
+      "source_location": "L2955",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_candidaterow",
       "target": "src_features_comparison_i18n_uset"
@@ -16504,7 +16491,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3030",
+      "source_location": "L3025",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_candidaterow",
       "target": "src_lib_analytics_trackevent"
@@ -16515,7 +16502,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L2967",
+      "source_location": "L2962",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_candidaterow",
       "target": "src_lib_comparison_ranking_calculatepricecomponent"
@@ -16526,7 +16513,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3049",
+      "source_location": "L3044",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_sourceschecked",
       "target": "src_features_comparison_i18n_uset"
@@ -16537,7 +16524,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3090",
+      "source_location": "L3085",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_statuspill",
       "target": "src_features_comparison_i18n_uset"
@@ -16547,7 +16534,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3128",
+      "source_location": "L3123",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_buildrequest",
       "target": "src_features_comparison_comparisonapp_hassubstantiveconditionnotes",
@@ -16558,7 +16545,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3116",
+      "source_location": "L3111",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_buildrequest",
       "target": "src_features_comparison_comparisonapp_nullableinteger",
@@ -16569,7 +16556,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3101",
+      "source_location": "L3096",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_buildrequest",
       "target": "src_features_comparison_comparisonapp_nullablenumber",
@@ -16581,7 +16568,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3137",
+      "source_location": "L3132",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_buildrequest",
       "target": "src_lib_comparison_us_sales_tax_estimatesalestaxratefromzip"
@@ -16591,7 +16578,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/ComparisonApp.tsx",
-      "source_location": "L3171",
+      "source_location": "L3166",
       "weight": 1.0,
       "source": "src_features_comparison_comparisonapp_nullableinteger",
       "target": "src_features_comparison_comparisonapp_nullablenumber",
@@ -16770,7 +16757,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L404",
+      "source_location": "L392",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_dict",
@@ -16790,7 +16777,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L796",
+      "source_location": "L772",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_getserversnapshot",
@@ -16800,7 +16787,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L785",
+      "source_location": "L761",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_getsnapshot",
@@ -16820,7 +16807,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L824",
+      "source_location": "L800",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_languageprovider",
@@ -16830,7 +16817,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L783",
+      "source_location": "L759",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_listeners",
@@ -16840,7 +16827,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L776",
+      "source_location": "L752",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_messages",
@@ -16850,7 +16837,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L807",
+      "source_location": "L783",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_persistlang",
@@ -16860,7 +16847,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L800",
+      "source_location": "L776",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_subscribe",
@@ -16870,7 +16857,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L817",
+      "source_location": "L793",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_uselang",
@@ -16880,7 +16867,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L832",
+      "source_location": "L808",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_uset",
@@ -16890,7 +16877,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L406",
+      "source_location": "L394",
       "weight": 1.0,
       "source": "src_features_comparison_i18n",
       "target": "src_features_comparison_i18n_zh",
@@ -16955,7 +16942,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L818",
+      "source_location": "L794",
       "weight": 1.0,
       "source": "src_features_comparison_i18n_uselang",
       "target": "src_features_comparison_i18n_getsnapshot",
@@ -16966,7 +16953,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L818",
+      "source_location": "L794",
       "weight": 1.0,
       "source": "src_features_comparison_i18n_uselang",
       "target": "src_features_comparison_i18n_getserversnapshot",
@@ -16977,7 +16964,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L818",
+      "source_location": "L794",
       "weight": 1.0,
       "source": "src_features_comparison_i18n_uselang",
       "target": "src_features_comparison_i18n_subscribe",
@@ -16988,7 +16975,7 @@
       "context": "collection",
       "confidence": "INFERRED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L819",
+      "source_location": "L795",
       "weight": 1.0,
       "source": "src_features_comparison_i18n_uselang",
       "target": "src_features_comparison_i18n_persistlang",
@@ -16999,7 +16986,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L825",
+      "source_location": "L801",
       "weight": 1.0,
       "source": "src_features_comparison_i18n_languageprovider",
       "target": "src_features_comparison_i18n_uselang",
@@ -17010,7 +16997,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/comparison/i18n.tsx",
-      "source_location": "L833",
+      "source_location": "L809",
       "weight": 1.0,
       "source": "src_features_comparison_i18n_uset",
       "target": "src_features_comparison_i18n_uselang",
@@ -36847,5 +36834,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "b465e9adc89356bbe1fa3607345a3de14a70781f"
+  "built_at_commit": "26f710243413df829eb17a992d389f26ab6c5fb6"
 }
