@@ -203,7 +203,7 @@ Design the codebase so Codex can inspect it through stable, explicit interfaces 
 ## Graphify
 
 Graphify source: https://github.com/Graphify-Labs/graphify. The installed CLI is at `/Users/chenjunhsu/.codex/tools/graphify/bin/graphify`; the published PyPI package is `graphifyy`, while the command remains `graphify`.
-An initial AST-only graph exists at `graphify-out/graph.json` (created with `graphify update .`): 1,107 nodes, 2,128 edges, 60 communities; benchmarked at about 4.5x fewer tokens per query than reading the raw corpus.
+An AST-only graph exists at `graphify-out/graph.json` and is created or refreshed with `graphify update .`. Treat the generated graph as the source of truth for its size: run `graphify benchmark graphify-out/graph.json` for current node/edge counts and token reduction instead of relying on hard-coded snapshot statistics.
 
 When the user types `/graphify`, use Graphify before doing anything else.
 
