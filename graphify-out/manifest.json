@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "src/features/comparison/ComparisonApp.tsx": {
-    "mtime": 1783228078.4636178,
-    "ast_hash": "1cbbd8654b5f15f27be875cd14295e27",
+    "mtime": 1783235667.9443433,
+    "ast_hash": "ce649e3c2e0b11e19b7465282efcc4a1",
     "semantic_hash": ""
   },
   "src/features/comparison/comparison-form-state.test.ts": {
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "src/features/comparison/i18n.tsx": {
-    "mtime": 1783201551.4597182,
-    "ast_hash": "41e0f71214d4fa053628123c7f6e10e4",
+    "mtime": 1783234136.882129,
+    "ast_hash": "0f2f6efb03205dfa0054b97e65514526",
     "semantic_hash": ""
   },
   "src/features/comparison/icons.tsx": {
@@ -500,8 +500,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1783231816.4705317,
-    "ast_hash": "505a4ebcf30b78b8a9e476e326f59d4d",
+    "mtime": 1783234931.447749,
+    "ast_hash": "b90a70694eb5695b5a8e54ba99794d28",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -657,6 +657,131 @@
   "public/window.svg": {
     "mtime": 1779591898.0,
     "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": ""
+  },
+  "docs/goal-verdict-first-ui.md": {
+    "mtime": 1783232149.0120554,
+    "ast_hash": "628aedf3c3a697d0d7d3cf1bc49e73ab",
+    "semantic_hash": ""
+  },
+  "docs/mockups/verdict-first-mock.html": {
+    "mtime": 1783232007.7141979,
+    "ast_hash": "f0ca6f746f59c309a6efad5048194120",
+    "semantic_hash": ""
+  },
+  "src/features/comparison/verdict-copy.test.ts": {
+    "mtime": 1783233092.0315921,
+    "ast_hash": "dedb29cc0ca3ec9df67593731c08ddd2",
+    "semantic_hash": ""
+  },
+  "src/features/comparison/verdict-copy.ts": {
+    "mtime": 1783233319.2448487,
+    "ast_hash": "d1c758722b01b37fc00e837634400b82",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-05-verdict-first-ui.md": {
+    "mtime": 1783233011.6044087,
+    "ast_hash": "cd331bdf501baf9d98978923ca543ba1",
+    "semantic_hash": ""
+  },
+  "output/browser-after/landing-en-desktop.png": {
+    "mtime": 1783235751.1519718,
+    "ast_hash": "fd8d7666627e43836be04a0c97bf7f6e",
+    "semantic_hash": ""
+  },
+  "output/browser-after/landing-en-mobile.png": {
+    "mtime": 1783235754.278925,
+    "ast_hash": "6125182e7899ba60efa2d5c7ebd2d1c5",
+    "semantic_hash": ""
+  },
+  "output/browser-after/landing-zh-desktop.png": {
+    "mtime": 1783235746.1445339,
+    "ast_hash": "e862a2208f85434535e10dcb68926639",
+    "semantic_hash": ""
+  },
+  "output/browser-after/landing-zh-mobile.png": {
+    "mtime": 1783235743.1036904,
+    "ast_hash": "91040f6450afdbbf6d2d209caf784257",
+    "semantic_hash": ""
+  },
+  "output/browser-after/results-en-desktop.png": {
+    "mtime": 1783235979.5239308,
+    "ast_hash": "93dfa9ac1abf057a8501ff63fa4b5528",
+    "semantic_hash": ""
+  },
+  "output/browser-after/results-en-mobile.png": {
+    "mtime": 1783235992.5395355,
+    "ast_hash": "9c13b18e1b7f06c2a4233a77a30e1b43",
+    "semantic_hash": ""
+  },
+  "output/browser-after/results-zh-desktop.png": {
+    "mtime": 1783235984.5315335,
+    "ast_hash": "f2ed82f36871da83cc07e782d9ff0e4d",
+    "semantic_hash": ""
+  },
+  "output/browser-after/results-zh-mobile.png": {
+    "mtime": 1783235987.6596992,
+    "ast_hash": "ff92d893e7d25782022f8ac2acd1b440",
+    "semantic_hash": ""
+  },
+  "output/browser-after/settings-en-mobile.png": {
+    "mtime": 1783236070.8629093,
+    "ast_hash": "431564f79fcc018aaa01f82ee5939241",
+    "semantic_hash": ""
+  },
+  "output/playwright/after/landing-en-desktop.png": {
+    "mtime": 1783234642.613434,
+    "ast_hash": "52cd617f328d30a0afa27636db72891c",
+    "semantic_hash": ""
+  },
+  "output/playwright/after/landing-en-mobile.png": {
+    "mtime": 1783234682.888889,
+    "ast_hash": "7912263b24d2ac5c7bc71cf6cd9debad",
+    "semantic_hash": ""
+  },
+  "output/playwright/after/landing-zh-desktop.png": {
+    "mtime": 1783234657.0703354,
+    "ast_hash": "964b5d0c9432e8e541eaf7b326d4cc92",
+    "semantic_hash": ""
+  },
+  "output/playwright/after/landing-zh-mobile.png": {
+    "mtime": 1783234670.1987998,
+    "ast_hash": "7e9104bfe2f0bf4cfe02a62b44cb34ff",
+    "semantic_hash": ""
+  },
+  "output/playwright/before/landing-en-desktop.png": {
+    "mtime": 1783232802.7632523,
+    "ast_hash": "3d12d70cb77bdf0311b2285ebf1b38b7",
+    "semantic_hash": ""
+  },
+  "output/playwright/before/landing-zh-desktop.png": {
+    "mtime": 1783232820.533113,
+    "ast_hash": "4a2c12d2a432900ab4258fda6cf8081c",
+    "semantic_hash": ""
+  },
+  "output/playwright/before/landing-zh-mobile.png": {
+    "mtime": 1783232828.708286,
+    "ast_hash": "39ae7f49fa39e7c83c7264cdc4a9135a",
+    "semantic_hash": ""
+  },
+  "output/playwright/before/results-en-desktop.png": {
+    "mtime": 1783232896.0282717,
+    "ast_hash": "abc0d7da2379dead2ab14a559332b0d7",
+    "semantic_hash": ""
+  },
+  "output/playwright/before/results-en-mobile.png": {
+    "mtime": 1783232924.2414997,
+    "ast_hash": "c3dbebdb8ab3e2bc66f82c3ef6e6bf8c",
+    "semantic_hash": ""
+  },
+  "output/playwright/before/results-zh-desktop.png": {
+    "mtime": 1783232908.0005403,
+    "ast_hash": "a46ccc41982b83122c79df27b8213d40",
+    "semantic_hash": ""
+  },
+  "output/playwright/before/results-zh-mobile.png": {
+    "mtime": 1783232909.5525243,
+    "ast_hash": "0d5fc7cb53683fc731d74a3a3e1047d1",
     "semantic_hash": ""
   }
 }

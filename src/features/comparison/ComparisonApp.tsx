@@ -12,7 +12,6 @@ import {
   IconCheck,
   IconChevronDown,
   IconExternal,
-  IconFoil,
   IconInfo,
   IconLink,
   IconPhotoProof,
@@ -31,6 +30,7 @@ import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
+import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import {
   defaultComparisonFormValues,
   emptyLedgerRow,
@@ -410,9 +410,9 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
+      setConfirmedIdentityForSettings(null);
       if (parsed.confirmedCard) {
         rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
-        setConfirmedIdentityForSettings(null);
       }
       const duration = readTimestamp() - startedAt;
       trackEvent("comparison_completed", {
@@ -456,9 +456,9 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(pendingRequest, t.error.temporary);
       setReport(parsed);
+      setConfirmedIdentityForSettings(null);
       if (parsed.confirmedCard) {
         rememberConfirmedCard(parsed.confirmedCard, pendingRequest.cardHint.game);
-        setConfirmedIdentityForSettings(null);
       }
       trackEvent("comparison_completed", {
         marketplace: pendingRequest.sourceListing.marketplace,
@@ -549,9 +549,9 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
+      setConfirmedIdentityForSettings(null);
       if (parsed.confirmedCard) {
         rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
-        setConfirmedIdentityForSettings(null);
       }
       const duration = readTimestamp() - startedAt;
       trackEvent("comparison_completed", {
@@ -665,18 +665,14 @@ function ComparisonExperience() {
             <div className="grid gap-5 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-start">
               <div className="flex min-h-full min-w-0 flex-col justify-between gap-5">
                 <div>
-                  <div className="hidden items-center gap-2 text-[0.72rem] font-black uppercase tracking-[0.12em] text-[#64736c] sm:inline-flex">
-                    <IconCardSearch className="h-4 w-4" />
-                    {t.hero.eyebrow}
-                  </div>
-                  <h1 className="display-soft mt-3 max-w-2xl font-serif text-3xl font-black leading-[1.04] tracking-[-0.03em] text-[#2f6f73] sm:text-4xl lg:text-5xl">
+                  <h1 className="display-soft max-w-2xl font-serif text-3xl font-black leading-[1.04] tracking-[-0.03em] text-[#2f6f73] sm:text-4xl lg:text-5xl">
                     {t.hero.title}
                   </h1>
                   <p className="mt-3 max-w-lg text-sm leading-6 text-[#52635c] sm:text-base">
                     {t.hero.subtitle}
                   </p>
                 </div>
-                <CardMarquee cards={carouselCards} />
+                <WorkedExample />
               </div>
 
               <div className="min-w-0 space-y-4">
@@ -1035,7 +1031,6 @@ function ComparisonExperience() {
           </form>
         </section>
 
-        {!loading && <HowItWorks />}
           </>
         )}
 
@@ -1082,7 +1077,7 @@ function Header() {
         <div className="flex items-center gap-3 sm:gap-6">
           <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
             <a className="hover:text-[#2f6f73]" href="#compare">{t.header.checkListing}</a>
-            <a className="hover:text-[#2f6f73]" href="#method">{t.header.method}</a>
+            <a className="hover:text-[#2f6f73]" href="/method">{t.header.method}</a>
             <span className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-[#2f6f73]">{t.header.scopeBadge}</span>
           </nav>
           <LanguageToggle lang={lang} setLang={setLang} t={t} />
@@ -1117,19 +1112,21 @@ function ResultsHeader({
           <Image src="/tcgpal-logo-horizontal.svg" alt="TCGpal" width={104} height={30} priority />
         </a>
         <button
-          className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-full border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
+          className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
           type="button"
           aria-expanded={editOpen}
           onClick={onEditToggle}
         >
           <IconCardSearch className="h-4 w-4 shrink-0 text-[#2f6f73]" />
-          <span className="min-w-0 truncate text-sm font-black text-[#24312f]">{query}</span>
-          {context && <span className="hidden truncate text-xs font-bold text-[#64736c] md:inline">· {context}</span>}
-          <span className="ml-auto shrink-0 text-xs font-black text-[#2f6f73]">{editOpen ? t.header.closeSearch : t.header.editSearch}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-black leading-5 text-[#24312f]">{query}</span>
+            {context && <span className="mt-0.5 block truncate text-xs font-bold leading-4 text-[#64736c]">{context}</span>}
+          </span>
+          <span className="shrink-0 text-xs font-black text-[#2f6f73]">{editOpen ? t.header.closeSearch : t.header.editSearch}</span>
         </button>
         <nav className="ml-auto flex items-center gap-2 text-xs font-black text-[#64736c] sm:gap-4">
           <button className="hover:text-[#2f6f73]" type="button" onClick={onNewSearch}>{t.header.newSearch}</button>
-          <a className="hidden hover:text-[#2f6f73] sm:inline" href="#method">{t.header.method}</a>
+          <a className="hidden hover:text-[#2f6f73] sm:inline" href="/method">{t.header.method}</a>
           <LanguageToggle lang={lang} setLang={setLang} t={t} />
         </nav>
       </div>
@@ -1169,10 +1166,61 @@ function Footer() {
     <footer className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-6 gap-y-2 border-t border-[#d6ded5] px-4 py-6 text-xs font-bold text-[#7a8982] sm:px-6 lg:px-8">
       <span>{t.footer.copyright}</span>
       <a className="hover:text-[#2f6f73]" href="/method">{t.header.method}</a>
-      <a className="hover:text-[#2f6f73]" href="#method">{t.footer.dataSources}</a>
-      <a className="hover:text-[#2f6f73]" href="#method">{t.footer.boundaries}</a>
+      <a className="hover:text-[#2f6f73]" href="/method">{t.footer.dataSources}</a>
+      <a className="hover:text-[#2f6f73]" href="/method">{t.footer.boundaries}</a>
       <a className="hover:text-[#2f6f73]" href="#feedback">{t.footer.feedback}</a>
     </footer>
+  );
+}
+
+function WorkedExample() {
+  const t = useT();
+  const rows = [
+    { label: t.workedExample.confirmedLabel, value: t.workedExample.confirmed, icon: IconCardCheck },
+    { label: t.workedExample.reviewedLabel, value: t.workedExample.reviewed, icon: IconCardFan },
+    { label: t.workedExample.recommendationLabel, value: t.workedExample.recommendation, icon: IconReceipt },
+  ];
+
+  return (
+    <aside
+      aria-label={t.workedExample.label}
+      className="overflow-hidden rounded-xl border border-[#d8c98f] bg-[#fffaf0] shadow-[0_6px_14px_rgba(36,49,47,0.04)]"
+    >
+      <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[88px_minmax(0,1fr)]">
+        <div className="relative aspect-[2.5/3.5] w-[76px] self-start overflow-hidden rounded-lg bg-[#efe8d7] sm:w-[88px]">
+          <Image
+            src="https://images.pokemontcg.io/swsh35/74_hires.png"
+            alt={`${t.workedExample.card} card art`}
+            fill
+            sizes="88px"
+            className="object-contain"
+          />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-[#8d6032]">{t.workedExample.label}</p>
+          <h2 className="mt-1 font-serif text-lg font-black text-[#24312f]">{t.workedExample.card}</h2>
+          <dl className="mt-3 space-y-2.5">
+            {rows.map(({ label, value, icon: Icon }) => (
+              <div key={label} className="grid grid-cols-[18px_minmax(0,1fr)] gap-2 text-sm leading-5">
+                <Icon className="mt-0.5 h-4 w-4 text-[#2f6f73]" />
+                <div>
+                  <dt className="inline font-black text-[#24312f]">{label}: </dt>
+                  <dd className={`inline ${label === t.workedExample.recommendationLabel ? "font-bold text-[#2f6f73]" : "text-[#52635c]"}`}>
+                    {value}
+                  </dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 border-t border-[#e4d9b5] bg-[#fcf5e5] px-4 py-3 text-xs leading-5 text-[#64736c] sm:flex-row sm:items-center sm:justify-between">
+        <p>{t.workedExample.note}</p>
+        <a className="shrink-0 font-black text-[#2f6f73] underline decoration-[#b7c6bd] underline-offset-4" href="/method">
+          {t.workedExample.methodLink}
+        </a>
+      </div>
+    </aside>
   );
 }
 
@@ -1202,52 +1250,6 @@ function buildMarqueeItems(cards: RecentCarouselCard[], minimum = 8): MarqueeIte
   }
   const loopBase = base.slice(0, Math.max(minimum, source.length));
   return [...loopBase, ...loopBase];
-}
-
-function CardMarquee({ cards }: { cards: RecentCarouselCard[] }) {
-  const items = buildMarqueeItems(cards);
-  return (
-    <div aria-hidden="true" className="card-marquee relative hidden h-[128px] overflow-hidden lg:block">
-      <div className="card-marquee-track flex w-max items-center">
-        {items.map((item, index) => (
-          <CardMarqueeItem key={`${item.kind}-${item.kind === "real" ? item.card.id : item.background}-${index}`} item={item} index={index} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CardMarqueeItem({ item, index }: { item: MarqueeItem; index: number }) {
-  const rotation = `${index % 2 ? 3 : -3}deg`;
-  if (item.kind === "real") {
-    return (
-      <span
-        className="card-marquee-card card-marquee-card-real relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(36,49,47,0.13)] bg-[#fcfbf6] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
-        style={{ transform: `rotate(${rotation})` }}
-      >
-        {item.card.imageUrl && (
-          <Image
-            src={item.card.imageUrl}
-            alt=""
-            fill
-            sizes="80px"
-            className="object-contain"
-          />
-        )}
-        <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
-      </span>
-    );
-  }
-  return (
-    <span
-      className="card-marquee-card relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(255,255,255,0.55)] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
-      style={{ background: item.background, transform: `rotate(${rotation})` }}
-    >
-      <span className="card-marquee-inner absolute inset-[6px] rounded-[6px] border border-[rgba(255,255,255,0.35)]" />
-      <span className="card-marquee-orb absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(255,255,255,0.45)]" />
-      <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
-    </span>
-  );
 }
 
 function ParsedPreview({
@@ -1347,39 +1349,6 @@ function CardIdentityRail({ identity, className = "" }: { identity: CardIdentity
         </span>
       )}
     </div>
-  );
-}
-
-function LoopStep({ number, title, description }: { number: string; title: string; description: string }) {
-  return (
-    <div className="grid grid-cols-[44px_1fr] gap-3 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4">
-      <span className="font-mono text-sm font-black text-[#b26a4c]">{number}</span>
-      <div>
-        <p className="font-bold text-[#24312f]">{title}</p>
-        <p className="mt-1 text-sm leading-5 text-[#64736c]">{description}</p>
-      </div>
-    </div>
-  );
-}
-
-function HowItWorks() {
-  const t = useT();
-  return (
-    <section className="mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-6 sm:p-8">
-      <p className="eyebrow text-[#2f6f73]">
-        <IconFoil className="h-4 w-4" />
-        {t.howItWorks.eyebrow}
-      </p>
-      <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <LoopStep number="01" title={t.howItWorks.s1t} description={t.howItWorks.s1d} />
-        <LoopStep number="02" title={t.howItWorks.s2t} description={t.howItWorks.s2d} />
-        <LoopStep number="03" title={t.howItWorks.s3t} description={t.howItWorks.s3d} />
-        <LoopStep number="04" title={t.howItWorks.s4t} description={t.howItWorks.s4d} />
-      </div>
-      <div className="mt-5 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-4 text-sm leading-6 text-[#64736c]">
-        <strong className="text-[#24312f]">{t.howItWorks.supportedLabel}</strong>{t.howItWorks.supportedBody}
-      </div>
-    </section>
   );
 }
 
@@ -1552,11 +1521,19 @@ function ConfirmedSettingsStage({
 }) {
   const t = useT();
   const preferredRole = useWatch({ control: form.control, name: "preferredRole" });
+  const postalCode = useWatch({ control: form.control, name: "postalCode" });
+  const desiredCondition = useWatch({ control: form.control, name: "desiredCondition" });
+  const taxRatePercent = useWatch({ control: form.control, name: "taxRatePercent" });
+  const stickyRunContext = [
+    desiredCondition === "Unknown" ? t.form.anyCondition : t.conditions[desiredCondition],
+    postalCode ? `ZIP ${postalCode}` : t.card.preTaxTotal,
+    taxRatePercent ? `${taxRatePercent}%` : null,
+  ].filter(Boolean).join(" · ");
   return (
     <section
       id="comparison-result"
       tabIndex={-1}
-      className="stage-reveal mt-6 scroll-mt-6 rounded-md border border-[#2f6f73] bg-[#fcfbf6] p-5 outline-none shadow-[0_14px_34px_rgba(36,49,47,0.08)] sm:p-7"
+      className="stage-reveal mt-6 scroll-mt-6 rounded-md border border-[#2f6f73] bg-[#fcfbf6] p-5 pb-28 outline-none shadow-[0_14px_34px_rgba(36,49,47,0.08)] sm:p-7"
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-start">
         <article className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
@@ -1647,6 +1624,13 @@ function ConfirmedSettingsStage({
             {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
           </button>
         </div>
+      </div>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#c9d7ce] bg-[#fcfbf6]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-8px_22px_rgba(36,49,47,0.10)] backdrop-blur sm:hidden">
+        <p className="mb-2 truncate text-xs font-bold text-[#64736c]">{stickyRunContext}</p>
+        <button className="primary-button w-full justify-center" type="button" disabled={loading} onClick={onRun}>
+          {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
+          {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
+        </button>
       </div>
     </section>
   );
@@ -1848,8 +1832,16 @@ function ComparisonResult({
   const [qaError, setQaError] = useState<string | null>(null);
   const [qaTarget, setQaTarget] = useState<{ id: string; label: string } | null>(null);
   const [receiptCopied, setReceiptCopied] = useState(false);
-  const selectedChoiceReason = selectedChoice && selectedListing
-    ? choiceReasonText(selectedChoice, selectedListing, lang)
+  const selectedVerdictCopy = selectedChoice && selectedListing
+    ? buildVerdictCopy({
+      listing: selectedListing,
+      choice: selectedChoice,
+      alternatives: alternativeListings,
+      lang,
+    })
+    : null;
+  const selectedChoiceReason = selectedVerdictCopy
+    ? [selectedVerdictCopy.why, selectedVerdictCopy.catch, selectedVerdictCopy.alternative].filter(Boolean).join(" ")
     : null;
 
   async function copyComparisonReceipt() {
@@ -1921,67 +1913,6 @@ function ComparisonResult({
         </div>
       )}
 
-      <div className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-3 shadow-[0_8px_28px_rgba(36,49,47,0.04)] sm:p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#7a8982]">{t.result.showingYou}</p>
-            <h2 className="mt-1 font-serif text-xl font-black text-[#24312f]">
-              {selectedRole ? roleToggleLabel(selectedRole, t) : t.card.recommended}
-              <span className="font-sans text-sm font-bold text-[#7a8982]"> · {t.result.yourDefault}</span>
-            </h2>
-          </div>
-        {report.rankedChoices.length > 0 && (
-          <div
-            className="grid w-full grid-cols-2 gap-1 rounded-xl border border-[#d6ded5] bg-[#fffef9] p-1 sm:ml-auto sm:w-[480px] sm:grid-cols-4"
-            style={report.rankedChoices.length === 4 ? undefined : { gridTemplateColumns: `repeat(${report.rankedChoices.length}, minmax(0, 1fr))` }}
-          >
-            {report.rankedChoices.map((choice) => {
-              const active = choice.role === selectedRole;
-              return (
-                <button
-                  key={choice.role}
-                  type="button"
-                  onClick={() => {
-                    setRoleOverride(choice.role);
-                    setQaQuestion("");
-                    setQaAnswer(null);
-                    setQaError(null);
-                    setQaTarget(null);
-                    trackEvent("lens_selected", { choice_role: choice.role });
-                  }}
-                  aria-pressed={active}
-                  title={roleToggleHint(choice.role, t)}
-                  className={`min-h-9 rounded-lg px-2 py-2 text-center text-xs font-black transition sm:text-sm ${
-                    active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:bg-[#e7efe8] hover:text-[#2f6f73]"
-                  }`}
-                >
-                  {roleToggleLabel(choice.role, t)}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm leading-6 text-[#52635c]">
-          <p className="flex min-w-0 items-start gap-2">
-            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#2f6f73] font-mono text-[11px] font-black text-white">?</span>
-            <span>{selectedRole ? roleToggleHint(selectedRole, t) : t.result.defaultLensNote}</span>
-          </p>
-          {samePickRoles.length > 0 && (
-            <span className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1 text-xs font-bold text-[#64736c]">
-              {t.result.samePickAs(samePickRoles.join(" · "))}
-            </span>
-          )}
-          <span className="text-xs font-bold text-[#64736c]">{t.result.candidateCount(eligibleCount)}</span>
-          {selectedListing && selectedChoice && (
-            <button className="text-button min-h-0 py-0 text-xs" type="button" onClick={() => void copyComparisonReceipt()}>
-              <IconReceipt className="h-4 w-4" />
-              {receiptCopied ? t.result.receiptCopied : t.result.copyReceipt}
-            </button>
-          )}
-        </div>
-      </div>
-
       {report.rankedChoices.length === 0 && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.noRecommendationTitle}</h3>
@@ -1995,10 +1926,33 @@ function ComparisonResult({
             <RecommendedBuyHero
               listing={selectedListing}
               choice={selectedChoice}
+              verdict={selectedVerdictCopy ?? buildVerdictCopy({
+                listing: selectedListing,
+                choice: selectedChoice,
+                alternatives: alternativeListings,
+                lang,
+              })}
+              comparableCount={eligibleCount}
               fallbackImageUrl={report.confirmedCard?.imageUrl ?? null}
               marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
               demoMode={report.demoMode}
               onAsk={askAboutListing}
+            />
+          )}
+
+          {report.rankedChoices.length > 0 && (
+            <LensControls
+              choices={report.rankedChoices}
+              selectedRole={selectedRole}
+              samePickRoles={samePickRoles}
+              onSelect={(role) => {
+                setRoleOverride(role);
+                setQaQuestion("");
+                setQaAnswer(null);
+                setQaError(null);
+                setQaTarget(null);
+                trackEvent("lens_selected", { choice_role: role });
+              }}
             />
           )}
 
@@ -2036,34 +1990,21 @@ function ComparisonResult({
             )}
           </div>
 
-          <MarketReferenceLine
+          <DecisionReceipt
             card={report.confirmedCard}
             generatedAt={report.generatedAt}
             listedRange={listedRange}
-          />
-
-          <SourceStatusLine
             liveSources={connectedSourceLabels}
             hasMarketReference={marketReferenceAvailable}
             unavailableCount={unavailablePlatformCount}
             observedTime={observedTime}
             warningsCount={report.warnings.length}
+            excluded={excluded}
+            cautions={report.narrative.cautions}
+            receiptCopied={receiptCopied}
+            canCopy={Boolean(selectedListing && selectedChoice)}
+            onCopy={() => void copyComparisonReceipt()}
           />
-
-          {excluded.length > 0 && (
-            <details className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
-              <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.excluded(excluded.length)}</summary>
-              <div className="mt-3 space-y-2 text-sm text-[#64736c]">
-                {excluded.map((listing) => (
-                  <p key={listing.id}>
-                    <span className="font-black uppercase tracking-[0.04em] text-[#9a4a2c]">{t.result.tooRiskySkip}</span>
-                    {": "}
-                    <strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}
-                  </p>
-                ))}
-              </div>
-            </details>
-          )}
 
           <details id="method" className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
@@ -2148,17 +2089,6 @@ function ComparisonResult({
               comparingDiscoveryId={comparingDiscoveryId}
             />
           )}
-          <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
-            <h3 className="text-sm font-black text-[#24312f]">{t.result.beforeYouBuy}</h3>
-            <ul className="mt-3 space-y-2 text-sm leading-6 text-[#52635c]">
-              {report.narrative.cautions.map((caution) => (
-                <li key={caution} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b26a4c]" />
-                  {localizedCaution(caution, t)}
-                </li>
-              ))}
-            </ul>
-          </section>
         </aside>
       </div>
     </section>
@@ -2674,9 +2604,67 @@ function MarketDeltaBadge({
   );
 }
 
+function LensControls({
+  choices,
+  selectedRole,
+  samePickRoles,
+  onSelect,
+}: {
+  choices: RankedChoice[];
+  selectedRole: RankedChoice["role"] | null;
+  samePickRoles: string[];
+  onSelect: (role: RankedChoice["role"]) => void;
+}) {
+  const t = useT();
+  return (
+    <section className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-black text-[#24312f]">{t.result.optimizeInsteadFor}</h3>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-[#64736c]">{t.result.defaultLensNote}</p>
+        </div>
+        {samePickRoles.length > 0 && (
+          <span className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-2.5 py-1 text-xs font-bold text-[#64736c]">
+            {t.result.samePickAs(samePickRoles.join(" · "))}
+          </span>
+        )}
+      </div>
+      <div
+        className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4"
+        style={choices.length === 4 ? undefined : { gridTemplateColumns: `repeat(${choices.length}, minmax(0, 1fr))` }}
+      >
+        {choices.map((choice) => {
+          const active = choice.role === selectedRole;
+          return (
+            <button
+              key={choice.role}
+              type="button"
+              onClick={() => onSelect(choice.role)}
+              aria-pressed={active}
+              title={roleToggleHint(choice.role, t)}
+              className={`min-h-12 rounded-md border px-3 py-2 text-left transition ${
+                active
+                  ? "border-[#2f6f73] bg-[#2f6f73] text-[#fcfbf6]"
+                  : "border-[#d6ded5] bg-[#fcfbf6] text-[#52635c] hover:border-[#9fb3a8] hover:bg-[#e7efe8] hover:text-[#2f6f73]"
+              }`}
+            >
+              <span className="block text-sm font-black">{roleToggleLabel(choice.role, t)}</span>
+              <span className={`mt-1 block text-xs leading-4 ${active ? "text-[#dcecdf]" : "text-[#7a8982]"}`}>
+                {roleToggleHint(choice.role, t)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function RecommendedBuyHero({
   listing,
   choice,
+  verdict,
+  comparableCount,
   fallbackImageUrl,
   marketPrice,
   demoMode,
@@ -2684,37 +2672,50 @@ function RecommendedBuyHero({
 }: {
   listing: NormalizedListing;
   choice: RankedChoice;
+  verdict: VerdictCopy;
+  comparableCount: number;
   fallbackImageUrl: string | null;
   marketPrice: number | null;
   demoMode: boolean;
   onAsk: (listing: NormalizedListing) => void;
 }) {
   const t = useT();
-  const { lang } = useLang();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
-  const roleScore = choice.role === "lowest_landed_cost"
-    ? Math.round(calculatePriceComponent(total, marketPrice))
-    : choice.role === "safest_listing"
-      ? listing.safetyScore
-      : choice.role === "best_condition_evidence"
-        ? listing.evidenceCompletenessScore
-        : listing.valueScore;
   const imageUrl = listing.imageUrl ?? fallbackImageUrl;
-  const reason = choiceReasonText(choice, listing, lang);
+  const [loadedImageUrl, setLoadedImageUrl] = useState<string | null>(null);
+  const imageLoaded = imageUrl !== null && loadedImageUrl === imageUrl;
 
   return (
     <article
       aria-live="polite"
-      className="rounded-2xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_14px_34px_rgba(36,49,47,0.10)] sm:p-5"
-      title={reason}
+      aria-label={t.result.bestSupportedBuy}
+      className="rounded-xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.08)] sm:p-5"
+      title={`${verdict.why} ${verdict.catch}`}
     >
-      <div className="grid gap-4 sm:grid-cols-[68px_minmax(0,1fr)_auto] sm:items-center">
-        <div className="relative aspect-[2.5/3.5] w-16 overflow-hidden rounded-lg border border-[#c9d7ce] bg-[#e7efe8]">
+      <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-4 lg:grid-cols-[92px_minmax(0,1fr)_auto] lg:items-center">
+        <div className="relative aspect-[2.5/3.5] w-[76px] overflow-hidden rounded-lg border border-[#c9d7ce] bg-[#e7efe8] sm:w-[84px] lg:w-[92px]">
           {imageUrl ? (
-            <Image src={imageUrl} alt="" fill sizes="68px" className="object-contain" />
+            <>
+              <span
+                aria-hidden="true"
+                className={`absolute inset-0 bg-[linear-gradient(135deg,#e7efe8,#fcfbf6_52%,#f4e7bf)] transition-opacity duration-150 motion-reduce:transition-none ${
+                  imageLoaded ? "opacity-0" : "opacity-100"
+                }`}
+              />
+              <Image
+              src={imageUrl}
+              alt={listing.imageUrl ? `${listing.title} listing image` : `${listing.title} reference card image`}
+              fill
+              loading="eager"
+              fetchPriority="high"
+              sizes="(min-width: 1024px) 92px, (min-width: 640px) 84px, 76px"
+              onLoad={() => setLoadedImageUrl(imageUrl)}
+              className={`object-contain transition-opacity duration-150 motion-reduce:transition-none ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+            />
+            </>
           ) : (
             <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-6 w-6" /></span>
           )}
@@ -2723,22 +2724,26 @@ function RecommendedBuyHero({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md bg-[#2f6f73] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
+              {t.result.ourPick}
+            </span>
+            <span className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
               {roleToggleLabel(choice.role, t)}
             </span>
-            <span className="text-xs font-bold text-[#7a8982]">{t.result.score(roleScore)}</span>
+            <span className="text-xs font-bold text-[#7a8982]">{verdict.strength}</span>
+            <span className="text-xs font-bold text-[#7a8982]">{t.result.oneOfComparable(comparableCount)}</span>
             {listing.demo && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
             {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
             {listing.webDiscovered && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
           </div>
-          <h3 className="mt-2 font-serif text-xl font-bold leading-tight text-[#24312f] sm:text-2xl">
+          <h2 className="mt-2 font-serif text-xl font-bold leading-tight text-[#24312f] sm:text-2xl">
             {listing.title}
-          </h3>
+          </h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-[#52635c]">
             <ListingMetaLine listing={listing} />
           </p>
         </div>
 
-        <div className="grid gap-2 sm:min-w-[170px] sm:justify-items-end sm:text-right">
+        <div className="col-span-2 grid gap-3 sm:col-start-2 lg:col-span-1 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
           <div>
             <p className="font-mono text-3xl font-black leading-none text-[#24312f]">{formatMoney(total)}</p>
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{totalLabel}</p>
@@ -2748,10 +2753,20 @@ function RecommendedBuyHero({
       </div>
 
       <div className="mt-4 border-t border-[#e4ebe3] pt-4">
-        <p className="text-sm leading-6 text-[#52635c]">
-          <strong className="text-[#24312f]">{t.result.whyThisPick}</strong>{" "}
-          {reason}
-        </p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#2f6f73]">{t.result.whyItStandsOut}</h3>
+            <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.why}</p>
+          </div>
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.whatToKnow}</h3>
+            <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.catch}</p>
+          </div>
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.nextBestOption}</h3>
+            <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.alternative ?? t.result.noAlternative}</p>
+          </div>
+        </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <VerdictMath listing={listing} marketPrice={marketPrice} />
           <div className="flex flex-wrap gap-2">
@@ -2767,7 +2782,7 @@ function RecommendedBuyHero({
                 rel="noreferrer"
                 onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode })}
               >
-                {t.card.viewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
+                {t.result.reviewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
               </a>
             ) : (
               <span className="inline-flex min-h-10 items-center text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
@@ -2776,6 +2791,98 @@ function RecommendedBuyHero({
         </div>
       </div>
     </article>
+  );
+}
+
+function DecisionReceipt({
+  card,
+  generatedAt,
+  listedRange,
+  liveSources,
+  hasMarketReference,
+  unavailableCount,
+  observedTime,
+  warningsCount,
+  excluded,
+  cautions,
+  receiptCopied,
+  canCopy,
+  onCopy,
+}: {
+  card: CardIdentityCandidate | null;
+  generatedAt: string;
+  listedRange: string;
+  liveSources: string;
+  hasMarketReference: boolean;
+  unavailableCount: number;
+  observedTime: string;
+  warningsCount: number;
+  excluded: NormalizedListing[];
+  cautions: string[];
+  receiptCopied: boolean;
+  canCopy: boolean;
+  onCopy: () => void;
+}) {
+  const t = useT();
+  return (
+    <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4 sm:p-5" aria-labelledby="decision-receipt-title">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 id="decision-receipt-title" className="font-serif text-xl font-black text-[#24312f]">{t.result.decisionReceipt}</h3>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-[#64736c]">{t.result.decisionReceiptHelp}</p>
+        </div>
+        <button
+          className="secondary-button min-h-10 px-3 py-2 text-xs"
+          type="button"
+          disabled={!canCopy}
+          onClick={onCopy}
+          title={!canCopy ? t.result.shareUnavailable : undefined}
+        >
+          <IconReceipt className="h-4 w-4" />
+          {receiptCopied ? t.result.receiptCopied : t.result.shareReceipt}
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-2">
+        <MarketReferenceLine card={card} generatedAt={generatedAt} listedRange={listedRange} />
+        <SourceStatusLine
+          liveSources={liveSources}
+          hasMarketReference={hasMarketReference}
+          unavailableCount={unavailableCount}
+          observedTime={observedTime}
+          warningsCount={warningsCount}
+        />
+      </div>
+
+      {cautions.length > 0 && (
+        <div className="mt-4 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+          <h4 className="text-sm font-black text-[#24312f]">{t.result.beforeYouBuy}</h4>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-[#52635c]">
+            {cautions.map((caution) => (
+              <li key={caution} className="flex gap-2">
+                <IconCaution className="mt-1 h-4 w-4 shrink-0 text-[#8d6032]" />
+                <span>{localizedCaution(caution, t)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {excluded.length > 0 && (
+        <details className="mt-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+          <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.excluded(excluded.length)}</summary>
+          <div className="mt-3 space-y-2 text-sm leading-6 text-[#64736c]">
+            {excluded.map((listing) => (
+              <p key={listing.id}>
+                <span className="font-black uppercase tracking-[0.04em] text-[#9a4a2c]">{t.result.tooRiskySkip}</span>
+                {": "}
+                <strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
+    </section>
   );
 }
 
