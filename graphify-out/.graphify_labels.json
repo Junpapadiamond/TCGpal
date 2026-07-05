@@ -61,11 +61,9 @@
   "59": "VerdictMath",
   "60": "CardIdentityCandidate",
   "61": "eBay ePID Coverage Report",
-  "62": "formatMoney",
   "63": "Status — TCGpal session summary & handoff",
   "64": "check-ebay.mjs",
   "65": "fetch-optcg.mjs",
-  "66": "identifyCards",
   "67": "instrumentation-client.ts",
   "68": "vercel.json",
   "69": "design-qa.md",
@@ -74,12 +72,7 @@
   "72": "postcss.config.mjs",
   "73": "global-error.tsx",
   "74": "page.tsx",
-  "75": "analytics.ts",
   "76": "CLAUDE.md",
   "77": "instrumentation.test.ts",
-  "78": "vitest.config.ts",
-  "79": "VerdictMath",
-  "80": "buildRequest",
-  "81": "page.tsx",
-  "82": "ApiResponseError"
+  "78": "vitest.config.ts"
 }

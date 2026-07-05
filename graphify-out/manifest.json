@@ -115,7 +115,7 @@
     "semantic_hash": ""
   },
   "src/features/comparison/ComparisonApp.tsx": {
-    "mtime": 1783235667.9443433,
+    "mtime": 1783236445.780673,
     "ast_hash": "ce649e3c2e0b11e19b7465282efcc4a1",
     "semantic_hash": ""
   },
@@ -130,7 +130,7 @@
     "semantic_hash": ""
   },
   "src/features/comparison/i18n.tsx": {
-    "mtime": 1783234136.882129,
+    "mtime": 1783236445.782035,
     "ast_hash": "0f2f6efb03205dfa0054b97e65514526",
     "semantic_hash": ""
   },
@@ -500,7 +500,7 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1783234931.447749,
+    "mtime": 1783236445.7652743,
     "ast_hash": "b90a70694eb5695b5a8e54ba99794d28",
     "semantic_hash": ""
   },
@@ -660,27 +660,27 @@
     "semantic_hash": ""
   },
   "docs/goal-verdict-first-ui.md": {
-    "mtime": 1783232149.0120554,
+    "mtime": 1783236445.7660115,
     "ast_hash": "628aedf3c3a697d0d7d3cf1bc49e73ab",
     "semantic_hash": ""
   },
   "docs/mockups/verdict-first-mock.html": {
-    "mtime": 1783232007.7141979,
+    "mtime": 1783236445.7664413,
     "ast_hash": "f0ca6f746f59c309a6efad5048194120",
     "semantic_hash": ""
   },
   "src/features/comparison/verdict-copy.test.ts": {
-    "mtime": 1783233092.0315921,
+    "mtime": 1783236445.7825227,
     "ast_hash": "dedb29cc0ca3ec9df67593731c08ddd2",
     "semantic_hash": ""
   },
   "src/features/comparison/verdict-copy.ts": {
-    "mtime": 1783233319.2448487,
+    "mtime": 1783236445.7838078,
     "ast_hash": "d1c758722b01b37fc00e837634400b82",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-05-verdict-first-ui.md": {
-    "mtime": 1783233011.6044087,
+    "mtime": 1783236445.7673721,
     "ast_hash": "cd331bdf501baf9d98978923ca543ba1",
     "semantic_hash": ""
   },

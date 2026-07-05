@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1231 nodes · 2249 edges · 83 communities (73 shown, 10 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 21 edges (avg confidence: 0.64)
+- 1231 nodes · 2332 edges · 76 communities (68 shown, 8 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 26 edges (avg confidence: 0.67)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6eddb8a3`
+- Built from commit: `b465e9ad`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -77,67 +77,60 @@
 - [[_COMMUNITY_VerdictMath|VerdictMath]]
 - [[_COMMUNITY_CardIdentityCandidate|CardIdentityCandidate]]
 - [[_COMMUNITY_eBay ePID Coverage Report|eBay ePID Coverage Report]]
-- [[_COMMUNITY_formatMoney|formatMoney]]
 - [[_COMMUNITY_Status — TCGpal session summary & handoff|Status — TCGpal session summary & handoff]]
 - [[_COMMUNITY_check-ebay.mjs|check-ebay.mjs]]
 - [[_COMMUNITY_fetch-optcg.mjs|fetch-optcg.mjs]]
-- [[_COMMUNITY_identifyCards|identifyCards]]
 - [[_COMMUNITY_instrumentation-client.ts|instrumentation-client.ts]]
 - [[_COMMUNITY_vercel.json|vercel.json]]
 - [[_COMMUNITY_design-qa|design-qa.md]]
 - [[_COMMUNITY_eslint.config.mjs|eslint.config.mjs]]
 - [[_COMMUNITY_next.config.ts|next.config.ts]]
 - [[_COMMUNITY_postcss.config.mjs|postcss.config.mjs]]
-- [[_COMMUNITY_analytics.ts|analytics.ts]]
-- [[_COMMUNITY_VerdictMath|VerdictMath]]
-- [[_COMMUNITY_buildRequest|buildRequest]]
-- [[_COMMUNITY_page.tsx|page.tsx]]
-- [[_COMMUNITY_ApiResponseError|ApiResponseError]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `runListingComparison()` - 38 edges
 2. `useT()` - 29 edges
-3. `CardIdentityCandidate` - 19 edges
+3. `CardIdentityCandidate` - 20 edges
 4. `getAiConfig()` - 18 edges
 5. `logOpsEvent()` - 18 edges
-6. `fetchUniversalListing()` - 16 edges
-7. `compilerOptions` - 16 edges
-8. `normalizeListing()` - 14 edges
-9. `TCGpal Agent Guide` - 13 edges
-10. `useLang()` - 13 edges
+6. `normalizeListing()` - 16 edges
+7. `fetchUniversalListing()` - 16 edges
+8. `compilerOptions` - 16 edges
+9. `useLang()` - 13 edges
+10. `TCGpal Agent Guide` - 13 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `main()` --indirect_call--> `card()`  [INFERRED]
   scripts/build-optcg-catalog.mjs → src/lib/external/one-piece-catalog.ts
+- `composeCarouselCards()` --indirect_call--> `card()`  [INFERRED]
+  src/features/comparison/ComparisonApp.tsx → src/lib/external/one-piece-catalog.ts
+- `buildMarqueeItems()` --indirect_call--> `card()`  [INFERRED]
+  src/features/comparison/ComparisonApp.tsx → src/lib/external/one-piece-catalog.ts
+- `makeListing()` --calls--> `normalizeListing()`  [EXTRACTED]
+  src/features/comparison/verdict-copy.test.ts → src/lib/comparison/ranking.ts
 - `runListingComparison()` --indirect_call--> `listing()`  [INFERRED]
   src/lib/ai/listing-compare.ts → src/lib/ai/comparison-qa.test.ts
-- `finalizeListingScores()` --indirect_call--> `listing()`  [INFERRED]
-  src/lib/comparison/ranking.ts → src/lib/ai/comparison-qa.test.ts
-- `runStandardComparisonFlow()` --indirect_call--> `card()`  [INFERRED]
-  src/lib/testing/standard-comparison-flow.ts → src/lib/external/one-piece-catalog.ts
-- `ComparisonExperience()` --calls--> `useT()`  [EXTRACTED]
-  src/features/comparison/ComparisonApp.tsx → src/features/comparison/i18n.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (83 total, 10 thin omitted)
+## Communities (76 total, 8 thin omitted)
 
 ### Community 0 - "comparison-qa.ts"
 Cohesion: 0.08
 Nodes (49): answerComparisonQuestion(), answerWithWebContext(), asksAboutCheapest(), asksAboutRisk(), asksForOutsideContext(), asksForVerificationSources(), asksReportOnlyQuestion(), buildWebContextQuery() (+41 more)
 
 ### Community 1 - "provider.ts"
-Cohesion: 0.08
-Nodes (38): GET(), getAllocatorConfig(), isComparisonAgentEnabled(), parseFallbackModels(), AiConfig, AiModelRole, AiProviderName, AiReasoningEffort (+30 more)
+Cohesion: 0.11
+Nodes (22): AiConfig, AiModelRole, getModelForStep(), AiProbeResult, AiProvider, AiProviderResult, anthropicHeaders(), AnthropicMessagesProvider (+14 more)
 
 ### Community 2 - "one-piece-tcg.ts"
 Cohesion: 0.09
 Nodes (38): GET(), card(), catalogByNumber, catalogByPrint, curated, findOnePieceCatalogCard(), findOnePieceCatalogVariants(), onePieceCatalog (+30 more)
 
 ### Community 3 - "ComparisonApp.tsx"
-Cohesion: 0.08
-Nodes (3): IconComponent, IconProps, strokeProps
+Cohesion: 0.09
+Nodes (22): WorkedExample(), IconArrowUpRight(), IconCardCheck(), IconCardFan(), IconCardSearch(), IconCaution(), IconCheck(), IconChevronDown() (+14 more)
 
 ### Community 4 - "ebay.ts"
 Cohesion: 0.09
@@ -153,7 +146,7 @@ Nodes (39): collectorNumberKey(), collectorPrefixKey(), findTcgplayerGroup(), ge
 
 ### Community 7 - "ranking.ts"
 Cohesion: 0.10
-Nodes (36): aboveMarketContext(), calculateBaseSellerTrustScore(), calculateConditionCompatibilityScore(), calculateEvidenceCompletenessScore(), calculatePriceComponent(), calculateSellerSubRatingScore(), calculateSellerTrustScore(), calculateValueScore() (+28 more)
+Nodes (35): aboveMarketContext(), calculateBaseSellerTrustScore(), calculateConditionCompatibilityScore(), calculateEvidenceCompletenessScore(), calculateSellerSubRatingScore(), calculateSellerTrustScore(), calculateValueScore(), comparableCost() (+27 more)
 
 ### Community 8 - "web-marketplace-discovery.ts"
 Cohesion: 0.09
@@ -181,7 +174,7 @@ Nodes (22): clearComparisonCache(), comparisonCacheKey(), getCachedComparison(),
 
 ### Community 14 - "listing-compare.ts"
 Cohesion: 0.13
-Nodes (29): applyMarketAnchor(), buildMarketReference(), buildNarrative(), buildSoldReference(), CATALOG_RETRY_DELAYS_MS, dedupeSeeds(), evaluateOnePieceMatch(), extractTcgplayerPricing() (+21 more)
+Nodes (19): applyMarketAnchor(), buildMarketReference(), buildNarrative(), buildSoldReference(), dedupeSeeds(), errorMessage(), formatAnchorDate(), getPriceChartingReference() (+11 more)
 
 ### Community 15 - "rate-limit.ts"
 Cohesion: 0.16
@@ -204,44 +197,44 @@ Cohesion: 0.15
 Nodes (12): 1. Landing: kill the generic, show a concrete example, 2. Results: verdict-first hierarchy, 3. Verdict copy: judgment + the catch + the alternative, 4. Receipt block, 5. Fix the winner image on first paint, Goal: De-generic the UI — plainspoken landing, verdict-first results, Guardrails (non-negotiable), Non-goals (+4 more)
 
 ### Community 20 - "useT"
-Cohesion: 0.13
-Nodes (15): CardKeyPreview(), ComparisonQuestionBox(), DecisionReceipt(), ErrorNotice(), Footer(), IdentityCard(), IdentityConfirmation(), LoadingLoop() (+7 more)
+Cohesion: 0.12
+Nodes (22): CandidateRow(), CardKeyPreview(), choiceReasonText(), ComparisonQuestionBox(), ComparisonResult(), ErrorNotice(), Footer(), formatMoney() (+14 more)
 
 ### Community 21 - "market-agent.ts"
-Cohesion: 0.17
-Nodes (20): AGENT_SYSTEM_PROMPT, AllocatorDialect, createAgentModel(), createChatCompletionsAgentModel(), createOpenAiAgentModel(), createResponsesAgentModel(), fetchWithTimeout(), parseArgs() (+12 more)
+Cohesion: 0.22
+Nodes (11): createAgentModel(), createChatCompletionsAgentModel(), createOpenAiAgentModel(), createResponsesAgentModel(), fetchWithTimeout(), parseArgs(), RunMarketSearchInput, toAgentDecision() (+3 more)
 
 ### Community 22 - "platforms.ts"
-Cohesion: 0.14
-Nodes (18): runAgentFanout(), DEFAULT_AGENTS, ebayPlatformAgent, PlatformAgent, PlatformOutcome, PlatformSearchInput, PlatformSearchPlan, PlatformSeed (+10 more)
+Cohesion: 0.11
+Nodes (29): AGENT_SYSTEM_PROMPT, AllocatorDialect, buildPlatformTools(), runAgentFanout(), runMarketSearch(), sampleSeedsForAllocator(), ToolCollector, withDeadline() (+21 more)
 
 ### Community 23 - "standard-comparison-flow.ts"
-Cohesion: 0.20
-Nodes (8): groupIdentitiesBySet(), IdentityGroup, CacheEntry, CardCrosswalkEntry, crosswalkCache, EbayProductResolution, BuyerContext, CardIdentityCandidate
+Cohesion: 0.33
+Nodes (5): CacheEntry, CardCrosswalkEntry, crosswalkCache, EbayProductResolution, BuyerContext
 
 ### Community 24 - "ComparisonResult"
-Cohesion: 0.17
-Nodes (21): buildListingCatch(), buildVerdictCopy(), chineseAlternative(), chineseCatch(), chineseCondition(), chineseTotal(), chineseWhy(), englishAlternative() (+13 more)
+Cohesion: 0.21
+Nodes (20): buildListingCatch(), buildVerdictCopy(), chineseAlternative(), chineseCatch(), chineseCondition(), chineseTotal(), chineseWhy(), englishAlternative() (+12 more)
 
 ### Community 25 - "TCGpal Agent Guide"
 Cohesion: 0.13
 Nodes (14): Agent and Rules Boundary, Agent Navigation Interfaces, Analytics Privacy, Architecture, Current Status, Data Boundaries, Engineering Rules, Graphify (+6 more)
 
 ### Community 26 - "harness.ts"
-Cohesion: 0.18
-Nodes (12): AgentDecision, AgentMessage, AgentModel, AgentRun, AgentStep, AgentTool, AgentToolCall, AgentToolResult (+4 more)
+Cohesion: 0.11
+Nodes (17): AgentDecision, AgentMessage, AgentModel, AgentRun, AgentStep, AgentTool, AgentToolCall, AgentToolResult (+9 more)
 
 ### Community 27 - "面试 talk track — 国内大厂 AI PM（TCGpal）"
 Cohesion: 0.14
 Nodes (13): 1. AI 放在哪——核心判断力, 2 分钟版（问题 → 洞察 → 关键决策 → 复盘）, 2. 可信度 / 控幻觉设计, 3. 为什么是 Agent,不是一次 prompt, 4. 效果怎么评估（eval）, 5. 成本取舍 + 自我复盘, AI PM 专属追问——提前备好, Deep-dive 弹药库（5 个 STAR 故事,按 AI PM 重心排序） (+5 more)
 
 ### Community 28 - "route.ts"
-Cohesion: 0.40
-Nodes (4): demoIdentities, DemoListingSeed, demoListingSeeds, ListingSeed
+Cohesion: 0.22
+Nodes (7): buyer, makeListing(), demoIdentities, DemoListingSeed, demoListingSeeds, ListingSeed, RankedChoice
 
 ### Community 29 - "evaluateIdentityFields"
-Cohesion: 0.28
-Nodes (9): cleanCardName(), collectorNumberParts(), detectIdentityMismatch(), evaluateIdentityFields(), extractCollectorNumber(), normalizeCollectorSegment(), normalizeWords(), rankLocalIdentities() (+1 more)
+Cohesion: 0.14
+Nodes (29): CATALOG_RETRY_DELAYS_MS, cleanCardName(), collectorNumberParts(), confidenceRank(), dedupeIdentities(), detectIdentityMismatch(), evaluateIdentity(), evaluateIdentityFields() (+21 more)
 
 ### Community 30 - "build-optcg-catalog.mjs"
 Cohesion: 0.27
@@ -252,8 +245,8 @@ Cohesion: 0.23
 Nodes (9): normalizeCents(), normalizeProduct(), PriceChartingProduct, priceChartingProductSchema, priceChartingSearchResponseSchema, PriceChartingSearchResult, PriceChartingUnavailableError, SearchPriceChartingOptions (+1 more)
 
 ### Community 32 - "query-parser.ts"
-Cohesion: 0.22
-Nodes (11): COMMON_ALIAS_HINTS, extractFirst(), GAME_TOKENS, LANGUAGE_TOKENS, normalizeWhitespace(), parseCardQuery(), ParsedCardQuery, parsedCardQuerySchema (+3 more)
+Cohesion: 0.20
+Nodes (12): COMMON_ALIAS_HINTS, extractFirst(), GAME_TOKENS, LANGUAGE_TOKENS, normalizeWhitespace(), parseCardQuery(), ParsedCardQuery, parsedCardQuerySchema (+4 more)
 
 ### Community 33 - "listing-risk.ts"
 Cohesion: 0.23
@@ -264,16 +257,16 @@ Cohesion: 0.15
 Nodes (14): recordCacheBackendFailure(), consoleSink, getOperationalErrorCode(), logOpsEvent(), OperationalEvent, OperationalEventName, OperationalEventRecord, OperationalEventSink (+6 more)
 
 ### Community 35 - "japan-references.ts"
-Cohesion: 0.27
-Nodes (9): buildJapanReferenceLinks(), buildJapanSearchQuery(), isOnePiece(), JapanReferenceLink, manualNote(), searchUrl(), onePieceCard, pokemonCard (+1 more)
+Cohesion: 0.26
+Nodes (10): buildJapanReferenceLinks(), buildJapanSearchQuery(), isOnePiece(), JapanReferenceLink, manualNote(), searchUrl(), onePieceCard, pokemonCard (+2 more)
 
 ### Community 36 - "config.ts"
-Cohesion: 0.18
-Nodes (7): AllocatorConfig, buildPlatformTools(), sampleSeedsForAllocator(), buyer, card, config, fetcher
+Cohesion: 0.19
+Nodes (16): GET(), getAllocatorConfig(), isComparisonAgentEnabled(), parseFallbackModels(), AiProviderName, AiReasoningEffort, AiWireApi, getAiConfig() (+8 more)
 
 ### Community 37 - "standard-comparison-flow.ts"
 Cohesion: 0.15
-Nodes (15): clearCrosswalkCache(), TcgGame, assertStandardComparisonFlowPlan(), buildStandardComparisonRequest(), runStandardComparisonFlow(), selectConfirmationId(), STANDARD_COMPARISON_FLOW_CARDS, StandardComparisonEntryMode (+7 more)
+Nodes (15): clearCrosswalkCache(), ConditionClaim, assertStandardComparisonFlowPlan(), buildStandardComparisonRequest(), runStandardComparisonFlow(), selectConfirmationId(), STANDARD_COMPARISON_FLOW_CARDS, StandardComparisonEntryMode (+7 more)
 
 ### Community 38 - "raw-vs-slab.ts"
 Cohesion: 0.35
@@ -284,12 +277,12 @@ Cohesion: 0.20
 Nodes (9): AI and agent boundary, Council verdict, Distribution, External source notes, Launch gates, Product thesis, Proven, Better, New, TCGpal Ship-Readiness Audit (+1 more)
 
 ### Community 40 - "us-sales-tax.ts"
-Cohesion: 0.60
-Nodes (4): estimateSalesTaxRateFromZip(), STATE_TAX_RATES, stateFromZip(), ZIP_PREFIX_RANGES
+Cohesion: 0.31
+Nodes (8): buildRequest(), hasSubstantiveConditionNotes(), nullableInteger(), nullableNumber(), estimateSalesTaxRateFromZip(), STATE_TAX_RATES, stateFromZip(), ZIP_PREFIX_RANGES
 
 ### Community 41 - "ComparisonExperience"
-Cohesion: 0.22
-Nodes (10): ComparisonExperience(), composeCarouselCards(), ConfirmedSettingsStage(), isRecentCarouselCard(), LensControls(), readRecentCarouselCards(), rolePreferenceLabel(), roleToggleHint() (+2 more)
+Cohesion: 0.15
+Nodes (15): ComparisonExperience(), composeCarouselCards(), ConfirmedSettingsStage(), isRecentCarouselCard(), LensControls(), readRecentCarouselCards(), rolePreferenceLabel(), roleToggleHint() (+7 more)
 
 ### Community 42 - "listing-compare.test.ts"
 Cohesion: 0.22
@@ -312,8 +305,8 @@ Cohesion: 0.22
 Nodes (8): Accessibility & Inclusion, Anti-references, Brand Personality, Design Principles, Product, Product Purpose, Register, Users
 
 ### Community 47 - "comparison-form-state.ts"
-Cohesion: 0.09
-Nodes (20): apiErrorMessage(), buildMarqueeItems(), conditions, evidenceVerdict(), fallbackCardBacks, gameTiles, HoloCardArt(), isRetriableStatus() (+12 more)
+Cohesion: 0.06
+Nodes (36): ComparisonForm, defaultComparisonFormValues, emptyLedgerRow, LedgerRow, LensRole, resetForNewCardSearch(), apiErrorMessage(), ApiResponseError (+28 more)
 
 ### Community 48 - "market-agent.test.ts"
 Cohesion: 0.17
@@ -360,16 +353,12 @@ Cohesion: 0.50
 Nodes (4): <a id="20"></a>20. Collaborative chat artifacts, <a id="21"></a>21. Knowledge-cutoff disclaimers & speculative gap-filling, <a id="22"></a>22. Sycophantic / servile tone, Communication patterns
 
 ### Community 60 - "CardIdentityCandidate"
-Cohesion: 0.27
-Nodes (8): ComparisonForm, defaultComparisonFormValues, emptyLedgerRow, LedgerRow, LensRole, resetForNewCardSearch(), ConditionClaim, RankedChoice
+Cohesion: 0.40
+Nodes (3): IdentityConfirmation(), groupIdentitiesBySet(), IdentityGroup
 
 ### Community 61 - "eBay ePID Coverage Report"
 Cohesion: 0.40
 Nodes (4): Browse ePID Consensus Fallback, Current eBay Access, eBay ePID Coverage Report, Interpretation
-
-### Community 62 - "formatMoney"
-Cohesion: 0.27
-Nodes (10): CandidateRow(), choiceReasonText(), ComparisonResult(), formatMoney(), listingCost(), MarketReferenceLine(), RecommendedBuyHero(), roleToggleLabel() (+2 more)
 
 ### Community 63 - "Status — TCGpal session summary & handoff"
 Cohesion: 0.50
@@ -379,41 +368,25 @@ Nodes (3): Procedure, Rules, Status — TCGpal session summary & handoff
 Cohesion: 0.50
 Nodes (3): auth, env, envText
 
-### Community 66 - "identifyCards"
-Cohesion: 0.27
-Nodes (10): confidenceRank(), dedupeIdentities(), errorMessage(), evaluateIdentity(), formatCollectorNumber(), getPriceChartingReference(), identifyCards(), identifyOnePieceCards() (+2 more)
-
-### Community 75 - "analytics.ts"
-Cohesion: 0.43
-Nodes (5): allowedProperties, initializeAnalytics(), sanitizeAnalyticsProperties(), TcgpalAnalyticsEvent, trackEvent()
-
-### Community 79 - "VerdictMath"
-Cohesion: 0.40
-Nodes (6): conditionInputsLine(), evidenceInputsLine(), riskFormula(), sellerInputsLine(), valueFormula(), VerdictMath()
-
-### Community 80 - "buildRequest"
-Cohesion: 0.67
-Nodes (4): buildRequest(), hasSubstantiveConditionNotes(), nullableInteger(), nullableNumber()
-
 ## Knowledge Gaps
-- **446 isolated node(s):** `This is NOT the Next.js you know`, `Product`, `Current Status`, `Product Guardrails`, `Data Boundaries` (+441 more)
+- **442 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+437 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `card()` connect `one-piece-tcg.ts` to `standard-comparison-flow.ts`, `build-optcg-catalog.mjs`?**
+- **Why does `CardIdentityCandidate` connect `japan-references.ts` to `one-piece-tcg.ts`, `ebay.ts`, `tcgcsv.ts`, `web-marketplace-discovery.ts`, `schemas.ts`, `route.ts`, `comparison-form-state.ts`, `platforms.ts`, `standard-comparison-flow.ts`, `harness.ts`, `CardIdentityCandidate`, `evaluateIdentityFields`?**
+  _High betweenness centrality (0.041) - this node is a cross-community bridge._
+- **Why does `Marketplace` connect `universal-listing.ts` to `events.ts`, `ranking.ts`, `web-marketplace-discovery.ts`, `schemas.ts`, `comparison-form-state.ts`, `i18n.tsx`, `platforms.ts`, `harness.ts`?**
   _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `main()` connect `build-optcg-catalog.mjs` to `one-piece-tcg.ts`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `CardIdentityCandidate` connect `standard-comparison-flow.ts` to `one-piece-tcg.ts`, `japan-references.ts`, `config.ts`, `ebay.ts`, `tcgcsv.ts`, `web-marketplace-discovery.ts`, `schemas.ts`, `listing-compare.ts`, `market-agent.ts`, `platforms.ts`, `route.ts`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **What connects `This is NOT the Next.js you know`, `Product`, `Current Status` to the rest of the system?**
-  _446 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `card()` connect `one-piece-tcg.ts` to `ComparisonExperience`, `standard-comparison-flow.ts`, `build-optcg-catalog.mjs`, `comparison-form-state.ts`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
+  _442 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `comparison-qa.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
 - **Should `provider.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.07755102040816327 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10887096774193548 - nodes in this community are weakly interconnected._
 - **Should `one-piece-tcg.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.08888888888888889 - nodes in this community are weakly interconnected._
