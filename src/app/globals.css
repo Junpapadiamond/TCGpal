@@ -321,6 +321,15 @@ a {
   box-shadow: 0 14px 28px rgba(36, 49, 47, 0.18);
 }
 
+.loading-card-real {
+  background: #fcfbf6;
+}
+
+.loading-card-real img {
+  padding: 0.18rem;
+  filter: saturate(0.96) contrast(1.02);
+}
+
 .loading-card:nth-child(odd) {
   transform: translateY(-0.2rem) rotate(-2deg);
 }
@@ -334,6 +343,14 @@ a {
   inset: 0.45rem;
   border-radius: 0.42rem;
   border: 1px solid rgba(255, 255, 255, 0.38);
+}
+
+.loading-card-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 28%, rgba(255, 255, 255, 0.22) 44%, transparent 60%);
+  pointer-events: none;
 }
 
 .loading-card-label {
@@ -521,8 +538,60 @@ a {
   mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
 }
 
+.card-marquee-card {
+  position: relative;
+  display: block;
+  height: 6.9rem;
+  width: 4.9rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 0.56rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 10px 22px rgba(36, 49, 47, 0.18);
+  margin-inline: 0.375rem;
+}
+
+.card-marquee-card-real {
+  border-color: rgba(36, 49, 47, 0.13);
+  background: #fcfbf6;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.76) inset,
+    0 10px 24px rgba(36, 49, 47, 0.17);
+}
+
+.card-marquee-card-real img {
+  padding: 0.16rem;
+  filter: saturate(0.96) contrast(1.02);
+}
+
+.card-marquee-inner {
+  position: absolute;
+  inset: 0.375rem;
+  border-radius: 0.38rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.card-marquee-orb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 1.75rem;
+  width: 1.75rem;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+}
+
+.card-marquee-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.2) 45%, transparent 60%);
+  pointer-events: none;
+}
+
 .card-marquee-track {
-  animation: card-marquee 26s linear infinite;
+  animation: card-marquee 30s linear infinite;
   will-change: transform;
 }
 

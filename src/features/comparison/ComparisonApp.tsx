@@ -81,8 +81,22 @@ const conditions: ConditionClaim[] = [
 ];
 
 const LEDGER_PREVIEW_COUNT = 4;
+const RECENT_CONFIRMED_CARDS_KEY = "tcgpal:recent-confirmed-cards";
+const MAX_RECENT_CONFIRMED_CARDS = 10;
+const MAX_MARQUEE_REAL_CARDS = 8;
 
 type LensRole = RankedChoice["role"];
+
+type RecentCarouselCard = {
+  id: string;
+  game: TcgGame;
+  name: string;
+  setName: string;
+  setCode: string;
+  cardNumber: string;
+  imageUrl: string | null;
+  lastSeenAt: number;
+};
 
 type ComparisonForm = {
   // The hero search box: one free-text query, deterministically parsed server-side
@@ -239,6 +253,86 @@ function sleep(ms: number) {
   });
 }
 
+function toRecentCarouselCard(identity: CardIdentityCandidate, game: TcgGame): RecentCarouselCard {
+  return {
+    id: identity.id,
+    game,
+    name: identity.name,
+    setName: identity.setName,
+    setCode: identity.setCode,
+    cardNumber: identity.cardNumber,
+    imageUrl: identity.imageUrl ?? null,
+    lastSeenAt: Date.now(),
+  };
+}
+
+function isRecentCarouselCard(value: unknown): value is RecentCarouselCard {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<RecentCarouselCard>;
+  return typeof candidate.id === "string"
+    && (candidate.game === "pokemon" || candidate.game === "onePiece")
+    && typeof candidate.name === "string"
+    && typeof candidate.setName === "string"
+    && typeof candidate.setCode === "string"
+    && typeof candidate.cardNumber === "string"
+    && (typeof candidate.imageUrl === "string" || candidate.imageUrl === null)
+    && typeof candidate.lastSeenAt === "number";
+}
+
+function safeCarouselImageUrl(value: string | null) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    const allowed = url.protocol === "https:"
+      && (
+        host === "images.pokemontcg.io"
+        || host === "images.scrydex.com"
+        || host === "en.onepiece-cardgame.com"
+        || host.endsWith(".optcgapi.com")
+      );
+    return allowed ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function readRecentCarouselCards(): RecentCarouselCard[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(RECENT_CONFIRMED_CARDS_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(isRecentCarouselCard)
+      .map((card) => ({ ...card, imageUrl: safeCarouselImageUrl(card.imageUrl) }))
+      .slice(0, MAX_RECENT_CONFIRMED_CARDS);
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentCarouselCards(cards: RecentCarouselCard[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(RECENT_CONFIRMED_CARDS_KEY, JSON.stringify(cards.slice(0, MAX_RECENT_CONFIRMED_CARDS)));
+  } catch {
+    /* ignore unavailable storage */
+  }
+}
+
+function mergeRecentCarouselCard(cards: RecentCarouselCard[], card: RecentCarouselCard) {
+  return [card, ...cards.filter((existing) => existing.id !== card.id)].slice(0, MAX_RECENT_CONFIRMED_CARDS);
+}
+
+function composeCarouselCards(current: RecentCarouselCard | null, recent: RecentCarouselCard[]) {
+  const ordered = current ? [current, ...recent] : recent;
+  const deduped = new Map<string, RecentCarouselCard>();
+  for (const card of ordered) {
+    if (!deduped.has(card.id)) deduped.set(card.id, card);
+  }
+  return Array.from(deduped.values()).slice(0, MAX_MARQUEE_REAL_CARDS);
+}
+
 function focusComparisonTarget() {
   window.requestAnimationFrame(() => {
     const target = document.getElementById("comparison-result");
@@ -266,6 +360,7 @@ function ComparisonExperience() {
   const form = useForm<ComparisonForm>({ defaultValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
   const [confirmedIdentityForSettings, setConfirmedIdentityForSettings] = useState<CardIdentityCandidate | null>(null);
+  const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -310,6 +405,13 @@ function ComparisonExperience() {
   }, []);
 
   useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setRecentCarouselCards(readRecentCarouselCards());
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
     if (!sourceUrl.trim()) return;
     form.setValue("marketplace", detectMarketplaceFromUrl(sourceUrl));
   }, [form, sourceUrl]);
@@ -343,6 +445,15 @@ function ComparisonExperience() {
     }
   }, [postalCode, taxRatePercent]);
 
+  function rememberConfirmedCard(identity: CardIdentityCandidate, resolvedGame: TcgGame) {
+    const card = toRecentCarouselCard(identity, resolvedGame);
+    setRecentCarouselCards((current) => {
+      const next = mergeRecentCarouselCard(current, card);
+      writeRecentCarouselCards(next);
+      return next;
+    });
+  }
+
   async function submitComparison(values: ComparisonForm, confirmedCardId?: string) {
     if (!values.heroQuery.trim() && !values.cardName.trim()) {
       form.setError("heroQuery", { type: "required", message: t.form.heroSearchRequired });
@@ -374,6 +485,10 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
+      if (parsed.confirmedCard) {
+        rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
+        setConfirmedIdentityForSettings(null);
+      }
       const duration = readTimestamp() - startedAt;
       trackEvent("comparison_completed", {
         marketplace: request.sourceListing.marketplace,
@@ -402,6 +517,7 @@ function ComparisonExperience() {
     form.setValue("cardName", identity.name);
     form.setValue("setCode", identity.setCode);
     form.setValue("cardNumber", identity.cardNumber);
+    rememberConfirmedCard(identity, pendingRequest.cardHint.game);
     trackEvent("card_identity_confirmed", { confidence: identity.confidence });
     focusComparisonTarget();
   }
@@ -415,6 +531,10 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(pendingRequest, t.error.temporary);
       setReport(parsed);
+      if (parsed.confirmedCard) {
+        rememberConfirmedCard(parsed.confirmedCard, pendingRequest.cardHint.game);
+        setConfirmedIdentityForSettings(null);
+      }
       trackEvent("comparison_completed", {
         marketplace: pendingRequest.sourceListing.marketplace,
         status: parsed.status,
@@ -503,6 +623,10 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
+      if (parsed.confirmedCard) {
+        rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
+        setConfirmedIdentityForSettings(null);
+      }
       const duration = readTimestamp() - startedAt;
       trackEvent("comparison_completed", {
         marketplace: discovery.marketplace,
@@ -528,6 +652,12 @@ function ComparisonExperience() {
 
   const compactMode = Boolean(pendingRequest || report || confirmedIdentityForSettings);
   const activeCard = report?.confirmedCard ?? null;
+  const currentCarouselCard = confirmedIdentityForSettings
+    ? toRecentCarouselCard(confirmedIdentityForSettings, pendingRequest?.cardHint.game ?? game)
+    : activeCard
+      ? toRecentCarouselCard(activeCard, pendingRequest?.cardHint.game ?? game)
+      : null;
+  const carouselCards = composeCarouselCards(currentCarouselCard, recentCarouselCards);
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
@@ -619,7 +749,7 @@ function ComparisonExperience() {
                     {t.hero.subtitle}
                   </p>
                 </div>
-                <CardMarquee />
+                <CardMarquee cards={carouselCards} />
               </div>
 
               <div className="min-w-0 space-y-4">
@@ -982,7 +1112,7 @@ function ComparisonExperience() {
           </>
         )}
 
-        {loading && <LoadingLoop />}
+        {loading && <LoadingLoop cards={carouselCards} />}
         {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
         {report?.status === "needs_confirmation" && !loading && !confirmedIdentityForSettings && (
           <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
@@ -1119,10 +1249,9 @@ function Footer() {
   );
 }
 
-// Stylized card backs (no real card art, so nothing to license) rolling in a
-// seamless CSS marquee. Purely decorative: hidden from assistive tech and
-// frozen automatically under prefers-reduced-motion via the global rule.
-const marqueeCards = [
+// Stylized card backs stay as first-run fallback; real card art is used only
+// after a card has been confirmed, so the rail never reflects raw typed guesses.
+const fallbackCardBacks = [
   "linear-gradient(150deg, #2f6f73, #24585c)",
   "linear-gradient(150deg, #d8a03a, #b97f24)",
   "linear-gradient(150deg, #9a4a2c, #7c3a22)",
@@ -1131,23 +1260,66 @@ const marqueeCards = [
   "linear-gradient(150deg, #6d5a8c, #544370)",
 ];
 
-function CardMarquee() {
+type MarqueeItem =
+  | { kind: "real"; card: RecentCarouselCard }
+  | { kind: "back"; background: string };
+
+function buildMarqueeItems(cards: RecentCarouselCard[], minimum = 8): MarqueeItem[] {
+  const realCards = cards.filter((card) => card.imageUrl);
+  const source: MarqueeItem[] = realCards.length > 0
+    ? realCards.map((card) => ({ kind: "real" as const, card }))
+    : fallbackCardBacks.map((background) => ({ kind: "back" as const, background }));
+  const base: MarqueeItem[] = [];
+  while (base.length < Math.max(minimum, source.length)) {
+    base.push(...source);
+  }
+  const loopBase = base.slice(0, Math.max(minimum, source.length));
+  return [...loopBase, ...loopBase];
+}
+
+function CardMarquee({ cards }: { cards: RecentCarouselCard[] }) {
+  const items = buildMarqueeItems(cards);
   return (
     <div aria-hidden="true" className="card-marquee relative hidden h-[128px] overflow-hidden lg:block">
       <div className="card-marquee-track flex w-max items-center">
-        {[...marqueeCards, ...marqueeCards].map((background, index) => (
-          <span
-            key={index}
-            className="relative mx-1.5 block h-[104px] w-[74px] shrink-0 rounded-[9px] border border-[rgba(255,255,255,0.55)] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
-            style={{ background, transform: `rotate(${index % 2 ? 3 : -3}deg)` }}
-          >
-            <span className="absolute inset-[6px] rounded-[6px] border border-[rgba(255,255,255,0.35)]" />
-            <span className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(255,255,255,0.45)]" />
-            <span className="absolute inset-0 rounded-[9px] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
-          </span>
+        {items.map((item, index) => (
+          <CardMarqueeItem key={`${item.kind}-${item.kind === "real" ? item.card.id : item.background}-${index}`} item={item} index={index} />
         ))}
       </div>
     </div>
+  );
+}
+
+function CardMarqueeItem({ item, index }: { item: MarqueeItem; index: number }) {
+  const rotation = `${index % 2 ? 3 : -3}deg`;
+  if (item.kind === "real") {
+    return (
+      <span
+        className="card-marquee-card card-marquee-card-real relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(36,49,47,0.13)] bg-[#fcfbf6] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
+        style={{ transform: `rotate(${rotation})` }}
+      >
+        {item.card.imageUrl && (
+          <Image
+            src={item.card.imageUrl}
+            alt=""
+            fill
+            sizes="80px"
+            className="object-contain"
+          />
+        )}
+        <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
+      </span>
+    );
+  }
+  return (
+    <span
+      className="card-marquee-card relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(255,255,255,0.55)] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
+      style={{ background: item.background, transform: `rotate(${rotation})` }}
+    >
+      <span className="card-marquee-inner absolute inset-[6px] rounded-[6px] border border-[rgba(255,255,255,0.35)]" />
+      <span className="card-marquee-orb absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(255,255,255,0.45)]" />
+      <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
+    </span>
   );
 }
 
@@ -1293,7 +1465,7 @@ function CheckField({ label, registration }: { label: string; registration: UseF
   );
 }
 
-function LoadingLoop() {
+function LoadingLoop({ cards }: { cards: RecentCarouselCard[] }) {
   const t = useT();
   return (
     <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite">
@@ -1316,13 +1488,14 @@ function LoadingLoop() {
           </ul>
           <div className="agent-progress mt-5"><span /></div>
         </div>
-        <LoadingCardRail labels={t.loading.cardLabels} />
+        <LoadingCardRail labels={t.loading.cardLabels} cards={cards} />
       </div>
     </section>
   );
 }
 
-function LoadingCardRail({ labels }: { labels: string[] }) {
+function LoadingCardRail({ labels, cards }: { labels: string[]; cards: RecentCarouselCard[] }) {
+  const items = buildMarqueeItems(cards, 4).slice(0, 4);
   return (
     <div className="loading-card-rail" aria-hidden="true">
       <style>{`
@@ -1358,11 +1531,23 @@ function LoadingCardRail({ labels }: { labels: string[] }) {
         }
         .loading-card:nth-child(odd) { transform: translateY(-.2rem) rotate(-2deg); }
         .loading-card:nth-child(even) { transform: translateY(.2rem) rotate(2deg); }
+        .loading-card-real { background: #fcfbf6; }
+        .loading-card-real img {
+          padding: .18rem;
+          filter: saturate(.96) contrast(1.02);
+        }
         .loading-card-inner {
           position: absolute;
           inset: .45rem;
           border-radius: .42rem;
           border: 1px solid rgba(255,255,255,.38);
+        }
+        .loading-card-gloss {
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: linear-gradient(115deg, transparent 28%, rgba(255,255,255,.22) 44%, transparent 60%);
+          pointer-events: none;
         }
         .loading-card-label {
           position: relative;
@@ -1386,13 +1571,21 @@ function LoadingCardRail({ labels }: { labels: string[] }) {
         }
       `}</style>
       <div className="loading-card-track">
-        {marqueeCards.slice(0, 4).map((background, index) => (
+        {items.map((item, index) => (
           <span
-            key={`${background}-${index}`}
-            className="loading-card"
-            style={{ background, zIndex: marqueeCards.length - index }}
+            key={`${item.kind}-${item.kind === "real" ? item.card.id : item.background}-${index}`}
+            className={`loading-card ${item.kind === "real" ? "loading-card-real" : ""}`}
+            style={{
+              background: item.kind === "back" ? item.background : undefined,
+              zIndex: items.length - index,
+            }}
           >
-            <span className="loading-card-inner" />
+            {item.kind === "real" && item.card.imageUrl ? (
+              <Image src={item.card.imageUrl} alt="" fill sizes="84px" className="object-contain" />
+            ) : (
+              <span className="loading-card-inner" />
+            )}
+            <span className="loading-card-gloss" />
             <span className="loading-card-label">{labels[index] ?? ""}</span>
           </span>
         ))}
