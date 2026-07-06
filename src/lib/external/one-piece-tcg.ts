@@ -211,16 +211,22 @@ function mergeOnePieceCatalogs(bundled: OnePieceTcgCard[], live: OnePieceTcgCard
 }
 
 function rankOnePieceCards(cards: OnePieceTcgCard[], query: string, limit: number, setHint = ""): OnePieceTcgCard[] {
-  return cards
-    .map((card) => {
-      // Name relevance gates inclusion; a matching set hint floats those prints to the
-      // top of the returned page so a name with many prints (e.g. 80+ Luffys) doesn't
-      // bury the set the buyer asked for before it can be ranked.
-      const nameScore = scoreOnePieceCard(card, query);
-      const score = nameScore > 0 && setHint && onePieceSetMatches(card, setHint) ? nameScore + 1000 : nameScore;
-      return { card, score };
-    })
-    .filter((entry) => entry.score > 0)
+  const nameMatched = cards
+    .map((card) => ({ card, score: scoreOnePieceCard(card, query) }))
+    .filter((entry) => entry.score > 0);
+
+  // A set hint ("Luffy op15") means the buyer wants THAT set only, not every print
+  // of the name padded out with unrelated sets — narrow to it when at least one
+  // print matches; an unrecognized/typo'd hint falls back to every name match
+  // rather than returning nothing.
+  const pool = setHint
+    ? (() => {
+        const setMatched = nameMatched.filter((entry) => onePieceSetMatches(entry.card, setHint));
+        return setMatched.length > 0 ? setMatched : nameMatched;
+      })()
+    : nameMatched;
+
+  return pool
     .sort(
       (a, b) =>
         b.score - a.score

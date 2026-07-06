@@ -400,7 +400,7 @@ function applyParsedCardQuery(
   const cardHint: CardHint = {
     game: request.cardHint.game !== "pokemon" ? request.cardHint.game : (parsed.game ?? request.cardHint.game),
     name: request.cardHint.name || parsed.name,
-    setCode: request.cardHint.setCode,
+    setCode: request.cardHint.setCode || parsed.setCode,
     cardNumber: request.cardHint.cardNumber || parsed.cardNumber,
     language: request.cardHint.language !== "English" ? request.cardHint.language : (parsed.language || request.cardHint.language),
     variant: request.cardHint.variant || parsed.variant,
@@ -410,6 +410,7 @@ function applyParsedCardQuery(
   const derived = [
     cardHint.name && `name "${cardHint.name}"`,
     cardHint.cardNumber && `collector number ${cardHint.cardNumber}`,
+    cardHint.setCode && `set ${cardHint.setCode}`,
     parsed.game && `game ${parsed.game}`,
     parsed.language && `language ${parsed.language}`,
     cardHint.variant && `variant ${cardHint.variant}`,

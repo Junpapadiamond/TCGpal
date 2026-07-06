@@ -56,6 +56,29 @@ describe("parseCardQuery", () => {
     expect(parseCardQuery("Shanks EB01-006").game).toBe("onePiece");
   });
 
+  it("parses a bare One Piece set code as a set filter, not a broken card number", () => {
+    const result = parseCardQuery("Luffy op15");
+    expect(result.name).toBe("Luffy");
+    expect(result.setCode).toBe("OP-15");
+    expect(result.cardNumber).toBe("");
+    expect(result.game).toBe("onePiece");
+  });
+
+  it("zero-pads a single-digit set code to match the catalog's OP-01 format", () => {
+    expect(parseCardQuery("Luffy op1").setCode).toBe("OP-01");
+  });
+
+  it("still parses a full collector number normally when a set code is also present", () => {
+    const result = parseCardQuery("Luffy OP01-024");
+    expect(result.cardNumber).toBe("OP01-024");
+    expect(result.setCode).toBe("");
+  });
+
+  it("treats 'manga' as an alias for the same SP/special-art rarity code", () => {
+    expect(parseCardQuery("Luffy manga").variant).toBe("SP");
+    expect(parseCardQuery("Luffy sp").variant).toBe("SP");
+  });
+
   it("keeps ambiguous promo codes game-neutral", () => {
     // P-096 exists in both games' promo numbering; a wrong guess is worse than none.
     expect(parseCardQuery("Luffy P-096").game).toBeNull();

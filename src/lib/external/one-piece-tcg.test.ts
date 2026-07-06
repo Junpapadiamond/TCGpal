@@ -123,15 +123,26 @@ describe("OPTCG (One Piece) adapter", () => {
     expect(scoreOnePieceCard(exact, "sanji")).toBeGreaterThan(scoreOnePieceCard(partial, "sanji"));
   });
 
-  it("floats the requested set to the top when a name has many prints", async () => {
+  it("narrows to the requested set instead of padding out with every print of the name", async () => {
     const offline = vi.fn(async () => {
       throw new Error("network disabled");
     }) as unknown as typeof fetch;
 
-    // "Luffy" has 80+ prints across 30+ sets; the set hint must pull EB-02 to the top.
-    const result = await searchOnePieceCards({ query: "luffy", setHint: "EB-02", fetcher: offline });
+    // "Luffy" has 100+ prints across 30+ sets; "Luffy op15" means "just the OP-15
+    // prints", not an arbitrary top slice of every set.
+    const result = await searchOnePieceCards({ query: "luffy", setHint: "OP-15", fetcher: offline });
     expect(result.cards.length).toBeGreaterThan(0);
-    expect(result.cards[0]?.set_id).toBe("EB-02");
+    expect(result.cards.every((card) => card.set_id === "OP-15")).toBe(true);
+  });
+
+  it("falls back to every print when the set hint matches nothing", async () => {
+    const offline = vi.fn(async () => {
+      throw new Error("network disabled");
+    }) as unknown as typeof fetch;
+
+    const withHint = await searchOnePieceCards({ query: "luffy", setHint: "OP-99", pageSize: 250, fetcher: offline });
+    const withoutHint = await searchOnePieceCards({ query: "luffy", pageSize: 250, fetcher: offline });
+    expect(withHint.cards.length).toBe(withoutHint.cards.length);
   });
 
   it("maps an OPTCG card onto the shared identity candidate shape", () => {

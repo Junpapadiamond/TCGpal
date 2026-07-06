@@ -1638,10 +1638,20 @@ function ConfirmedSettingsStage({
   );
 }
 
+// Groups a print's specific variant label ("Alternate Art (P1)", "Secret Rare Alt
+// (R2)") into the coarser bucket collectors actually browse by, so the filter
+// dropdown has a handful of options instead of one per unique print marker. Base
+// prints (no variant label) get their own bucket rather than being unfilterable.
+function printTypeOf(identity: CardIdentityCandidate, basePrintLabel: string): string {
+  if (!identity.variant) return basePrintLabel;
+  return identity.variant.replace(/\s*\([^)]*\)\s*$/, "").trim() || basePrintLabel;
+}
+
 function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identities: CardIdentityCandidate[]; warnings?: string[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
   const t = useT();
   const [setFilter, setSetFilter] = useState("");
   const [rarityFilter, setRarityFilter] = useState("");
+  const [printTypeFilter, setPrintTypeFilter] = useState("");
   // Options come from the full, unfiltered list so picking one filter never
   // hides the choices for the other.
   const setOptions = useMemo(
@@ -1652,12 +1662,18 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
     () => Array.from(new Set(identities.map((identity) => identity.rarity).filter((value): value is string => Boolean(value)))).sort(),
     [identities],
   );
-  const showFilters = identities.length > 4 && (setOptions.length > 1 || rarityOptions.length > 1);
+  const printTypeOptions = useMemo(
+    () => Array.from(new Set(identities.map((identity) => printTypeOf(identity, t.identity.basePrint)))).sort(),
+    [identities, t.identity.basePrint],
+  );
+  const showFilters = identities.length > 4
+    && (setOptions.length > 1 || rarityOptions.length > 1 || printTypeOptions.length > 1);
   const filteredIdentities = useMemo(
     () => identities.filter((identity) =>
       (!setFilter || (identity.setName || identity.setCode) === setFilter)
-      && (!rarityFilter || identity.rarity === rarityFilter)),
-    [identities, setFilter, rarityFilter],
+      && (!rarityFilter || identity.rarity === rarityFilter)
+      && (!printTypeFilter || printTypeOf(identity, t.identity.basePrint) === printTypeFilter)),
+    [identities, setFilter, rarityFilter, printTypeFilter, t.identity.basePrint],
   );
   const grouped = filteredIdentities.length > IDENTITY_GROUP_THRESHOLD;
   const groups = useMemo(() => (grouped ? groupIdentitiesBySet(filteredIdentities) : []), [grouped, filteredIdentities]);
@@ -1711,16 +1727,28 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
               </select>
             </label>
           )}
+          {printTypeOptions.length > 1 && (
+            <label className="field !gap-1">
+              <span className="text-xs">{t.identity.filterPrintTypeLabel}</span>
+              <select value={printTypeFilter} onChange={(event) => setPrintTypeFilter(event.target.value)}>
+                <option value="">{t.identity.filterAllPrintTypes}</option>
+                {printTypeOptions.map((printType) => (
+                  <option key={printType} value={printType}>{printType}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <p className="ml-auto text-xs font-bold text-[#64736c]">
             {t.identity.filterShowingCount(filteredIdentities.length, identities.length)}
           </p>
-          {(setFilter || rarityFilter) && (
+          {(setFilter || rarityFilter || printTypeFilter) && (
             <button
               type="button"
               className="text-xs font-black text-[#2f6f73] hover:underline"
               onClick={() => {
                 setSetFilter("");
                 setRarityFilter("");
+                setPrintTypeFilter("");
               }}
             >
               {t.identity.filterClear}

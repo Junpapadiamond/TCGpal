@@ -14,6 +14,9 @@ export type ParsedCardQuery = {
   game: TcgGame | null;
   name: string;
   cardNumber: string;
+  // "" = not detected. One Piece only today ("OP-15") — a bare set code with no
+  // "-NNN" suffix names a SET, distinct from cardNumber which names one PRINT.
+  setCode: string;
   // "" = not detected; caller applies the schema default ("English").
   language: string;
   variant: string;
@@ -24,6 +27,7 @@ export const parsedCardQuerySchema = z.object({
   game: tcgGameSchema.nullable(),
   name: z.string().trim().default(""),
   cardNumber: z.string().trim().default(""),
+  setCode: z.string().trim().default(""),
   language: z.string().trim().default(""),
   variant: z.string().trim().default(""),
   gradingClaim: z.string().trim().default(""),
@@ -84,7 +88,18 @@ const RARITY_CODE_KEYWORDS: Array<{ pattern: RegExp; variant: string }> = [
   { pattern: /\bsec\b/i, variant: "Secret Rare" },
   { pattern: /\bsr\b/i, variant: "Super Rare" },
   { pattern: /\bsp\b/i, variant: "SP" },
+  // One Piece's SP-rarity parallels are the ones collectors call "manga rare"
+  // (hand-drawn manga-style art) — the catalog only tags them as "SP CARD", so
+  // route the collector term to the same filter value.
+  { pattern: /\bmanga\b/i, variant: "SP" },
 ];
+
+// A bare "OP15" / "ST01" / "EB02" (no "-NNN" suffix) names a SET, not one print —
+// real collector numbers always look like "OP01-024". Extracted separately (and
+// before the generic collector-number pattern below) so a set-only query narrows
+// results to that set instead of being half-parsed as a broken card number and
+// then silently ignored.
+const ONE_PIECE_SET_ONLY_PATTERN = /\b(OP|ST|EB|PRB)(\d{1,2})\b(?!-\d)/i;
 
 const COMMON_ALIAS_HINTS: Array<{
   pattern: RegExp;
@@ -159,6 +174,15 @@ export function parseCardQuery(query: string): ParsedCardQuery {
   }
   if (game === null && alias) game = alias.game;
 
+  // Claim a bare One Piece set code ("OP15") before the generic collector-number
+  // pattern gets a chance to half-match it as an incomplete print number.
+  let setCode = "";
+  const setOnlyMatch = remaining.match(ONE_PIECE_SET_ONLY_PATTERN);
+  if (setOnlyMatch) {
+    setCode = `${setOnlyMatch[1].toUpperCase()}-${setOnlyMatch[2].padStart(2, "0")}`;
+    remaining = removeMatch(remaining, setOnlyMatch);
+  }
+
   // A real card has one collector-number format; only try the letter-prefix
   // pattern (which could otherwise collide with a language/variant word that
   // happens to end in digits) once the fraction style has had first refusal.
@@ -182,6 +206,7 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     game,
     name: alias?.name ?? normalizeWhitespace(remaining),
     cardNumber,
+    setCode,
     language,
     variant: variant || alias?.variant || "",
     gradingClaim,
