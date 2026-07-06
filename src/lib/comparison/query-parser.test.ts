@@ -67,4 +67,26 @@ describe("parseCardQuery", () => {
     expect(result.language).toBe("");
     expect(result.name).toBe("Charizard Base Set");
   });
+
+  it("recognizes a short rarity code so 'sp' narrows to the special/parallel print", () => {
+    const result = parseCardQuery("Luffy sp");
+    expect(result.name).toBe("Luffy");
+    expect(result.variant).toBe("SP");
+  });
+
+  it("expands the SIR abbreviation to its full Pokémon rarity name", () => {
+    const result = parseCardQuery("Pikachu sir");
+    expect(result.name).toBe("Pikachu");
+    expect(result.variant).toBe("Special Illustration Rare");
+  });
+
+  it("prefers a full variant phrase over a short rarity code when both could apply", () => {
+    const result = parseCardQuery("Charizard Alternate Art");
+    expect(result.variant).toBe("Alternate Art");
+  });
+
+  it("does not treat 'sr' inside an ordinary word as a rarity code", () => {
+    const result = parseCardQuery("Sriracha the Pikachu");
+    expect(result.variant).toBe("");
+  });
 });

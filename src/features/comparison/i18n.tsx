@@ -175,6 +175,13 @@ const en = {
       "No catalog match was found. Check the card name, then add the printed collector number (for example, 215/203) or a set name/code and try again.",
     lookupUnavailable:
       "The card catalog is temporarily unavailable, so we couldn't list versions. This is a lookup hiccup, not a missing card. Please try again in a moment.",
+    filterSetLabel: "Set",
+    filterRarityLabel: "Rarity",
+    filterAllSets: "All sets",
+    filterAllRarities: "All rarities",
+    filterClear: "Clear filters",
+    filterNoMatches: "No versions match these filters.",
+    filterShowingCount: (shown: number, total: number) => `Showing ${shown} of ${total} versions`,
   },
   result: {
     demoTitle: "Labeled demo inventory.",
@@ -538,6 +545,13 @@ const zh: Dict = {
       "没找到对得上的卡片。先核对一下卡片名称，再补上卡面上的收藏编号（比如 215/203）或系列名称 / 代码，然后重试。",
     lookupUnavailable:
       "卡片库暂时连不上，没能列出版本。这是查询出了点小问题，不是没有这张卡。过一会儿再试一下。",
+    filterSetLabel: "系列",
+    filterRarityLabel: "稀有度",
+    filterAllSets: "所有系列",
+    filterAllRarities: "所有稀有度",
+    filterClear: "清除筛选",
+    filterNoMatches: "没有符合筛选条件的版本。",
+    filterShowingCount: (shown: number, total: number) => `显示 ${total} 个版本中的 ${shown} 个`,
   },
   result: {
     demoTitle: "标注的示例库存。",

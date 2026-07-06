@@ -153,7 +153,7 @@ export async function searchOnePieceCards({
 }: SearchOnePieceCardsOptions): Promise<OnePieceTcgSearchResult> {
   const normalizedQuery = query.trim();
   const directId = cardNumber.trim().toUpperCase();
-  const limit = Math.min(Math.max(pageSize, 1), 50);
+  const limit = Math.min(Math.max(pageSize, 1), 250);
 
   // Fast path: a concrete card number (OP01-024) resolves to EVERY print of that
   // number — base art plus each alternate art / parallel / manga / treasure rare —

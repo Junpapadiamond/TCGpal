@@ -63,7 +63,27 @@ const VARIANT_KEYWORDS = [
   "Gold Star",
   "1st Edition",
   "Reverse Holo",
+  "ACE SPEC",
   "Promo",
+];
+
+// Short rarity codes collectors actually type in a search box ("Luffy sp",
+// "Pikachu sir") rather than the full phrase above. Word-boundary matched and
+// case-insensitive. A wrong rarity guess only narrows results (the caller
+// falls back to the unfiltered list when the guess matches nothing), so the
+// small false-positive risk of a short token is acceptable here in a way it
+// would not be for the game/language detectors below.
+const RARITY_CODE_KEYWORDS: Array<{ pattern: RegExp; variant: string }> = [
+  { pattern: /\bsir\b/i, variant: "Special Illustration Rare" },
+  { pattern: /\bsar\b/i, variant: "Special Art Rare" },
+  { pattern: /\bchr\b/i, variant: "Character Rare" },
+  { pattern: /\bcsr\b/i, variant: "Character Super Rare" },
+  { pattern: /\bhr\b/i, variant: "Hyper Rare" },
+  { pattern: /\bur\b/i, variant: "Ultra Rare" },
+  { pattern: /\bir\b/i, variant: "Illustration Rare" },
+  { pattern: /\bsec\b/i, variant: "Secret Rare" },
+  { pattern: /\bsr\b/i, variant: "Super Rare" },
+  { pattern: /\bsp\b/i, variant: "SP" },
 ];
 
 const COMMON_ALIAS_HINTS: Array<{
@@ -108,6 +128,16 @@ export function parseCardQuery(query: string): ParsedCardQuery {
       variant = keyword;
       remaining = removeMatch(remaining, match);
       break;
+    }
+  }
+  if (!variant) {
+    for (const { pattern, variant: candidate } of RARITY_CODE_KEYWORDS) {
+      const match = remaining.match(pattern);
+      if (match) {
+        variant = candidate;
+        remaining = removeMatch(remaining, match);
+        break;
+      }
     }
   }
 

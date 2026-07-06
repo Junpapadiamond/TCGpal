@@ -626,7 +626,14 @@ function ComparisonExperience() {
               className="mx-auto grid max-w-[1180px] gap-3 border-t border-[#d6ded5] px-4 py-4 sm:grid-cols-[minmax(0,1fr)_160px_140px_auto] sm:items-end sm:px-6 lg:px-8"
               onSubmit={form.handleSubmit((values) => {
                 setCompactSearchOpen(false);
-                void submitComparison(values);
+                // This panel only lets the buyer edit the free-text query — clear the
+                // previously confirmed card's locked identity fields so the new query
+                // drives identity resolution again instead of re-matching the old card
+                // (buildRequest's cardHint would otherwise win over the fresh parse).
+                form.setValue("cardName", "");
+                form.setValue("setCode", "");
+                form.setValue("cardNumber", "");
+                void submitComparison({ ...values, cardName: "", setCode: "", cardNumber: "" });
               })}
             >
               <label className="field">
@@ -655,7 +662,7 @@ function ComparisonExperience() {
           ) : null}
         />
       ) : (
-        <Header />
+        <Header onLogoClick={startNewSearch} />
       )}
       <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-6 sm:pt-8"}`}>
         {!compactMode && (
@@ -1065,15 +1072,15 @@ function ComparisonExperience() {
   );
 }
 
-function Header() {
+function Header({ onLogoClick }: { onLogoClick: () => void }) {
   const t = useT();
   const { lang, setLang } = useLang();
   return (
     <header className="border-b border-[#d6ded5] bg-[#f7f9f5]/95">
       <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <a className="flex items-center gap-3" href="#" aria-label={t.header.home}>
+        <button className="flex items-center gap-3" type="button" onClick={onLogoClick} aria-label={t.header.home}>
           <Image src="/tcgpal-logo-horizontal.svg" alt="TCGpal" width={142} height={41} priority />
-        </a>
+        </button>
         <div className="flex items-center gap-3 sm:gap-6">
           <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
             <a className="hover:text-[#2f6f73]" href="#compare">{t.header.checkListing}</a>
@@ -1108,9 +1115,9 @@ function ResultsHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fcfbf6]/95 shadow-[0_1px_10px_rgba(36,49,47,0.04)] backdrop-blur">
       <div className="relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-2 px-4 py-2.5 sm:gap-3 sm:px-6 lg:flex-nowrap lg:px-8">
-        <a className="shrink-0" href="#" aria-label={t.header.home}>
+        <button className="shrink-0" type="button" onClick={onNewSearch} aria-label={t.header.home}>
           <Image src="/tcgpal-logo-horizontal.svg" alt="TCGpal" width={104} height={30} priority />
-        </a>
+        </button>
         <button
           className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
           type="button"
@@ -1614,7 +1621,7 @@ function ConfirmedSettingsStage({
             </label>
           </div>
 
-          <button className="primary-button mt-5 w-full justify-center sm:w-auto" type="button" disabled={loading} onClick={onRun}>
+          <button className="primary-button mt-5 !hidden w-full justify-center sm:!inline-flex sm:w-auto" type="button" disabled={loading} onClick={onRun}>
             {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
             {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
           </button>
@@ -1633,11 +1640,30 @@ function ConfirmedSettingsStage({
 
 function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identities: CardIdentityCandidate[]; warnings?: string[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
   const t = useT();
-  const grouped = identities.length > IDENTITY_GROUP_THRESHOLD;
-  const groups = useMemo(() => (grouped ? groupIdentitiesBySet(identities) : []), [grouped, identities]);
+  const [setFilter, setSetFilter] = useState("");
+  const [rarityFilter, setRarityFilter] = useState("");
+  // Options come from the full, unfiltered list so picking one filter never
+  // hides the choices for the other.
+  const setOptions = useMemo(
+    () => Array.from(new Set(identities.map((identity) => identity.setName || identity.setCode).filter(Boolean))).sort(),
+    [identities],
+  );
+  const rarityOptions = useMemo(
+    () => Array.from(new Set(identities.map((identity) => identity.rarity).filter((value): value is string => Boolean(value)))).sort(),
+    [identities],
+  );
+  const showFilters = identities.length > 4 && (setOptions.length > 1 || rarityOptions.length > 1);
+  const filteredIdentities = useMemo(
+    () => identities.filter((identity) =>
+      (!setFilter || (identity.setName || identity.setCode) === setFilter)
+      && (!rarityFilter || identity.rarity === rarityFilter)),
+    [identities, setFilter, rarityFilter],
+  );
+  const grouped = filteredIdentities.length > IDENTITY_GROUP_THRESHOLD;
+  const groups = useMemo(() => (grouped ? groupIdentitiesBySet(filteredIdentities) : []), [grouped, filteredIdentities]);
   const likelyMatches = useMemo(
-    () => (grouped ? identities.filter((identity) => identity.confidence !== "low").slice(0, 4) : []),
-    [grouped, identities],
+    () => (grouped ? filteredIdentities.filter((identity) => identity.confidence !== "low").slice(0, 4) : []),
+    [grouped, filteredIdentities],
   );
   const likelyMatchIds = useMemo(() => new Set(likelyMatches.map((identity) => identity.id)), [likelyMatches]);
   const remainingGroups = useMemo(
@@ -1661,9 +1687,54 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
           {t.identity.desc}
         </p>
       </div>
+      {showFilters && (
+        <div className="mt-5 flex flex-wrap items-end gap-3 rounded-lg border border-[#d6ded5] bg-[#f7f9f5] p-3">
+          {setOptions.length > 1 && (
+            <label className="field !gap-1">
+              <span className="text-xs">{t.identity.filterSetLabel}</span>
+              <select value={setFilter} onChange={(event) => setSetFilter(event.target.value)}>
+                <option value="">{t.identity.filterAllSets}</option>
+                {setOptions.map((setName) => (
+                  <option key={setName} value={setName}>{setName}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          {rarityOptions.length > 1 && (
+            <label className="field !gap-1">
+              <span className="text-xs">{t.identity.filterRarityLabel}</span>
+              <select value={rarityFilter} onChange={(event) => setRarityFilter(event.target.value)}>
+                <option value="">{t.identity.filterAllRarities}</option>
+                {rarityOptions.map((rarity) => (
+                  <option key={rarity} value={rarity}>{rarity}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          <p className="ml-auto text-xs font-bold text-[#64736c]">
+            {t.identity.filterShowingCount(filteredIdentities.length, identities.length)}
+          </p>
+          {(setFilter || rarityFilter) && (
+            <button
+              type="button"
+              className="text-xs font-black text-[#2f6f73] hover:underline"
+              onClick={() => {
+                setSetFilter("");
+                setRarityFilter("");
+              }}
+            >
+              {t.identity.filterClear}
+            </button>
+          )}
+        </div>
+      )}
       {identities.length === 0 ? (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
           {lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch}
+        </div>
+      ) : filteredIdentities.length === 0 ? (
+        <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
+          {t.identity.filterNoMatches}
         </div>
       ) : grouped ? (
         <div className="mt-6 space-y-7">
@@ -1700,7 +1771,7 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
         </div>
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {identities.map((identity) => (
+          {filteredIdentities.map((identity) => (
             <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h3" />
           ))}
         </div>

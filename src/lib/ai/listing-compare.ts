@@ -57,10 +57,11 @@ import {
   type SourceListing,
 } from "@/lib/schemas";
 
-// Broad queries (e.g. "pikachu") legitimately match many prints. Show enough to
-// let the buyer find the right version; the IdentityConfirmation UI groups these
-// by set so the list stays scannable.
-const MAX_IDENTITY_CANDIDATES = 24;
+// Broad queries (e.g. "pikachu") legitimately match many prints — collectors
+// want to browse every version, not a truncated top-24. Cap only at a level
+// that protects the response payload; the IdentityConfirmation UI groups and
+// filters (by set/rarity) so the full list stays scannable.
+const MAX_IDENTITY_CANDIDATES = 200;
 
 export async function runListingComparison(
   rawRequest: ComparisonRequest,
@@ -619,7 +620,11 @@ async function identifyCards(
         query: searchName,
         cardNumber: request.cardHint.cardNumber,
         setHint: request.cardHint.setCode,
-        pageSize: request.cardHint.cardNumber ? 12 : 30,
+        // A known collector number resolves to one specific print, so a small
+        // page is enough; a name-only search (e.g. "pikachu") should return
+        // every print the catalog has, not a truncated top slice — pageSize
+        // 250 is the Pokémon TCG API's own maximum.
+        pageSize: request.cardHint.cardNumber ? 12 : 250,
         fetcher,
         timeoutMs: 15000,
       },
@@ -637,7 +642,8 @@ async function identifyCards(
         summary: `Found ${apiMatches.length} possible identities and ranked exact number, set, and name matches first.`,
         status: "complete",
       });
-      return dedupeIdentities(apiMatches).slice(0, MAX_IDENTITY_CANDIDATES);
+      const narrowed = filterByRequestedVariant(dedupeIdentities(apiMatches), request.cardHint.variant, trace);
+      return narrowed.slice(0, MAX_IDENTITY_CANDIDATES);
     }
 
     // The lookup itself failed (warning already recorded). Surface that as an
@@ -734,7 +740,10 @@ async function identifyOnePieceCards(
         query: searchName || directId,
         cardNumber: directId,
         setHint: request.cardHint.setCode,
-        pageSize: directId ? 12 : 30,
+        // A known card id resolves to one number's prints, so a small page is
+        // enough; a name-only search (e.g. "luffy") should return every print
+        // in the catalog — some characters have 80+ — not a truncated slice.
+        pageSize: directId ? 12 : 200,
         fetcher,
         timeoutMs: 15000,
       });
@@ -748,7 +757,8 @@ async function identifyOnePieceCards(
         summary: `Found ${matches.length} possible One Piece identities — base art plus every alternate art, treasure rare, and promo print — ranked with exact id and name matches first.`,
         status: "complete",
       });
-      return dedupeIdentities(matches).slice(0, MAX_IDENTITY_CANDIDATES);
+      const narrowed = filterByRequestedVariant(dedupeIdentities(matches), request.cardHint.variant, trace);
+      return narrowed.slice(0, MAX_IDENTITY_CANDIDATES);
     } catch (error) {
       warnings.push(`One Piece catalog lookup unavailable: ${errorMessage(error)}`);
     }
@@ -1309,6 +1319,40 @@ function cleanCardName(title: string) {
 function dedupeIdentities(identities: CardIdentityCandidate[]) {
   return Array.from(new Map(identities.map((identity) => [identity.id, identity])).values())
     .sort((a, b) => confidenceRank(b.confidence) - confidenceRank(a.confidence));
+}
+
+// A short rarity code in the search text ("Luffy sp", "Pikachu sir") should
+// narrow the version picker to just those prints instead of every version of
+// the character. Substring match against both the catalog rarity and variant
+// label, since Pokémon rarities are full names ("Special Illustration Rare")
+// while One Piece rarities are short codes ("SP") stored verbatim. If the
+// guess matches nothing (e.g. the catalog uses a different label), fall back
+// to the unfiltered list rather than showing the buyer zero results.
+function filterByRequestedVariant(
+  identities: CardIdentityCandidate[],
+  requestedVariant: string,
+  trace: ComparisonTrace[],
+): CardIdentityCandidate[] {
+  if (!requestedVariant.trim()) return identities;
+  const needle = requestedVariant.toLowerCase();
+  const narrowed = identities.filter((identity) =>
+    identity.rarity?.toLowerCase().includes(needle) || identity.variant?.toLowerCase().includes(needle));
+  if (narrowed.length > 0) {
+    trace.push({
+      step: "card_identification",
+      actor: "Rarity filter",
+      summary: `Narrowed to ${narrowed.length} print(s) matching the requested "${requestedVariant}" rarity.`,
+      status: "complete",
+    });
+    return narrowed;
+  }
+  trace.push({
+    step: "card_identification",
+    actor: "Rarity filter",
+    summary: `No print matched the requested "${requestedVariant}" rarity; showing every version instead.`,
+    status: "fallback",
+  });
+  return identities;
 }
 
 function dedupeSeeds(seeds: DemoListingSeed[]) {

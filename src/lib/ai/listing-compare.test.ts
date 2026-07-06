@@ -363,6 +363,88 @@ describe("listing comparison agent", () => {
     expect(response.identityCandidates.map((card) => card.cardNumber)).toEqual(["65/101", "99/101"]);
   });
 
+  it("narrows Pokémon versions to the requested rarity code (e.g. 'Pikachu sir')", async () => {
+    const pikachuFetcher = (async (input: RequestInfo | URL) => {
+      if (String(input).includes("api.pokemontcg.io")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            data: [
+              {
+                id: "sv1-238",
+                name: "Pikachu",
+                number: "238",
+                rarity: "Special Illustration Rare",
+                set: { id: "sv1", name: "Scarlet & Violet", printedTotal: 198 },
+              },
+              {
+                id: "base1-58",
+                name: "Pikachu",
+                number: "58",
+                rarity: "Common",
+                set: { id: "base1", name: "Base", printedTotal: 102 },
+              },
+            ],
+            count: 2,
+            totalCount: 2,
+          }),
+        } as Response;
+      }
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison({
+      ...request,
+      sourceListing: { ...request.sourceListing, title: "" },
+      cardHint: { game: "pokemon", name: "Pikachu", setCode: "", cardNumber: "", language: "English", variant: "Special Illustration Rare", gradingClaim: "" },
+    }, { fetcher: pikachuFetcher });
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates.map((card) => card.id)).toEqual(["sv1-238"]);
+  });
+
+  it("falls back to every version when the requested rarity matches no print", async () => {
+    const plasmaFetcher = (async (input: RequestInfo | URL) => {
+      if (String(input).includes("api.pokemontcg.io")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            data: [
+              {
+                id: "bw10-65",
+                name: "Dialga-EX",
+                number: "65",
+                subtypes: ["Basic", "EX", "Team Plasma"],
+                set: { id: "bw10", name: "Plasma Blast", series: "Black & White", printedTotal: 101 },
+              },
+              {
+                id: "bw10-99",
+                name: "Dialga-EX",
+                number: "99",
+                subtypes: ["Basic", "EX", "Team Plasma"],
+                set: { id: "bw10", name: "Plasma Blast", series: "Black & White", printedTotal: 101 },
+              },
+            ],
+            count: 2,
+            totalCount: 2,
+          }),
+        } as Response;
+      }
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison({
+      ...request,
+      sourceListing: { ...request.sourceListing, title: "" },
+      cardHint: { game: "pokemon", name: "Dialga", setCode: "Team plasma", cardNumber: "N", language: "English", variant: "Hyper Rare", gradingClaim: "" },
+    }, { fetcher: plasmaFetcher });
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates.length).toBe(2);
+  });
+
   it("continues after the user confirms a catalog identity", async () => {
     const response = await runListingComparison({
       ...request,
