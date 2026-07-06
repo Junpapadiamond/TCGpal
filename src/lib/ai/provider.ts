@@ -27,7 +27,32 @@ export type AiProbeResult = {
   warning?: string;
 };
 
+// The narrative call is enrichment on the comparison's critical path. Without a
+// hard cap, a slow or rate-limited model (e.g. a 429 that stalls) hangs the whole
+// serverless request until the platform kills it — which the browser reports as a
+// bare "Load failed" with no listings. Bounding it lets buildNarrative fall back to
+// the deterministic narrative quickly and still return the live listings.
+const AI_REQUEST_TIMEOUT_MS = 12000;
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs = AI_REQUEST_TIMEOUT_MS,
+) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export function createAiProvider(config: AiConfig): AiProvider {
+  if (config.provider === "anthropic") {
+    return config.hasApiKey ? new AnthropicMessagesProvider(config) : new UnavailableProvider("anthropic");
+  }
+
   if (config.provider !== "openai") {
     return new UnavailableProvider(config.provider);
   }
@@ -36,7 +61,9 @@ export function createAiProvider(config: AiConfig): AiProvider {
     return new UnavailableProvider("openai");
   }
 
-  return new OpenAiResponsesProvider(config);
+  return config.wireApi === "chat"
+    ? new OpenAiChatCompletionsProvider(config)
+    : new OpenAiResponsesProvider(config);
 }
 
 export async function probeAnthropicModel(config: AiConfig): Promise<AiProbeResult> {
@@ -49,14 +76,9 @@ export async function probeAnthropicModel(config: AiConfig): Promise<AiProbeResu
   }
 
   try {
-    const response = await fetch(`${config.anthropicBaseUrl}/messages`, {
+    const response = await fetch(`${config.anthropicBaseUrl}/v1/messages`, {
       method: "POST",
-      headers: {
-        "x-api-key": token,
-        Authorization: `Bearer ${token}`,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
+      headers: anthropicHeaders(),
       body: JSON.stringify({
         model: config.anthropicModel,
         max_tokens: 16,
@@ -100,7 +122,7 @@ class OpenAiResponsesProvider implements AiProvider {
 
   async completeJson<T>({ role, schemaName, schema, system, user }: CompleteJsonInput<T>): Promise<AiProviderResult<T>> {
     const model = getModelForStep(role, this.config);
-    const response = await fetch(`${this.config.baseUrl}/responses`, {
+    const response = await fetchWithTimeout(`${this.config.baseUrl}/responses`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -154,6 +176,147 @@ class OpenAiResponsesProvider implements AiProvider {
   }
 }
 
+class OpenAiChatCompletionsProvider implements AiProvider {
+  constructor(private readonly config: AiConfig) {}
+
+  async completeJson<T>({ role, schemaName, schema, system, user }: CompleteJsonInput<T>): Promise<AiProviderResult<T>> {
+    const model = getModelForStep(role, this.config);
+    const response = await fetchWithTimeout(`${this.config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: system,
+          },
+          {
+            role: "user",
+            content: [
+              "Return one JSON object only. Do not wrap it in markdown.",
+              `JSON schema name: ${schemaName}`,
+              JSON.stringify(z.toJSONSchema(schema)),
+              "Input:",
+              JSON.stringify(user, null, 2),
+            ].join("\n\n"),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(`OpenAI ${response.status}: ${message.slice(0, 500)}`);
+    }
+
+    const payload = (await response.json()) as unknown;
+    const text = extractChatCompletionText(payload);
+    const parsedJson = parseJsonObject(text);
+    const parsed = schema.safeParse(parsedJson);
+
+    if (!parsed.success) {
+      throw new Error(`AI output failed ${schemaName} validation: ${parsed.error.message}`);
+    }
+
+    return {
+      data: parsed.data,
+      model,
+      provider: "openai",
+    };
+  }
+}
+
+class AnthropicMessagesProvider implements AiProvider {
+  constructor(private readonly config: AiConfig) {}
+
+  async completeJson<T>({ schemaName, schema, system, user }: CompleteJsonInput<T>): Promise<AiProviderResult<T>> {
+    const model = this.config.anthropicModel;
+    const response = await fetchWithTimeout(`${this.config.anthropicBaseUrl}/v1/messages`, {
+      method: "POST",
+      headers: anthropicHeaders(),
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        system,
+        messages: [
+          {
+            role: "user",
+            content: [
+              "Respond with a single JSON object only — no markdown fences, no prose before or after.",
+              `It must conform exactly to this JSON Schema (named "${schemaName}"). Return the object itself, not the schema, and do not nest it under any key:`,
+              JSON.stringify(z.toJSONSchema(schema)),
+              "Input data to summarize:",
+              JSON.stringify(user, null, 2),
+            ].join("\n\n"),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(`Anthropic ${response.status}: ${message.slice(0, 500)}`);
+    }
+
+    const text = extractAnthropicText((await response.json()) as unknown);
+    const parsed = schema.safeParse(parseJsonObject(text));
+
+    if (!parsed.success) {
+      throw new Error(`AI output failed ${schemaName} validation: ${parsed.error.message}`);
+    }
+
+    return {
+      data: parsed.data,
+      model,
+      provider: "anthropic",
+    };
+  }
+}
+
+function anthropicHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "anthropic-version": "2023-06-01",
+    "Content-Type": "application/json",
+  };
+  // ANTHROPIC_AUTH_TOKEN → Authorization: Bearer (proxy / OAuth style).
+  // ANTHROPIC_API_KEY → x-api-key (official key style). Sending both can make a
+  // proxy forward the x-api-key upstream and 401 ("invalid x-api-key").
+  const authToken = process.env.ANTHROPIC_AUTH_TOKEN;
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  } else if (process.env.ANTHROPIC_API_KEY) {
+    headers["x-api-key"] = process.env.ANTHROPIC_API_KEY;
+  }
+  return headers;
+}
+
+function extractAnthropicText(payload: unknown) {
+  if (typeof payload !== "object" || !payload || !("content" in payload) || !Array.isArray(payload.content)) {
+    throw new Error("Anthropic response did not include content.");
+  }
+
+  const chunks: string[] = [];
+  for (const block of payload.content) {
+    if (
+      typeof block === "object" && block
+      && "type" in block && block.type === "text"
+      && "text" in block && typeof block.text === "string"
+    ) {
+      chunks.push(block.text);
+    }
+  }
+
+  const text = chunks.join("\n").trim();
+  if (!text) throw new Error("Anthropic response text was empty.");
+  return text;
+}
+
 export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
   if (!process.env.OPENAI_API_KEY) {
     return {
@@ -162,27 +325,59 @@ export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
     };
   }
 
+  return probeOpenAiCompatibleModel({
+    model,
+    apiKey: process.env.OPENAI_API_KEY,
+    baseUrl: process.env.OPENAI_BASE_URL,
+    wireApi: process.env.OPENAI_WIRE_API || process.env.OPENAI_API,
+    reasoningEffort: process.env.OPENAI_REASONING_EFFORT,
+    disableResponseStorage: process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "true" || process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "1",
+  });
+}
+
+export async function probeOpenAiCompatibleModel(input: {
+  model: string;
+  apiKey: string | undefined;
+  baseUrl: string | undefined;
+  wireApi: string | undefined;
+  reasoningEffort?: string | undefined;
+  disableResponseStorage?: boolean | undefined;
+}): Promise<AiProbeResult> {
+  if (!input.apiKey) {
+    return {
+      ok: false,
+      warning: "OpenAI-compatible API key is missing. AI actions will use local fallback.",
+    };
+  }
+
   try {
     const config = {
-      baseUrl: normalizeProbeBaseUrl(process.env.OPENAI_BASE_URL),
-      reasoningEffort: normalizeProbeReasoningEffort(process.env.OPENAI_REASONING_EFFORT),
-      disableResponseStorage: process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "true" || process.env.OPENAI_DISABLE_RESPONSE_STORAGE === "1",
+      baseUrl: normalizeProbeBaseUrl(input.baseUrl),
+      wireApi: normalizeProbeWireApi(input.wireApi),
+      reasoningEffort: normalizeProbeReasoningEffort(input.reasoningEffort),
+      disableResponseStorage: Boolean(input.disableResponseStorage),
     };
-    const response = await fetch(`${config.baseUrl}/responses`, {
+    const response = await fetch(`${config.baseUrl}/${config.wireApi === "chat" ? "chat/completions" : "responses"}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${input.apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model,
-        input: "Return the word ok.",
-        reasoning: {
-          effort: config.reasoningEffort,
-        },
-        store: !config.disableResponseStorage,
-        max_output_tokens: 16,
-      }),
+      body: JSON.stringify(config.wireApi === "chat"
+        ? {
+          model: input.model,
+          messages: [{ role: "user", content: "Return the word ok." }],
+          max_tokens: 16,
+        }
+        : {
+          model: input.model,
+          input: "Return the word ok.",
+          reasoning: {
+            effort: config.reasoningEffort,
+          },
+          store: !config.disableResponseStorage,
+          max_output_tokens: 16,
+        }),
     });
 
     if (!response.ok) {
@@ -190,7 +385,7 @@ export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
       return {
         ok: false,
         status: response.status,
-        warning: `OpenAI ${response.status}: ${message.slice(0, 240)}`,
+        warning: `OpenAI-compatible ${response.status}: ${message.slice(0, 240)}`,
       };
     }
 
@@ -198,7 +393,7 @@ export async function probeOpenAiModel(model: string): Promise<AiProbeResult> {
   } catch (error) {
     return {
       ok: false,
-      warning: error instanceof Error ? error.message : "Unknown OpenAI health check error.",
+      warning: error instanceof Error ? error.message : "Unknown OpenAI-compatible health check error.",
     };
   }
 }
@@ -229,6 +424,26 @@ function extractResponseText(payload: unknown) {
   return text;
 }
 
+function extractChatCompletionText(payload: unknown) {
+  if (typeof payload !== "object" || !payload || !("choices" in payload) || !Array.isArray(payload.choices)) {
+    throw new Error("Chat Completions response did not include choices.");
+  }
+
+  const first = payload.choices[0];
+  if (typeof first !== "object" || !first || !("message" in first)) {
+    throw new Error("Chat Completions response did not include a message.");
+  }
+
+  const message = first.message;
+  if (typeof message !== "object" || !message || !("content" in message) || typeof message.content !== "string") {
+    throw new Error("Chat Completions response text was empty.");
+  }
+
+  const text = message.content.trim();
+  if (!text) throw new Error("Chat Completions response text was empty.");
+  return text;
+}
+
 function parseJsonObject(text: string) {
   const trimmed = text.trim();
   const withoutFence = trimmed
@@ -241,6 +456,12 @@ function parseJsonObject(text: string) {
 
 function normalizeProbeBaseUrl(value: string | undefined) {
   return (value?.trim() || "https://api.openai.com/v1").replace(/\/+$/, "");
+}
+
+function normalizeProbeWireApi(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase().replace(/[_-]/g, "");
+  if (normalized === "chat" || normalized === "chatcompletions" || normalized === "openaicompletions" || normalized === "completions") return "chat";
+  return "responses";
 }
 
 function normalizeProbeReasoningEffort(value: string | undefined) {

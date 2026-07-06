@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TCGpal — verdict-first reference mock</title>
+<style>
+  :root{
+    --cream:#EDEBE2; --cream-2:#F5F3EB; --surface:#FCFBF7; --surface-2:#F8F6EF;
+    --ink:#22302E; --ink-soft:#3A4A47; --muted:#6E6E63; --faint:#9A988C;
+    --line:#E3E1D6; --line-2:#D9D6C9;
+    --teal:#2F5D59; --teal-dk:#244A46; --teal-tint:#E4EEEC;
+    --gold:#B98D18; --gold-bg:#F2E7C4;
+    --rust:#B0562F; --green:#3C7A57; --green-bg:#E6F0E6;
+    --serif:"Iowan Old Style",Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --radius:14px; --shadow:0 1px 2px rgba(30,40,38,.05),0 8px 24px rgba(30,40,38,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .serif{font-family:var(--serif)}
+  .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  a{color:var(--teal);text-decoration:none}
+  .mocknote{background:#20302e;color:#cfe0dc;font-size:12.5px;text-align:center;padding:8px 12px;letter-spacing:.02em}
+  .mocknote b{color:#fff}
+  .sectionlabel{max-width:1120px;margin:34px auto 10px;padding:0 24px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--rust);font-weight:700}
+
+  /* header */
+  header.bar{background:var(--cream);border-bottom:1px solid var(--line)}
+  .bar .wrap{display:flex;align-items:center;justify-content:space-between;height:70px}
+  .logo{font-family:var(--serif);font-weight:600;font-size:22px;color:var(--teal-dk);display:flex;flex-direction:column;line-height:1}
+  .logo small{font-size:9px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase;margin-top:3px;font-family:var(--sans)}
+  nav.top{display:flex;align-items:center;gap:22px;font-size:14.5px;color:var(--ink)}
+  .scopechip{background:var(--surface);border:1px solid var(--line-2);border-radius:999px;padding:8px 16px;font-size:13.5px;color:var(--teal-dk);font-weight:600}
+  .lang{display:flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;font-size:13px}
+  .lang span{padding:5px 11px}
+  .lang .on{background:var(--teal);color:#fff}
+
+  /* HERO */
+  .hero{padding:46px 0 30px}
+  .hero .grid{display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:start}
+  h1.display{font-family:var(--serif);font-weight:600;font-size:52px;line-height:1.04;letter-spacing:-.01em;margin:6px 0 16px;color:var(--teal-dk)}
+  .lede{font-size:17px;color:var(--muted);max-width:30ch;margin-bottom:22px}
+  /* the concrete worked-example strip that REPLACES the 4-card grid */
+  .worked{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);max-width:440px}
+  .worked .q{font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:10px}
+  .worked .q b{color:var(--teal-dk)}
+  .worked ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .worked li{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:var(--ink)}
+  .worked .dot{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:var(--teal-tint);color:var(--teal-dk);font-size:11px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+  .worked .k{color:var(--muted)}
+  .worked .win{color:var(--green);font-weight:600}
+  .worked .foot{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint)}
+
+  /* search card */
+  .search{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:var(--shadow)}
+  .search h2{font-family:var(--serif);font-size:26px;margin:2px 0 6px;color:var(--ink)}
+  .search p.hint{font-size:13.5px;color:var(--muted);margin:0 0 16px}
+  .field{width:100%;border:1.5px solid var(--teal);border-radius:12px;padding:15px 15px 15px 42px;font-size:15px;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%232F5D59' stroke-width='1.7'><rect x='2' y='3' width='11' height='13' rx='2'/><path d='M6 7h5M6 10h5'/></svg>") 14px 50% no-repeat;color:var(--ink)}
+  .field::placeholder{color:var(--faint)}
+  .games{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+  .game{border:1.5px solid var(--line-2);border-radius:12px;padding:16px;text-align:center;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2)}
+  .game.on{border-color:var(--teal);background:var(--teal-tint);color:var(--teal-dk)}
+  .row{display:flex;align-items:center;gap:18px;margin-top:4px}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:12px;padding:15px 22px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;gap:9px;align-items:center}
+  .btn.block{flex:1;justify-content:center}
+  .btn:hover{background:var(--teal-dk)}
+  .link-muted{color:var(--teal);font-size:14px;border-bottom:1px solid var(--line-2);padding-bottom:1px}
+
+  /* ---- RESULTS ---- */
+  .results-shell{background:var(--cream)}
+  .idbar{position:sticky;top:0;background:rgba(237,235,226,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:5}
+  .idbar .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+  .idpill{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);min-width:0}
+  .idpill b{font-family:var(--serif);color:var(--ink);font-size:16px}
+  .idpill .sep{color:var(--faint)}
+  .idpill .edit{color:var(--teal);font-weight:600}
+  .results-main{display:grid;grid-template-columns:1fr 300px;gap:26px;padding:28px 0 60px}
+
+  /* VERDICT hero — the star of the page */
+  .verdict{background:var(--surface);border:1.5px solid var(--teal);border-radius:18px;box-shadow:0 10px 30px rgba(36,74,70,.10);overflow:hidden}
+  .verdict .head{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:var(--teal);color:#fff}
+  .verdict .head .t{font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;opacity:.95}
+  .verdict .head .worth{font-size:13px;opacity:.9}
+  .verdict .body{padding:22px}
+  .vtop{display:flex;gap:20px}
+  .cardimg{flex:0 0 132px;height:184px;border-radius:10px;background:
+      linear-gradient(150deg,#f6d67a,#e7a23c 42%,#8fbfe8 42%,#5b86c4);
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.06), 0 6px 14px rgba(0,0,0,.12);position:relative}
+  .cardimg::after{content:"Charizard VMAX";position:absolute;left:8px;top:8px;font-size:10px;color:#3a2a12;font-weight:700;font-family:var(--serif)}
+  .vmain{flex:1;min-width:0}
+  .vtitle{font-family:var(--serif);font-size:23px;line-height:1.15;color:var(--ink);margin:0 0 6px}
+  .price{display:flex;align-items:baseline;gap:12px;margin:6px 0 2px}
+  .price .big{font-family:var(--serif);font-size:34px;color:var(--ink);font-weight:600}
+  .price .est{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .under{display:inline-block;background:var(--green-bg);color:var(--green);font-weight:600;font-size:13px;padding:4px 10px;border-radius:999px;margin-top:4px}
+  /* the plain-language verdict + the catch */
+  .verdict-say{font-size:15.5px;color:var(--ink);margin:16px 0 4px;line-height:1.55}
+  .verdict-say .catch{color:var(--rust);font-weight:600}
+  .verdict-say .alt{color:var(--teal);font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center}
+  .tag{font-size:12.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .tag.warn{color:var(--rust);border-color:#e6cdbf;background:#F7EEE9}
+  .tag.good{color:var(--green)}
+  .scoreword{margin-left:auto;font-size:12.5px;color:var(--faint)}
+  .scoreword b{color:var(--muted)}
+  .vactions{display:flex;gap:12px;margin-top:20px;align-items:center}
+  .btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
+  .btn.ghost:hover{background:var(--surface-2)}
+  .mathlink{margin-left:auto;font-size:13px;color:var(--muted);border-bottom:1px dotted var(--line-2)}
+
+  /* demoted lens control */
+  .lenses{display:flex;align-items:center;gap:8px;margin:16px 2px 4px;font-size:13.5px;color:var(--muted);flex-wrap:wrap}
+  .lenses .lbl{color:var(--faint)}
+  .lens{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:6px 14px;color:var(--ink);cursor:pointer}
+  .lens.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* alternatives */
+  .altlist{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+  .altrow{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;gap:14px;align-items:center}
+  .altrow .thumb{flex:0 0 46px;height:64px;border-radius:6px;background:linear-gradient(150deg,#f6d67a,#e7a23c 45%,#8fbfe8 45%,#5b86c4)}
+  .altrow .info{flex:1;min-width:0}
+  .altrow .at{font-family:var(--serif);font-size:15.5px;color:var(--ink);margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .altrow .ameta{font-size:12.5px;color:var(--muted)}
+  .altrow .ameta .g{color:var(--green)}
+  .altrow .ameta .w{color:var(--rust)}
+  .altrow .ap{text-align:right;flex:0 0 auto}
+  .altrow .ap .p{font-family:var(--serif);font-size:18px;color:var(--ink)}
+  .altrow .ap .u{font-size:12px;color:var(--green)}
+  .showall{text-align:center;padding:12px;color:var(--teal);font-weight:600;font-size:14px;border:1px dashed var(--line-2);border-radius:12px;background:var(--surface-2)}
+
+  /* RECEIPT block */
+  .receipt{margin-top:22px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);overflow:hidden}
+  .receipt .rrow{display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:13.5px;color:var(--ink);border-bottom:1px dashed var(--line-2)}
+  .receipt .rrow:last-child{border-bottom:none}
+  .receipt .rrow .k{color:var(--muted)}
+  .receipt .amt{font-family:var(--serif);font-size:16px;color:var(--ink)}
+  .receipt .fresh{font-size:11px;color:var(--faint);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+  .receipt .spacer{flex:1}
+  .receipt a{font-weight:600}
+  .receipt .ck{color:var(--green)}
+
+  /* right rail */
+  .rail{display:flex;flex-direction:column;gap:16px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h3{font-size:14px;margin:0 0 10px;color:var(--ink)}
+  .panel textarea{width:100%;border:1px solid var(--line-2);border-radius:10px;padding:10px;font-family:var(--sans);font-size:13.5px;resize:none;min-height:64px;color:var(--ink);background:var(--surface-2)}
+  .panel .btn{width:100%;justify-content:center;margin-top:10px;font-size:14px;padding:11px}
+  .panel.note li{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .panel.note ul{margin:0;padding-left:16px}
+
+  @media(max-width:900px){
+    .hero .grid{grid-template-columns:1fr;gap:26px}
+    h1.display{font-size:40px}
+    .results-main{grid-template-columns:1fr}
+    .rail{order:-1}
+    .vtop{flex-direction:column}
+    .cardimg{flex-basis:auto;width:120px;height:168px}
+  }
+</style>
+</head>
+<body>
+
+<div class="mocknote">Static reference mock — <b>not production</b>. Shows target information hierarchy &amp; voice, not final pixels. Colors/type approximate the real cream/teal/gold system.</div>
+
+<!-- ================= LANDING (revised) ================= -->
+<div class="sectionlabel">A · Landing (de-generic)</div>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="logo">TCGpal.<small>think before you buy</small></div>
+    <nav class="top">
+      <a>Check a listing</a>
+      <a>Method</a>
+      <span class="scopechip">Pokémon &amp; One Piece · Raw singles · US</span>
+      <span class="lang"><span class="on">EN</span><span>中文</span></span>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      <div class="eyebrow">Check the exact copy, not just the name</div>
+      <h1 class="display">Find the exact card.<br>Compare real listings.</h1>
+      <p class="lede">Confirm the print, then compare live offers by complete cost, seller record, and photo evidence.</p>
+
+      <!-- REPLACES the four 01–04 "trustworthy comparison" cards: one concrete, real-number example -->
+      <div class="worked">
+        <div class="q">You search <b>“Charizard VMAX 074/073”</b> — here's what happens:</div>
+        <ol>
+          <li><span class="dot">1</span><span><span class="k">Confirmed the exact print:</span> Champion's Path · Secret · EN</span></li>
+          <li><span class="dot">2</span><span><span class="k">Found</span> 8 real eBay listings · <span class="k">removed</span> 42 replicas &amp; wrong prints</span></li>
+          <li><span class="dot">3</span><span><span class="k">Best value:</span> <span class="win">$163.86 landed — 29% under</span> the $231 market reference</span></li>
+        </ol>
+        <div class="foot">Every result shows its sources, what's missing, and how sure we are. Unknown stays unknown.</div>
+      </div>
+    </div>
+
+    <div class="search">
+      <h2 class="serif">Which card are you checking?</h2>
+      <p class="hint">Name plus number is fastest. If it's ambiguous, you pick the exact version before listings rank.</p>
+      <input class="field" placeholder='Type the card, e.g. “Greninja Gold Star SWSH144”' />
+      <div class="games">
+        <div class="game on">Pokémon</div>
+        <div class="game">One Piece</div>
+      </div>
+      <div class="row">
+        <button class="btn block">Find exact card</button>
+        <a class="link-muted">or paste a listing link</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RESULTS (verdict-first) ================= -->
+<div class="sectionlabel">B · Results (verdict-first)</div>
+
+<div class="results-shell">
+  <div class="idbar">
+    <div class="wrap">
+      <div class="idpill">
+        <b>Charizard VMAX · 74/73 · Champion's Path</b>
+        <span class="sep">·</span> Pokémon <span class="sep">·</span> ZIP 10003 <span class="sep">·</span> Near Mint
+        <span class="sep">·</span> <a class="edit">Edit</a>
+      </div>
+      <nav class="top"><a>New search</a><a>Method</a><span class="lang"><span class="on">EN</span><span>中文</span></span></nav>
+    </div>
+  </div>
+
+  <div class="wrap results-main">
+    <div class="col-main">
+
+      <!-- THE VERDICT -->
+      <div class="verdict">
+        <div class="head">
+          <span class="t">✓ Our pick — best value</span>
+          <span class="worth">1 of 8 comparable listings</span>
+        </div>
+        <div class="body">
+          <div class="vtop">
+            <div class="cardimg" aria-label="Charizard VMAX card image"></div>
+            <div class="vmain">
+              <h2 class="vtitle">Charizard VMAX — Champions Path 2020, Secret 074/073 Holo (EN)</h2>
+              <div class="price">
+                <span class="big">$163.86</span>
+                <span class="est">est. landed · price + ship + tax</span>
+              </div>
+              <span class="under">▼ 29% under the $231 market reference</span>
+
+              <!-- plainspoken judgment WITH the catch and the alternative -->
+              <p class="verdict-say">
+                The cheapest <b>Near-Mint</b> copy from a solid seller.
+                <span class="catch">The catch: only 2 photos — you can't inspect the corners yourself.</span>
+                Want to check condition before buying? <span class="alt">The 7-photo listing below is ~$27 more.</span>
+              </p>
+
+              <div class="tags">
+                <span class="tag">eBay</span>
+                <span class="tag">Near Mint</span>
+                <span class="tag good">Decent seller · 99.3%</span>
+                <span class="tag warn">Thin evidence · 2 photos</span>
+                <span class="scoreword"><b>Strong overall</b> · 80/100</span>
+              </div>
+
+              <div class="vactions">
+                <button class="btn">View listing on eBay ↗</button>
+                <button class="btn ghost">Why this pick?</button>
+                <a class="mathlink">Check the math behind these labels</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- lens control DEMOTED to a quiet secondary row -->
+      <div class="lenses">
+        <span class="lbl">Optimize instead for:</span>
+        <span class="lens on">Best value</span>
+        <span class="lens">Cheapest</span>
+        <span class="lens">Safest</span>
+        <span class="lens">Best-documented</span>
+        <span style="margin-left:auto;color:var(--faint);font-size:12.5px">Same pick as Safest &amp; Documented</span>
+      </div>
+
+      <!-- alternatives -->
+      <div class="altlist">
+        <div class="altrow">
+          <div class="thumb"></div>
+          <div class="info">
+            <p class="at">Pokémon TCG Charizard VMAX Secret Rare Holo Champions Path 074/073</p>
+            <div class="ameta">eBay · Near Mint · <span class="g">Decent seller</span> · <span class="g">Photo-rich · 7 photos</span> · English</div>
+          </div>
+          <div class="ap"><div class="p">$190.05</div><div class="u">▼ 18% under</div></div>
+        </div>
+        <div class="altrow">
+          <div class="thumb"></div>
+          <div class="info">
+            <p class="at">Charizard VMAX 074/073 Secret Rare Full Art Holo — Champions Path</p>
+            <div class="ameta">eBay · Near Mint · <span class="w">Unproven seller</span> · <span class="w">Thin evidence</span> · English</div>
+          </div>
+          <div class="ap"><div class="p">$166.83</div><div class="u">▼ 28% under</div></div>
+        </div>
+        <div class="showall">Show all 8 comparable listings ▾</div>
+      </div>
+
+      <!-- THE RECEIPT -->
+      <div class="receipt" aria-label="How we checked">
+        <div class="rrow">
+          <span class="k">Market reference</span>
+          <span class="amt">$231.81</span>
+          <span class="fresh">prices as of 7/5/2026</span>
+          <span class="spacer"></span>
+          <span class="k">comparable range $157–$383</span>
+        </div>
+        <div class="rrow">
+          <span class="ck">✓</span> Checked eBay + TCGplayer market reference · 2:05 PM.
+          <a>&nbsp;See how we checked.</a>
+          <span class="spacer"></span>
+          <a>See why 42 listings were excluded ▸</a>
+        </div>
+        <div class="rrow">
+          <span class="k">This is a shareable decision receipt —</span>
+          <a>&nbsp;Copy result</a> <span class="k">·</span> <a>Share receipt ↗</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- right rail (secondary) -->
+    <aside class="rail">
+      <div class="panel">
+        <h3>Ask about this result</h3>
+        <textarea placeholder="Why did this listing win, or what evidence is missing?"></textarea>
+        <button class="btn">Ask</button>
+      </div>
+      <div class="panel note">
+        <h3>Before you buy</h3>
+        <ul>
+          <li>One listing may lead several lenses; none is a grade prediction.</li>
+          <li>Recent sold prices still need manual verification — we link, we don't claim.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+</body>
+</html>

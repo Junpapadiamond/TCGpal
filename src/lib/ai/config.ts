@@ -1,14 +1,14 @@
-import type { HermesTaskType } from "@/lib/schemas";
-
 export type AiProviderName = "openai" | "anthropic" | "glm" | "kimi" | "mimo";
 export type AiModelRole = "classifier" | "primary" | "critic";
 export type AiReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
+export type AiWireApi = "responses" | "chat";
 
 export type AiConfig = {
   provider: AiProviderName;
   primaryModel: string;
   cheapModel: string;
   baseUrl: string;
+  wireApi: AiWireApi;
   anthropicBaseUrl: string;
   anthropicModel: string;
   reasoningEffort: AiReasoningEffort;
@@ -21,9 +21,10 @@ export function getAiConfig(): AiConfig {
 
   return {
     provider,
-    primaryModel: process.env.OPENAI_MODEL || process.env.OPENAI_MODEL_PRIMARY || "gpt-5.5-2026-04-23",
-    cheapModel: process.env.OPENAI_MODEL_REVIEW || process.env.OPENAI_MODEL_CHEAP || process.env.OPENAI_MODEL || "gpt-5.5-2026-04-23",
+    primaryModel: process.env.OPENAI_MODEL || process.env.OPENAI_MODEL_PRIMARY || "gpt-5.5",
+    cheapModel: process.env.OPENAI_MODEL_REVIEW || process.env.OPENAI_MODEL_CHEAP || process.env.OPENAI_MODEL || "gpt-5.4",
     baseUrl: normalizeBaseUrl(process.env.OPENAI_BASE_URL),
+    wireApi: parseWireApi(process.env.OPENAI_WIRE_API || process.env.OPENAI_API),
     anthropicBaseUrl: normalizeAnthropicBaseUrl(process.env.ANTHROPIC_BASE_URL),
     anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-4-8",
     reasoningEffort: parseReasoningEffort(process.env.OPENAI_REASONING_EFFORT),
@@ -38,13 +39,6 @@ export function getAiConfig(): AiConfig {
 
 export function getModelForStep(role: AiModelRole, config: AiConfig = getAiConfig()) {
   return role === "primary" ? config.primaryModel : config.cheapModel;
-}
-
-export function getPrimaryAgentForTask(taskType: HermesTaskType) {
-  if (taskType === "PLAN_GENERATION") return "Plan Agent";
-  if (taskType === "LISTING_RISK_CHECK") return "Listing Risk Agent";
-  if (taskType === "RAW_VS_SLAB_EXPLAIN") return "Calculation Explainer Agent";
-  return "Journal Reflection Agent";
 }
 
 function parseProvider(value: string | undefined): AiProviderName {
@@ -71,6 +65,14 @@ function parseReasoningEffort(value: string | undefined): AiReasoningEffort {
   }
 
   return "xhigh";
+}
+
+function parseWireApi(value: string | undefined): AiWireApi {
+  const normalized = value?.trim().toLowerCase().replace(/[_-]/g, "");
+  if (normalized === "chat" || normalized === "chatcompletions" || normalized === "openaicompletions" || normalized === "completions") {
+    return "chat";
+  }
+  return "responses";
 }
 
 function parseBoolean(value: string | undefined) {

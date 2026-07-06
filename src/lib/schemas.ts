@@ -1,69 +1,386 @@
 import { z } from "zod";
 
-export const ipOptions = ["One Piece", "Pokemon", "Yu-Gi-Oh", "Sports Cards", "Other"] as const;
-export const favoriteTcgOptions = ["Pokemon", "One Piece", "Yu-Gi-Oh", "League / Riot TCG", "Other"] as const;
-export const playerTypeOptions = ["Collector", "Hybrid Collector-Seller", "Seller / Vendor"] as const;
-export const budgetRangeOptions = ["$50", "$150", "$300", "$1000+", "Talk about it later"] as const;
-export const goalOptions = [
-  "Collection",
-  "Collection + resale",
-  "Grading play",
-  "Small seller inventory",
-  "Set completion",
-] as const;
-export const riskOptions = ["Low", "Medium", "High"] as const;
-export const holdingOptions = ["Short-term", "3-6 months", "1 year+", "Long-term collection"] as const;
-export const gradingOptions = ["No", "Maybe", "Yes"] as const;
-export const marketOptions = ["eBay", "TCGplayer", "Cardmarket", "Mercari", "Local community", "Other"] as const;
-export const actualGradeOptions = ["UNKNOWN", "PSA10", "PSA9", "PSA8_OR_LOWER"] as const;
-export const decisionSourceOptions = ["manual", "listing_risk", "raw_vs_slab"] as const;
-export const decisionPlanStatusOptions = ["open", "done", "skipped"] as const;
-export const journalSentimentOptions = ["Still interested", "Cautious", "Passed for now", "Exited", "Needs review"] as const;
-export const journalReviewStatusOptions = ["Watching", "Needs review", "Resolved"] as const;
-export const journalActionOptions = [
-  "Considering purchase",
-  "Bought",
-  "Skipped",
-  "Sent for grading",
-  "Listed for sale",
-  "Sold",
-  "Holding",
-  "Re-evaluation",
-] as const;
+export const marketplaceSchema = z.enum([
+  "eBay",
+  "TCGplayer",
+  "Cardmarket",
+  "Facebook",
+  "Reddit",
+  "Mercari",
+  "Whatnot",
+  "SNKRDUNK",
+  "Xianyu",
+  "集换社",
+  "Yahoo Auctions JP",
+  "Shopee Taiwan",
+  "Local shop",
+  "Other",
+]);
 
-export const userProfileSchema = z.object({
-  ip: z.enum(ipOptions),
-  favoriteTcgs: z.array(z.enum(favoriteTcgOptions)).default(["One Piece"]),
-  playerType: z.enum(playerTypeOptions).default("Hybrid Collector-Seller"),
-  budgetRange: z.enum(budgetRangeOptions).default("$300"),
-  goal: z.enum(goalOptions),
-  todayBudget: z.number().min(0).default(300),
-  monthlyBudget: z.number().min(0),
-  riskLevel: z.enum(riskOptions),
-  holdingPeriod: z.enum(holdingOptions),
-  gradingPreference: z.enum(gradingOptions),
-  preferredMarket: z.enum(marketOptions),
-  favoriteCharacters: z.string().trim().default(""),
+// How a marketplace agent actually sources its listings — surfaced in the "sources
+// checked" panel so the operator (and eventually the buyer) can see whether a
+// platform is live via an official API, requires a partner/licensed integration, is
+// served from a cached index, or is the universal manual-entry fallback.
+export const platformSourceModeSchema = z.enum([
+  "official_api",
+  "partner_feed",
+  "licensed_provider",
+  "cached_index",
+  "manual_fallback",
+]);
+
+export const conditionClaimSchema = z.enum([
+  "Near Mint",
+  "Lightly Played",
+  "Moderately Played",
+  "Heavily Played",
+  "Damaged",
+  "Unknown",
+]);
+
+export const confidenceSchema = z.enum(["low", "medium", "high"]);
+
+// Evidence-based risk stays separate from data coverage: a listing with no
+// seller track record is "unverified" (neutral), never "higher_risk".
+export const riskLabelSchema = z.enum(["low_risk", "some_risk", "higher_risk", "unverified"]);
+
+export const moneySchema = z.object({
+  value: z.number().min(0),
+  currency: z.literal("USD").default("USD"),
 });
 
-export const planInputSchema = z.object({
-  ip: z.enum(ipOptions),
-  theme: z.string().trim().min(1),
-  budget: z.number().positive(),
-  goal: z.enum(goalOptions),
-  riskLevel: z.enum(riskOptions),
-  holdingPeriod: z.enum(holdingOptions),
-  gradingPreference: z.enum(gradingOptions),
-  preferredMarket: z.enum(marketOptions),
-  notes: z.string().trim().default(""),
+export const sellerSubRatingsSchema = z.object({
+  accurateDescription: z.number().min(0).max(5).nullable().default(null),
+  shippingCost: z.number().min(0).max(5).nullable().default(null),
+  shippingSpeed: z.number().min(0).max(5).nullable().default(null),
+  communication: z.number().min(0).max(5).nullable().default(null),
+});
+
+export const sellerTrustSignalsSchema = z.object({
+  feedbackPercentage: z.number().min(0).max(100).nullable().default(null),
+  feedbackCount: z.number().int().min(0).nullable().default(null),
+  returnsAccepted: z.boolean().nullable().default(null),
+  topRated: z.boolean().nullable().default(null),
+  buyerProtection: z.boolean().nullable().default(null),
+  subRatings: sellerSubRatingsSchema.nullable().default(null),
+});
+
+export const listingEvidenceSchema = z.object({
+  photoCount: z.number().int().min(0).default(0),
+  frontBackExplicit: z.boolean().default(false),
+  closeupsExplicit: z.boolean().default(false),
+  surfaceExplicit: z.boolean().default(false),
+  identityExplicit: z.boolean().default(false),
+  substantiveConditionNotes: z.boolean().default(false),
+  missing: z.array(z.string()).default([]),
+});
+
+export const sourceListingSchema = z.object({
+  marketplace: marketplaceSchema,
+  url: z.string().url().optional().or(z.literal("")),
+  title: z.string().trim().default(""),
+  description: z.string().trim().default(""),
+  price: z.number().min(0).nullable().default(null),
+  shipping: z.number().min(0).nullable().default(null),
+  claimedCondition: conditionClaimSchema.default("Unknown"),
+  active: z.boolean().default(true),
+  seller: sellerTrustSignalsSchema.default({
+    feedbackPercentage: null,
+    feedbackCount: null,
+    returnsAccepted: null,
+    topRated: null,
+    buyerProtection: null,
+    subRatings: null,
+  }),
+  evidence: listingEvidenceSchema.default({
+    photoCount: 0,
+    frontBackExplicit: false,
+    closeupsExplicit: false,
+    surfaceExplicit: false,
+    identityExplicit: false,
+    substantiveConditionNotes: false,
+    missing: [],
+  }),
+});
+
+export const buyerContextSchema = z.object({
+  country: z.literal("US").default("US"),
+  postalCode: z.string().trim().max(10).default(""),
+  taxRate: z.number().min(0).max(0.2).nullable().default(null),
+  desiredCondition: conditionClaimSchema.default("Near Mint"),
+});
+
+export const tcgGameSchema = z.enum(["pokemon", "onePiece"]);
+
+export const cardHintSchema = z.object({
+  game: tcgGameSchema.default("pokemon"),
+  name: z.string().trim().default(""),
+  setCode: z.string().trim().default(""),
+  cardNumber: z.string().trim().default(""),
+  language: z.string().trim().default("English"),
+  // Parsed from a free-text search query (e.g. "Gold Star", "Alt Art", "Promo") —
+  // disambiguation context, not a separate search field. Raw singles only today;
+  // ranking does not act on this (see gradingClaim below).
+  variant: z.string().trim().default(""),
+  // Parsed from a free-text query like "PSA 10" — captured as identity metadata
+  // (useful to disambiguate a graded listing's underlying raw print) even though
+  // TCGpal's ranking is raw-singles-only today and does not search for or rank
+  // graded listings. Supporting graded-listing comparison is a separate, explicit
+  // product-scope decision, not implied by capturing this field.
+  gradingClaim: z.string().trim().default(""),
+});
+
+// A quick cross-platform listing the buyer enters by hand. Kept minimal so a
+// row is fast to add; richer seller/photo evidence stays on the single detailed
+// `sourceListing` path.
+export const manualCandidateSchema = z.object({
+  marketplace: marketplaceSchema,
+  url: z.string().url().optional().or(z.literal("")),
+  title: z.string().trim().default(""),
+  price: z.number().min(0).nullable().default(null),
+  shipping: z.number().min(0).nullable().default(null),
+  claimedCondition: conditionClaimSchema.default("Unknown"),
+});
+
+export const comparisonRequestSchema = z.object({
+  sourceListing: sourceListingSchema,
+  buyer: buyerContextSchema,
+  // The hero search box: one free-text string ("P-096 One Piece Japanese Promo").
+  // When present, it is deterministically parsed into cardHint fields before
+  // identity resolution runs — this is the "one box, one click" entry point.
+  // Any cardHint field the caller also sets explicitly is NOT overwritten by the
+  // parse (progressive-disclosure detail fields always win over the free-text guess).
+  query: z.string().trim().max(200).optional(),
+  cardHint: cardHintSchema.default({
+    game: "pokemon",
+    name: "",
+    setCode: "",
+    cardNumber: "",
+    language: "English",
+    variant: "",
+    gradingClaim: "",
+  }),
+  // Lightweight listings the buyer found on other platforms (TCGplayer,
+  // Facebook, Mercari, Whatnot, local shop...). They are user-supplied facts —
+  // never fetched server-side — and rank in the same ledger as eBay results.
+  manualCandidates: z.array(manualCandidateSchema).default([]),
+  // Optional wider web-discovery pass. The default comparison stays focused on
+  // configured platform agents; "expanded" asks Exa/Tavily for candidate links
+  // that remain separately labeled until enough structured evidence exists.
+  webDiscoveryMode: z.enum(["off", "expanded"]).default("off"),
+  confirmedCardId: z.string().trim().optional(),
+});
+
+export const cardIdentityCandidateSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  setName: z.string(),
+  setCode: z.string(),
+  cardNumber: z.string(),
+  language: z.string(),
+  imageUrl: z.string().url().nullable().default(null),
+  rarity: z.string().nullable().optional(),
+  variant: z.string().nullable().optional(),
+  setSymbolUrl: z.string().url().nullable().optional(),
+  confidence: confidenceSchema,
+  matchReasons: z.array(z.string()),
+  // Live TCGplayer market price for this exact version (USD), used as the
+  // fair-price anchor. Optional so demo identities without pricing stay valid.
+  marketUrl: z.string().url().nullable().optional(),
+  marketLow: z.number().nullable().optional(),
+  marketMid: z.number().nullable().optional(),
+  marketHigh: z.number().nullable().optional(),
+  // Where the anchor came from and how fresh it is ("tcgcsv" daily feed vs the
+  // inline pokemontcg.io approximation), so the UI can show freshness honestly.
+  marketSource: z.enum(["tcgcsv", "pokemontcg"]).nullable().optional(),
+  marketAsOf: z.string().nullable().optional(),
+  // Crosswalk: canonical card id ↔ TCGplayer product id (null when unmapped).
+  tcgplayerProductId: z.number().int().nullable().optional(),
+});
+
+export const normalizedListingSchema = z.object({
+  id: z.string(),
+  marketplace: marketplaceSchema,
+  url: z.string().url().nullable().default(null),
+  title: z.string(),
+  cardId: z.string(),
+  matchConfidence: confidenceSchema,
+  matchReasons: z.array(z.string()),
+  active: z.boolean(),
+  raw: z.boolean(),
+  currency: z.literal("USD"),
+  price: z.number().min(0),
+  shipping: z.number().min(0).nullable(),
+  // Shipping must be known before a row may compete for a recommendation.
+  // Tax may still be unknown, in which case the row is compared pre-tax.
+  costComplete: z.boolean(),
+  estimatedTax: z.number().min(0).nullable(),
+  preTaxTotal: z.number().min(0),
+  estimatedLandedCost: z.number().min(0).nullable(),
+  claimedCondition: conditionClaimSchema,
+  listingLanguage: z.string().trim().nullable().default(null),
+  imageUrl: z.string().url().nullable().default(null),
+  seller: sellerTrustSignalsSchema,
+  evidence: listingEvidenceSchema,
+  sellerTrustScore: z.number().int().min(0).max(100),
+  evidenceCompletenessScore: z.number().int().min(0).max(100),
+  conditionCompatibilityScore: z.number().int().min(0).max(100),
+  marketComparable: z.boolean(),
+  priceScore: z.number().int().min(0).max(100),
+  safetyScore: z.number().int().min(0).max(100),
+  // Composite "best value" score: price-vs-market + safety + evidence. Deterministic —
+  // computed alongside the other scores in normalizeListing(), never AI-assigned.
+  valueScore: z.number().int().min(0).max(100),
+  // Seller-track-record risk, kept separate from evidence volume (search-API rows
+  // legitimately carry thin evidence). Missing seller data → "unverified", neutral.
+  riskLabel: riskLabelSchema,
+  // Plain-language notes documenting how missing data and platform baselines were
+  // applied — the "check the math" trail for the trust score.
+  trustNotes: z.array(z.string()).default([]),
+  eligible: z.boolean(),
+  exclusionReasons: z.array(z.string()),
+  observedAt: z.string(),
+  demo: z.boolean().default(false),
+  // True for listings the buyer supplied (pasted URL, manual entry) rather than a
+  // live platform search — labeled "user-added" in the ledger.
+  userSupplied: z.boolean().default(false),
+  // True for approximate candidates inferred from the optional Exa/Tavily
+  // expanded-search lane. They rank only when a USD price hint exists and stay
+  // visibly distinct from official platform inventory.
+  webDiscovered: z.boolean().default(false),
+});
+
+export const rankedChoiceRoleSchema = z.enum([
+  "best_value",
+  "lowest_landed_cost",
+  "safest_listing",
+  "best_condition_evidence",
+]);
+
+export const rankedChoiceSchema = z.object({
+  role: rankedChoiceRoleSchema,
+  listingId: z.string(),
+  label: z.string(),
+  reason: z.string(),
+  confidence: confidenceSchema,
+});
+
+export const comparisonReferenceSchema = z.object({
+  label: z.string(),
+  status: z.enum(["used", "unavailable", "missing"]),
+  observedAt: z.string(),
+  url: z.string().url().nullable().default(null),
+  note: z.string(),
+  rawLow: z.number().nullable().default(null),
+  rawMid: z.number().nullable().default(null),
+  rawHigh: z.number().nullable().default(null),
+});
+
+export const comparisonTraceSchema = z.object({
+  step: z.string(),
+  actor: z.string(),
+  summary: z.string(),
+  status: z.enum(["complete", "fallback", "skipped"]),
+});
+
+export const comparisonNarrativeSchema = z.object({
+  summary: z.string(),
+  cautions: z.array(z.string()),
+});
+
+// One entry per platform agent in the cross-platform fan-out: whether it ran,
+// was unavailable, or sat out because its API is not configured. Powers the
+// "sources checked" panel so the user can see exactly which marketplaces are live.
+export const comparisonPlatformResultSchema = z.object({
+  id: z.string(),
+  marketplace: marketplaceSchema,
+  label: z.string(),
+  sourceMode: platformSourceModeSchema,
+  status: z.enum(["complete", "fallback", "skipped"]),
+  configured: z.boolean(),
+  count: z.number().int().min(0).default(0),
+  detail: z.string().default(""),
+});
+
+export const webDiscoveryProviderSchema = z.enum(["exa", "tavily"]);
+
+export const webDiscoverySchema = z.object({
+  id: z.string(),
+  marketplace: marketplaceSchema,
+  platformLabel: z.string(),
+  title: z.string().trim().min(1),
+  url: z.string().url(),
+  providers: z.array(webDiscoveryProviderSchema).min(1),
+  listingLike: z.boolean().default(false),
+  freshness: z.enum(["within_3_days", "unknown", "not_time_sensitive"]).default("unknown"),
+  availability: z.enum(["available_hint", "unknown"]).default("unknown"),
+  snippet: z.string().trim().default(""),
+  priceHintUsd: z.number().min(0).nullable().default(null),
+  rankedCandidateId: z.string().nullable().default(null),
+  evidenceLevel: z.enum(["price_hint", "link_only"]).default("link_only"),
+  discoveredAt: z.string(),
+  note: z.string(),
+});
+
+export const comparisonReportSchema = z.object({
+  status: z.enum(["needs_confirmation", "complete", "partial"]),
+  request: comparisonRequestSchema,
+  identityCandidates: z.array(cardIdentityCandidateSchema),
+  confirmedCard: cardIdentityCandidateSchema.nullable(),
+  candidates: z.array(normalizedListingSchema),
+  rankedChoices: z.array(rankedChoiceSchema),
+  references: z.array(comparisonReferenceSchema),
+  narrative: comparisonNarrativeSchema,
+  warnings: z.array(z.string()),
+  trace: z.array(comparisonTraceSchema),
+  platforms: z.array(comparisonPlatformResultSchema).default([]),
+  webDiscoveries: z.array(webDiscoverySchema).default([]),
+  demoMode: z.boolean(),
+  generatedAt: z.string(),
+});
+
+export const comparisonQuestionRequestSchema = z.object({
+  report: comparisonReportSchema,
+  question: z.string().trim().min(1).max(500),
+  targetListingId: z.string().trim().min(1).max(200).optional(),
+  activeRole: rankedChoiceRoleSchema.optional(),
+  // "auto" lets the assistant add cited web context for source legitimacy,
+  // translation, reference-discovery, and identity-help questions. Report/ranking
+  // questions remain report-only.
+  webContext: z.enum(["auto", "off", "force"]).default("off"),
+});
+
+export const webCitationSchema = z.object({
+  title: z.string().trim().min(1),
+  url: z.string().url(),
+  snippet: z.string().trim().default(""),
+  source: z.enum(["tavily_search", "tavily_extract"]),
+});
+
+export const comparisonQuestionResponseSchema = z.object({
+  answer: z.string().trim().min(1),
+  cautions: z.array(z.string()).default([]),
+  usedAi: z.boolean().default(false),
+  webContextChecked: z.boolean().default(false),
+  webCitations: z.array(webCitationSchema).default([]),
 });
 
 export const listingRiskInputSchema = z.object({
   title: z.string().trim().min(1),
   description: z.string().trim().default(""),
   price: z.number().min(0),
-  marketplace: z.enum(marketOptions),
+  marketplace: marketplaceSchema,
   userGoal: z.enum(["Self-collection", "Grading", "Resale"]),
+});
+
+export const listingRiskReportSchema = z.object({
+  score: z.enum(["Low", "Medium", "Medium-High", "High"]),
+  confidence: z.enum(["Low", "Medium-low", "Medium", "High"]),
+  missingInfo: z.array(z.string()),
+  keyRisks: z.array(z.string()).min(1),
+  sellerQuestions: z.array(z.string()).min(1),
+  suitability: z.string(),
+  cautiousSummary: z.string(),
 });
 
 export const rawVsSlabInputSchema = z.object({
@@ -78,291 +395,6 @@ export const rawVsSlabInputSchema = z.object({
   psa9Probability: z.number().min(0).max(1),
 });
 
-export const fomoCheckInputSchema = z.object({
-  cardName: z.string().trim().min(1),
-  cardVersion: z.string().trim().default(""),
-  askingPrice: z.number().min(0),
-  todayBudget: z.number().min(0).default(0),
-  monthlyBudget: z.number().min(0),
-  budgetRange: z.enum(budgetRangeOptions),
-  versionConfirmed: z.boolean().default(true),
-  feelingText: z.string().trim().min(1),
-  evidenceText: z.string().trim().default(""),
-});
-
-export const fomoMetricSchema = z.object({
-  score: z.number().int().min(0).max(100),
-  label: z.enum(["Low", "Medium", "High"]),
-  reasons: z.array(z.string()).min(1).max(4),
-});
-
-export const fomoCheckResultSchema = z.object({
-  decisionPosture: z.enum(["Cool", "Warm", "Hot", "Overheated"]),
-  nextStep: z.enum(["Pause", "Ask for evidence", "Run math", "Proceed within guardrails"]),
-  fomoHeat: fomoMetricSchema,
-  budgetStrain: fomoMetricSchema,
-  evidenceStrength: fomoMetricSchema,
-  versionClarity: fomoMetricSchema,
-  hardStop: z.boolean(),
-  cooldownRecommended: z.boolean(),
-  warmSummary: z.string(),
-  guardrail: z.string(),
-});
-
-export const marketCheckDecisionSchema = z.enum(["Buy", "Ask seller", "Wait", "Pause"]);
-export const marketCheckConfidenceSchema = z.enum(["low", "medium", "high"]);
-
-export const marketCheckSourceSchema = z.object({
-  label: z.string(),
-  url: z.string().nullable().default(null),
-  status: z.enum(["used", "missing", "unavailable"]),
-  note: z.string(),
-});
-
-export const marketCheckToolTraceSchema = z.object({
-  step: z.string(),
-  tool: z.string(),
-  model: z.string(),
-  summary: z.string(),
-  sources: z.array(marketCheckSourceSchema).default([]),
-});
-
-export const marketCheckRequestSchema = z.object({
-  cardName: z.string().trim().min(1),
-  cardVersion: z.string().trim().default(""),
-  tcg: z.enum(favoriteTcgOptions).default("Pokemon"),
-  askingPrice: z.number().min(0),
-  feelingText: z.string().trim().min(1),
-  evidenceText: z.string().trim().default(""),
-  profile: userProfileSchema,
-});
-
-export const identifiedCardSchema = z.object({
-  cardName: z.string(),
-  version: z.string(),
-  tcg: z.enum(favoriteTcgOptions),
-  confidence: marketCheckConfidenceSchema,
-  candidates: z.array(z.object({
-    name: z.string(),
-    version: z.string(),
-    source: z.string(),
-    imageUrl: z.string().nullable().default(null),
-    url: z.string().nullable().default(null),
-  })),
-  missing: z.array(z.string()),
-});
-
-export const referencePricesSchema = z.object({
-  available: z.boolean(),
-  source: z.string(),
-  rawLow: z.number().nullable(),
-  rawMid: z.number().nullable(),
-  rawHigh: z.number().nullable(),
-  psa9: z.number().nullable(),
-  psa10: z.number().nullable(),
-  notes: z.array(z.string()),
-});
-
-export const soldCompsSchema = z.object({
-  available: z.boolean(),
-  source: z.string(),
-  manualCheckUrl: z.string().default(""),
-  lookupQuery: z.string().default(""),
-  comps: z.array(z.object({
-    label: z.string(),
-    price: z.number(),
-    soldAt: z.string().nullable().default(null),
-    url: z.string().nullable().default(null),
-  })),
-  notes: z.array(z.string()),
-});
-
-export const evidenceGapCheckSchema = z.object({
-  score: z.number().int().min(0).max(100),
-  gaps: z.array(z.string()),
-  strengths: z.array(z.string()),
-});
-
-export const marketBudgetRulesSchema = z.object({
-  hardStop: z.boolean(),
-  budgetStrain: z.number().int().min(0).max(100),
-  activeBudget: z.number(),
-  remainingToday: z.number(),
-  notes: z.array(z.string()),
-});
-
-export const marketCheckDecisionSummarySchema = z.object({
-  decision: marketCheckDecisionSchema,
-  confidence: marketCheckConfidenceSchema,
-  summary: z.string(),
-  nextActions: z.array(z.string()).min(1),
-  assumptions: z.array(z.string()),
-  missingInformation: z.array(z.string()),
-});
-
-export const marketCheckResponseSchema = z.object({
-  input: marketCheckRequestSchema,
-  identifiedCard: identifiedCardSchema,
-  referencePrices: referencePricesSchema,
-  soldComps: soldCompsSchema,
-  evidence: evidenceGapCheckSchema,
-  budget: marketBudgetRulesSchema,
-  result: marketCheckDecisionSummarySchema,
-  sources: z.array(marketCheckSourceSchema),
-  trace: z.array(marketCheckToolTraceSchema),
-  warnings: z.array(z.string()),
-  fallbackUsed: z.boolean(),
-  model: z.string(),
-});
-
-export const demoSessionSchema = z.object({
-  signedIn: z.boolean(),
-  mode: z.enum(["login", "signup"]),
-  createdAt: z.string(),
-});
-
-export const tcgPurchaseSchema = z.object({
-  id: z.string(),
-  cardId: z.string(),
-  cardName: z.string().trim().min(1),
-  cardVersion: z.string().trim().default(""),
-  askingPrice: z.number().min(0),
-  boughtAt: z.string(),
-});
-
-export const cooldownTicketSchema = z.object({
-  id: z.string(),
-  cardId: z.string(),
-  cardName: z.string().trim().min(1),
-  cardVersion: z.string().trim().default(""),
-  askingPrice: z.number().min(0),
-  originalThesis: z.string().trim().min(1),
-  missingEvidence: z.string().trim().default(""),
-  decisionPosture: fomoCheckResultSchema.shape.decisionPosture,
-  nextStep: fomoCheckResultSchema.shape.nextStep,
-  createdAt: z.string(),
-  revisitDate: z.string(),
-  status: z.enum(["cooling", "reviewed", "skipped", "bought"]).default("cooling"),
-});
-
-export const decisionJournalEntrySchema = z.object({
-  id: z.string(),
-  tcg: z.enum(favoriteTcgOptions).default("One Piece"),
-  cardName: z.string().trim().min(1),
-  version: z.string().trim().default(""),
-  date: z.string(),
-  actionType: z.enum(journalActionOptions),
-  price: z.number().min(0),
-  userGoal: z.enum(goalOptions),
-  tags: z.string().trim().default(""),
-  sentiment: z.enum(journalSentimentOptions).default("Cautious"),
-  thesis: z.string().trim().min(1),
-  watchReason: z.string().trim().default(""),
-  buyCondition: z.string().trim().default(""),
-  sellCondition: z.string().trim().default(""),
-  stopCondition: z.string().trim().default(""),
-  risks: z.string().trim().default(""),
-  missingInfo: z.string().trim().default(""),
-  reviewDate: z.string().default(""),
-  reviewStatus: z.enum(journalReviewStatusOptions).default("Needs review"),
-  finalOutcome: z.string().trim().default(""),
-  lessonsLearned: z.string().trim().default(""),
-  assumedPsa10Probability: z.number().min(0).max(1).optional(),
-  actualGrade: z.enum(actualGradeOptions).default("UNKNOWN"),
-  source: z.enum(decisionSourceOptions).default("manual"),
-  createdAt: z.string(),
-});
-
-export const decisionPlanItemSchema = z.object({
-  id: z.string(),
-  createdAt: z.string(),
-  source: z.enum(["journal", "listing_risk", "raw_vs_slab"]),
-  title: z.string().trim().min(1),
-  cardName: z.string().trim().min(1),
-  summary: z.string().trim().min(1),
-  dueDate: z.string(),
-  status: z.enum(decisionPlanStatusOptions),
-});
-
-export const generatedPlanSchema = z.object({
-  title: z.string(),
-  posture: z.enum(["Conservative", "Balanced", "Aggressive"]),
-  summary: z.string(),
-  budgetSplit: z.array(z.string()).min(1),
-  buyConditions: z.array(z.string()).min(1),
-  doNotBuyConditions: z.array(z.string()).min(1),
-  sellConditions: z.array(z.string()).min(1),
-  risks: z.array(z.string()).min(1),
-  nextActions: z.array(z.string()).min(1),
-});
-
-export const generatedPlanSetSchema = z.object({
-  input: planInputSchema,
-  generatedAt: z.string(),
-  plans: z.array(generatedPlanSchema).length(3),
-});
-
-export const listingRiskReportSchema = z.object({
-  score: z.enum(["Low", "Medium", "Medium-High", "High"]),
-  confidence: z.enum(["Low", "Medium-low", "Medium", "High"]),
-  missingInfo: z.array(z.string()),
-  keyRisks: z.array(z.string()).min(1),
-  sellerQuestions: z.array(z.string()).min(1),
-  suitability: z.string(),
-  cautiousSummary: z.string(),
-});
-
-export const evidenceFieldSchema = z.object({
-  value: z.string().nullable(),
-  confidence: z.enum(["high", "medium", "low"]),
-  source: z.enum(["explicit_title", "explicit_description", "inferred", "unknown"]),
-});
-
-export const conditionClaimSchema = z.object({
-  claim: z.string(),
-  source: z.enum(["seller_claim", "observed_photo", "inferred"]),
-  confidence: z.enum(["high", "medium", "low"]),
-});
-
-export const listingEvidenceSchema = z.object({
-  cardName: evidenceFieldSchema,
-  setCode: evidenceFieldSchema,
-  cardNumber: evidenceFieldSchema,
-  language: evidenceFieldSchema,
-  conditionClaims: z.array(conditionClaimSchema),
-  sellerPolicy: z.object({
-    returns: z.enum(["allowed", "none", "unspecified"]),
-    shipping: z.string().nullable(),
-  }),
-  photosClaimed: z.object({
-    front: z.boolean(),
-    back: z.boolean(),
-    corners: z.boolean(),
-    edges: z.boolean(),
-    surface: z.boolean(),
-  }),
-  missingEvidence: z.array(z.string()),
-});
-
-export const riskDimensionSchema = z.object({
-  score: z.number().int().min(0).max(100),
-  reasons: z.array(z.string()).max(3),
-  triggeredRules: z.array(z.string()),
-});
-
-export const riskScoreSchema = z.object({
-  overall: z.number().int().min(0).max(100),
-  level: z.enum(["low", "medium", "high", "critical"]),
-  verdict: z.string().max(120),
-  dimensions: z.object({
-    condition: riskDimensionSchema,
-    versionClarity: riskDimensionSchema,
-    priceVsComps: riskDimensionSchema,
-    sellerPolicy: riskDimensionSchema,
-    gradingViability: riskDimensionSchema,
-  }),
-});
-
 export const rawVsSlabResultSchema = z.object({
   psa10NetValue: z.number(),
   psa9NetValue: z.number(),
@@ -375,122 +407,53 @@ export const rawVsSlabResultSchema = z.object({
   assumptions: z.array(z.string()),
 });
 
-export const pipelineMathResultSchema = z.object({
-  input: rawVsSlabInputSchema,
-  result: rawVsSlabResultSchema,
-  toolUsed: z.literal("calculateRawVsSlab"),
-  assumptionNotes: z.array(z.string()),
-});
+export type Marketplace = z.infer<typeof marketplaceSchema>;
+export type ConditionClaim = z.infer<typeof conditionClaimSchema>;
+export type RiskLabel = z.infer<typeof riskLabelSchema>;
 
-export const pipelineCriticResultSchema = z.object({
-  passed: z.boolean(),
-  finalRecommendation: z.string(),
-  warnings: z.array(z.string()),
-  bannedPhrasesFlagged: z.array(z.string()),
-});
-
-export const listingRiskPipelineResultSchema = z.object({
-  listingInput: listingRiskInputSchema,
-  evidence: listingEvidenceSchema,
-  riskScore: riskScoreSchema,
-  math: pipelineMathResultSchema,
-  critic: pipelineCriticResultSchema,
-});
-
-export const hermesTaskTypeSchema = z.enum([
-  "PLAN_GENERATION",
-  "LISTING_RISK_CHECK",
-  "LISTING_RISK_PIPELINE",
-  "RAW_VS_SLAB_EXPLAIN",
-  "JOURNAL_DRAFT",
-]);
-
-export const agentTraceStepSchema = z.object({
-  step: z.string(),
-  agent: z.string(),
-  model: z.string(),
-  summary: z.string(),
-  toolsUsed: z.array(z.string()).default([]),
-});
-
-export const criticResultSchema = z.object({
-  passed: z.boolean(),
-  flags: z.array(z.string()),
-  rewrittenSummary: z.string().nullable(),
-});
-
-export const journalDraftSchema = z.object({
-  cardName: z.string(),
-  actionType: z.enum(journalActionOptions),
-  thesis: z.string(),
-  buyCondition: z.string(),
-  sellCondition: z.string(),
-  stopCondition: z.string(),
-  risks: z.string(),
-  missingInfo: z.string(),
-  reviewPrompt: z.string(),
-});
-
-export const hermesRequestSchema = z.object({
-  taskHint: hermesTaskTypeSchema.optional(),
-  profile: userProfileSchema.optional(),
-  planInput: planInputSchema.optional(),
-  listingInput: listingRiskInputSchema.optional(),
-  rawInput: rawVsSlabInputSchema.optional(),
-  rawResult: rawVsSlabResultSchema.optional(),
-  journalEntry: decisionJournalEntrySchema.optional(),
-  journalSummary: z.string().default(""),
-});
-
-export const hermesResponseSchema = z.object({
-  taskType: hermesTaskTypeSchema,
-  result: z.union([
-    generatedPlanSetSchema,
-    listingRiskReportSchema,
-    listingRiskPipelineResultSchema,
-    rawVsSlabResultSchema,
-    journalDraftSchema,
-  ]),
-  trace: z.array(agentTraceStepSchema),
-  warnings: z.array(z.string()),
-  fallbackUsed: z.boolean(),
-});
-
-export type UserProfile = z.infer<typeof userProfileSchema>;
-export type PlanInput = z.infer<typeof planInputSchema>;
-export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
-export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;
-export type FomoCheckInput = z.infer<typeof fomoCheckInputSchema>;
-export type FomoCheckResult = z.infer<typeof fomoCheckResultSchema>;
-export type MarketCheckDecision = z.infer<typeof marketCheckDecisionSchema>;
-export type MarketCheckRequest = z.infer<typeof marketCheckRequestSchema>;
-export type MarketCheckResponse = z.infer<typeof marketCheckResponseSchema>;
-export type MarketCheckSource = z.infer<typeof marketCheckSourceSchema>;
-export type MarketCheckToolTrace = z.infer<typeof marketCheckToolTraceSchema>;
-export type IdentifiedCard = z.infer<typeof identifiedCardSchema>;
-export type ReferencePrices = z.infer<typeof referencePricesSchema>;
-export type SoldComps = z.infer<typeof soldCompsSchema>;
-export type EvidenceGapCheck = z.infer<typeof evidenceGapCheckSchema>;
-export type MarketBudgetRules = z.infer<typeof marketBudgetRulesSchema>;
-export type DemoSession = z.infer<typeof demoSessionSchema>;
-export type TcgPurchase = z.infer<typeof tcgPurchaseSchema>;
-export type CooldownTicket = z.infer<typeof cooldownTicketSchema>;
-export type DecisionJournalEntry = z.infer<typeof decisionJournalEntrySchema>;
-export type DecisionPlanItem = z.infer<typeof decisionPlanItemSchema>;
-export type GeneratedPlan = z.infer<typeof generatedPlanSchema>;
-export type GeneratedPlanSet = z.infer<typeof generatedPlanSetSchema>;
-export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
+// The pre-scored listing every source produces (platform agents, fixtures,
+// manual entries, pasted URLs). Deterministic normalization computes the rest.
+export type ListingSeed = Omit<
+  NormalizedListing,
+  | "estimatedTax"
+  | "preTaxTotal"
+  | "estimatedLandedCost"
+  | "costComplete"
+  | "sellerTrustScore"
+  | "evidenceCompletenessScore"
+  | "conditionCompatibilityScore"
+  | "marketComparable"
+  | "priceScore"
+  | "safetyScore"
+  | "valueScore"
+  | "riskLabel"
+  | "trustNotes"
+  | "eligible"
+  | "exclusionReasons"
+  | "webDiscovered"
+  | "listingLanguage"
+> & { webDiscovered?: boolean; listingLanguage?: string | null };
+export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
-export type RiskScore = z.infer<typeof riskScoreSchema>;
+export type SourceListing = z.infer<typeof sourceListingSchema>;
+export type BuyerContext = z.infer<typeof buyerContextSchema>;
+export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>;
+export type TcgGame = z.infer<typeof tcgGameSchema>;
+export type CardHint = z.infer<typeof cardHintSchema>;
+export type ManualCandidate = z.infer<typeof manualCandidateSchema>;
+export type CardIdentityCandidate = z.infer<typeof cardIdentityCandidateSchema>;
+export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
+export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
+export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
+export type ComparisonReport = z.infer<typeof comparisonReportSchema>;
+export type ComparisonQuestionResponse = z.infer<typeof comparisonQuestionResponseSchema>;
+export type WebCitation = z.infer<typeof webCitationSchema>;
+export type ComparisonTrace = z.infer<typeof comparisonTraceSchema>;
+export type ComparisonPlatformResult = z.infer<typeof comparisonPlatformResultSchema>;
+export type PlatformSourceMode = z.infer<typeof platformSourceModeSchema>;
+export type WebDiscovery = z.infer<typeof webDiscoverySchema>;
+export type WebDiscoveryProvider = z.infer<typeof webDiscoveryProviderSchema>;
+export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
+export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
+export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;
 export type RawVsSlabResult = z.infer<typeof rawVsSlabResultSchema>;
-export type PipelineMathResult = z.infer<typeof pipelineMathResultSchema>;
-export type PipelineCriticResult = z.infer<typeof pipelineCriticResultSchema>;
-export type ListingRiskPipelineResult = z.infer<typeof listingRiskPipelineResultSchema>;
-export type HermesTaskType = z.infer<typeof hermesTaskTypeSchema>;
-export type AgentTraceStep = z.infer<typeof agentTraceStepSchema>;
-export type CriticResult = z.infer<typeof criticResultSchema>;
-export type JournalDraft = z.infer<typeof journalDraftSchema>;
-export type HermesRequest = z.infer<typeof hermesRequestSchema>;
-export type HermesResponse = z.infer<typeof hermesResponseSchema>;
-export type AiPlanResult = GeneratedPlanSet;
-export type AiListingRiskResult = ListingRiskReport;

@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { calculateRawVsSlab, netSaleValue } from "./raw-vs-slab";
-import { defaultRawVsSlabInput } from "./sample-data";
+
+const defaultRawVsSlabInput = {
+  rawPrice: 80,
+  psa10Price: 220,
+  psa9Price: 95,
+  otherPrice: 45,
+  gradingCost: 35,
+  marketplaceFeeRate: 0.13,
+  shippingCost: 5,
+  psa10Probability: 0.25,
+  psa9Probability: 0.4,
+};
 
 describe("raw vs slab calculations", () => {
   it("calculates net sale value after marketplace fee and shipping", () => {

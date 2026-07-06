@@ -1,65 +1,70 @@
 # TCGpal
 
-TCGpal is a PM-demo MVP for a cautious decision layer for TCG collectors and small sellers. It is not another price chart. It helps users decide whether a marketplace listing is worth pursuing by connecting card-first recommendations, listing risk, raw-vs-slab math, and their own decision history.
+TCGpal helps U.S. Pokémon and One Piece buyers compare condition-compatible raw singles without pretending incomplete data is comparable. It separates four questions ordinary price apps collapse:
 
-## Phase 0 Demo
+- Which actionable listing has the best overall value?
+- What is the lowest complete comparable cost?
+- Which listing has the strongest seller and return signals?
+- Which listing provides the most reviewable photo and condition evidence?
 
-Built features:
+One listing may lead several lenses. The app can also abstain when condition or shipping data is insufficient.
 
-- First-run TCG/persona/budget picker
-- Card-forward Home with curated demo recommendations
-- Listing Risk Checker using pasted title, description, price, and goal
-- Raw vs Slab Calculator using deterministic TypeScript math
-- Decision Journal saved to `localStorage`, including assumed PSA10 odds and actual grading outcomes
-- 30-day decision plan items generated from Listing Risk and Raw vs Slab results
-- Journal-based grading calibration that adjusts new PSA10 assumptions from recent outcomes
-- Hermes Router server route with AI-assisted Listing Risk actions and technical trace
-- Provider adapter with OpenAI default and future GLM/Kimi/MiMo extension points
-- Eval harness for routing, schema validation, deterministic math, safety language, and model-cost guards
+## Current v1
 
-Deferred features:
+- Card-first search and exact-version confirmation with no login
+- Official eBay active-listing adapter
+- TCGplayer/TCGCSV aggregate market reference with explicit freshness; it is not ranked as seller inventory
+- Manual candidates from TCGplayer, Facebook, Reddit, Mercari, Whatnot, shops, and shows
+- Pokémon and One Piece catalog matching
+- Optional PriceCharting reference pricing
+- Deterministic condition compatibility, complete-cost, seller-trust, evidence, eligibility, and ranking rules
+- Optional grounded listing Q&A; the initial comparison does not wait for model allocation or narrative
+- Labeled demo inventory only when no live or user-supplied listing exists
+- Privacy-restricted PostHog custom events
 
-- Supabase
-- Auth
-- Image upload
-- Vision model
-- External marketplace APIs
-- Payments
-- Perplexity/web search
-- Full multi-provider runtime beyond OpenAI
-
-## Tech Stack
-
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- React Hook Form
-- Zod
-- Vitest
-- localStorage persistence
-- OpenAI Responses API via a server-side provider adapter
-
-## AI Setup
-
-Copy `.env.example` to `.env.local` and add your API key:
-
-```bash
-AI_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
-OPENAI_MODEL_PRIMARY=gpt-5.4-mini
-OPENAI_MODEL_CHEAP=gpt-5.4-nano
-```
-
-The demo still works without an API key. In that case, Hermes returns local fallback results. Technical trace is available behind a collapsed UI toggle.
-
-## Getting Started
+## Setup
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+The labeled demo works without credentials. Add eBay credentials for live active listings; TCGCSV is keyless reference data.
+
+## Environment
+
+```bash
+EBAY_CLIENT_ID=
+EBAY_CLIENT_SECRET=
+EBAY_MARKETPLACE_ID=EBAY_US
+
+POKEMON_TCG_API_KEY=
+PRICECHARTING_API_TOKEN=
+
+AI_PROVIDER=openai
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5.5
+
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+All marketplace and AI keys stay server-side. The PostHog project key is public by design, but analytics payloads are restricted by an explicit property allowlist.
+
+## Public API
+
+`POST /api/agent/listing-compare`
+
+The response is one of:
+
+- `needs_confirmation`: the exact card/version must be confirmed.
+- `complete`: ranked choices and evidence are available.
+- `partial`: some evidence source is unavailable, but the report is still useful.
+
+See [product spec](docs/product-spec.md), [architecture and data sources](docs/architecture-and-data-sources.md), and [validation plan](docs/validation-plan.md).
 
 ## Verification
 
@@ -70,6 +75,8 @@ npm run test
 npm run build
 ```
 
-## Product Guardrails
+`npm run test` includes the standard multi-card product flow in `src/lib/testing/standard-comparison-flow.ts`: five sequential card searches across Pokémon and One Piece, exercising both Edit and New search transitions.
 
-TCGpal should explain uncertainty and tradeoffs. It should not promise profit, claim guaranteed grades, or tell a user they must buy a card.
+## Product boundaries
+
+No marketplace crawling, sold-history claims, image grading, auth, payments, saved collections, monitoring, or investment promises. Seller condition labels remain claims; unknown shipping and unknown condition remain unknown.

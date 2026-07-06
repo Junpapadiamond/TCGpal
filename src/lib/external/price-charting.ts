@@ -66,9 +66,9 @@ export async function searchPriceChartingProducts({
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   const response = await fetcher(url, {
-    next: { revalidate: 3600 },
+    cache: "no-store",
     signal: controller.signal,
-  } as RequestInit & { next: { revalidate: number } }).finally(() => clearTimeout(timeout));
+  }).finally(() => clearTimeout(timeout));
 
   if (!response.ok) {
     throw new Error(`PriceCharting API request failed with ${response.status}.`);
