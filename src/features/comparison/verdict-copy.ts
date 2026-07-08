@@ -1,9 +1,17 @@
 import type { ConditionClaim, NormalizedListing, RankedChoice } from "@/lib/schemas";
 
+export type VerdictAction = {
+  kind: "buy" | "wait" | "pass";
+  label: string;
+  note: string;
+};
+
 export type VerdictCopy = {
   why: string;
   catch: string;
   alternative: string | null;
+  whyNotCheapest: string | null;
+  action: VerdictAction;
   strength: string;
 };
 
@@ -11,6 +19,7 @@ type VerdictCopyInput = {
   listing: NormalizedListing;
   choice: RankedChoice;
   alternatives: NormalizedListing[];
+  marketPrice: number | null;
   lang: "en" | "zh";
 };
 
@@ -172,6 +181,102 @@ function chineseAlternative(listing: NormalizedListing, alternative: NormalizedL
   return `下一条可比的 ${alternative.marketplace} 商品${difference}。`;
 }
 
+// "Why not the cheapest" — the trust-building read. When the pick is not the
+// cheapest eligible copy, state the savings being skipped and the specific,
+// factual weakness of the cheaper copy. Deterministic facts only: no scam
+// language, no authenticity or grading claims.
+const CHEAPER_TRADEOFF_MARGIN = 10;
+
+function cheaperTradeoffs(cheapest: NormalizedListing, listing: NormalizedListing, lang: VerdictCopyInput["lang"]) {
+  const reasons: string[] = [];
+  if (cheapest.evidenceCompletenessScore + CHEAPER_TRADEOFF_MARGIN <= listing.evidenceCompletenessScore) {
+    reasons.push(lang === "zh"
+      ? `可复核材料更少（${cheapest.evidence.photoCount} 张 vs ${listing.evidence.photoCount} 张实物照片）`
+      : `less to review (${cheapest.evidence.photoCount} vs ${listing.evidence.photoCount} item-specific photos)`);
+  }
+  if (cheapest.riskLabel === "higher_risk") {
+    reasons.push(lang === "zh" ? "卖家历史记录存在风险信号" : "risk signals on its seller track record");
+  } else if (cheapest.sellerTrustScore + CHEAPER_TRADEOFF_MARGIN <= listing.sellerTrustScore) {
+    reasons.push(lang === "zh" ? "卖家记录更弱" : "a weaker seller record");
+  }
+  if (cheapest.seller.returnsAccepted === false && listing.seller.returnsAccepted !== false) {
+    reasons.push(lang === "zh" ? "不接受退货" : "no returns accepted");
+  }
+  if (reasons.length === 0) {
+    reasons.push(lang === "zh" ? "综合价值评分更低" : "a lower combined value read");
+  }
+  return reasons.slice(0, 2);
+}
+
+function buildWhyNotCheapest(
+  listing: NormalizedListing,
+  alternatives: NormalizedListing[],
+  lang: VerdictCopyInput["lang"],
+): string | null {
+  const cheapest = [...alternatives, listing].sort((a, b) => listingCost(a) - listingCost(b))[0];
+  if (!cheapest || cheapest.id === listing.id) return null;
+  const savings = listingCost(listing) - listingCost(cheapest);
+  if (savings < 0.01) return null;
+  const reasons = cheaperTradeoffs(cheapest, listing, lang);
+  if (lang === "zh") {
+    return `最便宜的可比商品（${cheapest.marketplace}，${chineseTotal(cheapest)}）能省 ${formatMoney(savings)}，但它${reasons.join("、")}——省下的钱换来的是更多不确定性。`;
+  }
+  const joined = reasons.join(" and ");
+  return `The cheapest comparable copy (${englishTotal(cheapest)} on ${cheapest.marketplace}) would save ${formatMoney(savings)}, but it has ${joined} — the saving buys extra uncertainty this pick avoids.`;
+}
+
+// The action line — the last element of the decision layer: buy / wait / pass
+// in deliberately cautious language. Deterministic rules only; thresholds are
+// conservative so "wait" and "pass" fire on clear signals, not noise.
+const ACTION_ABOVE_MARKET_RATIO = 0.15;
+const ACTION_THIN_EVIDENCE_SCORE = 25;
+
+function buildAction(
+  listing: NormalizedListing,
+  marketPrice: number | null,
+  lang: VerdictCopyInput["lang"],
+): VerdictAction {
+  if (listing.riskLabel === "higher_risk") {
+    return {
+      kind: "pass",
+      label: lang === "zh" ? "建议放弃" : "Consider passing",
+      note: lang === "zh"
+        ? "该卖家的历史记录在本次比较中存在风险信号——除非商品页能打消这些疑虑，建议放弃这条，等更稳妥的货源。"
+        : "This seller's track record carries risk signals in this comparison — consider passing unless the listing page resolves them.",
+    };
+  }
+  const marketUsable = marketPrice !== null && marketPrice > 0 && listing.marketComparable && listing.costComplete && !listing.demo;
+  if (marketUsable) {
+    const delta = (listingCost(listing) - marketPrice) / marketPrice;
+    if (delta > ACTION_ABOVE_MARKET_RATIO) {
+      const pct = Math.round(delta * 100);
+      return {
+        kind: "wait",
+        label: lang === "zh" ? "建议再等等" : "Consider waiting",
+        note: lang === "zh"
+          ? `这份比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%——除非急需，等待更接近市场价的货源是合理的。`
+          : `This copy runs about ${pct}% over the ${formatMoney(marketPrice)} market reference — unless you need it now, waiting for closer-to-market supply is reasonable.`,
+      };
+    }
+  }
+  if (listing.evidenceCompletenessScore < ACTION_THIN_EVIDENCE_SCORE) {
+    return {
+      kind: "wait",
+      label: lang === "zh" ? "建议再等等" : "Consider waiting",
+      note: lang === "zh"
+        ? "目前可复核的材料很少——下单前先向卖家索要实物照片或更多细节。"
+        : "There is very little to review here — ask the seller for item photos or more detail before committing.",
+    };
+  }
+  return {
+    kind: "buy",
+    label: lang === "zh" ? "可以考虑入手" : "Reasonable to buy",
+    note: lang === "zh"
+      ? "数据支持这笔购买，但请先确认商品页与这些信息一致——品相仍是卖家的声明。"
+      : "The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.",
+  };
+}
+
 function roleScore(listing: NormalizedListing, role: RankedChoice["role"]) {
   switch (role) {
     case "best_value":
@@ -200,6 +305,7 @@ export function buildVerdictCopy({
   listing,
   choice,
   alternatives,
+  marketPrice,
   lang,
 }: VerdictCopyInput): VerdictCopy {
   const alternative = alternatives[0] ?? null;
@@ -211,6 +317,8 @@ export function buildVerdictCopy({
         ? chineseAlternative(listing, alternative)
         : englishAlternative(listing, alternative)
       : null,
+    whyNotCheapest: buildWhyNotCheapest(listing, alternatives, lang),
+    action: buildAction(listing, marketPrice, lang),
     strength: strengthLabel(roleScore(listing, choice.role), lang),
   };
 }

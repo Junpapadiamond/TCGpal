@@ -1931,11 +1931,14 @@ function ComparisonResult({
       listing: selectedListing,
       choice: selectedChoice,
       alternatives: alternativeListings,
+      marketPrice: report.demoMode ? null : report.confirmedCard?.marketMid ?? null,
       lang,
     })
     : null;
   const selectedChoiceReason = selectedVerdictCopy
-    ? [selectedVerdictCopy.why, selectedVerdictCopy.catch, selectedVerdictCopy.alternative].filter(Boolean).join(" ")
+    ? [selectedVerdictCopy.why, selectedVerdictCopy.catch, selectedVerdictCopy.whyNotCheapest ?? selectedVerdictCopy.alternative]
+      .filter(Boolean)
+      .join(" ")
     : null;
 
   async function copyComparisonReceipt() {
@@ -1951,6 +1954,7 @@ function ComparisonResult({
       `${totalLabel}: ${formatMoney(total)}`,
       `Seller trust ${selectedListing.sellerTrustScore}/100 · Evidence ${selectedListing.evidenceCompletenessScore}/100`,
       selectedChoiceReason ?? selectedChoice.reason,
+      selectedVerdictCopy ? `${t.result.actionLabel}: ${selectedVerdictCopy.action.label} — ${selectedVerdictCopy.action.note}` : "",
       selectedListing.url ? `Listing: ${selectedListing.url}` : "",
       `Generated ${new Date(report.generatedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}`,
     ].filter(Boolean).join("\n");
@@ -2024,6 +2028,7 @@ function ComparisonResult({
                 listing: selectedListing,
                 choice: selectedChoice,
                 alternatives: alternativeListings,
+                marketPrice: report.demoMode ? null : report.confirmedCard?.marketMid ?? null,
                 lang,
               })}
               comparableCount={eligibleCount}
@@ -2847,7 +2852,20 @@ function RecommendedBuyHero({
       </div>
 
       <div className="mt-4 border-t border-[#e4ebe3] pt-4">
-        <div className="grid gap-3 md:grid-cols-3">
+        <p
+          className={`flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border px-3 py-2.5 text-sm leading-6 ${
+            verdict.action.kind === "buy"
+              ? "border-[#c9d7ce] bg-[#e7efe8] text-[#24585c]"
+              : verdict.action.kind === "wait"
+                ? "border-[#e2c879] bg-[#fff8dc] text-[#6f5a22]"
+                : "border-[#dcb9a4] bg-[#f9efe7] text-[#9a4a2c]"
+          }`}
+        >
+          <span className="text-xs font-black uppercase tracking-[0.08em]">{t.result.actionLabel}</span>
+          <strong className="font-black">{verdict.action.label}</strong>
+          <span className="basis-full font-semibold sm:basis-auto">{verdict.action.note}</span>
+        </p>
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
           <div>
             <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#2f6f73]">{t.result.whyItStandsOut}</h3>
             <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.why}</p>
@@ -2856,10 +2874,17 @@ function RecommendedBuyHero({
             <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.whatToKnow}</h3>
             <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.catch}</p>
           </div>
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.nextBestOption}</h3>
-            <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.alternative ?? t.result.noAlternative}</p>
-          </div>
+          {verdict.whyNotCheapest ? (
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.whyNotCheapest}</h3>
+              <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.whyNotCheapest}</p>
+            </div>
+          ) : (
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.nextBestOption}</h3>
+              <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.alternative ?? t.result.noAlternative}</p>
+            </div>
+          )}
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <VerdictMath listing={listing} marketPrice={marketPrice} />

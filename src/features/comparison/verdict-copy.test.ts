@@ -82,6 +82,7 @@ describe("buildVerdictCopy", () => {
       listing: winner,
       choice: choice("best_value", winner.id),
       alternatives: [documentedAlternative],
+      marketPrice: 200,
       lang: "en",
     });
 
@@ -100,6 +101,7 @@ describe("buildVerdictCopy", () => {
       listing: winner,
       choice: choice("best_value", winner.id),
       alternatives: [documentedAlternative],
+      marketPrice: 200,
       lang: "zh",
     });
 
@@ -123,6 +125,7 @@ describe("buildVerdictCopy", () => {
       listing: winner,
       choice: choice("safest_listing", winner.id),
       alternatives: [],
+      marketPrice: 200,
       lang: "en",
     });
 
@@ -143,6 +146,7 @@ describe("buildVerdictCopy", () => {
       listing: winner,
       choice: choice("lowest_landed_cost", winner.id),
       alternatives: [],
+      marketPrice: 200,
       lang: "en",
     });
 
@@ -158,12 +162,14 @@ describe("buildVerdictCopy", () => {
       listing: preTax,
       choice: choice("lowest_landed_cost", preTax.id),
       alternatives: [],
+      marketPrice: 200,
       lang: "en",
     });
     const landedCopy = buildVerdictCopy({
       listing: landed,
       choice: choice("lowest_landed_cost", landed.id),
       alternatives: [],
+      marketPrice: 200,
       lang: "en",
     });
 
@@ -187,11 +193,176 @@ describe("buildVerdictCopy", () => {
           listing: winner,
           choice: choice(role, winner.id),
           alternatives: [alternative],
+          marketPrice: 200,
           lang,
         });
-        const rendered = `${copy.why} ${copy.catch} ${copy.alternative ?? ""}`;
+        const rendered = `${copy.why} ${copy.catch} ${copy.alternative ?? ""} ${copy.whyNotCheapest ?? ""} ${copy.action.label} ${copy.action.note}`;
         expect(rendered).not.toMatch(/will grade|best condition|authentic|guarantee|评级预测|保真|鉴定承诺/i);
+        expect(rendered).not.toMatch(/must buy|guaranteed|sure thing|can't lose|必买|稳赚|保证/i);
       }
     }
+  });
+
+  describe("whyNotCheapest", () => {
+    it("explains skipping a cheaper copy with the savings and the specific weakness", () => {
+      const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
+      const cheaper = makeListing({
+        id: "cheaper",
+        price: 100,
+        photoCount: 1,
+        feedbackPercentage: null,
+        feedbackCount: null,
+      });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [cheaper],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.whyNotCheapest).toContain("$20.00");
+      expect(copy.whyNotCheapest).toMatch(/1 (vs|of)|photo/i);
+      expect(copy.whyNotCheapest).not.toMatch(/scam|fake|counterfeit/i);
+    });
+
+    it("renders the cheaper-copy tradeoff in Chinese", () => {
+      const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
+      const cheaper = makeListing({ id: "cheaper", price: 100, photoCount: 1 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [cheaper],
+        marketPrice: 200,
+        lang: "zh",
+      });
+
+      expect(copy.whyNotCheapest).toContain("$20.00");
+      expect(copy.whyNotCheapest).toContain("实物照片");
+    });
+
+    it("is null when the pick is already the cheapest eligible copy", () => {
+      const winner = makeListing({ id: "winner", price: 100, photoCount: 8 });
+      const pricier = makeListing({ id: "pricier", price: 130, photoCount: 8 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [pricier],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.whyNotCheapest).toBeNull();
+    });
+  });
+
+  describe("action", () => {
+    it("supports a cautious buy when the numbers check out near market", () => {
+      const winner = makeListing({ id: "winner", price: 100, photoCount: 8 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.action.kind).toBe("buy");
+      expect(copy.action.note).toContain("seller's claim");
+      expect(copy.action.label.toLowerCase()).not.toContain("must");
+    });
+
+    it("suggests waiting when the pick sits well above the market reference", () => {
+      const winner = makeListing({ id: "winner", price: 250, photoCount: 8 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.action.kind).toBe("wait");
+      expect(copy.action.note).toContain("market reference");
+    });
+
+    it("suggests waiting for more evidence when there is almost nothing to review", () => {
+      const winner = makeListing({
+        id: "winner",
+        price: 100,
+        photoCount: 0,
+        feedbackPercentage: null,
+        feedbackCount: null,
+      });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.action.kind).toBe("wait");
+      expect(copy.action.note.toLowerCase()).toContain("photo");
+    });
+
+    it("suggests passing when the seller track record carries risk signals", () => {
+      const winner = makeListing({
+        id: "winner",
+        price: 100,
+        photoCount: 8,
+        feedbackPercentage: 82,
+        feedbackCount: 40,
+      });
+
+      expect(winner.riskLabel).toBe("higher_risk");
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.action.kind).toBe("pass");
+      expect(copy.action.note).not.toMatch(/scam|fraud/i);
+    });
+
+    it("keeps the action cautious without a market reference", () => {
+      const winner = makeListing({ id: "winner", price: 250, photoCount: 8 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: null,
+        lang: "en",
+      });
+
+      expect(copy.action.kind).toBe("buy");
+      expect(copy.action.note).toContain("seller's claim");
+    });
+
+    it("renders the action in Chinese", () => {
+      const winner = makeListing({ id: "winner", price: 250, photoCount: 8 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "zh",
+      });
+
+      expect(copy.action.kind).toBe("wait");
+      expect(copy.action.note).toContain("市场参考价");
+    });
   });
 });
