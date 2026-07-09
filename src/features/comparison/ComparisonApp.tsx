@@ -447,6 +447,32 @@ function ComparisonExperience() {
     focusComparisonTarget();
   }
 
+  // One-tap switch to a sibling print suggested by a zero-recommendation
+  // abstention (e.g. "no SP listings — compare the Alternate Art instead").
+  // Reuses the pending request exactly, only swapping the confirmed print id.
+  async function compareSuggestedPrint(cardId: string) {
+    if (!pendingRequest || loading) return;
+    const suggestedRequest = { ...pendingRequest, confirmedCardId: cardId };
+    setPendingRequest(suggestedRequest);
+    setLoading(true);
+    setError(null);
+    try {
+      const parsed = await requestComparisonReport(suggestedRequest, t.error.temporary);
+      setReport(parsed);
+      setConfirmedIdentityForSettings(null);
+      if (parsed.confirmedCard) {
+        rememberConfirmedCard(parsed.confirmedCard, suggestedRequest.cardHint.game);
+      }
+      trackEvent("card_identity_confirmed", { confidence: "high" });
+      focusComparisonTarget();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : t.error.temporary);
+      trackEvent("comparison_failed", { marketplace: suggestedRequest.sourceListing.marketplace });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // R5: a failed comparison keeps the exact request around so one tap retries
   // it — the buyer never re-types anything after a backend hiccup.
   async function retryComparison() {
@@ -1064,6 +1090,7 @@ function ComparisonExperience() {
             onFeedback={sendFeedback}
             onCompareDiscovery={compareWebDiscovery}
             comparingDiscoveryId={comparingDiscoveryId}
+            onCompareSuggestedPrint={compareSuggestedPrint}
           />
         )}
       </div>
@@ -1846,6 +1873,7 @@ function ComparisonResult({
   onFeedback,
   onCompareDiscovery,
   comparingDiscoveryId,
+  onCompareSuggestedPrint,
 }: {
   report: ComparisonReport;
   preferredRole: LensRole;
@@ -1853,6 +1881,7 @@ function ComparisonResult({
   onFeedback: (changedDecision: boolean) => void;
   onCompareDiscovery: (discovery: WebDiscovery) => void;
   comparingDiscoveryId: string | null;
+  onCompareSuggestedPrint: (cardId: string) => void;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -2014,7 +2043,18 @@ function ComparisonResult({
       {report.rankedChoices.length === 0 && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.noRecommendationTitle}</h3>
-          <p className="mt-2 text-sm leading-6">{t.result.noRecommendationBody}</p>
+          <p className="mt-2 text-sm leading-6">{report.abstention?.reason ?? t.result.noRecommendationBody}</p>
+          {report.abstention?.reason && <p className="mt-1 text-sm leading-6">{t.result.noRecommendationBody}</p>}
+          {report.abstention?.suggestedCardId && (
+            <button
+              className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md bg-[#2f6f73] px-4 text-sm font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+              type="button"
+              onClick={() => onCompareSuggestedPrint(report.abstention!.suggestedCardId!)}
+            >
+              {t.result.compareSuggestedPrint(report.abstention.suggestedLabel ?? t.result.compareSuggestedFallbackLabel)}
+              <IconArrowUpRight className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       )}
 

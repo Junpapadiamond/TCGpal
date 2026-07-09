@@ -675,6 +675,97 @@ describe("listing comparison agent", () => {
     expect(response.trace.some((entry) => entry.actor === "Cross-platform ledger")).toBe(true);
   });
 
+  it("abstains helpfully when live listings exist but none match the confirmed special print", async () => {
+    process.env.EBAY_CLIENT_ID = "id";
+    process.env.EBAY_CLIENT_SECRET = "secret";
+    const { resetEbayTokenCacheForTests } = await import("@/lib/external/ebay");
+    const { findOnePieceCatalogVariants } = await import("@/lib/external/one-piece-catalog");
+    const { variantKey } = await import("@/lib/external/one-piece-tcg");
+    const { deriveVariantIntent } = await import("@/lib/comparison/ranking");
+    resetEbayTokenCacheForTests();
+
+    const prints = findOnePieceCatalogVariants("OP01-016");
+    const spPrint = prints.find((print) => deriveVariantIntent(print) === "sp");
+    const basePrint = prints.find((print) => deriveVariantIntent(print) === "base");
+    expect(spPrint).toBeDefined();
+    expect(basePrint).toBeDefined();
+
+    const searchQueries: string[] = [];
+    const spFetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 7200 }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/")) {
+        return { ok: true, status: 200, json: async () => ({ productSummaries: [] }) } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item_summary/search")) {
+        searchQueries.push(new URL(url).searchParams.get("q") ?? "");
+        // Live supply exists, but every copy is a regular alternate art.
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [{
+              itemId: "v1|900|0",
+              title: "Nami OP01-016 Alternate Art Parallel",
+              condition: "Ungraded",
+              price: { value: "180.00", currency: "USD" },
+              shippingOptions: [{ shippingCost: { value: "4.00", currency: "USD" } }],
+            }],
+          }),
+        } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item/")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemId: "v1|900|0",
+            title: "Nami OP01-016 Alternate Art Parallel",
+            condition: "Ungraded",
+            conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
+            price: { value: "180.00", currency: "USD" },
+            shippingOptions: [{ shippingCost: { value: "4.00", currency: "USD" } }],
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    try {
+      const response = await runListingComparison({
+        ...request,
+        sourceListing: { ...request.sourceListing, marketplace: "eBay", title: "", description: "", url: "", price: null, shipping: null },
+        cardHint: { game: "onePiece", name: "Nami", setCode: "", cardNumber: "OP01-016", language: "English", variant: "", gradingClaim: "" },
+        confirmedCardId: variantKey(spPrint!),
+      }, { fetcher: spFetcher });
+
+      // The listing search led with the SP token (the other captured query is the
+      // separate ePID-consensus metadata leg, which stays a plain keyword probe).
+      expect(searchQueries).toContain("Nami OP01-016 SP");
+
+      expect(response.demoMode).toBe(false);
+      expect(response.rankedChoices).toHaveLength(0);
+      expect(response.abstention).toBeTruthy();
+      expect(response.abstention?.reason).toContain("SP");
+      expect(response.abstention?.foundCount).toBeGreaterThan(0);
+      expect(response.abstention?.variantExcludedCount).toBeGreaterThan(0);
+      expect(response.abstention?.suggestedCardId).toBe(variantKey(basePrint!));
+      expect(response.abstention?.suggestedLabel).toBeTruthy();
+    } finally {
+      delete process.env.EBAY_CLIENT_ID;
+      delete process.env.EBAY_CLIENT_SECRET;
+      resetEbayTokenCacheForTests();
+    }
+  });
+
+  it("reports no abstention when a recommendation exists", async () => {
+    const response = await runListingComparison(request, { fetcher });
+    expect(response.rankedChoices.length).toBeGreaterThan(0);
+    expect(response.abstention ?? null).toBeNull();
+  });
+
   it("dispatches the marketplace fan-out and reference pricing concurrently, not sequentially", async () => {
     process.env.EBAY_CLIENT_ID = "id";
     process.env.EBAY_CLIENT_SECRET = "secret";

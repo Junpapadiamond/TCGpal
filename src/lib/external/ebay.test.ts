@@ -254,15 +254,17 @@ describe("eBay active-listing search", () => {
     expect(results.map((listing) => listing.id)).toEqual(["ebay-9"]);
   });
 
-  it("keeps the plain query for base One Piece prints and for query overrides", async () => {
+  it("keeps the plain query for base One Piece prints and marks query overrides too", async () => {
     const baseCard = { ...spCard, id: "OP01-016", rarity: "R", variant: null } as CardIdentityCandidate;
     const captured: { searchUrl?: string } = {};
     await searchEbayAlternatives(baseCard, buyer, searchFetcher(captured));
     expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016");
 
+    // The crosswalk's deterministic query template arrives as an override; the
+    // variant token still leads, with the raw override as the fallback attempt.
     const overridden: { searchUrl?: string } = {};
     await searchEbayAlternatives(spCard, buyer, searchFetcher(overridden), "Nami OP01-016 custom");
-    expect(new URL(overridden.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 custom");
+    expect(new URL(overridden.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 custom SP");
   });
 
   it("uses the cheapest shipping option, not the first, so landed cost matches the listing", async () => {

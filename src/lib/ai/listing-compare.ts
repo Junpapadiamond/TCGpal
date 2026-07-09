@@ -1,7 +1,16 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
 import { demoIdentities, demoListingSeedsFor, type DemoListingSeed } from "@/lib/comparison/fixtures";
-import { deriveVariantIntent, finalizeListingScores, isOnePieceCardKey, normalizeListing, rankListings } from "@/lib/comparison/ranking";
+import {
+  deriveVariantIntent,
+  finalizeListingScores,
+  isOnePieceCardKey,
+  isVariantMismatchReason,
+  normalizeListing,
+  rankListings,
+  variantIntentLabel,
+  type VariantIntent,
+} from "@/lib/comparison/ranking";
 import {
   EbayUnavailableError,
   getEbayListingByUrl,
@@ -39,9 +48,10 @@ import {
   mapOnePieceCardToIdentity,
   onePieceSetMatches,
   searchOnePieceCards,
+  variantKey,
   type OnePieceTcgCard,
 } from "@/lib/external/one-piece-tcg";
-import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
+import { findOnePieceCatalogVariant, findOnePieceCatalogVariants } from "@/lib/external/one-piece-catalog";
 import {
   cardIdentityCandidateSchema,
   comparisonNarrativeSchema,
@@ -49,6 +59,7 @@ import {
   comparisonRequestSchema,
   type CardHint,
   type CardIdentityCandidate,
+  type ComparisonAbstention,
   type ComparisonReference,
   type ComparisonReport,
   type ComparisonRequest,
@@ -304,6 +315,9 @@ export async function runListingComparison(
   const narrative = buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
   const partial = normalized.filter((listing) => listing.eligible).length === 0
     || (!demoMode && references.every((reference) => reference.status !== "used"));
+  const abstention = !demoMode && rankedChoices.length === 0 && normalized.length > 0
+    ? buildAbstention(confirmedCard, normalized, variantIntent)
+    : null;
 
   const report = comparisonReportSchema.parse({
     status: partial ? "partial" : "complete",
@@ -318,12 +332,58 @@ export async function runListingComparison(
     trace,
     platforms: platformResults,
     webDiscoveries: webDiscovery.results,
+    abstention,
     demoMode,
     generatedAt,
   });
 
   if (cacheable) await setCachedComparison(cacheKey, report, now());
   return report;
+}
+
+// Deterministic explanation for "found listings, recommended none": names the
+// confirmed print, counts different-print supply, and — when a sibling print of
+// the same One Piece number exists in the catalog — suggests the one-tap switch
+// most likely to have live supply. Never invents listings; the excluded ledger
+// stays the evidence.
+function buildAbstention(
+  confirmedCard: CardIdentityCandidate,
+  listings: NormalizedListing[],
+  variantIntent: VariantIntent | null,
+): ComparisonAbstention {
+  const variantExcluded = listings.filter(
+    (listing) => !listing.eligible && listing.exclusionReasons.some(isVariantMismatchReason),
+  );
+
+  let suggestedCardId: string | null = null;
+  let suggestedLabel: string | null = null;
+  if (variantIntent && variantExcluded.length > 0 && isOnePieceCardKey(confirmedCard.cardNumber, confirmedCard.id)) {
+    const siblings = findOnePieceCatalogVariants(confirmedCard.cardNumber)
+      .filter((print) => variantKey(print) !== confirmedCard.id);
+    const target = variantIntent !== "base"
+      ? siblings.find((print) => deriveVariantIntent(print) === "base") ?? siblings[0]
+      : siblings[0];
+    if (target) {
+      suggestedCardId = variantKey(target);
+      suggestedLabel = target.variant ?? (deriveVariantIntent(target) === "base" ? "base print" : target.rarity ?? "other print");
+    }
+  }
+
+  const count = listings.length;
+  const plural = count === 1 ? "listing" : "listings";
+  const reason = variantIntent && variantIntent !== "base"
+    ? `Found ${count} live ${plural} for ${confirmedCard.cardNumber}, but none matched the ${variantIntentLabel(variantIntent)} print${
+      variantExcluded.length > 0 ? ` — ${variantExcluded.length} looked like a different print of the same number` : ""
+    }.`
+    : `Found ${count} live ${plural}, but none met the comparison gates (exact match, condition fit, and complete cost).`;
+
+  return {
+    reason,
+    foundCount: count,
+    variantExcludedCount: variantExcluded.length,
+    suggestedCardId,
+    suggestedLabel,
+  };
 }
 
 // Prefer the daily TCGplayer feed over the inline catalog approximation, but

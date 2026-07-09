@@ -322,6 +322,18 @@ export const webDiscoverySchema = z.object({
   note: z.string(),
 });
 
+// Deterministic explanation for a zero-recommendation result: live candidates
+// were found but none survived the gates. When the excluded set shows sibling
+// prints of the same number, a one-tap alternative print is suggested so a
+// rare-print search never dead-ends on an unexplained empty state.
+export const comparisonAbstentionSchema = z.object({
+  reason: z.string(),
+  foundCount: z.number().int().min(0),
+  variantExcludedCount: z.number().int().min(0),
+  suggestedCardId: z.string().nullable(),
+  suggestedLabel: z.string().nullable(),
+});
+
 export const comparisonReportSchema = z.object({
   status: z.enum(["needs_confirmation", "complete", "partial"]),
   request: comparisonRequestSchema,
@@ -335,6 +347,7 @@ export const comparisonReportSchema = z.object({
   trace: z.array(comparisonTraceSchema),
   platforms: z.array(comparisonPlatformResultSchema).default([]),
   webDiscoveries: z.array(webDiscoverySchema).default([]),
+  abstention: comparisonAbstentionSchema.nullable().optional(),
   demoMode: z.boolean(),
   generatedAt: z.string(),
 });
@@ -446,6 +459,7 @@ export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
 export type ComparisonReport = z.infer<typeof comparisonReportSchema>;
+export type ComparisonAbstention = z.infer<typeof comparisonAbstentionSchema>;
 export type ComparisonQuestionResponse = z.infer<typeof comparisonQuestionResponseSchema>;
 export type WebCitation = z.infer<typeof webCitationSchema>;
 export type ComparisonTrace = z.infer<typeof comparisonTraceSchema>;

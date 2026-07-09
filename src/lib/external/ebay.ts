@@ -200,8 +200,10 @@ export async function searchEbayAlternatives(
   // One Piece special prints (SP / manga / treasure / alt art) share their card
   // number with the far cheaper base copy, so a plain name+number search surfaces
   // mostly the wrong print and the variant gate then rejects everything. Lead with
-  // a variant-marked query and keep the plain query as the visible fallback.
-  const variantToken = !queryOverride?.trim() && isOnePieceCardKey(card.cardNumber, card.id)
+  // a variant-marked query and keep the unmarked query as the visible fallback.
+  // Applied on top of query overrides too: the crosswalk template is the same
+  // deterministic name+number string, and the fallback attempt protects recall.
+  const variantToken = isOnePieceCardKey(card.cardNumber, card.id)
     ? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null
     : null;
 

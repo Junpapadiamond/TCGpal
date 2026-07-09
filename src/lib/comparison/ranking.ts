@@ -92,6 +92,19 @@ export function deriveVariantIntent(print: { rarity?: string | null; variant?: s
   return "base";
 }
 
+// Human label for a variant class, used in exclusion reasons and abstention copy.
+export function variantIntentLabel(intent: VariantIntent): string {
+  const specific = specificVariantMarkers.find((marker) => marker.intent === intent);
+  if (specific) return specific.label;
+  return intent === "alt" ? "alternate-art" : "base";
+}
+
+// All variant-gate exclusion reasons carry this phrase; the abstention builder
+// uses it to count "supply exists, but it's a different print" exclusions.
+export function isVariantMismatchReason(reason: string) {
+  return reason.includes("you're comparing");
+}
+
 // The variant gate, applied only to listings whose print must be inferred from free
 // text (eBay and future auto-sourced marketplaces). TCGplayer rows are resolved to
 // the exact product upstream, and a user-pasted listing is an explicit choice — so
