@@ -19,7 +19,7 @@ const MIXED_TITLES = [
   { itemId: "v1|base|0", title: "Nami OP01-016 Romance Dawn", price: "4.00" },
 ];
 
-function ebayFetcher(titles: Array<{ itemId: string; title: string; price: string }>) {
+function ebayFetcher(titles: Array<{ itemId: string; title: string; price: string; aspects?: Array<{ name: string; value: string }> }>) {
   return (async (input: RequestInfo | URL) => {
     const url = String(input);
     if (url.includes("/identity/v1/oauth2/token")) {
@@ -54,6 +54,7 @@ function ebayFetcher(titles: Array<{ itemId: string; title: string; price: strin
           title: entry.title,
           condition: "Ungraded",
           conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
+          localizedAspects: entry.aspects ?? [],
           price: { value: entry.price, currency: "USD" },
           shippingOptions: [{ shippingCost: { value: "4.00", currency: "USD" } }],
         }),
@@ -173,6 +174,34 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
     expect(response.rankedChoices).toHaveLength(0);
     expect(response.abstention?.variantExcludedCount).toBeGreaterThan(0);
     expect(response.abstention?.suggestedCardId).toBe(variantKey(basePrint!));
+  });
+
+  // The reported real-world failure mode: many live listings exist for the
+  // number, but sellers left plain titles ("Nami OP01-016") with no alt-art
+  // wording, so a title-only gate would exclude all of them as "a different
+  // print" and abstain even though the correct print genuinely has supply.
+  // eBay's own item specifics (fetched into matchAspectText) do name the
+  // print — reading title + aspects together turns this into a real
+  // recommendation instead of a false abstention.
+  it("recommends a plain-titled listing whose item specifics reveal the confirmed alt-art print", async () => {
+    const titles = [
+      { itemId: "v1|plain-alt|0", title: "Nami OP01-016", price: "95.00", aspects: [{ name: "Parallel/Variant", value: "Alternate Art" }] },
+      { itemId: "v1|plain-alt2|0", title: "Nami OP01-016 Romance Dawn", price: "110.00", aspects: [{ name: "Parallel/Variant", value: "Alternate Art" }] },
+      // A same-number listing whose aspects reveal a DIFFERENT print still
+      // gets excluded — the widening adds recall, it never removes the gate.
+      { itemId: "v1|plain-sp|0", title: "Nami OP01-016", price: "300.00", aspects: [{ name: "Parallel/Variant", value: "Special Art (SP)" }] },
+    ];
+    const response = await runListingComparison(
+      onePieceRequest(variantKey(altPrint!)),
+      { fetcher: ebayFetcher(titles) },
+    );
+
+    expect(response.demoMode).toBe(false);
+    expect(response.abstention ?? null).toBeNull();
+    const winner = response.rankedChoices.find((choice) => choice.role === "best_value");
+    expect(winner).toBeDefined();
+    const spListing = response.candidates.find((candidate) => candidate.id === "ebay-v1|plain-sp|0");
+    expect(spListing?.eligible).toBe(false);
   });
 
   // Same defect class, condition axis: the structured condition field can say

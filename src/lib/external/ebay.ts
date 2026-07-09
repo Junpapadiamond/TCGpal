@@ -616,6 +616,24 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// eBay's structured item specifics (Parallel/Variant, Rarity, Features, ...)
+// frequently name the exact print even when the seller's own title is plain —
+// real listings vary wildly in title discipline, but category-templated
+// specifics are filled in far more consistently. Joined as inert text (never
+// displayed) so the deterministic variant/language gates can read it alongside
+// the title instead of undercounting real matching supply. Aspect names are
+// not hardcoded/allowlisted here — eBay categories use inconsistent naming
+// ("Parallel/Variant" vs "Card Rarity" vs "Features"), so every aspect's
+// name:value pair is included; the gate patterns are specific enough (require
+// "special art", "SP", "treasure rare", explicit language names, ...) that
+// unrelated aspect noise cannot falsely trigger them.
+function buildMatchAspectText(item: z.infer<typeof ebayItemSchema>): string {
+  return (item.localizedAspects ?? [])
+    .filter((aspect) => aspect.name && aspect.value)
+    .map((aspect) => `${aspect.name}: ${aspect.value}`)
+    .join(". ");
+}
+
 function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdentityCandidate, searchNote = "") {
   const source = toSourceListing(item, item.itemWebUrl ?? item.itemAffiliateWebUrl ?? "https://www.ebay.com");
   const title = item.title;
@@ -636,6 +654,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     shipping: source.shipping,
     claimedCondition: source.claimedCondition,
     listingLanguage: item.localizedAspects?.find((aspect) => aspect.name.toLowerCase() === "language")?.value ?? null,
+    matchAspectText: buildMatchAspectText(item),
     imageUrl: item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? null,
     seller: source.seller,
     evidence: source.evidence,

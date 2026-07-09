@@ -108,35 +108,40 @@ export function isVariantMismatchReason(reason: string) {
 // The variant gate, applied only to listings whose print must be inferred from free
 // text (eBay and future auto-sourced marketplaces). TCGplayer rows are resolved to
 // the exact product upstream, and a user-pasted listing is an explicit choice — so
-// neither is second-guessed from its title.
+// neither is second-guessed from its title. `matchText` is the title plus any
+// structured item-specifics text the source adapter could pull (see
+// `matchAspectText` on NormalizedListing) — real sellers very often leave the
+// title plain while eBay's own item specifics do name the print, and reading
+// title-only under-counts real matching supply.
 function variantMismatchReason(
-  listing: Pick<NormalizedListing, "title" | "marketplace" | "userSupplied">,
+  listing: Pick<NormalizedListing, "marketplace" | "userSupplied">,
+  matchText: string,
   intent: VariantIntent | null,
 ): string | null {
   if (!intent || listing.userSupplied || listing.marketplace === "TCGplayer") return null;
-  const detected = specificVariantMarkers.filter((marker) => marker.pattern.test(listing.title));
+  const detected = specificVariantMarkers.filter((marker) => marker.pattern.test(matchText));
   if (intent === "base") {
     if (detected.length > 0) {
-      return `Title looks like a ${detected[0].label} print — you're comparing the base version.`;
+      return `Evidence in this listing points to a ${detected[0].label} print — you're comparing the base version.`;
     }
-    if (altArtTitlePattern.test(listing.title)) {
-      return "Title looks like an alternate-art / parallel print — you're comparing the base version.";
+    if (altArtTitlePattern.test(matchText)) {
+      return "Evidence in this listing points to an alternate-art / parallel print — you're comparing the base version.";
     }
     return null;
   }
   const own = specificVariantMarkers.find((marker) => marker.intent === intent) ?? null;
   const foreign = detected.find((marker) => marker.intent !== intent) ?? null;
   if (foreign) {
-    return `Title looks like a ${foreign.label} print — you're comparing ${own ? `the ${own.label}` : "an alternate-art"} print.`;
+    return `Evidence in this listing points to a ${foreign.label} print — you're comparing ${own ? `the ${own.label}` : "an alternate-art"} print.`;
   }
   if (own) {
-    return own.pattern.test(listing.title)
+    return own.pattern.test(matchText)
       ? null
-      : `Title has no ${own.label} marker — you're comparing the ${own.label} print.`;
+      : `This listing shows no ${own.label} evidence — you're comparing the ${own.label} print.`;
   }
-  return altArtTitlePattern.test(listing.title)
+  return altArtTitlePattern.test(matchText)
     ? null
-    : "Title has no alternate-art marker — you're comparing an alternate-art print.";
+    : "This listing shows no alternate-art evidence — you're comparing an alternate-art print.";
 }
 
 // Platform baseline trust (a data-driven table, not a ranking branch):
@@ -572,12 +577,15 @@ const MARKET_FLOOR_RATIO = 0.25;
 
 function getExclusionReasons(
   listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "shipping" | "claimedCondition" | "marketplace" | "userSupplied">
-    & { listingLanguage?: string | null },
+    & { listingLanguage?: string | null; matchAspectText?: string },
   buyer: BuyerContext,
   marketPrice: number | null,
   variantIntent: VariantIntent | null = null,
   cardLanguage: string | null = null,
 ) {
+  // Structured item-specifics text (when the source adapter has it) plus the
+  // title — see the variant/language gate functions for why both matter.
+  const matchText = [listing.title, listing.matchAspectText].filter(Boolean).join(" ").trim();
   const reasons: string[] = [];
   if (!listing.active) reasons.push("Listing is not active.");
   if (!listing.raw) reasons.push("Listing is not a raw single card.");
@@ -605,19 +613,19 @@ function getExclusionReasons(
   if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO) {
     reasons.push("Priced far below market — likely a replica, proxy, or mislabeled item.");
   }
-  const variantReason = variantMismatchReason(listing, variantIntent);
+  const variantReason = variantMismatchReason(listing, matchText, variantIntent);
   if (variantReason) reasons.push(variantReason);
-  const languageReason = languageMismatchReason(listing.title, cardLanguage, listing.listingLanguage ?? null);
+  const languageReason = languageMismatchReason(matchText, cardLanguage, listing.listingLanguage ?? null);
   if (languageReason) reasons.push(languageReason);
   return reasons;
 }
 
-function languageMismatchReason(title: string, targetLanguage: string | null, listingLanguage: string | null) {
+function languageMismatchReason(matchText: string, targetLanguage: string | null, listingLanguage: string | null) {
   if (!targetLanguage) return null;
   const target = targetLanguage.toLowerCase();
   const englishTarget = target === "en" || target.includes("english");
   const japaneseTarget = target === "jp" || target === "jpn" || target.includes("japanese");
-  const languageEvidence = `${listingLanguage ?? ""} ${title}`;
+  const languageEvidence = `${listingLanguage ?? ""} ${matchText}`;
   const explicitJapanese = /\b(japanese|jpn|jp)\b|日本語|日版/i.test(languageEvidence);
   const explicitEnglish = /\b(english|eng)\b/i.test(languageEvidence);
   const explicitOther = /\b(korean|chinese|french|german|spanish|italian|portuguese)\b/i.test(languageEvidence);

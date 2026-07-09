@@ -346,6 +346,59 @@ describe("eBay active-listing search", () => {
     expect(results[0]?.evidence.substantiveConditionNotes).toBe(true);
   });
 
+  // Real sellers often leave the title plain while eBay's own item specifics do
+  // name the print — the enriched item-detail localizedAspects become
+  // matchAspectText so the deterministic variant gate can read them too,
+  // instead of undercounting real matching supply from title text alone.
+  it("carries the item-detail localizedAspects into matchAspectText for the variant gate", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [{
+              itemId: "v1|456|0",
+              title: "Umbreon VMAX 215/203",
+              condition: "Ungraded",
+              price: { value: "95.00", currency: "USD" },
+              shippingOptions: [{ shippingCost: { value: "4.00", currency: "USD" } }],
+            }],
+          }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          itemId: "v1|456|0",
+          title: "Umbreon VMAX 215/203",
+          condition: "Ungraded",
+          localizedAspects: [
+            { name: "Card Name", value: "Umbreon VMAX" },
+            { name: "Parallel/Variant", value: "Alternate Art" },
+          ],
+          price: { value: "95.00", currency: "USD" },
+          shippingOptions: [{ shippingCost: { value: "4.00", currency: "USD" } }],
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(card, buyer, fetcher);
+
+    expect(results[0]?.matchAspectText).toContain("Parallel/Variant: Alternate Art");
+  });
+
+  it("defaults matchAspectText to empty when the item has no localizedAspects", async () => {
+    const captured: { searchUrl?: string } = {};
+    const results = await searchEbayAlternatives(card, buyer, searchFetcher(captured));
+    expect(results[0]?.matchAspectText).toBe("");
+  });
+
   it("caches the OAuth token across requests instead of refetching it every time", async () => {
     let tokenCalls = 0;
     const fetcher = (async (input: RequestInfo | URL) => {

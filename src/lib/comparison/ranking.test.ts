@@ -483,6 +483,87 @@ describe("titleConditionFloor", () => {
   });
 });
 
+// Real eBay sellers frequently leave the TITLE plain (just card name + number)
+// while eBay's own structured item specifics (fetched into `matchAspectText`,
+// e.g. "Parallel/Variant: Alternate Art") do carry the print info. Requiring a
+// marker in the title alone under-counts real matching supply — this is the
+// root cause behind "50 listings found, 49 excluded as a different print".
+// Widening the gate to read title + aspect text together must never weaken it:
+// a foreign marker anywhere still excludes, an own-class marker anywhere still
+// admits.
+describe("aspect-text widened variant matching", () => {
+  const ebayBase = {
+    ...demoListingSeeds[0],
+    marketplace: "eBay" as const,
+    userSupplied: false,
+    raw: true,
+    active: true,
+    currency: "USD" as const,
+    matchConfidence: "high" as const,
+    demo: false,
+  };
+
+  it("admits a plain-titled listing whose item specifics name the confirmed print", () => {
+    const listing = {
+      ...ebayBase,
+      id: "plain-alt",
+      title: "Nami OP01-016",
+      matchAspectText: "Card Name: Nami. Parallel/Variant: Alternate Art. Rarity: R.",
+    };
+    expect(normalizeListing({ listing, buyer, variantIntent: "alt" }).eligible).toBe(true);
+  });
+
+  it("still excludes a plain-titled listing whose item specifics name a different print class", () => {
+    const listing = {
+      ...ebayBase,
+      id: "plain-sp",
+      title: "Nami OP01-016",
+      matchAspectText: "Parallel/Variant: Special Art (SP).",
+    };
+    const result = normalizeListing({ listing, buyer, variantIntent: "alt" });
+    expect(result.eligible).toBe(false);
+    expect(result.exclusionReasons.join(" ")).toContain("SP");
+  });
+
+  it("keeps a base comparison off a plain title whose aspects reveal a secret-rare-alt parallel", () => {
+    const listing = {
+      ...ebayBase,
+      id: "plain-secalt",
+      title: "Shanks OP01-120",
+      matchAspectText: "Rarity: SEC. Parallel/Variant: Secret Rare Alt.",
+    };
+    expect(normalizeListing({ listing, buyer, variantIntent: "base" }).eligible).toBe(false);
+  });
+
+  it("behaves exactly as before when matchAspectText is absent (no regression)", () => {
+    const listing = { ...ebayBase, id: "no-aspect", title: "Nami OP01-016 Alternate Art" };
+    expect(normalizeListing({ listing, buyer, variantIntent: "alt" }).eligible).toBe(true);
+    expect(normalizeListing({ listing, buyer, variantIntent: "base" }).eligible).toBe(false);
+  });
+
+  it("does not let aspect text override an explicit title marker (foreign-in-title still wins over silence-in-aspects)", () => {
+    const listing = {
+      ...ebayBase,
+      id: "title-wins",
+      title: "Nami OP01-016 SP Special Art",
+      matchAspectText: "Rarity: SP CARD.",
+    };
+    expect(normalizeListing({ listing, buyer, variantIntent: "sp" }).eligible).toBe(true);
+  });
+
+  it("widens the language gate the same way: aspect text can reveal a mismatched language", () => {
+    const listing = {
+      ...ebayBase,
+      id: "jp-aspect",
+      title: "Monkey.D.Luffy OP01-024",
+      matchAspectText: "Language: Japanese.",
+      claimedCondition: "Near Mint" as const,
+    };
+    expect(normalizeListing({ listing, buyer, cardLanguage: "EN" }).eligible).toBe(false);
+    expect(normalizeListing({ listing, buyer, cardLanguage: "Japanese" }).eligible).toBe(true);
+  });
+});
+
 describe("deriveVariantIntent", () => {
   it("maps catalog rarity/variant pairs onto the variant classes", () => {
     expect(deriveVariantIntent({ rarity: "R", variant: null })).toBe("base");

@@ -11,6 +11,7 @@ function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
     cardId: "OP01-024",
     matchConfidence: "high",
     matchReasons: [],
+    matchAspectText: "",
     active: true,
     raw: true,
     currency: "USD",

@@ -206,6 +206,12 @@ export const normalizedListingSchema = z.object({
   cardId: z.string(),
   matchConfidence: confidenceSchema,
   matchReasons: z.array(z.string()),
+  // Structured item-specifics text (e.g. eBay's "Parallel/Variant" aspect),
+  // when the source adapter can read it. Never displayed — read only by the
+  // deterministic variant/language gates in ranking.ts alongside the title, so
+  // a seller's plain title doesn't undercount real matching supply when eBay's
+  // own structured data does name the print.
+  matchAspectText: z.string().trim().default(""),
   active: z.boolean(),
   raw: z.boolean(),
   currency: z.literal("USD"),
@@ -445,7 +451,8 @@ export type ListingSeed = Omit<
   | "exclusionReasons"
   | "webDiscovered"
   | "listingLanguage"
-> & { webDiscovered?: boolean; listingLanguage?: string | null };
+  | "matchAspectText"
+> & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string };
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;
