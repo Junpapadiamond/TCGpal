@@ -56,7 +56,6 @@ const en = {
     cardQuestion: "Which card are you checking?",
     cardQuestionHelp: "Name plus number is fastest. If it is ambiguous, you choose the exact version before listings rank.",
     preferenceQuestion: "Comparison defaults",
-    preferenceHelp: "Set condition, tax context, and the first result lens. You can change lenses after results load.",
     confirmedSettingsEyebrow: "Exact version confirmed",
     confirmedSettingsHeading: "Choose how to compare it",
     confirmedSettingsHelp:
@@ -425,7 +424,6 @@ const zh: Dict = {
     cardQuestion: "你想查哪张卡？",
     cardQuestionHelp: "卡名加编号最快。若有歧义，会先让你选择确切版本，再排序商品。",
     preferenceQuestion: "比对默认设置",
-    preferenceHelp: "设置品相、税费上下文和结果页第一视角。结果出来后仍可切换。",
     confirmedSettingsEyebrow: "确切版本已确认",
     confirmedSettingsHeading: "选择这张卡的比对方式",
     confirmedSettingsHelp:

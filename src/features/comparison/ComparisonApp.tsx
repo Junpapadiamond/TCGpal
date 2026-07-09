@@ -28,6 +28,7 @@ import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
+import { buildReceiptSummaryLine } from "./receipt-summary";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import {
@@ -688,61 +689,6 @@ function ComparisonExperience() {
                   </button>
                 </div>
               </section>
-
-              {hasExplicitCardKey && (
-              <section className="stage-reveal rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
-                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
-                <h2 className="mt-2 font-serif text-2xl font-black leading-none text-[#24312f]">
-                  {t.form.preferenceQuestion}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.form.preferenceHelp}</p>
-
-                <fieldset className="mt-4 grid gap-2 sm:grid-cols-2">
-                  <legend className="sr-only">{t.form.preferenceQuestion}</legend>
-                  {(["best_value", "lowest_landed_cost", "safest_listing", "best_condition_evidence"] as LensRole[]).map((role) => {
-                    const active = preferredRole === role;
-                    return (
-                      <label
-                        key={role}
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                          active ? "border-2 border-[#2f6f73] bg-[#eef7ef]" : "border-[#d6ded5] bg-[#fcfbf6] hover:border-[#9fb3a8]"
-                        }`}
-                      >
-                        <input className="sr-only" type="radio" value={role} {...form.register("preferredRole")} />
-                        <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-[#2f6f73]" : "border-[#c9d7ce]"}`}>
-                          {active && <span className="h-2 w-2 rounded-full bg-[#2f6f73]" />}
-                        </span>
-                        <span>
-                          <span className="block text-sm font-black text-[#24312f]">{rolePreferenceLabel(role, t)}</span>
-                          <span className="mt-0.5 block text-xs leading-5 text-[#64736c]">{roleToggleHint(role, t)}</span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </fieldset>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <label className="field">
-                    <span>{t.form.deliveryZip}</span>
-                    <div className="input-with-icon">
-                      <IconPin className="h-4 w-4" />
-                      <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
-                    </div>
-                    <small>{t.form.deliveryZipHelp}</small>
-                  </label>
-                  <label className="field">
-                    <span>{t.form.desiredCondition}</span>
-                    <select {...form.register("desiredCondition")}>
-                      {conditions.map((value) => (
-                        <option key={value} value={value}>
-                          {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </section>
-              )}
               </div>
             </div>
 
@@ -1824,11 +1770,6 @@ function ComparisonResult({
   const connectedSourceLabels = livePlatforms.map((platform) => platform.marketplace).join(" + ");
   const unavailablePlatformCount = visiblePlatforms.filter((platform) => platform.status !== "complete").length;
   const marketReferenceAvailable = typeof report.confirmedCard?.marketMid === "number";
-  const samePickRoles = selectedChoice
-    ? report.rankedChoices
-      .filter((choice) => choice.listingId === selectedChoice.listingId && choice.role !== selectedChoice.role)
-      .map((choice) => roleToggleLabel(choice.role, t))
-    : [];
   const listingTotals = eligibleListings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
   const listedRange = listingTotals.length > 0
     ? `${formatMoney(Math.min(...listingTotals))} to ${formatMoney(Math.max(...listingTotals))}`
@@ -1995,7 +1936,6 @@ function ComparisonResult({
             <LensControls
               choices={report.rankedChoices}
               selectedRole={selectedRole}
-              samePickRoles={samePickRoles}
               onSelect={(role) => {
                 setRoleOverride(role);
                 closeQaPanel();
@@ -2070,6 +2010,15 @@ function ComparisonResult({
           <details id="method" className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
             <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
 
+            {selectedListing && (
+              <div className="mt-4">
+                <VerdictMath
+                  listing={selectedListing}
+                  marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
+                />
+              </div>
+            )}
+
             {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
 
             {report.references.length > 0 && (
@@ -2117,17 +2066,19 @@ function ComparisonResult({
             )}
           </details>
 
-          <section id="feedback" className="rounded-xl border border-[#d6ded5] bg-[#24312f] p-5 text-[#fcfbf6] sm:flex sm:items-center sm:justify-between sm:gap-6">
-            <h3 className="font-serif text-xl font-bold">{t.result.feedbackQuestion}</h3>
+          {/* Pilot signal: one quiet row, always visible (never folded) so
+              decision_feedback_submitted keeps flowing without shouting. */}
+          <section id="feedback" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#d6ded5] bg-[#fcfbf6] px-4 py-3">
+            <h3 className="text-sm font-bold text-[#52635c]">{t.result.feedbackQuestion}</h3>
             {feedbackSent ? (
-              <p className="mt-4 inline-flex items-center gap-2 font-bold text-[#d7a84e] sm:mt-0">
-                <IconCheck className="h-5 w-5" />
+              <p className="inline-flex items-center gap-2 text-sm font-bold text-[#2f6f73]">
+                <IconCheck className="h-4 w-4" />
                 {t.result.feedbackSaved}
               </p>
             ) : (
-              <div className="mt-4 flex gap-3 sm:mt-0">
-                <button className="dark-button" type="button" onClick={() => onFeedback(true)}>{t.result.yes}</button>
-                <button className="dark-button" type="button" onClick={() => onFeedback(false)}>{t.result.notYet}</button>
+              <div className="flex gap-2">
+                <button className="secondary-button min-h-9 px-3 py-1.5 text-xs" type="button" onClick={() => onFeedback(true)}>{t.result.yes}</button>
+                <button className="secondary-button min-h-9 px-3 py-1.5 text-xs" type="button" onClick={() => onFeedback(false)}>{t.result.notYet}</button>
               </div>
             )}
           </section>
@@ -2539,59 +2490,42 @@ function MarketDeltaBadge({
   );
 }
 
+// Compact segmented control: label-only pills, one row, hints on hover/focus
+// via title. The full lens descriptions live at the settings stage; the result
+// page keeps lenses one tap away without a panel competing with the verdict.
 function LensControls({
   choices,
   selectedRole,
-  samePickRoles,
   onSelect,
 }: {
   choices: RankedChoice[];
   selectedRole: RankedChoice["role"] | null;
-  samePickRoles: string[];
   onSelect: (role: RankedChoice["role"]) => void;
 }) {
   const t = useT();
   return (
-    <section className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-black text-[#24312f]">{t.result.optimizeInsteadFor}</h3>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-[#64736c]">{t.result.defaultLensNote}</p>
-        </div>
-        {samePickRoles.length > 0 && (
-          <span className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-2.5 py-1 text-xs font-bold text-[#64736c]">
-            {t.result.samePickAs(samePickRoles.join(" · "))}
-          </span>
-        )}
-      </div>
-      <div
-        className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4"
-        style={choices.length === 4 ? undefined : { gridTemplateColumns: `repeat(${choices.length}, minmax(0, 1fr))` }}
-      >
-        {choices.map((choice) => {
-          const active = choice.role === selectedRole;
-          return (
-            <button
-              key={choice.role}
-              type="button"
-              onClick={() => onSelect(choice.role)}
-              aria-pressed={active}
-              title={roleToggleHint(choice.role, t)}
-              className={`min-h-12 rounded-md border px-3 py-2 text-left transition ${
-                active
-                  ? "border-[#2f6f73] bg-[#2f6f73] text-[#fcfbf6]"
-                  : "border-[#d6ded5] bg-[#fcfbf6] text-[#52635c] hover:border-[#9fb3a8] hover:bg-[#e7efe8] hover:text-[#2f6f73]"
-              }`}
-            >
-              <span className="block text-sm font-black">{roleToggleLabel(choice.role, t)}</span>
-              <span className={`mt-1 block text-xs leading-4 ${active ? "text-[#dcecdf]" : "text-[#7a8982]"}`}>
-                {roleToggleHint(choice.role, t)}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    <div role="group" aria-label={t.result.optimizeInsteadFor} className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.optimizeInsteadFor}</span>
+      {choices.map((choice) => {
+        const active = choice.role === selectedRole;
+        return (
+          <button
+            key={choice.role}
+            type="button"
+            onClick={() => onSelect(choice.role)}
+            aria-pressed={active}
+            title={roleToggleHint(choice.role, t)}
+            className={`min-h-10 rounded-full border px-3.5 py-1.5 text-sm font-black transition focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${
+              active
+                ? "border-[#2f6f73] bg-[#2f6f73] text-[#fcfbf6]"
+                : "border-[#d6ded5] bg-[#fcfbf6] text-[#52635c] hover:border-[#9fb3a8] hover:bg-[#e7efe8] hover:text-[#2f6f73]"
+            }`}
+          >
+            {roleToggleLabel(choice.role, t)}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -2664,7 +2598,6 @@ function RecommendedBuyHero({
             <span className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
               {roleToggleLabel(choice.role, t)}
             </span>
-            <span className="text-xs font-bold text-[#7a8982]">{verdict.strength}</span>
             <span className="text-xs font-bold text-[#7a8982]">{t.result.oneOfComparable(comparableCount)}</span>
             {listing.demo && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
             {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
@@ -2722,8 +2655,7 @@ function RecommendedBuyHero({
             </div>
           )}
         </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <VerdictMath listing={listing} marketPrice={marketPrice} />
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
             <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={() => onAsk(listing)}>
               <IconInfo className="h-4 w-4" />
@@ -2779,26 +2711,44 @@ function DecisionReceipt({
   onCopy: () => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
+  // Folded by default: the closed summary still carries the guardrail facts
+  // (sources · market + freshness · exclusions · observed time) in one line.
+  const summaryLine = buildReceiptSummaryLine({
+    liveSources,
+    marketMid: card?.marketMid ?? null,
+    marketAsOf: card?.marketAsOf ?? null,
+    excludedCount: excluded.length,
+    observedTime,
+    lang,
+  });
   return (
-    <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4 sm:p-5" aria-labelledby="decision-receipt-title">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 id="decision-receipt-title" className="font-serif text-xl font-black text-[#24312f]">{t.result.decisionReceipt}</h3>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-[#64736c]">{t.result.decisionReceiptHelp}</p>
-        </div>
-        <button
-          className="secondary-button min-h-10 px-3 py-2 text-xs"
-          type="button"
-          disabled={!canCopy}
-          onClick={onCopy}
-          title={!canCopy ? t.result.shareUnavailable : undefined}
-        >
-          <IconReceipt className="h-4 w-4" />
-          {receiptCopied ? t.result.receiptCopied : t.result.shareReceipt}
-        </button>
-      </div>
+    <details className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]" aria-label={t.result.decisionReceipt}>
+      <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3">
+        <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#52635c]" title={summaryLine}>{summaryLine}</span>
+        <span className="flex shrink-0 items-center gap-2">
+          <button
+            className="secondary-button min-h-9 px-2.5 py-1.5 text-xs"
+            type="button"
+            disabled={!canCopy}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onCopy();
+            }}
+            title={!canCopy ? t.result.shareUnavailable : t.result.shareReceipt}
+          >
+            <IconReceipt className="h-4 w-4" />
+            {receiptCopied ? t.result.receiptCopied : t.result.shareReceipt}
+          </button>
+          <IconChevronDown className="h-4 w-4 text-[#64736c]" />
+        </span>
+      </summary>
 
-      <div className="mt-4 grid gap-2">
+      <div className="px-4 pb-4 sm:px-5">
+      <h3 className="font-serif text-lg font-black text-[#24312f]">{t.result.decisionReceipt}</h3>
+
+      <div className="mt-3 grid gap-2">
         <MarketReferenceLine card={card} generatedAt={generatedAt} listedRange={listedRange} />
         <SourceStatusLine
           liveSources={liveSources}
@@ -2837,7 +2787,8 @@ function DecisionReceipt({
           </div>
         </details>
       )}
-    </section>
+      </div>
+    </details>
   );
 }
 

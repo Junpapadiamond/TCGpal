@@ -90,7 +90,6 @@ describe("buildVerdictCopy", () => {
     expect(copy.catch).toContain("2 item-specific photos");
     expect(copy.alternative).toContain("7 item-specific photos");
     expect(copy.alternative).toContain("$27.00 more");
-    expect(copy.strength).not.toContain("/100");
   });
 
   it("renders the same facts as natural Chinese copy", () => {

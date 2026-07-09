@@ -12,7 +12,6 @@ export type VerdictCopy = {
   alternative: string | null;
   whyNotCheapest: string | null;
   action: VerdictAction;
-  strength: string;
 };
 
 type VerdictCopyInput = {
@@ -277,30 +276,6 @@ function buildAction(
   };
 }
 
-function roleScore(listing: NormalizedListing, role: RankedChoice["role"]) {
-  switch (role) {
-    case "best_value":
-      return listing.valueScore;
-    case "lowest_landed_cost":
-      return listing.priceScore;
-    case "safest_listing":
-      return listing.safetyScore;
-    case "best_condition_evidence":
-      return listing.evidenceCompletenessScore;
-  }
-}
-
-function strengthLabel(score: number, lang: VerdictCopyInput["lang"]) {
-  if (lang === "zh") {
-    if (score >= 80) return "整体表现强";
-    if (score >= 65) return "整体表现稳健";
-    return "有取舍，建议复核";
-  }
-  if (score >= 80) return "Strong overall";
-  if (score >= 65) return "Solid overall";
-  return "Tradeoffs to review";
-}
-
 export function buildVerdictCopy({
   listing,
   choice,
@@ -319,6 +294,5 @@ export function buildVerdictCopy({
       : null,
     whyNotCheapest: buildWhyNotCheapest(listing, alternatives, lang),
     action: buildAction(listing, marketPrice, lang),
-    strength: strengthLabel(roleScore(listing, choice.role), lang),
   };
 }
