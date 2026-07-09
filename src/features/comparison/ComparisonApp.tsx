@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent, t
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
-  IconCardCheck,
   IconCardFan,
   IconCardSearch,
   IconCaution,
@@ -25,7 +24,7 @@ import {
 } from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
-import { calculatePriceComponent, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
+import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
@@ -49,7 +48,6 @@ import {
   type NormalizedListing,
   type RankedChoice,
   type TcgGame,
-  type WebDiscovery,
 } from "@/lib/schemas";
 
 const marketplaces: Marketplace[] = [
@@ -87,7 +85,6 @@ const conditions: ConditionClaim[] = [
   "Damaged",
 ];
 
-const LEDGER_PREVIEW_COUNT = 4;
 const RECENT_CONFIRMED_CARDS_KEY = "tcgpal:recent-confirmed-cards";
 const MAX_RECENT_CONFIRMED_CARDS = 10;
 const MAX_MARQUEE_REAL_CARDS = 8;
@@ -295,7 +292,6 @@ function ComparisonExperience() {
   const [refineOpen, setRefineOpen] = useState(false);
   const [listingOpen, setListingOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
-  const [comparingDiscoveryId, setComparingDiscoveryId] = useState<string | null>(null);
   const [compactSearchOpen, setCompactSearchOpen] = useState(false);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
 
@@ -498,102 +494,6 @@ function ComparisonExperience() {
       trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function compareWebDiscovery(discovery: WebDiscovery) {
-    if (loading || !report?.confirmedCard) return;
-    const confirmedCard = report.confirmedCard;
-    const cardQuery = `${confirmedCard.name} ${confirmedCard.setCode} ${confirmedCard.cardNumber}`.trim();
-    const currentValues = form.getValues();
-    const baseRequest = pendingRequest ?? buildRequest(currentValues, confirmedCard.id);
-    const request: ComparisonRequest = {
-      ...baseRequest,
-      query: baseRequest.query || cardQuery,
-      sourceListing: {
-        marketplace: discovery.marketplace,
-        url: discovery.url,
-        title: discovery.title,
-        description: discovery.snippet,
-        price: discovery.priceHintUsd,
-        shipping: null,
-        claimedCondition: "Unknown",
-        active: true,
-        seller: {
-          feedbackPercentage: null,
-          feedbackCount: null,
-          returnsAccepted: null,
-          topRated: null,
-          buyerProtection: null,
-          subRatings: null,
-        },
-        evidence: {
-          photoCount: 0,
-          frontBackExplicit: false,
-          closeupsExplicit: false,
-          surfaceExplicit: false,
-          identityExplicit: Boolean(confirmedCard.cardNumber && discovery.title.includes(confirmedCard.cardNumber)),
-          substantiveConditionNotes: false,
-          missing: [],
-        },
-      },
-      cardHint: {
-        ...baseRequest.cardHint,
-        name: confirmedCard.name,
-        setCode: confirmedCard.setCode,
-        cardNumber: confirmedCard.cardNumber,
-        language: confirmedCard.language,
-        variant: confirmedCard.variant ?? "",
-        gradingClaim: "",
-      },
-      confirmedCardId: confirmedCard.id,
-      webDiscoveryMode: "off",
-    };
-
-    form.setValue("url", discovery.url);
-    form.setValue("marketplace", discovery.marketplace);
-    form.setValue("listingTitle", discovery.title);
-    form.setValue("description", discovery.snippet);
-    form.setValue("price", discovery.priceHintUsd === null ? "" : String(discovery.priceHintUsd));
-    form.setValue("shipping", "");
-    form.setValue("cardName", confirmedCard.name);
-    form.setValue("setCode", confirmedCard.setCode);
-    form.setValue("cardNumber", confirmedCard.cardNumber);
-    if (!currentValues.heroQuery.trim()) form.setValue("heroQuery", cardQuery);
-    setPendingRequest(request);
-    setLoading(true);
-    setError(null);
-    setFeedbackSent(false);
-    setComparingDiscoveryId(discovery.id);
-    const startedAt = readTimestamp();
-    trackEvent("second_comparison_started", { marketplace: discovery.marketplace });
-    trackEvent("source_detected", { marketplace: discovery.marketplace });
-    if (discovery.marketplace !== "eBay") {
-      trackEvent("manual_candidate_added", { marketplace: discovery.marketplace });
-    }
-
-    try {
-      const parsed = await requestComparisonReport(request, t.error.temporary);
-      setReport(parsed);
-      setConfirmedIdentityForSettings(null);
-      if (parsed.confirmedCard) {
-        rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
-      }
-      const duration = readTimestamp() - startedAt;
-      trackEvent("comparison_completed", {
-        marketplace: discovery.marketplace,
-        status: parsed.status,
-        demo_mode: parsed.demoMode,
-        candidate_count: parsed.candidates.length,
-        duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
-      });
-      focusComparisonTarget();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t.error.temporary);
-      trackEvent("comparison_failed", { marketplace: discovery.marketplace });
-    } finally {
-      setLoading(false);
-      setComparingDiscoveryId(null);
     }
   }
 
@@ -1088,8 +988,6 @@ function ComparisonExperience() {
             preferredRole={preferredRole}
             feedbackSent={feedbackSent}
             onFeedback={sendFeedback}
-            onCompareDiscovery={compareWebDiscovery}
-            comparingDiscoveryId={comparingDiscoveryId}
             onCompareSuggestedPrint={compareSuggestedPrint}
           />
         )}
@@ -1871,16 +1769,12 @@ function ComparisonResult({
   preferredRole,
   feedbackSent,
   onFeedback,
-  onCompareDiscovery,
-  comparingDiscoveryId,
   onCompareSuggestedPrint,
 }: {
   report: ComparisonReport;
   preferredRole: LensRole;
   feedbackSent: boolean;
   onFeedback: (changedDecision: boolean) => void;
-  onCompareDiscovery: (discovery: WebDiscovery) => void;
-  comparingDiscoveryId: string | null;
   onCompareSuggestedPrint: (cardId: string) => void;
 }) {
   const t = useT();
@@ -1912,7 +1806,6 @@ function ComparisonResult({
   const selectedListing = selectedChoice ? listingMap.get(selectedChoice.listingId) ?? null : null;
 
   const eligibleCount = eligibleListings.length;
-  const [showAllCandidates, setShowAllCandidates] = useState(false);
   const orderedEligibleListings = useMemo(
     () => sortListingsForRole(eligibleListings, selectedRole),
     [eligibleListings, selectedRole],
@@ -1926,11 +1819,6 @@ function ComparisonResult({
   const alternativeListings = selectedListing
     ? prioritizedEligibleListings.filter((listing) => listing.id !== selectedListing.id)
     : prioritizedEligibleListings;
-  const visibleAlternativeListings = showAllCandidates
-    ? alternativeListings
-    : alternativeListings.slice(0, selectedListing ? Math.max(1, LEDGER_PREVIEW_COUNT - 1) : LEDGER_PREVIEW_COUNT);
-  const hiddenEligibleCount = Math.max(0, alternativeListings.length - visibleAlternativeListings.length);
-  const webDiscoveries = report.webDiscoveries ?? [];
   const visiblePlatforms = report.platforms.filter((platform) => platform.configured || platform.status === "fallback");
   const livePlatforms = visiblePlatforms.filter((platform) => platform.status === "complete");
   const connectedSourceLabels = livePlatforms.map((platform) => platform.marketplace).join(" + ");
@@ -1954,7 +1842,31 @@ function ComparisonResult({
   const [qaLoading, setQaLoading] = useState(false);
   const [qaError, setQaError] = useState<string | null>(null);
   const [qaTarget, setQaTarget] = useState<{ id: string; label: string } | null>(null);
+  // The Q&A panel is on-demand: closed (and costing zero attention) until the
+  // buyer asks — via the hero's "Why is this the top pick?", a row's Ask link,
+  // or the standalone opener under the alternatives fold.
+  const [qaOpen, setQaOpen] = useState(false);
   const [receiptCopied, setReceiptCopied] = useState(false);
+
+  function openQaPanel() {
+    setQaOpen(true);
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById("comparison-qa");
+      if (!target) return;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+      target.querySelector<HTMLTextAreaElement>("textarea")?.focus({ preventScroll: true });
+    });
+  }
+
+  function closeQaPanel() {
+    setQaOpen(false);
+    setQaQuestion("");
+    setQaAnswer(null);
+    setQaError(null);
+    setQaTarget(null);
+  }
   const selectedVerdictCopy = selectedChoice && selectedListing
     ? buildVerdictCopy({
       listing: selectedListing,
@@ -2028,6 +1940,7 @@ function ComparisonResult({
     const question = listing.id === selectedListingId
       ? t.result.askWhyThis
       : t.result.askWhyNotListing(listing.marketplace, formatMoney(listing.estimatedLandedCost ?? listing.preTaxTotal));
+    openQaPanel();
     void askQuestion({ question, targetListing: listing });
   }
 
@@ -2058,8 +1971,7 @@ function ComparisonResult({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-        <div className="space-y-3">
+      <div className="mx-auto max-w-[860px] space-y-3">
           {selectedListing && selectedChoice && (
             <RecommendedBuyHero
               listing={selectedListing}
@@ -2086,48 +1998,58 @@ function ComparisonResult({
               samePickRoles={samePickRoles}
               onSelect={(role) => {
                 setRoleOverride(role);
-                setQaQuestion("");
-                setQaAnswer(null);
-                setQaError(null);
-                setQaTarget(null);
+                closeQaPanel();
                 trackEvent("lens_selected", { choice_role: role });
               }}
             />
           )}
 
-          <div className="space-y-2.5">
-            {visibleAlternativeListings.map((listing) => (
-              <CandidateRow
-                key={listing.id}
-                listing={listing}
-                fallbackImageUrl={report.confirmedCard?.imageUrl ?? null}
-                marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
-                choice={listing.id === selectedChoice?.listingId ? selectedChoice : null}
-                lead={!selectedListing && listing.id === prioritizedEligibleListings[0]?.id}
-                demoMode={report.demoMode}
-                onAsk={askAboutListing}
+          {alternativeListings.length > 0 && (
+            <details
+              className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]"
+              open={!selectedListing}
+            >
+              <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-black text-[#2f6f73] transition hover:text-[#24585c]">
+                {t.result.compareOthers(alternativeListings.length)}
+                <IconChevronDown className="h-4 w-4 shrink-0" />
+              </summary>
+              <div className="space-y-2 px-4 pb-4">
+                {alternativeListings.map((listing) => (
+                  <CompactCandidateRow
+                    key={listing.id}
+                    listing={listing}
+                    marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
+                    demoMode={report.demoMode}
+                    onAsk={askAboutListing}
+                  />
+                ))}
+              </div>
+            </details>
+          )}
+
+          {qaOpen ? (
+            <div id="comparison-qa" tabIndex={-1} className="scroll-mt-24 outline-none">
+              <ComparisonQuestionBox
+                question={qaQuestion}
+                answer={qaAnswer}
+                error={qaError}
+                loading={qaLoading}
+                targetLabel={qaTarget?.label ?? null}
+                onQuestionChange={setQaQuestion}
+                onAsk={askQuestion}
+                onClose={closeQaPanel}
               />
-            ))}
-            {hiddenEligibleCount > 0 && !showAllCandidates && (
-              <button
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#c9d7ce] px-3 py-3 text-sm font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8]"
-                type="button"
-                onClick={() => setShowAllCandidates(true)}
-              >
-                {t.result.showAll(eligibleCount)}
-                <IconChevronDown className="h-4 w-4" />
-              </button>
-            )}
-            {showAllCandidates && eligibleCount > LEDGER_PREVIEW_COUNT && (
-              <button
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#c9d7ce] px-3 py-3 text-sm font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8]"
-                type="button"
-                onClick={() => setShowAllCandidates(false)}
-              >
-                {t.result.showFewer}
-              </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#c9d7ce] px-3 py-3 text-sm font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8]"
+              type="button"
+              onClick={() => openQaPanel()}
+            >
+              <IconInfo className="h-4 w-4" />
+              {t.result.askTitle}
+            </button>
+          )}
 
           <DecisionReceipt
             card={report.confirmedCard}
@@ -2209,113 +2131,6 @@ function ComparisonResult({
               </div>
             )}
           </section>
-        </div>
-
-        <aside className="space-y-3 lg:sticky lg:top-24">
-          <ComparisonQuestionBox
-            question={qaQuestion}
-            answer={qaAnswer}
-            error={qaError}
-            loading={qaLoading}
-            targetLabel={qaTarget?.label ?? null}
-            onQuestionChange={setQaQuestion}
-            onAsk={askQuestion}
-          />
-          {webDiscoveries.length > 0 && (
-            <WebDiscoveryPanel
-              discoveries={webDiscoveries}
-              onCompare={onCompareDiscovery}
-              comparingDiscoveryId={comparingDiscoveryId}
-            />
-          )}
-        </aside>
-      </div>
-    </section>
-  );
-}
-
-function WebDiscoveryPanel({
-  discoveries,
-  onCompare,
-  comparingDiscoveryId,
-}: {
-  discoveries: ComparisonReport["webDiscoveries"];
-  onCompare: (discovery: WebDiscovery) => void;
-  comparingDiscoveryId: string | null;
-}) {
-  const t = useT();
-  return (
-    <section className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-4">
-      <h3 className="text-sm font-black text-[#6f5a22]">{t.result.webDiscoveryTitle}</h3>
-      <p className="mt-3 text-sm leading-6 text-[#6f5a22]">{t.result.webDiscoveryBody}</p>
-      <div className="mt-4 grid gap-2">
-        {discoveries.slice(0, 12).map((discovery) => (
-          <article
-            key={discovery.id}
-            className="rounded-md border border-[#d9c27b] bg-[#fcfbf6] px-3 py-2 text-sm text-[#52635c]"
-          >
-            <a
-              className="block transition hover:text-[#2f6f73]"
-              href={discovery.url}
-              target="_blank"
-              rel="noreferrer"
-              title={discovery.note}
-            >
-              <span className="flex items-start justify-between gap-3">
-                <span className="min-w-0">
-                  <span className="block text-[10px] font-black uppercase tracking-[0.09em] text-[#8d6032]">
-                    {discovery.platformLabel} · {discovery.listingLike ? t.result.webDiscoveryPossibleListing : t.result.webDiscoveryReference}
-                  </span>
-                  <span className="mt-1 line-clamp-2 font-bold leading-5 text-[#2f6f73]">{discovery.title}</span>
-                </span>
-                <IconArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
-              </span>
-            </a>
-            <span className="mt-2 flex flex-wrap gap-1.5">
-              {discovery.providers.map((provider) => (
-                <span key={provider} className="rounded border border-[#d9c27b] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#8d6032]">
-                  {provider}
-                </span>
-              ))}
-              {discovery.freshness === "within_3_days" && (
-                <span className="rounded border border-[#c9d7ce] bg-[#e7efe8] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
-                  {t.result.webDiscoveryRecent}
-                </span>
-              )}
-              {discovery.availability === "available_hint" && (
-                <span className="rounded border border-[#c9d7ce] bg-[#e7efe8] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
-                  {t.result.webDiscoveryAvailable}
-                </span>
-              )}
-              {discovery.rankedCandidateId && (
-                <span className="rounded border border-[#c9d7ce] bg-[#e7efe8] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
-                  {t.result.webDiscoveryRanked}
-                </span>
-              )}
-              {discovery.priceHintUsd !== null && (
-                <span className="rounded border border-[#d9c27b] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] text-[#8d6032]">
-                  {formatMoney(discovery.priceHintUsd)}
-                </span>
-              )}
-            </span>
-            {discovery.listingLike && (
-              <button
-                className="mt-3 flex min-h-9 w-full items-center justify-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-3 py-2 text-xs font-black uppercase tracking-[0.06em] text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#dcecdf] disabled:cursor-not-allowed disabled:opacity-60"
-                type="button"
-                disabled={comparingDiscoveryId !== null}
-                onClick={() => onCompare(discovery)}
-                title={t.result.webDiscoveryCompareTitle}
-              >
-                {comparingDiscoveryId === discovery.id ? (
-                  <IconSpinner className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <IconCardCheck className="h-3.5 w-3.5" />
-                )}
-                {comparingDiscoveryId === discovery.id ? t.result.webDiscoveryCompareLoading : t.result.webDiscoveryCompare}
-              </button>
-            )}
-          </article>
-        ))}
       </div>
     </section>
   );
@@ -2329,6 +2144,7 @@ function ComparisonQuestionBox({
   targetLabel,
   onQuestionChange,
   onAsk,
+  onClose,
 }: {
   question: string;
   answer: ComparisonQuestionResponse | null;
@@ -2337,11 +2153,21 @@ function ComparisonQuestionBox({
   targetLabel: string | null;
   onQuestionChange: (value: string) => void;
   onAsk: () => void | Promise<void>;
+  onClose: () => void;
 }) {
   const t = useT();
   return (
     <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
-      <h3 className="text-sm font-black text-[#24312f]">{t.result.askTitle}</h3>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-sm font-black text-[#24312f]">{t.result.askTitle}</h3>
+        <button
+          className="inline-flex min-h-8 items-center rounded-md px-2 text-xs font-bold text-[#64736c] transition hover:bg-[#e7efe8] hover:text-[#24312f] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+          type="button"
+          onClick={onClose}
+        >
+          {t.result.askClose}
+        </button>
+      </div>
       {targetLabel && (
         <p className="mt-3 inline-flex max-w-full items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
           <IconReceipt className="h-3.5 w-3.5 shrink-0" />
@@ -2434,36 +2260,6 @@ function roleToggleHint(role: RankedChoice["role"], t: Dict) {
     case "safest_listing": return t.lens.safestHint;
     case "best_condition_evidence": return t.lens.bestDocumentedHint;
   }
-}
-
-function choiceReasonText(choice: RankedChoice, listing: NormalizedListing, lang: Lang) {
-  if (lang === "en") return choice.reason;
-
-  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const base = (() => {
-    switch (choice.role) {
-      case "best_value":
-        return `完整总价、品相匹配、卖家可信度与证据的综合最优（${listing.valueScore}/100）。`;
-      case "lowest_landed_cost":
-        return listing.estimatedTax === null
-          ? `税前合计最低，为 ${formatMoney(listing.preTaxTotal)}；未包含税费。`
-          : `预估到手价最低，为 ${formatMoney(total)}。`;
-      case "safest_listing":
-        return `卖家记录与商品证据综合分最高（${listing.safetyScore}/100）。`;
-      case "best_condition_evidence":
-        return `照片与品相证据最完整（${listing.evidenceCompletenessScore}/100）；这不是评级预测。`;
-    }
-  })();
-
-  const overMarket = choice.reason.match(/\+(\d+)% over the \$([0-9.]+) TCGplayer market reference/i);
-  if (overMarket) {
-    return `${base} 注意：这张高于 $${overMarket[2]} TCGplayer 参考价 ${overMarket[1]}%，它领先本次候选，不代表低于市场。`;
-  }
-  const thinSupply = choice.reason.match(/cheapest eligible copy is \+(\d+)% over the \$([0-9.]+) TCGplayer market reference/i);
-  if (thinSupply) {
-    return `${base} 当前供应偏少，最低可比商品仍高于 $${thinSupply[2]} TCGplayer 参考价 ${thinSupply[1]}%。`;
-  }
-  return base;
 }
 
 function sortListingsForRole(listings: NormalizedListing[], role: RankedChoice["role"] | null) {
@@ -3099,103 +2895,63 @@ function SourceStatusLine({
   );
 }
 
-function CandidateRow({
+// Compact one-line alternative row: the decision layer stays singular, so the
+// ledger inside the fold shows just enough to compare — title, condition,
+// photos, total, vs-market — with view/ask one tap away.
+function CompactCandidateRow({
   listing,
-  fallbackImageUrl,
   marketPrice,
-  choice,
-  lead,
   demoMode,
   onAsk,
 }: {
   listing: NormalizedListing;
-  fallbackImageUrl: string | null;
   marketPrice: number | null;
-  choice: RankedChoice | null;
-  lead: boolean;
   demoMode: boolean;
   onAsk: (listing: NormalizedListing) => void;
 }) {
   const t = useT();
-  const { lang } = useLang();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
-  const roleScore = choice?.role === "lowest_landed_cost"
-    ? Math.round(calculatePriceComponent(total, marketPrice))
-    : choice?.role === "safest_listing"
-      ? listing.safetyScore
-      : choice?.role === "best_condition_evidence"
-        ? listing.evidenceCompletenessScore
-        : listing.valueScore;
-  const imageUrl = listing.imageUrl ?? fallbackImageUrl;
-  const reason = choice ? choiceReasonText(choice, listing, lang) : null;
 
   return (
-    <article
-      aria-live={lead ? "polite" : undefined}
-      className={`result-row rounded-xl bg-[#fcfbf6] transition ${
-        lead
-          ? "border-2 border-[#2f6f73] p-4 shadow-[0_10px_28px_rgba(36,49,47,0.08)] sm:p-5"
-          : "border border-[#d6ded5] p-3.5 hover:border-[#9fb3a8] hover:shadow-[0_6px_18px_rgba(36,49,47,0.06)] sm:p-4"
-      }`}
-      title={reason ?? undefined}
-    >
-      <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3.5 sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:items-center">
-        <div className={`relative aspect-[2.5/3.5] overflow-hidden rounded-md border border-[#d6ded5] bg-[#e7efe8] ${lead ? "w-14" : "w-[52px]"}`}>
-          {imageUrl ? (
-            <Image src={imageUrl} alt="" fill sizes="56px" className="object-contain" />
-          ) : (
-            <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-5 w-5" /></span>
-          )}
-        </div>
-        <div className="min-w-0">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {lead && (
-              <span className="rounded-md bg-[#2f6f73] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
-                {roleToggleLabel(choice?.role ?? "best_value", t)}
-              </span>
-            )}
-            {listing.demo && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
-            {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
-            {listing.webDiscovered && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
+    <article className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2.5 transition hover:border-[#9fb3a8]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div className="min-w-0 flex-1 basis-52">
+          <div className="flex min-w-0 items-center gap-2">
+            {listing.demo && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
+            {listing.userSupplied && <span className="shrink-0 rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
+            {listing.webDiscovered && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
+            <h3 className="min-w-0 truncate text-sm font-bold leading-snug text-[#24312f]">{listing.title}</h3>
           </div>
-          <h3 className={`mt-1.5 min-w-0 font-bold leading-snug text-[#24312f] ${lead ? "font-serif text-lg sm:text-xl" : "truncate text-sm sm:text-[15px]"}`}>
-            {listing.title}
-          </h3>
-          <p className="mt-2 text-xs font-semibold leading-5 text-[#64736c]">
-            <ListingMetaLine listing={listing} />
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-[#64736c]">
-            {lead && <span>{roleToggleLabel(choice?.role ?? "best_value", t)} {roleScore}/100</span>}
+          <p className="mt-0.5 truncate text-xs font-semibold leading-5 text-[#64736c]">
+            {t.conditions[listing.claimedCondition]} · {t.card.photos(listing.evidence.photoCount)}
+            {" · "}
             <button className="underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
               {t.candidate.ask}
             </button>
-          </div>
+          </p>
         </div>
-        <div className="col-span-2 flex items-end justify-between gap-3 sm:col-span-1 sm:grid sm:min-w-[142px] sm:justify-items-end sm:gap-1.5">
-          <div className="sm:text-right">
-            <p className={`font-mono font-black text-[#24312f] ${lead ? "text-2xl" : "text-lg"}`}>{formatMoney(total)}</p>
-            <p className="text-[10px] font-black uppercase tracking-[0.06em] text-[#7a8982]">{totalLabel}</p>
-          </div>
-          <MarketDeltaBadge listing={listing} marketPrice={marketPrice} compact />
-          {listing.url ? (
-            <a
-              className={`result-row-cta inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#2f6f73] px-3 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${lead ? "is-lead" : ""}`}
-              href={listing.url}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => trackEvent("choice_opened", { choice_role: choice?.role ?? "candidate", marketplace: listing.marketplace, demo_mode: demoMode })}
-            >
-              {t.card.viewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
-            </a>
-          ) : (
-            <span className="text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
-          )}
+        <div className="text-right">
+          <p className="font-mono text-base font-black leading-tight text-[#24312f]">{formatMoney(total)}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.06em] text-[#7a8982]">{totalLabel}</p>
         </div>
+        <MarketDeltaBadge listing={listing} marketPrice={marketPrice} compact />
+        {listing.url ? (
+          <a
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-[#c9d7ce] px-3 text-xs font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+            href={listing.url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => trackEvent("choice_opened", { choice_role: "candidate", marketplace: listing.marketplace, demo_mode: demoMode })}
+          >
+            {t.card.viewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
+          </a>
+        ) : (
+          <span className="text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
+        )}
       </div>
-      {lead && <VerdictMath listing={listing} marketPrice={marketPrice} />}
     </article>
   );
 }
