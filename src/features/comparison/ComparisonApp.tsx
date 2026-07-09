@@ -30,6 +30,12 @@ import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
+import {
+  applyIdentityFilterChange,
+  clearIdentityFilters,
+  computeIdentityFacets,
+  type IdentityFilters,
+} from "./identity-filters";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import {
   defaultComparisonFormValues,
@@ -1509,43 +1515,28 @@ function ConfirmedSettingsStage({
   );
 }
 
-// Groups a print's specific variant label ("Alternate Art (P1)", "Secret Rare Alt
-// (R2)") into the coarser bucket collectors actually browse by, so the filter
-// dropdown has a handful of options instead of one per unique print marker. Base
-// prints (no variant label) get their own bucket rather than being unfilterable.
-function printTypeOf(identity: CardIdentityCandidate, basePrintLabel: string): string {
-  if (!identity.variant) return basePrintLabel;
-  return identity.variant.replace(/\s*\([^)]*\)\s*$/, "").trim() || basePrintLabel;
-}
-
 function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identities: CardIdentityCandidate[]; warnings?: string[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
   const t = useT();
-  const [setFilter, setSetFilter] = useState("");
-  const [rarityFilter, setRarityFilter] = useState("");
-  const [printTypeFilter, setPrintTypeFilter] = useState("");
-  // Options come from the full, unfiltered list so picking one filter never
-  // hides the choices for the other.
-  const setOptions = useMemo(
-    () => Array.from(new Set(identities.map((identity) => identity.setName || identity.setCode).filter(Boolean))).sort(),
-    [identities],
+  const [filters, setFilters] = useState<IdentityFilters>({ setFilter: "", rarityFilter: "", printTypeFilter: "" });
+  // A print's rarity and its print-type bucket are not independent (SP CARD
+  // rarity is always Special Art, SEC never coexists with Special Art, ...), so
+  // each dropdown's options are computed against the OTHER active filters —
+  // picking one narrows the others instead of leaving a combination on screen
+  // that can only ever show "0 versions".
+  const facets = useMemo(
+    () => computeIdentityFacets(identities, filters, t.identity.basePrint),
+    [identities, filters, t.identity.basePrint],
   );
-  const rarityOptions = useMemo(
-    () => Array.from(new Set(identities.map((identity) => identity.rarity).filter((value): value is string => Boolean(value)))).sort(),
-    [identities],
-  );
-  const printTypeOptions = useMemo(
-    () => Array.from(new Set(identities.map((identity) => printTypeOf(identity, t.identity.basePrint)))).sort(),
-    [identities, t.identity.basePrint],
-  );
-  const showFilters = identities.length > 4
-    && (setOptions.length > 1 || rarityOptions.length > 1 || printTypeOptions.length > 1);
-  const filteredIdentities = useMemo(
-    () => identities.filter((identity) =>
-      (!setFilter || (identity.setName || identity.setCode) === setFilter)
-      && (!rarityFilter || identity.rarity === rarityFilter)
-      && (!printTypeFilter || printTypeOf(identity, t.identity.basePrint) === printTypeFilter)),
-    [identities, setFilter, rarityFilter, printTypeFilter, t.identity.basePrint],
-  );
+  // "Should the filter bar show at all" is a static question about the full,
+  // unfiltered list — unrelated to how the active filters narrow each other.
+  const showFilters = identities.length > 4 && (() => {
+    const empty = computeIdentityFacets(identities, { setFilter: "", rarityFilter: "", printTypeFilter: "" }, t.identity.basePrint);
+    return empty.setOptions.length > 1 || empty.rarityOptions.length > 1 || empty.printTypeOptions.length > 1;
+  })();
+  const { setOptions, rarityOptions, printTypeOptions, filteredIdentities } = facets;
+  function updateFilter(key: keyof IdentityFilters, value: string) {
+    setFilters((current) => applyIdentityFilterChange(current, key, value, identities, t.identity.basePrint));
+  }
   const grouped = filteredIdentities.length > IDENTITY_GROUP_THRESHOLD;
   const groups = useMemo(() => (grouped ? groupIdentitiesBySet(filteredIdentities) : []), [grouped, filteredIdentities]);
   const likelyMatches = useMemo(
@@ -1579,7 +1570,7 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
           {setOptions.length > 1 && (
             <label className="field !gap-1">
               <span className="text-xs">{t.identity.filterSetLabel}</span>
-              <select value={setFilter} onChange={(event) => setSetFilter(event.target.value)}>
+              <select value={filters.setFilter} onChange={(event) => updateFilter("setFilter", event.target.value)}>
                 <option value="">{t.identity.filterAllSets}</option>
                 {setOptions.map((setName) => (
                   <option key={setName} value={setName}>{setName}</option>
@@ -1590,7 +1581,7 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
           {rarityOptions.length > 1 && (
             <label className="field !gap-1">
               <span className="text-xs">{t.identity.filterRarityLabel}</span>
-              <select value={rarityFilter} onChange={(event) => setRarityFilter(event.target.value)}>
+              <select value={filters.rarityFilter} onChange={(event) => updateFilter("rarityFilter", event.target.value)}>
                 <option value="">{t.identity.filterAllRarities}</option>
                 {rarityOptions.map((rarity) => (
                   <option key={rarity} value={rarity}>{rarity}</option>
@@ -1601,7 +1592,7 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
           {printTypeOptions.length > 1 && (
             <label className="field !gap-1">
               <span className="text-xs">{t.identity.filterPrintTypeLabel}</span>
-              <select value={printTypeFilter} onChange={(event) => setPrintTypeFilter(event.target.value)}>
+              <select value={filters.printTypeFilter} onChange={(event) => updateFilter("printTypeFilter", event.target.value)}>
                 <option value="">{t.identity.filterAllPrintTypes}</option>
                 {printTypeOptions.map((printType) => (
                   <option key={printType} value={printType}>{printType}</option>
@@ -1612,15 +1603,11 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
           <p className="ml-auto text-xs font-bold text-[#64736c]">
             {t.identity.filterShowingCount(filteredIdentities.length, identities.length)}
           </p>
-          {(setFilter || rarityFilter || printTypeFilter) && (
+          {(filters.setFilter || filters.rarityFilter || filters.printTypeFilter) && (
             <button
               type="button"
               className="text-xs font-black text-[#2f6f73] hover:underline"
-              onClick={() => {
-                setSetFilter("");
-                setRarityFilter("");
-                setPrintTypeFilter("");
-              }}
+              onClick={() => setFilters(clearIdentityFilters())}
             >
               {t.identity.filterClear}
             </button>
