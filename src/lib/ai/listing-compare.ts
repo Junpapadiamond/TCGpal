@@ -1,7 +1,7 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
 import { demoIdentities, demoListingSeedsFor, type DemoListingSeed } from "@/lib/comparison/fixtures";
-import { finalizeListingScores, normalizeListing, rankListings } from "@/lib/comparison/ranking";
+import { deriveVariantIntent, finalizeListingScores, normalizeListing, rankListings } from "@/lib/comparison/ranking";
 import {
   EbayUnavailableError,
   getEbayListingByUrl,
@@ -271,16 +271,15 @@ export async function runListingComparison(
   // Demo fixtures are never scored against the market anchor: their prices are
   // fabricated, so any market-derived score would be a fake vs-market read.
   const marketAnchor = demoMode ? null : confirmedCard.marketMid ?? null;
-  // Keep the ranked listings on the confirmed side of the base ↔ alternate-art line:
-  // the same card number spans both at very different prices. Demo fixtures aren't
-  // gated (they're labeled, not real offers). `variant` is set only on alt-art prints.
-  // Pokémon collector numbers identify a unique print, so title wording such as
-  // "alternate art" must not contradict the catalog number. One Piece reuses a
-  // card number across base/parallel catalog variants, so only that catalog needs
-  // the additional title-side variant gate.
+  // Keep the ranked listings on the confirmed side of the variant line: the same
+  // One Piece card number spans base, alternate arts, and SP / manga / treasure
+  // special prints at very different prices, so the gate needs the exact class,
+  // not just base-vs-alt. Demo fixtures aren't gated (they're labeled, not real
+  // offers). Pokémon collector numbers identify a unique print, so only the One
+  // Piece catalog needs the title-side variant gate.
   const onePieceVariant = /^(?:OP|ST|EB|PRB|P)-?\d/i.test(confirmedCard.cardNumber)
     || /^(?:OP|ST|EB|PRB|P)\d/i.test(confirmedCard.id);
-  const variantIntent = demoMode || !onePieceVariant ? null : confirmedCard.variant ? "alt" : "base";
+  const variantIntent = demoMode || !onePieceVariant ? null : deriveVariantIntent(confirmedCard);
   const normalized = finalizeListingScores(dedupeSeeds(seeds).map((listing) => normalizeListing({
     listing,
     buyer: request.buyer,

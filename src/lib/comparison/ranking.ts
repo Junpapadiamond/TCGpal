@@ -47,16 +47,44 @@ const exclusionPatterns = [
   /\bnon[\s-]?textured\b/i,
 ];
 
-// Which print the buyer confirmed: the plain base card, or an alternate-art /
-// parallel / manga / treasure print. The same card number spans both at very
-// different prices, so a comparison must stay on the confirmed side of that line.
-export type VariantIntent = "base" | "alt";
+// Which print the buyer confirmed: the plain base card, a generic alternate-art /
+// parallel, or one of the specific special classes (SP, manga, treasure). One Piece
+// reuses the same card number across all of these at very different prices, so a
+// comparison must stay on the exact confirmed class — an SP buyer must never be
+// recommended a regular alt art.
+export type VariantIntent = "base" | "alt" | "sp" | "manga" | "treasure";
 
 // Free-text markers that a listing is an alternate art / parallel / special print
 // rather than the base. Kept deliberately specific so a base comparison is not
 // polluted by (pricier) alt-art listings, and an alt-art comparison does not show
 // base copies. Titles that merely say "holo"/"foil" are NOT alt-art signals.
 const altArtTitlePattern = /\b(alt(?:ernate)?[\s.]*art|parallel|manga|full[\s-]*art|special[\s-]*art|art\s*rare|treasure\s*rare)\b/i;
+
+// Specific special-print classes, checked before the generic alt marker: a title
+// carrying one of these belongs to that class only, in both directions of the gate.
+const specificVariantMarkers: ReadonlyArray<{
+  intent: Exclude<VariantIntent, "base" | "alt">;
+  pattern: RegExp;
+  label: string;
+}> = [
+  { intent: "sp", pattern: /\bSP\b|special[\s-]*art/i, label: "SP (Special Art)" },
+  { intent: "manga", pattern: /\bmanga\b/i, label: "manga art" },
+  { intent: "treasure", pattern: /treasure\s*rare|\bTR\b/i, label: "Treasure Rare" },
+];
+
+// Map a confirmed catalog print (rarity + variant text as bundled in the One Piece
+// catalog) onto the variant class the comparison must stay inside. "Secret Rare Alt"
+// parallels behave as generic alternate arts: sellers title them with alt/parallel
+// markers, and the base SEC print maps to "base".
+export function deriveVariantIntent(print: { rarity?: string | null; variant?: string | null }): VariantIntent {
+  const rarity = (print.rarity ?? "").trim().toLowerCase();
+  const variant = (print.variant ?? "").trim().toLowerCase();
+  if (rarity === "sp" || rarity === "sp card" || variant.startsWith("special art")) return "sp";
+  if (variant.includes("manga")) return "manga";
+  if (rarity === "tr" || variant.includes("treasure")) return "treasure";
+  if (variant) return "alt";
+  return "base";
+}
 
 // The variant gate, applied only to listings whose print must be inferred from free
 // text (eBay and future auto-sourced marketplaces). TCGplayer rows are resolved to
@@ -67,14 +95,29 @@ function variantMismatchReason(
   intent: VariantIntent | null,
 ): string | null {
   if (!intent || listing.userSupplied || listing.marketplace === "TCGplayer") return null;
-  const looksAlt = altArtTitlePattern.test(listing.title);
-  if (intent === "base" && looksAlt) {
-    return "Title looks like an alternate-art / parallel print — you're comparing the base version.";
+  const detected = specificVariantMarkers.filter((marker) => marker.pattern.test(listing.title));
+  if (intent === "base") {
+    if (detected.length > 0) {
+      return `Title looks like a ${detected[0].label} print — you're comparing the base version.`;
+    }
+    if (altArtTitlePattern.test(listing.title)) {
+      return "Title looks like an alternate-art / parallel print — you're comparing the base version.";
+    }
+    return null;
   }
-  if (intent === "alt" && !looksAlt) {
-    return "Title has no alternate-art marker — you're comparing an alternate-art print.";
+  const own = specificVariantMarkers.find((marker) => marker.intent === intent) ?? null;
+  const foreign = detected.find((marker) => marker.intent !== intent) ?? null;
+  if (foreign) {
+    return `Title looks like a ${foreign.label} print — you're comparing ${own ? `the ${own.label}` : "an alternate-art"} print.`;
   }
-  return null;
+  if (own) {
+    return own.pattern.test(listing.title)
+      ? null
+      : `Title has no ${own.label} marker — you're comparing the ${own.label} print.`;
+  }
+  return altArtTitlePattern.test(listing.title)
+    ? null
+    : "Title has no alternate-art marker — you're comparing an alternate-art print.";
 }
 
 // Platform baseline trust (a data-driven table, not a ranking branch):

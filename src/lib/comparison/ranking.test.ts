@@ -5,6 +5,7 @@ import {
   calculatePriceComponent,
   calculateSellerTrustScore,
   calculateValueScore,
+  deriveVariantIntent,
   finalizeListingScores,
   normalizeListing,
   rankListings,
@@ -334,5 +335,77 @@ describe("comparison ranking", () => {
     const alt = { ...ebayListing, id: "alt2", title: "Monkey.D.Luffy OP01-024 Alternate Art" };
     expect(normalizeListing({ listing: alt, buyer, variantIntent: null }).eligible).toBe(true);
     expect(normalizeListing({ listing: alt, buyer }).eligible).toBe(true);
+  });
+
+  // One Piece reuses one card number across base, alternate arts, and SP / manga /
+  // treasure special prints at very different prices. An SP buyer must never be
+  // recommended a regular alt art (and vice versa).
+  it("keeps an SP comparison off regular alt-art and markerless base listings", () => {
+    const sp = { ...ebayListing, id: "sp", title: "Nami OP01-016 SP Special Art" };
+    const spShort = { ...ebayListing, id: "sp-short", title: "Nami OP01-016 SP" };
+    const alt = { ...ebayListing, id: "alt-art", title: "Nami OP01-016 Alternate Art Parallel" };
+    const base = { ...ebayListing, id: "plain", title: "Nami OP01-016 Romance Dawn" };
+
+    expect(normalizeListing({ listing: sp, buyer, variantIntent: "sp" }).eligible).toBe(true);
+    expect(normalizeListing({ listing: spShort, buyer, variantIntent: "sp" }).eligible).toBe(true);
+
+    const altUnderSp = normalizeListing({ listing: alt, buyer, variantIntent: "sp" });
+    expect(altUnderSp.eligible).toBe(false);
+    expect(altUnderSp.exclusionReasons.join(" ")).toContain("SP");
+
+    expect(normalizeListing({ listing: base, buyer, variantIntent: "sp" }).eligible).toBe(false);
+  });
+
+  it("keeps an alt-art comparison off SP, manga, and treasure prints", () => {
+    const sp = { ...ebayListing, id: "sp3", title: "Nami OP01-016 SP" };
+    const manga = { ...ebayListing, id: "manga", title: "Monkey.D.Luffy OP01-024 Manga Art" };
+    const treasure = { ...ebayListing, id: "tr", title: "Shanks OP01-120 Treasure Rare" };
+    const alt = { ...ebayListing, id: "alt3", title: "Nami OP01-016 Alternate Art" };
+
+    expect(normalizeListing({ listing: sp, buyer, variantIntent: "alt" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: manga, buyer, variantIntent: "alt" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: treasure, buyer, variantIntent: "alt" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: alt, buyer, variantIntent: "alt" }).eligible).toBe(true);
+  });
+
+  it("keeps the base comparison off SP and manga titles too", () => {
+    const sp = { ...ebayListing, id: "sp2", title: "Nami OP01-016 SP" };
+    const manga = { ...ebayListing, id: "manga2", title: "Monkey.D.Luffy OP01-024 Manga Rare" };
+    expect(normalizeListing({ listing: sp, buyer, variantIntent: "base" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: manga, buyer, variantIntent: "base" }).eligible).toBe(false);
+  });
+
+  it("requires manga and treasure comparisons to carry their own marker", () => {
+    const manga = { ...ebayListing, id: "manga3", title: "Monkey.D.Luffy OP01-024 Manga Art" };
+    const alt = { ...ebayListing, id: "alt4", title: "Monkey.D.Luffy OP01-024 Alternate Art" };
+    const treasure = { ...ebayListing, id: "tr2", title: "Shanks OP01-120 TR" };
+
+    expect(normalizeListing({ listing: manga, buyer, variantIntent: "manga" }).eligible).toBe(true);
+    expect(normalizeListing({ listing: alt, buyer, variantIntent: "manga" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: treasure, buyer, variantIntent: "treasure" }).eligible).toBe(true);
+    expect(normalizeListing({ listing: alt, buyer, variantIntent: "treasure" }).eligible).toBe(false);
+  });
+
+  // An SP title that also says "alt art" is still an SP copy — the specific
+  // marker wins over the generic one in both directions.
+  it("lets an SP-marked title that also says alt art pass the SP gate only", () => {
+    const both = { ...ebayListing, id: "both", title: "Nami OP01-016 SP Alt Art Special" };
+    expect(normalizeListing({ listing: both, buyer, variantIntent: "sp" }).eligible).toBe(true);
+    expect(normalizeListing({ listing: both, buyer, variantIntent: "alt" }).eligible).toBe(false);
+    expect(normalizeListing({ listing: both, buyer, variantIntent: "base" }).eligible).toBe(false);
+  });
+});
+
+describe("deriveVariantIntent", () => {
+  it("maps catalog rarity/variant pairs onto the variant classes", () => {
+    expect(deriveVariantIntent({ rarity: "R", variant: null })).toBe("base");
+    expect(deriveVariantIntent({ rarity: "SEC", variant: null })).toBe("base");
+    expect(deriveVariantIntent({ rarity: "R", variant: "Alternate Art (P1)" })).toBe("alt");
+    expect(deriveVariantIntent({ rarity: "SP CARD", variant: "Special Art (P4)" })).toBe("sp");
+    expect(deriveVariantIntent({ rarity: "SP CARD", variant: null })).toBe("sp");
+    expect(deriveVariantIntent({ rarity: "R", variant: "Manga Art (P5)" })).toBe("manga");
+    expect(deriveVariantIntent({ rarity: "TR", variant: null })).toBe("treasure");
+    expect(deriveVariantIntent({ rarity: "SEC", variant: "Secret Rare Alt (P1)" })).toBe("alt");
+    expect(deriveVariantIntent({})).toBe("base");
   });
 });
