@@ -1847,7 +1847,7 @@ function ComparisonResult({
         : selectedListing.title,
       `${roleToggleLabel(selectedChoice.role, t)}: ${selectedListing.marketplace} · ${t.conditions[selectedListing.claimedCondition]}`,
       `${totalLabel}: ${formatMoney(total)}`,
-      `Seller trust ${selectedListing.sellerTrustScore}/100 · Evidence ${selectedListing.evidenceCompletenessScore}/100`,
+      `${sellerVerdict(selectedListing, t).label} · ${evidenceVerdict(selectedListing.evidenceCompletenessScore, t).label}`,
       selectedChoiceReason ?? selectedChoice.reason,
       selectedVerdictCopy ? `${t.result.actionLabel}: ${selectedVerdictCopy.action.label} — ${selectedVerdictCopy.action.note}` : "",
       selectedListing.url ? `Listing: ${selectedListing.url}` : "",

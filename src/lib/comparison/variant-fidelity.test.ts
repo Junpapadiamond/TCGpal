@@ -175,6 +175,29 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
     expect(response.abstention?.suggestedCardId).toBe(variantKey(basePrint!));
   });
 
+  // Same defect class, condition axis: the structured condition field can say
+  // Near Mint while the seller's own title admits a range ("NM-LP"). The worst
+  // stated case governs — an NM-minimum buyer is never recommended that copy.
+  it("keeps an NM-minimum comparison off listings whose titles admit a lower condition", async () => {
+    const titles = [
+      { itemId: "v1|clean|0", title: "Nami OP01-016 Romance Dawn Near Mint", price: "12.00" },
+      { itemId: "v1|range|0", title: "Nami OP01-016 Romance Dawn NM-LP", price: "8.00" },
+    ];
+    const response = await runListingComparison(
+      {
+        ...onePieceRequest(variantKey(basePrint!)),
+        buyer: { country: "US", postalCode: "10001", taxRate: 0.08, desiredCondition: "Near Mint" },
+      },
+      { fetcher: ebayFetcher(titles) },
+    );
+
+    const winner = response.rankedChoices.find((choice) => choice.role === "best_value");
+    expect(winner?.listingId).toBe("ebay-v1|clean|0");
+    const range = response.candidates.find((candidate) => candidate.id === "ebay-v1|range|0");
+    expect(range?.eligible).toBe(false);
+    expect(range?.exclusionReasons.join(" ")).toContain("worst case");
+  });
+
   it("leaves Pokémon comparisons ungated by variant wording (numbers identify one print)", async () => {
     const fetcher = (async (input: RequestInfo | URL) => {
       const url = String(input);

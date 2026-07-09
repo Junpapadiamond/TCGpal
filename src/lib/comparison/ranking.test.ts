@@ -9,6 +9,7 @@ import {
   finalizeListingScores,
   normalizeListing,
   rankListings,
+  titleConditionFloor,
 } from "@/lib/comparison/ranking";
 
 const buyer = {
@@ -393,6 +394,92 @@ describe("comparison ranking", () => {
     expect(normalizeListing({ listing: both, buyer, variantIntent: "sp" }).eligible).toBe(true);
     expect(normalizeListing({ listing: both, buyer, variantIntent: "alt" }).eligible).toBe(false);
     expect(normalizeListing({ listing: both, buyer, variantIntent: "base" }).eligible).toBe(false);
+  });
+});
+
+// Sellers routinely state a condition (or a range like "NM-LP") in the title
+// while the structured condition field says Near Mint. A stated range counts as
+// its worst case: an NM-minimum buyer must never be recommended a title that
+// admits LP. Same defect class as the variant gate: title contradicts structure.
+describe("title condition floor gate", () => {
+  const nmBuyer = { ...buyer, desiredCondition: "Near Mint" as const };
+  const lpBuyer = { ...buyer, desiredCondition: "Lightly Played" as const };
+  const ebayNm = {
+    ...demoListingSeeds[0],
+    marketplace: "eBay" as const,
+    userSupplied: false,
+    raw: true,
+    active: true,
+    currency: "USD" as const,
+    matchConfidence: "high" as const,
+    claimedCondition: "Near Mint" as const,
+    demo: false,
+  };
+
+  const excludedTitles = [
+    // The reported bug, verbatim shape: structured NM, title admits LP.
+    "Charmander 168/165 Scarlet & Violet 151 Illustration Rare Holo Pokemon NM-LP",
+    "Charmander 168/165 NM/LP",
+    "Charmander 168/165 LP-NM 151",
+    "Charmander 168/165 Near Mint - Lightly Played",
+    "Charmander 168/165 Lightly Played",
+    "Charmander 168/165 LP",
+    "Charmander 168/165 Moderately Played",
+    "Charmander 168/165 MP",
+    "Charmander 168/165 MP/HP played",
+    "Charmander 168/165 Heavily Played",
+    "Charmander 168/165 (HP) see photos",
+    "Charmander 168/165 damaged see pics",
+    "Charmander 168/165 DMG for parts",
+    "Charmander 168/165 played condition",
+  ];
+  for (const title of excludedTitles) {
+    it(`keeps an NM-minimum comparison off "${title}"`, () => {
+      const listing = normalizeListing({ listing: { ...ebayNm, id: title, title }, buyer: nmBuyer });
+      expect(listing.eligible).toBe(false);
+      expect(listing.exclusionReasons.join(" ")).toMatch(/worst case|requested Near Mint/);
+    });
+  }
+
+  const eligibleTitles = [
+    // "HP" here is the Pokémon hit-points stat, not Heavily Played.
+    "Charmander 70 HP 168/165 NM",
+    "Charmander V 110HP Scarlet & Violet",
+    "Charmander 168/165 NM",
+    "Charmander 168/165 Near Mint Pokemon 151",
+    "Charmander 168/165 Illustration Rare Holo",
+  ];
+  for (const title of eligibleTitles) {
+    it(`keeps "${title}" eligible for an NM-minimum buyer`, () => {
+      expect(normalizeListing({ listing: { ...ebayNm, id: title, title }, buyer: nmBuyer }).eligible).toBe(true);
+    });
+  }
+
+  it("treats the floor relative to the buyer's minimum, not absolutely", () => {
+    // NM-LP is fine for an LP-minimum buyer; LP/MP is not.
+    const nmLp = { ...ebayNm, id: "nm-lp", title: "Charmander 168/165 NM-LP", claimedCondition: "Lightly Played" as const };
+    const lpMp = { ...ebayNm, id: "lp-mp", title: "Charmander 168/165 LP/MP", claimedCondition: "Lightly Played" as const };
+    expect(normalizeListing({ listing: nmLp, buyer: lpBuyer }).eligible).toBe(true);
+    expect(normalizeListing({ listing: lpMp, buyer: lpBuyer }).eligible).toBe(false);
+  });
+
+  it("leaves any-condition buyers and user-supplied rows ungated by title condition", () => {
+    const rangeTitle = { ...ebayNm, id: "any", title: "Charmander 168/165 NM-LP" };
+    expect(normalizeListing({ listing: rangeTitle, buyer }).eligible).toBe(true);
+    const pasted = { ...ebayNm, id: "pasted", title: "Charmander 168/165 NM-LP", userSupplied: true };
+    expect(normalizeListing({ listing: pasted, buyer: nmBuyer }).eligible).toBe(true);
+  });
+});
+
+describe("titleConditionFloor", () => {
+  it("maps title condition wording onto the worst stated grade", () => {
+    expect(titleConditionFloor("Charmander NM-LP")).toBe("Lightly Played");
+    expect(titleConditionFloor("Charmander LP/MP")).toBe("Moderately Played");
+    expect(titleConditionFloor("Charmander MP-HP")).toBe("Heavily Played");
+    expect(titleConditionFloor("Charmander damaged NM")).toBe("Damaged");
+    expect(titleConditionFloor("Charmander 70 HP NM")).toBe(null);
+    expect(titleConditionFloor("Charmander Near Mint")).toBe(null);
+    expect(titleConditionFloor("Charmander 168/165")).toBe(null);
   });
 });
 

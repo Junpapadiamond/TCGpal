@@ -287,6 +287,29 @@ const CONDITION_RANK: Record<Exclude<ConditionClaim, "Unknown">, number> = {
   "Near Mint": 5,
 };
 
+// Sellers routinely state a condition — or a range like "NM-LP" — in the title
+// while the structured condition field says Near Mint. The stated range counts
+// as its worst case, so this reads the lowest grade the title itself admits.
+// "HP" is only Heavily Played in an explicit condition context (spelled out,
+// parenthesized, or paired with another grade); bare "70 HP" is a Pokémon stat.
+// Only ever used to gate DOWN, never to upgrade a claim.
+export function titleConditionFloor(title: string): Exclude<ConditionClaim, "Unknown"> | null {
+  const floors: Array<Exclude<ConditionClaim, "Unknown">> = [];
+  if (/\b(?:damaged|dmg|for\s*parts|poor)\b/i.test(title)) floors.push("Damaged");
+  if (
+    /\bheavily\s*played\b/i.test(title)
+    || /\b(?:NM|LP|MP)\s*[/\-–~]+\s*HP\b/i.test(title)
+    || /\(\s*HP\s*\)/i.test(title)
+    || /\bHP\s*[/\-–~]+\s*(?:MP|LP|DMG|damaged)\b/i.test(title)
+  ) floors.push("Heavily Played");
+  if (/\bmoderately\s*played\b|\bMP\b/i.test(title)) floors.push("Moderately Played");
+  if (/\blightly\s*played\b|\bLP\b/i.test(title)) floors.push("Lightly Played");
+  // Generic "played" with no grade attached still contradicts a Near Mint claim.
+  if (floors.length === 0 && /\bplayed\b/i.test(title)) floors.push("Lightly Played");
+  if (floors.length === 0) return null;
+  return floors.sort((a, b) => CONDITION_RANK[a] - CONDITION_RANK[b])[0];
+}
+
 const CONDITION_SCORE: Record<ConditionClaim, number> = {
   Unknown: 25,
   Damaged: 10,
@@ -566,6 +589,15 @@ function getExclusionReasons(
       reasons.push(`Seller condition is not stated; the buyer requested ${buyer.desiredCondition} or better.`);
     } else if (CONDITION_RANK[listing.claimedCondition] < CONDITION_RANK[buyer.desiredCondition]) {
       reasons.push(`Seller claims ${listing.claimedCondition}; the buyer requested ${buyer.desiredCondition} or better.`);
+    }
+    // The title is also the seller's claim: "NM-LP" with a structured Near Mint
+    // field still admits Lightly Played, and the worst stated case governs.
+    // User-entered rows are an explicit choice and are not second-guessed.
+    const conditionFloor = listing.userSupplied || listing.marketplace === "TCGplayer"
+      ? null
+      : titleConditionFloor(listing.title);
+    if (conditionFloor && CONDITION_RANK[conditionFloor] < CONDITION_RANK[buyer.desiredCondition]) {
+      reasons.push(`Title itself mentions ${conditionFloor} — a stated condition range counts as its worst case; the buyer requested ${buyer.desiredCondition} or better.`);
     }
   }
   if (exclusionPatterns.some((pattern) => pattern.test(listing.title))) reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
