@@ -134,6 +134,9 @@ PostHog uses explicit custom events only:
 - `comparison_receipt_copied`
 - `decision_feedback_submitted`
 - `second_comparison_started`
+- `alternatives_expanded`
+- `method_opened`
+- `qa_opened`
 
 Autocapture, session replay, pageview capture, and person profiles stay disabled. Never transmit URLs, listing text, seller identifiers, or images.
 

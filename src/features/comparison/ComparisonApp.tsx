@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
@@ -1789,7 +1789,20 @@ function ComparisonResult({
   const [qaOpen, setQaOpen] = useState(false);
   const [receiptCopied, setReceiptCopied] = useState(false);
 
+  // Fold-rate signals, once per report: a buyer opening Layer-2/3 folds is
+  // measurable re-research behavior (see the analytics event union).
+  const foldEventsFired = useRef({ reportKey: "", fired: new Set<string>() });
+  function trackFoldOpened(event: "alternatives_expanded" | "method_opened" | "qa_opened") {
+    if (foldEventsFired.current.reportKey !== report.generatedAt) {
+      foldEventsFired.current = { reportKey: report.generatedAt, fired: new Set() };
+    }
+    if (foldEventsFired.current.fired.has(event)) return;
+    foldEventsFired.current.fired.add(event);
+    trackEvent(event, { demo_mode: report.demoMode });
+  }
+
   function openQaPanel() {
+    trackFoldOpened("qa_opened");
     setQaOpen(true);
     if (typeof window === "undefined") return;
     window.requestAnimationFrame(() => {
@@ -1948,6 +1961,9 @@ function ComparisonResult({
             <details
               className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]"
               open={!selectedListing}
+              onToggle={(event) => {
+                if ((event.target as HTMLDetailsElement).open) trackFoldOpened("alternatives_expanded");
+              }}
             >
               <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-black text-[#2f6f73] transition hover:text-[#24585c]">
                 {t.result.compareOthers(alternativeListings.length)}
@@ -2007,7 +2023,13 @@ function ComparisonResult({
             onCopy={() => void copyComparisonReceipt()}
           />
 
-          <details id="method" className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
+          <details
+            id="method"
+            className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5"
+            onToggle={(event) => {
+              if ((event.target as HTMLDetailsElement).open) trackFoldOpened("method_opened");
+            }}
+          >
             <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
 
             {selectedListing && (

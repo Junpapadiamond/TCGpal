@@ -13,7 +13,14 @@ export type TcgpalAnalyticsEvent =
   | "lens_selected"
   | "comparison_receipt_copied"
   | "decision_feedback_submitted"
-  | "second_comparison_started";
+  | "second_comparison_started"
+  // Fold-rate signals: fired once per report on first open of a Layer-2/3
+  // surface. High fold-open rates with low choice_opened would mean buyers are
+  // re-doing the research by hand — the kill criterion the folds would
+  // otherwise hide. Payload stays within the allowlist (demo_mode only).
+  | "alternatives_expanded"
+  | "method_opened"
+  | "qa_opened";
 
 const allowedProperties = new Set([
   "marketplace",
