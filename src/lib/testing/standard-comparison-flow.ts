@@ -93,6 +93,19 @@ export const STANDARD_COMPARISON_FLOW_CARDS: StandardComparisonFlowCard[] = [
     expectedCardId: "sv3pt5-25",
     entryMode: "new_search",
   },
+  {
+    // Variant-heavy step: OP01-016 spans a base print, five alternate arts, and an
+    // SP CARD. Confirming the SP print keeps the multi-print identity path — the
+    // class of bug where a confirmed SP compared regular alt arts — in the standard.
+    label: "One Piece SP print search: Nami OP01-016 SP",
+    game: "onePiece",
+    query: "Nami OP01-016",
+    name: "Nami",
+    setCode: "OP-01",
+    cardNumber: "OP01-016",
+    expectedCardId: "OP01-016_p4",
+    entryMode: "new_search",
+  },
 ];
 
 export function assertStandardComparisonFlowPlan(cards: StandardComparisonFlowCard[]) {

@@ -61,9 +61,12 @@ afterEach(() => {
 describe("standard multi-card comparison flow", () => {
   it("codifies the pilot smoke standard as at least five sequential searches across both live games", () => {
     expect(() => assertStandardComparisonFlowPlan(STANDARD_COMPARISON_FLOW_CARDS)).not.toThrow();
-    expect(STANDARD_COMPARISON_FLOW_CARDS).toHaveLength(5);
+    expect(STANDARD_COMPARISON_FLOW_CARDS).toHaveLength(6);
     expect(new Set(STANDARD_COMPARISON_FLOW_CARDS.map((card) => card.game))).toEqual(new Set(["pokemon", "onePiece"]));
     expect(STANDARD_COMPARISON_FLOW_CARDS.slice(1).every((card) => card.entryMode !== "first_search")).toBe(true);
+    // The standard must always include a multi-print card confirmed to a specific
+    // special print (SP/alt), so variant-fidelity regressions surface here first.
+    expect(STANDARD_COMPARISON_FLOW_CARDS.some((card) => card.expectedCardId.includes("_p"))).toBe(true);
   });
 
   it("runs five card-first comparisons in one session, confirming ambiguous picks before the next search", async () => {
@@ -72,13 +75,15 @@ describe("standard multi-card comparison flow", () => {
       compare: (request: ComparisonRequest) => runListingComparison(request, { fetcher: standardFlowFetcher }),
     });
 
-    expect(result.cards).toHaveLength(5);
-    expect(result.cards.map((card) => card.game)).toEqual(["pokemon", "onePiece", "pokemon", "onePiece", "pokemon"]);
-    expect(result.cards.map((card) => card.entryMode)).toEqual(["first_search", "edit_search", "new_search", "edit_search", "new_search"]);
+    expect(result.cards).toHaveLength(6);
+    expect(result.cards.map((card) => card.game)).toEqual(["pokemon", "onePiece", "pokemon", "onePiece", "pokemon", "onePiece"]);
+    expect(result.cards.map((card) => card.entryMode)).toEqual(["first_search", "edit_search", "new_search", "edit_search", "new_search", "new_search"]);
     expect(result.cards.every((card) => card.finalStatus !== "needs_confirmation")).toBe(true);
     expect(result.cards.every((card) => card.confirmedCardId)).toBe(true);
     expect(result.cards.every((card) => card.rankedChoiceCount > 0)).toBe(true);
     expect(result.cards.every((card) => card.sourceResultCount > 0)).toBe(true);
+    // The SP step must confirm the exact special print, not the base art.
+    expect(result.cards[5]?.confirmedCardId).toBe("OP01-016_p4");
   });
 });
 
