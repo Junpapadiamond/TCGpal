@@ -1,10 +1,20 @@
 import { z } from "zod";
+import { deriveVariantIntent, isOnePieceCardKey, type VariantIntent } from "@/lib/comparison/ranking";
 import type {
   BuyerContext,
   CardIdentityCandidate,
   ListingSeed,
   SourceListing,
 } from "@/lib/schemas";
+
+// Query token appended when the confirmed One Piece print is a special class,
+// so Best Match surfaces the right print instead of the cheaper base copies.
+const VARIANT_QUERY_TOKENS: Partial<Record<VariantIntent, string>> = {
+  sp: "SP",
+  manga: "manga",
+  treasure: "treasure rare",
+  alt: "alt art",
+};
 
 const ebayAmountSchema = z.object({
   value: z.string(),
@@ -187,24 +197,52 @@ export async function searchEbayAlternatives(
   const query = queryOverride?.trim()
     || [card.name, card.cardNumber || card.setName].filter(Boolean).join(" ").trim();
 
-  const attempts = ebayProduct?.epid
-    ? [
-      { mode: "epid" as const, epid: ebayProduct.epid, fallbackReason: "" },
-      { mode: "keyword" as const, query, fallbackReason: `eBay product-ID search for ePID ${ebayProduct.epid} returned no USD candidates; broadened to keyword fallback.` },
-    ]
-    : [{ mode: "keyword" as const, query, fallbackReason: "" }];
+  // One Piece special prints (SP / manga / treasure / alt art) share their card
+  // number with the far cheaper base copy, so a plain name+number search surfaces
+  // mostly the wrong print and the variant gate then rejects everything. Lead with
+  // a variant-marked query and keep the plain query as the visible fallback.
+  const variantToken = !queryOverride?.trim() && isOnePieceCardKey(card.cardNumber, card.id)
+    ? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null
+    : null;
+
+  const attempts = [
+    ...(ebayProduct?.epid
+      ? [{ mode: "epid" as const, epid: ebayProduct.epid, query: "", fallbackReason: "" }]
+      : []),
+    ...(variantToken
+      ? [{
+        mode: "keyword" as const,
+        query: `${query} ${variantToken}`,
+        fallbackReason: ebayProduct?.epid
+          ? `eBay product-ID search for ePID ${ebayProduct.epid} returned no USD candidates; broadened to the variant-marked keyword query.`
+          : "",
+      }]
+      : []),
+    {
+      mode: "keyword" as const,
+      query,
+      fallbackReason: variantToken
+        ? `eBay search for "${query} ${variantToken}" returned no USD candidates; broadened to the plain card query.`
+        : ebayProduct?.epid
+          ? `eBay product-ID search for ePID ${ebayProduct.epid} returned no USD candidates; broadened to keyword fallback.`
+          : "",
+    },
+  ];
 
   let summaries: z.infer<typeof ebayItemSchema>[] = [];
   let searchNote = "";
-  for (const attempt of attempts) {
+  for (const [index, attempt] of attempts.entries()) {
+    const finalAttempt = index === attempts.length - 1;
     const endpoint = buildEbaySearchEndpoint(attempt);
     const response = await fetchWithTimeout(endpoint, {
       headers: ebayHeaders(token, buyer),
       cache: "no-store",
     }, fetcher);
     if (!response.ok) {
-      if (attempt.mode === "epid") {
-        searchNote = `eBay product-ID search for ePID ${attempt.epid} failed with ${response.status}; broadened to keyword fallback.`;
+      if (!finalAttempt) {
+        searchNote = attempt.mode === "epid"
+          ? `eBay product-ID search for ePID ${attempt.epid} failed with ${response.status}; broadened to keyword fallback.`
+          : `eBay search for "${attempt.query}" failed with ${response.status}; broadened to the plain card query.`;
         continue;
       }
       throw new Error(`eBay active-listing search failed with ${response.status}.`);
@@ -213,8 +251,10 @@ export async function searchEbayAlternatives(
     summaries = result.itemSummaries.filter((item) => item.price.currency === "USD");
     searchNote = attempt.mode === "epid"
       ? `Searched eBay by product ID ePID ${attempt.epid}.`
-      : attempt.fallbackReason || "Searched eBay by keyword fallback.";
-    if (summaries.length > 0 || attempt.mode === "keyword") break;
+      : attempt.fallbackReason || (variantToken && !finalAttempt
+        ? `Searched eBay with the variant-marked query "${attempt.query}".`
+        : "Searched eBay by keyword fallback.");
+    if (summaries.length > 0 || finalAttempt) break;
   }
 
   // Browse search summaries usually say only "Ungraded". The item endpoint

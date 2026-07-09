@@ -1,7 +1,7 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
 import { demoIdentities, demoListingSeedsFor, type DemoListingSeed } from "@/lib/comparison/fixtures";
-import { deriveVariantIntent, finalizeListingScores, normalizeListing, rankListings } from "@/lib/comparison/ranking";
+import { deriveVariantIntent, finalizeListingScores, isOnePieceCardKey, normalizeListing, rankListings } from "@/lib/comparison/ranking";
 import {
   EbayUnavailableError,
   getEbayListingByUrl,
@@ -277,8 +277,7 @@ export async function runListingComparison(
   // not just base-vs-alt. Demo fixtures aren't gated (they're labeled, not real
   // offers). Pokémon collector numbers identify a unique print, so only the One
   // Piece catalog needs the title-side variant gate.
-  const onePieceVariant = /^(?:OP|ST|EB|PRB|P)-?\d/i.test(confirmedCard.cardNumber)
-    || /^(?:OP|ST|EB|PRB|P)\d/i.test(confirmedCard.id);
+  const onePieceVariant = isOnePieceCardKey(confirmedCard.cardNumber, confirmedCard.id);
   const variantIntent = demoMode || !onePieceVariant ? null : deriveVariantIntent(confirmedCard);
   const normalized = finalizeListingScores(dedupeSeeds(seeds).map((listing) => normalizeListing({
     listing,

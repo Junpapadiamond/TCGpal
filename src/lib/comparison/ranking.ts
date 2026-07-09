@@ -72,6 +72,12 @@ const specificVariantMarkers: ReadonlyArray<{
   { intent: "treasure", pattern: /treasure\s*rare|\bTR\b/i, label: "Treasure Rare" },
 ];
 
+// One Piece card keys ("OP01-016", "EB01-001_p2", "ST01-004", promo "P-096") are the
+// only catalog whose numbers span multiple prints, so they alone get variant handling.
+export function isOnePieceCardKey(cardNumber: string, id: string) {
+  return /^(?:OP|ST|EB|PRB|P)-?\d/i.test(cardNumber) || /^(?:OP|ST|EB|PRB|P)\d/i.test(id);
+}
+
 // Map a confirmed catalog print (rarity + variant text as bundled in the One Piece
 // catalog) onto the variant class the comparison must stay inside. "Secret Rare Alt"
 // parallels behave as generic alternate arts: sellers title them with alt/parallel

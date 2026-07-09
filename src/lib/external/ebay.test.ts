@@ -200,6 +200,71 @@ describe("eBay active-listing search", () => {
     expect(results.map((listing) => listing.id)).toEqual(["ebay-1"]);
   });
 
+  // One Piece special prints share their card number with the (far cheaper) base
+  // and alt-art copies, so recall depends on the variant token being in the query.
+  const spCard = {
+    id: "OP01-016_p4",
+    name: "Nami",
+    setName: "Romance Dawn",
+    setCode: "OP-01",
+    cardNumber: "OP01-016",
+    language: "EN",
+    imageUrl: null,
+    rarity: "SP CARD",
+    variant: "Special Art (P4)",
+    confidence: "high",
+    matchReasons: [],
+  } as CardIdentityCandidate;
+
+  it("searches a One Piece SP print with the variant token first", async () => {
+    const captured: { searchUrl?: string } = {};
+    await searchEbayAlternatives(spCard, buyer, searchFetcher(captured));
+    expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 SP");
+  });
+
+  it("broadens to the plain card query when the variant-token search finds no USD listings", async () => {
+    const searchUrls: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        searchUrls.push(url);
+        const q = new URL(url).searchParams.get("q") ?? "";
+        if (q.endsWith(" SP")) {
+          return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [{ itemId: "9", title: "Nami OP01-016 SP Special Art", price: { value: "300.00", currency: "USD" } }],
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(spCard, buyer, fetcher);
+    expect(searchUrls.map((url) => new URL(url).searchParams.get("q"))).toEqual([
+      "Nami OP01-016 SP",
+      "Nami OP01-016",
+    ]);
+    expect(results.map((listing) => listing.id)).toEqual(["ebay-9"]);
+  });
+
+  it("keeps the plain query for base One Piece prints and for query overrides", async () => {
+    const baseCard = { ...spCard, id: "OP01-016", rarity: "R", variant: null } as CardIdentityCandidate;
+    const captured: { searchUrl?: string } = {};
+    await searchEbayAlternatives(baseCard, buyer, searchFetcher(captured));
+    expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016");
+
+    const overridden: { searchUrl?: string } = {};
+    await searchEbayAlternatives(spCard, buyer, searchFetcher(overridden), "Nami OP01-016 custom");
+    expect(new URL(overridden.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 custom");
+  });
+
   it("uses the cheapest shipping option, not the first, so landed cost matches the listing", async () => {
     const fetcher = (async (input: RequestInfo | URL) => {
       const url = String(input);
