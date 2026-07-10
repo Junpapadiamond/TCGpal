@@ -6,6 +6,14 @@ import {
 } from "@/features/comparison/comparison-form-state";
 
 describe("comparison form search state", () => {
+  it("defaults to the Best Value lens and a Near Mint minimum condition", () => {
+    // The buyer must reach a first result without configuring the ranking
+    // system: Best Value is the opinionated default recommendation, and
+    // Near Mint is the assumed minimum seller-stated condition.
+    expect(defaultComparisonFormValues.preferredRole).toBe("best_value");
+    expect(defaultComparisonFormValues.desiredCondition).toBe("Near Mint");
+  });
+
   it("clears card and listing fields for a new search while preserving buyer context", () => {
     const previous: ComparisonForm = {
       ...defaultComparisonFormValues,

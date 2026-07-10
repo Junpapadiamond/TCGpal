@@ -2,6 +2,14 @@ import type { ConditionClaim, Marketplace, RankedChoice, TcgGame } from "@/lib/s
 
 export type LensRole = RankedChoice["role"];
 
+// The comparison runs in one of three truthful phases. There is no streaming
+// progress API, so the UI states which whole job is underway rather than
+// faking per-step completion:
+// - resolving: initial request (identity + first listing pass)
+// - comparing: a confirmed exact print is being compared against live listings
+// - retrying: re-running the exact same request after a transient failure
+export type LoadingPhase = "resolving" | "comparing" | "retrying";
+
 export type LedgerRow = {
   marketplace: Marketplace;
   price: string;

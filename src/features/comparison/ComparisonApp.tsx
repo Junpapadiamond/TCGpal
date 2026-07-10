@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
+import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
   IconCardCheck,
@@ -37,6 +37,7 @@ import {
   resetForNewCardSearch,
   type ComparisonForm,
   type LensRole,
+  type LoadingPhase,
 } from "./comparison-form-state";
 import {
   comparisonReportSchema,
@@ -284,11 +285,15 @@ function ComparisonExperience() {
   const t = useT();
   const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
-  const [confirmedIdentityForSettings, setConfirmedIdentityForSettings] = useState<CardIdentityCandidate | null>(null);
+  // The just-confirmed card, kept only to give the loading animation a real
+  // image while its comparison runs — not a settings stage.
+  const [pendingCard, setPendingCard] = useState<RecentCarouselCard | null>(null);
   const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase | null>(null);
+  const loading = loadingPhase !== null;
   const [error, setError] = useState<string | null>(null);
+  const [contextOpen, setContextOpen] = useState(false);
   // Two doors below the hero search, grouped by intent: refine what we search
   // for, or bring a listing you already found (with its evidence and any
   // manual candidates from unsupported marketplaces).
@@ -379,38 +384,24 @@ function ComparisonExperience() {
     });
   }
 
-  async function submitComparison(values: ComparisonForm, confirmedCardId?: string) {
-    if (!values.heroQuery.trim() && !values.cardName.trim()) {
-      form.setError("heroQuery", { type: "required", message: t.form.heroSearchRequired });
-      return;
-    }
-
-    if (report && !confirmedCardId) {
-      trackEvent("second_comparison_started", {
-        marketplace: values.marketplace,
-      });
-    }
-
-    const request = buildRequest(values, confirmedCardId);
-    if (!confirmedCardId) setConfirmedIdentityForSettings(null);
+  // Single request runner shared by initial search, confirmed-identity search,
+  // retry, and suggested-print comparison — so loading, errors, completion
+  // analytics, and card memory behave identically on every path. Callers own
+  // only the start-specific analytics (comparison_started vs card_identity_confirmed).
+  async function runComparisonRequest(
+    request: ComparisonRequest,
+    phase: LoadingPhase,
+    options: { discoveryId?: string } = {},
+  ) {
     setPendingRequest(request);
-    setLoading(true);
+    setLoadingPhase(phase);
     setError(null);
     setFeedbackSent(false);
+    if (options.discoveryId) setComparingDiscoveryId(options.discoveryId);
     const startedAt = readTimestamp();
-
-    trackEvent(confirmedCardId ? "card_identity_confirmed" : "comparison_started", {
-      marketplace: request.sourceListing.marketplace,
-    });
-    trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
-    if (request.sourceListing.marketplace !== "eBay") {
-      trackEvent("manual_candidate_added", { marketplace: request.sourceListing.marketplace });
-    }
-
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
-      setConfirmedIdentityForSettings(null);
       if (parsed.confirmedCard) {
         rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
       }
@@ -423,56 +414,54 @@ function ComparisonExperience() {
         duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
       });
       focusComparisonTarget();
+      return parsed;
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : t.error.temporary;
-      setError(message);
+      setError(caught instanceof Error ? caught.message : t.error.temporary);
       trackEvent("comparison_failed", { marketplace: request.sourceListing.marketplace });
+      return null;
     } finally {
-      setLoading(false);
+      setLoadingPhase(null);
+      if (options.discoveryId) setComparingDiscoveryId(null);
     }
   }
 
+  async function submitComparison(values: ComparisonForm) {
+    if (!values.heroQuery.trim() && !values.cardName.trim()) {
+      form.setError("heroQuery", { type: "required", message: t.form.heroSearchRequired });
+      return;
+    }
+    if (report) {
+      trackEvent("second_comparison_started", { marketplace: values.marketplace });
+    }
+    const request = buildRequest(values);
+    setPendingCard(null);
+    trackEvent("comparison_started", { marketplace: request.sourceListing.marketplace });
+    trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
+    if (request.sourceListing.marketplace !== "eBay") {
+      trackEvent("manual_candidate_added", { marketplace: request.sourceListing.marketplace });
+    }
+    await runComparisonRequest(request, "resolving");
+  }
+
+  // Selecting an exact version confirms it and runs the final comparison
+  // immediately — there is no intermediate settings screen. The identity
+  // confirmation event fires exactly once, here (never again on completion).
   async function confirmIdentity(identity: CardIdentityCandidate) {
-    if (!pendingRequest) return;
-    const confirmedRequest = { ...pendingRequest, confirmedCardId: identity.id };
-    setPendingRequest(confirmedRequest);
-    setConfirmedIdentityForSettings(identity);
-    setReport(null);
-    setError(null);
+    if (!pendingRequest || loading) return;
     form.setValue("cardName", identity.name);
     form.setValue("setCode", identity.setCode);
     form.setValue("cardNumber", identity.cardNumber);
     rememberConfirmedCard(identity, pendingRequest.cardHint.game);
+    setPendingCard(toRecentCarouselCard(identity, pendingRequest.cardHint.game));
     trackEvent("card_identity_confirmed", { confidence: identity.confidence });
-    focusComparisonTarget();
+    await runComparisonRequest({ ...pendingRequest, confirmedCardId: identity.id }, "comparing");
   }
 
   // R5: a failed comparison keeps the exact request around so one tap retries
   // it — the buyer never re-types anything after a backend hiccup.
   async function retryComparison() {
     if (!pendingRequest || loading) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const parsed = await requestComparisonReport(pendingRequest, t.error.temporary);
-      setReport(parsed);
-      setConfirmedIdentityForSettings(null);
-      if (parsed.confirmedCard) {
-        rememberConfirmedCard(parsed.confirmedCard, pendingRequest.cardHint.game);
-      }
-      trackEvent("comparison_completed", {
-        marketplace: pendingRequest.sourceListing.marketplace,
-        status: parsed.status,
-        demo_mode: parsed.demoMode,
-        candidate_count: parsed.candidates.length,
-      });
-      focusComparisonTarget();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t.error.temporary);
-      trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
-    } finally {
-      setLoading(false);
-    }
+    await runComparisonRequest(pendingRequest, "retrying");
   }
 
   async function compareWebDiscovery(discovery: WebDiscovery) {
@@ -534,41 +523,12 @@ function ComparisonExperience() {
     form.setValue("setCode", confirmedCard.setCode);
     form.setValue("cardNumber", confirmedCard.cardNumber);
     if (!currentValues.heroQuery.trim()) form.setValue("heroQuery", cardQuery);
-    setPendingRequest(request);
-    setLoading(true);
-    setError(null);
-    setFeedbackSent(false);
-    setComparingDiscoveryId(discovery.id);
-    const startedAt = readTimestamp();
     trackEvent("second_comparison_started", { marketplace: discovery.marketplace });
     trackEvent("source_detected", { marketplace: discovery.marketplace });
     if (discovery.marketplace !== "eBay") {
       trackEvent("manual_candidate_added", { marketplace: discovery.marketplace });
     }
-
-    try {
-      const parsed = await requestComparisonReport(request, t.error.temporary);
-      setReport(parsed);
-      setConfirmedIdentityForSettings(null);
-      if (parsed.confirmedCard) {
-        rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
-      }
-      const duration = readTimestamp() - startedAt;
-      trackEvent("comparison_completed", {
-        marketplace: discovery.marketplace,
-        status: parsed.status,
-        demo_mode: parsed.demoMode,
-        candidate_count: parsed.candidates.length,
-        duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
-      });
-      focusComparisonTarget();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t.error.temporary);
-      trackEvent("comparison_failed", { marketplace: discovery.marketplace });
-    } finally {
-      setLoading(false);
-      setComparingDiscoveryId(null);
-    }
+    await runComparisonRequest(request, "comparing", { discoveryId: discovery.id });
   }
 
   function sendFeedback(changedDecision: boolean) {
@@ -576,14 +536,15 @@ function ComparisonExperience() {
     trackEvent("decision_feedback_submitted", { changed_decision: changedDecision });
   }
 
-  const compactMode = Boolean(pendingRequest || report || confirmedIdentityForSettings);
+  const compactMode = Boolean(pendingRequest || report);
   const activeCard = report?.confirmedCard ?? null;
-  const currentCarouselCard = confirmedIdentityForSettings
-    ? toRecentCarouselCard(confirmedIdentityForSettings, pendingRequest?.cardHint.game ?? game)
-    : activeCard
-      ? toRecentCarouselCard(activeCard, pendingRequest?.cardHint.game ?? game)
-      : null;
+  const currentCarouselCard = activeCard
+    ? toRecentCarouselCard(activeCard, pendingRequest?.cardHint.game ?? game)
+    : pendingCard;
   const carouselCards = composeCarouselCards(currentCarouselCard, recentCarouselCards);
+  // The loading animation shows only the card actually being compared (once
+  // confirmed) or a neutral treatment — never unrelated recently viewed cards.
+  const loadingCard = activeCard ? currentCarouselCard : pendingCard;
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
@@ -599,13 +560,21 @@ function ComparisonExperience() {
     hasCardStarter
     && (heroPreview?.cardNumber || cardNumber.trim())
   );
+  // The quiet buyer-context line under the search: minimum condition, then
+  // either the delivery ZIP or an explicit pre-tax note when no ZIP is set.
+  const conditionLabel = desiredCondition === "Unknown" ? t.form.anyCondition : t.conditions[desiredCondition];
+  const contextSummary = [
+    conditionLabel,
+    postalCode.trim() ? `ZIP ${postalCode.trim()}` : t.form.preTaxContext,
+  ].join(" · ");
 
   function startNewSearch() {
     setReport(null);
     setPendingRequest(null);
-    setConfirmedIdentityForSettings(null);
+    setPendingCard(null);
     setError(null);
     setCompactSearchOpen(false);
+    setContextOpen(false);
     form.reset(resetForNewCardSearch(form.getValues()));
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
@@ -761,62 +730,56 @@ function ComparisonExperience() {
                     {t.form.pasteListingInstead}
                   </button>
                 </div>
-              </section>
 
-              {hasExplicitCardKey && (
-              <section className="stage-reveal rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5">
-                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
-                <h2 className="mt-2 font-serif text-2xl font-black leading-none text-[#24312f]">
-                  {t.form.preferenceQuestion}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.form.preferenceHelp}</p>
-
-                <fieldset className="mt-4 grid gap-2 sm:grid-cols-2">
-                  <legend className="sr-only">{t.form.preferenceQuestion}</legend>
-                  {(["best_value", "lowest_landed_cost", "safest_listing", "best_condition_evidence"] as LensRole[]).map((role) => {
-                    const active = preferredRole === role;
-                    return (
-                      <label
-                        key={role}
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                          active ? "border-2 border-[#2f6f73] bg-[#eef7ef]" : "border-[#d6ded5] bg-[#fcfbf6] hover:border-[#9fb3a8]"
-                        }`}
-                      >
-                        <input className="sr-only" type="radio" value={role} {...form.register("preferredRole")} />
-                        <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-[#2f6f73]" : "border-[#c9d7ce]"}`}>
-                          {active && <span className="h-2 w-2 rounded-full bg-[#2f6f73]" />}
-                        </span>
-                        <span>
-                          <span className="block text-sm font-black text-[#24312f]">{rolePreferenceLabel(role, t)}</span>
-                          <span className="mt-0.5 block text-xs leading-5 text-[#64736c]">{roleToggleHint(role, t)}</span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </fieldset>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <label className="field">
-                    <span>{t.form.deliveryZip}</span>
-                    <div className="input-with-icon">
-                      <IconPin className="h-4 w-4" />
-                      <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
-                    </div>
-                    <small>{t.form.deliveryZipHelp}</small>
-                  </label>
-                  <label className="field">
-                    <span>{t.form.desiredCondition}</span>
-                    <select {...form.register("desiredCondition")}>
-                      {conditions.map((value) => (
-                        <option key={value} value={value}>
-                          {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                {/* One quiet context line: the assumptions used for totals. It never
+                    blocks the search — a first result arrives on defaults, and the
+                    buyer can open "Change" to adjust condition/ZIP/tax. */}
+                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#64736c]">
+                  <IconPin className="h-3.5 w-3.5 shrink-0 text-[#94a59c]" />
+                  <span className="font-bold text-[#52635c]">{contextSummary}</span>
+                  <button
+                    type="button"
+                    className="font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#24585c]"
+                    aria-expanded={contextOpen}
+                    onClick={() => setContextOpen((current) => !current)}
+                  >
+                    {t.form.changeContext}
+                  </button>
                 </div>
+                {contextOpen && (
+                  <div className="mt-3 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-4">
+                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.buyingContext}</p>
+                    <p className="mt-1 text-sm leading-6 text-[#64736c]">{t.form.buyingContextHelp}</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <label className="field">
+                        <span>{t.form.desiredCondition}</span>
+                        <select {...form.register("desiredCondition")}>
+                          {conditions.map((value) => (
+                            <option key={value} value={value}>
+                              {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        <span>{t.form.deliveryZip}</span>
+                        <div className="input-with-icon">
+                          <IconPin className="h-4 w-4" />
+                          <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
+                        </div>
+                        <small>{t.form.deliveryZipHelp}</small>
+                      </label>
+                      <label className="field">
+                        <span>{t.form.optionalTaxRate}</span>
+                        <div className="input-suffix">
+                          <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
+                          <span>%</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </section>
-              )}
               </div>
             </div>
 
@@ -828,7 +791,7 @@ function ComparisonExperience() {
             >
               <span className="flex items-center gap-2">
                 <IconTag className="h-4 w-4 text-[#2f6f73]" />
-                {t.form.refineToggle}
+                {t.form.cardDetails}
               </span>
               <IconChevronDown className={`h-4 w-4 transition ${refineOpen ? "rotate-180" : ""}`} />
             </button>
@@ -849,15 +812,6 @@ function ComparisonExperience() {
                   </label>
                 </div>
                 <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
-                <div className="mt-4 grid gap-4">
-                  <label className="field">
-                    <span>{t.form.optionalTaxRate}</span>
-                    <div className="input-suffix">
-                      <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
-                      <span>%</span>
-                    </div>
-                  </label>
-                </div>
               </div>
             )}
 
@@ -1041,22 +995,12 @@ function ComparisonExperience() {
           </>
         )}
 
-        {loading && <LoadingLoop cards={carouselCards} />}
+        {loadingPhase && <LoadingLoop phase={loadingPhase} card={loadingCard} />}
         {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
-        {report?.status === "needs_confirmation" && !loading && !confirmedIdentityForSettings && (
+        {report?.status === "needs_confirmation" && !loadingPhase && (
           <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
         )}
-        {confirmedIdentityForSettings && !loading && !report && (
-          <ConfirmedSettingsStage
-            identity={confirmedIdentityForSettings}
-            form={form}
-            onRun={form.handleSubmit((values) => {
-              void submitComparison(values, confirmedIdentityForSettings.id);
-            })}
-            loading={loading}
-          />
-        )}
-        {report && report.status !== "needs_confirmation" && !loading && (
+        {report && report.status !== "needs_confirmation" && !loadingPhase && (
           <ComparisonResult
             report={report}
             preferredRole={preferredRole}
@@ -1064,6 +1008,7 @@ function ComparisonExperience() {
             onFeedback={sendFeedback}
             onCompareDiscovery={compareWebDiscovery}
             comparingDiscoveryId={comparingDiscoveryId}
+            onPreferredRoleChange={(role) => form.setValue("preferredRole", role)}
           />
         )}
       </div>
@@ -1206,6 +1151,13 @@ function buildMarqueeItems(cards: RecentCarouselCard[], minimum = 8): MarqueeIte
   }
   const loopBase = base.slice(0, Math.max(minimum, source.length));
   return [...loopBase, ...loopBase];
+}
+
+function buildBackItems(count: number): MarqueeItem[] {
+  return Array.from({ length: count }, (_, index) => ({
+    kind: "back" as const,
+    background: fallbackCardBacks[index % fallbackCardBacks.length],
+  }));
 }
 
 function CardMarquee({ cards }: { cards: RecentCarouselCard[] }) {
@@ -1363,37 +1315,42 @@ function CheckField({ label, registration }: { label: string; registration: UseF
   );
 }
 
-function LoadingLoop({ cards }: { cards: RecentCarouselCard[] }) {
+function LoadingLoop({ phase, card }: { phase: LoadingPhase; card: RecentCarouselCard | null }) {
   const t = useT();
+  // Truthful, phase-specific status. No completed checkmarks and no percentage,
+  // because there is no per-step streaming signal to back either one.
+  const message = phase === "resolving"
+    ? t.loading.resolving
+    : phase === "retrying"
+      ? t.loading.retrying
+      : t.loading.comparing;
   return (
-    <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite">
+    <section
+      className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
         <div>
           <div className="flex items-center gap-3">
-            <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73]" />
-            <div>
-              <p className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.title}</p>
-              <p className="mt-1 text-sm text-[#64736c]">{t.loading.steps}</p>
-            </div>
+            <IconSpinner className="h-5 w-5 shrink-0 animate-spin text-[#2f6f73]" />
+            <p className="font-serif text-xl font-bold text-[#2f6f73]">{message}</p>
           </div>
-          <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-            {t.loading.checks.map((check) => (
-              <li key={check} className="flex items-center gap-2 rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#52635c]">
-                <IconCheck className="h-4 w-4 text-[#2f6f73]" />
-                {check}
-              </li>
-            ))}
-          </ul>
+          <p className="mt-3 text-sm text-[#64736c]">{t.loading.subnote}</p>
           <div className="agent-progress mt-5"><span /></div>
         </div>
-        <LoadingCardRail labels={t.loading.cardLabels} cards={cards} />
+        <LoadingCardRail card={card} />
       </div>
     </section>
   );
 }
 
-function LoadingCardRail({ labels, cards }: { labels: string[]; cards: RecentCarouselCard[] }) {
-  const items = buildMarqueeItems(cards, 4).slice(0, 4);
+function LoadingCardRail({ card }: { card: RecentCarouselCard | null }) {
+  // Show only the card actually being compared (once a print is confirmed);
+  // otherwise a neutral card-search treatment. Never unrelated recent cards.
+  const items: MarqueeItem[] = card
+    ? [{ kind: "real", card }, ...buildBackItems(3)]
+    : buildBackItems(4);
   return (
     <div className="loading-card-rail" aria-hidden="true">
       <style>{`
@@ -1484,7 +1441,6 @@ function LoadingCardRail({ labels, cards }: { labels: string[]; cards: RecentCar
               <span className="loading-card-inner" />
             )}
             <span className="loading-card-gloss" />
-            <span className="loading-card-label">{labels[index] ?? ""}</span>
           </span>
         ))}
       </div>
@@ -1507,134 +1463,6 @@ function ErrorNotice({ message, onRetry }: { message: string; onRetry?: () => vo
         )}
       </div>
     </div>
-  );
-}
-
-function ConfirmedSettingsStage({
-  identity,
-  form,
-  onRun,
-  loading,
-}: {
-  identity: CardIdentityCandidate;
-  form: UseFormReturn<ComparisonForm>;
-  onRun: () => void;
-  loading: boolean;
-}) {
-  const t = useT();
-  const preferredRole = useWatch({ control: form.control, name: "preferredRole" });
-  const postalCode = useWatch({ control: form.control, name: "postalCode" });
-  const desiredCondition = useWatch({ control: form.control, name: "desiredCondition" });
-  const taxRatePercent = useWatch({ control: form.control, name: "taxRatePercent" });
-  const stickyRunContext = [
-    desiredCondition === "Unknown" ? t.form.anyCondition : t.conditions[desiredCondition],
-    postalCode ? `ZIP ${postalCode}` : t.card.preTaxTotal,
-    taxRatePercent ? `${taxRatePercent}%` : null,
-  ].filter(Boolean).join(" · ");
-  return (
-    <section
-      id="comparison-result"
-      tabIndex={-1}
-      className="stage-reveal mt-6 scroll-mt-6 rounded-md border border-[#2f6f73] bg-[#fcfbf6] p-5 pb-28 outline-none shadow-[0_14px_34px_rgba(36,49,47,0.08)] sm:p-7"
-    >
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-start">
-        <article className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
-          <p className="eyebrow text-[#2f6f73]">
-            <IconCheck className="h-4 w-4" />
-            {t.form.confirmedSettingsEyebrow}
-          </p>
-          <div className="mt-4 grid grid-cols-[72px_minmax(0,1fr)] gap-4">
-            {identity.imageUrl ? (
-              <HoloCardArt
-                src={identity.imageUrl}
-                alt={`${identity.name} ${identity.cardNumber}`}
-                sizes="72px"
-                className="w-[72px]"
-              />
-            ) : (
-              <div className="aspect-[2.5/3.5] w-[72px] rounded-md bg-[#e7efe8]" />
-            )}
-            <div className="min-w-0">
-              <h2 className="font-serif text-2xl font-black leading-tight text-[#2f6f73]">{identity.name}</h2>
-              <p className="mt-1 text-sm font-black text-[#24312f]">#{identity.cardNumber}</p>
-              <CardIdentityRail identity={identity} className="mt-3" />
-            </div>
-          </div>
-        </article>
-
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
-          <h3 className="mt-2 font-serif text-3xl font-black leading-none text-[#24312f]">
-            {t.form.confirmedSettingsHeading}
-          </h3>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64736c]">{t.form.confirmedSettingsHelp}</p>
-
-          <fieldset className="mt-5 grid gap-2 sm:grid-cols-2">
-            <legend className="sr-only">{t.form.preferenceQuestion}</legend>
-            {(["best_value", "lowest_landed_cost", "safest_listing", "best_condition_evidence"] as LensRole[]).map((role) => {
-              const active = preferredRole === role;
-              return (
-                <label
-                  key={role}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                    active ? "border-2 border-[#2f6f73] bg-[#eef7ef]" : "border-[#d6ded5] bg-[#fffef9] hover:border-[#9fb3a8]"
-                  }`}
-                >
-                  <input className="sr-only" type="radio" value={role} {...form.register("preferredRole")} />
-                  <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-[#2f6f73]" : "border-[#c9d7ce]"}`}>
-                    {active && <span className="h-2 w-2 rounded-full bg-[#2f6f73]" />}
-                  </span>
-                  <span>
-                    <span className="block text-sm font-black text-[#24312f]">{rolePreferenceLabel(role, t)}</span>
-                    <span className="mt-0.5 block text-xs leading-5 text-[#64736c]">{roleToggleHint(role, t)}</span>
-                  </span>
-                </label>
-              );
-            })}
-          </fieldset>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <label className="field">
-              <span>{t.form.deliveryZip}</span>
-              <div className="input-with-icon">
-                <IconPin className="h-4 w-4" />
-                <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
-              </div>
-              <small>{t.form.deliveryZipHelp}</small>
-            </label>
-            <label className="field">
-              <span>{t.form.desiredCondition}</span>
-              <select {...form.register("desiredCondition")}>
-                {conditions.map((value) => (
-                  <option key={value} value={value}>
-                    {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span>{t.form.optionalTaxRate}</span>
-              <div className="input-suffix">
-                <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
-                <span>%</span>
-              </div>
-            </label>
-          </div>
-
-          <button className="primary-button mt-5 !hidden w-full justify-center sm:!inline-flex sm:w-auto" type="button" disabled={loading} onClick={onRun}>
-            {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-            {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
-          </button>
-        </div>
-      </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#c9d7ce] bg-[#fcfbf6]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-8px_22px_rgba(36,49,47,0.10)] backdrop-blur sm:hidden">
-        <p className="mb-2 truncate text-xs font-bold text-[#64736c]">{stickyRunContext}</p>
-        <button className="primary-button w-full justify-center" type="button" disabled={loading} onClick={onRun}>
-          {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-          {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
-        </button>
-      </div>
-    </section>
   );
 }
 
@@ -1846,6 +1674,7 @@ function ComparisonResult({
   onFeedback,
   onCompareDiscovery,
   comparingDiscoveryId,
+  onPreferredRoleChange,
 }: {
   report: ComparisonReport;
   preferredRole: LensRole;
@@ -1853,6 +1682,7 @@ function ComparisonResult({
   onFeedback: (changedDecision: boolean) => void;
   onCompareDiscovery: (discovery: WebDiscovery) => void;
   comparingDiscoveryId: string | null;
+  onPreferredRoleChange: (role: LensRole) => void;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -2041,6 +1871,9 @@ function ComparisonResult({
               samePickRoles={samePickRoles}
               onSelect={(role) => {
                 setRoleOverride(role);
+                // Keep the form's preferred lens in step with the result lens so
+                // Edit/New Search reopen on what the buyer last chose.
+                onPreferredRoleChange(role);
                 setQaQuestion("");
                 setQaAnswer(null);
                 setQaError(null);
@@ -2370,15 +2203,6 @@ function roleToggleLabel(role: RankedChoice["role"], t: Dict) {
     case "lowest_landed_cost": return t.lens.cheapest;
     case "safest_listing": return t.lens.safest;
     case "best_condition_evidence": return t.lens.bestDocumented;
-  }
-}
-
-function rolePreferenceLabel(role: RankedChoice["role"], t: Dict) {
-  switch (role) {
-    case "best_value": return t.lens.bestValuePreference;
-    case "lowest_landed_cost": return t.lens.cheapestPreference;
-    case "safest_listing": return t.lens.safestPreference;
-    case "best_condition_evidence": return t.lens.bestDocumentedPreference;
   }
 }
 
