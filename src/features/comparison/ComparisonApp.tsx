@@ -520,12 +520,16 @@ function ComparisonExperience() {
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
+  const selectedConditionLabel = desiredCondition === "Unknown"
+    ? t.form.anyCondition
+    : t.conditions[desiredCondition];
+  const appliedCondition = pendingRequest?.buyer.desiredCondition ?? desiredCondition;
   const headerContext = [
     t.form.games[pendingRequest?.cardHint.game ?? game],
     (pendingRequest?.buyer.postalCode ?? postalCode) ? `ZIP ${pendingRequest?.buyer.postalCode ?? postalCode}` : null,
-    (pendingRequest?.buyer.desiredCondition ?? desiredCondition) === "Unknown"
+    appliedCondition === "Unknown"
       ? t.form.anyCondition
-      : t.conditions[pendingRequest?.buyer.desiredCondition ?? desiredCondition],
+      : t.conditions[appliedCondition],
   ].filter(Boolean).join(" · ");
   const hasCardStarter = Boolean(heroQuery.trim().length >= 2 || cardName.trim().length >= 2 || cardNumber.trim());
   const hasExplicitCardKey = Boolean(
@@ -556,7 +560,8 @@ function ComparisonExperience() {
           onNewSearch={startNewSearch}
           editPanel={compactSearchOpen ? (
             <form
-              className="mx-auto grid max-w-[1180px] gap-3 border-t border-[#d6ded5] px-4 py-4 sm:grid-cols-[minmax(0,1fr)_160px_140px_auto] sm:items-end sm:px-6 lg:px-8"
+              id="results-edit-panel"
+              className="mx-auto grid max-h-[calc(100dvh-8rem)] max-w-[1180px] gap-3 overflow-y-auto overscroll-contain border-t border-[#d6ded5] px-4 py-4 sm:grid-cols-2 sm:items-end sm:px-6 lg:max-h-none lg:grid-cols-[minmax(220px,1fr)_140px_minmax(220px,240px)_120px_auto] lg:overflow-visible lg:px-8"
               onSubmit={form.handleSubmit((values) => {
                 setCompactSearchOpen(false);
                 // This panel only lets the buyer edit the free-text query — clear the
@@ -569,7 +574,7 @@ function ComparisonExperience() {
                 void submitComparison({ ...values, cardName: "", setCode: "", cardNumber: "" });
               })}
             >
-              <label className="field">
+              <label className="field sm:col-span-2 lg:col-span-1">
                 <span>{t.form.heroSearchLabel}</span>
                 <div className="input-with-icon">
                   <IconCardSearch className="h-4 w-4" />
@@ -583,6 +588,7 @@ function ComparisonExperience() {
                   <option value="onePiece">{t.form.games.onePiece}</option>
                 </select>
               </label>
+              <DesiredConditionField form={form} />
               <label className="field">
                 <span>{t.form.deliveryZip}</span>
                 <input {...form.register("postalCode")} inputMode="numeric" />
@@ -702,16 +708,22 @@ function ComparisonExperience() {
               className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
               type="button"
               aria-expanded={refineOpen}
+              aria-controls="search-refinement-panel"
               onClick={() => setRefineOpen((current) => !current)}
             >
               <span className="flex items-center gap-2">
                 <IconTag className="h-4 w-4 text-[#2f6f73]" />
-                {t.form.refineToggle}
+                <span>
+                  <span className="block">{t.form.refineToggle}</span>
+                  <span className="mt-0.5 block text-xs font-semibold text-[#64736c]">
+                    {t.form.desiredCondition}: <strong className="text-[#2f6f73]">{selectedConditionLabel}</strong>
+                  </span>
+                </span>
               </span>
               <IconChevronDown className={`h-4 w-4 transition ${refineOpen ? "rotate-180" : ""}`} />
             </button>
             {refineOpen && (
-              <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
+              <div id="search-refinement-panel" className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
                 <div className="grid gap-4 md:grid-cols-3">
                   <label className="field">
                     <span>{t.form.cardName}</span>
@@ -727,7 +739,8 @@ function ComparisonExperience() {
                   </label>
                 </div>
                 <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
-                <div className="mt-4 grid gap-4">
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <DesiredConditionField form={form} />
                   <label className="field">
                     <span>{t.form.optionalTaxRate}</span>
                     <div className="input-suffix">
@@ -999,6 +1012,7 @@ function ResultsHeader({
           className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
           type="button"
           aria-expanded={editOpen}
+          aria-controls="results-edit-panel"
           onClick={onEditToggle}
         >
           <IconCardSearch className="h-4 w-4 shrink-0 text-[#2f6f73]" />
@@ -1387,6 +1401,28 @@ function ErrorNotice({ message, onRetry }: { message: string; onRetry?: () => vo
   );
 }
 
+function DesiredConditionField({ form }: { form: UseFormReturn<ComparisonForm> }) {
+  const t = useT();
+  const value = useWatch({
+    control: form.control,
+    name: "desiredCondition",
+    defaultValue: defaultComparisonFormValues.desiredCondition,
+  });
+
+  return (
+    <label className="field">
+      <span>{t.form.desiredCondition}</span>
+      <select {...form.register("desiredCondition")} value={value}>
+        {conditions.map((condition) => (
+          <option key={condition} value={condition}>
+            {condition === "Unknown" ? t.form.anyCondition : t.conditions[condition]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function ConfirmedSettingsStage({
   identity,
   form,
@@ -1479,16 +1515,7 @@ function ConfirmedSettingsStage({
               </div>
               <small>{t.form.deliveryZipHelp}</small>
             </label>
-            <label className="field">
-              <span>{t.form.desiredCondition}</span>
-              <select {...form.register("desiredCondition")}>
-                {conditions.map((value) => (
-                  <option key={value} value={value}>
-                    {value === "Unknown" ? t.form.anyCondition : t.conditions[value]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <DesiredConditionField form={form} />
             <label className="field">
               <span>{t.form.optionalTaxRate}</span>
               <div className="input-suffix">
