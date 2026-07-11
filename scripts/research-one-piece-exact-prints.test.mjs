@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertCandidateCoverage,
   chooseProduct,
   markSharedProductMappings,
   productMatchesRelease,
@@ -10,6 +11,11 @@ function product(name, groupName = "One Piece Promotion Cards", abbreviation = "
 }
 
 describe("One Piece research release matching", () => {
+  it("refuses to overwrite research output when candidate discovery is empty", () => {
+    expect(() => assertCandidateCoverage([])).toThrow(/no candidate prints/i);
+    expect(() => assertCandidateCoverage([{ image_name: "OP01-001" }])).not.toThrow();
+  });
+
   it("does not confuse competition tiers that share the same image family", () => {
     expect(productMatchesRelease(
       product("Monkey.D.Luffy (Regional Finalist)"),

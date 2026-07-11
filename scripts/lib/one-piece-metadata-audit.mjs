@@ -53,8 +53,30 @@ function reasonCodesFor(record, sharedProductPairs, familyUniqueMarkers) {
   if (record.artworkClass === "unknown") reasons.push("semantic_unknown_artwork");
   if (record.displayLabel === PLACEHOLDER_LABEL) reasons.push("unresolved_label");
   if (record.releaseChannel === "unknown") reasons.push("unknown_release_channel");
+  if (!record.releaseProvenance || record.releaseProvenance === "unknown") reasons.push("unknown_release_provenance");
   if (!Array.isArray(record.exactMarkers) || record.exactMarkers.length === 0) reasons.push("missing_exact_markers");
   else if (!familyUniqueMarkers.has(record.canonicalPrintId)) reasons.push("no_family_unique_exact_marker");
+  if (!record.officialImageUrl) reasons.push("missing_official_image");
+  if (!record.imageComparison?.officialSha256) reasons.push("missing_official_image_hash");
+  if (!record.imageComparison?.tcgplayerSha256) reasons.push("missing_tcgplayer_image_hash");
+  const bestDistance = record.imageComparison?.bestDistance;
+  const matchThreshold = record.imageComparison?.matchThreshold;
+  if (!Number.isFinite(bestDistance) || !Number.isFinite(matchThreshold)) {
+    reasons.push("missing_image_distance_evidence");
+  } else if (bestDistance > matchThreshold) {
+    reasons.push("image_match_above_threshold");
+  }
+  const runnerUpDistance = record.imageComparison?.runnerUpDistance;
+  const matchMargin = record.imageComparison?.matchMargin;
+  const ambiguityMargin = record.imageComparison?.ambiguityMargin;
+  if (Number.isFinite(runnerUpDistance)) {
+    if (!Number.isFinite(matchMargin) || !Number.isFinite(ambiguityMargin)) {
+      reasons.push("missing_global_image_margin");
+    } else if (matchMargin < ambiguityMargin) {
+      reasons.push("ambiguous_global_image_match");
+    }
+  }
+  if (record.releaseMatch?.matched !== true) reasons.push("release_match_unproven");
   const pair = productPair(record);
   if (!pair) reasons.push("missing_product_mapping");
   else if (sharedProductPairs.has(pair)) reasons.push("shared_product_mapping");
@@ -95,6 +117,17 @@ export function auditOnePieceMetadata(records) {
   const verifiedWithoutFamilyUniqueExactMarker = count(verified, (record) =>
     !familyUniqueMarkers.has(record.canonicalPrintId),
   );
+  const verifiedUnknownReleaseProvenance = count(verified, (record) =>
+    !record.releaseProvenance || record.releaseProvenance === "unknown",
+  );
+  const recordsWithoutOfficialImage = count(records, (record) => !record.officialImageUrl);
+  const recordsWithoutTcgplayerImageHash = count(records, (record) => !record.imageComparison?.tcgplayerSha256);
+  const recordsWithAmbiguousGlobalImageMatch = count(records, (record) =>
+    Number.isFinite(record.imageComparison?.runnerUpDistance)
+    && Number.isFinite(record.imageComparison?.matchMargin)
+    && Number.isFinite(record.imageComparison?.ambiguityMargin)
+    && record.imageComparison.matchMargin < record.imageComparison.ambiguityMargin,
+  );
   const unresolvedWithProductMapping = count(records, (record) =>
     record.verification === "unresolved" && Boolean(productPair(record)),
   );
@@ -118,6 +151,10 @@ export function auditOnePieceMetadata(records) {
       verifiedUnknownReleaseChannel,
       verifiedWithoutExactMarkers,
       verifiedWithoutFamilyUniqueExactMarker,
+      verifiedUnknownReleaseProvenance,
+      recordsWithoutOfficialImage,
+      recordsWithoutTcgplayerImageHash,
+      recordsWithAmbiguousGlobalImageMatch,
       sharedMappedProductPairs: sharedProductPairs.size,
       mappedRecordsUsingSharedProductPairs: count(records, (record) => sharedProductPairs.has(productPair(record))),
       unresolvedWithProductMapping,
@@ -126,7 +163,8 @@ export function auditOnePieceMetadata(records) {
       verifiedWithoutReleaseMatchEvidence,
       recordsWithoutHumanReview,
     },
-    runtimePublicationAllowed: recordsClaimingUncheckedOfficialCardList === 0
+    runtimePublicationAllowed: records.length > 0
+      && recordsClaimingUncheckedOfficialCardList === 0
       && officialImagesWithoutContentHash === 0
       && verifiedWithoutReleaseMatchEvidence === 0
       && verifiedUnknownArtwork === 0
@@ -139,7 +177,8 @@ export function auditOnePieceMetadata(records) {
       && conflictingRecords === 0
       && unresolvedRecords === 0
       && duplicateCanonicalPrintIds === 0
-      && recordsWithoutHumanReview === 0,
+      && recordsWithoutHumanReview === 0
+      && evaluated.every((record) => record.reasonCodes.length === 0),
     manualReviewCandidates,
     reviewQueue: evaluated.filter((record) => record.reasonCodes.length > 0),
   };

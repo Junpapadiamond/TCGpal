@@ -7,7 +7,7 @@
     "verifiedRecords": 1579,
     "conflictingRecords": 225,
     "unresolvedRecords": 236,
-    "manualReviewCandidates": 829
+    "manualReviewCandidates": 784
   },
   "blockers": {
     "verifiedUnknownArtwork": 374,
@@ -15,6 +15,10 @@
     "verifiedUnknownReleaseChannel": 245,
     "verifiedWithoutExactMarkers": 65,
     "verifiedWithoutFamilyUniqueExactMarker": 256,
+    "verifiedUnknownReleaseProvenance": 29,
+    "recordsWithoutOfficialImage": 0,
+    "recordsWithoutTcgplayerImageHash": 121,
+    "recordsWithAmbiguousGlobalImageMatch": 414,
     "sharedMappedProductPairs": 38,
     "mappedRecordsUsingSharedProductPairs": 78,
     "unresolvedWithProductMapping": 115,
@@ -28,12 +32,8 @@
     "EB01-001_p1",
     "EB01-001_p2",
     "EB01-003_p1",
-    "EB01-003_p2",
-    "EB01-003_p3",
-    "EB01-003_p4",
     "EB01-003_p5",
     "EB01-006_p3",
-    "EB01-006_r1",
     "EB01-012_p1",
     "EB01-012_p3",
     "EB01-013_p1",
@@ -50,7 +50,6 @@
     "EB01-034_p1",
     "EB01-040_p1",
     "EB01-040_p2",
-    "EB01-043_p1",
     "EB01-046_p1",
     "EB01-048_p1",
     "EB01-048_p2",
@@ -176,11 +175,9 @@
     "OP02-015_p4",
     "OP02-017_p1",
     "OP02-018_p5",
-    "OP02-022_p1",
     "OP02-025_p1",
     "OP02-026_p1",
     "OP02-030_p1",
-    "OP02-034_p2",
     "OP02-036_p1",
     "OP02-041_p1",
     "OP02-049_p1",
@@ -242,7 +239,6 @@
     "OP03-114_p1",
     "OP03-114_p2",
     "OP03-116_p1",
-    "OP03-116_p3",
     "OP03-116_p6",
     "OP03-122_r1",
     "OP04-001_p1",
@@ -344,8 +340,6 @@
     "OP06-060_p3",
     "OP06-061_p1",
     "OP06-062_p1",
-    "OP06-063_p3",
-    "OP06-063_p4",
     "OP06-064_p3",
     "OP06-065_p3",
     "OP06-065_p4",
@@ -374,27 +368,19 @@
     "OP06-119_p3",
     "OP07-001_p2",
     "OP07-019_p2",
-    "OP07-021_p1",
     "OP07-021_p2",
     "OP07-021_p8",
     "OP07-038_p2",
-    "OP07-040_p1",
     "OP07-040_p3",
     "OP07-046_p2",
-    "OP07-047_p2",
-    "OP07-047_p3",
-    "OP07-047_p4",
     "OP07-059_p2",
-    "OP07-066_p2",
     "OP07-073_p1",
     "OP07-079_p2",
     "OP07-080_p1",
     "OP07-085_p2",
-    "OP07-091_p1",
     "OP07-097_p2",
     "OP07-100_p1",
     "OP07-109_p2",
-    "OP07-109_p4",
     "OP07-111_p2",
     "OP07-118_p2",
     "OP08-001_p1",
@@ -450,8 +436,6 @@
     "OP09-015_p1",
     "OP09-020_p2",
     "OP09-037_p2",
-    "OP09-043_p2",
-    "OP09-043_p3",
     "OP09-051_p4",
     "OP09-056_p1",
     "OP09-057_p2",
@@ -459,12 +443,9 @@
     "OP09-076_p2",
     "OP09-078_p2",
     "OP09-086_p1",
-    "OP09-089_p2",
-    "OP09-089_p3",
     "OP09-093_p4",
     "OP09-093_p5",
     "OP09-096_p1",
-    "OP09-106_p1",
     "OP09-108_p1",
     "OP09-108_p2",
     "OP09-118_p3",
@@ -481,7 +462,6 @@
     "OP10-030_p1",
     "OP10-030_p2",
     "OP10-032_p1",
-    "OP10-033_p2",
     "OP10-037_p1",
     "OP10-042_p1",
     "OP10-045_p1",
@@ -496,10 +476,8 @@
     "OP10-082_p1",
     "OP10-082_p2",
     "OP10-090_p1",
-    "OP10-092_p2",
     "OP10-095_p1",
     "OP10-099_p1",
-    "OP10-107_p2",
     "OP10-109_p1",
     "OP10-111_p1",
     "OP10-112_p1",
@@ -708,9 +686,7 @@
     "OP16-116_p1",
     "OP16-118_p1",
     "OP16-119_p1",
-    "P-001_p5",
     "P-002",
-    "P-003_p1",
     "P-006",
     "P-014_p3",
     "P-017_p1",
@@ -722,12 +698,9 @@
     "P-033",
     "P-034",
     "P-035",
-    "P-037",
     "P-039",
-    "P-041_p1",
     "P-042",
     "P-044_r1",
-    "P-045_p1",
     "P-046",
     "P-047",
     "P-048",
@@ -744,27 +717,17 @@
     "P-062",
     "P-063_p1",
     "P-065_p2",
-    "P-068",
-    "P-069_p6",
     "P-069_r1",
     "P-070_p2",
     "P-070_r1",
     "P-076",
-    "P-077_p2",
-    "P-078",
     "P-079_p2",
     "P-082_r1",
     "P-083_p2",
     "P-084",
-    "P-085",
-    "P-085_p1",
-    "P-085_p2",
     "P-085_r1",
     "P-088",
     "P-088_p3",
-    "P-089",
-    "P-089_p1",
-    "P-089_p2",
     "P-090",
     "P-091",
     "P-093",
@@ -773,7 +736,6 @@
     "P-099",
     "P-100",
     "P-102_p2",
-    "P-105_p1",
     "P-107",
     "P-111_p1",
     "P-112_p1",
@@ -813,7 +775,6 @@
     "ST03-004_p1",
     "ST03-005_p1",
     "ST03-005_p5",
-    "ST03-008_p3",
     "ST03-008_p7",
     "ST03-009_p1",
     "ST03-013_p3",
@@ -840,12 +801,10 @@
     "ST14-003_p1",
     "ST15-002_p1",
     "ST15-002_p2",
-    "ST15-005_p2",
     "ST15-005_p5",
     "ST16-004_p1",
     "ST16-004_p2",
     "ST17-002_p1",
-    "ST17-003_p2",
     "ST18-001_p1",
     "ST18-001_p3",
     "ST18-003_p1",
@@ -856,6 +815,24 @@
     "ST26-005_p1"
   ],
   "reviewQueue": [
+    {
+      "canonicalPrintId": "EB01-003_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "EB01-003_p3",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "EB01-003_p4",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
     {
       "canonicalPrintId": "EB01-006_p1",
       "reasonCodes": [
@@ -869,13 +846,23 @@
       ]
     },
     {
+      "canonicalPrintId": "EB01-006_r1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "EB01-007_p1",
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -889,13 +876,15 @@
     {
       "canonicalPrintId": "EB01-009_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "EB01-012_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -916,7 +905,8 @@
       "canonicalPrintId": "EB01-015_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -929,7 +919,8 @@
     {
       "canonicalPrintId": "EB01-018_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -940,7 +931,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -954,7 +949,14 @@
     {
       "canonicalPrintId": "EB01-038_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "EB01-043_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -964,6 +966,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -974,6 +978,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -984,6 +990,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -994,6 +1002,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1004,6 +1014,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1022,13 +1034,15 @@
     {
       "canonicalPrintId": "EB01-051_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "EB01-057_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -1041,7 +1055,8 @@
     {
       "canonicalPrintId": "EB01-060_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -1055,7 +1070,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -1066,7 +1082,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1078,7 +1098,9 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "unknown_release_provenance",
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -1088,20 +1110,26 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "EB02-061_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "EB04-028_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -1109,7 +1137,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -1124,6 +1154,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1131,6 +1164,7 @@
       "canonicalPrintId": "OP01-005_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -1177,6 +1211,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1185,7 +1222,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -1197,6 +1236,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1206,13 +1248,17 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP01-014_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -1221,6 +1267,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1235,7 +1283,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -1257,13 +1307,17 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP01-017_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -1272,6 +1326,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1279,6 +1336,7 @@
       "canonicalPrintId": "OP01-021_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -1291,6 +1349,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1299,7 +1360,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -1316,7 +1379,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -1331,6 +1395,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1360,7 +1427,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1382,6 +1453,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1410,7 +1484,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -1447,7 +1523,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -1478,6 +1556,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -1490,6 +1569,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -1507,7 +1587,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -1533,7 +1614,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -1546,6 +1628,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1559,6 +1643,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1582,7 +1668,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1624,6 +1714,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1635,6 +1728,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1652,6 +1748,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1698,7 +1797,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -1709,6 +1809,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1726,6 +1829,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1749,6 +1855,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1772,7 +1881,8 @@
       "canonicalPrintId": "OP01-120_p2",
       "reasonCodes": [
         "confidence_not_high",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -1802,6 +1912,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1852,7 +1965,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1891,6 +2008,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1941,6 +2061,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1956,7 +2078,8 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -1969,6 +2092,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -1982,6 +2107,12 @@
       ]
     },
     {
+      "canonicalPrintId": "OP02-022_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "OP02-023_r1",
       "reasonCodes": [
         "status_not_verified",
@@ -1991,6 +2122,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2004,6 +2137,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2025,6 +2160,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2038,7 +2175,15 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP02-034_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -2046,7 +2191,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -2059,6 +2205,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2069,7 +2217,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2083,6 +2235,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2096,6 +2250,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2109,6 +2265,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2120,7 +2278,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -2133,6 +2292,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2146,6 +2307,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2184,6 +2347,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2193,6 +2359,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2273,7 +2441,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -2329,6 +2498,7 @@
       "reasonCodes": [
         "confidence_not_high",
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -2338,13 +2508,15 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP02-106_r2",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -2431,7 +2603,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2445,6 +2621,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2458,6 +2636,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2495,6 +2675,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2517,6 +2699,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2548,6 +2732,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2561,6 +2747,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2574,6 +2762,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2599,6 +2789,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2618,6 +2811,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2652,6 +2847,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2665,6 +2862,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2678,6 +2877,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2691,6 +2892,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2704,6 +2907,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2717,6 +2922,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2730,6 +2937,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2768,6 +2977,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2777,7 +2988,8 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -2790,6 +3002,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2800,7 +3014,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -2809,6 +3025,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2822,6 +3040,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2831,7 +3051,8 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -2844,6 +3065,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2858,14 +3081,16 @@
       "reasonCodes": [
         "semantic_unknown_artwork",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP03-094_p3",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -2878,6 +3103,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2902,6 +3129,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2913,7 +3142,10 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2963,6 +3195,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2972,7 +3206,8 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -2985,6 +3220,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -2993,7 +3230,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -3034,7 +3272,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -3045,7 +3284,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -3053,7 +3293,14 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP03-116_p3",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -3070,7 +3317,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -3083,6 +3332,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3096,6 +3347,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3118,7 +3371,8 @@
       "canonicalPrintId": "OP03-121_p5",
       "reasonCodes": [
         "confidence_not_high",
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -3131,6 +3385,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3144,6 +3400,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3170,7 +3428,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -3194,7 +3453,8 @@
     {
       "canonicalPrintId": "OP04-016_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -3242,7 +3502,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3256,6 +3520,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3269,6 +3535,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3282,6 +3550,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3295,6 +3565,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3332,6 +3604,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3345,6 +3619,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3358,6 +3634,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3371,7 +3649,8 @@
     {
       "canonicalPrintId": "OP04-077_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -3391,7 +3670,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -3400,6 +3680,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3426,6 +3709,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3439,6 +3724,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3476,6 +3763,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -3489,6 +3777,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3502,6 +3792,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3521,6 +3813,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3540,6 +3834,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3568,7 +3864,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3604,6 +3904,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3615,6 +3918,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3632,7 +3938,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3662,7 +3972,9 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "unknown_release_provenance",
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -3686,7 +3998,8 @@
     {
       "canonicalPrintId": "OP05-007_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -3710,7 +4023,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3730,6 +4047,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3749,6 +4068,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3773,6 +4094,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3782,6 +4106,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3807,6 +4134,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3826,6 +4155,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3845,7 +4176,8 @@
     {
       "canonicalPrintId": "OP05-037_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -3856,6 +4188,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3894,6 +4229,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3936,6 +4273,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -3944,7 +4284,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -3987,14 +4328,16 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP05-066_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4052,14 +4395,16 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP05-070_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4146,7 +4491,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -4156,6 +4502,7 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "release_match_unproven",
         "shared_product_mapping"
       ]
     },
@@ -4189,6 +4536,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4202,6 +4551,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4215,6 +4566,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4223,7 +4576,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -4237,7 +4591,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -4299,6 +4654,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4312,6 +4669,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4343,6 +4702,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4355,6 +4715,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4374,6 +4735,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4405,6 +4767,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4460,13 +4823,15 @@
       "canonicalPrintId": "OP05-119_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP05-119_r2",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4478,6 +4843,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4490,13 +4856,15 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP06-007_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4506,7 +4874,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4528,6 +4900,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4540,6 +4913,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4563,7 +4937,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -4575,6 +4950,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4587,6 +4963,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4594,7 +4971,8 @@
       "canonicalPrintId": "OP06-038_p2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4607,6 +4985,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4620,6 +5000,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4633,26 +5015,30 @@
     {
       "canonicalPrintId": "OP06-044_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-047_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-049_p1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-049_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4665,6 +5051,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4678,6 +5066,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4685,7 +5075,8 @@
       "canonicalPrintId": "OP06-056_p4",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4698,32 +5089,38 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP06-056_r2",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-058_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-059_p1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-059_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4747,6 +5144,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4760,13 +5158,27 @@
     {
       "canonicalPrintId": "OP06-063_p2",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP06-063_p3",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP06-063_p4",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-063_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4778,6 +5190,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4790,6 +5203,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4802,6 +5216,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4814,6 +5229,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4826,6 +5242,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4838,6 +5255,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4850,6 +5268,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4862,6 +5281,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4874,6 +5294,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4886,6 +5307,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -4909,7 +5331,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -4922,27 +5345,31 @@
     {
       "canonicalPrintId": "OP06-073_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-076_p2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-076_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-078_p1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -4955,6 +5382,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4968,6 +5397,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4981,6 +5412,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -4994,6 +5427,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5017,7 +5452,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -5027,7 +5463,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5040,6 +5480,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -5052,6 +5493,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -5088,6 +5530,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -5095,7 +5538,8 @@
       "canonicalPrintId": "OP06-100_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5107,27 +5551,31 @@
     {
       "canonicalPrintId": "OP06-101_p3",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-101_p4",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-103_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-104_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5150,20 +5598,23 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "OP06-107_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-109_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5172,6 +5623,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5196,6 +5649,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -5203,14 +5657,16 @@
       "canonicalPrintId": "OP06-110_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP06-112_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5234,13 +5690,15 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP06-115_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5261,13 +5719,17 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP06-118_r1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5279,7 +5741,8 @@
     {
       "canonicalPrintId": "OP06-119_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5304,13 +5767,16 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP07-014_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5328,7 +5794,8 @@
     {
       "canonicalPrintId": "OP07-015_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5341,7 +5808,8 @@
     {
       "canonicalPrintId": "OP07-017_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5360,12 +5828,20 @@
       ]
     },
     {
+      "canonicalPrintId": "OP07-021_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "OP07-021_p3",
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5376,6 +5852,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5386,6 +5864,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5396,6 +5876,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5406,6 +5888,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5421,7 +5905,8 @@
       "canonicalPrintId": "OP07-021_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5453,7 +5938,8 @@
     {
       "canonicalPrintId": "OP07-026_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5465,7 +5951,8 @@
     {
       "canonicalPrintId": "OP07-029_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5487,14 +5974,16 @@
       "canonicalPrintId": "OP07-031_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP07-033_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5518,7 +6007,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5526,7 +6019,8 @@
       "canonicalPrintId": "OP07-037_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5536,10 +6030,17 @@
       ]
     },
     {
+      "canonicalPrintId": "OP07-040_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "OP07-040_p2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5550,14 +6051,19 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP07-040_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5568,7 +6074,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5591,6 +6101,24 @@
       ]
     },
     {
+      "canonicalPrintId": "OP07-047_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP07-047_p3",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP07-047_p4",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "OP07-047_p5",
       "reasonCodes": [
         "status_not_verified",
@@ -5598,7 +6126,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5610,7 +6142,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5641,7 +6177,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5653,7 +6193,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5676,7 +6220,8 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -5684,7 +6229,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -5697,7 +6243,8 @@
     {
       "canonicalPrintId": "OP07-056_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5707,7 +6254,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5729,19 +6280,30 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP07-064_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP07-066_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP07-066_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5766,7 +6328,8 @@
     {
       "canonicalPrintId": "OP07-076_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5779,6 +6342,12 @@
       "canonicalPrintId": "OP07-085_p1",
       "reasonCodes": [
         "unknown_release_channel"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP07-091_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5802,7 +6371,8 @@
     {
       "canonicalPrintId": "OP07-107_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5814,7 +6384,14 @@
     {
       "canonicalPrintId": "OP07-109_p3",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP07-109_p4",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5834,7 +6411,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -5847,7 +6425,8 @@
     {
       "canonicalPrintId": "OP07-114_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5864,7 +6443,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5883,7 +6466,8 @@
     {
       "canonicalPrintId": "OP07-118_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5897,19 +6481,22 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "OP07-119_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP08-023_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5919,7 +6506,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5930,14 +6521,19 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP08-067_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5946,13 +6542,17 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP08-074_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -5965,6 +6565,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5978,6 +6580,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -5991,7 +6595,8 @@
     {
       "canonicalPrintId": "OP08-087_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6008,14 +6613,19 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP08-099_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6088,20 +6698,23 @@
     {
       "canonicalPrintId": "OP09-004_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-005_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-006_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6111,7 +6724,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6124,14 +6741,16 @@
     {
       "canonicalPrintId": "OP09-009_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-010_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6144,21 +6763,24 @@
       "canonicalPrintId": "OP09-011_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-012_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-013_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6171,6 +6793,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6178,7 +6802,8 @@
       "canonicalPrintId": "OP09-014_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6191,6 +6816,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6198,14 +6825,16 @@
       "canonicalPrintId": "OP09-015_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-016_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6213,14 +6842,16 @@
       "reasonCodes": [
         "semantic_unknown_artwork",
         "unknown_release_channel",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-020_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6248,7 +6879,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "unresolved_label"
+        "unresolved_label",
+        "release_match_unproven"
       ]
     },
     {
@@ -6256,13 +6888,15 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "OP09-027_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6275,7 +6909,8 @@
     {
       "canonicalPrintId": "OP09-033_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6292,14 +6927,17 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "unknown_release_provenance",
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "OP09-035_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6326,21 +6964,36 @@
     {
       "canonicalPrintId": "OP09-043_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP09-043_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP09-043_p3",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-043_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-045_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6352,7 +7005,8 @@
     {
       "canonicalPrintId": "OP09-046_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6364,7 +7018,8 @@
     {
       "canonicalPrintId": "OP09-048_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6378,7 +7033,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -6409,28 +7065,32 @@
       "canonicalPrintId": "OP09-051_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-053_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-054_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-055_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6445,7 +7105,8 @@
       "canonicalPrintId": "OP09-056_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6453,20 +7114,23 @@
       "reasonCodes": [
         "semantic_unknown_artwork",
         "unknown_release_channel",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-057_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-061_p1",
       "reasonCodes": [
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6488,7 +7152,8 @@
       "canonicalPrintId": "OP09-063_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6502,7 +7167,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -6520,7 +7186,8 @@
     {
       "canonicalPrintId": "OP09-069_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6530,7 +7197,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6538,7 +7209,8 @@
       "canonicalPrintId": "OP09-070_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6550,7 +7222,8 @@
     {
       "canonicalPrintId": "OP09-072_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6558,7 +7231,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -6566,14 +7240,16 @@
       "reasonCodes": [
         "semantic_unknown_artwork",
         "unknown_release_channel",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-076_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6590,7 +7266,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6599,14 +7279,16 @@
       "reasonCodes": [
         "semantic_unknown_artwork",
         "unknown_release_channel",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-077_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6618,6 +7300,7 @@
         "semantic_unknown_artwork",
         "unknown_release_channel",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -6630,6 +7313,7 @@
         "semantic_unknown_artwork",
         "unknown_release_channel",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -6643,7 +7327,8 @@
     {
       "canonicalPrintId": "OP09-079_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6678,6 +7363,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6691,6 +7378,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6699,48 +7388,67 @@
       "reasonCodes": [
         "semantic_unknown_artwork",
         "unknown_release_channel",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-086_r2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-088_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-089_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP09-089_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP09-089_p3",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-089_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-090_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP09-091_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unknown_release_channel"
+        "unknown_release_channel",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6764,7 +7472,8 @@
     {
       "canonicalPrintId": "OP09-093_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6774,7 +7483,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6788,7 +7501,8 @@
     {
       "canonicalPrintId": "OP09-096_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6801,6 +7515,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6814,6 +7530,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6827,7 +7545,8 @@
     {
       "canonicalPrintId": "OP09-098_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6844,12 +7563,20 @@
       ]
     },
     {
+      "canonicalPrintId": "OP09-106_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "OP09-106_p2",
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6860,6 +7587,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6870,6 +7599,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6880,6 +7611,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6890,6 +7623,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6906,7 +7641,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -6943,7 +7682,8 @@
     {
       "canonicalPrintId": "OP10-011_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6956,7 +7696,8 @@
     {
       "canonicalPrintId": "OP10-018_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6966,20 +7707,32 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP10-032_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP10-033_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP10-033_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -6990,14 +7743,19 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP10-046_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7007,7 +7765,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7021,7 +7783,8 @@
     {
       "canonicalPrintId": "OP10-079_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7034,7 +7797,14 @@
     {
       "canonicalPrintId": "OP10-092_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP10-092_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7044,14 +7814,19 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP10-095_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7064,13 +7839,21 @@
     {
       "canonicalPrintId": "OP10-105_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP10-107_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "OP10-107_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7079,6 +7862,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7092,25 +7877,29 @@
     {
       "canonicalPrintId": "OP10-108_p2",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
       "canonicalPrintId": "OP10-108_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP10-109_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP10-112_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7123,13 +7912,15 @@
     {
       "canonicalPrintId": "OP10-114_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "OP10-119_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7140,7 +7931,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7149,7 +7944,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7165,7 +7961,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7182,7 +7982,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7191,7 +7995,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7203,7 +8008,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "unknown_release_provenance",
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -7214,7 +8021,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7225,7 +8036,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7248,7 +8063,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7271,7 +8090,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7288,7 +8111,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7306,6 +8133,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7318,7 +8148,8 @@
     {
       "canonicalPrintId": "OP13-037_p2",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -7329,13 +8160,17 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP13-043_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -7345,7 +8180,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7357,6 +8196,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7368,13 +8210,17 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP13-072_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -7385,6 +8231,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7395,14 +8244,19 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "OP13-092_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -7438,31 +8292,36 @@
     {
       "canonicalPrintId": "OP14-014_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
       "canonicalPrintId": "OP14-037_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
       "canonicalPrintId": "OP14-099_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
       "canonicalPrintId": "OP15-075_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
       "canonicalPrintId": "OP15-108_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -7478,7 +8337,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -7486,7 +8346,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7494,7 +8355,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -7504,7 +8367,16 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-001_p5",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7514,7 +8386,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7524,7 +8400,16 @@
         "status_not_verified",
         "confidence_not_high",
         "no_family_unique_exact_marker",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-003_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7544,6 +8429,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7552,19 +8440,24 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "P-009",
       "reasonCodes": [
-        "confidence_not_high"
+        "confidence_not_high",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "P-010",
       "reasonCodes": [
-        "confidence_not_high"
+        "confidence_not_high",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7572,7 +8465,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7580,7 +8474,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7588,20 +8483,23 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "P-014_p2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "P-014_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7609,7 +8507,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7618,13 +8517,15 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "P-016_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -7634,7 +8535,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -7642,7 +8544,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7651,7 +8554,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -7659,7 +8563,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7667,7 +8572,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7676,13 +8582,15 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "P-022_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -7691,7 +8599,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7699,7 +8608,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7707,13 +8617,15 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "P-028",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7747,7 +8659,8 @@
         "confidence_not_high",
         "conflicts_present",
         "semantic_unknown_artwork",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -7757,6 +8670,7 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -7767,6 +8681,7 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -7777,6 +8692,9 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7787,7 +8705,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker",
+        "release_match_unproven",
         "shared_product_mapping"
       ]
     },
@@ -7809,7 +8729,14 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-037",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7818,7 +8745,14 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-041_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7829,6 +8763,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7837,7 +8773,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -7852,7 +8789,14 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-045_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7862,7 +8806,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7873,7 +8821,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7884,7 +8836,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7895,7 +8851,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7906,7 +8866,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7917,7 +8881,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7935,14 +8903,19 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "P-053_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -7959,7 +8932,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7976,7 +8953,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -7985,7 +8966,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8000,7 +8982,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8015,7 +8998,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8030,7 +9014,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8045,14 +9030,16 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "P-061_r1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -8063,6 +9050,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8074,19 +9063,29 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "P-065",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "P-065_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-068",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -8097,6 +9096,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8109,13 +9110,15 @@
     {
       "canonicalPrintId": "P-069",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "P-069_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -8134,13 +9137,21 @@
     {
       "canonicalPrintId": "P-069_p4",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "P-069_p5",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-069_p6",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -8167,7 +9178,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8177,7 +9189,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8189,6 +9205,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8199,7 +9217,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8211,6 +9233,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8222,6 +9246,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8232,7 +9258,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8244,6 +9274,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8255,6 +9287,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8265,7 +9299,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8277,6 +9315,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8293,12 +9333,26 @@
       ]
     },
     {
+      "canonicalPrintId": "P-077_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-078",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "P-078_p1",
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8309,6 +9363,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8319,6 +9375,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8329,6 +9387,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8339,6 +9399,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8350,6 +9412,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8361,6 +9425,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8373,7 +9439,8 @@
     {
       "canonicalPrintId": "P-079_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -8397,7 +9464,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -8405,7 +9473,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8416,6 +9485,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8436,7 +9507,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8449,13 +9521,15 @@
     {
       "canonicalPrintId": "P-083",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "P-083_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -8466,6 +9540,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8477,7 +9553,27 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-085",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-085_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-085_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -8494,6 +9590,24 @@
       ]
     },
     {
+      "canonicalPrintId": "P-089",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-089_p1",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "P-089_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
       "canonicalPrintId": "P-092",
       "reasonCodes": [
         "no_family_unique_exact_marker"
@@ -8505,7 +9619,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -8515,6 +9630,8 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8535,6 +9652,7 @@
         "confidence_not_high",
         "conflicts_present",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -8611,6 +9729,12 @@
       ]
     },
     {
+      "canonicalPrintId": "P-105_p1",
+      "reasonCodes": [
+        "unknown_release_provenance"
+      ]
+    },
+    {
       "canonicalPrintId": "P-105_p2",
       "reasonCodes": [
         "no_family_unique_exact_marker"
@@ -8669,7 +9793,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8677,7 +9802,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8686,7 +9812,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -8694,13 +9821,15 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "ST01-002_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -8709,7 +9838,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -8718,13 +9849,16 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "ST01-004_p2",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -8732,7 +9866,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -8744,6 +9880,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8751,6 +9890,7 @@
       "canonicalPrintId": "ST01-006_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -8760,7 +9900,9 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -8776,6 +9918,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8813,6 +9958,7 @@
       "canonicalPrintId": "ST01-007_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -8821,7 +9967,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8835,7 +9982,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8843,7 +9991,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -8855,6 +10005,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8863,7 +10016,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -8871,7 +10025,9 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "unknown_release_provenance",
+        "release_match_unproven"
       ]
     },
     {
@@ -8880,6 +10036,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8887,6 +10046,7 @@
       "canonicalPrintId": "ST01-011_p1",
       "reasonCodes": [
         "unresolved_label",
+        "unknown_release_provenance",
         "no_family_unique_exact_marker"
       ]
     },
@@ -8896,6 +10056,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8913,7 +10076,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -8942,7 +10107,8 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -8950,13 +10116,15 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "ST01-013_p1",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -8968,6 +10136,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8981,6 +10152,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -8994,6 +10167,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9007,6 +10182,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9016,6 +10193,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9048,7 +10227,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9061,6 +10241,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9074,6 +10256,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9083,6 +10267,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9095,6 +10281,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9106,7 +10295,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9120,6 +10313,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9144,6 +10339,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "release_match_unproven",
         "shared_product_mapping"
       ]
     },
@@ -9164,7 +10360,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9174,7 +10371,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -9186,6 +10385,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9193,6 +10395,12 @@
       "canonicalPrintId": "ST03-008_p2",
       "reasonCodes": [
         "no_family_unique_exact_marker"
+      ]
+    },
+    {
+      "canonicalPrintId": "ST03-008_p3",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -9216,6 +10424,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "release_match_unproven",
         "shared_product_mapping"
       ]
     },
@@ -9235,7 +10444,8 @@
       "canonicalPrintId": "ST03-012_p1",
       "reasonCodes": [
         "confidence_not_high",
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -9259,6 +10469,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -9267,7 +10478,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9277,7 +10489,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9288,7 +10504,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9302,6 +10522,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9335,13 +10557,16 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "ST04-008_p2",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -9349,7 +10574,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9359,7 +10585,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -9388,7 +10616,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9411,7 +10643,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9422,7 +10658,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9433,7 +10673,9 @@
         "confidence_not_high",
         "conflicts_present",
         "unresolved_label",
-        "no_family_unique_exact_marker"
+        "unknown_release_provenance",
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -9446,6 +10688,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9459,6 +10703,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9503,6 +10749,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -9544,7 +10791,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9556,7 +10804,8 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -9568,6 +10817,9 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9596,6 +10848,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9605,6 +10859,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9626,7 +10883,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9635,6 +10893,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9644,7 +10905,8 @@
         "status_not_verified",
         "confidence_not_high",
         "conflicts_present",
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "release_match_unproven"
       ]
     },
     {
@@ -9665,7 +10927,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9685,7 +10948,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9702,7 +10966,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9719,7 +10984,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9736,7 +11002,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9758,7 +11025,8 @@
     {
       "canonicalPrintId": "ST12-005_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -9770,6 +11038,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -9782,6 +11051,7 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "no_family_unique_exact_marker",
+        "ambiguous_global_image_match",
         "shared_product_mapping"
       ]
     },
@@ -9789,13 +11059,15 @@
       "canonicalPrintId": "ST12-017_p1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "ST12-017_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -9821,7 +11093,8 @@
       "reasonCodes": [
         "status_not_verified",
         "confidence_not_high",
-        "conflicts_present"
+        "conflicts_present",
+        "release_match_unproven"
       ]
     },
     {
@@ -9918,7 +11191,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9959,6 +11236,9 @@
         "status_not_verified",
         "confidence_not_high",
         "unresolved_label",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -9979,7 +11259,8 @@
       "canonicalPrintId": "ST13-019_p1",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -9998,6 +11279,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10011,6 +11294,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10030,14 +11315,18 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "ST14-010_r2",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10050,7 +11339,8 @@
     {
       "canonicalPrintId": "ST14-013_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10063,6 +11353,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10076,6 +11368,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10089,19 +11383,28 @@
     {
       "canonicalPrintId": "ST14-017_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "ST15-002_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "ST15-005_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "ST15-005_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10126,13 +11429,15 @@
     {
       "canonicalPrintId": "ST16-003_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "ST16-004_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10145,6 +11450,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10158,19 +11465,29 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
     {
       "canonicalPrintId": "ST17-002_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "ST17-003_p1",
       "reasonCodes": [
-        "no_family_unique_exact_marker"
+        "no_family_unique_exact_marker",
+        "ambiguous_global_image_match"
+      ]
+    },
+    {
+      "canonicalPrintId": "ST17-003_p2",
+      "reasonCodes": [
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10183,6 +11500,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10194,7 +11513,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10208,6 +11531,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10221,6 +11546,8 @@
         "unresolved_label",
         "unknown_release_channel",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10232,7 +11559,11 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10241,7 +11572,8 @@
       "reasonCodes": [
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "missing_exact_markers",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10254,7 +11586,8 @@
     {
       "canonicalPrintId": "ST18-001_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10272,13 +11605,16 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "unresolved_label",
-        "missing_exact_markers"
+        "unknown_release_provenance",
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
       "canonicalPrintId": "ST18-002_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10291,7 +11627,8 @@
     {
       "canonicalPrintId": "ST18-003_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10310,7 +11647,8 @@
     {
       "canonicalPrintId": "ST19-002_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10323,7 +11661,8 @@
     {
       "canonicalPrintId": "ST20-003_r1",
       "reasonCodes": [
-        "semantic_unknown_artwork"
+        "semantic_unknown_artwork",
+        "ambiguous_global_image_match"
       ]
     },
     {
@@ -10341,7 +11680,9 @@
         "semantic_unknown_artwork",
         "unresolved_label",
         "unknown_release_channel",
-        "missing_exact_markers"
+        "unknown_release_provenance",
+        "missing_exact_markers",
+        "release_match_unproven"
       ]
     },
     {
@@ -10360,13 +11701,15 @@
       "canonicalPrintId": "ST21-003_p2",
       "reasonCodes": [
         "semantic_unknown_artwork",
-        "unresolved_label"
+        "unresolved_label",
+        "ambiguous_global_image_match"
       ]
     },
     {
       "canonicalPrintId": "ST21-003_p3",
       "reasonCodes": [
-        "unresolved_label"
+        "unresolved_label",
+        "unknown_release_provenance"
       ]
     },
     {
@@ -10455,6 +11798,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10466,6 +11811,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10477,6 +11824,8 @@
         "conflicts_present",
         "semantic_unknown_artwork",
         "missing_exact_markers",
+        "ambiguous_global_image_match",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },
@@ -10487,7 +11836,11 @@
         "confidence_not_high",
         "semantic_unknown_artwork",
         "unresolved_label",
+        "unknown_release_provenance",
         "missing_exact_markers",
+        "missing_tcgplayer_image_hash",
+        "missing_image_distance_evidence",
+        "release_match_unproven",
         "missing_product_mapping"
       ]
     },

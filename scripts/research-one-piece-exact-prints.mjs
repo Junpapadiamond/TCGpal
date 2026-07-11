@@ -64,6 +64,12 @@ function candidatePrints() {
   );
 }
 
+export function assertCandidateCoverage(prints) {
+  if (!Array.isArray(prints) || prints.length === 0) {
+    throw new Error("One Piece research found no candidate prints; refusing to overwrite the research ledger.");
+  }
+}
+
 async function fetchJson(url, attempts = 4) {
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -618,6 +624,7 @@ export function markSharedProductMappings(records) {
 
 async function main() {
   const prints = candidatePrints();
+  assertCandidateCoverage(prints);
   process.stderr.write(`Auditing ${prints.length} candidate English special prints.\n`);
   const tcgcsv = await loadTcgcsv();
   process.stderr.write(`Loaded ${tcgcsv.groups.length} TCGCSV groups and ${tcgcsv.products.length} products.\n`);
