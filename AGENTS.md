@@ -200,6 +200,7 @@ When the work is finished — gate green and visually verified — push it to `m
 Design the codebase so Codex can inspect it through stable, explicit interfaces before opening many raw files:
 
 - **Project map:** `AGENTS.md` is the highest-level product, boundary, and verification contract. Keep it current when source access, ranking ownership, provider policy, or launch gates change.
+- **Current handoff:** `PROGRESS.md` is the section-addressable status and decision index for new threads. Read `BOOTSTRAP` and `TASK-INDEX`, then only the relevant `WS-*` section. Invoke `/progress` or `$progress` to refresh git state and task evidence without loading the full history.
 - **Knowledge graph:** Graphify is installed for Codex. Use it as the first broad-navigation interface when the task is architectural, cross-file, or asks "where/how does this work?"
 - **Runtime contracts:** `src/lib/schemas.ts` is the public request/response contract. Zod schemas must stay authoritative for API boundaries and cached/shared payloads.
 - **Provider contracts:** `src/lib/comparison/platforms.ts` is the marketplace-agent interface. New live sources should join by implementing `PlatformAgent`, not by branching comparison orchestration.
