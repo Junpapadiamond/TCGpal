@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-07-12
 canonical_branch: origin/main
-canonical_commit: 7637f56fb20c7bfeeeca278b7ab960b0b46b0928
+last_verified_product_commit: 7637f56fb20c7bfeeeca278b7ab960b0b46b0928
 max_lines: 300
 ---
 
@@ -211,7 +211,7 @@ The user must decide these; agents must not infer them:
 
 Observed on 2026-07-12 in /Users/chenjunhsu/Desktop/projects/TCGpal:
 
-- Local main was at 5e6899e, one commit ahead and eight behind origin/main; remote source of truth was 7637f56.
+- Local main was at 5e6899e and diverged from origin/main. Use the progress snapshot for current ahead/behind counts; do not hard-code them here.
 - The working tree contained user changes. Preserve them; do not reset, clean, or include them incidentally.
 - Small adjustment: src/lib/external/tcgcsv.ts and its test attempt to prevent vintage Base Set cards from resolving to newer “Base Set” groups. Files exist, but this local version was not included in the 461-test remote release evidence.
 - Unapproved experiment: photo-search route/tests and related package changes. Behavior and scope are not verified; see D-PHOTO.
