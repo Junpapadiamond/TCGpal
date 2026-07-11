@@ -17,6 +17,31 @@ const VARIANT_QUERY_TOKENS: Partial<Record<VariantIntent, string>> = {
   alt: "alt art",
 };
 
+function researchedPrintQueryToken(card: CardIdentityCandidate): string | null {
+  if (card.treatments?.includes("gold")) return "gold";
+  if (card.treatments?.includes("silver")) return "silver";
+  if (card.treatments?.includes("red") && card.artworkClass === "super_alternate") return "red super alt";
+  if (card.artworkClass === "manga") return "manga";
+  if (card.artworkClass === "wanted_poster") return "wanted poster";
+  if (card.artworkClass === "super_alternate") return "super alt";
+  const aliases = card.collectorAliases ?? [];
+  for (const token of [
+    "tournament winner",
+    "tournament pack",
+    "treasure cup",
+    "regional champion",
+    "regional finalist",
+    "regional participation",
+    "premium collection",
+    "championship",
+    "anniversary",
+    "promo",
+  ]) {
+    if (aliases.some((alias) => alias.toLowerCase().includes(token))) return token;
+  }
+  return null;
+}
+
 const ebayAmountSchema = z.object({
   value: z.string(),
   currency: z.string(),
@@ -205,7 +230,7 @@ export async function searchEbayAlternatives(
   // Applied on top of query overrides too: the crosswalk template is the same
   // deterministic name+number string, and the fallback attempt protects recall.
   const variantToken = isOnePieceCardKey(card.cardNumber, card.id)
-    ? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null
+    ? researchedPrintQueryToken(card) ?? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null
     : null;
   const exactPrintToken = isOnePieceCardKey(card.cardNumber, card.id)
     ? card.id.match(/_([a-z]\d+)$/i)?.[1]?.toUpperCase() ?? null
@@ -264,6 +289,18 @@ export async function searchEbayAlternatives(
     }
     const result = ebaySearchSchema.parse(await response.json());
     summaries = result.itemSummaries.filter((item) => item.price.currency === "USD");
+    if (!finalAttempt && summaries.length > 0) {
+      const nonMismatches = summaries.filter((item) => assessPrintFidelity({
+        card,
+        matchText: item.title,
+        listingPrice: Number(item.price.value),
+        exactMarketAnchor: null,
+      }).match !== "mismatch");
+      if (nonMismatches.length === 0) {
+        continue;
+      }
+      summaries = nonMismatches;
+    }
     searchNote = attempt.mode === "epid"
       ? `Searched eBay by product ID ePID ${attempt.epid}.`
       : attempt.fallbackReason || (variantToken && !finalAttempt

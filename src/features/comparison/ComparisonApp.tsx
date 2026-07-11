@@ -532,7 +532,7 @@ function ComparisonExperience() {
     : null;
   const carouselCards = composeCarouselCards(currentCarouselCard, recentCarouselCards);
   const headerQuery = activeCard
-    ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
+    ? [activeCard.name, activeCard.cardNumber, activeCard.variant, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
   const selectedConditionLabel = desiredCondition === "Unknown"
     ? t.form.anyCondition
@@ -1604,7 +1604,7 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
       {identity.imageUrl ? (
         <HoloCardArt
           src={identity.imageUrl}
-          alt={`${identity.name} ${identity.cardNumber}`}
+          alt={[identity.name, identity.cardNumber, identity.variant, identity.setName].filter(Boolean).join(" · ")}
           sizes={compact ? "112px" : "144px"}
           className={`mx-auto ${compact ? "w-28" : "w-36"}`}
         />
@@ -2667,7 +2667,7 @@ function EvidencePhoto({ src, alt, label }: { src: string | null; alt: string; l
   );
 }
 
-function PrintIdentitySummary({
+export function PrintIdentitySummary({
   listing,
   confirmedCard,
   compact = false,

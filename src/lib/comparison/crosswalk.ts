@@ -2,6 +2,7 @@ import { resolveTcgplayerProductVariants, type TcgplayerProductMatch } from "@/l
 import { resolveEbayProductForCard, type EbayProductResolution } from "@/lib/external/ebay";
 import type { BuyerContext, CardIdentityCandidate } from "@/lib/schemas";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
+import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 
 // R1: the canonical card id (pokemontcg.io id, confirmed at the version step)
 // maps to each platform's native identifier so connectors never re-match free
@@ -29,7 +30,8 @@ export async function resolveCardCrosswalk(
   now: () => Date = () => new Date(),
   buyer: BuyerContext = { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
 ): Promise<CardCrosswalkEntry> {
-  const cached = crosswalkCache.get(card.id);
+  const cacheKey = `${ONE_PIECE_PRINT_METADATA_REVISION}|${card.id}`;
+  const cached = crosswalkCache.get(cacheKey);
   if (cached && now().getTime() - cached.at < CROSSWALK_TTL_MS) {
     return cached.entry;
   }
@@ -78,7 +80,7 @@ export async function resolveCardCrosswalk(
     return entry;
   }
 
-  crosswalkCache.set(card.id, { entry, at: now().getTime() });
+  crosswalkCache.set(cacheKey, { entry, at: now().getTime() });
   return entry;
 }
 
@@ -90,12 +92,14 @@ export function selectExactTcgplayerProduct(
   card: CardIdentityCandidate,
   products: TcgplayerProductMatch[],
 ): TcgplayerProductMatch | null {
-  const exactRelease = products.filter((product) => releaseMatches(product.groupName, card.setName));
   const preferred = card.tcgplayerProductId
-    ? exactRelease.filter((product) => product.productId === card.tcgplayerProductId)
+    ? products.filter((product) => product.productId === card.tcgplayerProductId)
     : [];
-  if (card.tcgplayerProductId && preferred.length === 0) return null;
-  const pool = preferred.length > 0 ? preferred : exactRelease;
+  if (card.tcgplayerProductId && preferred.length !== 1) return null;
+  if (preferred.length === 1) {
+    return exactProductIdentityMatches(card, preferred[0]) ? preferred[0] : null;
+  }
+  const pool = products.filter((product) => releaseMatches(product.groupName, card.setName));
   const credible = pool.filter((product) => {
     const assessment = assessPrintFidelity({
       card,
@@ -107,6 +111,23 @@ export function selectExactTcgplayerProduct(
     return false;
   });
   return credible.length === 1 ? credible[0] : null;
+}
+
+function exactProductIdentityMatches(card: CardIdentityCandidate, product: TcgplayerProductMatch) {
+  const expectedNumber = normalizeIdentityText(card.cardNumber);
+  const productNumber = normalizeIdentityText(product.collectorNumber);
+  const expectedName = normalizeIdentityText(card.name);
+  const productName = normalizeIdentityText(product.productName);
+  return Boolean(
+    expectedNumber
+    && productNumber === expectedNumber
+    && expectedName
+    && productName.includes(expectedName),
+  );
+}
+
+function normalizeIdentityText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 function releaseMatches(groupName: string, setName: string) {

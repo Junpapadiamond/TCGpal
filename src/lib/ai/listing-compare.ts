@@ -126,7 +126,7 @@ export async function runListingComparison(
       webDiscoveries: [],
       outcome: "next_moves",
       inspectListingId: null,
-      identityContractVersion: 2,
+      identityContractVersion: 3,
       demoMode: getConfiguredPlatformAgents().length === 0,
       generatedAt,
     });
@@ -353,7 +353,7 @@ export async function runListingComparison(
     abstention,
     outcome,
     inspectListingId: inspectLead?.id ?? null,
-    identityContractVersion: 2,
+    identityContractVersion: 3,
     demoMode,
     generatedAt,
   });
@@ -1417,7 +1417,10 @@ function filterByRequestedVariant(
   if (!requestedVariant.trim()) return identities;
   const needle = requestedVariant.toLowerCase();
   const narrowed = identities.filter((identity) =>
-    identity.rarity?.toLowerCase().includes(needle) || identity.variant?.toLowerCase().includes(needle));
+    identity.rarity?.toLowerCase().includes(needle)
+    || identity.variant?.toLowerCase().includes(needle)
+    || identity.setName.toLowerCase().includes(needle)
+    || identity.collectorAliases?.some((alias) => alias.toLowerCase().includes(needle)));
   if (narrowed.length > 0) {
     trace.push({
       step: "card_identification",
@@ -1426,6 +1429,39 @@ function filterByRequestedVariant(
       status: "complete",
     });
     return narrowed;
+  }
+  const strictOnePieceFacets = new Set([
+    "manga art",
+    "gold",
+    "silver",
+    "wanted poster",
+    "super alternate art",
+    "red super alternate art",
+    "treasure cup",
+    "tournament pack",
+    "tournament winner",
+    "championship",
+    "anniversary",
+    "regional champion",
+    "regional finalist",
+    "regional participation",
+    "promo",
+    "premium collection",
+    "signature",
+    "serial numbered",
+    "stamped",
+  ]);
+  if (
+    strictOnePieceFacets.has(needle)
+    && identities.some((identity) => isOnePieceCardKey(identity.cardNumber, identity.id))
+  ) {
+    trace.push({
+      step: "card_identification",
+      actor: "Exact print facet filter",
+      summary: `No verified print matched the requested "${requestedVariant}" facet; sibling prints were not substituted.`,
+      status: "complete",
+    });
+    return [];
   }
   trace.push({
     step: "card_identification",

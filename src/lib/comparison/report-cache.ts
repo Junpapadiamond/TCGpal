@@ -1,5 +1,6 @@
 import { clearLocalCache, getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { comparisonReportSchema, type ComparisonReport, type ComparisonRequest } from "@/lib/schemas";
+import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 
 // R7: pure card searches (no user-supplied listing facts) are cacheable — the
 // fan-out result only depends on the confirmed card, desired condition, and
@@ -11,7 +12,8 @@ const CACHE_SCOPE = "comparison-report";
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
   return [
-    "identity-v2",
+    "identity-v3",
+    ONE_PIECE_PRINT_METADATA_REVISION,
     confirmedCardId,
     request.buyer.desiredCondition,
     request.buyer.postalCode,
@@ -35,7 +37,7 @@ export async function getCachedComparison(key: string, now: Date = new Date()): 
     now,
     validate(value) {
       const parsed = comparisonReportSchema.safeParse(value);
-      return parsed.success && parsed.data.identityContractVersion === 2 ? parsed.data : null;
+      return parsed.success && parsed.data.identityContractVersion === 3 ? parsed.data : null;
     },
   });
 }
@@ -43,7 +45,7 @@ export async function getCachedComparison(key: string, now: Date = new Date()): 
 export async function setCachedComparison(key: string, report: ComparisonReport, now: Date = new Date()) {
   // Only cache reports built from live data; demo fixtures and failed runs
   // should re-attempt the live sources on the next request.
-  if (report.demoMode || report.status === "needs_confirmation" || report.identityContractVersion !== 2) return;
+  if (report.demoMode || report.status === "needs_confirmation" || report.identityContractVersion !== 3) return;
   await setJsonCache(CACHE_SCOPE, key, report, { ttlSeconds: CACHE_TTL_SECONDS, now });
 }
 

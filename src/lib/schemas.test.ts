@@ -23,6 +23,19 @@ const card = {
     variantLabel: "Alternate Art",
     imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png",
     catalogVerified: true,
+    artworkClass: null,
+    treatments: [],
+    originalSetCode: "SWSH7",
+    releaseName: "Evolving Skies",
+    releaseCode: "SWSH7",
+    releaseChannel: "unknown" as const,
+    releaseProvenance: "original_set" as const,
+    competitionTier: null,
+    collectorAliases: [],
+    exactMarkers: [],
+    metadataRevision: null,
+    tcgplayerProductId: null,
+    tcgplayerGroupId: null,
   },
 };
 
@@ -74,13 +87,13 @@ function report(overrides: Record<string, unknown>) {
     webDiscoveries: [],
     demoMode: false,
     generatedAt: "2026-07-11T00:00:00.000Z",
-    identityContractVersion: 2,
+    identityContractVersion: 3,
     ...overrides,
   };
 }
 
 describe("exact-print report contract", () => {
-  it("rejects an eligible v2 listing whose print identity is unresolved", () => {
+  it("rejects an eligible v3 listing whose print identity is unresolved", () => {
     const unresolved = { ...listing, eligible: true, printMatch: "unknown" as const };
     expect(comparisonReportSchema.safeParse(report({ candidates: [unresolved], outcome: "best_buy" })).success).toBe(false);
   });
@@ -96,7 +109,7 @@ describe("exact-print report contract", () => {
     expect(comparisonReportSchema.safeParse(report({ rankedChoices: [{ ...choice, listingId: "missing" }], outcome: "best_buy" })).success).toBe(false);
   });
 
-  it("rejects a v2 report that omits classification or outcome fields", () => {
+  it("rejects a v3 report that omits classification or outcome fields", () => {
     const incomplete = { ...listing } as Record<string, unknown>;
     delete incomplete.printMatch;
     delete incomplete.printMatchConfidence;
@@ -105,7 +118,7 @@ describe("exact-print report contract", () => {
     expect(comparisonReportSchema.safeParse(report({ candidates: [incomplete], outcome: undefined })).success).toBe(false);
   });
 
-  it("requires canonical print identity on every v2 identity candidate and confirmed card", () => {
+  it("requires canonical print identity on every v3 identity candidate and confirmed card", () => {
     const withoutPrintIdentity = { ...card } as Record<string, unknown>;
     delete withoutPrintIdentity.printIdentity;
 
@@ -130,7 +143,7 @@ describe("exact-print report contract", () => {
     })).success).toBe(true);
   });
 
-  it("makes v2 result outcomes mutually exclusive", () => {
+  it("makes v3 result outcomes mutually exclusive", () => {
     const choice = { role: "best_value", listingId: listing.id, label: "Buy", reason: "Verified", confidence: "high" };
     const inspect = { ...listing, id: "inspect", eligible: false, printMatch: "unknown" as const };
 

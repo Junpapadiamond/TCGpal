@@ -56,6 +56,7 @@ export type TcgplayerProductMatch = {
   groupName: string;
   productId: number;
   productName: string;
+  collectorNumber: string;
   productUrl: string;
   imageUrl: string | null;
 };
@@ -101,7 +102,7 @@ export function isTcgcsvStale(asOf: string | null, now: Date = new Date()) {
 // Group is matched by set name, product by printed collector number; a name
 // sanity check prevents a wrong-number data glitch from crossing sets.
 export async function resolveTcgplayerProduct(
-  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId" | "variant">>,
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId" | "tcgplayerGroupId" | "variant">>,
   fetcher: typeof fetch = fetch,
   options: { preferredProductId?: number | null } = {},
 ): Promise<TcgplayerProductMatch | null> {
@@ -122,11 +123,11 @@ export async function resolveTcgplayerProduct(
 }
 
 export async function resolveTcgplayerProductVariants(
-  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber">,
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId" | "tcgplayerGroupId">>,
   fetcher: typeof fetch = fetch,
 ): Promise<TcgplayerProductMatch[]> {
   const categoryId = inferTcgplayerCategoryId(card);
-  const group = await findTcgplayerGroup(categoryId, card.setName, fetcher);
+  const group = await findTcgplayerGroup(categoryId, card.setName, fetcher, card.tcgplayerGroupId ?? null);
   if (!group) return [];
 
   const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 86400);
@@ -144,6 +145,11 @@ export async function resolveTcgplayerProductVariants(
 
   const nameMatches = candidates.filter((product) => productNameMatchesCard(product.cleanName || product.name, card.name));
   const matches = nameMatches.length > 0 ? nameMatches : candidates.length === 1 ? candidates : [];
+  if (card.tcgplayerProductId) {
+    return matches
+      .filter((product) => product.productId === card.tcgplayerProductId)
+      .map((product) => toProductMatch(categoryId, group, product));
+  }
   return sortTcgplayerProducts(matches).map((product) => toProductMatch(categoryId, group, product));
 }
 
@@ -158,6 +164,7 @@ function toProductMatch(
     groupName: group.name,
     productId: product.productId,
     productName: product.name,
+    collectorNumber: product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "",
     productUrl: product.url || `https://www.tcgplayer.com/product/${product.productId}`,
     imageUrl: product.imageUrl || null,
   };
@@ -208,10 +215,19 @@ export async function searchTcgplayerListings(
   return { seeds: [], anchor, product, asOf };
 }
 
-async function findTcgplayerGroup(categoryId: number, setName: string, fetcher: typeof fetch) {
+async function findTcgplayerGroup(
+  categoryId: number,
+  setName: string,
+  fetcher: typeof fetch,
+  preferredGroupId: number | null = null,
+) {
   const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/groups`), fetcher, 86400);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer group feed failed with ${response.status}.`);
   const groups = tcgcsvEnvelope(tcgcsvGroupSchema).parse(await response.json()).results;
+
+  if (preferredGroupId) {
+    return groups.find((group) => group.groupId === preferredGroupId) ?? null;
+  }
 
   const wanted = normalize(setName);
   if (!wanted) return null;

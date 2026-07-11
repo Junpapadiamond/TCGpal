@@ -899,6 +899,74 @@ describe("listing comparison agent", () => {
     ).toBe(true);
   });
 
+  it.each([
+    ["Luffy manga OP11-118", "OP11-118", "Manga Art", "OP11-118_p2"],
+    ["Luffy manga EB02-061", "EB02-061", "Manga Art", "EB02-061_p2"],
+    ["gold Gear 5 Luffy OP05-119", "OP05-119", "Gold", "OP05-119_p8"],
+    ["silver Luffy OP05-119", "OP05-119", "Silver", "OP05-119_p7"],
+  ])("narrows researched collector query %s to its exact print", async (query, cardNumber, variant, expectedId) => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query,
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "", setCode: "", cardNumber, language: "English", variant, gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.status).toBe("partial");
+    expect(response.confirmedCard?.id).toBe(expectedId);
+    expect(response.confirmedCard?.printIdentity?.canonicalPrintId).toBe(expectedId);
+  });
+
+  it.each([
+    ["Koby treasure cup OP11-119", "OP11-119", "Treasure Cup", "OP11-119_p2"],
+    ["Luffy tournament winner ST01-012", "ST01-012", "Tournament Winner", "ST01-012_p6"],
+    ["Eustass Kid wanted poster OP01-051", "OP01-051", "Wanted Poster", "OP01-051_p2"],
+  ])("resolves researched release query %s", async (query, cardNumber, variant, expectedId) => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query,
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "", setCode: "", cardNumber, language: "English", variant, gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.confirmedCard?.id).toBe(expectedId);
+  });
+
+  it("does not fall back to sibling prints when a recognized exact treatment has no match", async () => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query: "gold Nami OP01-016",
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "Nami", setCode: "", cardNumber: "OP01-016", language: "English", variant: "Gold", gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates).toEqual([]);
+    expect(response.confirmedCard).toBeNull();
+  });
+
+  it.each([
+    ["Luffy Regional Champion OP03-123", "OP03-123", "Regional Champion"],
+    ["Nami promo OP01-016", "OP01-016", "Promo"],
+    ["Nami signature OP01-016", "OP01-016", "Signature"],
+    ["Nami serial numbered OP01-016", "OP01-016", "Serial Numbered"],
+    ["Nami stamped OP01-016", "OP01-016", "Stamped"],
+  ])("abstains instead of substituting siblings for unsupported facet %s", async (query, cardNumber, variant) => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query,
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "", setCode: "", cardNumber, language: "English", variant, gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.identityCandidates).toEqual([]);
+    expect(response.confirmedCard).toBeNull();
+  });
+
   it("surfaces every same-number One Piece art variant before auto-confirming", async () => {
     // A number with alternate arts must open the version picker (not auto-confirm the
     // base) so the buyer can pick the exact print — and it must do so with zero

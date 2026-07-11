@@ -13,6 +13,12 @@ const namiPrints = findOnePieceCatalogVariants("OP01-016").map((card) =>
 const kidAndKillerPrints = findOnePieceCatalogVariants("EB01-003").map((card) =>
   mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
 );
+const gearFivePrints = findOnePieceCatalogVariants("OP05-119").map((card) =>
+  mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
+);
+const op13LuffyPrints = findOnePieceCatalogVariants("OP13-118").map((card) =>
+  mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
+);
 
 describe("exact-print fidelity", () => {
   it("keeps every bundled Nami print as a unique canonical identity", () => {
@@ -48,7 +54,7 @@ describe("exact-print fidelity", () => {
     });
 
     expect(result.match).toBe("unknown");
-    expect(result.reasons).toContain("multiple_sibling_prints_share_generic_variant");
+    expect(result.reasons).toContain("multiple_siblings_share_researched_artwork");
   });
 
   it("uses a seller-stated P-number without parentheses as exact sibling evidence", () => {
@@ -105,7 +111,7 @@ describe("exact-print fidelity", () => {
     });
 
     expect(result.match).toBe("compatible");
-    expect(result.reasons).toContain("named_print_class_is_unique_for_card_number");
+    expect(result.reasons).toContain("listing_names_unique_researched_artwork");
   });
 
   it("treats explicit generic alternate-art evidence as a known mismatch for selected SP", () => {
@@ -168,6 +174,49 @@ describe("exact-print fidelity", () => {
 
     expect(result.match).toBe("unknown");
     expect(result.priceGuard).toBe("none");
+  });
+
+  it("keeps manga, wanted-poster, silver, and gold Gear 5 prints in separate identity facets", () => {
+    const manga = gearFivePrints.find((card) => card.id === "OP05-119_p2")!;
+    const wanted = gearFivePrints.find((card) => card.id === "OP05-119_p6")!;
+    const silver = gearFivePrints.find((card) => card.id === "OP05-119_p7")!;
+    const gold = gearFivePrints.find((card) => card.id === "OP05-119_p8")!;
+
+    expect(assessPrintFidelity({ card: manga, matchText: "Gear 5 Luffy OP05-119 Manga Rare", listingPrice: 800, exactMarketAnchor: 800 }).match).toBe("unknown");
+    expect(assessPrintFidelity({ card: manga, matchText: `Gear 5 Luffy OP05-119 Manga Rare ${manga.setName}`, listingPrice: 800, exactMarketAnchor: 800 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: wanted, matchText: "Gear 5 Luffy OP05-119 Wanted Poster", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: gold, matchText: "Gear 5 Luffy OP05-119 Gold Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: gold, matchText: "Gear 5 Luffy OP05-119 Silver Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
+    expect(assessPrintFidelity({ card: silver, matchText: "Gear 5 Luffy OP05-119 Gold Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
+    expect(assessPrintFidelity({ card: gold, matchText: "Gear 5 Luffy OP05-119 SP Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
+  });
+
+  it("distinguishes ordinary, super, red-super, and wanted-poster OP13 artwork", () => {
+    const ordinary = op13LuffyPrints.find((card) => card.id === "OP13-118_p1")!;
+    const superAlt = op13LuffyPrints.find((card) => card.id === "OP13-118_p2")!;
+    const redSuperAlt = op13LuffyPrints.find((card) => card.id === "OP13-118_p3")!;
+    const wanted = op13LuffyPrints.find((card) => card.id === "OP13-118_p4")!;
+
+    expect(assessPrintFidelity({ card: superAlt, matchText: "Luffy OP13-118 Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: redSuperAlt, matchText: "Luffy OP13-118 Red Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: redSuperAlt, matchText: "Luffy OP13-118 Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
+    expect(assessPrintFidelity({ card: wanted, matchText: "Luffy OP13-118 Wanted Poster", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: ordinary, matchText: "Luffy OP13-118 Wanted Poster", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
+  });
+
+  it("distinguishes tournament-pack and winner siblings that share one release name", () => {
+    const prints = findOnePieceCatalogVariants("ST01-012").map((card) =>
+      mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
+    );
+    const pack = prints.find((card) => card.id === "ST01-012_p5")!;
+    const winner = prints.find((card) => card.id === "ST01-012_p6")!;
+    const generic = "Monkey.D.Luffy ST01-012 Alternate Art 3rd Anniversary Event";
+
+    expect(assessPrintFidelity({ card: pack, matchText: generic, listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
+    expect(assessPrintFidelity({ card: winner, matchText: generic, listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
+    expect(assessPrintFidelity({ card: pack, matchText: "Luffy ST01-012 3rd Anniversary Tournament Pack", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: winner, matchText: "Luffy ST01-012 3rd Anniversary Winner", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: winner, matchText: "Luffy ST01-012 3rd Anniversary Tournament Pack", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
   });
 
   it("applies the same family ambiguity rules to another One Piece multi-print card", () => {

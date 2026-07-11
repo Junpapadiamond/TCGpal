@@ -71,6 +71,10 @@ function classifyPrintIdentity(
     return result("mismatch", "high", "canonical_print_id_names_sibling");
   }
 
+  if (card.artworkClass) {
+    return classifyResearchedOnePiecePrint(card, text);
+  }
+
   const selectedClass = printClass(card);
   const detectedSpecial = specialPatterns.find(({ pattern }) => pattern.test(text))?.kind ?? null;
   if (detectedSpecial && detectedSpecial !== selectedClass) {
@@ -121,6 +125,129 @@ function classifyPrintIdentity(
     return result("mismatch", "high", "listing_names_generic_alternate_sibling");
   }
   return result("unknown", "low", "listing_does_not_prove_selected_print");
+}
+
+function classifyResearchedOnePiecePrint(
+  card: CardIdentityCandidate,
+  text: string,
+): Omit<PrintFidelityAssessment, "priceGuard"> {
+  const selectedTreatments = new Set(card.treatments ?? []);
+  const observed = detectResearchedPrintFacet(text);
+  const rawSiblings = findOnePieceCatalogVariants(card.cardNumber);
+  const normalizedText = normalizePhrase(text);
+  const selectedRelease = normalizePhrase(card.setName);
+  const selectedReleaseNamed = selectedRelease.length >= 8 && normalizedText.includes(selectedRelease);
+  const namedSiblingRelease = rawSiblings.some((sibling) => {
+    const release = normalizePhrase(sibling.set_name ?? "");
+    return variantKey(sibling) !== card.id
+      && release.length >= 8
+      && release !== selectedRelease
+      && normalizedText.includes(release);
+  });
+  if (namedSiblingRelease && !selectedReleaseNamed) {
+    return result("mismatch", "high", "listing_names_sibling_release");
+  }
+
+  const siblings = rawSiblings.map((sibling) => ({
+    id: variantKey(sibling),
+    artworkClass: sibling.artwork_class ?? null,
+    treatments: sibling.treatments ?? [],
+    exactMarkers: [...(sibling.exact_markers ?? []), sibling.set_name ?? ""].filter(Boolean),
+  }));
+
+  const facetSiblings = siblings.filter((sibling) =>
+    sibling.artworkClass === card.artworkClass
+    && sibling.treatments.join("|") === [...selectedTreatments].join("|"),
+  );
+  const explicitlyNamed = facetSiblings.filter((sibling) =>
+    sibling.exactMarkers.some((marker) => {
+      if (marker.length < 4 || !phraseMarkerMatches(text, marker)) return false;
+      const markerKey = normalizePhrase(marker);
+      return !facetSiblings.some((other) =>
+        other.id !== sibling.id
+        && other.exactMarkers.some((otherMarker) => normalizePhrase(otherMarker) === markerKey),
+      );
+    }),
+  );
+  const selectedExplicitlyNamed = explicitlyNamed.some((sibling) => sibling.id === card.id);
+  const siblingExplicitlyNamed = explicitlyNamed.some((sibling) => sibling.id !== card.id);
+  if (selectedExplicitlyNamed && !siblingExplicitlyNamed) {
+    return result("compatible", "high", "listing_names_unique_exact_print_marker");
+  }
+  if (siblingExplicitlyNamed && !selectedExplicitlyNamed) {
+    return result("mismatch", "high", "listing_names_sibling_exact_print_marker");
+  }
+
+  if (observed.treatment && !selectedTreatments.has(observed.treatment)) {
+    return result("mismatch", "high", "listing_names_different_print_treatment");
+  }
+  if (observed.artworkClass && observed.artworkClass !== card.artworkClass) {
+    return result("mismatch", "high", "listing_names_different_artwork_class");
+  }
+
+  if (observed.treatment && selectedTreatments.has(observed.treatment)) {
+    return result("compatible", "high", "listing_names_selected_print_treatment");
+  }
+
+  if (observed.artworkClass === card.artworkClass) {
+    if (selectedTreatments.size > 0) {
+      const untreatedSibling = siblings.some((sibling) =>
+        sibling.id !== card.id
+        && sibling.artworkClass === card.artworkClass
+        && sibling.treatments.length === 0,
+      );
+      return untreatedSibling
+        ? result("mismatch", "high", "listing_names_untreated_sibling_artwork")
+        : result("unknown", "low", "listing_omits_selected_print_treatment");
+    }
+    const sameFacetSiblings = siblings.filter((sibling) =>
+      sibling.artworkClass === card.artworkClass && sibling.treatments.length === 0,
+    );
+    return sameFacetSiblings.length === 1
+      ? result("compatible", "high", "listing_names_unique_researched_artwork")
+      : result("unknown", "low", "multiple_siblings_share_researched_artwork");
+  }
+
+  if (genericAltPattern.test(text)) {
+    return result("mismatch", "high", "listing_names_generic_alternate_sibling");
+  }
+  return result("unknown", "low", "listing_does_not_prove_selected_print");
+}
+
+function phraseMarkerMatches(text: string, marker: string) {
+  const normalizedMarker = marker.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  return new RegExp(`(?:^|[^a-z0-9])${normalizedMarker}(?:[^a-z0-9]|$)`, "i").test(text);
+}
+
+function detectResearchedPrintFacet(text: string): {
+  artworkClass: CardIdentityCandidate["artworkClass"] | null;
+  treatment: "gold" | "silver" | "red" | null;
+} {
+  if (/\bred\s+super\s+(?:alt|alternate(?:\s+art)?)\b/i.test(text)) {
+    return { artworkClass: "super_alternate", treatment: "red" };
+  }
+  if (/\bsuper\s+(?:alt|alternate(?:\s+art)?)\b/i.test(text)) {
+    return { artworkClass: "super_alternate", treatment: null };
+  }
+  if (/\bwanted(?:\s+poster)?\b|\bposter\s+art\b/i.test(text)) {
+    return { artworkClass: "wanted_poster", treatment: null };
+  }
+  if (/\bmanga(?:\s+(?:art|rare))?\b/i.test(text)) {
+    return { artworkClass: "manga", treatment: null };
+  }
+  if (/\bgold\b/i.test(text)) {
+    return { artworkClass: /\bSP\b|special[\s-]*art/i.test(text) ? "special" : null, treatment: "gold" };
+  }
+  if (/\bsilver\b/i.test(text)) {
+    return { artworkClass: /\bSP\b|special[\s-]*art/i.test(text) ? "special" : null, treatment: "silver" };
+  }
+  if (/\bSP\b|special[\s-]*art/i.test(text)) {
+    return { artworkClass: "special", treatment: null };
+  }
+  if (genericAltPattern.test(text)) {
+    return { artworkClass: "alternate", treatment: null };
+  }
+  return { artworkClass: null, treatment: null };
 }
 
 function classifyPokemonPrintIdentity(
@@ -211,5 +338,18 @@ export function canonicalPrintIdentity(card: CardIdentityCandidate) {
     variantLabel: card.variant ?? null,
     imageUrl: card.imageUrl ?? null,
     catalogVerified: Boolean(bundled) || !isOnePiecePrint(card),
+    artworkClass: card.artworkClass ?? null,
+    treatments: card.treatments ?? [],
+    originalSetCode: card.setCode,
+    releaseName: card.setName,
+    releaseCode: isOnePiecePrint(card) ? null : card.setCode,
+    releaseChannel: card.releaseChannel ?? "unknown",
+    releaseProvenance: card.releaseProvenance ?? (isOnePiecePrint(card) ? "unknown" : "original_set"),
+    competitionTier: card.competitionTier ?? null,
+    collectorAliases: card.collectorAliases ?? [],
+    exactMarkers: card.exactMarkers ?? [],
+    metadataRevision: card.metadataRevision ?? null,
+    tcgplayerProductId: card.tcgplayerProductId ?? null,
+    tcgplayerGroupId: card.tcgplayerGroupId ?? null,
   };
 }

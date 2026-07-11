@@ -182,6 +182,19 @@ export const canonicalPrintIdentitySchema = z.object({
   variantLabel: z.string().nullable(),
   imageUrl: z.string().url().nullable(),
   catalogVerified: z.boolean(),
+  artworkClass: z.enum(["alternate", "manga", "wanted_poster", "super_alternate", "special"]).nullable(),
+  treatments: z.array(z.enum(["gold", "silver", "red"])),
+  originalSetCode: z.string(),
+  releaseName: z.string(),
+  releaseCode: z.string().nullable(),
+  releaseChannel: z.enum(["anniversary", "booster", "event", "premium_booster", "premium_collection", "promo", "tournament", "unknown"]),
+  releaseProvenance: z.enum(["original_set", "reprint", "promotion", "unknown"]),
+  competitionTier: z.enum(["champion", "finalist", "participation", "winner"]).nullable(),
+  collectorAliases: z.array(z.string()),
+  exactMarkers: z.array(z.string()),
+  metadataRevision: z.string().nullable(),
+  tcgplayerProductId: z.number().int().nullable(),
+  tcgplayerGroupId: z.number().int().nullable(),
 });
 
 export const cardIdentityCandidateSchema = z.object({
@@ -194,6 +207,14 @@ export const cardIdentityCandidateSchema = z.object({
   imageUrl: z.string().url().nullable().default(null),
   rarity: z.string().nullable().optional(),
   variant: z.string().nullable().optional(),
+  artworkClass: z.enum(["alternate", "manga", "wanted_poster", "super_alternate", "special"]).nullable().optional(),
+  treatments: z.array(z.enum(["gold", "silver", "red"])).optional(),
+  releaseChannel: z.enum(["anniversary", "booster", "event", "premium_booster", "premium_collection", "promo", "tournament", "unknown"]).optional(),
+  releaseProvenance: z.enum(["original_set", "reprint", "promotion", "unknown"]).optional(),
+  competitionTier: z.enum(["champion", "finalist", "participation", "winner"]).nullable().optional(),
+  collectorAliases: z.array(z.string()).optional(),
+  exactMarkers: z.array(z.string()).optional(),
+  metadataRevision: z.string().nullable().optional(),
   setSymbolUrl: z.string().url().nullable().optional(),
   confidence: confidenceSchema,
   matchReasons: z.array(z.string()),
@@ -209,6 +230,7 @@ export const cardIdentityCandidateSchema = z.object({
   marketAsOf: z.string().nullable().optional(),
   // Crosswalk: canonical card id ↔ TCGplayer product id (null when unmapped).
   tcgplayerProductId: z.number().int().nullable().optional(),
+  tcgplayerGroupId: z.number().int().nullable().optional(),
   printIdentity: canonicalPrintIdentitySchema.optional(),
 });
 
@@ -377,20 +399,20 @@ export const comparisonReportSchema = z.object({
   abstention: comparisonAbstentionSchema.nullable().optional(),
   outcome: z.enum(["best_buy", "inspect_first", "next_moves"]).optional(),
   inspectListingId: z.string().nullable().optional(),
-  identityContractVersion: z.literal(2).optional(),
+  identityContractVersion: z.literal(3).optional(),
   demoMode: z.boolean(),
   generatedAt: z.string(),
 }).superRefine((report, ctx) => {
-  if (report.identityContractVersion !== 2) return;
+  if (report.identityContractVersion !== 3) return;
   if (!report.outcome) {
-    ctx.addIssue({ code: "custom", path: ["outcome"], message: "A v2 report requires an explicit outcome." });
+    ctx.addIssue({ code: "custom", path: ["outcome"], message: "A v3 report requires an explicit outcome." });
   }
   for (const [index, candidate] of report.identityCandidates.entries()) {
     if (!candidate.printIdentity) {
       ctx.addIssue({
         code: "custom",
         path: ["identityCandidates", index, "printIdentity"],
-        message: "A v2 identity candidate requires canonical print identity.",
+        message: "A v3 identity candidate requires canonical print identity.",
       });
     }
   }
@@ -398,7 +420,7 @@ export const comparisonReportSchema = z.object({
     ctx.addIssue({
       code: "custom",
       path: ["confirmedCard", "printIdentity"],
-      message: "A v2 confirmed card requires canonical print identity.",
+      message: "A v3 confirmed card requires canonical print identity.",
     });
   }
   for (const [index, listing] of report.candidates.entries()) {
@@ -406,7 +428,7 @@ export const comparisonReportSchema = z.object({
       ctx.addIssue({
         code: "custom",
         path: ["candidates", index, "printMatch"],
-        message: "A v2 candidate requires complete print assessment fields.",
+        message: "A v3 candidate requires complete print assessment fields.",
       });
     }
     if (listing.eligible && listing.printMatch !== "exact" && listing.printMatch !== "compatible") {

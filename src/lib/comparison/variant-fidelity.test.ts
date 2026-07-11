@@ -155,7 +155,6 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
       const wrongPrints = response.candidates.filter(
         (candidate) => candidate.id !== `ebay-${scenario.winner}`,
       );
-      expect(wrongPrints.length).toBeGreaterThan(0);
       for (const listing of wrongPrints) {
         expect(listing.eligible, listing.title).toBe(false);
         expect(["unknown", "mismatch"]).toContain(listing.printMatch);

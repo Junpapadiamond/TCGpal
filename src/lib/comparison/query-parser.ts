@@ -62,6 +62,19 @@ const GRADING_COMPANY_PATTERN = /\b(psa|bgs|cgc|sgc)\s*(\d{1,2}(?:\.\d)?)\b/i;
 // Longest/most-specific phrases first so "Trainer Gallery" matches whole rather
 // than leaving a dangling "Gallery".
 const VARIANT_KEYWORDS = [
+  "Serial Numbered",
+  "Premium Collection",
+  "Signature",
+  "Stamped",
+  "Tournament Winner",
+  "Tournament Pack",
+  "Treasure Cup",
+  "Championship",
+  "Anniversary",
+  "Red Super Alternate Art",
+  "Super Alternate Art",
+  "Wanted Poster",
+  "Manga Art",
   "Trainer Gallery",
   "Alternate Art",
   "Alt Art",
@@ -70,6 +83,8 @@ const VARIANT_KEYWORDS = [
   "Reverse Holo",
   "ACE SPEC",
   "Promo",
+  "Gold",
+  "Silver",
 ];
 
 // Short rarity codes collectors actually type in a search box ("Luffy sp",
@@ -92,7 +107,19 @@ const RARITY_CODE_KEYWORDS: Array<{ pattern: RegExp; variant: string }> = [
   // One Piece's SP-rarity parallels are the ones collectors call "manga rare"
   // (hand-drawn manga-style art) — the catalog only tags them as "SP CARD", so
   // route the collector term to the same filter value.
-  { pattern: /\bmanga\b/i, variant: "SP" },
+  { pattern: /\bmanga\b/i, variant: "Manga Art" },
+  { pattern: /\bwanted(?:\s+poster)?\b/i, variant: "Wanted Poster" },
+  { pattern: /\bred\s+super\s+(?:alt|alternate(?:\s+art)?)\b/i, variant: "Red Super Alternate Art" },
+  { pattern: /\bsuper\s+(?:alt|alternate(?:\s+art)?)\b/i, variant: "Super Alternate Art" },
+  { pattern: /\bgold\b/i, variant: "Gold" },
+  { pattern: /\bsilver\b/i, variant: "Silver" },
+];
+
+const ONE_PIECE_RELEASE_PHRASES: Array<{ pattern: RegExp; variant: string }> = [
+  { pattern: /\b(?:\d+(?:st|nd|rd|th)\s+)?anniversary\s+winner\b/i, variant: "Tournament Winner" },
+  { pattern: /\bregional\s+champion\b/i, variant: "Regional Champion" },
+  { pattern: /\bregional\s+finalist\b/i, variant: "Regional Finalist" },
+  { pattern: /\bregional\s+participation\b/i, variant: "Regional Participation" },
 ];
 
 // A bare "OP15" / "ST01" / "EB02" (no "-NNN" suffix) names a SET, not one print —
@@ -137,7 +164,15 @@ export function parseCardQuery(query: string): ParsedCardQuery {
   const gradingClaim = grading ? normalizeWhitespace(grading[0]) : "";
 
   let variant = "";
-  for (const keyword of VARIANT_KEYWORDS) {
+  for (const { pattern, variant: candidate } of ONE_PIECE_RELEASE_PHRASES) {
+    const match = remaining.match(pattern);
+    if (match) {
+      variant = candidate;
+      remaining = removeMatch(remaining, match);
+      break;
+    }
+  }
+  for (const keyword of variant ? [] : VARIANT_KEYWORDS) {
     const pattern = new RegExp(`\\b${keyword.replace(/\s+/g, "\\s+")}\\b`, "i");
     const match = remaining.match(pattern);
     if (match) {
@@ -174,7 +209,19 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     }
   }
   if (game === null && alias) game = alias.game;
-  if (game === null && variant === "SP" && ONE_PIECE_CHARACTER_HINT_PATTERN.test(query)) {
+  const onePieceSpecialVariants = new Set([
+    "SP",
+    "Manga Art",
+    "Gold",
+    "Silver",
+    "Wanted Poster",
+    "Super Alternate Art",
+    "Red Super Alternate Art",
+    "Signature",
+    "Serial Numbered",
+    "Stamped",
+  ]);
+  if (game === null && onePieceSpecialVariants.has(variant) && ONE_PIECE_CHARACTER_HINT_PATTERN.test(query)) {
     game = "onePiece";
   }
 

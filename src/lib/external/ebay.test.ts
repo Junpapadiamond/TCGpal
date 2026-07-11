@@ -8,6 +8,8 @@ import {
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
 import type { CardIdentityCandidate } from "@/lib/schemas";
+import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
+import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 
 describe("eBay URL boundary", () => {
   it("extracts allowlisted eBay item IDs", () => {
@@ -220,6 +222,52 @@ describe("eBay active-listing search", () => {
     const captured: { searchUrl?: string } = {};
     await searchEbayAlternatives(spCard, buyer, searchFetcher(captured));
     expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 P4 SP");
+  });
+
+  it.each([
+    ["OP11-118_p2", "Monkey.D.Luffy OP11-118 P2 manga"],
+    ["OP05-119_p7", "Monkey.D.Luffy OP05-119 P7 silver"],
+    ["OP05-119_p8", "Monkey.D.Luffy OP05-119 P8 gold"],
+    ["OP13-118_p4", "Monkey.D.Luffy OP13-118 P4 wanted poster"],
+    ["OP11-119_p2", "Koby OP11-119 P2 treasure cup"],
+    ["ST01-012_p6", "Monkey.D.Luffy ST01-012 P6 tournament winner"],
+    ["OP01-016_p2", "Nami OP01-016 P2 premium collection"],
+  ])("uses verified semantic aliases in the exact-print query for %s", async (printId, expectedQuery) => {
+    const print = findOnePieceCatalogVariant(printId);
+    if (!print) throw new Error(`Missing bundled print ${printId}.`);
+    const exactCard = mapOnePieceCardToIdentity(print, { confidence: "high", matchReasons: [] });
+    const captured: { searchUrl?: string } = {};
+
+    await searchEbayAlternatives(exactCard, buyer, searchFetcher(captured));
+
+    expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe(expectedQuery);
+  });
+
+  it("continues to a semantic fallback when the first query returns only a sibling print", async () => {
+    const print = findOnePieceCatalogVariant("ST01-012_p6")!;
+    const winner = mapOnePieceCardToIdentity(print, { confidence: "high", matchReasons: [] });
+    const searchQueries: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        const query = new URL(url).searchParams.get("q") ?? "";
+        searchQueries.push(query);
+        const exact = !query.includes(" P6 ");
+        return { ok: true, status: 200, json: async () => ({ itemSummaries: [{
+          itemId: exact ? "winner" : "pack",
+          title: exact ? "Luffy ST01-012 3rd Anniversary Winner" : "Luffy ST01-012 3rd Anniversary Tournament Pack",
+          price: { value: "100.00", currency: "USD" },
+        }] }) } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(winner, buyer, fetcher);
+    expect(searchQueries.length).toBeGreaterThan(1);
+    expect(results.map((listing) => listing.id)).toContain("ebay-winner");
   });
 
   it("broadens to the plain card query when the variant-token search finds no USD listings", async () => {

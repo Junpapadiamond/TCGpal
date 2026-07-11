@@ -219,6 +219,15 @@ const en = {
       listing_names_generic_alternate_sibling: "The listing points to a generic alternate sibling, not the selected print.",
       listing_names_different_print_class: "The listing names a different print class.",
       listing_names_sibling_release: "The listing names a different release of this card.",
+      listing_names_unique_exact_print_marker: "The listing names a marker unique to the selected print.",
+      listing_names_sibling_exact_print_marker: "The listing names a marker unique to a sibling print.",
+      listing_names_different_print_treatment: "The listing names a different foil or color treatment.",
+      listing_names_different_artwork_class: "The listing names a different artwork class.",
+      listing_names_selected_print_treatment: "The listing names the selected print treatment.",
+      listing_names_untreated_sibling_artwork: "The listing names the untreated sibling artwork, not the selected treatment.",
+      listing_omits_selected_print_treatment: "The listing does not state the selected print treatment.",
+      listing_names_unique_researched_artwork: "The stated artwork is unique for this card number and release.",
+      multiple_siblings_share_researched_artwork: "Multiple researched releases share this artwork description.",
       canonical_print_id_names_sibling: "The listing names a different canonical print ID.",
       price_far_below_exact_print_anchor: "The price is far below the exact-print reference and needs extra verification.",
       price_below_exact_print_review_band: "The price is below the exact-print review band and needs inspection.",
@@ -600,6 +609,15 @@ const zh: Dict = {
       listing_names_generic_alternate_sibling: "商品指向笼统的异画版本，并非已选版本。",
       listing_names_different_print_class: "商品写的是另一种版本类型。",
       listing_names_sibling_release: "商品写的是这张卡的另一个发行版本。",
+      listing_names_unique_exact_print_marker: "商品写出了只属于已选版本的明确标记。",
+      listing_names_sibling_exact_print_marker: "商品写出了只属于同编号另一版本的标记。",
+      listing_names_different_print_treatment: "商品写的是不同的闪膜或颜色工艺。",
+      listing_names_different_artwork_class: "商品写的是不同的卡图类型。",
+      listing_names_selected_print_treatment: "商品明确写出了已选版本的特殊工艺。",
+      listing_names_untreated_sibling_artwork: "商品写的是未采用该特殊工艺的同图版本。",
+      listing_omits_selected_print_treatment: "商品没有写明已选版本的特殊工艺。",
+      listing_names_unique_researched_artwork: "该卡图与发行信息在此编号下可以唯一确认。",
+      multiple_siblings_share_researched_artwork: "多个已核对发行版本共用这类卡图描述。",
       canonical_print_id_names_sibling: "商品写的是另一个标准版本编号。",
       price_far_below_exact_print_anchor: "价格远低于该确切版本的参考价，需要额外核验。",
       price_below_exact_print_review_band: "价格低于该确切版本的核验区间，需要先检查。",
@@ -818,7 +836,7 @@ function subscribe(callback: () => void): () => void {
   };
 }
 
-function persistLang(lang: Lang) {
+export function setLanguage(lang: Lang) {
   currentLang = lang;
   try {
     localStorage.setItem(STORAGE_KEY, lang);
@@ -830,7 +848,7 @@ function persistLang(lang: Lang) {
 
 export function useLang(): { lang: Lang; setLang: (lang: Lang) => void } {
   const lang = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  return { lang, setLang: persistLang };
+  return { lang, setLang: setLanguage };
 }
 
 // Mounted once near the root; keeps the <html lang> attribute in sync for

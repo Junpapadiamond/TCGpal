@@ -1,6 +1,8 @@
 import { z } from "zod";
 import type { CardIdentityCandidate } from "@/lib/schemas";
 import { findOnePieceCatalogCard, findOnePieceCatalogVariants, onePieceCatalog } from "./one-piece-catalog";
+import type { OnePieceArtworkClass, OnePiecePrintTreatment } from "./one-piece-print-metadata";
+import { deriveOnePieceReleaseMetadata, ONE_PIECE_PRINT_METADATA_REVISION } from "./one-piece-print-metadata";
 
 // OPTCG API (https://www.optcgapi.com) is a free, no-key community catalog for the
 // One Piece Trading Card Game. It exposes static-ish JSON dumps plus per-card
@@ -33,6 +35,12 @@ const onePieceCardSchema = z.object({
   // Human label for the art variation ("Alternate Art (P1)", "Treasure Rare", ...);
   // null/absent for the base print.
   variant: z.string().nullable().optional(),
+  artwork_class: z.custom<OnePieceArtworkClass>().nullable().optional(),
+  treatments: z.array(z.custom<OnePiecePrintTreatment>()).optional(),
+  collector_aliases: z.array(z.string()).optional(),
+  exact_markers: z.array(z.string()).optional(),
+  tcgplayer_product_id: z.number().int().nullable().optional(),
+  tcgplayer_group_id: z.number().int().nullable().optional(),
   card_color: z.string().nullable().optional(),
   card_type: z.string().nullable().optional(),
   card_text: z.string().nullable().optional(),
@@ -362,6 +370,8 @@ export function mapOnePieceCardToIdentity(
 ): CardIdentityCandidate {
   const imageUrl = safeImageUrl(card.card_image);
   const market = toMarketPrice(card);
+  const release = deriveOnePieceReleaseMetadata(card.set_name ?? deriveSetCode(card), variantKey(card));
+  const researched = Boolean(card.artwork_class);
 
   return {
     // Per-print id so alternate arts of one number stay distinct in the picker and
@@ -375,10 +385,20 @@ export function mapOnePieceCardToIdentity(
     imageUrl,
     rarity: card.rarity ?? null,
     variant: card.variant ?? null,
+    artworkClass: card.artwork_class ?? null,
+    treatments: card.treatments ?? [],
+    releaseChannel: release.channel,
+    releaseProvenance: release.provenance,
+    competitionTier: release.competitionTier,
+    collectorAliases: card.collector_aliases ?? [],
+    exactMarkers: card.exact_markers ?? [],
+    metadataRevision: researched ? ONE_PIECE_PRINT_METADATA_REVISION : null,
     confidence: options.confidence,
     matchReasons: options.matchReasons,
     marketLow: market,
     marketMid: market,
     marketHigh: market,
+    tcgplayerProductId: card.tcgplayer_product_id ?? null,
+    tcgplayerGroupId: card.tcgplayer_group_id ?? null,
   };
 }
