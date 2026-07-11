@@ -83,6 +83,41 @@ describe("eBay URL boundary", () => {
       resetEbayTokenCacheForTests();
     }
   });
+
+  it("treats a negative eBay feedback sentinel as unknown", async () => {
+    process.env.EBAY_CLIENT_ID = "test-id";
+    process.env.EBAY_CLIENT_SECRET = "test-secret";
+    resetEbayTokenCacheForTests();
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          itemId: "123456789012",
+          title: "Venusaur Base Set 15/102",
+          price: { value: "80.00", currency: "USD" },
+          seller: { feedbackScore: -1 },
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    try {
+      const listing = await getEbayListingByUrl(
+        "https://www.ebay.com/itm/Venusaur/123456789012",
+        { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
+        fetcher,
+      );
+      expect(listing.seller.feedbackCount).toBeNull();
+    } finally {
+      delete process.env.EBAY_CLIENT_ID;
+      delete process.env.EBAY_CLIENT_SECRET;
+      resetEbayTokenCacheForTests();
+    }
+  });
 });
 
 describe("eBay active-listing search", () => {

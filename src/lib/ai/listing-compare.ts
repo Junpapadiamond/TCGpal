@@ -352,7 +352,7 @@ export async function runListingComparison(
     webDiscoveries: webDiscovery.results,
     abstention,
     outcome,
-    inspectListingId: inspectLead?.id ?? null,
+    inspectListingId: outcome === "inspect_first" ? inspectLead?.id ?? null : null,
     identityContractVersion: 3,
     demoMode,
     generatedAt,
@@ -701,11 +701,12 @@ async function identifyCards(
     // selection cannot inherit the comparison route's much larger time budget: a
     // transient rate-limit/network blip should not look like "this card doesn't
     // exist". Responses are cached for an hour.
-    const result = await searchPokemonWithRetry(
+    let result = await searchPokemonWithRetry(
       {
         query: searchName,
         cardNumber: request.cardHint.cardNumber,
         setHint: request.cardHint.setCode,
+        relaxed: searchName.trim().split(/\s+/).length > 1,
         // A known collector number resolves to one specific print, so a small
         // page is enough; a name-only search (e.g. "pikachu") should return
         // every print the catalog has, not a truncated top slice — pageSize
@@ -716,6 +717,25 @@ async function identifyCards(
       },
       warnings,
     );
+
+    if ((!result || result.cards.length === 0) && !request.cardHint.cardNumber && !request.cardHint.setCode) {
+      const corrected = await parseCardQueryWithAi(searchName, trace);
+      const correctedName = corrected?.name.trim() ?? "";
+      if (correctedName && normalizeWords(correctedName) !== normalizeWords(searchName)) {
+        result = await searchPokemonWithRetry(
+          { query: correctedName, relaxed: false, pageSize: 250, fetcher, timeoutMs: 8000 },
+          warnings,
+        );
+        if (result?.cards.length) {
+          trace.push({
+            step: "card_identification",
+            actor: "Pokémon catalog spelling recovery",
+            summary: `No catalog cards matched "${searchName}"; retried with "${correctedName}" and found ${result.cards.length} possible identities.`,
+            status: "complete",
+          });
+        }
+      }
+    }
 
     if (result) {
       const apiMatches = result.cards

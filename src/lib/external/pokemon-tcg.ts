@@ -66,6 +66,7 @@ type SearchPokemonCardsOptions = {
   query: string;
   cardNumber?: string;
   setHint?: string;
+  relaxed?: boolean;
   pageSize?: number;
   apiKey?: string;
   fetcher?: typeof fetch;
@@ -94,6 +95,7 @@ export async function searchPokemonCards({
   query,
   cardNumber = "",
   setHint = "",
+  relaxed = true,
   pageSize = 8,
   apiKey = process.env.POKEMON_TCG_API_KEY,
   fetcher = fetch,
@@ -106,6 +108,7 @@ export async function searchPokemonCards({
     name: normalizedQuery,
     cardNumber,
     setHint,
+    relaxed,
   });
   let lastResult: PokemonTcgSearchResult | null = null;
 
@@ -257,10 +260,12 @@ function buildPokemonCardQueries({
   name,
   cardNumber,
   setHint,
+  relaxed,
 }: {
   name: string;
   cardNumber: string;
   setHint: string;
+  relaxed: boolean;
 }) {
   const number = parseCollectorNumber(cardNumber);
   const setFilter = buildSetFilter(setHint);
@@ -288,7 +293,7 @@ function buildPokemonCardQueries({
   // precise tiers above return nothing (searchPokemonCards stops at the first
   // non-empty result), so exact matches stay fast and precise. Skipped for raw
   // `field:value` queries the caller passed through verbatim.
-  if (!name.includes(":")) {
+  if (relaxed && !name.includes(":")) {
     const tokens = nameTokens(name);
     const wildcard = wildcardAllTokens(tokens);
     const loose = looseSingleToken(tokens);

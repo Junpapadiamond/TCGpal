@@ -461,7 +461,7 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     active: !item.itemEndDate || new Date(item.itemEndDate).getTime() > Date.now(),
     seller: {
       feedbackPercentage: numberOrNull(item.seller?.feedbackPercentage),
-      feedbackCount: item.seller?.feedbackScore ?? null,
+      feedbackCount: nonNegativeIntegerOrNull(item.seller?.feedbackScore),
       returnsAccepted: item.returnTerms?.returnsAccepted ?? null,
       topRated: item.topRatedBuyingExperience ?? null,
       buyerProtection: true,
@@ -469,6 +469,10 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     },
     evidence,
   };
+}
+
+function nonNegativeIntegerOrNull(value: number | undefined): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }
 
 async function getEbayItemDetail(

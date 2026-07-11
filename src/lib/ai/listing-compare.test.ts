@@ -210,6 +210,28 @@ describe("listing comparison agent", () => {
     expect(response.outcome).toBe("inspect_first");
   });
 
+  it("returns a valid Best Buy report when an unresolved listing exists beside a recommendation", async () => {
+    const response = await runListingComparison(
+      {
+        ...request,
+        confirmedCardId: "swsh7-215",
+        manualCandidates: [{
+          marketplace: "Mercari",
+          url: "",
+          title: "Umbreon VMAX Evolving Skies Near Mint",
+          price: 450,
+          shipping: 0,
+          claimedCondition: "Near Mint",
+        }],
+      },
+      { fetcher },
+    );
+
+    expect(response.outcome).toBe("best_buy");
+    expect(response.rankedChoices.length).toBeGreaterThan(0);
+    expect(response.inspectListingId).toBeNull();
+  });
+
   it("does not run expanded web discovery unless the buyer opts in", async () => {
     vi.stubEnv("EXA_API_KEY", "exa-test");
     vi.stubEnv("TAVILY_API_KEY", "tavily-test");
@@ -650,6 +672,45 @@ describe("listing comparison agent", () => {
     expect(response.identityCandidates).toHaveLength(2);
     expect(fetch).not.toHaveBeenCalled();
     expect(response.trace.some((entry) => entry.actor === "Smart query parser")).toBe(true);
+  });
+
+  it("hero search box: corrects a misspelled card name only after catalog search finds nothing", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    vi.stubEnv("OPENAI_WIRE_API", "chat");
+    vi.stubEnv("OPENAI_BASE_URL", "https://ai.test/v1");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ game: "pokemon", name: "Venusaur", cardNumber: "", setCode: "", language: "", variant: "", gradingClaim: "" }) } }],
+    }))));
+    const catalogQueries: string[] = [];
+    const typoFetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      const query = url.searchParams.get("q") ?? "";
+      catalogQueries.push(query);
+      if (query === 'name:"Venusaur"') {
+        return new Response(JSON.stringify({
+          data: [{ id: "base1-15", name: "Venusaur", number: "15", set: { id: "base1", name: "Base", printedTotal: 102 } }],
+          count: 1,
+          totalCount: 1,
+        }));
+      }
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        query: "venasuar",
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      { fetcher: typoFetcher },
+    );
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates[0]?.name).toBe("Venusaur");
+    expect(catalogQueries[0]).toBe('name:"venasuar"');
+    expect(catalogQueries).toContain('name:"Venusaur"');
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it("hero search box: structured regex parses skip the AI fallback", async () => {
