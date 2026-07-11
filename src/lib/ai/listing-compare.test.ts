@@ -630,6 +630,28 @@ describe("listing comparison agent", () => {
     expect(trace.some((entry) => entry.actor.toString().includes("AI query parser"))).toBe(true);
   });
 
+  it("hero search box: a simple card name reaches identity confirmation without waiting for AI", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("simple card names must not call the AI provider");
+    }));
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        query: "Lugia",
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      { fetcher },
+    );
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates).toHaveLength(2);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(response.trace.some((entry) => entry.actor === "Smart query parser")).toBe(true);
+  });
+
   it("hero search box: structured regex parses skip the AI fallback", async () => {
     vi.stubEnv("OPENAI_API_KEY", "sk-test");
     vi.stubGlobal("fetch", vi.fn());
@@ -848,7 +870,7 @@ describe("listing comparison agent", () => {
 
   it("surfaces a lookup-unavailable warning (and retries) instead of a silent 'no match'", async () => {
     // The Pokémon catalog API is down: a transient failure must not look like
-    // "this card doesn't exist". It should retry (3 attempts with backoff), then
+    // "this card doesn't exist". It should retry once, then
     // report the real reason.
     let pokemonCalls = 0;
     const failing = (async (input: RequestInfo | URL) => {
@@ -870,7 +892,7 @@ describe("listing comparison agent", () => {
 
     expect(response.status).toBe("needs_confirmation");
     expect(response.identityCandidates).toEqual([]);
-    expect(pokemonCalls).toBe(3); // one retry on transient failure
+    expect(pokemonCalls).toBe(2);
     expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(true);
   });
 
