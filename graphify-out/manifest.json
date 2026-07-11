@@ -495,8 +495,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1783791776.3994954,
-    "ast_hash": "9aed7ef0fa772f115094a6e7137ea732",
+    "mtime": 1783798889.750078,
+    "ast_hash": "ef4b714848e38960e15934838cb3f1c3",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -822,6 +822,11 @@
   "output/playwright/metadata-search-zh-mobile.png": {
     "mtime": 1783792902.215395,
     "ast_hash": "58109945a034ac83d1f54ed82b07d391",
+    "semantic_hash": ""
+  },
+  "PROGRESS.md": {
+    "mtime": 1783798862.401055,
+    "ast_hash": "ae560406f64856ea9ffc8d957bd690dd",
     "semantic_hash": ""
   }
 }
