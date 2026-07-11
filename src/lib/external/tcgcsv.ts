@@ -139,12 +139,19 @@ export async function resolveTcgplayerProductVariants(
   if (!wantedPrefix) return [];
 
   const candidates = products.filter((product) => {
-    const number = product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "";
+    const number = productNumber(product);
     return collectorNumberKey(number) === wantedNumber || collectorPrefixKey(number) === wantedPrefix;
   });
 
   const nameMatches = candidates.filter((product) => productNameMatchesCard(product.cleanName || product.name, card.name));
-  const matches = nameMatches.length > 0 ? nameMatches : candidates.length === 1 ? candidates : [];
+  const exactNumberMatches = candidates.filter(
+    (product) => collectorNumberKey(productNumber(product)) === wantedNumber,
+  );
+  const matches = nameMatches.length > 0
+    ? nameMatches
+    : exactNumberMatches.length === 1
+      ? exactNumberMatches
+      : [];
   if (card.tcgplayerProductId) {
     return matches
       .filter((product) => product.productId === card.tcgplayerProductId)
@@ -232,13 +239,14 @@ async function findTcgplayerGroup(
   const wanted = normalize(setName);
   if (!wanted) return null;
 
-  // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies"), so
-  // containment of the catalog set name is the primary match.
-  const exact = groups.find((group) => {
-    const name = normalize(group.name);
-    return name === wanted || name.endsWith(wanted) || name.includes(wanted);
-  });
-  if (exact) return exact;
+  // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies").
+  // Rank every containment candidate so a short name such as "Base" cannot
+  // select "Scarlet & Violet Base Set" merely because it appears first.
+  const contained = groups
+    .map((group) => ({ group, tier: containmentTier(normalize(group.name), wanted) }))
+    .filter((entry) => entry.tier > 0)
+    .sort((a, b) => b.tier - a.tier || normalize(a.group.name).length - normalize(b.group.name).length);
+  if (contained[0]) return contained[0].group;
 
   const bestTokens = groups
     .map((group) => ({ group, overlap: nameOverlap(group.name, setName) }))
@@ -288,6 +296,10 @@ function collectorNumberKey(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9/]/g, "").split("/").map(stripLeadingZeros).join("/");
 }
 
+function productNumber(product: TcgcsvProduct) {
+  return product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "";
+}
+
 function collectorPrefixKey(value: string) {
   return collectorNumberKey(value).split("/")[0] ?? "";
 }
@@ -299,6 +311,12 @@ function stripLeadingZeros(segment: string) {
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function containmentTier(groupName: string, wanted: string) {
+  if (groupName === wanted) return 3;
+  if (groupName.endsWith(wanted)) return 2;
+  return groupName.includes(wanted) ? 1 : 0;
 }
 
 function nameOverlap(left: string, right: string) {
