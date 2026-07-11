@@ -440,12 +440,17 @@ export async function applyQueryParserWithAi(request: ComparisonRequest, trace: 
   if (!query) return request;
 
   const parsed = parseCardQuery(query);
-  if (hasStructuredQuerySignal(parsed)) {
+  if (hasStructuredQuerySignal(parsed) || isSimpleCardNameQuery(parsed)) {
     return applyParsedCardQuery(request, query, parsed, trace, "Smart query parser");
   }
 
   const aiParsed = await parseCardQueryWithAi(query, trace);
   return applyParsedCardQuery(request, query, aiParsed ?? parsed, trace, aiParsed ? "AI query parser" : "Smart query parser");
+}
+
+function isSimpleCardNameQuery(parsed: ParsedCardQuery) {
+  const words = parsed.name.trim().split(/\s+/).filter(Boolean);
+  return words.length > 0 && words.length <= 2;
 }
 
 function applyParsedCardQuery(
@@ -671,7 +676,8 @@ async function identifyCards(
   // limits), so resolve real card identities whenever we have a usable query.
   if (searchName.length >= 2) {
     // pokemontcg.io's first (uncached) response can take 5-8s because it carries
-    // pricing payloads, so allow more headroom than the 8s default. Retry once: a
+    // pricing payloads. Retry once, but keep each attempt bounded so identity
+    // selection cannot inherit the comparison route's much larger time budget: a
     // transient rate-limit/network blip should not look like "this card doesn't
     // exist". Responses are cached for an hour.
     const result = await searchPokemonWithRetry(
@@ -685,7 +691,7 @@ async function identifyCards(
         // 250 is the Pokémon TCG API's own maximum.
         pageSize: request.cardHint.cardNumber ? 12 : 250,
         fetcher,
-        timeoutMs: 15000,
+        timeoutMs: 8000,
       },
       warnings,
     );
@@ -733,8 +739,8 @@ async function identifyCards(
 // "lookup unavailable" from a genuine empty result.
 // R5: the catalog's cold-start hiccup must not surface as "card catalog
 // temporarily unavailable" on a buyer's very first search — retry transient
-// failures with exponential backoff before giving up.
-const CATALOG_RETRY_DELAYS_MS = [400, 900];
+// failures once after a short backoff before giving up.
+const CATALOG_RETRY_DELAYS_MS = [400];
 
 async function searchPokemonWithRetry(
   options: Parameters<typeof searchPokemonCards>[0],
