@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { applyQueryParser, applyQueryParserWithAi, runListingComparison } from "@/lib/ai/listing-compare";
 import { cardIdentityCandidateSchema, comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
+import { clearComparisonCache } from "@/lib/comparison/report-cache";
+import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
 
 // Keep the orchestration tests hermetic: stub the Pokémon catalog response so we
 // never hit the live API. eBay/PriceCharting short-circuit on missing env creds
@@ -96,6 +98,11 @@ const request: ComparisonRequest = {
   webDiscoveryMode: "off",
 };
 
+beforeEach(() => {
+  clearComparisonCache();
+  clearCrosswalkCache();
+});
+
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
@@ -147,9 +154,10 @@ describe("listing comparison agent", () => {
     expect(response.rankedChoices.length).toBe(4);
     expect(response.rankedChoices[0]?.role).toBe("best_value");
     expect(response.candidates.some((candidate) => candidate.demo)).toBe(false);
+    expect(response.candidates.filter((candidate) => candidate.userSupplied).every((candidate) => candidate.imageUrl === null)).toBe(true);
   });
 
-  it("uses labeled demo inventory only for a pure card search with no live rows", async () => {
+  it("returns next moves instead of fabricated inventory when a pure search has no live rows", async () => {
     const pureSearch: ComparisonRequest = {
       ...request,
       sourceListing: {
@@ -166,10 +174,40 @@ describe("listing comparison agent", () => {
 
     const response = await runListingComparison(pureSearch, { fetcher });
 
-    expect(response.demoMode).toBe(true);
-    expect(response.candidates.length).toBeGreaterThan(0);
-    expect(response.candidates.every((candidate) => candidate.demo)).toBe(true);
-    expect(response.candidates.every((candidate) => candidate.marketComparable === false)).toBe(true);
+    expect(response.demoMode).toBe(false);
+    expect(response.candidates).toHaveLength(0);
+    expect(response.rankedChoices).toHaveLength(0);
+    expect(response.outcome).toBe("next_moves");
+  });
+
+  it("never ranks pasted or manual Pokémon listings that omit the confirmed collector number", async () => {
+    const response = await runListingComparison(
+      {
+        ...request,
+        confirmedCardId: "swsh7-215",
+        sourceListing: {
+          ...request.sourceListing,
+          title: "Umbreon VMAX Evolving Skies raw card",
+          price: 500,
+          shipping: 0,
+        },
+        manualCandidates: [{
+          marketplace: "Mercari",
+          url: "",
+          title: "Umbreon VMAX Evolving Skies Near Mint",
+          price: 450,
+          shipping: 0,
+          claimedCondition: "Near Mint",
+        }],
+      },
+      { fetcher },
+    );
+
+    expect(response.candidates).toHaveLength(2);
+    expect(response.candidates.every((candidate) => candidate.printMatch === "unknown")).toBe(true);
+    expect(response.candidates.every((candidate) => !candidate.eligible)).toBe(true);
+    expect(response.rankedChoices).toHaveLength(0);
+    expect(response.outcome).toBe("inspect_first");
   });
 
   it("does not run expanded web discovery unless the buyer opts in", async () => {
@@ -672,6 +710,7 @@ describe("listing comparison agent", () => {
     const marketplaces = response.candidates.map((candidate) => candidate.marketplace);
     expect(marketplaces).toContain("TCGplayer");
     expect(marketplaces).toContain("Mercari");
+    expect(response.candidates.filter((candidate) => candidate.userSupplied).every((candidate) => candidate.imageUrl === null)).toBe(true);
     expect(response.trace.some((entry) => entry.actor === "Cross-platform ledger")).toBe(true);
   });
 
@@ -686,9 +725,7 @@ describe("listing comparison agent", () => {
 
     const prints = findOnePieceCatalogVariants("OP01-016");
     const spPrint = prints.find((print) => deriveVariantIntent(print) === "sp");
-    const basePrint = prints.find((print) => deriveVariantIntent(print) === "base");
     expect(spPrint).toBeDefined();
-    expect(basePrint).toBeDefined();
 
     const searchQueries: string[] = [];
     const spFetcher = (async (input: RequestInfo | URL) => {
@@ -743,16 +780,13 @@ describe("listing comparison agent", () => {
 
       // The listing search led with the SP token (the other captured query is the
       // separate ePID-consensus metadata leg, which stays a plain keyword probe).
-      expect(searchQueries).toContain("Nami OP01-016 SP");
+      expect(searchQueries).toContain("Nami OP01-016 P4 SP");
 
       expect(response.demoMode).toBe(false);
       expect(response.rankedChoices).toHaveLength(0);
-      expect(response.abstention).toBeTruthy();
-      expect(response.abstention?.reason).toContain("SP");
-      expect(response.abstention?.foundCount).toBeGreaterThan(0);
-      expect(response.abstention?.variantExcludedCount).toBeGreaterThan(0);
-      expect(response.abstention?.suggestedCardId).toBe(variantKey(basePrint!));
-      expect(response.abstention?.suggestedLabel).toBeTruthy();
+      expect(response.outcome).toBe("next_moves");
+      expect(response.inspectListingId).toBeNull();
+      expect(response.candidates[0]?.printMatch).toBe("mismatch");
     } finally {
       delete process.env.EBAY_CLIENT_ID;
       delete process.env.EBAY_CLIENT_SECRET;

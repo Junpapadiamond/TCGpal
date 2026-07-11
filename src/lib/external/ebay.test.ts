@@ -219,7 +219,7 @@ describe("eBay active-listing search", () => {
   it("searches a One Piece SP print with the variant token first", async () => {
     const captured: { searchUrl?: string } = {};
     await searchEbayAlternatives(spCard, buyer, searchFetcher(captured));
-    expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 SP");
+    expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 P4 SP");
   });
 
   it("broadens to the plain card query when the variant-token search finds no USD listings", async () => {
@@ -232,7 +232,7 @@ describe("eBay active-listing search", () => {
       if (url.includes("/item_summary/search")) {
         searchUrls.push(url);
         const q = new URL(url).searchParams.get("q") ?? "";
-        if (q.endsWith(" SP")) {
+        if (q.endsWith(" P4 SP") || q.endsWith(" SP")) {
           return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
         }
         return {
@@ -248,6 +248,7 @@ describe("eBay active-listing search", () => {
 
     const results = await searchEbayAlternatives(spCard, buyer, fetcher);
     expect(searchUrls.map((url) => new URL(url).searchParams.get("q"))).toEqual([
+      "Nami OP01-016 P4 SP",
       "Nami OP01-016 SP",
       "Nami OP01-016",
     ]);
@@ -264,7 +265,7 @@ describe("eBay active-listing search", () => {
     // variant token still leads, with the raw override as the fallback attempt.
     const overridden: { searchUrl?: string } = {};
     await searchEbayAlternatives(spCard, buyer, searchFetcher(overridden), "Nami OP01-016 custom");
-    expect(new URL(overridden.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 custom SP");
+    expect(new URL(overridden.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 custom P4 SP");
   });
 
   it("uses the cheapest shipping option, not the first, so landed cost matches the listing", async () => {
@@ -505,7 +506,48 @@ describe("eBay catalog ePID resolution", () => {
     await expect(resolveEbayProductForCard(card, buyer, fetcher)).resolves.toBeNull();
   });
 
-  it("falls back to Browse ePID consensus when Catalog metadata is not entitled", async () => {
+  it("rejects an ePID whose catalog aspects identify a sibling Nami print", async () => {
+    const selected = {
+      id: "OP01-016_p4",
+      name: "Nami",
+      setName: "Awakening Of The New Era",
+      setCode: "OP-05",
+      cardNumber: "OP01-016",
+      language: "EN",
+      imageUrl: null,
+      rarity: "SP CARD",
+      variant: "Special Art (P4)",
+      confidence: "high",
+      matchReasons: [],
+    } as CardIdentityCandidate;
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            productSummaries: [{
+              epid: "wrong-alt",
+              title: "Nami OP01-016 Alternate Art P2",
+              localizedAspects: [
+                { name: "Parallel/Variant", value: "Alternate Art (P2)" },
+                { name: "Card Number", value: "OP01-016" },
+              ],
+            }],
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    await expect(resolveEbayProductForCard(selected, buyer, fetcher)).resolves.toBeNull();
+  });
+
+  it("does not synthesize an ePID from Browse-title consensus when Catalog aspects are unavailable", async () => {
     const fetcher = (async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/identity/v1/oauth2/token")) {
@@ -530,10 +572,32 @@ describe("eBay catalog ePID resolution", () => {
       throw new Error(`unexpected fetch: ${url}`);
     }) as unknown as typeof fetch;
 
-    const result = await resolveEbayProductForCard(card, buyer, fetcher);
+    await expect(resolveEbayProductForCard(card, buyer, fetcher)).resolves.toBeNull();
+  });
 
-    expect(result?.epid).toBe("24048923237");
-    expect(result?.matchReasons.some((reason) => reason.includes("Browse"))).toBe(true);
+  it("rejects a title-only Catalog ePID when no localized aspects prove the print", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/commerce/catalog/") && url.includes("/product_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            productSummaries: [{
+              epid: "title-only",
+              title: "Umbreon VMAX Evolving Skies 215/203",
+              localizedAspects: [],
+            }],
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    await expect(resolveEbayProductForCard(card, buyer, fetcher)).resolves.toBeNull();
   });
 
   it("does not infer a Browse ePID when high-confidence listings disagree", async () => {

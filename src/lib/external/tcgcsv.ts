@@ -109,16 +109,16 @@ export async function resolveTcgplayerProduct(
   if (matches.length === 0) return null;
   const preferredProductId = options.preferredProductId ?? card.tcgplayerProductId ?? null;
   if (preferredProductId) {
-    return matches.find((product) => product.productId === preferredProductId) ?? matches[0];
+    return matches.find((product) => product.productId === preferredProductId) ?? null;
   }
-  // Anchor to the print the buyer actually confirmed: an alternate-art / parallel
-  // card must not be priced against the (cheaper) base SKU, and a base card must
-  // not be priced against the pricier parallel. `variant` is set only for alt-art
-  // prints. Falls back to the best available product when that class isn't listed
-  // separately, so a missing parallel SKU still yields a (base) anchor, never null.
+  // Anchor to the print class the buyer confirmed. Ambiguous products and a
+  // missing requested variant return null so a sibling SKU never supplies the
+  // selected print's market anchor.
   const wantsAlt = Boolean(card.variant);
   const sameClass = matches.filter((product) => isParallelProduct(product) === wantsAlt);
-  return sameClass[0] ?? matches[0];
+  if (sameClass.length === 1) return sameClass[0];
+  if (!card.variant && matches.length === 1) return matches[0];
+  return null;
 }
 
 export async function resolveTcgplayerProductVariants(
@@ -257,7 +257,7 @@ async function tcgcsvFetch(url: URL, fetcher: typeof fetch, revalidateSeconds: n
     return await fetcher(url, {
       // TCGCSV rejects requests without a User-Agent with 401.
       headers: {
-        "User-Agent": "TCGpal/0.1 (+https://tcgpal.vercel.app)",
+        "User-Agent": "TCGlens/0.1 (+https://tcgpal.vercel.app)",
         Accept: "application/json, text/plain",
       },
       next: { revalidate: revalidateSeconds },

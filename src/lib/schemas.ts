@@ -171,6 +171,19 @@ export const comparisonRequestSchema = z.object({
   confirmedCardId: z.string().trim().optional(),
 });
 
+export const canonicalPrintIdentitySchema = z.object({
+  canonicalPrintId: z.string(),
+  familyId: z.string(),
+  game: tcgGameSchema,
+  setName: z.string(),
+  setCode: z.string(),
+  collectorNumber: z.string(),
+  rarity: z.string().nullable(),
+  variantLabel: z.string().nullable(),
+  imageUrl: z.string().url().nullable(),
+  catalogVerified: z.boolean(),
+});
+
 export const cardIdentityCandidateSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -196,7 +209,11 @@ export const cardIdentityCandidateSchema = z.object({
   marketAsOf: z.string().nullable().optional(),
   // Crosswalk: canonical card id ↔ TCGplayer product id (null when unmapped).
   tcgplayerProductId: z.number().int().nullable().optional(),
+  printIdentity: canonicalPrintIdentitySchema.optional(),
 });
+
+export const printMatchSchema = z.enum(["exact", "compatible", "unknown", "mismatch"]);
+export const printPriceGuardSchema = z.enum(["none", "inspect", "exclude"]);
 
 export const normalizedListingSchema = z.object({
   id: z.string(),
@@ -206,6 +223,10 @@ export const normalizedListingSchema = z.object({
   cardId: z.string(),
   matchConfidence: confidenceSchema,
   matchReasons: z.array(z.string()),
+  printMatch: printMatchSchema.optional(),
+  printMatchConfidence: confidenceSchema.optional(),
+  printMatchReasons: z.array(z.string()).optional(),
+  printPriceGuard: printPriceGuardSchema.optional(),
   // Structured item-specifics text (e.g. eBay's "Parallel/Variant" aspect),
   // when the source adapter can read it. Never displayed — read only by the
   // deterministic variant/language gates in ranking.ts alongside the title, so
@@ -354,8 +375,79 @@ export const comparisonReportSchema = z.object({
   platforms: z.array(comparisonPlatformResultSchema).default([]),
   webDiscoveries: z.array(webDiscoverySchema).default([]),
   abstention: comparisonAbstentionSchema.nullable().optional(),
+  outcome: z.enum(["best_buy", "inspect_first", "next_moves"]).optional(),
+  inspectListingId: z.string().nullable().optional(),
+  identityContractVersion: z.literal(2).optional(),
   demoMode: z.boolean(),
   generatedAt: z.string(),
+}).superRefine((report, ctx) => {
+  if (report.identityContractVersion !== 2) return;
+  if (!report.outcome) {
+    ctx.addIssue({ code: "custom", path: ["outcome"], message: "A v2 report requires an explicit outcome." });
+  }
+  for (const [index, candidate] of report.identityCandidates.entries()) {
+    if (!candidate.printIdentity) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["identityCandidates", index, "printIdentity"],
+        message: "A v2 identity candidate requires canonical print identity.",
+      });
+    }
+  }
+  if (report.confirmedCard && !report.confirmedCard.printIdentity) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["confirmedCard", "printIdentity"],
+      message: "A v2 confirmed card requires canonical print identity.",
+    });
+  }
+  for (const [index, listing] of report.candidates.entries()) {
+    if (!listing.printMatch || !listing.printMatchConfidence || !listing.printMatchReasons || !listing.printPriceGuard) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["candidates", index, "printMatch"],
+        message: "A v2 candidate requires complete print assessment fields.",
+      });
+    }
+    if (listing.eligible && listing.printMatch !== "exact" && listing.printMatch !== "compatible") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["candidates", index, "printMatch"],
+        message: "An eligible listing must prove the confirmed print identity.",
+      });
+    }
+  }
+  for (const [index, choice] of report.rankedChoices.entries()) {
+    const listing = report.candidates.find((candidate) => candidate.id === choice.listingId);
+    if (!listing || !listing.eligible || (listing.printMatch !== "exact" && listing.printMatch !== "compatible")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rankedChoices", index, "listingId"],
+        message: "A ranked choice must reference an eligible exact-print candidate.",
+      });
+    }
+  }
+  if (report.outcome === "best_buy" && report.rankedChoices.length === 0) {
+    ctx.addIssue({ code: "custom", path: ["rankedChoices"], message: "Best Buy requires a ranked choice." });
+  }
+  if (report.outcome !== "best_buy" && report.rankedChoices.length > 0) {
+    ctx.addIssue({ code: "custom", path: ["rankedChoices"], message: "Only Best Buy may contain ranked choices." });
+  }
+  if (report.outcome !== "inspect_first" && report.inspectListingId != null) {
+    ctx.addIssue({ code: "custom", path: ["inspectListingId"], message: "Only Inspect First may identify an inspect listing." });
+  }
+  if (report.outcome === "inspect_first") {
+    const inspect = report.inspectListingId
+      ? report.candidates.find((candidate) => candidate.id === report.inspectListingId)
+      : null;
+    if (!inspect || inspect.printMatch !== "unknown") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["inspectListingId"],
+        message: "Inspect First requires an unresolved listing from this report.",
+      });
+    }
+  }
 });
 
 export const comparisonQuestionRequestSchema = z.object({
@@ -452,6 +544,10 @@ export type ListingSeed = Omit<
   | "webDiscovered"
   | "listingLanguage"
   | "matchAspectText"
+  | "printMatch"
+  | "printMatchConfidence"
+  | "printMatchReasons"
+  | "printPriceGuard"
 > & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string };
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
@@ -462,6 +558,8 @@ export type TcgGame = z.infer<typeof tcgGameSchema>;
 export type CardHint = z.infer<typeof cardHintSchema>;
 export type ManualCandidate = z.infer<typeof manualCandidateSchema>;
 export type CardIdentityCandidate = z.infer<typeof cardIdentityCandidateSchema>;
+export type CanonicalPrintIdentity = z.infer<typeof canonicalPrintIdentitySchema>;
+export type PrintMatch = z.infer<typeof printMatchSchema>;
 export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;

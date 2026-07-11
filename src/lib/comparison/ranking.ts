@@ -2,6 +2,7 @@ import {
   normalizedListingSchema,
   rankedChoiceSchema,
   type BuyerContext,
+  type CardIdentityCandidate,
   type ConditionClaim,
   type ListingEvidence,
   type ListingSeed,
@@ -11,6 +12,7 @@ import {
   type RiskLabel,
   type SellerTrustSignals,
 } from "@/lib/schemas";
+import { assessPrintFidelity, type PrintFidelityAssessment } from "@/lib/comparison/print-fidelity";
 
 const exclusionPatterns = [
   // Graded slabs. The grade can be joined to the grader by a space, colon, hash,
@@ -360,6 +362,7 @@ export function normalizeListing(input: {
   marketPrice?: number | null;
   variantIntent?: VariantIntent | null;
   cardLanguage?: string | null;
+  confirmedCard?: CardIdentityCandidate | null;
 }) {
   const { listing, buyer } = input;
   const costComplete = listing.shipping !== null;
@@ -375,6 +378,15 @@ export function normalizeListing(input: {
   const conditionCompatibilityScore = calculateConditionCompatibilityScore(listing.claimedCondition, buyer.desiredCondition);
   const safetyScore = Math.round((sellerTrustScore * SAFETY_WEIGHTS.seller) + (evidenceCompletenessScore * SAFETY_WEIGHTS.evidence));
   const marketPrice = input.marketPrice ?? null;
+  const matchText = [listing.title, listing.matchAspectText].filter(Boolean).join(" ").trim();
+  const printAssessment = input.confirmedCard
+    ? assessPrintFidelity({
+        card: input.confirmedCard,
+        matchText,
+        listingPrice: listing.price,
+        exactMarketAnchor: marketPrice,
+      })
+    : null;
   // A condition-sensitive request may use the exact-print market anchor after
   // incompatible copies have been removed. "Any condition" deliberately does
   // not compare played copies against one blended anchor.
@@ -400,6 +412,8 @@ export function normalizeListing(input: {
     marketPrice,
     input.variantIntent ?? null,
     input.cardLanguage ?? null,
+    printAssessment,
+    Boolean(input.confirmedCard),
   );
 
   // The risk label reflects the seller's track record, not evidence volume:
@@ -424,6 +438,10 @@ export function normalizeListing(input: {
 
   return normalizedListingSchema.parse({
     ...listing,
+    printMatch: printAssessment?.match ?? "unknown",
+    printMatchConfidence: printAssessment?.confidence ?? "low",
+    printMatchReasons: printAssessment?.reasons ?? ["print_identity_not_assessed"],
+    printPriceGuard: printAssessment?.priceGuard ?? "none",
     costComplete,
     estimatedTax,
     preTaxTotal,
@@ -582,6 +600,8 @@ function getExclusionReasons(
   marketPrice: number | null,
   variantIntent: VariantIntent | null = null,
   cardLanguage: string | null = null,
+  printAssessment: PrintFidelityAssessment | null = null,
+  strictPrintFidelity = false,
 ) {
   // Structured item-specifics text (when the source adapter has it) plus the
   // title — see the variant/language gate functions for why both matter.
@@ -610,11 +630,22 @@ function getExclusionReasons(
   }
   if (exclusionPatterns.some((pattern) => pattern.test(listing.title))) reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
   const marketFloorApplies = buyer.desiredCondition === "Near Mint" || buyer.desiredCondition === "Lightly Played";
-  if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO) {
+  if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO && !strictPrintFidelity) {
     reasons.push("Priced far below market — likely a replica, proxy, or mislabeled item.");
   }
-  const variantReason = variantMismatchReason(listing, matchText, variantIntent);
-  if (variantReason) reasons.push(variantReason);
+  if (strictPrintFidelity && printAssessment) {
+    if (printAssessment.match === "mismatch") {
+      reasons.push("Evidence points to a different print of the same card — you're comparing the confirmed artwork.");
+    } else if (printAssessment.match === "unknown") {
+      reasons.push("The listing does not prove it is the exact confirmed artwork; inspect it before deciding.");
+    }
+    if (printAssessment.priceGuard === "exclude") {
+      reasons.push("Price is far below the verified exact-print market anchor and the listing does not prove the selected artwork.");
+    }
+  } else {
+    const variantReason = variantMismatchReason(listing, matchText, variantIntent);
+    if (variantReason) reasons.push(variantReason);
+  }
   const languageReason = languageMismatchReason(matchText, cardLanguage, listing.listingLanguage ?? null);
   if (languageReason) reasons.push(languageReason);
   return reasons;

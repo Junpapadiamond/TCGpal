@@ -99,6 +99,23 @@ describe("universal paste-a-URL adapter", () => {
     expect(await isPathAllowedByRobots(new URL("https://robots-allow.example.com/other"), fetcher)).toBe(true);
   });
 
+  it("honors TCGlensAgent-specific robots directives", async () => {
+    const fetcher = vi.fn(async (url: URL | RequestInfo) => {
+      if (String(url).endsWith("/robots.txt")) {
+        return new Response([
+          "User-agent: *",
+          "Allow: /",
+          "User-agent: TCGlensAgent",
+          "Disallow: /private",
+        ].join("\n"));
+      }
+      throw new Error("unexpected");
+    }) as unknown as typeof fetch;
+
+    expect(await isPathAllowedByRobots(new URL("https://tcglens-robots.example.com/private/card"), fetcher)).toBe(false);
+    expect(await isPathAllowedByRobots(new URL("https://tcglens-robots.example.com/public/card"), fetcher)).toBe(true);
+  });
+
   it("rejects non-USD listings instead of pretending a conversion", async () => {
     const eurHtml = productHtml.replace('"priceCurrency":"USD"', '"priceCurrency":"EUR"');
     const fetcher = vi.fn(async (url: URL | RequestInfo) => {

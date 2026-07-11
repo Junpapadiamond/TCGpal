@@ -79,6 +79,11 @@ describe("parseCardQuery", () => {
     expect(parseCardQuery("Luffy sp").variant).toBe("SP");
   });
 
+  it("routes iconic One Piece character plus SP language to the One Piece catalog", () => {
+    expect(parseCardQuery("Nami SP")).toMatchObject({ game: "onePiece", name: "Nami", variant: "SP" });
+    expect(parseCardQuery("Luffy manga")).toMatchObject({ game: "onePiece", name: "Luffy", variant: "SP" });
+  });
+
   it("keeps ambiguous promo codes game-neutral", () => {
     // P-096 exists in both games' promo numbering; a wrong guess is worse than none.
     expect(parseCardQuery("Luffy P-096").game).toBeNull();

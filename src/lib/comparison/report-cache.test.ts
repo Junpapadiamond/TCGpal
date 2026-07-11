@@ -32,6 +32,9 @@ function reportStub(overrides: Partial<ComparisonReport> = {}): ComparisonReport
     trace: [],
     platforms: [],
     webDiscoveries: [],
+    identityContractVersion: 2,
+    outcome: "next_moves",
+    inspectListingId: null,
     demoMode: false,
     generatedAt: "2026-07-03T10:00:00.000Z",
     ...overrides,
@@ -59,7 +62,13 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe("swsh7-215|Near Mint|10001|0.08");
+    expect(key).toBe("identity-v2|swsh7-215|Near Mint|10001|0.08");
+  });
+
+  it("refuses reports created before the exact-print identity contract", async () => {
+    const legacy = reportStub({ identityContractVersion: undefined });
+    await setCachedComparison("legacy", legacy);
+    expect(await getCachedComparison("legacy")).toBeNull();
   });
 
   it("serves within the 15-minute TTL and expires after", async () => {

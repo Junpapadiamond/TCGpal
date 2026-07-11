@@ -1,6 +1,7 @@
-import { resolveTcgplayerProduct, type TcgplayerProductMatch } from "@/lib/external/tcgcsv";
+import { resolveTcgplayerProductVariants, type TcgplayerProductMatch } from "@/lib/external/tcgcsv";
 import { resolveEbayProductForCard, type EbayProductResolution } from "@/lib/external/ebay";
 import type { BuyerContext, CardIdentityCandidate } from "@/lib/schemas";
+import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
 
 // R1: the canonical card id (pokemontcg.io id, confirmed at the version step)
 // maps to each platform's native identifier so connectors never re-match free
@@ -60,7 +61,8 @@ export async function resolveCardCrosswalk(
   }
 
   try {
-    const product = await resolveTcgplayerProduct(card, fetcher, { preferredProductId: card.tcgplayerProductId ?? null });
+    const products = await resolveTcgplayerProductVariants(card, fetcher);
+    const product = selectExactTcgplayerProduct(card, products);
     if (product) {
       entry = {
         ...entry,
@@ -82,4 +84,37 @@ export async function resolveCardCrosswalk(
 
 export function clearCrosswalkCache() {
   crosswalkCache.clear();
+}
+
+export function selectExactTcgplayerProduct(
+  card: CardIdentityCandidate,
+  products: TcgplayerProductMatch[],
+): TcgplayerProductMatch | null {
+  const exactRelease = products.filter((product) => releaseMatches(product.groupName, card.setName));
+  const preferred = card.tcgplayerProductId
+    ? exactRelease.filter((product) => product.productId === card.tcgplayerProductId)
+    : [];
+  if (card.tcgplayerProductId && preferred.length === 0) return null;
+  const pool = preferred.length > 0 ? preferred : exactRelease;
+  const credible = pool.filter((product) => {
+    const assessment = assessPrintFidelity({
+      card,
+      matchText: `${product.productName} ${product.groupName} ${product.productUrl}`,
+      listingPrice: 0,
+      exactMarketAnchor: null,
+    });
+    if (assessment.match === "exact" || assessment.match === "compatible") return true;
+    return false;
+  });
+  return credible.length === 1 ? credible[0] : null;
+}
+
+function releaseMatches(groupName: string, setName: string) {
+  const group = normalizeRelease(groupName);
+  const wanted = normalizeRelease(setName);
+  return Boolean(wanted && (group === wanted || group.endsWith(wanted)));
+}
+
+function normalizeRelease(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }

@@ -1,6 +1,6 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
-import { demoIdentities, demoListingSeedsFor, type DemoListingSeed } from "@/lib/comparison/fixtures";
+import { demoIdentities, type DemoListingSeed } from "@/lib/comparison/fixtures";
 import {
   deriveVariantIntent,
   finalizeListingScores,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/external/ebay";
 import { getConfiguredPlatformAgents, runPlatformFanout } from "@/lib/comparison/platforms";
 import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
+import { canonicalPrintIdentity } from "@/lib/comparison/print-fidelity";
 import {
   comparisonCacheKey,
   getCachedComparison,
@@ -91,12 +92,13 @@ export async function runListingComparison(
   const generatedAt = now().toISOString();
   const warnings: string[] = [];
   const trace: ComparisonTrace[] = [];
-  let demoMode = false;
+  const demoMode = false;
 
   const request = await applyQueryParserWithAi(comparisonRequestSchema.parse(rawRequest), trace);
 
   const { source: sourceResult, universal } = await ingestSourceListing(request, fetcher, warnings, trace);
-  const identities = await identifyCards(request, sourceResult, fetcher, warnings, trace);
+  const identities = (await identifyCards(request, sourceResult, fetcher, warnings, trace))
+    .map((identity) => ({ ...identity, printIdentity: canonicalPrintIdentity(identity) }));
   let confirmedCard = resolveConfirmedCard(request, identities);
 
   if (!confirmedCard) {
@@ -115,13 +117,16 @@ export async function runListingComparison(
       rankedChoices: [],
       references: [],
       narrative: {
-        summary: "Confirm the exact card before TCGpal compares prices. Similar artwork and reprints can produce a precise-looking but wrong result.",
+        summary: "Confirm the exact card before TCGlens compares prices. Similar artwork and reprints can produce a precise-looking but wrong result.",
         cautions: ["No marketplace ranking has been created yet."],
       },
       warnings,
       trace,
       platforms: [],
       webDiscoveries: [],
+      outcome: "next_moves",
+      inspectListingId: null,
+      identityContractVersion: 2,
       demoMode: getConfiguredPlatformAgents().length === 0,
       generatedAt,
     });
@@ -133,6 +138,7 @@ export async function runListingComparison(
     summary: `Confirmed ${confirmedCard.name}, ${confirmedCard.setName} ${confirmedCard.cardNumber}.`,
     status: "complete",
   });
+  confirmedCard = { ...confirmedCard, printIdentity: canonicalPrintIdentity(confirmedCard) };
 
   // R7: pure card searches are served from a 15-minute cache keyed by
   // card + condition + delivery context.
@@ -262,19 +268,15 @@ export async function runListingComparison(
   }
 
   if (fanout.seeds.length === 0 && seeds.length === 0) {
-    // No live source produced a single listing (nothing configured, or every
-    // configured source failed or found no match) — fall back to labeled demo
-    // inventory the buyer cannot mistake for real offers, rather than masking
-    // the gap. A manual/pasted candidate still gets labeled context to rank against.
-    demoMode = true;
-    seeds.push(...demoListingSeedsFor(confirmedCard));
+    // An empty live search is a real product outcome. Do not manufacture a
+    // recommendation from fixtures; keep useful references and next actions.
     warnings.push(fanout.configuredCount === 0
-      ? "No live marketplace API is configured. Showing labeled demo inventory instead."
-      : "No live marketplace source returned a listing. Showing labeled demo inventory instead.");
+      ? "No live marketplace API is configured. Connect eBay or paste a specific listing to inspect."
+      : "No live marketplace source returned a listing. Refine the card details, retry, or paste a specific listing.");
     trace.push({
       step: "marketplace_search",
       actor: "Platform fan-out",
-      summary: "No live source returned listings; loaded labeled fixtures.",
+      summary: "No live source returned listings; preserved an honest empty result.",
       status: "fallback",
     });
   }
@@ -296,8 +298,24 @@ export async function runListingComparison(
     marketPrice: marketAnchor,
     variantIntent,
     cardLanguage: confirmedCard.language,
+    confirmedCard: demoMode ? null : confirmedCard,
   })));
   const rankedChoices = rankListings(normalized, { marketPrice: marketAnchor });
+  const inspectLead = normalized
+    .filter((listing) => listing.printMatch === "unknown"
+      && listing.printPriceGuard !== "exclude"
+      && listing.active
+      && listing.raw
+      && listing.currency === "USD"
+      && listing.shipping !== null
+      && listing.matchConfidence !== "low"
+      && listing.exclusionReasons.every((reason) => reason.includes("exact confirmed artwork")))
+    .sort((a, b) => b.valueScore - a.valueScore || a.preTaxTotal - b.preTaxTotal)[0] ?? null;
+  const outcome = rankedChoices.length > 0
+    ? "best_buy" as const
+    : inspectLead
+      ? "inspect_first" as const
+      : "next_moves" as const;
   trace.push({
     step: "validation_and_ranking",
     actor: "Deterministic TypeScript",
@@ -333,6 +351,9 @@ export async function runListingComparison(
     platforms: platformResults,
     webDiscoveries: webDiscovery.results,
     abstention,
+    outcome,
+    inspectListingId: inspectLead?.id ?? null,
+    identityContractVersion: 2,
     demoMode,
     generatedAt,
   });
@@ -874,7 +895,8 @@ function evaluateOnePieceMatch(
 
 function resolveConfirmedCard(request: ComparisonRequest, identities: CardIdentityCandidate[]) {
   if (request.confirmedCardId) {
-    return identities.find((candidate) => candidate.id === request.confirmedCardId) ?? null;
+    const wanted = request.confirmedCardId.toUpperCase();
+    return identities.find((candidate) => candidate.id.toUpperCase() === wanted) ?? null;
   }
   const top = identities[0];
   const hasExplicitIdentity = Boolean(
@@ -919,7 +941,7 @@ function sourceToSeed(
     price: source.price,
     shipping: source.shipping,
     claimedCondition: source.claimedCondition,
-    imageUrl: card.imageUrl,
+    imageUrl: null,
     seller: source.seller,
     evidence: source.evidence,
     observedAt,
@@ -967,7 +989,7 @@ function manualCandidatesToSeeds(
       price: candidate.price,
       shipping: candidate.shipping,
       claimedCondition: candidate.claimedCondition,
-      imageUrl: card.imageUrl,
+      imageUrl: null,
       seller: {
         feedbackPercentage: null,
         feedbackCount: null,
@@ -1108,8 +1130,8 @@ function localNarrative(
   const eligible = listings.filter((listing) => listing.eligible);
   return comparisonNarrativeSchema.parse({
     summary: eligible.length
-      ? `TCGpal found ${eligible.length} eligible ${card.name} listings and separated price, seller safety, and condition evidence instead of collapsing them into one magic answer.`
-      : `TCGpal could not find an eligible exact-match listing for ${card.name}.`,
+      ? `TCGlens found ${eligible.length} eligible ${card.name} listings and separated price, seller safety, and condition evidence instead of collapsing them into one magic answer.`
+      : `TCGlens could not find an eligible exact-match listing for ${card.name}.`,
     cautions: [
       choices.length < 3 ? "Fewer than three decision lenses had enough eligible evidence." : "One listing may lead several lenses; none is a grade prediction.",
       references.some((reference) => reference.label === "Sold transactions" && reference.status !== "used")

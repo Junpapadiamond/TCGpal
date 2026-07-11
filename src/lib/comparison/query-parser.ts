@@ -45,6 +45,7 @@ const GAME_TOKENS: Array<{ pattern: RegExp; game: TcgGame }> = [
 // Pokémon. Ambiguous shapes (P-096 appears in both games) stay null.
 const ONE_PIECE_CODE_PATTERN = /\b(?:OP|ST|EB|PRB)\d{1,2}(?:-\d{1,3})?\b/i;
 const POKEMON_CODE_PATTERN = /\b(?:SWSH|SVP?|SM|XY|BW|TG|GG|DP|HGSS)\d{1,4}\b/i;
+const ONE_PIECE_CHARACTER_HINT_PATTERN = /\b(?:nami|luffy|zoro|sanji|shanks|ace|sabo|yamato|robin|chopper|hancock|law)\b/i;
 
 // Full words only (no 2-3 letter abbreviations like "JP"/"EN") — a wrong game/
 // language guess is worse than no guess, and short abbreviations are exactly the
@@ -173,6 +174,9 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     }
   }
   if (game === null && alias) game = alias.game;
+  if (game === null && variant === "SP" && ONE_PIECE_CHARACTER_HINT_PATTERN.test(query)) {
+    game = "onePiece";
+  }
 
   // Claim a bare One Piece set code ("OP15") before the generic collector-number
   // pattern gets a chance to half-match it as an incomplete print number.

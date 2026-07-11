@@ -11,6 +11,7 @@ const CACHE_SCOPE = "comparison-report";
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
   return [
+    "identity-v2",
     confirmedCardId,
     request.buyer.desiredCondition,
     request.buyer.postalCode,
@@ -34,7 +35,7 @@ export async function getCachedComparison(key: string, now: Date = new Date()): 
     now,
     validate(value) {
       const parsed = comparisonReportSchema.safeParse(value);
-      return parsed.success ? parsed.data : null;
+      return parsed.success && parsed.data.identityContractVersion === 2 ? parsed.data : null;
     },
   });
 }
@@ -42,7 +43,7 @@ export async function getCachedComparison(key: string, now: Date = new Date()): 
 export async function setCachedComparison(key: string, report: ComparisonReport, now: Date = new Date()) {
   // Only cache reports built from live data; demo fixtures and failed runs
   // should re-attempt the live sources on the next request.
-  if (report.demoMode || report.status === "needs_confirmation") return;
+  if (report.demoMode || report.status === "needs_confirmation" || report.identityContractVersion !== 2) return;
   await setJsonCache(CACHE_SCOPE, key, report, { ttlSeconds: CACHE_TTL_SECONDS, now });
 }
 
