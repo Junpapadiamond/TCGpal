@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-07-12
 canonical_branch: origin/main
-last_verified_product_commit: 7637f56fb20c7bfeeeca278b7ab960b0b46b0928
+last_verified_product_commit: 484115bb097db004c49f24602861d5a1bf4454e9
 max_lines: 300
 ---
 
@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
 | WS-DISTRIBUTION | Additional marketplaces and growth | Large expansion | Deferred | Do not expand before correctness and pilot gates |
-| WS-LOCAL | Dirty local experiments | Mixed | Unverified; do not sweep into a commit | Review each local change independently |
+| WS-LOCAL | Dirty local experiments | Mixed | Base Set fix completed; photo search undecided | Decide D-PHOTO; preserve the original checkout |
 <!-- progress:end -->
 
 <!-- progress:section id="GOALS" -->
@@ -71,6 +71,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Nami SP and the eight bundled OP01-016 prints have regression coverage; selected P4 remains OP01-016_p4.
 - eBay ePID use and TCGplayer product resolution abstain when exact identity cannot be proven.
 - Signed/serialized aliases normalize to strict facets; unsupported textured/stamped searches abstain rather than show siblings.
+- Vintage Base Set crosswalks rank the most specific TCGCSV group and reject loose collector-number collisions with another card name.
 
 ### What went wrong
 
@@ -80,7 +81,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 ### Not finished or not verified
 
-- Verified: automated gates passed on 7637f56: lint, typecheck, 42 test files / 461 tests, build, bilingual desktop/mobile visual QA, and strict-facet manual abstention.
+- Verified: automated gates passed on 484115b: lint, typecheck, 42 test files / 463 tests, and build. The earlier bilingual desktop/mobile visual QA and strict-facet manual abstention remain evidenced on 7637f56.
 - Unknown: representative live eBay recall, false exclusions, ePID coverage, and p95 latency across a 30-listing corpus.
 - Unknown: whether exact listings often fall below the bounded eBay item-detail enrichment window.
 - Required: live checks for reported Nami, Charmander, Portgas.D.Ace, manga, tournament, gold/silver, anniversary, and Pokemon variant cases.
@@ -150,8 +151,8 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - docs/validation-plan.md
 - docs/product-spec.md
 - docs/product-principles.md
-- output/product-readiness-audit-2026-07-10/council/chairman.md
-- docs/councils/tcgpal_feature_scorecard.md
+- output/product-readiness-audit-2026-07-10/council/chairman.md (historical; missing from origin/main, retained as an artifact in the original checkout)
+- docs/councils/tcgpal_feature_scorecard.md (historical; missing from origin/main, retained as an artifact in the original checkout)
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
@@ -213,7 +214,7 @@ Observed on 2026-07-12 in /Users/chenjunhsu/Desktop/projects/TCGpal:
 
 - Local main was at 5e6899e and diverged from origin/main. Use the progress snapshot for current ahead/behind counts; do not hard-code them here.
 - The working tree contained user changes. Preserve them; do not reset, clean, or include them incidentally.
-- Small adjustment: src/lib/external/tcgcsv.ts and its test attempt to prevent vintage Base Set cards from resolving to newer “Base Set” groups. Files exist, but this local version was not included in the 461-test remote release evidence.
+- Superseded local adjustment: src/lib/external/tcgcsv.ts and its test contain an older attempt to prevent vintage Base Set collisions. The reviewed origin/main-based implementation is commit 484115b; preserve the older dirty files until the user reconciles the divergent checkout.
 - Unapproved experiment: photo-search route/tests and related package changes. Behavior and scope are not verified; see D-PHOTO.
 - Untracked UI concept: TCGpal_more_ui_refine.html.
 - Untracked council docs, research output, screenshots, Graphify backups, and cache files are artifacts, not automatically release work.
@@ -241,13 +242,13 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Last verified remote release: 7637f56 on 2026-07-12.
+Last verified product commit: 484115b on 2026-07-12.
 
 - npm run lint: passed.
 - npm run typecheck: passed.
-- npm run test: 42 files / 461 tests passed; includes metadata freshness and sequential multi-card flow.
+- npm run test: 42 files / 463 tests passed; includes Base Set collision regressions, metadata freshness, and sequential multi-card flow.
 - npm run build: passed on Next.js 16.2.6.
-- Visual: English and Chinese desktop/mobile; no horizontal overflow; zero browser console errors.
+- Visual: unchanged by 484115b. English and Chinese desktop/mobile evidence from 7637f56 remains applicable; no horizontal overflow and zero browser console errors were observed there.
 - Peer review: identity and UX reviewers approved after fixes; chairman approved.
 - Remote: origin/main matched 7637f56fb20c7bfeeeca278b7ab960b0b46b0928.
 
