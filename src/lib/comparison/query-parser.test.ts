@@ -100,8 +100,8 @@ describe("parseCardQuery", () => {
     expect(parseCardQuery("Luffy signature OP05-119").variant).toBe("Signature");
     expect(parseCardQuery("Luffy serial numbered OP05-119").variant).toBe("Serial Numbered");
     expect(parseCardQuery("Luffy stamped OP05-119").variant).toBe("Stamped");
-    expect(parseCardQuery("Luffy serialized OP07-119").variant).toBe("Serialized");
-    expect(parseCardQuery("signed Luffy ST01-012").variant).toBe("Signed");
+    expect(parseCardQuery("Luffy serialized OP07-119").variant).toBe("Serial Numbered");
+    expect(parseCardQuery("signed Luffy ST01-012").variant).toBe("Signature");
     expect(parseCardQuery("textured Yamato OP01-121").variant).toBe("Textured");
   });
 

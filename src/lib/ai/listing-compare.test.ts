@@ -1037,6 +1037,7 @@ describe("listing comparison agent", () => {
     ["Nami signature OP01-016", "OP01-016", "Signature"],
     ["Nami serial numbered OP01-016", "OP01-016", "Serial Numbered"],
     ["Nami stamped OP01-016", "OP01-016", "Stamped"],
+    ["Nami textured OP01-016", "OP01-016", "Textured"],
   ])("abstains instead of substituting siblings for unsupported facet %s", async (query, cardNumber, variant) => {
     const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
     const response = await runListingComparison({

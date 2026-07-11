@@ -1476,6 +1476,7 @@ function filterByRequestedVariant(
     "signature",
     "serial numbered",
     "stamped",
+    "textured",
   ]);
   if (
     strictOnePieceFacets.has(needle)

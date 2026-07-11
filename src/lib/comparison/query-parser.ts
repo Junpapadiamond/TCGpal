@@ -90,6 +90,11 @@ const VARIANT_KEYWORDS = [
   "Silver",
 ];
 
+const VARIANT_ALIASES: Record<string, string> = {
+  Serialized: "Serial Numbered",
+  Signed: "Signature",
+};
+
 // Short rarity codes collectors actually type in a search box ("Luffy sp",
 // "Pikachu sir") rather than the full phrase above. Word-boundary matched and
 // case-insensitive. A wrong rarity guess only narrows results (the caller
@@ -179,7 +184,7 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     const pattern = new RegExp(`\\b${keyword.replace(/\s+/g, "\\s+")}\\b`, "i");
     const match = remaining.match(pattern);
     if (match) {
-      variant = keyword;
+      variant = VARIANT_ALIASES[keyword] ?? keyword;
       remaining = removeMatch(remaining, match);
       break;
     }
@@ -221,9 +226,7 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     "Super Alternate Art",
     "Red Super Alternate Art",
     "Signature",
-    "Signed",
     "Serial Numbered",
-    "Serialized",
     "Stamped",
     "Textured",
   ]);

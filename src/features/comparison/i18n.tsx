@@ -24,9 +24,9 @@ function zhConfidenceLabel(level: string) {
 }
 
 const ZH_VARIANT_LABELS: Record<string, string> = {
-  Signed: "签名版",
-  Serialized: "序列编号版",
-  Stamped: "压印版",
+  Signature: "印刷签名版",
+  "Serial Numbered": "序列编号版",
+  Stamped: "烫印版",
   Textured: "纹理版",
 };
 
