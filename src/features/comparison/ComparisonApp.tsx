@@ -26,7 +26,7 @@ import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
-import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
+import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import {
@@ -285,6 +285,7 @@ export function ComparisonApp() {
 
 function ComparisonExperience() {
   const t = useT();
+  const { lang } = useLang();
   const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
   const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
@@ -670,7 +671,7 @@ function ComparisonExperience() {
                   <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
                 )}
 
-                <ParsedPreview preview={heroPreview} game={game} t={t} />
+                <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
 
                 <fieldset className="mt-4">
                   <legend className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.gameLabel}</legend>
@@ -1166,10 +1167,12 @@ function CardMarqueeItem({ item, index }: { item: MarqueeItem; index: number }) 
 function ParsedPreview({
   preview,
   game,
+  lang,
   t,
 }: {
   preview: ReturnType<typeof parseCardQuery> | null;
   game: TcgGame;
+  lang: Lang;
   t: Dict;
 }) {
   if (!preview) {
@@ -1181,7 +1184,7 @@ function ParsedPreview({
     preview.name && { label: preview.name, tone: "green" },
     preview.cardNumber && { label: `#${preview.cardNumber}`, tone: "gold" },
     preview.language && { label: preview.language, tone: "neutral" },
-    preview.variant && { label: preview.variant, tone: "neutral" },
+    preview.variant && { label: localizeVariantLabel(lang, preview.variant), tone: "neutral" },
     preview.gradingClaim && { label: preview.gradingClaim, tone: "neutral" },
   ].filter(Boolean) as Array<{ label: string; tone: "blue" | "green" | "gold" | "neutral" }>;
 

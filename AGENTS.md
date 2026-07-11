@@ -39,6 +39,8 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - OpenAI is optional. Without it, the deterministic evidence summary remains usable.
 - The configured/default OpenAI-compatible model is `gpt-5.5`; `gpt-5.4` is the review/cheap fallback. The dated slug `gpt-5.5-2026-04-23` is not available on the current zjapi channel.
 - The technical trace stays collapsed for normal users.
+- The full English One Piece special-print research ledger lives at `output/one-piece-exact-print-metadata.json`. It is evidence and a review queue, not a runtime catalog overlay. `output/one-piece-exact-print-audit.json` deterministically reports semantic gaps, reverse product-ID collisions, provenance gaps, and manual-review candidates. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect runtime identity or market anchors.
+- `npm run metadata:refresh` reruns the bounded TCGCSV/official-image research job and regenerates the audit. `.github/workflows/refresh-one-piece-metadata.yml` runs it weekly and opens a review PR when sources change. It never edits runtime matching code, auto-merges metadata, or publishes a TCGplayer mapping without review.
 
 ## Product Guardrails
 
@@ -116,6 +118,8 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 - `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
 - `src/lib/analytics.ts`: explicit PostHog events and privacy allowlist.
 - `scripts/check-ebay.mjs`: dev utility to validate eBay creds (OAuth token + Browse search access).
+- `scripts/research-one-piece-exact-prints.mjs`: offline research generator over the bundled English catalog, official card-image URLs, and TCGCSV category 68. It records image hashes/margins and retains unresolved/conflicting rows; its output is never consumed by product routes.
+- `scripts/audit-one-piece-exact-prints.mjs`: deterministic gate for the research ledger. `npm run metadata:check` fails when the checked-in audit is stale.
 
 Keep server/API secrets outside Client Components. Route handlers are dynamic and provider fetches use fresh data.
 

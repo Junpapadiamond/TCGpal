@@ -63,9 +63,12 @@ const GRADING_COMPANY_PATTERN = /\b(psa|bgs|cgc|sgc)\s*(\d{1,2}(?:\.\d)?)\b/i;
 // than leaving a dangling "Gallery".
 const VARIANT_KEYWORDS = [
   "Serial Numbered",
+  "Serialized",
   "Premium Collection",
   "Signature",
+  "Signed",
   "Stamped",
+  "Textured",
   "Tournament Winner",
   "Tournament Pack",
   "Treasure Cup",
@@ -218,8 +221,11 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     "Super Alternate Art",
     "Red Super Alternate Art",
     "Signature",
+    "Signed",
     "Serial Numbered",
+    "Serialized",
     "Stamped",
+    "Textured",
   ]);
   if (game === null && onePieceSpecialVariants.has(variant) && ONE_PIECE_CHARACTER_HINT_PATTERN.test(query)) {
     game = "onePiece";

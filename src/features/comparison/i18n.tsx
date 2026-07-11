@@ -23,6 +23,17 @@ function zhConfidenceLabel(level: string) {
   return level;
 }
 
+const ZH_VARIANT_LABELS: Record<string, string> = {
+  Signed: "签名版",
+  Serialized: "序列编号版",
+  Stamped: "压印版",
+  Textured: "纹理版",
+};
+
+export function localizeVariantLabel(lang: Lang, variant: string) {
+  return lang === "zh" ? ZH_VARIANT_LABELS[variant] ?? variant : variant;
+}
+
 // English is the source dictionary; `Dict = typeof en` forces the Chinese
 // dictionary to cover every key (and matching function signatures) at compile time.
 const en = {

@@ -1,0 +1,48 @@
+name: Refresh One Piece exact-print research
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * 1"
+
+concurrency:
+  group: one-piece-metadata-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run metadata:refresh
+      - run: npm run test
+      - name: Open review pull request when sources changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- output/one-piece-exact-print-metadata.json output/one-piece-exact-print-audit.json; then
+            echo "No metadata changes."
+            exit 0
+          fi
+          branch="automation/one-piece-metadata-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add output/one-piece-exact-print-metadata.json output/one-piece-exact-print-audit.json
+          git commit -m "chore: refresh One Piece exact-print research"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Review One Piece exact-print research refresh" \
+            --body "Automated research refresh. Runtime publication remains blocked until reviewed allowlist decisions are made. Review the audit blockers and record-level evidence before promoting any mapping."
