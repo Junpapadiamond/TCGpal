@@ -44,8 +44,10 @@ import {
   type LensRole,
 } from "./comparison-form-state";
 import {
+  cardIdentitySearchResponseSchema,
   comparisonReportSchema,
   type CardIdentityCandidate,
+  type CardIdentitySearchResponse,
   type ComparisonReport,
   type ComparisonQuestionResponse,
   type ComparisonRequest,
@@ -119,6 +121,14 @@ class ApiResponseError extends Error {
 async function requestComparisonReport(request: ComparisonRequest, fallbackMessage: string) {
   const json = await postJsonWithRetry("/api/agent/listing-compare", request, fallbackMessage);
   return comparisonReportSchema.parse(json);
+}
+
+async function requestCardIdentity(request: ComparisonRequest, fallbackMessage: string) {
+  const json = await postJsonWithRetry("/api/agent/card-identity", {
+    query: request.query || request.cardHint.name,
+    cardHint: request.cardHint,
+  }, fallbackMessage);
+  return cardIdentitySearchResponseSchema.parse(json);
 }
 
 async function postJsonWithRetry(path: string, body: unknown, fallbackMessage: string) {
@@ -288,9 +298,11 @@ function ComparisonExperience() {
   const { lang } = useLang();
   const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
+  const [identityResult, setIdentityResult] = useState<CardIdentitySearchResponse | null>(null);
+  const [selectedIdentity, setSelectedIdentity] = useState<CardIdentityCandidate | null>(null);
   const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [journeyState, setJourneyState] = useState<"idle" | "identifying" | "confirming" | "comparing" | "result" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   // Two doors below the hero search, grouped by intent: refine what we search
   // for, or bring a listing you already found (with its evidence and any
@@ -300,6 +312,7 @@ function ComparisonExperience() {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [compactSearchOpen, setCompactSearchOpen] = useState(false);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
+  const loading = journeyState === "identifying" || journeyState === "comparing";
 
   const heroQuery = useWatch({ control: form.control, name: "heroQuery" });
   const marketplace = useWatch({ control: form.control, name: "marketplace" });
@@ -395,42 +408,93 @@ function ComparisonExperience() {
 
     const request = buildRequest(values, confirmedCardId);
     setPendingRequest(request);
-    setLoading(true);
     setError(null);
     setFeedbackSent(false);
-    const startedAt = readTimestamp();
-
-    trackEvent(confirmedCardId ? "card_identity_confirmed" : "comparison_started", {
-      marketplace: request.sourceListing.marketplace,
-    });
-    trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
-    if (request.sourceListing.marketplace !== "eBay") {
-      trackEvent("manual_candidate_added", { marketplace: request.sourceListing.marketplace });
-    }
-
     try {
-      const parsed = await requestComparisonReport(request, t.error.temporary);
-      setReport(parsed);
-      setPendingRequest(parsed.request);
-      if (parsed.confirmedCard) {
-        rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
+      if (confirmedCardId) {
+        await runConfirmedComparison(request, selectedIdentity);
+        return;
       }
-      const duration = readTimestamp() - startedAt;
-      trackEvent("comparison_completed", {
-        marketplace: request.sourceListing.marketplace,
-        status: parsed.status,
-        demo_mode: parsed.demoMode,
-        candidate_count: parsed.candidates.length,
-        duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
-      });
-      focusComparisonTarget();
+      if (hasListingSubmission(request)) {
+        await runListingSubmission(request);
+        return;
+      }
+      setReport(null);
+      setIdentityResult(null);
+      setSelectedIdentity(null);
+      setJourneyState("identifying");
+      trackEvent("card_search_started");
+      const identity = await requestCardIdentity(request, t.error.identityTemporary);
+      setIdentityResult(identity);
+      if (identity.status === "resolved" && identity.confirmedCard) {
+        const confirmedRequest = { ...request, confirmedCardId: identity.confirmedCard.id };
+        setPendingRequest(confirmedRequest);
+        setSelectedIdentity(identity.confirmedCard);
+        rememberConfirmedCard(identity.confirmedCard, request.cardHint.game);
+        await runConfirmedComparison(confirmedRequest, identity.confirmedCard);
+      } else {
+        setJourneyState("confirming");
+        trackEvent("identity_gallery_viewed", { status: identity.status });
+        focusComparisonTarget();
+      }
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : t.error.temporary;
       setError(message);
+      setJourneyState("error");
       trackEvent("comparison_failed", { marketplace: request.sourceListing.marketplace });
-    } finally {
-      setLoading(false);
     }
+  }
+
+  async function runListingSubmission(request: ComparisonRequest) {
+    setJourneyState("comparing");
+    trackEvent("comparison_started", { marketplace: request.sourceListing.marketplace });
+    trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
+    const parsed = await requestComparisonReport(request, t.error.temporary);
+    setPendingRequest(parsed.request);
+    if (parsed.status === "needs_confirmation") {
+      setIdentityResult({
+        identityContractVersion: 1,
+        status: parsed.identityCandidates.length > 0 ? "needs_confirmation" : "not_found",
+        candidates: parsed.identityCandidates,
+        confirmedCard: null,
+        warnings: parsed.warnings,
+        generatedAt: parsed.generatedAt,
+      });
+      setJourneyState("confirming");
+      trackEvent("identity_gallery_viewed", { status: parsed.status });
+      return;
+    }
+    setReport(parsed);
+    setJourneyState("result");
+    trackEvent("comparison_completed", {
+      marketplace: request.sourceListing.marketplace,
+      status: parsed.status,
+      demo_mode: parsed.demoMode,
+      candidate_count: parsed.candidates.length,
+    });
+    focusComparisonTarget();
+  }
+
+  async function runConfirmedComparison(request: ComparisonRequest, identity: CardIdentityCandidate | null) {
+    const startedAt = readTimestamp();
+    setSelectedIdentity(identity);
+    setJourneyState("comparing");
+    trackEvent("comparison_started", { marketplace: request.sourceListing.marketplace });
+    trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
+    const parsed = await requestComparisonReport(request, t.error.temporary);
+    setReport(parsed);
+    setPendingRequest(parsed.request);
+    if (parsed.confirmedCard) rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
+    setJourneyState("result");
+    const duration = readTimestamp() - startedAt;
+    trackEvent("comparison_completed", {
+      marketplace: request.sourceListing.marketplace,
+      status: parsed.status,
+      demo_mode: parsed.demoMode,
+      candidate_count: parsed.candidates.length,
+      duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
+    });
+    focusComparisonTarget();
   }
 
   async function confirmIdentity(identity: CardIdentityCandidate) {
@@ -439,31 +503,18 @@ function ComparisonExperience() {
     setPendingRequest(confirmedRequest);
     setReport(null);
     setError(null);
-    setLoading(true);
+    setSelectedIdentity(identity);
     form.setValue("cardName", identity.name);
     form.setValue("setCode", identity.setCode);
     form.setValue("cardNumber", identity.cardNumber);
     rememberConfirmedCard(identity, pendingRequest.cardHint.game);
     trackEvent("card_identity_confirmed", { confidence: identity.confidence });
     try {
-      const parsed = await requestComparisonReport(confirmedRequest, t.error.temporary);
-      setReport(parsed);
-      setPendingRequest(parsed.request);
-      if (parsed.confirmedCard) {
-        rememberConfirmedCard(parsed.confirmedCard, parsed.request.cardHint.game);
-      }
-      trackEvent("comparison_completed", {
-        marketplace: confirmedRequest.sourceListing.marketplace,
-        status: parsed.status,
-        demo_mode: parsed.demoMode,
-        candidate_count: parsed.candidates.length,
-      });
-      focusComparisonTarget();
+      await runConfirmedComparison(confirmedRequest, identity);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t.error.temporary);
+      setJourneyState("error");
       trackEvent("comparison_failed", { marketplace: confirmedRequest.sourceListing.marketplace });
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -474,22 +525,14 @@ function ComparisonExperience() {
     if (!pendingRequest || loading) return;
     const suggestedRequest = { ...pendingRequest, confirmedCardId: cardId };
     setPendingRequest(suggestedRequest);
-    setLoading(true);
     setError(null);
     try {
-      const parsed = await requestComparisonReport(suggestedRequest, t.error.temporary);
-      setReport(parsed);
-      setPendingRequest(parsed.request);
-      if (parsed.confirmedCard) {
-        rememberConfirmedCard(parsed.confirmedCard, suggestedRequest.cardHint.game);
-      }
+      await runConfirmedComparison(suggestedRequest, null);
       trackEvent("card_identity_confirmed", { confidence: "high" });
-      focusComparisonTarget();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t.error.temporary);
+      setJourneyState("error");
       trackEvent("comparison_failed", { marketplace: suggestedRequest.sourceListing.marketplace });
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -497,27 +540,17 @@ function ComparisonExperience() {
   // it — the buyer never re-types anything after a backend hiccup.
   async function retryComparison() {
     if (!pendingRequest || loading) return;
-    setLoading(true);
     setError(null);
     try {
-      const parsed = await requestComparisonReport(pendingRequest, t.error.temporary);
-      setReport(parsed);
-      setPendingRequest(parsed.request);
-      if (parsed.confirmedCard) {
-        rememberConfirmedCard(parsed.confirmedCard, pendingRequest.cardHint.game);
+      if (pendingRequest.confirmedCardId) {
+        await runConfirmedComparison(pendingRequest, selectedIdentity);
+      } else {
+        await submitComparison(form.getValues());
       }
-      trackEvent("comparison_completed", {
-        marketplace: pendingRequest.sourceListing.marketplace,
-        status: parsed.status,
-        demo_mode: parsed.demoMode,
-        candidate_count: parsed.candidates.length,
-      });
-      focusComparisonTarget();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t.error.temporary);
+      setJourneyState("error");
       trackEvent("comparison_failed", { marketplace: pendingRequest.sourceListing.marketplace });
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -556,6 +589,9 @@ function ComparisonExperience() {
     setReport(null);
     setPendingRequest(null);
     setError(null);
+    setIdentityResult(null);
+    setSelectedIdentity(null);
+    setJourneyState("idle");
     setCompactSearchOpen(false);
     form.reset(resetForNewCardSearch(form.getValues()));
     window.requestAnimationFrame(() => {
@@ -714,7 +750,7 @@ function ComparisonExperience() {
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <button className="primary-button flex-1 justify-center" type="submit" disabled={loading}>
                     {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-                    {loading ? t.form.submitLoading : hasExplicitCardKey ? t.form.submitIdle : t.form.findExactCard}
+                  {loading ? t.form.submitLoading : hasExplicitCardKey ? t.form.submitIdle : t.form.browseVersions}
                   </button>
                   <button
                     className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-2 text-sm font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4 hover:text-[#24585c]"
@@ -958,12 +994,15 @@ function ComparisonExperience() {
           </>
         )}
 
-        {loading && <LoadingLoop cards={carouselCards} />}
+        {journeyState === "identifying" && <IdentityLoading query={pendingRequest?.cardHint.name || pendingRequest?.query || ""} />}
+        {journeyState === "comparing" && (selectedIdentity
+          ? <ComparisonLoading identity={selectedIdentity} />
+          : <ListingSubmissionLoading />)}
         {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
-        {report?.status === "needs_confirmation" && !loading && (
-          <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
+        {journeyState === "confirming" && identityResult && (
+          <IdentityConfirmation identities={identityResult.candidates} warnings={identityResult.warnings} onConfirm={confirmIdentity} />
         )}
-        {report && report.status !== "needs_confirmation" && !loading && (
+        {journeyState === "result" && report && report.status !== "needs_confirmation" && (
           <ComparisonResult
             report={report}
             preferredRole={preferredRole}
@@ -1275,132 +1314,73 @@ function CheckField({ label, registration }: { label: string; registration: UseF
   );
 }
 
-function LoadingLoop({ cards }: { cards: RecentCarouselCard[] }) {
+function IdentityLoading({ query }: { query: string }) {
+  const t = useT();
+  const parsed = parseCardQuery(query);
+  const label = parsed.cardNumber || parsed.name || query;
+  return (
+    <section id="comparison-result" tabIndex={-1} className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 outline-none sm:p-7" aria-live="polite" aria-busy="true">
+      <div className="max-w-2xl">
+        <p className="eyebrow"><IconSpinner className="h-4 w-4 animate-spin" />{t.identity.findingEyebrow}</p>
+        <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.identity.findingHeading(label)}</h2>
+        <p className="mt-2 leading-7 text-[#64736c]">{t.identity.findingDesc}</p>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="animate-pulse rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4 motion-reduce:animate-none" aria-hidden="true">
+            <div className="mx-auto aspect-[2.5/3.5] w-32 rounded-md bg-[#dfe8e1]" />
+            <div className="mt-4 h-4 w-2/3 rounded bg-[#dfe8e1]" />
+            <div className="mt-2 h-3 w-1/2 rounded bg-[#e7ede7]" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ComparisonLoading({ identity }: { identity: CardIdentityCandidate }) {
   const t = useT();
   return (
-    <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
+    <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite" aria-busy="true">
+      <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-center">
         <div>
           <div className="flex items-center gap-3">
             <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73]" />
             <div>
-              <p className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.title}</p>
+              <h2 className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.comparing(identity.name)}</h2>
               <p className="mt-1 text-sm text-[#64736c]">{t.loading.steps}</p>
             </div>
           </div>
           <ul className="mt-5 grid gap-2 sm:grid-cols-2">
             {t.loading.checks.map((check) => (
               <li key={check} className="flex items-center gap-2 rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#52635c]">
-                <IconCheck className="h-4 w-4 text-[#2f6f73]" />
+                <IconSpinner className="h-4 w-4 text-[#2f6f73]" />
                 {check}
               </li>
             ))}
           </ul>
-          <div className="agent-progress mt-5"><span /></div>
         </div>
-        <LoadingCardRail labels={t.loading.cardLabels} cards={cards} />
+        <div className="rounded-lg border border-[#c9d7ce] bg-[#fcfbf6] p-3 text-center">
+          {identity.imageUrl ? <Image src={identity.imageUrl} alt={`${identity.name} ${identity.cardNumber}`} width={132} height={185} className="mx-auto h-auto w-[132px]" /> : null}
+          <p className="mt-2 text-xs font-black text-[#52635c]">{identity.cardNumber}</p>
+        </div>
       </div>
     </section>
   );
 }
 
-function LoadingCardRail({ labels, cards }: { labels: string[]; cards: RecentCarouselCard[] }) {
-  const items = buildMarqueeItems(cards, 4).slice(0, 4);
+function ListingSubmissionLoading() {
+  const t = useT();
   return (
-    <div className="loading-card-rail" aria-hidden="true">
-      <style>{`
-        .loading-card-rail {
-          min-height: 9.5rem;
-          overflow: hidden;
-          border-radius: 0.75rem;
-          border: 1px solid #c9d7ce;
-          background: linear-gradient(135deg, rgba(255,255,255,.58), transparent 50%), #f7f9f5;
-          -webkit-mask-image: linear-gradient(90deg, transparent, #000 11%, #000 89%, transparent);
-          mask-image: linear-gradient(90deg, transparent, #000 11%, #000 89%, transparent);
-        }
-        .loading-card-track {
-          display: flex;
-          min-height: 9.5rem;
-          align-items: center;
-          gap: .75rem;
-          padding-inline: 1rem;
-          animation: tcgpal-loading-card-roll 2.8s cubic-bezier(.22,1,.36,1) infinite;
-          will-change: transform;
-        }
-        .loading-card {
-          position: relative;
-          display: grid;
-          height: 7.4rem;
-          width: 5.25rem;
-          flex: 0 0 auto;
-          place-items: center;
-          overflow: hidden;
-          border-radius: .6rem;
-          border: 1px solid rgba(255,255,255,.62);
-          box-shadow: 0 14px 28px rgba(36,49,47,.18);
-        }
-        .loading-card:nth-child(odd) { transform: translateY(-.2rem) rotate(-2deg); }
-        .loading-card:nth-child(even) { transform: translateY(.2rem) rotate(2deg); }
-        .loading-card-real { background: #fcfbf6; }
-        .loading-card-real img {
-          padding: .18rem;
-          filter: saturate(.96) contrast(1.02);
-        }
-        .loading-card-inner {
-          position: absolute;
-          inset: .45rem;
-          border-radius: .42rem;
-          border: 1px solid rgba(255,255,255,.38);
-        }
-        .loading-card-gloss {
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          background: linear-gradient(115deg, transparent 28%, rgba(255,255,255,.22) 44%, transparent 60%);
-          pointer-events: none;
-        }
-        .loading-card-label {
-          position: relative;
-          z-index: 2;
-          border-radius: 999px;
-          background: rgba(252,251,246,.86);
-          padding: .26rem .48rem;
-          color: #24312f;
-          font-size: .62rem;
-          font-weight: 900;
-          letter-spacing: .04em;
-          text-transform: uppercase;
-        }
-        @keyframes tcgpal-loading-card-roll {
-          0% { transform: translateX(0); }
-          46% { transform: translateX(-3.4rem); }
-          100% { transform: translateX(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .loading-card-track { animation: none; }
-        }
-      `}</style>
-      <div className="loading-card-track">
-        {items.map((item, index) => (
-          <span
-            key={`${item.kind}-${item.kind === "real" ? item.card.id : item.background}-${index}`}
-            className={`loading-card ${item.kind === "real" ? "loading-card-real" : ""}`}
-            style={{
-              background: item.kind === "back" ? item.background : undefined,
-              zIndex: items.length - index,
-            }}
-          >
-            {item.kind === "real" && item.card.imageUrl ? (
-              <Image src={item.card.imageUrl} alt="" fill sizes="84px" className="object-contain" />
-            ) : (
-              <span className="loading-card-inner" />
-            )}
-            <span className="loading-card-gloss" />
-            <span className="loading-card-label">{labels[index] ?? ""}</span>
-          </span>
-        ))}
+    <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite" aria-busy="true">
+      <div className="flex items-start gap-3">
+        <IconSpinner className="mt-1 h-5 w-5 animate-spin text-[#2f6f73] motion-reduce:animate-none" />
+        <div>
+          <h2 className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.listingSubmissionTitle}</h2>
+          <p className="mt-1 text-sm leading-6 text-[#64736c]">{t.loading.listingSubmissionDesc}</p>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -1482,6 +1462,10 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
   // A failed catalog lookup must not read as "no such card" — distinguish it so the
   // empty state says "temporarily unavailable, try again" instead of "no match".
   const lookupUnavailable = identities.length === 0 && warnings.some((warning) => /catalog lookup unavailable/i.test(warning));
+  const sharedNumber = identities.length > 1 && identities.every((identity) => identity.cardNumber === identities[0]?.cardNumber)
+    ? identities[0]?.cardNumber ?? ""
+    : "";
+  const heading = t.identity.chooseHeading(identities[0]?.name ?? "card", sharedNumber);
   return (
     <section id="comparison-result" tabIndex={-1} className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 outline-none sm:p-7">
       <div className="max-w-2xl">
@@ -1489,7 +1473,7 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
           <IconSeal className="h-4 w-4" />
           {t.identity.eyebrow}
         </p>
-        <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.identity.heading}</h2>
+        <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{heading}</h2>
         <p className="mt-2 leading-7 text-[#64736c]">
           {t.identity.desc}
         </p>
@@ -3067,6 +3051,17 @@ function nullableNumber(value: string) {
   if (!value.trim()) return null;
   const number = Number(value);
   return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function hasListingSubmission(request: ComparisonRequest) {
+  const source = request.sourceListing;
+  return Boolean(
+    source.url.trim()
+    || source.title.trim()
+    || source.description.trim()
+    || source.price !== null
+    || request.manualCandidates.length > 0
+  );
 }
 
 function nullableInteger(value: string) {

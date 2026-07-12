@@ -606,6 +606,7 @@ export type SourceListing = z.infer<typeof sourceListingSchema>;
 export type BuyerContext = z.infer<typeof buyerContextSchema>;
 export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>;
 export type CardIdentitySearchRequest = z.infer<typeof cardIdentitySearchRequestSchema>;
+export type CardIdentitySearchRequestInput = z.input<typeof cardIdentitySearchRequestSchema>;
 export type CardIdentitySearchResponse = z.infer<typeof cardIdentitySearchResponseSchema>;
 export type TcgGame = z.infer<typeof tcgGameSchema>;
 export type CardHint = z.infer<typeof cardHintSchema>;

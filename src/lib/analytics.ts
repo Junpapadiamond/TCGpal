@@ -3,6 +3,8 @@
 import posthog from "posthog-js";
 
 export type TcgpalAnalyticsEvent =
+  | "card_search_started"
+  | "identity_gallery_viewed"
   | "comparison_started"
   | "source_detected"
   | "card_identity_confirmed"

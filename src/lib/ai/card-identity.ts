@@ -3,12 +3,12 @@ import {
   cardIdentitySearchRequestSchema,
   cardIdentitySearchResponseSchema,
   comparisonRequestSchema,
-  type CardIdentitySearchRequest,
+  type CardIdentitySearchRequestInput,
   type CardIdentitySearchResponse,
 } from "@/lib/schemas";
 
 export async function resolveCardIdentity(
-  rawInput: CardIdentitySearchRequest,
+  rawInput: CardIdentitySearchRequestInput,
   dependencies: { fetcher?: typeof fetch; now?: () => Date } = {},
 ): Promise<CardIdentitySearchResponse> {
   const input = cardIdentitySearchRequestSchema.parse(rawInput);

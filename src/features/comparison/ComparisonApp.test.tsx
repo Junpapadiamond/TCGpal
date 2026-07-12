@@ -8,6 +8,7 @@ import { ComparisonApp, PrintIdentitySummary } from "@/features/comparison/Compa
 import { setLanguage, useLang } from "@/features/comparison/i18n";
 import type { CardIdentityCandidate, ComparisonReport, ComparisonRequest, NormalizedListing } from "@/lib/schemas";
 import { normalizeListing, rankListings } from "@/lib/comparison/ranking";
+import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
 import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 
@@ -35,6 +36,32 @@ function reportFor(request: ComparisonRequest): ComparisonReport {
   };
 }
 
+function identityResponse(candidates: CardIdentityCandidate[], status: "resolved" | "needs_confirmation" = "resolved") {
+  return {
+    identityContractVersion: 1 as const,
+    status,
+    candidates,
+    confirmedCard: status === "resolved" ? candidates[0] ?? null : null,
+    warnings: [],
+    generatedAt: "2026-07-12T00:00:00.000Z",
+  };
+}
+
+function identityForQuery(query: string): CardIdentityCandidate {
+  const parsed = parseCardQuery(query);
+  return {
+    id: parsed.cardNumber || "test-card",
+    name: parsed.name || query,
+    setName: "Test set",
+    setCode: parsed.setCode || "TEST",
+    cardNumber: parsed.cardNumber || "1/1",
+    language: "English",
+    imageUrl: "https://images.pokemontcg.io/base1/1.png",
+    confidence: "high",
+    matchReasons: ["Test catalog match."],
+  };
+}
+
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();
   return {
@@ -59,8 +86,14 @@ describe("comparison condition controls", () => {
       value: createMemoryStorage(),
     });
     setLanguage("en");
-    vi.stubGlobal("fetch", vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([identityForQuery(String(request.query))])), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
       requests.push(request);
       return new Response(JSON.stringify(reportFor(request)), {
         status: 200,
@@ -90,6 +123,93 @@ describe("comparison condition controls", () => {
     vi.restoreAllMocks();
   });
 
+  it("opens a gallery-shaped identity state without comparison language for a name-only search", async () => {
+    let resolveIdentity!: (response: Response) => void;
+    const identityResponse = new Promise<Response>((resolve) => { resolveIdentity = resolve; });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/api/agent/card-identity")) return identityResponse;
+      throw new Error("listing comparison must not start before confirmation");
+    }));
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Pikachu" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Browse card versions" }));
+
+    expect(await screen.findByRole("heading", { name: "Finding Pikachu versions" })).toBeTruthy();
+    expect(screen.queryByText(/validating the comparison/i)).toBeNull();
+    expect(screen.queryByText(/marketplace evidence/i)).toBeNull();
+
+    resolveIdentity(new Response(JSON.stringify({
+      identityContractVersion: 1,
+      status: "needs_confirmation",
+      candidates: [{
+        id: "sv5-18",
+        name: "Pikachu",
+        setName: "Paldean Fates",
+        setCode: "SV5",
+        cardNumber: "18/91",
+        language: "English",
+        imageUrl: "https://images.pokemontcg.io/sv5/18.png",
+        confidence: "medium",
+        matchReasons: ["Card name matches."],
+      }],
+      confirmedCard: null,
+      warnings: [],
+      generatedAt: "2026-07-12T00:00:00.000Z",
+    }), { headers: { "Content-Type": "application/json" } }));
+
+    expect(await screen.findByRole("heading", { name: "Choose your Pikachu" })).toBeTruthy();
+  });
+
+  it("bypasses the gallery for one proven print and anchors the comparison loader to that artwork", async () => {
+    let resolveComparison!: (response: Response) => void;
+    const comparisonResponse = new Promise<Response>((resolve) => { resolveComparison = resolve; });
+    const exactCard: CardIdentityCandidate = {
+      id: "swsh7-215",
+      name: "Umbreon VMAX",
+      setName: "Evolving Skies",
+      setCode: "SWSH7",
+      cardNumber: "215/203",
+      language: "English",
+      imageUrl: "https://images.pokemontcg.io/swsh7/215.png",
+      confidence: "high",
+      matchReasons: ["Collector number matches."],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify({
+          identityContractVersion: 1,
+          status: "resolved",
+          candidates: [exactCard],
+          confirmedCard: exactCard,
+          warnings: [],
+          generatedAt: "2026-07-12T00:00:00.000Z",
+        }), { headers: { "Content-Type": "application/json" } });
+      }
+      if (String(input).endsWith("/api/agent/listing-compare")) {
+        requests.push(JSON.parse(String(init?.body)) as ComparisonRequest);
+        return comparisonResponse;
+      }
+      throw new Error(`unexpected request ${String(input)}`);
+    }));
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Umbreon VMAX 215/203" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Compare exact listings" }));
+
+    expect(await screen.findByRole("heading", { name: "Comparing listings for Umbreon VMAX" })).toBeTruthy();
+    expect(screen.getByAltText("Umbreon VMAX 215/203")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Choose your/i })).toBeNull();
+    await waitFor(() => expect(requests[0]?.confirmedCardId).toBe("swsh7-215"));
+
+    resolveComparison(new Response(JSON.stringify({
+      ...reportFor(requests[0]),
+      confirmedCard: exactCard,
+    }), { headers: { "Content-Type": "application/json" } }));
+  });
+
   it("shows the active minimum before search and submits a refined condition", async () => {
     render(<ComparisonApp />);
 
@@ -106,7 +226,7 @@ describe("comparison condition controls", () => {
     const form = query.closest("form");
     expect(form).not.toBeNull();
     fireEvent.click(within(form as HTMLFormElement).getByRole("button", {
-      name: /Find exact card|Compare exact listings/,
+      name: /Browse card versions|Find exact card|Compare exact listings/,
     }));
 
     await waitFor(() => expect(requests).toHaveLength(1));
@@ -123,7 +243,7 @@ describe("comparison condition controls", () => {
     const form = query.closest("form");
     expect(form).not.toBeNull();
     fireEvent.click(within(form as HTMLFormElement).getByRole("button", {
-      name: /Find exact card|Compare exact listings/,
+      name: /Browse card versions|Find exact card|Compare exact listings/,
     }));
 
     await waitFor(() => expect(requests).toHaveLength(1));
@@ -170,19 +290,16 @@ describe("comparison condition controls", () => {
       rarity: "SP CARD",
       variant: "Special Art (P4)",
     };
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([p2, p4], "needs_confirmation")), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
       requests.push(request);
-      const report: ComparisonReport = requests.length === 1
-        ? {
-            ...reportFor(request),
-            status: "needs_confirmation",
-            identityCandidates: [p2, p4],
-          }
-        : {
-            ...reportFor(request),
-            confirmedCard: p4,
-          };
+      const report: ComparisonReport = { ...reportFor(request), confirmedCard: p4 };
       return new Response(JSON.stringify(report), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -194,16 +311,16 @@ describe("comparison condition controls", () => {
     const query = screen.getByRole("textbox", { name: "Search for a card" });
     fireEvent.change(query, { target: { value: "Nami SP" } });
     const form = query.closest("form")!;
-    fireEvent.click(within(form).getByRole("button", { name: /Find exact card|Compare exact listings/ }));
+    fireEvent.click(within(form).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
     const p4Control = await screen.findByRole("button", {
       name: /Select Nami OP01-016 Special Art \(P4\)/,
     });
     fireEvent.click(p4Control);
 
-    await waitFor(() => expect(requests).toHaveLength(2));
-    expect(requests[1].confirmedCardId).toBe("OP01-016_p4");
-    expect(requests[1].buyer.desiredCondition).toBe("Near Mint");
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0].confirmedCardId).toBe("OP01-016_p4");
+    expect(requests[0].buyer.desiredCondition).toBe("Near Mint");
     expect(screen.queryByRole("button", { name: /Rank live listings/ })).toBeNull();
   });
 
@@ -214,23 +331,23 @@ describe("comparison condition controls", () => {
       if (!card) throw new Error(`Missing bundled print ${id}.`);
       return mapOnePieceCardToIdentity(card, { confidence: "medium", matchReasons: ["Card name matches."] });
     });
-    vi.stubGlobal("fetch", vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse(candidates, "needs_confirmation")), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       requests.push(request);
       return new Response(JSON.stringify({
         ...reportFor(request),
-        status: request.confirmedCardId ? "partial" : "needs_confirmation",
-        identityCandidates: request.confirmedCardId ? [] : candidates,
-        confirmedCard: request.confirmedCardId
-          ? candidates.find((candidate) => candidate.id === request.confirmedCardId) ?? null
-          : null,
+        status: "partial",
+        confirmedCard: candidates.find((candidate) => candidate.id === request.confirmedCardId) ?? null,
       } satisfies ComparisonReport), { status: 200, headers: { "Content-Type": "application/json" } });
     }));
     render(<ComparisonApp />);
 
     const query = screen.getByRole("textbox", { name: "Search for a card" });
     fireEvent.change(query, { target: { value: "Gear 5 Luffy OP05-119" } });
-    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Find exact card|Compare exact listings/ }));
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
     expect(await screen.findByRole("button", { name: /Select Monkey.D.Luffy OP05-119 Manga Art/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Select Monkey.D.Luffy OP05-119 Silver Special Art/ })).toBeTruthy();
@@ -243,8 +360,8 @@ describe("comparison condition controls", () => {
     gold.focus();
     await user.keyboard("{Enter}");
 
-    await waitFor(() => expect(requests).toHaveLength(2));
-    expect(requests[1].confirmedCardId).toBe("OP05-119_p8");
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0].confirmedCardId).toBe("OP05-119_p8");
     expect(screen.getByRole("button", { name: /Gold Special Art/ })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "EN" }));
   });
@@ -376,8 +493,11 @@ describe("comparison condition controls", () => {
       priceScore: Math.max(0, listing.priceScore - 20),
       valueScore: Math.max(0, listing.valueScore - 10),
     };
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([confirmedCard])), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       requests.push(request);
       const report: ComparisonReport = {
         ...reportFor(request),
@@ -394,7 +514,7 @@ describe("comparison condition controls", () => {
 
     const query = screen.getByRole("textbox", { name: "Search for a card" });
     fireEvent.change(query, { target: { value: "Nami SP OP01-016" } });
-    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Find exact card|Compare exact listings/ }));
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
     expect(await screen.findAllByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toHaveLength(2);
     expect(screen.getByAltText("Listing evidence photo: Nami OP01-016 SP Special Art")).toBeTruthy();
@@ -472,8 +592,11 @@ describe("comparison condition controls", () => {
       confirmedCard,
       cardLanguage: "EN",
     });
-    vi.stubGlobal("fetch", vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([confirmedCard])), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       requests.push(request);
       return new Response(JSON.stringify({
         ...reportFor(request),
@@ -489,7 +612,7 @@ describe("comparison condition controls", () => {
 
     const query = screen.getByRole("textbox", { name: "Search for a card" });
     fireEvent.change(query, { target: { value: "Nami OP01-016 P2" } });
-    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Find exact card|Compare exact listings/ }));
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
     expect(await screen.findByRole("heading", { name: "Best inspect lead" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Inspect listing" })).toBeTruthy();
@@ -497,8 +620,11 @@ describe("comparison condition controls", () => {
   });
 
   it("offers real next actions and keeps an English abstention reason out of 中文", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([identityForQuery(String(request.query))])), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       requests.push(request);
       return new Response(JSON.stringify({
         ...reportFor(request),
@@ -519,7 +645,7 @@ describe("comparison condition controls", () => {
 
     const query = screen.getByRole("textbox", { name: "Search for a card" });
     fireEvent.change(query, { target: { value: "Nami OP01-016 SP" } });
-    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Find exact card|Compare exact listings/ }));
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
     expect(await screen.findByRole("button", { name: "Refine search" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Retry sources" })).toBeTruthy();

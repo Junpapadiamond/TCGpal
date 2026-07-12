@@ -128,6 +128,8 @@ Keep server/API secrets outside Client Components. Route handlers are dynamic an
 PostHog uses explicit custom events only:
 
 - `comparison_started`
+- `card_search_started`
+- `identity_gallery_viewed`
 - `source_detected`
 - `card_identity_confirmed`
 - `manual_candidate_added`
