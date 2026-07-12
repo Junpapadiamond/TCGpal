@@ -263,6 +263,33 @@ export const cardIdentitySearchResponseSchema = z.object({
   }
 });
 
+// Agent-only discovery contract: unlike the primary card-first flow, this asks
+// "which exact card should I inspect within this budget?" The market anchor is
+// used only to bound the identity shortlist; a live listing must still pass the
+// normal comparison gates before it can become a recommendation.
+export const cardDiscoveryRequestSchema = z.object({
+  query: z.string().trim().min(2).max(120),
+  game: tcgGameSchema.default("pokemon"),
+  language: z.string().trim().min(2).max(40).default("English"),
+  budget: z.object({
+    min: z.number().min(0),
+    max: z.number().positive(),
+    currency: z.literal("USD").default("USD"),
+  }),
+  desiredCondition: conditionClaimSchema.exclude(["Unknown"]).default("Near Mint"),
+  postalCode: z.string().trim().max(10).default(""),
+  maxResults: z.number().int().min(1).max(5).default(3),
+  includeLiveListings: z.boolean().default(true),
+}).superRefine((request, ctx) => {
+  if (request.budget.max < request.budget.min) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["budget", "max"],
+      message: "Budget maximum must be greater than or equal to the minimum.",
+    });
+  }
+});
+
 export const printMatchSchema = z.enum(["exact", "compatible", "unknown", "mismatch"]);
 export const printPriceGuardSchema = z.enum(["none", "inspect", "exclude"]);
 
@@ -501,6 +528,36 @@ export const comparisonReportSchema = z.object({
   }
 });
 
+export const cardDiscoveryOutcomeSchema = z.enum([
+  "best_buy",
+  "inspect_first",
+  "no_listing_in_budget",
+  "comparison_unavailable",
+  "market_reference_only",
+]);
+
+export const cardDiscoveryCandidateSchema = z.object({
+  card: cardIdentityCandidateSchema,
+  marketPrice: z.number().min(0),
+  outcome: cardDiscoveryOutcomeSchema,
+  recommendedListing: normalizedListingSchema.nullable(),
+  recommendation: rankedChoiceSchema.nullable(),
+  listingCost: z.number().min(0).nullable(),
+  warnings: z.array(z.string()),
+});
+
+export const cardDiscoveryResponseSchema = z.object({
+  discoveryContractVersion: z.literal(1),
+  status: z.enum(["complete", "partial", "no_matches", "unavailable"]),
+  request: cardDiscoveryRequestSchema,
+  evaluatedIdentities: z.number().int().min(0),
+  marketEligibleIdentities: z.number().int().min(0),
+  shortlist: z.array(cardDiscoveryCandidateSchema),
+  warnings: z.array(z.string()),
+  limitations: z.array(z.string()),
+  generatedAt: z.string(),
+});
+
 export const comparisonQuestionRequestSchema = z.object({
   report: comparisonReportSchema,
   question: z.string().trim().min(1).max(500),
@@ -608,6 +665,10 @@ export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>;
 export type CardIdentitySearchRequest = z.infer<typeof cardIdentitySearchRequestSchema>;
 export type CardIdentitySearchRequestInput = z.input<typeof cardIdentitySearchRequestSchema>;
 export type CardIdentitySearchResponse = z.infer<typeof cardIdentitySearchResponseSchema>;
+export type CardDiscoveryRequest = z.infer<typeof cardDiscoveryRequestSchema>;
+export type CardDiscoveryRequestInput = z.input<typeof cardDiscoveryRequestSchema>;
+export type CardDiscoveryResponse = z.infer<typeof cardDiscoveryResponseSchema>;
+export type CardDiscoveryCandidate = z.infer<typeof cardDiscoveryCandidateSchema>;
 export type TcgGame = z.infer<typeof tcgGameSchema>;
 export type CardHint = z.infer<typeof cardHintSchema>;
 export type ManualCandidate = z.infer<typeof manualCandidateSchema>;

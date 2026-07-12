@@ -41,6 +41,7 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - The technical trace stays collapsed for normal users.
 - The full English One Piece special-print research ledger lives at `output/one-piece-exact-print-metadata.json`. It is evidence and a review queue, not a runtime catalog overlay. `output/one-piece-exact-print-audit.json` deterministically reports semantic gaps, reverse product-ID collisions, provenance gaps, and manual-review candidates. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect runtime identity or market anchors.
 - `npm run metadata:refresh` reruns the bounded TCGCSV/official-image research job and regenerates the audit. `.github/workflows/refresh-one-piece-metadata.yml` runs it weekly and opens a review PR when sources change. It never edits runtime matching code, auto-merges metadata, or publishes a TCGplayer mapping without review.
+- **Agent-only budget discovery pilot:** `POST /api/agent/card-discovery` accepts a broad card/character query, USD budget, minimum seller-stated condition, language, and a maximum of five results. It shortlists only exact catalog identities whose current market anchor is inside budget, then runs the normal live comparison for those identities in parallel. Cards without market anchors are omitted rather than guessed; a live listing must independently fit the budget and pass every existing exact-print, raw-single, condition, complete-cost, seller, and evidence gate. This is not yet a primary-navigation surface or an investment recommender.
 
 ## Product Guardrails
 
@@ -114,6 +115,8 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 - `src/lib/ai/agent/market-agent.ts`: retained experimental allocator harness. It is not called by the production comparison route; keep it disabled until an offline evaluation proves better exact-match recall/precision without unacceptable latency or deterministic-coverage regressions.
 - `src/lib/comparison/japan-references.ts`: one-click Japan price/buy reference links. These are manual outbound checks only; they must never be counted as fetched inventory or analyzed prices.
 - `src/lib/ai/listing-compare.ts`: comparison orchestration — identity + TCGplayer-reference extraction, deterministic platform fan-out, deterministic evidence summary, and trace. Model allocation/narrative is not on the initial comparison path.
+- `src/lib/ai/card-discovery.ts`: bounded agent-only discovery orchestration — market-anchored identity shortlist followed by up to five parallel calls through the unchanged comparison core.
+- `src/app/api/agent/card-discovery`: the public budget-discovery pilot route; independently rate limited.
 - `src/app/api/agent/listing-compare`: the public comparison route.
 - `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
 - `src/lib/analytics.ts`: explicit PostHog events and privacy allowlist.

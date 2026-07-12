@@ -88,6 +88,30 @@ The link never bypasses catalog matching, exact-print validation, or the public
 API schema. If screenshot evidence is ambiguous, omit `card` so the buyer can
 confirm the correct print.
 
+### Agent-only budget discovery pilot
+
+`POST /api/agent/card-discovery` supports a bounded discovery-first request:
+
+```json
+{
+  "query": "Pikachu",
+  "game": "pokemon",
+  "language": "English",
+  "budget": { "min": 200, "max": 500, "currency": "USD" },
+  "desiredCondition": "Near Mint",
+  "postalCode": "10001",
+  "maxResults": 3,
+  "includeLiveListings": true
+}
+```
+
+The route considers at most five exact identities. It omits identities without
+a usable market reference, uses the market anchor only to create the shortlist,
+and recommends a live listing only when that listing is itself inside budget and
+passes the normal raw-single, exact-print, condition, complete-cost, seller, and
+evidence gates. It returns `complete`, `partial`, `no_matches`, or `unavailable`
+and never substitutes a prediction or sold-history claim for missing evidence.
+
 ## Verification
 
 ```bash

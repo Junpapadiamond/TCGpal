@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Marketplace, PlatformSourceMode } from "@/lib/schemas";
 
-export type OpsRoute = "card-identity" | "listing-compare" | "listing-compare-explain";
+export type OpsRoute = "card-identity" | "card-discovery" | "listing-compare" | "listing-compare-explain";
 export type OpsLevel = "info" | "warn" | "error";
 export type OpsProvider =
   | "anthropic"

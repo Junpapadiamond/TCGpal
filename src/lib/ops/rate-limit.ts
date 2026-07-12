@@ -29,6 +29,7 @@ type LocalRateEntry = {
 const DEFAULT_COMPARISON_LIMIT = 20;
 const DEFAULT_EXPLAIN_LIMIT = 60;
 const DEFAULT_IDENTITY_LIMIT = 60;
+const DEFAULT_DISCOVERY_LIMIT = 10;
 const DEFAULT_WINDOW_MS = 10 * 60 * 1000;
 const LOCAL_RATE_LIMIT_MAX_ENTRIES = 2500;
 const localRateLimitStore = new Map<string, LocalRateEntry>();
@@ -86,6 +87,12 @@ export function getRateLimitIdentity(request: Request) {
 }
 
 export function getRateLimitRule(route: OpsRoute): RateLimitRule {
+  if (route === "card-discovery") {
+    return {
+      max: readPositiveInt("RATE_LIMIT_DISCOVERY_MAX", DEFAULT_DISCOVERY_LIMIT),
+      windowMs: readPositiveInt("RATE_LIMIT_DISCOVERY_WINDOW_MS", DEFAULT_WINDOW_MS),
+    };
+  }
   if (route === "card-identity") {
     return {
       max: readPositiveInt("RATE_LIMIT_IDENTITY_MAX", DEFAULT_IDENTITY_LIMIT),
