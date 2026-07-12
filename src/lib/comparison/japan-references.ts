@@ -73,7 +73,7 @@ export function isJapanReferenceLabel(label: string) {
 }
 
 function manualNote(source: string) {
-  return `${source} was not fetched or analyzed by TCGpal. Open this Japan price/buy search manually; paste a specific listing back into TCGpal if you want it ranked with the other evidence.`;
+  return `${source} was not fetched or analyzed by TCGlens. Open this Japan price/buy search manually; paste a specific listing back into TCGlens if you want it ranked with the other evidence.`;
 }
 
 function searchUrl(base: string, key: string, query: string) {

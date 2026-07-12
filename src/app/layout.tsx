@@ -28,7 +28,7 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "TCGpal — Compare Pokémon & One Piece card listings with evidence",
+  title: "TCGlens — Compare Pokémon & One Piece card listings with evidence",
   description: "Compare landed cost, seller signals, and condition evidence before buying Pokémon or One Piece cards.",
   icons: {
     icon: [

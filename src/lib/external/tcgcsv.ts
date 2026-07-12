@@ -56,6 +56,7 @@ export type TcgplayerProductMatch = {
   groupName: string;
   productId: number;
   productName: string;
+  collectorNumber: string;
   productUrl: string;
   imageUrl: string | null;
 };
@@ -101,7 +102,7 @@ export function isTcgcsvStale(asOf: string | null, now: Date = new Date()) {
 // Group is matched by set name, product by printed collector number; a name
 // sanity check prevents a wrong-number data glitch from crossing sets.
 export async function resolveTcgplayerProduct(
-  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId" | "variant">>,
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId" | "tcgplayerGroupId" | "variant">>,
   fetcher: typeof fetch = fetch,
   options: { preferredProductId?: number | null } = {},
 ): Promise<TcgplayerProductMatch | null> {
@@ -109,24 +110,24 @@ export async function resolveTcgplayerProduct(
   if (matches.length === 0) return null;
   const preferredProductId = options.preferredProductId ?? card.tcgplayerProductId ?? null;
   if (preferredProductId) {
-    return matches.find((product) => product.productId === preferredProductId) ?? matches[0];
+    return matches.find((product) => product.productId === preferredProductId) ?? null;
   }
-  // Anchor to the print the buyer actually confirmed: an alternate-art / parallel
-  // card must not be priced against the (cheaper) base SKU, and a base card must
-  // not be priced against the pricier parallel. `variant` is set only for alt-art
-  // prints. Falls back to the best available product when that class isn't listed
-  // separately, so a missing parallel SKU still yields a (base) anchor, never null.
+  // Anchor to the print class the buyer confirmed. Ambiguous products and a
+  // missing requested variant return null so a sibling SKU never supplies the
+  // selected print's market anchor.
   const wantsAlt = Boolean(card.variant);
   const sameClass = matches.filter((product) => isParallelProduct(product) === wantsAlt);
-  return sameClass[0] ?? matches[0];
+  if (sameClass.length === 1) return sameClass[0];
+  if (!card.variant && matches.length === 1) return matches[0];
+  return null;
 }
 
 export async function resolveTcgplayerProductVariants(
-  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber">,
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "cardNumber"> & Partial<Pick<CardIdentityCandidate, "tcgplayerProductId" | "tcgplayerGroupId">>,
   fetcher: typeof fetch = fetch,
 ): Promise<TcgplayerProductMatch[]> {
   const categoryId = inferTcgplayerCategoryId(card);
-  const group = await findTcgplayerGroup(categoryId, card.setName, fetcher);
+  const group = await findTcgplayerGroup(categoryId, card.setName, fetcher, card.tcgplayerGroupId ?? null);
   if (!group) return [];
 
   const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 86400);
@@ -138,12 +139,24 @@ export async function resolveTcgplayerProductVariants(
   if (!wantedPrefix) return [];
 
   const candidates = products.filter((product) => {
-    const number = product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "";
+    const number = productNumber(product);
     return collectorNumberKey(number) === wantedNumber || collectorPrefixKey(number) === wantedPrefix;
   });
 
   const nameMatches = candidates.filter((product) => productNameMatchesCard(product.cleanName || product.name, card.name));
-  const matches = nameMatches.length > 0 ? nameMatches : candidates.length === 1 ? candidates : [];
+  const exactNumberMatches = candidates.filter(
+    (product) => collectorNumberKey(productNumber(product)) === wantedNumber,
+  );
+  const matches = nameMatches.length > 0
+    ? nameMatches
+    : exactNumberMatches.length === 1
+      ? exactNumberMatches
+      : [];
+  if (card.tcgplayerProductId) {
+    return matches
+      .filter((product) => product.productId === card.tcgplayerProductId)
+      .map((product) => toProductMatch(categoryId, group, product));
+  }
   return sortTcgplayerProducts(matches).map((product) => toProductMatch(categoryId, group, product));
 }
 
@@ -158,6 +171,7 @@ function toProductMatch(
     groupName: group.name,
     productId: product.productId,
     productName: product.name,
+    collectorNumber: product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "",
     productUrl: product.url || `https://www.tcgplayer.com/product/${product.productId}`,
     imageUrl: product.imageUrl || null,
   };
@@ -208,21 +222,31 @@ export async function searchTcgplayerListings(
   return { seeds: [], anchor, product, asOf };
 }
 
-async function findTcgplayerGroup(categoryId: number, setName: string, fetcher: typeof fetch) {
+async function findTcgplayerGroup(
+  categoryId: number,
+  setName: string,
+  fetcher: typeof fetch,
+  preferredGroupId: number | null = null,
+) {
   const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/groups`), fetcher, 86400);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer group feed failed with ${response.status}.`);
   const groups = tcgcsvEnvelope(tcgcsvGroupSchema).parse(await response.json()).results;
 
+  if (preferredGroupId) {
+    return groups.find((group) => group.groupId === preferredGroupId) ?? null;
+  }
+
   const wanted = normalize(setName);
   if (!wanted) return null;
 
-  // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies"), so
-  // containment of the catalog set name is the primary match.
-  const exact = groups.find((group) => {
-    const name = normalize(group.name);
-    return name === wanted || name.endsWith(wanted) || name.includes(wanted);
-  });
-  if (exact) return exact;
+  // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies").
+  // Rank every containment candidate so a short name such as "Base" cannot
+  // select "Scarlet & Violet Base Set" merely because it appears first.
+  const contained = groups
+    .map((group) => ({ group, tier: containmentTier(normalize(group.name), wanted) }))
+    .filter((entry) => entry.tier > 0)
+    .sort((a, b) => b.tier - a.tier || normalize(a.group.name).length - normalize(b.group.name).length);
+  if (contained[0]) return contained[0].group;
 
   const bestTokens = groups
     .map((group) => ({ group, overlap: nameOverlap(group.name, setName) }))
@@ -257,7 +281,7 @@ async function tcgcsvFetch(url: URL, fetcher: typeof fetch, revalidateSeconds: n
     return await fetcher(url, {
       // TCGCSV rejects requests without a User-Agent with 401.
       headers: {
-        "User-Agent": "TCGpal/0.1 (+https://tcgpal.vercel.app)",
+        "User-Agent": "TCGlens/0.1 (+https://tcgpal.vercel.app)",
         Accept: "application/json, text/plain",
       },
       next: { revalidate: revalidateSeconds },
@@ -272,6 +296,10 @@ function collectorNumberKey(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9/]/g, "").split("/").map(stripLeadingZeros).join("/");
 }
 
+function productNumber(product: TcgcsvProduct) {
+  return product.extendedData?.find((entry) => entry.name === "Number")?.value ?? "";
+}
+
 function collectorPrefixKey(value: string) {
   return collectorNumberKey(value).split("/")[0] ?? "";
 }
@@ -283,6 +311,12 @@ function stripLeadingZeros(segment: string) {
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function containmentTier(groupName: string, wanted: string) {
+  if (groupName === wanted) return 3;
+  if (groupName.endsWith(wanted)) return 2;
+  return groupName.includes(wanted) ? 1 : 0;
 }
 
 function nameOverlap(left: string, right: string) {

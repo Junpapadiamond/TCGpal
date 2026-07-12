@@ -16,7 +16,7 @@ export { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 
 const FETCH_TIMEOUT_MS = 8000;
 const MAX_HTML_BYTES = 1_500_000;
-const USER_AGENT = "TCGpalAgent/0.1 (user-initiated single-listing check; +https://tcgpal.vercel.app)";
+const USER_AGENT = "TCGlensAgent/0.1 (user-initiated single-listing check; +https://tcgpal.vercel.app)";
 
 export class UniversalListingBlockedError extends Error {
   constructor(message: string) {
@@ -111,11 +111,12 @@ function parseRobots(text: string): RobotsRules {
 
     if (field === "user-agent") {
       const agent = value.toLowerCase();
+      const targetsThisClient = agent === "*" || agent.includes("tcglens") || agent.includes("tcgpal");
       // A new agent block starts; groups of consecutive user-agent lines share rules.
       if (sawAnyAgent && (rules.allow.length || rules.disallow.length)) {
-        applies = agent === "*" || agent.includes("tcgpal");
+        applies = targetsThisClient;
       } else {
-        applies = applies || agent === "*" || agent.includes("tcgpal");
+        applies = applies || targetsThisClient;
       }
       sawAnyAgent = true;
     } else if (applies && field === "disallow" && value) {
@@ -235,7 +236,7 @@ export async function fetchUniversalListing(
 
   if (!(await isPathAllowedByRobots(url, fetcher))) {
     throw new UniversalListingBlockedError(
-      "This site's robots.txt disallows automated access to that page, so TCGpal did not fetch it. Add the listing facts manually instead.",
+      "This site's robots.txt disallows automated access to that page, so TCGlens did not fetch it. Add the listing facts manually instead.",
     );
   }
 
@@ -330,7 +331,7 @@ function buildUniversalListingResult(
   const price = deterministic.price ?? ai?.price ?? tavily?.price ?? null;
   const currency = (deterministic.currency ?? ai?.currency ?? tavily?.currency ?? "USD").toUpperCase();
   if (currency && currency !== "USD") {
-    throw new Error(`The pasted listing is priced in ${currency}; TCGpal compares USD listings only.`);
+    throw new Error(`The pasted listing is priced in ${currency}; TCGlens compares USD listings only.`);
   }
   if (price === null && !title) {
     throw new Error("No price or title could be extracted from the pasted page.");

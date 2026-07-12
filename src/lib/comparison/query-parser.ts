@@ -45,6 +45,7 @@ const GAME_TOKENS: Array<{ pattern: RegExp; game: TcgGame }> = [
 // Pokémon. Ambiguous shapes (P-096 appears in both games) stay null.
 const ONE_PIECE_CODE_PATTERN = /\b(?:OP|ST|EB|PRB)\d{1,2}(?:-\d{1,3})?\b/i;
 const POKEMON_CODE_PATTERN = /\b(?:SWSH|SVP?|SM|XY|BW|TG|GG|DP|HGSS)\d{1,4}\b/i;
+const ONE_PIECE_CHARACTER_HINT_PATTERN = /\b(?:nami|luffy|zoro|sanji|shanks|ace|sabo|yamato|robin|chopper|hancock|law)\b/i;
 
 // Full words only (no 2-3 letter abbreviations like "JP"/"EN") — a wrong game/
 // language guess is worse than no guess, and short abbreviations are exactly the
@@ -61,6 +62,22 @@ const GRADING_COMPANY_PATTERN = /\b(psa|bgs|cgc|sgc)\s*(\d{1,2}(?:\.\d)?)\b/i;
 // Longest/most-specific phrases first so "Trainer Gallery" matches whole rather
 // than leaving a dangling "Gallery".
 const VARIANT_KEYWORDS = [
+  "Serial Numbered",
+  "Serialized",
+  "Premium Collection",
+  "Signature",
+  "Signed",
+  "Stamped",
+  "Textured",
+  "Tournament Winner",
+  "Tournament Pack",
+  "Treasure Cup",
+  "Championship",
+  "Anniversary",
+  "Red Super Alternate Art",
+  "Super Alternate Art",
+  "Wanted Poster",
+  "Manga Art",
   "Trainer Gallery",
   "Alternate Art",
   "Alt Art",
@@ -69,7 +86,14 @@ const VARIANT_KEYWORDS = [
   "Reverse Holo",
   "ACE SPEC",
   "Promo",
+  "Gold",
+  "Silver",
 ];
+
+const VARIANT_ALIASES: Record<string, string> = {
+  Serialized: "Serial Numbered",
+  Signed: "Signature",
+};
 
 // Short rarity codes collectors actually type in a search box ("Luffy sp",
 // "Pikachu sir") rather than the full phrase above. Word-boundary matched and
@@ -91,7 +115,19 @@ const RARITY_CODE_KEYWORDS: Array<{ pattern: RegExp; variant: string }> = [
   // One Piece's SP-rarity parallels are the ones collectors call "manga rare"
   // (hand-drawn manga-style art) — the catalog only tags them as "SP CARD", so
   // route the collector term to the same filter value.
-  { pattern: /\bmanga\b/i, variant: "SP" },
+  { pattern: /\bmanga\b/i, variant: "Manga Art" },
+  { pattern: /\bwanted(?:\s+poster)?\b/i, variant: "Wanted Poster" },
+  { pattern: /\bred\s+super\s+(?:alt|alternate(?:\s+art)?)\b/i, variant: "Red Super Alternate Art" },
+  { pattern: /\bsuper\s+(?:alt|alternate(?:\s+art)?)\b/i, variant: "Super Alternate Art" },
+  { pattern: /\bgold\b/i, variant: "Gold" },
+  { pattern: /\bsilver\b/i, variant: "Silver" },
+];
+
+const ONE_PIECE_RELEASE_PHRASES: Array<{ pattern: RegExp; variant: string }> = [
+  { pattern: /\b(?:\d+(?:st|nd|rd|th)\s+)?anniversary\s+winner\b/i, variant: "Tournament Winner" },
+  { pattern: /\bregional\s+champion\b/i, variant: "Regional Champion" },
+  { pattern: /\bregional\s+finalist\b/i, variant: "Regional Finalist" },
+  { pattern: /\bregional\s+participation\b/i, variant: "Regional Participation" },
 ];
 
 // A bare "OP15" / "ST01" / "EB02" (no "-NNN" suffix) names a SET, not one print —
@@ -136,11 +172,19 @@ export function parseCardQuery(query: string): ParsedCardQuery {
   const gradingClaim = grading ? normalizeWhitespace(grading[0]) : "";
 
   let variant = "";
-  for (const keyword of VARIANT_KEYWORDS) {
+  for (const { pattern, variant: candidate } of ONE_PIECE_RELEASE_PHRASES) {
+    const match = remaining.match(pattern);
+    if (match) {
+      variant = candidate;
+      remaining = removeMatch(remaining, match);
+      break;
+    }
+  }
+  for (const keyword of variant ? [] : VARIANT_KEYWORDS) {
     const pattern = new RegExp(`\\b${keyword.replace(/\s+/g, "\\s+")}\\b`, "i");
     const match = remaining.match(pattern);
     if (match) {
-      variant = keyword;
+      variant = VARIANT_ALIASES[keyword] ?? keyword;
       remaining = removeMatch(remaining, match);
       break;
     }
@@ -173,6 +217,22 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     }
   }
   if (game === null && alias) game = alias.game;
+  const onePieceSpecialVariants = new Set([
+    "SP",
+    "Manga Art",
+    "Gold",
+    "Silver",
+    "Wanted Poster",
+    "Super Alternate Art",
+    "Red Super Alternate Art",
+    "Signature",
+    "Serial Numbered",
+    "Stamped",
+    "Textured",
+  ]);
+  if (game === null && onePieceSpecialVariants.has(variant) && ONE_PIECE_CHARACTER_HINT_PATTERN.test(query)) {
+    game = "onePiece";
+  }
 
   // Claim a bare One Piece set code ("OP15") before the generic collector-number
   // pattern gets a chance to half-match it as an incomplete print number.

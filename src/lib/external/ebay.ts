@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { deriveVariantIntent, isOnePieceCardKey, type VariantIntent } from "@/lib/comparison/ranking";
+import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -15,6 +16,31 @@ const VARIANT_QUERY_TOKENS: Partial<Record<VariantIntent, string>> = {
   treasure: "treasure rare",
   alt: "alt art",
 };
+
+function researchedPrintQueryToken(card: CardIdentityCandidate): string | null {
+  if (card.treatments?.includes("gold")) return "gold";
+  if (card.treatments?.includes("silver")) return "silver";
+  if (card.treatments?.includes("red") && card.artworkClass === "super_alternate") return "red super alt";
+  if (card.artworkClass === "manga") return "manga";
+  if (card.artworkClass === "wanted_poster") return "wanted poster";
+  if (card.artworkClass === "super_alternate") return "super alt";
+  const aliases = card.collectorAliases ?? [];
+  for (const token of [
+    "tournament winner",
+    "tournament pack",
+    "treasure cup",
+    "regional champion",
+    "regional finalist",
+    "regional participation",
+    "premium collection",
+    "championship",
+    "anniversary",
+    "promo",
+  ]) {
+    if (aliases.some((alias) => alias.toLowerCase().includes(token))) return token;
+  }
+  return null;
+}
 
 const ebayAmountSchema = z.object({
   value: z.string(),
@@ -204,12 +230,24 @@ export async function searchEbayAlternatives(
   // Applied on top of query overrides too: the crosswalk template is the same
   // deterministic name+number string, and the fallback attempt protects recall.
   const variantToken = isOnePieceCardKey(card.cardNumber, card.id)
-    ? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null
+    ? researchedPrintQueryToken(card) ?? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null
+    : null;
+  const exactPrintToken = isOnePieceCardKey(card.cardNumber, card.id)
+    ? card.id.match(/_([a-z]\d+)$/i)?.[1]?.toUpperCase() ?? null
     : null;
 
   const attempts = [
     ...(ebayProduct?.epid
       ? [{ mode: "epid" as const, epid: ebayProduct.epid, query: "", fallbackReason: "" }]
+      : []),
+    ...(variantToken && exactPrintToken
+      ? [{
+        mode: "keyword" as const,
+        query: `${query} ${exactPrintToken} ${variantToken}`,
+        fallbackReason: ebayProduct?.epid
+          ? `eBay product-ID search returned no USD candidates; broadened to the exact-print keyword query.`
+          : "",
+      }]
       : []),
     ...(variantToken
       ? [{
@@ -251,6 +289,18 @@ export async function searchEbayAlternatives(
     }
     const result = ebaySearchSchema.parse(await response.json());
     summaries = result.itemSummaries.filter((item) => item.price.currency === "USD");
+    if (!finalAttempt && summaries.length > 0) {
+      const nonMismatches = summaries.filter((item) => assessPrintFidelity({
+        card,
+        matchText: item.title,
+        listingPrice: Number(item.price.value),
+        exactMarketAnchor: null,
+      }).match !== "mismatch");
+      if (nonMismatches.length === 0) {
+        continue;
+      }
+      summaries = nonMismatches;
+    }
     searchNote = attempt.mode === "epid"
       ? `Searched eBay by product ID ePID ${attempt.epid}.`
       : attempt.fallbackReason || (variantToken && !finalAttempt
@@ -322,12 +372,12 @@ export async function resolveEbayProductForCard(
     cache: "no-store",
   }, fetcher);
   if (!response.ok) {
-    return resolveEbayProductFromBrowseConsensus(card, buyer, token, fetcher);
+    return null;
   }
 
   const result = ebayCatalogSearchSchema.parse(await response.json());
   if (result.productSummaries.length === 0) {
-    return resolveEbayProductFromBrowseConsensus(card, buyer, token, fetcher);
+    return null;
   }
   const matches = result.productSummaries
     .flatMap((product) => {
@@ -335,10 +385,19 @@ export async function resolveEbayProductForCard(
       if (!epid) return [];
       const localizedAspects = extractCatalogAspects(product);
       const productTitle = product.title?.trim() || "";
-      const searchableText = [productTitle, ...localizedAspects.flatMap((aspect) => [aspect.name, aspect.value])]
-        .join(" ");
+      const aspectText = localizedAspects.flatMap((aspect) => [aspect.name, aspect.value]).join(" ");
+      const searchableText = [productTitle, aspectText].filter(Boolean).join(" ");
+      const numberPattern = collectorNumberPattern(card.cardNumber);
+      if (!aspectText || !numberPattern?.test(aspectText)) return [];
       const match = assessTitleMatch(searchableText, card);
       if (match.confidence !== "high") return [];
+      const print = assessPrintFidelity({
+        card,
+        matchText: searchableText,
+        listingPrice: 0,
+        exactMarketAnchor: null,
+      });
+      if (print.match !== "exact" && print.match !== "compatible") return [];
       return [{
         epid,
         confidence: "high" as const,
@@ -353,58 +412,6 @@ export async function resolveEbayProductForCard(
 
   const uniqueByEpid = new Map(matches.map((match) => [match.epid, match]));
   return uniqueByEpid.size === 1 ? [...uniqueByEpid.values()][0] : null;
-}
-
-async function resolveEbayProductFromBrowseConsensus(
-  card: CardIdentityCandidate,
-  buyer: BuyerContext,
-  token: string,
-  fetcher: typeof fetch,
-): Promise<EbayProductResolution | null> {
-  const query = [card.name, card.cardNumber || card.setName].filter(Boolean).join(" ").trim();
-  const endpoint = buildEbaySearchEndpoint({ mode: "keyword", query });
-  endpoint.searchParams.set("limit", "20");
-  const response = await fetchWithTimeout(endpoint, {
-    headers: ebayHeaders(token, buyer),
-    cache: "no-store",
-  }, fetcher);
-  if (!response.ok) return null;
-
-  const result = ebaySearchSchema.parse(await response.json());
-  const highConfidence = result.itemSummaries
-    .filter((item) => item.price.currency === "USD")
-    .flatMap((item) => {
-      const epid = item.epid?.trim();
-      if (!epid) return [];
-      const match = assessTitleMatch(item.title, card);
-      return match.confidence === "high" ? [{ epid, title: item.title, reasons: match.reasons }] : [];
-    });
-
-  if (highConfidence.length < 2) return null;
-
-  const counts = new Map<string, { count: number; title: string; reasons: string[] }>();
-  for (const match of highConfidence) {
-    const current = counts.get(match.epid);
-    counts.set(match.epid, {
-      count: (current?.count ?? 0) + 1,
-      title: current?.title ?? match.title,
-      reasons: current?.reasons ?? match.reasons,
-    });
-  }
-  const sorted = [...counts.entries()].sort((a, b) => b[1].count - a[1].count);
-  const [epid, winner] = sorted[0] ?? [];
-  if (!epid || !winner || winner.count / highConfidence.length < 0.75) return null;
-
-  return {
-    epid,
-    confidence: "high",
-    productTitle: winner.title,
-    localizedAspects: [],
-    matchReasons: [
-      `Browse exact-match listings showed a consistent ePID (${winner.count}/${highConfidence.length}); using product-ID search before keyword fallback.`,
-      ...winner.reasons,
-    ],
-  };
 }
 
 function extractCatalogAspects(product: z.infer<typeof ebayCatalogProductSchema>): EbayLocalizedAspect[] {
@@ -454,7 +461,7 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     active: !item.itemEndDate || new Date(item.itemEndDate).getTime() > Date.now(),
     seller: {
       feedbackPercentage: numberOrNull(item.seller?.feedbackPercentage),
-      feedbackCount: item.seller?.feedbackScore ?? null,
+      feedbackCount: nonNegativeIntegerOrNull(item.seller?.feedbackScore),
       returnsAccepted: item.returnTerms?.returnsAccepted ?? null,
       topRated: item.topRatedBuyingExperience ?? null,
       buyerProtection: true,
@@ -462,6 +469,10 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     },
     evidence,
   };
+}
+
+function nonNegativeIntegerOrNull(value: number | undefined): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }
 
 async function getEbayItemDetail(

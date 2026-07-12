@@ -321,7 +321,7 @@ function discoveryNote(item: RawDiscovery) {
   const availability = hasAvailableSignal(`${item.title} ${item.snippet}`)
     ? "Snippet/title has an availability hint."
     : "No reliable availability hint was found in the snippet/title.";
-  return `${freshness} ${availability} Experimental web discovery only: it may still be sold, login-gated, region-blocked, stale, or indirectly indexed. Open manually or paste the exact URL back into TCGpal before comparing.`;
+  return `${freshness} ${availability} Experimental web discovery only: it may still be sold, login-gated, region-blocked, stale, or indirectly indexed. Open manually or paste the exact URL back into TCGlens before comparing.`;
 }
 
 function isWithinDays(value: string | null, days: number, nowDate: Date) {

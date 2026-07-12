@@ -35,10 +35,12 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - Japan reference searches (Yahoo Auctions JP, Mercari JP, SNKRDUNK, and game-specific shop links) are shown as one-click outbound manual checks. They are not fetched, parsed, ranked, or counted as live source rows until an approved provider/API is connected.
 - Facebook, Reddit, Mercari, Whatnot, Japan marketplaces, local shops, and other connector-less sources join via paste-a-URL or the manual ledger until an approved provider/API is connected. Roadmap platform agents remain visible as skipped/not connected.
 - Tavily/Exa are optional test infrastructure behind `TAVILY_API_KEY` and `EXA_API_KEY`. Their approved slots are: (1) the conversational assistant (`/api/agent/listing-compare/explain`) for cited web context on source-legitimacy, translation, manual-reference, and identity-help questions; (2) experimental web marketplace discovery that returns possible links only. Tavily/Exa citations and discovered links must stay separate from listing evidence and must never feed the ranking core.
-- When no live source returns a single listing, labeled fixtures load with `demoMode:true`. Demo listings never show the per-listing vs-market read.
+- When no live source returns a trustworthy listing, the response uses the `next_moves` outcome with refine, retry, paste-a-listing, and manual-check actions. Demo fixtures are test-only and are never presented as real recommendations or fallback inventory.
 - OpenAI is optional. Without it, the deterministic evidence summary remains usable.
 - The configured/default OpenAI-compatible model is `gpt-5.5`; `gpt-5.4` is the review/cheap fallback. The dated slug `gpt-5.5-2026-04-23` is not available on the current zjapi channel.
 - The technical trace stays collapsed for normal users.
+- The full English One Piece special-print research ledger lives at `output/one-piece-exact-print-metadata.json`. It is evidence and a review queue, not a runtime catalog overlay. `output/one-piece-exact-print-audit.json` deterministically reports semantic gaps, reverse product-ID collisions, provenance gaps, and manual-review candidates. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect runtime identity or market anchors.
+- `npm run metadata:refresh` reruns the bounded TCGCSV/official-image research job and regenerates the audit. `.github/workflows/refresh-one-piece-metadata.yml` runs it weekly and opens a review PR when sources change. It never edits runtime matching code, auto-merges metadata, or publishes a TCGplayer mapping without review.
 
 ## Product Guardrails
 
@@ -116,6 +118,8 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 - `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
 - `src/lib/analytics.ts`: explicit PostHog events and privacy allowlist.
 - `scripts/check-ebay.mjs`: dev utility to validate eBay creds (OAuth token + Browse search access).
+- `scripts/research-one-piece-exact-prints.mjs`: offline research generator over the bundled English catalog, official card-image URLs, and TCGCSV category 68. It records image hashes/margins and retains unresolved/conflicting rows; its output is never consumed by product routes.
+- `scripts/audit-one-piece-exact-prints.mjs`: deterministic gate for the research ledger. `npm run metadata:check` fails when the checked-in audit is stale.
 
 Keep server/API secrets outside Client Components. Route handlers are dynamic and provider fetches use fresh data.
 
@@ -179,10 +183,10 @@ Then run `npm run dev` and verify:
 - With eBay creds, a card search returns live listings; novelty/replica titles and items priced below the market floor are excluded; the recommended buy defaults to Best Value with working Cheapest / Safest / Best-documented toggles and a real listing link.
 - One Piece cards resolve through the bundled/OPTCG catalog, use TCGCSV category `68` for TCGplayer crosswalk/prices when available, and degrade visibly when no TCGCSV product match exists.
 - Japan price checks appear as outbound manual reference buttons, open the relevant Japanese search pages, and remain labeled as not fetched/analyzed.
-- The labeled demo (no live or user-supplied rows) still reaches the independent lenses and hides the per-listing vs-market read.
+- With no live or user-supplied rows, the result uses Next Moves, exposes useful follow-up actions, and never displays demo inventory as a recommendation.
 - A manual Facebook/local listing is never fetched server-side.
 - Tax-known and tax-unknown totals use the correct language.
-- Missing provider credentials remain clearly labeled (`demoMode:true`).
+- Missing provider credentials remain clearly labeled while honest empty results use `demoMode:false` with Next Moves; demo mode is reserved for explicit test/demo fixtures.
 - Technical trace is collapsed.
 - No grade prediction or automated sold-history claim appears.
 - Desktop and mobile layouts remain usable.
@@ -196,6 +200,7 @@ When the work is finished — gate green and visually verified — push it to `m
 Design the codebase so Codex can inspect it through stable, explicit interfaces before opening many raw files:
 
 - **Project map:** `AGENTS.md` is the highest-level product, boundary, and verification contract. Keep it current when source access, ranking ownership, provider policy, or launch gates change.
+- **Current handoff:** `PROGRESS.md` is the section-addressable status and decision index for new threads. Read `BOOTSTRAP` and `TASK-INDEX`, then only the relevant `WS-*` section. Invoke `/progress` or `$progress` to refresh git state and task evidence without loading the full history.
 - **Knowledge graph:** Graphify is installed for Codex. Use it as the first broad-navigation interface when the task is architectural, cross-file, or asks "where/how does this work?"
 - **Runtime contracts:** `src/lib/schemas.ts` is the public request/response contract. Zod schemas must stay authoritative for API boundaries and cached/shared payloads.
 - **Provider contracts:** `src/lib/comparison/platforms.ts` is the marketplace-agent interface. New live sources should join by implementing `PlatformAgent`, not by branching comparison orchestration.

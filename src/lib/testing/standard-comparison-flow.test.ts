@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runListingComparison } from "@/lib/ai/listing-compare";
 import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
 import {
@@ -7,6 +7,7 @@ import {
   runStandardComparisonFlow,
 } from "@/lib/testing/standard-comparison-flow";
 import type { ComparisonRequest } from "@/lib/schemas";
+import { resetEbayTokenCacheForTests } from "@/lib/external/ebay";
 
 type PokemonFixtureCard = {
   id: string;
@@ -32,6 +33,8 @@ const pokemonFixtures: PokemonFixtureCard[] = [
   pokemonFixture("sv3pt5-25", "Pikachu", "25", "Scarlet & Violet 151", "sv3pt5", 165, 2.5),
 ];
 
+const standardListingTitles = new Map<string, string>();
+
 const standardFlowFetcher = vi.fn(async (input: RequestInfo | URL) => {
   const url = new URL(String(input));
   if (url.hostname === "api.pokemontcg.io") {
@@ -49,11 +52,51 @@ const standardFlowFetcher = vi.fn(async (input: RequestInfo | URL) => {
       totalCount: pokemonFixtures.length,
     });
   }
-  throw new Error(`network disabled in standard flow test: ${url.href}`);
+  if (url.pathname.includes("/identity/v1/oauth2/token")) {
+    return Response.json({ access_token: "test-token", expires_in: 7200 });
+  }
+  if (url.pathname.includes("/commerce/catalog/")) {
+    return Response.json({ productSummaries: [] });
+  }
+  if (url.pathname.includes("/buy/browse/v1/item_summary/search")) {
+    const query = url.searchParams.get("q") ?? "Exact card";
+    const itemId = `standard-${encodeURIComponent(query)}`;
+    const listingTitle = /OP01-(?:024|001)/.test(query) ? `${query} base print` : query;
+    standardListingTitles.set(itemId, listingTitle);
+    return Response.json({
+      itemSummaries: [{
+        itemId,
+        title: listingTitle,
+        condition: "Ungraded",
+        price: { value: "120.00", currency: "USD" },
+        shippingOptions: [{ shippingCost: { value: "5.00", currency: "USD" } }],
+      }],
+    });
+  }
+  if (url.pathname.includes("/buy/browse/v1/item/")) {
+    const itemId = decodeURIComponent(url.pathname.split("/item/")[1] ?? "");
+    return Response.json({
+      itemId,
+      title: standardListingTitles.get(itemId) ?? "Exact card listing",
+      condition: "Ungraded",
+      conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
+      price: { value: "120.00", currency: "USD" },
+      shippingOptions: [{ shippingCost: { value: "5.00", currency: "USD" } }],
+    });
+  }
+  return new Response(JSON.stringify({ error: "not available in fixture" }), { status: 404 });
 }) as unknown as typeof fetch;
+
+beforeEach(() => {
+  vi.stubEnv("EBAY_CLIENT_ID", "test-id");
+  vi.stubEnv("EBAY_CLIENT_SECRET", "test-secret");
+  resetEbayTokenCacheForTests();
+  standardListingTitles.clear();
+});
 
 afterEach(() => {
   clearCrosswalkCache();
+  resetEbayTokenCacheForTests();
   vi.clearAllMocks();
   vi.unstubAllEnvs();
 });

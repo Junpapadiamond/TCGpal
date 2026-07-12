@@ -8,6 +8,7 @@ import {
 } from "@/lib/comparison/report-cache";
 import { getJsonCache } from "@/lib/ops/cache";
 import { comparisonReportSchema, type ComparisonReport, type ComparisonRequest } from "@/lib/schemas";
+import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 
 const pureSearch = {
   sourceListing: { marketplace: "Other", url: "", title: "", price: null },
@@ -32,6 +33,9 @@ function reportStub(overrides: Partial<ComparisonReport> = {}): ComparisonReport
     trace: [],
     platforms: [],
     webDiscoveries: [],
+    identityContractVersion: 3,
+    outcome: "next_moves",
+    inspectListingId: null,
     demoMode: false,
     generatedAt: "2026-07-03T10:00:00.000Z",
     ...overrides,
@@ -59,7 +63,13 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe("swsh7-215|Near Mint|10001|0.08");
+    expect(key).toBe(`identity-v3|${ONE_PIECE_PRINT_METADATA_REVISION}|swsh7-215|Near Mint|10001|0.08`);
+  });
+
+  it("refuses reports created before the exact-print identity contract", async () => {
+    const legacy = reportStub({ identityContractVersion: undefined });
+    await setCachedComparison("legacy", legacy);
+    expect(await getCachedComparison("legacy")).toBeNull();
   });
 
   it("serves within the 15-minute TTL and expires after", async () => {

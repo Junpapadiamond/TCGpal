@@ -16,7 +16,7 @@ import type { ComparisonRequest } from "@/lib/schemas";
 const MIXED_TITLES = [
   { itemId: "v1|sp|0", title: "Nami OP01-016 SP Special Art", price: "310.00" },
   { itemId: "v1|alt|0", title: "Nami OP01-016 Alternate Art Parallel", price: "95.00" },
-  { itemId: "v1|base|0", title: "Nami OP01-016 Romance Dawn", price: "4.00" },
+  { itemId: "v1|base|0", title: "Nami OP01-016 Romance Dawn base print", price: "4.00" },
 ];
 
 function ebayFetcher(titles: Array<{ itemId: string; title: string; price: string; aspects?: Array<{ name: string; value: string }> }>) {
@@ -133,7 +133,6 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
 
   const scenarios = [
     { label: "SP", print: () => spPrint!, winner: "v1|sp|0" },
-    { label: "alt-art", print: () => altPrint!, winner: "v1|alt|0" },
     // Base is priced at a realistic commons price; the mixed pool's SP/alt rows
     // must drop out on the variant gate, not merely lose on price.
     { label: "base", print: () => basePrint!, winner: "v1|base|0" },
@@ -152,19 +151,18 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
       const winnerListing = response.candidates.find((candidate) => candidate.id === `ebay-${scenario.winner}`);
       expect(winner?.listingId).toBe(winnerListing?.id);
 
-      // Every other print class in the pool is excluded with a variant reason.
+      // Every other print class stays out of recommendation eligibility.
       const wrongPrints = response.candidates.filter(
         (candidate) => candidate.id !== `ebay-${scenario.winner}`,
       );
-      expect(wrongPrints.length).toBeGreaterThan(0);
       for (const listing of wrongPrints) {
         expect(listing.eligible, listing.title).toBe(false);
-        expect(listing.exclusionReasons.join(" "), listing.title).toContain("you're comparing");
+        expect(["unknown", "mismatch"]).toContain(listing.printMatch);
       }
     });
   }
 
-  it("abstains with a sibling-print suggestion when only wrong prints are live", async () => {
+  it("returns Next Moves when live rows explicitly identify sibling prints", async () => {
     const wrongOnly = MIXED_TITLES.filter((entry) => entry.itemId !== "v1|sp|0");
     const response = await runListingComparison(
       onePieceRequest(variantKey(spPrint!)),
@@ -172,8 +170,8 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
     );
 
     expect(response.rankedChoices).toHaveLength(0);
-    expect(response.abstention?.variantExcludedCount).toBeGreaterThan(0);
-    expect(response.abstention?.suggestedCardId).toBe(variantKey(basePrint!));
+    expect(response.outcome).toBe("next_moves");
+    expect(response.inspectListingId).toBeNull();
   });
 
   // The reported real-world failure mode: many live listings exist for the
@@ -183,7 +181,7 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
   // eBay's own item specifics (fetched into matchAspectText) do name the
   // print — reading title + aspects together turns this into a real
   // recommendation instead of a false abstention.
-  it("recommends a plain-titled listing whose item specifics reveal the confirmed alt-art print", async () => {
+  it("keeps generic alternate-art item specifics at Inspect First when several alternate prints exist", async () => {
     const titles = [
       { itemId: "v1|plain-alt|0", title: "Nami OP01-016", price: "95.00", aspects: [{ name: "Parallel/Variant", value: "Alternate Art" }] },
       { itemId: "v1|plain-alt2|0", title: "Nami OP01-016 Romance Dawn", price: "110.00", aspects: [{ name: "Parallel/Variant", value: "Alternate Art" }] },
@@ -197,9 +195,9 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
     );
 
     expect(response.demoMode).toBe(false);
-    expect(response.abstention ?? null).toBeNull();
-    const winner = response.rankedChoices.find((choice) => choice.role === "best_value");
-    expect(winner).toBeDefined();
+    expect(response.rankedChoices).toHaveLength(0);
+    expect(response.outcome).toBe("inspect_first");
+    expect(response.inspectListingId).not.toBeNull();
     const spListing = response.candidates.find((candidate) => candidate.id === "ebay-v1|plain-sp|0");
     expect(spListing?.eligible).toBe(false);
   });
@@ -209,8 +207,8 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
   // stated case governs — an NM-minimum buyer is never recommended that copy.
   it("keeps an NM-minimum comparison off listings whose titles admit a lower condition", async () => {
     const titles = [
-      { itemId: "v1|clean|0", title: "Nami OP01-016 Romance Dawn Near Mint", price: "12.00" },
-      { itemId: "v1|range|0", title: "Nami OP01-016 Romance Dawn NM-LP", price: "8.00" },
+      { itemId: "v1|clean|0", title: "Nami OP01-016 Romance Dawn base print Near Mint", price: "12.00" },
+      { itemId: "v1|range|0", title: "Nami OP01-016 Romance Dawn base print NM-LP", price: "8.00" },
     ];
     const response = await runListingComparison(
       {

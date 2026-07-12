@@ -14,7 +14,6 @@ import {
   IconInfo,
   IconLink,
   IconPhotoProof,
-  IconPin,
   IconPlus,
   IconReceipt,
   IconSeal,
@@ -27,7 +26,7 @@ import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
-import { LanguageProvider, useLang, useT, type Dict, type Lang } from "./i18n";
+import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
 import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
 import {
@@ -286,9 +285,9 @@ export function ComparisonApp() {
 
 function ComparisonExperience() {
   const t = useT();
+  const { lang } = useLang();
   const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
-  const [confirmedIdentityForSettings, setConfirmedIdentityForSettings] = useState<CardIdentityCandidate | null>(null);
   const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
   const [loading, setLoading] = useState(false);
@@ -395,7 +394,6 @@ function ComparisonExperience() {
     }
 
     const request = buildRequest(values, confirmedCardId);
-    if (!confirmedCardId) setConfirmedIdentityForSettings(null);
     setPendingRequest(request);
     setLoading(true);
     setError(null);
@@ -413,7 +411,7 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(request, t.error.temporary);
       setReport(parsed);
-      setConfirmedIdentityForSettings(null);
+      setPendingRequest(parsed.request);
       if (parsed.confirmedCard) {
         rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
       }
@@ -436,18 +434,37 @@ function ComparisonExperience() {
   }
 
   async function confirmIdentity(identity: CardIdentityCandidate) {
-    if (!pendingRequest) return;
+    if (!pendingRequest || loading) return;
     const confirmedRequest = { ...pendingRequest, confirmedCardId: identity.id };
     setPendingRequest(confirmedRequest);
-    setConfirmedIdentityForSettings(identity);
     setReport(null);
     setError(null);
+    setLoading(true);
     form.setValue("cardName", identity.name);
     form.setValue("setCode", identity.setCode);
     form.setValue("cardNumber", identity.cardNumber);
     rememberConfirmedCard(identity, pendingRequest.cardHint.game);
     trackEvent("card_identity_confirmed", { confidence: identity.confidence });
-    focusComparisonTarget();
+    try {
+      const parsed = await requestComparisonReport(confirmedRequest, t.error.temporary);
+      setReport(parsed);
+      setPendingRequest(parsed.request);
+      if (parsed.confirmedCard) {
+        rememberConfirmedCard(parsed.confirmedCard, parsed.request.cardHint.game);
+      }
+      trackEvent("comparison_completed", {
+        marketplace: confirmedRequest.sourceListing.marketplace,
+        status: parsed.status,
+        demo_mode: parsed.demoMode,
+        candidate_count: parsed.candidates.length,
+      });
+      focusComparisonTarget();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : t.error.temporary);
+      trackEvent("comparison_failed", { marketplace: confirmedRequest.sourceListing.marketplace });
+    } finally {
+      setLoading(false);
+    }
   }
 
   // One-tap switch to a sibling print suggested by a zero-recommendation
@@ -462,7 +479,7 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(suggestedRequest, t.error.temporary);
       setReport(parsed);
-      setConfirmedIdentityForSettings(null);
+      setPendingRequest(parsed.request);
       if (parsed.confirmedCard) {
         rememberConfirmedCard(parsed.confirmedCard, suggestedRequest.cardHint.game);
       }
@@ -485,7 +502,7 @@ function ComparisonExperience() {
     try {
       const parsed = await requestComparisonReport(pendingRequest, t.error.temporary);
       setReport(parsed);
-      setConfirmedIdentityForSettings(null);
+      setPendingRequest(parsed.request);
       if (parsed.confirmedCard) {
         rememberConfirmedCard(parsed.confirmedCard, pendingRequest.cardHint.game);
       }
@@ -509,16 +526,14 @@ function ComparisonExperience() {
     trackEvent("decision_feedback_submitted", { changed_decision: changedDecision });
   }
 
-  const compactMode = Boolean(pendingRequest || report || confirmedIdentityForSettings);
+  const compactMode = Boolean(pendingRequest || report);
   const activeCard = report?.confirmedCard ?? null;
-  const currentCarouselCard = confirmedIdentityForSettings
-    ? toRecentCarouselCard(confirmedIdentityForSettings, pendingRequest?.cardHint.game ?? game)
-    : activeCard
-      ? toRecentCarouselCard(activeCard, pendingRequest?.cardHint.game ?? game)
-      : null;
+  const currentCarouselCard = activeCard
+    ? toRecentCarouselCard(activeCard, pendingRequest?.cardHint.game ?? game)
+    : null;
   const carouselCards = composeCarouselCards(currentCarouselCard, recentCarouselCards);
   const headerQuery = activeCard
-    ? [activeCard.name, activeCard.cardNumber, activeCard.setName].filter(Boolean).join(" · ")
+    ? [activeCard.name, activeCard.cardNumber, activeCard.variant, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
   const selectedConditionLabel = desiredCondition === "Unknown"
     ? t.form.anyCondition
@@ -540,12 +555,23 @@ function ComparisonExperience() {
   function startNewSearch() {
     setReport(null);
     setPendingRequest(null);
-    setConfirmedIdentityForSettings(null);
     setError(null);
     setCompactSearchOpen(false);
     form.reset(resetForNewCardSearch(form.getValues()));
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
+    });
+  }
+
+  function startPasteListing() {
+    setReport(null);
+    setPendingRequest(null);
+    setError(null);
+    setCompactSearchOpen(false);
+    setListingOpen(true);
+    form.reset(resetForNewCardSearch(form.getValues()));
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLInputElement>('input[name="url"]')?.focus();
     });
   }
 
@@ -645,7 +671,7 @@ function ComparisonExperience() {
                   <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
                 )}
 
-                <ParsedPreview preview={heroPreview} game={game} t={t} />
+                <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
 
                 <fieldset className="mt-4">
                   <legend className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.gameLabel}</legend>
@@ -934,18 +960,8 @@ function ComparisonExperience() {
 
         {loading && <LoadingLoop cards={carouselCards} />}
         {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
-        {report?.status === "needs_confirmation" && !loading && !confirmedIdentityForSettings && (
+        {report?.status === "needs_confirmation" && !loading && (
           <IdentityConfirmation identities={report.identityCandidates} warnings={report.warnings} onConfirm={confirmIdentity} />
-        )}
-        {confirmedIdentityForSettings && !loading && !report && (
-          <ConfirmedSettingsStage
-            identity={confirmedIdentityForSettings}
-            form={form}
-            onRun={form.handleSubmit((values) => {
-              void submitComparison(values, confirmedIdentityForSettings.id);
-            })}
-            loading={loading}
-          />
         )}
         {report && report.status !== "needs_confirmation" && !loading && (
           <ComparisonResult
@@ -954,6 +970,9 @@ function ComparisonExperience() {
             feedbackSent={feedbackSent}
             onFeedback={sendFeedback}
             onCompareSuggestedPrint={compareSuggestedPrint}
+            onRefineSearch={() => setCompactSearchOpen(true)}
+            onRetrySources={() => void retryComparison()}
+            onPasteListing={startPasteListing}
           />
         )}
       </div>
@@ -969,7 +988,7 @@ function Header({ onLogoClick }: { onLogoClick: () => void }) {
     <header className="border-b border-[#d6ded5] bg-[#f7f9f5]/95">
       <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <button className="flex items-center gap-3" type="button" onClick={onLogoClick} aria-label={t.header.home}>
-          <Image src="/tcgpal-logo-horizontal.svg" alt="TCGpal" width={142} height={41} priority />
+          <Image src="/tcgpal-logo-horizontal.svg" alt="TCGlens" width={142} height={41} priority />
         </button>
         <div className="flex items-center gap-3 sm:gap-6">
           <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
@@ -1006,7 +1025,7 @@ function ResultsHeader({
     <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fcfbf6]/95 shadow-[0_1px_10px_rgba(36,49,47,0.04)] backdrop-blur">
       <div className="relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-2 px-4 py-2.5 sm:gap-3 sm:px-6 lg:flex-nowrap lg:px-8">
         <button className="shrink-0" type="button" onClick={onNewSearch} aria-label={t.header.home}>
-          <Image src="/tcgpal-logo-horizontal.svg" alt="TCGpal" width={104} height={30} priority />
+          <Image src="/tcgpal-logo-horizontal.svg" alt="TCGlens" width={104} height={30} priority />
         </button>
         <button
           className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
@@ -1148,10 +1167,12 @@ function CardMarqueeItem({ item, index }: { item: MarqueeItem; index: number }) 
 function ParsedPreview({
   preview,
   game,
+  lang,
   t,
 }: {
   preview: ReturnType<typeof parseCardQuery> | null;
   game: TcgGame;
+  lang: Lang;
   t: Dict;
 }) {
   if (!preview) {
@@ -1163,7 +1184,7 @@ function ParsedPreview({
     preview.name && { label: preview.name, tone: "green" },
     preview.cardNumber && { label: `#${preview.cardNumber}`, tone: "gold" },
     preview.language && { label: preview.language, tone: "neutral" },
-    preview.variant && { label: preview.variant, tone: "neutral" },
+    preview.variant && { label: localizeVariantLabel(lang, preview.variant), tone: "neutral" },
     preview.gradingClaim && { label: preview.gradingClaim, tone: "neutral" },
   ].filter(Boolean) as Array<{ label: string; tone: "blue" | "green" | "gold" | "neutral" }>;
 
@@ -1423,125 +1444,6 @@ function DesiredConditionField({ form }: { form: UseFormReturn<ComparisonForm> }
   );
 }
 
-function ConfirmedSettingsStage({
-  identity,
-  form,
-  onRun,
-  loading,
-}: {
-  identity: CardIdentityCandidate;
-  form: UseFormReturn<ComparisonForm>;
-  onRun: () => void;
-  loading: boolean;
-}) {
-  const t = useT();
-  const preferredRole = useWatch({ control: form.control, name: "preferredRole" });
-  const postalCode = useWatch({ control: form.control, name: "postalCode" });
-  const desiredCondition = useWatch({ control: form.control, name: "desiredCondition" });
-  const taxRatePercent = useWatch({ control: form.control, name: "taxRatePercent" });
-  const stickyRunContext = [
-    desiredCondition === "Unknown" ? t.form.anyCondition : t.conditions[desiredCondition],
-    postalCode ? `ZIP ${postalCode}` : t.card.preTaxTotal,
-    taxRatePercent ? `${taxRatePercent}%` : null,
-  ].filter(Boolean).join(" · ");
-  return (
-    <section
-      id="comparison-result"
-      tabIndex={-1}
-      className="stage-reveal mt-6 scroll-mt-6 rounded-md border border-[#2f6f73] bg-[#fcfbf6] p-5 pb-28 outline-none shadow-[0_14px_34px_rgba(36,49,47,0.08)] sm:p-7"
-    >
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-start">
-        <article className="rounded-xl border border-[#d6ded5] bg-[#f7f9f5] p-4">
-          <p className="eyebrow text-[#2f6f73]">
-            <IconCheck className="h-4 w-4" />
-            {t.form.confirmedSettingsEyebrow}
-          </p>
-          <div className="mt-4 grid grid-cols-[72px_minmax(0,1fr)] gap-4">
-            {identity.imageUrl ? (
-              <HoloCardArt
-                src={identity.imageUrl}
-                alt={`${identity.name} ${identity.cardNumber}`}
-                sizes="72px"
-                className="w-[72px]"
-              />
-            ) : (
-              <div className="aspect-[2.5/3.5] w-[72px] rounded-md bg-[#e7efe8]" />
-            )}
-            <div className="min-w-0">
-              <h2 className="font-serif text-2xl font-black leading-tight text-[#2f6f73]">{identity.name}</h2>
-              <p className="mt-1 text-sm font-black text-[#24312f]">#{identity.cardNumber}</p>
-              <CardIdentityRail identity={identity} className="mt-3" />
-            </div>
-          </div>
-        </article>
-
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.stepTwo}</p>
-          <h3 className="mt-2 font-serif text-3xl font-black leading-none text-[#24312f]">
-            {t.form.confirmedSettingsHeading}
-          </h3>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64736c]">{t.form.confirmedSettingsHelp}</p>
-
-          <fieldset className="mt-5 grid gap-2 sm:grid-cols-2">
-            <legend className="sr-only">{t.form.preferenceQuestion}</legend>
-            {(["best_value", "lowest_landed_cost", "safest_listing", "best_condition_evidence"] as LensRole[]).map((role) => {
-              const active = preferredRole === role;
-              return (
-                <label
-                  key={role}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                    active ? "border-2 border-[#2f6f73] bg-[#eef7ef]" : "border-[#d6ded5] bg-[#fffef9] hover:border-[#9fb3a8]"
-                  }`}
-                >
-                  <input className="sr-only" type="radio" value={role} {...form.register("preferredRole")} />
-                  <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-[#2f6f73]" : "border-[#c9d7ce]"}`}>
-                    {active && <span className="h-2 w-2 rounded-full bg-[#2f6f73]" />}
-                  </span>
-                  <span>
-                    <span className="block text-sm font-black text-[#24312f]">{rolePreferenceLabel(role, t)}</span>
-                    <span className="mt-0.5 block text-xs leading-5 text-[#64736c]">{roleToggleHint(role, t)}</span>
-                  </span>
-                </label>
-              );
-            })}
-          </fieldset>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <label className="field">
-              <span>{t.form.deliveryZip}</span>
-              <div className="input-with-icon">
-                <IconPin className="h-4 w-4" />
-                <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
-              </div>
-              <small>{t.form.deliveryZipHelp}</small>
-            </label>
-            <DesiredConditionField form={form} />
-            <label className="field">
-              <span>{t.form.optionalTaxRate}</span>
-              <div className="input-suffix">
-                <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
-                <span>%</span>
-              </div>
-            </label>
-          </div>
-
-          <button className="primary-button mt-5 !hidden w-full justify-center sm:!inline-flex sm:w-auto" type="button" disabled={loading} onClick={onRun}>
-            {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-            {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
-          </button>
-        </div>
-      </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#c9d7ce] bg-[#fcfbf6]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-8px_22px_rgba(36,49,47,0.10)] backdrop-blur sm:hidden">
-        <p className="mb-2 truncate text-xs font-bold text-[#64736c]">{stickyRunContext}</p>
-        <button className="primary-button w-full justify-center" type="button" disabled={loading} onClick={onRun}>
-          {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-          {loading ? t.form.submitLoading : t.form.confirmedSettingsSubmit}
-        </button>
-      </div>
-    </section>
-  );
-}
-
 function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identities: CardIdentityCandidate[]; warnings?: string[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
   const t = useT();
   const [filters, setFilters] = useState<IdentityFilters>({ setFilter: "", rarityFilter: "", printTypeFilter: "" });
@@ -1705,7 +1607,7 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
       {identity.imageUrl ? (
         <HoloCardArt
           src={identity.imageUrl}
-          alt={`${identity.name} ${identity.cardNumber}`}
+          alt={[identity.name, identity.cardNumber, identity.variant, identity.setName].filter(Boolean).join(" · ")}
           sizes={compact ? "112px" : "144px"}
           className={`mx-auto ${compact ? "w-28" : "w-36"}`}
         />
@@ -1716,7 +1618,12 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
       {titleAs === "h4" ? <h4 className={titleClass}>{identity.name}</h4> : <h3 className={titleClass}>{identity.name}</h3>}
       {titleDetails && <p className="mt-1 text-sm font-black text-[#24312f]">{titleDetails}</p>}
       <CardIdentityRail identity={identity} className="mt-3" />
-      <button className="secondary-button mt-4 w-full" type="button" onClick={() => onConfirm(identity)}>
+      <button
+        className="secondary-button mt-4 w-full"
+        type="button"
+        aria-label={t.identity.selectAria(identity.name, identity.cardNumber, identity.variant ?? "")}
+        onClick={() => onConfirm(identity)}
+      >
         <IconCheck className="h-4 w-4" />
         {t.identity.confirm}
       </button>
@@ -1730,12 +1637,18 @@ function ComparisonResult({
   feedbackSent,
   onFeedback,
   onCompareSuggestedPrint,
+  onRefineSearch,
+  onRetrySources,
+  onPasteListing,
 }: {
   report: ComparisonReport;
   preferredRole: LensRole;
   feedbackSent: boolean;
   onFeedback: (changedDecision: boolean) => void;
   onCompareSuggestedPrint: (cardId: string) => void;
+  onRefineSearch: () => void;
+  onRetrySources: () => void;
+  onPasteListing: () => void;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -1762,8 +1675,13 @@ function ComparisonResult({
   const selectedRole = roleOverride && report.rankedChoices.some((choice) => choice.role === roleOverride)
     ? roleOverride
     : defaultRole;
-  const selectedChoice = report.rankedChoices.find((choice) => choice.role === selectedRole) ?? null;
-  const selectedListing = selectedChoice ? listingMap.get(selectedChoice.listingId) ?? null : null;
+  const rankedChoice = report.rankedChoices.find((choice) => choice.role === selectedRole) ?? null;
+  const rankedListing = rankedChoice ? listingMap.get(rankedChoice.listingId) ?? null : null;
+  const requestedInspectListing = report.inspectListingId ? listingMap.get(report.inspectListingId) ?? null : null;
+  const outcome = report.outcome ?? (rankedListing ? "best_buy" : requestedInspectListing ? "inspect_first" : "next_moves");
+  const selectedChoice = outcome === "best_buy" ? rankedChoice : null;
+  const selectedListing = outcome === "best_buy" ? rankedListing : null;
+  const inspectListing = outcome === "inspect_first" ? requestedInspectListing : null;
 
   const eligibleCount = eligibleListings.length;
   const orderedEligibleListings = useMemo(
@@ -1855,7 +1773,7 @@ function ComparisonResult({
     const total = selectedListing.estimatedLandedCost ?? selectedListing.preTaxTotal;
     const totalLabel = selectedListing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
     const receipt = [
-      "TCGpal comparison",
+      "TCGlens comparison",
       report.confirmedCard
         ? `${report.confirmedCard.name} · ${report.confirmedCard.setCode} #${report.confirmedCard.cardNumber}`
         : selectedListing.title,
@@ -1921,22 +1839,31 @@ function ComparisonResult({
         </div>
       )}
 
-      {report.rankedChoices.length === 0 && (
+      {outcome === "next_moves" && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
-          <h3 className="font-serif text-xl font-black">{t.result.noRecommendationTitle}</h3>
-          <p className="mt-2 text-sm leading-6">{report.abstention?.reason ?? t.result.noRecommendationBody}</p>
-          {report.abstention?.reason && <p className="mt-1 text-sm leading-6">{t.result.noRecommendationBody}</p>}
+          <h3 className="font-serif text-xl font-black">{t.result.nextMovesTitle}</h3>
+          <p className="mt-2 text-sm leading-6">{t.result.nextMovesBody}</p>
           {report.abstention?.suggestedCardId && (
             <button
               className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md bg-[#2f6f73] px-4 text-sm font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
               type="button"
               onClick={() => onCompareSuggestedPrint(report.abstention!.suggestedCardId!)}
             >
-              {t.result.compareSuggestedPrint(report.abstention.suggestedLabel ?? t.result.compareSuggestedFallbackLabel)}
+              {t.result.compareSuggestedPrint(lang === "zh" ? t.result.compareSuggestedFallbackLabel : report.abstention.suggestedLabel ?? t.result.compareSuggestedFallbackLabel)}
               <IconArrowUpRight className="h-3.5 w-3.5" />
             </button>
           )}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button className="secondary-button" type="button" onClick={onRefineSearch}>{t.result.refineSearch}</button>
+            <button className="secondary-button" type="button" onClick={onRetrySources}>{t.result.retrySources}</button>
+            <button className="secondary-button" type="button" onClick={onPasteListing}>{t.result.pasteListing}</button>
+            <a className="secondary-button inline-flex" href="#method">{t.result.nextMovesMethod}</a>
+          </div>
         </div>
+      )}
+
+      {outcome === "inspect_first" && inspectListing && (
+        <InspectFirstHero listing={inspectListing} confirmedCard={report.confirmedCard} />
       )}
 
       <div className="mx-auto max-w-[860px] space-y-3">
@@ -1952,14 +1879,14 @@ function ComparisonResult({
                 lang,
               })}
               comparableCount={eligibleCount}
-              fallbackImageUrl={report.confirmedCard?.imageUrl ?? null}
+              confirmedCard={report.confirmedCard}
               marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
               demoMode={report.demoMode}
               onAsk={askAboutListing}
             />
           )}
 
-          {report.rankedChoices.length > 0 && (
+          {outcome === "best_buy" && report.rankedChoices.length > 0 && (
             <LensControls
               choices={report.rankedChoices}
               selectedRole={selectedRole}
@@ -1971,7 +1898,7 @@ function ComparisonResult({
             />
           )}
 
-          {alternativeListings.length > 0 && (
+          {outcome === "best_buy" && alternativeListings.length > 0 && (
             <details
               className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]"
               open={!selectedListing}
@@ -1988,6 +1915,7 @@ function ComparisonResult({
                   <CompactCandidateRow
                     key={listing.id}
                     listing={listing}
+                    confirmedCard={report.confirmedCard}
                     marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
                     demoMode={report.demoMode}
                     onAsk={askAboutListing}
@@ -2123,6 +2051,39 @@ function ComparisonResult({
   );
 }
 
+function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListing; confirmedCard: CardIdentityCandidate | null }) {
+  const t = useT();
+  return (
+    <article className="mx-auto max-w-[860px] rounded-xl border-2 border-[#d7a84e] bg-[#fffaf0] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.06)] sm:p-5">
+      <div className="grid gap-4 sm:grid-cols-[152px_minmax(0,1fr)_auto] sm:items-center">
+        <div className="flex items-start gap-2">
+          <EvidencePhoto
+            src={confirmedCard?.imageUrl ?? null}
+            alt={confirmedCard ? t.result.confirmedReferenceAlt(confirmedCard.name, confirmedCard.cardNumber, confirmedCard.variant ?? "") : t.result.confirmedReference}
+            label={t.result.confirmedReference}
+          />
+          <EvidencePhoto src={listing.imageUrl} alt={t.result.listingEvidenceAlt(listing.title)} label={t.result.listingEvidencePhoto} />
+        </div>
+        <div>
+          <h2 className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.inspectFirstTitle}</h2>
+          <h3 className="mt-2 font-serif text-xl font-black text-[#24312f]">{listing.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.result.inspectFirstBody}</p>
+          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
+        </div>
+        <div className="sm:text-right">
+          <p className="font-mono text-2xl font-black text-[#24312f]">{formatMoney(listing.estimatedLandedCost ?? listing.preTaxTotal)}</p>
+          {listing.url && (
+            <a className="secondary-button mt-3 inline-flex" href={listing.url} target="_blank" rel="noreferrer">
+              {t.result.inspectListing}
+              <IconArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function ComparisonQuestionBox({
   question,
   answer,
@@ -2228,15 +2189,6 @@ function roleToggleLabel(role: RankedChoice["role"], t: Dict) {
     case "lowest_landed_cost": return t.lens.cheapest;
     case "safest_listing": return t.lens.safest;
     case "best_condition_evidence": return t.lens.bestDocumented;
-  }
-}
-
-function rolePreferenceLabel(role: RankedChoice["role"], t: Dict) {
-  switch (role) {
-    case "best_value": return t.lens.bestValuePreference;
-    case "lowest_landed_cost": return t.lens.cheapestPreference;
-    case "safest_listing": return t.lens.safestPreference;
-    case "best_condition_evidence": return t.lens.bestDocumentedPreference;
   }
 }
 
@@ -2570,7 +2522,7 @@ function RecommendedBuyHero({
   choice,
   verdict,
   comparableCount,
-  fallbackImageUrl,
+  confirmedCard,
   marketPrice,
   demoMode,
   onAsk,
@@ -2579,7 +2531,7 @@ function RecommendedBuyHero({
   choice: RankedChoice;
   verdict: VerdictCopy;
   comparableCount: number;
-  fallbackImageUrl: string | null;
+  confirmedCard: CardIdentityCandidate | null;
   marketPrice: number | null;
   demoMode: boolean;
   onAsk: (listing: NormalizedListing) => void;
@@ -2589,9 +2541,6 @@ function RecommendedBuyHero({
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
-  const imageUrl = listing.imageUrl ?? fallbackImageUrl;
-  const [loadedImageUrl, setLoadedImageUrl] = useState<string | null>(null);
-  const imageLoaded = imageUrl !== null && loadedImageUrl === imageUrl;
 
   return (
     <article
@@ -2600,30 +2549,18 @@ function RecommendedBuyHero({
       className="rounded-xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.08)] sm:p-5"
       title={`${verdict.why} ${verdict.catch}`}
     >
-      <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-4 lg:grid-cols-[92px_minmax(0,1fr)_auto] lg:items-center">
-        <div className="relative aspect-[2.5/3.5] w-[76px] overflow-hidden rounded-lg border border-[#c9d7ce] bg-[#e7efe8] sm:w-[84px] lg:w-[92px]">
-          {imageUrl ? (
-            <>
-              <span
-                aria-hidden="true"
-                className={`absolute inset-0 bg-[linear-gradient(135deg,#e7efe8,#fcfbf6_52%,#f4e7bf)] transition-opacity duration-150 motion-reduce:transition-none ${
-                  imageLoaded ? "opacity-0" : "opacity-100"
-                }`}
-              />
-              <Image
-              src={imageUrl}
-              alt={listing.imageUrl ? `${listing.title} listing image` : `${listing.title} reference card image`}
-              fill
-              loading="eager"
-              fetchPriority="high"
-              sizes="(min-width: 1024px) 92px, (min-width: 640px) 84px, 76px"
-              onLoad={() => setLoadedImageUrl(imageUrl)}
-              className={`object-contain transition-opacity duration-150 motion-reduce:transition-none ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-            />
-            </>
-          ) : (
-            <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-6 w-6" /></span>
-          )}
+      <div className="grid grid-cols-[136px_minmax(0,1fr)] gap-4 lg:grid-cols-[152px_minmax(0,1fr)_auto] lg:items-center">
+        <div className="flex items-start gap-2" aria-label={t.result.versionConfirmed}>
+          <EvidencePhoto
+            src={confirmedCard?.imageUrl ?? null}
+            alt={confirmedCard ? t.result.confirmedReferenceAlt(confirmedCard.name, confirmedCard.cardNumber, confirmedCard.variant ?? "") : t.result.confirmedReference}
+            label={t.result.confirmedReference}
+          />
+          <EvidencePhoto
+            src={listing.imageUrl}
+            alt={t.result.listingEvidenceAlt(listing.title)}
+            label={t.result.listingEvidencePhoto}
+          />
         </div>
 
         <div className="min-w-0">
@@ -2645,6 +2582,7 @@ function RecommendedBuyHero({
           <p className="mt-2 text-sm font-semibold leading-6 text-[#52635c]">
             <ListingMetaLine listing={listing} />
           </p>
+          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
         </div>
 
         <div className="col-span-2 grid gap-3 sm:col-start-2 lg:col-span-1 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
@@ -2714,6 +2652,57 @@ function RecommendedBuyHero({
         </div>
       </div>
     </article>
+  );
+}
+
+function EvidencePhoto({ src, alt, label }: { src: string | null; alt: string; label: string }) {
+  return (
+    <figure className="w-[64px] min-w-0 lg:w-[72px]">
+      <div className="relative aspect-[2.5/3.5] overflow-hidden rounded-md border border-[#c9d7ce] bg-[#e7efe8]">
+        {src ? (
+          <Image src={src} alt={alt} fill loading="eager" sizes="72px" className="object-contain" />
+        ) : (
+          <span className="absolute inset-0 grid place-items-center text-[#94a59c]"><IconReceipt className="h-5 w-5" /></span>
+        )}
+      </div>
+      <figcaption className="mt-1 text-center text-[9px] font-black uppercase leading-3 tracking-[0.04em] text-[#64736c]">{label}</figcaption>
+    </figure>
+  );
+}
+
+export function PrintIdentitySummary({
+  listing,
+  confirmedCard,
+  compact = false,
+}: {
+  listing: NormalizedListing;
+  confirmedCard: CardIdentityCandidate | null;
+  compact?: boolean;
+}) {
+  const t = useT();
+  if (!confirmedCard) return null;
+
+  const identity = confirmedCard.printIdentity;
+  const metadata = t.result.exactPrintMeta(
+    identity?.setName ?? confirmedCard.setName,
+    identity?.collectorNumber ?? confirmedCard.cardNumber,
+    identity?.rarity ?? confirmedCard.rarity ?? "",
+    identity?.variantLabel ?? confirmedCard.variant ?? "",
+  );
+  const reasons = listing.printMatchReasons ?? [];
+
+  return (
+    <div className={`${compact ? "mt-1.5" : "mt-3"} rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-2 text-xs leading-5 text-[#52635c]`}>
+      <p>
+        <span className="font-black text-[#24312f]">{t.result.exactPrintDetails}:</span>{" "}
+        {metadata}
+      </p>
+      {reasons.length > 0 && (
+        <ul aria-label={t.result.printCheck} className="mt-1 list-disc pl-4">
+          {reasons.map((reason) => <li key={reason}>{t.result.printReason(reason)}</li>)}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -2887,11 +2876,13 @@ function SourceStatusLine({
 // photos, total, vs-market — with view/ask one tap away.
 function CompactCandidateRow({
   listing,
+  confirmedCard,
   marketPrice,
   demoMode,
   onAsk,
 }: {
   listing: NormalizedListing;
+  confirmedCard: CardIdentityCandidate | null;
   marketPrice: number | null;
   demoMode: boolean;
   onAsk: (listing: NormalizedListing) => void;
@@ -2905,6 +2896,14 @@ function CompactCandidateRow({
   return (
     <article className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2.5 transition hover:border-[#9fb3a8]">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div className="flex shrink-0 items-start gap-2" aria-label={t.result.versionConfirmed}>
+          <EvidencePhoto
+            src={confirmedCard?.imageUrl ?? null}
+            alt={confirmedCard ? t.result.confirmedReferenceAlt(confirmedCard.name, confirmedCard.cardNumber, confirmedCard.variant ?? "") : t.result.confirmedReference}
+            label={t.result.confirmedReference}
+          />
+          <EvidencePhoto src={listing.imageUrl} alt={t.result.listingEvidenceAlt(listing.title)} label={t.result.listingEvidencePhoto} />
+        </div>
         <div className="min-w-0 flex-1 basis-52">
           <div className="flex min-w-0 items-center gap-2">
             {listing.demo && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
@@ -2919,6 +2918,7 @@ function CompactCandidateRow({
               {t.candidate.ask}
             </button>
           </p>
+          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
         </div>
         <div className="text-right">
           <p className="font-mono text-base font-black leading-tight text-[#24312f]">{formatMoney(total)}</p>

@@ -222,6 +222,73 @@ describe("comparison ranking", () => {
     expect(listing.estimatedLandedCost).toBeNull();
   });
 
+  it("does not reject a proven compatible Pokemon print solely for being below the legacy market floor", () => {
+    const exactPokemonCard = {
+      id: "swsh7-215",
+      name: "Umbreon VMAX",
+      setName: "Evolving Skies",
+      setCode: "SWSH7",
+      cardNumber: "215/203",
+      language: "English",
+      imageUrl: null,
+      confidence: "high" as const,
+      matchReasons: [],
+    };
+    const exactBargain = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        id: "exact-pokemon-bargain",
+        title: "Umbreon VMAX 215/203 Evolving Skies Near Mint",
+        price: 20,
+        shipping: 0,
+        claimedCondition: "Near Mint",
+      },
+      buyer: { ...buyer, desiredCondition: "Near Mint" },
+      marketPrice: 100,
+      confirmedCard: exactPokemonCard,
+    });
+
+    expect(exactBargain.printMatch).toBe("compatible");
+    expect(exactBargain.eligible).toBe(true);
+    expect(exactBargain.exclusionReasons).not.toContain(
+      "Priced far below market — likely a replica, proxy, or mislabeled item.",
+    );
+
+    const unprovenMarketplaceListing = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        id: "unproven-pokemon-marketplace",
+        marketplace: "eBay",
+        title: "Umbreon VMAX Evolving Skies Near Mint",
+        price: 90,
+        shipping: 0,
+        claimedCondition: "Near Mint",
+      },
+      buyer: { ...buyer, desiredCondition: "Near Mint" },
+      marketPrice: 100,
+      confirmedCard: exactPokemonCard,
+    });
+    expect(unprovenMarketplaceListing.printMatch).toBe("unknown");
+    expect(unprovenMarketplaceListing.eligible).toBe(false);
+
+    const unprovenBargain = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        id: "unproven-pokemon-bargain",
+        title: "Umbreon VMAX card Near Mint",
+        price: 20,
+        shipping: 0,
+        claimedCondition: "Near Mint",
+      },
+      buyer: { ...buyer, desiredCondition: "Near Mint" },
+      marketPrice: 100,
+    });
+    expect(unprovenBargain.eligible).toBe(false);
+    expect(unprovenBargain.exclusionReasons).toContain(
+      "Priced far below market — likely a replica, proxy, or mislabeled item.",
+    );
+  });
+
   it("enforces the requested condition and lets any-condition buyers widen explicitly", () => {
     const played = { ...demoListingSeeds[0], claimedCondition: "Moderately Played" as const };
     const nearMintOnly = normalizeListing({

@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { applyQueryParser, applyQueryParserWithAi, runListingComparison } from "@/lib/ai/listing-compare";
 import { cardIdentityCandidateSchema, comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
+import { clearComparisonCache } from "@/lib/comparison/report-cache";
+import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
 
 // Keep the orchestration tests hermetic: stub the Pokémon catalog response so we
 // never hit the live API. eBay/PriceCharting short-circuit on missing env creds
@@ -96,6 +98,11 @@ const request: ComparisonRequest = {
   webDiscoveryMode: "off",
 };
 
+beforeEach(() => {
+  clearComparisonCache();
+  clearCrosswalkCache();
+});
+
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
@@ -147,9 +154,10 @@ describe("listing comparison agent", () => {
     expect(response.rankedChoices.length).toBe(4);
     expect(response.rankedChoices[0]?.role).toBe("best_value");
     expect(response.candidates.some((candidate) => candidate.demo)).toBe(false);
+    expect(response.candidates.filter((candidate) => candidate.userSupplied).every((candidate) => candidate.imageUrl === null)).toBe(true);
   });
 
-  it("uses labeled demo inventory only for a pure card search with no live rows", async () => {
+  it("returns next moves instead of fabricated inventory when a pure search has no live rows", async () => {
     const pureSearch: ComparisonRequest = {
       ...request,
       sourceListing: {
@@ -166,10 +174,62 @@ describe("listing comparison agent", () => {
 
     const response = await runListingComparison(pureSearch, { fetcher });
 
-    expect(response.demoMode).toBe(true);
-    expect(response.candidates.length).toBeGreaterThan(0);
-    expect(response.candidates.every((candidate) => candidate.demo)).toBe(true);
-    expect(response.candidates.every((candidate) => candidate.marketComparable === false)).toBe(true);
+    expect(response.demoMode).toBe(false);
+    expect(response.candidates).toHaveLength(0);
+    expect(response.rankedChoices).toHaveLength(0);
+    expect(response.outcome).toBe("next_moves");
+  });
+
+  it("never ranks pasted or manual Pokémon listings that omit the confirmed collector number", async () => {
+    const response = await runListingComparison(
+      {
+        ...request,
+        confirmedCardId: "swsh7-215",
+        sourceListing: {
+          ...request.sourceListing,
+          title: "Umbreon VMAX Evolving Skies raw card",
+          price: 500,
+          shipping: 0,
+        },
+        manualCandidates: [{
+          marketplace: "Mercari",
+          url: "",
+          title: "Umbreon VMAX Evolving Skies Near Mint",
+          price: 450,
+          shipping: 0,
+          claimedCondition: "Near Mint",
+        }],
+      },
+      { fetcher },
+    );
+
+    expect(response.candidates).toHaveLength(2);
+    expect(response.candidates.every((candidate) => candidate.printMatch === "unknown")).toBe(true);
+    expect(response.candidates.every((candidate) => !candidate.eligible)).toBe(true);
+    expect(response.rankedChoices).toHaveLength(0);
+    expect(response.outcome).toBe("inspect_first");
+  });
+
+  it("returns a valid Best Buy report when an unresolved listing exists beside a recommendation", async () => {
+    const response = await runListingComparison(
+      {
+        ...request,
+        confirmedCardId: "swsh7-215",
+        manualCandidates: [{
+          marketplace: "Mercari",
+          url: "",
+          title: "Umbreon VMAX Evolving Skies Near Mint",
+          price: 450,
+          shipping: 0,
+          claimedCondition: "Near Mint",
+        }],
+      },
+      { fetcher },
+    );
+
+    expect(response.outcome).toBe("best_buy");
+    expect(response.rankedChoices.length).toBeGreaterThan(0);
+    expect(response.inspectListingId).toBeNull();
   });
 
   it("does not run expanded web discovery unless the buyer opts in", async () => {
@@ -614,6 +674,44 @@ describe("listing comparison agent", () => {
     expect(response.trace.some((entry) => entry.actor === "Smart query parser")).toBe(true);
   });
 
+  it("hero search box: corrects a misspelled card name only after catalog search finds nothing", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    vi.stubEnv("OPENAI_WIRE_API", "chat");
+    vi.stubEnv("OPENAI_BASE_URL", "https://ai.test/v1");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ game: "pokemon", name: "Venusaur", cardNumber: "", setCode: "", language: "", variant: "", gradingClaim: "" }) } }],
+    }))));
+    const catalogQueries: string[] = [];
+    const typoFetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      const query = url.searchParams.get("q") ?? "";
+      catalogQueries.push(query);
+      if (query === 'name:"Venusaur"') {
+        return new Response(JSON.stringify({
+          data: [{ id: "base1-15", name: "Venusaur", number: "15", set: { id: "base1", name: "Base", printedTotal: 102 } }],
+          count: 1,
+          totalCount: 1,
+        }));
+      }
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        query: "venasuar",
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      { fetcher: typoFetcher },
+    );
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates[0]?.name).toBe("Venusaur");
+    expect(catalogQueries[0]).toBe('name:"venasuar"');
+    expect(catalogQueries).toContain('name:"Venusaur"');
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
   it("hero search box: structured regex parses skip the AI fallback", async () => {
     vi.stubEnv("OPENAI_API_KEY", "sk-test");
     vi.stubGlobal("fetch", vi.fn());
@@ -694,6 +792,7 @@ describe("listing comparison agent", () => {
     const marketplaces = response.candidates.map((candidate) => candidate.marketplace);
     expect(marketplaces).toContain("TCGplayer");
     expect(marketplaces).toContain("Mercari");
+    expect(response.candidates.filter((candidate) => candidate.userSupplied).every((candidate) => candidate.imageUrl === null)).toBe(true);
     expect(response.trace.some((entry) => entry.actor === "Cross-platform ledger")).toBe(true);
   });
 
@@ -708,9 +807,7 @@ describe("listing comparison agent", () => {
 
     const prints = findOnePieceCatalogVariants("OP01-016");
     const spPrint = prints.find((print) => deriveVariantIntent(print) === "sp");
-    const basePrint = prints.find((print) => deriveVariantIntent(print) === "base");
     expect(spPrint).toBeDefined();
-    expect(basePrint).toBeDefined();
 
     const searchQueries: string[] = [];
     const spFetcher = (async (input: RequestInfo | URL) => {
@@ -765,16 +862,13 @@ describe("listing comparison agent", () => {
 
       // The listing search led with the SP token (the other captured query is the
       // separate ePID-consensus metadata leg, which stays a plain keyword probe).
-      expect(searchQueries).toContain("Nami OP01-016 SP");
+      expect(searchQueries).toContain("Nami OP01-016 P4 SP");
 
       expect(response.demoMode).toBe(false);
       expect(response.rankedChoices).toHaveLength(0);
-      expect(response.abstention).toBeTruthy();
-      expect(response.abstention?.reason).toContain("SP");
-      expect(response.abstention?.foundCount).toBeGreaterThan(0);
-      expect(response.abstention?.variantExcludedCount).toBeGreaterThan(0);
-      expect(response.abstention?.suggestedCardId).toBe(variantKey(basePrint!));
-      expect(response.abstention?.suggestedLabel).toBeTruthy();
+      expect(response.outcome).toBe("next_moves");
+      expect(response.inspectListingId).toBeNull();
+      expect(response.candidates[0]?.printMatch).toBe("mismatch");
     } finally {
       delete process.env.EBAY_CLIENT_ID;
       delete process.env.EBAY_CLIENT_SECRET;
@@ -885,6 +979,75 @@ describe("listing comparison agent", () => {
         .filter((card) => card.confidence === "high")
         .every((card) => card.setCode === "EB-02"),
     ).toBe(true);
+  });
+
+  it.each([
+    ["Luffy manga OP11-118", "OP11-118", "Manga Art", "OP11-118_p2"],
+    ["Luffy manga EB02-061", "EB02-061", "Manga Art", "EB02-061_p2"],
+    ["gold Gear 5 Luffy OP05-119", "OP05-119", "Gold", "OP05-119_p8"],
+    ["silver Luffy OP05-119", "OP05-119", "Silver", "OP05-119_p7"],
+  ])("narrows researched collector query %s to its exact print", async (query, cardNumber, variant, expectedId) => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query,
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "", setCode: "", cardNumber, language: "English", variant, gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.status).toBe("partial");
+    expect(response.confirmedCard?.id).toBe(expectedId);
+    expect(response.confirmedCard?.printIdentity?.canonicalPrintId).toBe(expectedId);
+  });
+
+  it.each([
+    ["Koby treasure cup OP11-119", "OP11-119", "Treasure Cup", "OP11-119_p2"],
+    ["Luffy tournament winner ST01-012", "ST01-012", "Tournament Winner", "ST01-012_p6"],
+    ["Eustass Kid wanted poster OP01-051", "OP01-051", "Wanted Poster", "OP01-051_p2"],
+  ])("resolves researched release query %s", async (query, cardNumber, variant, expectedId) => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query,
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "", setCode: "", cardNumber, language: "English", variant, gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.confirmedCard?.id).toBe(expectedId);
+  });
+
+  it("does not fall back to sibling prints when a recognized exact treatment has no match", async () => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query: "gold Nami OP01-016",
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "Nami", setCode: "", cardNumber: "OP01-016", language: "English", variant: "Gold", gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.status).toBe("needs_confirmation");
+    expect(response.identityCandidates).toEqual([]);
+    expect(response.confirmedCard).toBeNull();
+  });
+
+  it.each([
+    ["Luffy Regional Champion OP03-123", "OP03-123", "Regional Champion"],
+    ["Nami promo OP01-016", "OP01-016", "Promo"],
+    ["Nami signature OP01-016", "OP01-016", "Signature"],
+    ["Nami serial numbered OP01-016", "OP01-016", "Serial Numbered"],
+    ["Nami stamped OP01-016", "OP01-016", "Stamped"],
+    ["Nami textured OP01-016", "OP01-016", "Textured"],
+  ])("abstains instead of substituting siblings for unsupported facet %s", async (query, cardNumber, variant) => {
+    const offline = (async () => { throw new Error("network disabled in test"); }) as unknown as typeof fetch;
+    const response = await runListingComparison({
+      ...request,
+      query,
+      sourceListing: { ...request.sourceListing, title: "", url: "", price: null },
+      cardHint: { game: "onePiece", name: "", setCode: "", cardNumber, language: "English", variant, gradingClaim: "" },
+    }, { fetcher: offline });
+
+    expect(response.identityCandidates).toEqual([]);
+    expect(response.confirmedCard).toBeNull();
   });
 
   it("surfaces every same-number One Piece art variant before auto-confirming", async () => {

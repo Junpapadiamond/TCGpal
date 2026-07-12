@@ -5,6 +5,8 @@ import {
   scoreOnePieceCard,
   searchOnePieceCards,
 } from "@/lib/external/one-piece-tcg";
+import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
+import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 
 const luffyCard = {
   card_name: "Monkey.D.Luffy",
@@ -157,6 +159,24 @@ describe("OPTCG (One Piece) adapter", () => {
     expect(identity.imageUrl).toBe("https://www.optcgapi.com/images/OP01-001.png");
     expect(identity.marketMid).toBe(4.5);
     expect(identity.language).toBe("EN");
+  });
+
+  it("maps researched artwork and treatment metadata onto the shared identity boundary", () => {
+    const gold = findOnePieceCatalogVariant("OP05-119_p8");
+    if (!gold) throw new Error("Expected bundled gold Luffy print.");
+    const identity = mapOnePieceCardToIdentity(gold, { confidence: "high", matchReasons: [] });
+
+    expect(identity).toMatchObject({
+      id: "OP05-119_p8",
+      variant: "Gold Special Art",
+      artworkClass: "special",
+      treatments: ["gold"],
+      tcgplayerProductId: 632504,
+      tcgplayerGroupId: 24241,
+      metadataRevision: ONE_PIECE_PRINT_METADATA_REVISION,
+      releaseProvenance: "reprint",
+    });
+    expect(identity.exactMarkers).toContain("gold");
   });
 
   it("drops non-http image values instead of failing identity validation", () => {

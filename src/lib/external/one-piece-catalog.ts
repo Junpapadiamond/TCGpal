@@ -1,5 +1,6 @@
 import type { OnePieceTcgCard } from "./one-piece-tcg";
 import generatedSnapshot from "./one-piece-catalog.generated.json";
+import { deriveOnePieceCatalogPrintEnrichment, getOnePiecePrintEnrichment } from "./one-piece-print-metadata";
 
 // Curated, hand-verified One Piece catalog bundled in the repo so card search
 // works with ZERO network dependency. The live OPTCG API (optcgapi.com) augments
@@ -86,7 +87,26 @@ function loadSnapshot(): OnePieceTcgCard[] {
   return (generatedSnapshot as Partial<OnePieceTcgCard>[]).filter(
     (entry): entry is OnePieceTcgCard =>
       typeof entry?.card_name === "string" && typeof entry?.card_set_id === "string",
-  );
+  ).map((entry) => {
+    const enrichment = getOnePiecePrintEnrichment(entry.card_image_id ?? entry.card_set_id)
+      ?? deriveOnePieceCatalogPrintEnrichment({
+        canonicalPrintId: entry.card_image_id ?? entry.card_set_id,
+        isAlternateArt: Boolean(entry.is_alternate_art),
+        rarity: entry.rarity,
+        releaseName: entry.set_name,
+      });
+    if (!enrichment) return entry;
+    return {
+      ...entry,
+      variant: enrichment.displayLabel,
+      artwork_class: enrichment.artworkClass,
+      treatments: [...enrichment.treatments],
+      collector_aliases: [...enrichment.collectorAliases],
+      exact_markers: [...enrichment.exactMarkers],
+      tcgplayer_product_id: enrichment.tcgplayerProductId,
+      tcgplayer_group_id: enrichment.tcgplayerGroupId,
+    };
+  });
 }
 
 // The stable per-print key: the image id keeps alternate arts of one number distinct.

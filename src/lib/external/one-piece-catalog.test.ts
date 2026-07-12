@@ -93,4 +93,36 @@ describe("bundled One Piece catalog", () => {
     // A bare number still resolves to the canonical base print, not a parallel.
     expect(findOnePieceCatalogCard("OP01-024")?.is_alternate_art).toBe(false);
   });
+
+  it("enriches researched special prints without deriving treatment from the suffix", () => {
+    expect(findOnePieceCatalogVariant("OP11-118_p2")).toMatchObject({
+      variant: "Manga Art",
+      artwork_class: "manga",
+      treatments: [],
+      tcgplayer_product_id: 632499,
+    });
+    expect(findOnePieceCatalogVariant("OP05-119_p7")).toMatchObject({
+      variant: "Silver Special Art",
+      artwork_class: "special",
+      treatments: ["silver"],
+      tcgplayer_product_id: 632503,
+    });
+    expect(findOnePieceCatalogVariant("OP05-119_p8")).toMatchObject({
+      variant: "Gold Special Art",
+      artwork_class: "special",
+      treatments: ["gold"],
+      tcgplayer_product_id: 632504,
+    });
+    expect(findOnePieceCatalogVariant("OP03-123_p2")).not.toMatchObject({ artwork_class: "manga" });
+  });
+
+  it("classifies every obvious SP or special-release catalog print without inventing a market product", () => {
+    const obvious = onePieceCatalog.filter((card) =>
+      card.is_alternate_art
+      && (card.rarity === "SP CARD" || /anniversary|championship|regional|treasure cup|tournament|winner|premium card collection|promo/i.test(card.set_name ?? "")),
+    );
+    expect(obvious.length).toBeGreaterThan(300);
+    expect(obvious.filter((card) => !card.artwork_class)).toEqual([]);
+    expect(obvious.filter((card) => !card.variant || /^(?:Alternate|Special) Art \([PR]\d+\)$/i.test(card.variant))).toEqual([]);
+  });
 });

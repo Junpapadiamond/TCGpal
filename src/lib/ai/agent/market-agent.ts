@@ -267,7 +267,7 @@ function sampleSeedsForAllocator(seeds: PlatformSeed[]) {
 }
 
 const AGENT_SYSTEM_PROMPT = [
-  "You are TCGpal's cross-platform market allocator.",
+  "You are TCGlens' cross-platform market allocator.",
   "You decide how to search each marketplace tool for the exact confirmed card.",
   "Only use the provided tools. Never invent listings, prices, or sold comps.",
   "Call every relevant marketplace tool in one turn when possible; deterministic TypeScript handles ranking and final prose.",

@@ -114,6 +114,45 @@ const onePiecePricesPayload = {
   ],
 };
 
+const baseCharizardCard: CardIdentityCandidate = {
+  id: "base1-4",
+  name: "Charizard",
+  setName: "Base",
+  setCode: "base1",
+  cardNumber: "4/102",
+  language: "English",
+  imageUrl: "https://images.pokemontcg.io/base1/4_hires.png",
+  confidence: "high",
+  matchReasons: [],
+};
+
+const baseCollisionGroupsPayload = {
+  results: [
+    { groupId: 20001, name: "SV01: Scarlet & Violet Base Set", abbreviation: "SV01" },
+    { groupId: 604, name: "Base Set", abbreviation: "BS" },
+  ],
+};
+
+const baseSetProductsPayload = {
+  results: [{
+    productId: 42382,
+    name: "Charizard",
+    cleanName: "Charizard",
+    url: "https://www.tcgplayer.com/product/42382/pokemon-base-set-charizard",
+    extendedData: [{ name: "Number", value: "4/102" }],
+  }],
+};
+
+const scarletVioletBaseProductsPayload = {
+  results: [{
+    productId: 487833,
+    name: "Breloom",
+    cleanName: "Breloom",
+    url: "https://www.tcgplayer.com/product/487833/pokemon-sv01-scarlet-and-violet-base-set-breloom",
+    extendedData: [{ name: "Number", value: "004/198" }],
+  }],
+};
+
 function tcgcsvFetcher(lastUpdated = "2026-07-02T20:06:28+0000") {
   return vi.fn(async (url: URL | RequestInfo) => {
     const href = String(url);
@@ -139,6 +178,27 @@ function mixedTcgcsvFetcher(lastUpdated = "2026-07-02T20:06:28+0000") {
   }) as unknown as typeof fetch;
 }
 
+function vintageBaseCollisionFetcher() {
+  return vi.fn(async (url: URL | RequestInfo) => {
+    const href = String(url);
+    if (href.endsWith("/3/groups")) return new Response(JSON.stringify(baseCollisionGroupsPayload));
+    if (href.endsWith("/3/604/products")) return new Response(JSON.stringify(baseSetProductsPayload));
+    if (href.endsWith("/3/20001/products")) return new Response(JSON.stringify(scarletVioletBaseProductsPayload));
+    throw new Error(`unexpected fetch ${href}`);
+  }) as unknown as typeof fetch;
+}
+
+function unresolvedVintageBaseFetcher() {
+  return vi.fn(async (url: URL | RequestInfo) => {
+    const href = String(url);
+    if (href.endsWith("/3/groups")) {
+      return new Response(JSON.stringify({ results: [baseCollisionGroupsPayload.results[0]] }));
+    }
+    if (href.endsWith("/3/20001/products")) return new Response(JSON.stringify(scarletVioletBaseProductsPayload));
+    throw new Error(`unexpected fetch ${href}`);
+  }) as unknown as typeof fetch;
+}
+
 describe("TCGCSV TCGplayer connector", () => {
   it("resolves the crosswalk product by set name and collector number", async () => {
     const product = await resolveTcgplayerProduct(card, tcgcsvFetcher());
@@ -146,6 +206,22 @@ describe("TCGCSV TCGplayer connector", () => {
     expect(product?.productId).toBe(246723);
     expect(product?.groupId).toBe(2848);
     expect(product?.productUrl).toContain("246723");
+  });
+
+  it("prefers the vintage Base Set group over a newer set that contains the same term", async () => {
+    const product = await resolveTcgplayerProduct(baseCharizardCard, vintageBaseCollisionFetcher());
+
+    expect(product).toMatchObject({
+      groupId: 604,
+      productId: 42382,
+      productName: "Charizard",
+    });
+  });
+
+  it("refuses a prefix-only collector-number collision when the product name disagrees", async () => {
+    const product = await resolveTcgplayerProduct(baseCharizardCard, unresolvedVintageBaseFetcher());
+
+    expect(product).toBeNull();
   });
 
   it("routes One Piece cards through TCGCSV category 68", async () => {
@@ -171,6 +247,57 @@ describe("TCGCSV TCGplayer connector", () => {
 
     expect(product?.productId).toBe(453509);
     expect(product?.productName).toContain("Parallel");
+  });
+
+  it("fetches the verified group for a special release whose catalog set name differs", async () => {
+    const anniversaryNami: CardIdentityCandidate = {
+      ...onePieceCard,
+      id: "OP01-016_p7",
+      name: "Nami",
+      cardNumber: "OP01-016",
+      setName: "English Version 1st Anniversary Set",
+      variant: "English 1st Anniversary Art",
+      tcgplayerProductId: 557286,
+      tcgplayerGroupId: 17675,
+    };
+    const fetcher = vi.fn(async (url: URL | RequestInfo) => {
+      const href = String(url);
+      if (href.endsWith("/68/groups")) {
+        return new Response(JSON.stringify({ results: [{
+          groupId: 17675,
+          name: "One Piece Promotion Cards",
+          abbreviation: "OP-PR",
+        }] }));
+      }
+      if (href.endsWith("/68/17675/products")) {
+        return new Response(JSON.stringify({ results: [{
+          productId: 557286,
+          name: "Nami (English Version 1st Anniversary Set)",
+          cleanName: "Nami English Version 1st Anniversary Set",
+          url: "https://www.tcgplayer.com/product/557286",
+          extendedData: [{ name: "Number", value: "OP01-016" }],
+        }] }));
+      }
+      throw new Error(`unexpected fetch ${href}`);
+    }) as unknown as typeof fetch;
+
+    const variants = await resolveTcgplayerProductVariants(anniversaryNami, fetcher);
+
+    expect(variants).toMatchObject([{
+      groupId: 17675,
+      groupName: "One Piece Promotion Cards",
+      productId: 557286,
+    }]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns null when a requested TCGplayer product id is absent", async () => {
+    const product = await resolveTcgplayerProduct(
+      { ...onePieceCard, tcgplayerProductId: 999999 },
+      mixedTcgcsvFetcher(),
+    );
+
+    expect(product).toBeNull();
   });
 
   it("anchors a confirmed alternate-art print to the parallel SKU, not the base", async () => {

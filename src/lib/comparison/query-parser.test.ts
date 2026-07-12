@@ -74,9 +74,40 @@ describe("parseCardQuery", () => {
     expect(result.setCode).toBe("");
   });
 
-  it("treats 'manga' as an alias for the same SP/special-art rarity code", () => {
-    expect(parseCardQuery("Luffy manga").variant).toBe("SP");
+  it("preserves One Piece collector treatments as distinct variant facets", () => {
+    expect(parseCardQuery("Luffy manga").variant).toBe("Manga Art");
     expect(parseCardQuery("Luffy sp").variant).toBe("SP");
+    expect(parseCardQuery("gold Gear 5 Luffy OP05-119").variant).toBe("Gold");
+    expect(parseCardQuery("silver Luffy OP05-119").variant).toBe("Silver");
+    expect(parseCardQuery("Luffy wanted poster").variant).toBe("Wanted Poster");
+    expect(parseCardQuery("Luffy red super alt").variant).toBe("Red Super Alternate Art");
+    expect(parseCardQuery("Koby treasure cup OP11-119").variant).toBe("Treasure Cup");
+    expect(parseCardQuery("Luffy anniversary OP01-016").variant).toBe("Anniversary");
+    expect(parseCardQuery("Luffy tournament winner ST01-012").variant).toBe("Tournament Winner");
+  });
+
+  it("parses natural event-release language without leaving tier words in the card name", () => {
+    expect(parseCardQuery("3rd anniversary winner Luffy ST01-012")).toMatchObject({
+      name: "Luffy",
+      variant: "Tournament Winner",
+      cardNumber: "ST01-012",
+    });
+    expect(parseCardQuery("Luffy Regional Champion OP03-123")).toMatchObject({
+      name: "Luffy",
+      variant: "Regional Champion",
+      cardNumber: "OP03-123",
+    });
+    expect(parseCardQuery("Luffy signature OP05-119").variant).toBe("Signature");
+    expect(parseCardQuery("Luffy serial numbered OP05-119").variant).toBe("Serial Numbered");
+    expect(parseCardQuery("Luffy stamped OP05-119").variant).toBe("Stamped");
+    expect(parseCardQuery("Luffy serialized OP07-119").variant).toBe("Serial Numbered");
+    expect(parseCardQuery("signed Luffy ST01-012").variant).toBe("Signature");
+    expect(parseCardQuery("textured Yamato OP01-121").variant).toBe("Textured");
+  });
+
+  it("routes iconic One Piece character plus SP language to the One Piece catalog", () => {
+    expect(parseCardQuery("Nami SP")).toMatchObject({ game: "onePiece", name: "Nami", variant: "SP" });
+    expect(parseCardQuery("Luffy manga")).toMatchObject({ game: "onePiece", name: "Luffy", variant: "Manga Art" });
   });
 
   it("keeps ambiguous promo codes game-neutral", () => {
