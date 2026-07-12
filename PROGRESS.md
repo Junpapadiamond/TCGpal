@@ -81,7 +81,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 ### Not finished or not verified
 
-- Verified: automated gates passed on 484115b: lint, typecheck, 42 test files / 463 tests, and build. The earlier bilingual desktop/mobile visual QA and strict-facet manual abstention remain evidenced on 7637f56.
+- Verified: clean-worktree automated gates passed through 5315ba8: lint, typecheck, 44 test files / 473 tests, and build. Bilingual desktop/mobile identity and comparison-loader QA is recorded in VERIFICATION.
 - Unknown: representative live eBay recall, false exclusions, ePID coverage, and p95 latency across a 30-listing corpus.
 - Unknown: whether exact listings often fall below the bounded eBay item-detail enrichment window.
 - Required: live checks for reported Nami, Charmander, Portgas.D.Ace, manga, tournament, gold/silver, anniversary, and Pokemon variant cases.
@@ -216,9 +216,8 @@ The user must decide these; agents must not infer them:
 
 Observed on 2026-07-12 in /Users/chenjunhsu/Desktop/projects/TCGpal:
 
-- Local main was at 5e6899e and diverged from origin/main. Use the progress snapshot for current ahead/behind counts; do not hard-code them here.
-- The working tree contained user changes. Preserve them; do not reset, clean, or include them incidentally.
-- Superseded local adjustment: src/lib/external/tcgcsv.ts and its test contain an older attempt to prevent vintage Base Set collisions. The reviewed origin/main-based implementation is commit 484115b; preserve the older dirty files until the user reconciles the divergent checkout.
+- Current checkout `codex/identity-first-search` is at 5315ba8 and matches `origin/main` (ahead 0, behind 0). Local `main` remains at 5e6899e; use `origin/main` as the source of truth until that local ref is intentionally reconciled.
+- The working tree contains user changes. The six tracked modifications are generated Graphify files; preserve them and all untracked entries rather than resetting, cleaning, or committing them incidentally.
 - Unapproved experiment: photo-search route/tests and related package changes. Behavior and scope are not verified; see D-PHOTO.
 - Untracked UI concept: TCGpal_more_ui_refine.html.
 - Untracked council docs, research output, screenshots, Graphify backups, and cache files are artifacts, not automatically release work.
@@ -237,7 +236,7 @@ Refresh this section with /progress; do not assume it remains current.
 | Ranking/recommendation | schemas.ts, ranking.ts, platforms.ts, ranking/platform tests |
 | UI/product flow | WS-UX, ComparisonApp.tsx, i18n, standard flow |
 | Product/demand decision | WS-PILOT, validation plan, product spec, council chairman |
-| Marketplace expansion | AGENTS.md data boundaries, platforms.ts, architecture/data-sources doc |
+| Marketplace expansion | AGENTS.md data boundaries and `src/lib/comparison/platforms.ts`; the historical architecture/data-sources doc is missing |
 | Dirty local work | LOCAL-STATE, then git diff for only the named files |
 
 Use Graphify before broad cross-file exploration. Verify ambiguous graph edges in source.
@@ -246,7 +245,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Last verified feature commit: 1d1e15a plus the pending confirmed-card loader motion on 2026-07-12.
+Last verified feature commit: 5315ba8 on 2026-07-12.
 
 - Clean isolated worktree: `npm run lint` passed.
 - Clean isolated worktree: `npm run typecheck` passed.
@@ -258,7 +257,7 @@ Last verified feature commit: 1d1e15a plus the pending confirmed-card loader mot
 - Reduced motion: the identity flow reads `prefers-reduced-motion`, and the global reduced-motion media rule remains present; a device-level emulation was not available in the in-app browser run.
 - Dirty-checkout caveat: the full commands in the original checkout still fail because untracked photo-search tests reference absent implementation files. Those experiment files were not modified; feature verification used an isolated worktree.
 - Peer review: identity and UX reviewers approved after fixes; chairman approved.
-- Remote: origin/main matched 7637f56fb20c7bfeeeca278b7ab960b0b46b0928.
+- Remote: origin/main matched 5315ba82a569fe605106b2adc66a3235effe706d.
 
 Still not verified:
 
