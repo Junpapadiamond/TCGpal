@@ -362,6 +362,33 @@ export async function runListingComparison(
   return report;
 }
 
+export async function resolveCardIdentityCandidates(
+  rawRequest: ComparisonRequest,
+  dependencies: { fetcher?: typeof fetch; now?: () => Date } = {},
+) {
+  const fetcher = dependencies.fetcher ?? fetch;
+  const now = dependencies.now ?? (() => new Date());
+  const warnings: string[] = [];
+  const trace: ComparisonTrace[] = [];
+  const request = await applyQueryParserWithAi(comparisonRequestSchema.parse(rawRequest), trace);
+  const identities = (await identifyCards(request, request.sourceListing, fetcher, warnings, trace))
+    .map((identity) => ({ ...identity, printIdentity: canonicalPrintIdentity(identity) }));
+  const explicitNumber = collectorNumberParts(request.cardHint.cardNumber);
+  const sameNumber = explicitNumber.number
+    ? identities.filter((identity) => {
+      const candidate = collectorNumberParts(identity.cardNumber);
+      return candidate.number === explicitNumber.number
+        && (!explicitNumber.total || candidate.total === explicitNumber.total);
+    })
+    : [];
+  const candidates = sameNumber.length > 0 ? sameNumber : identities;
+  if (explicitNumber.number && sameNumber.length === 0 && identities.length > 0) {
+    warnings.push("That collector number did not match the catalog results, so broader name matches are shown for confirmation.");
+  }
+  const confirmedCard = resolveConfirmedCard(request, candidates);
+  return { request, candidates, confirmedCard, warnings, trace, generatedAt: now().toISOString() };
+}
+
 // Deterministic explanation for "found listings, recommended none": names the
 // confirmed print, counts different-print supply, and — when a sibling print of
 // the same One Piece number exists in the catalog — suggests the one-tap switch

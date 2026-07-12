@@ -234,6 +234,35 @@ export const cardIdentityCandidateSchema = z.object({
   printIdentity: canonicalPrintIdentitySchema.optional(),
 });
 
+export const cardIdentitySearchRequestSchema = z.object({
+  query: z.string().trim().min(1).max(200),
+  cardHint: cardHintSchema.default({
+    game: "pokemon",
+    name: "",
+    setCode: "",
+    cardNumber: "",
+    language: "English",
+    variant: "",
+    gradingClaim: "",
+  }),
+});
+
+export const cardIdentitySearchResponseSchema = z.object({
+  identityContractVersion: z.literal(1),
+  status: z.enum(["resolved", "needs_confirmation", "not_found", "unavailable"]),
+  candidates: z.array(cardIdentityCandidateSchema),
+  confirmedCard: cardIdentityCandidateSchema.nullable(),
+  warnings: z.array(z.string()),
+  generatedAt: z.string(),
+}).superRefine((response, ctx) => {
+  if (response.status === "resolved" && !response.confirmedCard) {
+    ctx.addIssue({ code: "custom", path: ["confirmedCard"], message: "A resolved identity response requires one confirmed card." });
+  }
+  if (response.status !== "resolved" && response.confirmedCard) {
+    ctx.addIssue({ code: "custom", path: ["confirmedCard"], message: "Only a resolved identity response may include a confirmed card." });
+  }
+});
+
 export const printMatchSchema = z.enum(["exact", "compatible", "unknown", "mismatch"]);
 export const printPriceGuardSchema = z.enum(["none", "inspect", "exclude"]);
 
@@ -576,6 +605,8 @@ export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;
 export type BuyerContext = z.infer<typeof buyerContextSchema>;
 export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>;
+export type CardIdentitySearchRequest = z.infer<typeof cardIdentitySearchRequestSchema>;
+export type CardIdentitySearchResponse = z.infer<typeof cardIdentitySearchResponseSchema>;
 export type TcgGame = z.infer<typeof tcgGameSchema>;
 export type CardHint = z.infer<typeof cardHintSchema>;
 export type ManualCandidate = z.infer<typeof manualCandidateSchema>;
