@@ -1,6 +1,7 @@
 import { resolveCardIdentity } from "@/lib/ai/card-identity";
 import { runListingComparison } from "@/lib/ai/listing-compare";
 import { rankListings } from "@/lib/comparison/ranking";
+import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import {
   cardDiscoveryRequestSchema,
   cardDiscoveryResponseSchema,
@@ -147,7 +148,7 @@ function buildComparisonRequest(
     buyer: {
       country: "US",
       postalCode: request.postalCode,
-      taxRate: null,
+      taxRate: estimateSalesTaxRateFromZip(request.postalCode),
       desiredCondition: request.desiredCondition,
     },
     cardHint: {

@@ -30,6 +30,7 @@ describe("discoverCards", () => {
         game: "pokemon",
         budget: { min: 200, max: 500 },
         desiredCondition: "Near Mint",
+        postalCode: "10001",
         maxResults: 3,
       },
       { identify, compare, now: () => new Date("2026-07-12T00:00:00.000Z") },
@@ -42,7 +43,7 @@ describe("discoverCards", () => {
     expect(result.shortlist.every((entry) => entry.outcome === "best_buy")).toBe(true);
     expect(compare).toHaveBeenCalledTimes(2);
     expect(compare.mock.calls[0]?.[0]).toMatchObject({
-      buyer: { desiredCondition: "Near Mint" },
+      buyer: { desiredCondition: "Near Mint", postalCode: "10001", taxRate: expect.any(Number) },
       confirmedCardId: expect.stringMatching(/^pikachu-/),
     });
   });
