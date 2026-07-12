@@ -22,6 +22,7 @@ import {
   IconX,
 } from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
+import { parseAgentSearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
@@ -311,6 +312,7 @@ function ComparisonExperience() {
   const [listingOpen, setListingOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [compactSearchOpen, setCompactSearchOpen] = useState(false);
+  const agentHandoffHandled = useRef(false);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
   const loading = journeyState === "identifying" || journeyState === "comparing";
 
@@ -496,6 +498,26 @@ function ComparisonExperience() {
     });
     focusComparisonTarget();
   }
+
+  // ChatGPT/Codex and other trusted interfaces can hand the buyer directly into
+  // the existing deterministic search flow. The URL contains card identity only
+  // (never marketplace credentials or private listing data), remains editable,
+  // and still passes through the same Zod-validated API and exact-print gates.
+  useEffect(() => {
+    if (agentHandoffHandled.current) return;
+    agentHandoffHandled.current = true;
+    const handoff = parseAgentSearchParams(new URLSearchParams(window.location.search));
+    if (!handoff) return;
+
+    form.setValue("heroQuery", handoff.query);
+    form.setValue("game", handoff.game);
+    if (!handoff.autoSubmit) return;
+
+    void form.handleSubmit((values) => submitComparison(values, handoff.confirmedCardId))();
+    // This is intentionally mount-only: a handoff must run at most once even as
+    // form state and localized copy change during the comparison.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function confirmIdentity(identity: CardIdentityCandidate) {
     if (!pendingRequest || loading) return;

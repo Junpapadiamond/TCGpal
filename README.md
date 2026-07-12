@@ -66,6 +66,28 @@ The response is one of:
 
 See [product spec](docs/product-spec.md), [architecture and data sources](docs/architecture-and-data-sources.md), and [validation plan](docs/validation-plan.md).
 
+### Agent screenshot handoff
+
+An assistant that identifies a card from a screenshot can open the existing
+search flow with a URL in this format:
+
+```text
+https://tcgpal.vercel.app/?agent=1&game=onePiece&q=P-096%20Monkey.D.Luffy&card=P-096
+```
+
+- `agent=1` marks the URL as an agent handoff.
+- `game` is `pokemon` or `onePiece`.
+- `q` is the normalized human-readable identity (name, card number, language,
+  and variant when visible).
+- `card` is optional. Include it only when the exact catalog ID is known; when
+  omitted, TCGpal keeps its normal exact-version confirmation step.
+- `auto=0` optionally fills the form without starting the search. By default the
+  handoff searches immediately.
+
+The link never bypasses catalog matching, exact-print validation, or the public
+API schema. If screenshot evidence is ambiguous, omit `card` so the buyer can
+confirm the correct print.
+
 ## Verification
 
 ```bash
