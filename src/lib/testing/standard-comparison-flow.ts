@@ -1,4 +1,6 @@
 import type {
+  CardIdentitySearchRequest,
+  CardIdentitySearchResponse,
   ComparisonReport,
   ComparisonRequest,
   ConditionClaim,
@@ -31,6 +33,7 @@ export type StandardComparisonFlowStep = {
   rankedChoiceCount: number;
   sourceResultCount: number;
   demoMode: boolean;
+  identityStatus: CardIdentitySearchResponse["status"] | null;
 };
 
 export type StandardComparisonFlowResult = {
@@ -39,6 +42,7 @@ export type StandardComparisonFlowResult = {
 
 export type StandardComparisonFlowOptions = {
   cards?: StandardComparisonFlowCard[];
+  identify?: (request: CardIdentitySearchRequest) => Promise<CardIdentitySearchResponse>;
   compare: (request: ComparisonRequest) => Promise<ComparisonReport>;
 };
 
@@ -143,6 +147,7 @@ export function assertStandardComparisonFlowPlan(cards: StandardComparisonFlowCa
 
 export async function runStandardComparisonFlow({
   cards = STANDARD_COMPARISON_FLOW_CARDS,
+  identify,
   compare,
 }: StandardComparisonFlowOptions): Promise<StandardComparisonFlowResult> {
   assertStandardComparisonFlowPlan(cards);
@@ -150,8 +155,19 @@ export async function runStandardComparisonFlow({
   const steps: StandardComparisonFlowStep[] = [];
   for (const card of cards) {
     const request = buildStandardComparisonRequest(card);
-    const initial = await compare(request);
-    const final = initial.status === "needs_confirmation"
+    const identity = identify
+      ? await identify({ query: card.query, cardHint: request.cardHint })
+      : null;
+    if (identity && identity.status !== "resolved" && identity.status !== "needs_confirmation") {
+      throw new Error(`Standard comparison flow could not identify ${card.label}: ${identity.status}.`);
+    }
+    const identityCardId = identity?.status === "resolved"
+      ? identity.confirmedCard?.id ?? null
+      : identity
+        ? selectIdentityConfirmationId(identity, card)
+        : null;
+    const initial = await compare(identityCardId ? { ...request, confirmedCardId: identityCardId } : request);
+    const final = !identity && initial.status === "needs_confirmation"
       ? await compare({ ...initial.request, confirmedCardId: selectConfirmationId(initial, card) })
       : initial;
 
@@ -162,15 +178,24 @@ export async function runStandardComparisonFlow({
       query: card.query,
       initialStatus: initial.status,
       finalStatus: final.status,
-      confirmationRequired: initial.status === "needs_confirmation",
+      confirmationRequired: identity?.status === "needs_confirmation" || (!identity && initial.status === "needs_confirmation"),
       confirmedCardId: final.confirmedCard?.id ?? null,
       rankedChoiceCount: final.rankedChoices.length,
       sourceResultCount: final.candidates.length,
       demoMode: final.demoMode,
+      identityStatus: identity?.status ?? null,
     });
   }
 
   return { cards: steps };
+}
+
+function selectIdentityConfirmationId(response: CardIdentitySearchResponse, card: StandardComparisonFlowCard) {
+  const expected = response.candidates.find((candidate) => candidate.id === card.expectedCardId);
+  if (expected) return expected.id;
+  const first = response.candidates[0];
+  if (first) return first.id;
+  throw new Error(`Standard comparison flow could not confirm ${card.label}; no identity candidates returned.`);
 }
 
 export function buildStandardComparisonRequest(card: StandardComparisonFlowCard): ComparisonRequest {

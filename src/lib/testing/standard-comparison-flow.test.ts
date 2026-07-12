@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runListingComparison } from "@/lib/ai/listing-compare";
+import { resolveCardIdentity } from "@/lib/ai/card-identity";
 import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
 import {
   STANDARD_COMPARISON_FLOW_CARDS,
@@ -115,6 +116,7 @@ describe("standard multi-card comparison flow", () => {
   it("runs five card-first comparisons in one session, confirming ambiguous picks before the next search", async () => {
     const result = await runStandardComparisonFlow({
       cards: STANDARD_COMPARISON_FLOW_CARDS,
+      identify: (input) => resolveCardIdentity(input, { fetcher: standardFlowFetcher }),
       compare: (request: ComparisonRequest) => runListingComparison(request, { fetcher: standardFlowFetcher }),
     });
 
@@ -122,6 +124,7 @@ describe("standard multi-card comparison flow", () => {
     expect(result.cards.map((card) => card.game)).toEqual(["pokemon", "onePiece", "pokemon", "onePiece", "pokemon", "onePiece"]);
     expect(result.cards.map((card) => card.entryMode)).toEqual(["first_search", "edit_search", "new_search", "edit_search", "new_search", "new_search"]);
     expect(result.cards.every((card) => card.finalStatus !== "needs_confirmation")).toBe(true);
+    expect(result.cards.every((card) => card.identityStatus === "resolved" || card.identityStatus === "needs_confirmation")).toBe(true);
     expect(result.cards.every((card) => card.confirmedCardId)).toBe(true);
     expect(result.cards.every((card) => card.rankedChoiceCount > 0)).toBe(true);
     expect(result.cards.every((card) => card.sourceResultCount > 0)).toBe(true);
