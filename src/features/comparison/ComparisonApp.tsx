@@ -3056,7 +3056,7 @@ function nullableNumber(value: string) {
 function hasListingSubmission(request: ComparisonRequest) {
   const source = request.sourceListing;
   return Boolean(
-    source.url.trim()
+    source.url?.trim()
     || source.title.trim()
     || source.description.trim()
     || source.price !== null

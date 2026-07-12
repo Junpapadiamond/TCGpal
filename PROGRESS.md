@@ -160,6 +160,8 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 
 ### Done
 
+- Card search now has explicit identity and comparison phases: name-only searches show the identity gallery, exact catalog matches proceed with a fixed confirmed-card anchor, and same-number sibling prints remain confirmation-gated.
+- `POST /api/agent/card-identity` resolves catalog identity without marketplace fan-out, ranking, or market-anchor work; the comparison route remains backward-compatible.
 - Exact version image selection immediately submits the canonical print.
 - Results distinguish best_buy, inspect_first, and next_moves.
 - Empty results do not use demo or low-confidence inventory as real recommendations.
@@ -242,13 +244,15 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Last verified product commit: 484115b on 2026-07-12.
+Last verified feature commit: 0c86c59 plus the pending null-safe `sourceListing.url` fix on 2026-07-12.
 
-- npm run lint: passed.
-- npm run typecheck: passed.
-- npm run test: 42 files / 463 tests passed; includes Base Set collision regressions, metadata freshness, and sequential multi-card flow.
-- npm run build: passed on Next.js 16.2.6.
-- Visual: unchanged by 484115b. English and Chinese desktop/mobile evidence from 7637f56 remains applicable; no horizontal overflow and zero browser console errors were observed there.
+- Clean isolated worktree: `npm run lint` passed.
+- Clean isolated worktree: `npm run typecheck` passed.
+- Clean isolated worktree: `npm run test` passed, 44 files / 472 tests; includes identity route/client regressions and the sequential multi-card flow.
+- Clean isolated worktree: `npm run build` passed on Next.js 16.2.6 and emitted `/api/agent/card-identity` as a dynamic route.
+- Visual: identity-first English/Chinese desktop/mobile QA passed for the Pikachu identity shell/gallery, exact Umbreon VMAX 215/203 flow, and eight-print Nami OP01-016 sibling gallery. No mobile overflow or browser console errors were observed; evidence is under `output/identity-first-visual-qa/`.
+- Reduced motion: the identity flow reads `prefers-reduced-motion`, and the global reduced-motion media rule remains present; a device-level emulation was not available in the in-app browser run.
+- Dirty-checkout caveat: the full commands in the original checkout still fail because untracked photo-search tests reference absent implementation files. Those experiment files were not modified; feature verification used an isolated worktree.
 - Peer review: identity and UX reviewers approved after fixes; chairman approved.
 - Remote: origin/main matched 7637f56fb20c7bfeeeca278b7ab960b0b46b0928.
 
