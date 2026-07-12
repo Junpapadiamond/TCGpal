@@ -268,6 +268,33 @@ describe("comparison condition controls", () => {
     });
   });
 
+  it("labels a set-only One Piece query in result Edit as browsing card versions", async () => {
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Nami OP01-016" } });
+    fireEvent.click(within(query.closest("form") as HTMLFormElement).getByRole("button", {
+      name: "Compare exact listings",
+    }));
+
+    await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.click(await screen.findByRole("button", { name: /Edit/i }));
+
+    const editQuery = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(editQuery, { target: { value: "luffy op01" } });
+
+    const editForm = editQuery.closest("form");
+    expect(editForm).not.toBeNull();
+    expect(within(editForm as HTMLFormElement).getByRole("button", {
+      name: "Browse card versions",
+    })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "中文" }));
+    expect(within(editForm as HTMLFormElement).getByRole("button", {
+      name: "浏览卡片版本",
+    })).toBeTruthy();
+  });
+
   it("selects the Nami P4 image and immediately searches that exact print", async () => {
     const p2 = {
       id: "OP01-016_p2",

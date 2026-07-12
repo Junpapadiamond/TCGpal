@@ -657,7 +657,7 @@ function ComparisonExperience() {
               </label>
               <button className="primary-button" type="submit" disabled={loading}>
                 {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
-                {t.form.submitIdle}
+                {loading ? t.form.submitLoading : heroPreview?.cardNumber ? t.form.submitIdle : t.form.browseVersions}
               </button>
             </form>
           ) : null}
