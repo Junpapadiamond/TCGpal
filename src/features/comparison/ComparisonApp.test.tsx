@@ -201,6 +201,16 @@ describe("comparison condition controls", () => {
 
     expect(await screen.findByRole("heading", { name: "Comparing listings for Umbreon VMAX" })).toBeTruthy();
     expect(screen.getByAltText("Umbreon VMAX 215/203")).toBeTruthy();
+    const cardMotion = screen.getByTestId("confirmed-card-motion");
+    const motionImages = Array.from(cardMotion.querySelectorAll("img"));
+    expect(motionImages).toHaveLength(4);
+    const motionSources = motionImages.map((image) => {
+      const src = image.getAttribute("src") ?? "";
+      return new URL(src, window.location.href).searchParams.get("url") ?? src;
+    });
+    expect(new Set(motionSources).size).toBe(1);
+    expect(motionSources[0]).toContain("swsh7/215.png");
+    expect(motionImages.filter((image) => image.getAttribute("alt"))).toHaveLength(1);
     expect(screen.queryByRole("heading", { name: /Choose your/i })).toBeNull();
     await waitFor(() => expect(requests[0]?.confirmedCardId).toBe("swsh7-215"));
 

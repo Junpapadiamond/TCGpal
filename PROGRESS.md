@@ -163,6 +163,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - Card search now has explicit identity and comparison phases: name-only searches show the identity gallery, exact catalog matches proceed with a fixed confirmed-card anchor, and same-number sibling prints remain confirmation-gated.
 - `POST /api/agent/card-identity` resolves catalog identity without marketplace fan-out, ranking, or market-anchor work; the comparison route remains backward-compatible.
 - The result-page Edit button follows the newly typed query: set-only One Piece searches such as `luffy op01` say Browse card versions and return to identity confirmation instead of implying listing comparison.
+- The comparison loader keeps one fixed confirmed-card anchor and restores motion with three decorative copies of that same print only; reduced-motion users keep the static anchor without positional movement.
 - Exact version image selection immediately submits the canonical print.
 - Results distinguish best_buy, inspect_first, and next_moves.
 - Empty results do not use demo or low-confidence inventory as real recommendations.
@@ -245,7 +246,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Last verified feature commit: 72c5b1a plus the pending result Edit CTA fix on 2026-07-12.
+Last verified feature commit: 1d1e15a plus the pending confirmed-card loader motion on 2026-07-12.
 
 - Clean isolated worktree: `npm run lint` passed.
 - Clean isolated worktree: `npm run typecheck` passed.
@@ -253,6 +254,7 @@ Last verified feature commit: 72c5b1a plus the pending result Edit CTA fix on 20
 - Clean isolated worktree: `npm run build` passed on Next.js 16.2.6 and emitted `/api/agent/card-identity` as a dynamic route.
 - Visual: identity-first English/Chinese desktop/mobile QA passed for the Pikachu identity shell/gallery, exact Umbreon VMAX 215/203 flow, and eight-print Nami OP01-016 sibling gallery. No mobile overflow or browser console errors were observed; evidence is under `output/identity-first-visual-qa/`.
 - Visual: result Edit with `luffy op01` shows Browse card versions / 浏览卡片版本 and transitions to the Luffy identity gallery; evidence is under `output/edit-search-cta-fix/`.
+- Visual: confirmed-card loader motion passed English desktop and Chinese mobile QA; sampled transforms changed over time, all four images resolved to the selected print, only the center anchor was accessible, and no horizontal overflow appeared. Evidence is under `output/confirmed-card-motion/`.
 - Reduced motion: the identity flow reads `prefers-reduced-motion`, and the global reduced-motion media rule remains present; a device-level emulation was not available in the in-app browser run.
 - Dirty-checkout caveat: the full commands in the original checkout still fail because untracked photo-search tests reference absent implementation files. Those experiment files were not modified; feature verification used an isolated worktree.
 - Peer review: identity and UX reviewers approved after fixes; chairman approved.

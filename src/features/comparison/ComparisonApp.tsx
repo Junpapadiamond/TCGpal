@@ -1342,7 +1342,7 @@ function ComparisonLoading({ identity }: { identity: CardIdentityCandidate }) {
   const t = useT();
   return (
     <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite" aria-busy="true">
-      <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-center">
+      <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_280px] sm:items-center">
         <div>
           <div className="flex items-center gap-3">
             <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73]" />
@@ -1360,12 +1360,78 @@ function ComparisonLoading({ identity }: { identity: CardIdentityCandidate }) {
             ))}
           </ul>
         </div>
-        <div className="rounded-lg border border-[#c9d7ce] bg-[#fcfbf6] p-3 text-center">
-          {identity.imageUrl ? <Image src={identity.imageUrl} alt={`${identity.name} ${identity.cardNumber}`} width={132} height={185} className="mx-auto h-auto w-[132px]" /> : null}
-          <p className="mt-2 text-xs font-black text-[#52635c]">{identity.cardNumber}</p>
-        </div>
+        <ConfirmedCardMotion identity={identity} />
       </div>
     </section>
+  );
+}
+
+function ConfirmedCardMotion({ identity }: { identity: CardIdentityCandidate }) {
+  return (
+    <div
+      data-testid="confirmed-card-motion"
+      className="confirmed-card-motion relative isolate min-h-[220px] overflow-hidden rounded-lg border border-[#c9d7ce] bg-[#fcfbf6] p-3 text-center"
+    >
+      <style>{`
+        .confirmed-card-motion::before {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          background: linear-gradient(90deg, #fcfbf6 0%, transparent 24%, transparent 76%, #fcfbf6 100%);
+          content: "";
+          pointer-events: none;
+        }
+        .confirmed-card-motion-track {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          display: flex;
+          width: max-content;
+          gap: .65rem;
+          opacity: .34;
+          transform: translate3d(-72%, -50%, 0);
+          animation: tcglens-confirmed-card-scroll 2.4s linear infinite alternate;
+          will-change: transform;
+        }
+        .confirmed-card-motion-copy {
+          display: block;
+          width: 78px;
+          flex: 0 0 auto;
+          overflow: hidden;
+          border-radius: .45rem;
+          filter: saturate(.72) contrast(.94);
+          box-shadow: 0 10px 24px rgba(36, 49, 47, .12);
+        }
+        .confirmed-card-motion-anchor {
+          position: relative;
+          z-index: 2;
+          width: 132px;
+          margin-inline: auto;
+          filter: drop-shadow(0 12px 18px rgba(36, 49, 47, .18));
+        }
+        @keyframes tcglens-confirmed-card-scroll {
+          to { transform: translate3d(-38%, -50%, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .confirmed-card-motion-track { display: none; }
+        }
+      `}</style>
+      {identity.imageUrl ? (
+        <>
+          <div className="confirmed-card-motion-track" aria-hidden="true">
+            {Array.from({ length: 3 }, (_, index) => (
+              <span className="confirmed-card-motion-copy" key={index}>
+                <Image src={identity.imageUrl!} alt="" width={78} height={109} className="h-auto w-full" />
+              </span>
+            ))}
+          </div>
+          <div className="confirmed-card-motion-anchor">
+            <Image src={identity.imageUrl} alt={`${identity.name} ${identity.cardNumber}`} width={132} height={185} className="h-auto w-full" />
+          </div>
+        </>
+      ) : null}
+      <p className="relative z-[2] mt-2 text-xs font-black text-[#52635c]">{identity.cardNumber}</p>
+    </div>
   );
 }
 
