@@ -239,7 +239,7 @@ describe("comparison ranking", () => {
         ...demoListingSeeds[0],
         id: "exact-pokemon-bargain",
         title: "Umbreon VMAX 215/203 Evolving Skies Near Mint",
-        price: 20,
+        price: 44,
         shipping: 0,
         claimedCondition: "Near Mint",
       },

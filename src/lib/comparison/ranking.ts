@@ -12,7 +12,11 @@ import {
   type RiskLabel,
   type SellerTrustSignals,
 } from "@/lib/schemas";
-import { assessPrintFidelity, type PrintFidelityAssessment } from "@/lib/comparison/print-fidelity";
+import {
+  assessPrintFidelity,
+  PRINT_IDENTITY_EXCLUDE_RATIO,
+  type PrintFidelityAssessment,
+} from "@/lib/comparison/print-fidelity";
 
 const exclusionPatterns = [
   // Graded slabs. The grade can be joined to the grader by a space, colon, hash,
@@ -591,7 +595,7 @@ function aboveMarketContext(listing: NormalizedListing, marketPrice: number | nu
 // A genuine raw single never costs a tiny fraction of its catalog market price;
 // items that do are almost always replicas, proxies, stickers, or mislabeled.
 // The threshold is deliberately conservative so real underpriced/played copies stay.
-const MARKET_FLOOR_RATIO = 0.25;
+const MARKET_FLOOR_RATIO = PRINT_IDENTITY_EXCLUDE_RATIO;
 
 function getExclusionReasons(
   listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "shipping" | "claimedCondition" | "marketplace" | "userSupplied">

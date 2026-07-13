@@ -69,7 +69,7 @@ const standardFlowFetcher = vi.fn(async (input: RequestInfo | URL) => {
         itemId,
         title: listingTitle,
         condition: "Ungraded",
-        price: { value: "120.00", currency: "USD" },
+        price: { value: "250.00", currency: "USD" },
         shippingOptions: [{ shippingCost: { value: "5.00", currency: "USD" } }],
       }],
     });
@@ -81,7 +81,7 @@ const standardFlowFetcher = vi.fn(async (input: RequestInfo | URL) => {
       title: standardListingTitles.get(itemId) ?? "Exact card listing",
       condition: "Ungraded",
       conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
-      price: { value: "120.00", currency: "USD" },
+      price: { value: "250.00", currency: "USD" },
       shippingOptions: [{ shippingCost: { value: "5.00", currency: "USD" } }],
     });
   }

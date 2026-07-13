@@ -95,7 +95,7 @@ The AI layer may:
 
 Deterministic TypeScript must own:
 
-- Eligibility and product exclusions. eBay search is full of cheap novelty items that carry the exact card name + number (gold-metal cards, stickers, DIY/"extended art", for-display replicas). Two deterministic defenses in `ranking.ts`: (1) `exclusionPatterns` title filters; (2) a **market-floor gate** that rejects listings priced below `MARKET_FLOOR_RATIO` (0.25) × TCGplayer market as likely replicas/mislabeled. eBay search uses Best Match (not price-asc) so the cheapest junk does not dominate.
+- Eligibility and product exclusions. eBay search is full of cheap novelty items that carry the exact card name + number (gold-metal cards, stickers, DIY/"extended art", for-display replicas). Two deterministic defenses in `ranking.ts`: (1) `exclusionPatterns` title filters; (2) a **market-floor gate** aligned to the exact-print exclusion band (`MARKET_FLOOR_RATIO` = 0.45) × TCGplayer market for NM/LP requests. Exact-print evidence proves identity, not commercial plausibility, so it never bypasses this gate. eBay search uses Best Match (not price-asc) so the cheapest junk does not dominate.
 - Exact-match validation gates.
 - Price, shipping, optional-tax calculations.
 - Seller-trust and evidence-completeness scoring.
