@@ -9,10 +9,12 @@ import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-prin
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
+const COMPARISON_CACHE_REVISION = "ranking-v2";
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
   return [
     "identity-v3",
+    COMPARISON_CACHE_REVISION,
     ONE_PIECE_PRINT_METADATA_REVISION,
     confirmedCardId,
     request.buyer.desiredCondition,
