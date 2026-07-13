@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-07-13
 canonical_branch: origin/main
-last_verified_product_commit: bab1af1b90abd9c4528fd1efec84069e01794782
+last_verified_product_commit: 7d2d23b0f0e1f15299b28c38403ed536b76eb91f
 max_lines: 300
 ---
 
@@ -192,7 +192,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 ## WS-DISTRIBUTION - Sources, distribution, and business model
 
 - A versioned capabilities REST endpoint and production-path Streamable HTTP MCP server expose identity browsing, bounded discovery, exact-card comparison, and deep-link continuation through the existing domain engine.
-- The repo/team `tcglens` Work plugin bundles the production remote MCP connection and an anti-FOMO usage skill; the official plugin validator passes locally.
+- The repo/team `tcglens` Work plugin bundles the production remote MCP connection and an anti-FOMO usage skill; the official plugin validator passes locally. Other Codex users can add the public GitHub marketplace and install it, but it is not published in ChatGPT's universal plugin directory and therefore is not searchable/installable from the phone plugin catalog.
 - MCP has a separate rate-limit/request-ID/ops boundary and returns bounded structured evidence without full traces or provider credentials.
 - v1 uses deep links back to the website. Inline Apps SDK UI, OAuth, and per-user quota are explicitly deferred.
 - eBay is the only live concrete-listing source. Manual links and pasted listings are clearly separate.
@@ -249,7 +249,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-MCP/plugin code commit `bab1af1b90abd9c4528fd1efec84069e01794782` is published to `main` and production verified on 2026-07-13.
+MCP/plugin release commit `7d2d23b0f0e1f15299b28c38403ed536b76eb91f` is published to `main` and production verified on 2026-07-13.
 
 - `npm install` / deterministic `npm ci` completed.
 - `npm run lint` passed.
@@ -272,7 +272,7 @@ MCP/plugin code commit `bab1af1b90abd9c4528fd1efec84069e01794782` is published t
 - Reduced motion: the identity flow reads `prefers-reduced-motion`, and the global reduced-motion media rule remains present; a device-level emulation was not available in the in-app browser run.
 - Dirty-checkout caveat: the full commands in the original checkout still fail because untracked photo-search tests reference absent implementation files. Those experiment files were not modified; feature verification used an isolated worktree.
 - Peer review: identity and UX reviewers approved after fixes; chairman approved.
-- Remote: origin/main matched 5315ba82a569fe605106b2adc66a3235effe706d.
+- Remote: origin/main matched `7d2d23b0f0e1f15299b28c38403ed536b76eb91f`; Vercel deployment `dpl_3hXEkRDoSbaeb6JHP1vVnz8Q1WPL` reached READY and served `https://tcgpal.vercel.app/mcp`.
 
 Still not verified:
 
