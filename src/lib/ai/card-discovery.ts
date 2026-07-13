@@ -50,9 +50,9 @@ export async function discoverCards(
   });
 
   const warnings = [...identity.warnings];
-  const language = request.language.toLocaleLowerCase();
+  const language = normalizeLanguage(request.language);
   const pricedInBudget = identity.candidates
-    .filter((card) => card.language.toLocaleLowerCase() === language)
+    .filter((card) => normalizeLanguage(card.language) === language)
     .filter((card) => typeof card.marketMid === "number"
       && Number.isFinite(card.marketMid)
       && card.marketMid >= request.budget.min
@@ -217,4 +217,11 @@ function isInsideBudget(listing: NormalizedListing, budget: { min: number; max: 
 function comparableCost(listing: NormalizedListing) {
   if (!listing.costComplete) return null;
   return listing.estimatedLandedCost ?? listing.preTaxTotal;
+}
+
+function normalizeLanguage(value: string) {
+  const language = value.trim().toLocaleLowerCase();
+  if (["en", "eng", "english"].includes(language)) return "english";
+  if (["jp", "jpn", "ja", "japanese"].includes(language)) return "japanese";
+  return language;
 }

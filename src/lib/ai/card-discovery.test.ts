@@ -78,6 +78,17 @@ describe("discoverCards", () => {
     expect(result.warnings).toContain("No catalog identity with a usable market reference fell inside the requested budget.");
     expect(compare).not.toHaveBeenCalled();
   });
+
+  it("treats catalog language codes as their public language names", async () => {
+    const englishCodeCard = { ...card("nami-en", 250), name: "Nami", language: "EN" };
+    const result = await discoverCards(
+      { query: "Nami", game: "onePiece", language: "English", budget: { min: 200, max: 300 }, includeLiveListings: false },
+      { identify: async () => identityResponse([englishCodeCard]) },
+    );
+
+    expect(result.shortlist).toHaveLength(1);
+    expect(result.shortlist[0]?.card.id).toBe("nami-en");
+  });
 });
 
 function card(id: string, marketMid: number): CardIdentityCandidate {

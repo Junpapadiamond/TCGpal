@@ -110,7 +110,7 @@ export function createTcglensToolHandlers(dependencies: ToolDependencies = {}) {
       const response = await discover(input, { now });
       const results = response.shortlist.map((candidate) => ({
         card: summarizeCard(candidate.card),
-        marketReference: marketReference(candidate.card, candidate.marketPrice),
+        marketReference: marketReference(candidate.card, candidate.card.marketMid ?? candidate.marketPrice),
         outcome: candidate.outcome,
         listing: candidate.recommendedListing ? summarizeListing(candidate.recommendedListing) : null,
         recommendation: candidate.recommendation ? {
@@ -233,7 +233,7 @@ function summarizeComparisonToolResult(report: ComparisonReport, game: z.infer<t
 function summarizeCard(card: CardIdentityCandidate) {
   return {
     id: card.id, name: card.name, setName: card.setName, setCode: card.setCode, cardNumber: card.cardNumber,
-    language: card.language, rarity: card.rarity ?? null, variant: card.variant ?? null, confidence: card.confidence,
+    language: publicLanguage(card.language), rarity: card.rarity ?? null, variant: card.variant ?? null, confidence: card.confidence,
     marketReference: marketReference(card, card.marketMid ?? null), imageUrl: card.imageUrl,
   };
 }
@@ -274,4 +274,11 @@ function toolResult<T extends Record<string, unknown>>(text: string, structuredC
 
 function dedupe(values: string[]) {
   return [...new Set(values)];
+}
+
+function publicLanguage(value: string) {
+  const language = value.trim().toLocaleLowerCase();
+  if (["en", "eng", "english"].includes(language)) return "English";
+  if (["jp", "jpn", "ja", "japanese"].includes(language)) return "Japanese";
+  return value;
 }

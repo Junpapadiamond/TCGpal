@@ -36,6 +36,7 @@ describe("TCGlens MCP tool mappings", () => {
       tcglensUrl: expect.stringContaining("agent=1"),
     });
     expect(result.structuredContent.cards).toHaveLength(24);
+    expect(result.structuredContent.cards[0]?.language).toBe("English");
   });
 
   it("does not fabricate browse cards when identity has no match", async () => {
@@ -54,7 +55,7 @@ describe("TCGlens MCP tool mappings", () => {
       request,
       evaluatedIdentities: 2,
       marketEligibleIdentities: 1,
-      shortlist: [{ card: card("pikachu-1", "Pikachu", 199), marketPrice: 350, outcome: "comparison_unavailable" as const, recommendedListing: null, recommendation: null, listingCost: null, warnings: ["eBay unavailable"] }],
+      shortlist: [{ card: card("pikachu-1", "Pikachu", 199), marketPrice: 355, outcome: "comparison_unavailable" as const, recommendedListing: null, recommendation: null, listingCost: null, warnings: ["eBay unavailable"] }],
       warnings: [],
       limitations: ["Raw singles only."],
       generatedAt: "2026-07-13T00:00:00.000Z",
@@ -71,6 +72,7 @@ describe("TCGlens MCP tool mappings", () => {
       maxResults: 3,
     }), expect.any(Object));
     expect(result.structuredContent).toMatchObject({ status: "partial", results: [{ outcome: "comparison_unavailable" }] });
+    expect(result.structuredContent.results[0]?.marketReference.mid).toBe(350);
   });
 
   it("rejects invalid discovery budgets before calling the domain", async () => {
@@ -127,7 +129,7 @@ describe("TCGlens MCP tool mappings", () => {
 function card(id: string, name: string, number: number): CardIdentityCandidate {
   return {
     id, name, setName: name === "Nami" ? "Romance Dawn" : "151", setCode: name === "Nami" ? "OP01" : "sv3pt5",
-    cardNumber: name === "Nami" ? `016/${number}` : "199/165", language: "English", imageUrl: `https://images.example.com/${id}.jpg`,
+    cardNumber: name === "Nami" ? `016/${number}` : "199/165", language: name === "Nami" ? "EN" : "English", imageUrl: `https://images.example.com/${id}.jpg`,
     rarity: "Rare", variant: "Alternate Art", confidence: "high", matchReasons: ["Name matches."], marketMid: 350, marketSource: "tcgcsv", marketAsOf: "2026-07-13T00:00:00.000Z",
   };
 }
