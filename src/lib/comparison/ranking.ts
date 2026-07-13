@@ -630,7 +630,10 @@ function getExclusionReasons(
   }
   if (exclusionPatterns.some((pattern) => pattern.test(listing.title))) reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
   const marketFloorApplies = buyer.desiredCondition === "Near Mint" || buyer.desiredCondition === "Lightly Played";
-  if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO && !strictPrintFidelity) {
+  // Exact-print evidence proves identity, not commercial plausibility. Keep the
+  // conservative floor active even after strict print confirmation so auctions,
+  // replicas, damaged/mislabeled rows, and anomalous prices cannot become a Buy.
+  if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO) {
     reasons.push("Priced far below market — likely a replica, proxy, or mislabeled item.");
   }
   if (strictPrintFidelity && printAssessment) {

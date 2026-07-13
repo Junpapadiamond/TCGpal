@@ -222,7 +222,7 @@ describe("comparison ranking", () => {
     expect(listing.estimatedLandedCost).toBeNull();
   });
 
-  it("does not reject a proven compatible Pokemon print solely for being below the legacy market floor", () => {
+  it("keeps the suspicious-price floor even when a Pokemon print is proven compatible", () => {
     const exactPokemonCard = {
       id: "swsh7-215",
       name: "Umbreon VMAX",
@@ -249,8 +249,8 @@ describe("comparison ranking", () => {
     });
 
     expect(exactBargain.printMatch).toBe("compatible");
-    expect(exactBargain.eligible).toBe(true);
-    expect(exactBargain.exclusionReasons).not.toContain(
+    expect(exactBargain.eligible).toBe(false);
+    expect(exactBargain.exclusionReasons).toContain(
       "Priced far below market — likely a replica, proxy, or mislabeled item.",
     );
 
