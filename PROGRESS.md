@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-07-13
 canonical_branch: origin/main
-last_verified_product_commit: pending-mcp-publication
+last_verified_product_commit: bab1af1b90abd9c4528fd1efec84069e01794782
 max_lines: 300
 ---
 
@@ -34,7 +34,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
-| WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin implemented; production verification pending | Verify exact Vercel commit and live tools |
+| WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin released and production verified | Pilot installation with another Work user |
 | WS-LOCAL | Dirty local experiments | Mixed | Base Set fix completed; photo search undecided | Decide D-PHOTO; preserve the original checkout |
 <!-- progress:end -->
 
@@ -188,7 +188,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - src/lib/testing/standard-comparison-flow.ts
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-production-verification-pending" tags="mcp,plugin,agents,marketplaces,distribution,business" -->
+<!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-released" tags="mcp,plugin,agents,marketplaces,distribution,business" -->
 ## WS-DISTRIBUTION - Sources, distribution, and business model
 
 - A versioned capabilities REST endpoint and production-path Streamable HTTP MCP server expose identity browsing, bounded discovery, exact-card comparison, and deep-link continuation through the existing domain engine.
@@ -249,15 +249,18 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Current MCP/plugin release is locally verified on 2026-07-13 and pending publication/deployment confirmation.
+MCP/plugin code commit `bab1af1b90abd9c4528fd1efec84069e01794782` is published to `main` and production verified on 2026-07-13.
 
 - `npm install` / deterministic `npm ci` completed.
 - `npm run lint` passed.
 - `npm run typecheck` passed.
-- `npm run test` passed: 52 files / 498 tests, including MCP handshake/tools-list, all five tool mappings, invalid input, bounded browse, ambiguity, partial failure, deep links, secret-safe output, and per-tool rate limits.
+- `npm run test` passed: 52 files / 499 tests, including MCP handshake/tools-list, all five tool mappings, invalid input, bounded browse, language normalization, ambiguity, partial failure, deep links, suspicious-price rejection, secret-safe output, and per-tool rate limits.
 - `npm run build` passed on Next.js 16.2.6 and emitted dynamic `/api/agent/capabilities` and `/mcp` routes.
 - Official plugin validation passed for `plugins/tcglens`.
 - No UI source changed; bilingual desktop/mobile visual QA is not applicable to this MCP-only release.
+- Production `/mcp` initialization and `tools/list` passed; capabilities and all five tools returned content plus structured output.
+- Live examples passed: bounded English Nami identities, checkout-bounded English Pikachu discovery, and exact Charizard ex `sv3pt5-199` comparison. Live verification caught and fixed inconsistent market projection, `EN` language aliases, strict-print market-floor bypass, and stale cached ranking reports before release completion.
+- Production rate limiting returned 429 after the configured discovery quota. Vercel runtime logs contained no raw ZIPs, queries, listing URLs, seller identifiers, images, bodies, or secrets.
 
 - Clean isolated worktree: `npm run lint` passed.
 - Clean isolated worktree: `npm run typecheck` passed.
