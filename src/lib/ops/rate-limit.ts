@@ -30,6 +30,7 @@ const DEFAULT_COMPARISON_LIMIT = 20;
 const DEFAULT_EXPLAIN_LIMIT = 60;
 const DEFAULT_IDENTITY_LIMIT = 60;
 const DEFAULT_DISCOVERY_LIMIT = 10;
+const DEFAULT_MCP_LIMIT = 60;
 const DEFAULT_WINDOW_MS = 10 * 60 * 1000;
 const LOCAL_RATE_LIMIT_MAX_ENTRIES = 2500;
 const localRateLimitStore = new Map<string, LocalRateEntry>();
@@ -41,6 +42,22 @@ export async function rateLimitRequest(
 ) {
   const identity = getRateLimitIdentity(request);
   return enforceRateLimit(`${route}:${identity}`, getRateLimitRule(route), options);
+}
+
+export async function rateLimitMcpRequest(
+  request: Request,
+  toolName: string | null,
+  options: EnforceRateLimitOptions = {},
+) {
+  const identity = getRateLimitIdentity(request);
+  const route = toolName === "tcglens_discover_cards"
+    ? "card-discovery"
+    : toolName === "tcglens_compare_card"
+      ? "listing-compare"
+      : toolName === "tcglens_browse_cards"
+        ? "card-identity"
+        : "mcp";
+  return enforceRateLimit(`mcp:${toolName ?? "protocol"}:${identity}`, getRateLimitRule(route), options);
 }
 
 export async function enforceRateLimit(
@@ -87,6 +104,12 @@ export function getRateLimitIdentity(request: Request) {
 }
 
 export function getRateLimitRule(route: OpsRoute): RateLimitRule {
+  if (route === "mcp") {
+    return {
+      max: readPositiveInt("RATE_LIMIT_MCP_MAX", DEFAULT_MCP_LIMIT),
+      windowMs: readPositiveInt("RATE_LIMIT_MCP_WINDOW_MS", DEFAULT_WINDOW_MS),
+    };
+  }
   if (route === "card-discovery") {
     return {
       max: readPositiveInt("RATE_LIMIT_DISCOVERY_MAX", DEFAULT_DISCOVERY_LIMIT),

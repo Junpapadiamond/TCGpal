@@ -1,9 +1,9 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-07-12
+updated_at: 2026-07-13
 canonical_branch: origin/main
-last_verified_product_commit: 484115bb097db004c49f24602861d5a1bf4454e9
+last_verified_product_commit: pending-mcp-publication
 max_lines: 300
 ---
 
@@ -34,7 +34,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
-| WS-DISTRIBUTION | Additional marketplaces and growth | Large expansion | Deferred | Do not expand before correctness and pilot gates |
+| WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin implemented; production verification pending | Verify exact Vercel commit and live tools |
 | WS-LOCAL | Dirty local experiments | Mixed | Base Set fix completed; photo search undecided | Decide D-PHOTO; preserve the original checkout |
 <!-- progress:end -->
 
@@ -188,9 +188,13 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - src/lib/testing/standard-comparison-flow.ts
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-DISTRIBUTION" state="deferred" tags="marketplaces,distribution,business,subscription,ads" -->
+<!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-production-verification-pending" tags="mcp,plugin,agents,marketplaces,distribution,business" -->
 ## WS-DISTRIBUTION - Sources, distribution, and business model
 
+- A versioned capabilities REST endpoint and production-path Streamable HTTP MCP server expose identity browsing, bounded discovery, exact-card comparison, and deep-link continuation through the existing domain engine.
+- The repo/team `tcglens` Work plugin bundles the production remote MCP connection and an anti-FOMO usage skill; the official plugin validator passes locally.
+- MCP has a separate rate-limit/request-ID/ops boundary and returns bounded structured evidence without full traces or provider credentials.
+- v1 uses deep links back to the website. Inline Apps SDK UI, OAuth, and per-user quota are explicitly deferred.
 - eBay is the only live concrete-listing source. Manual links and pasted listings are clearly separate.
 - Cross-marketplace discovery is desirable but scraping or unlicensed server-side fetching is outside current boundaries.
 - Subscription and advertising are hypotheses, not implemented models.
@@ -245,7 +249,15 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Last verified feature commit: 5315ba8 on 2026-07-12.
+Current MCP/plugin release is locally verified on 2026-07-13 and pending publication/deployment confirmation.
+
+- `npm install` / deterministic `npm ci` completed.
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm run test` passed: 52 files / 498 tests, including MCP handshake/tools-list, all five tool mappings, invalid input, bounded browse, ambiguity, partial failure, deep links, secret-safe output, and per-tool rate limits.
+- `npm run build` passed on Next.js 16.2.6 and emitted dynamic `/api/agent/capabilities` and `/mcp` routes.
+- Official plugin validation passed for `plugins/tcglens`.
+- No UI source changed; bilingual desktop/mobile visual QA is not applicable to this MCP-only release.
 
 - Clean isolated worktree: `npm run lint` passed.
 - Clean isolated worktree: `npm run typecheck` passed.

@@ -112,6 +112,33 @@ export const buyerContextSchema = z.object({
 
 export const tcgGameSchema = z.enum(["pokemon", "onePiece"]);
 
+export const agentCapabilitiesSchema = z.object({
+  capabilitiesContractVersion: z.literal(1),
+  games: z.array(tcgGameSchema),
+  languages: z.array(z.enum(["English", "Japanese"])),
+  productTypes: z.array(z.literal("raw_single")),
+  currencies: z.array(z.literal("USD")),
+  liveListingPlatforms: z.array(marketplaceSchema),
+  gradedListings: z.literal(false),
+  imageIdentificationInput: z.literal(false),
+  imageGrading: z.literal(false),
+  soldHistory: z.literal(false),
+  maxDiscoveryResults: z.literal(5),
+  identityContractVersion: z.literal(1),
+  discoveryContractVersion: z.literal(1),
+  comparisonContractVersion: z.literal(3),
+  handoffContractVersion: z.literal(1),
+  sourceAccess: z.object({
+    live: z.array(z.object({
+      name: z.string(),
+      role: z.literal("active_listings"),
+      mode: platformSourceModeSchema,
+    })),
+    referenceOnly: z.array(z.string()),
+    manualFallback: z.array(z.string()),
+  }),
+});
+
 export const cardHintSchema = z.object({
   game: tcgGameSchema.default("pokemon"),
   name: z.string().trim().default(""),
@@ -275,6 +302,7 @@ export const cardDiscoveryRequestSchema = z.object({
     min: z.number().min(0),
     max: z.number().positive(),
     currency: z.literal("USD").default("USD"),
+    basis: z.literal("checkout").default("checkout"),
   }),
   desiredCondition: conditionClaimSchema.exclude(["Unknown"]).default("Near Mint"),
   postalCode: z.string().trim().max(10).default(""),
@@ -670,6 +698,7 @@ export type CardDiscoveryRequestInput = z.input<typeof cardDiscoveryRequestSchem
 export type CardDiscoveryResponse = z.infer<typeof cardDiscoveryResponseSchema>;
 export type CardDiscoveryCandidate = z.infer<typeof cardDiscoveryCandidateSchema>;
 export type TcgGame = z.infer<typeof tcgGameSchema>;
+export type AgentCapabilities = z.infer<typeof agentCapabilitiesSchema>;
 export type CardHint = z.infer<typeof cardHintSchema>;
 export type ManualCandidate = z.infer<typeof manualCandidateSchema>;
 export type CardIdentityCandidate = z.infer<typeof cardIdentityCandidateSchema>;

@@ -2,9 +2,20 @@
 
 ## Product thesis
 
-TCGpal is the fastest trustworthy way to compare condition-compatible raw copies and know when the data is insufficient to recommend one. It compresses the manual workflow buyers already perform: confirm the exact print, check the TCGplayer reference, inspect eBay photos and seller history, calculate checkout cost, and decide whether the evidence is good enough.
+TCGlens is a source-backed card-decision engine available through the website and external agent interfaces. It is the fastest trustworthy way to compare condition-compatible raw copies and know when the data is insufficient to recommend one. It compresses the manual workflow buyers already perform: confirm the exact print, check the TCGplayer reference, inspect eBay photos and seller history, calculate checkout cost, and decide whether the evidence is good enough.
 
 The honest launch promise is: compare concrete eBay listings against a clearly labeled TCGplayer market reference, plus exact listings the buyer supplies. TCGCSV aggregate rows and web-discovered links are never presented as seller inventory.
+
+TCGlens remains the deterministic decision engine. ChatGPT, Codex Work, the website, and future clients are interfaces: they may interpret natural language or images into possible identity fields, ask clarifying questions, choose a tool, and explain results. They may not override catalog truth, eligibility, checkout math, ranking, or abstention. TCGlens does not accept image input in v1 and never grades images or predicts condition.
+
+## Interface contracts
+
+- The website provides the visual identity gallery and listing evidence view.
+- REST exposes versioned identity, discovery, comparison, explanation, and capabilities contracts.
+- The remote Streamable HTTP MCP endpoint at `/mcp` exposes the same engine through five bounded tools.
+- Deep links reuse the website handoff contract and contain only non-sensitive search/identity state.
+
+MCP does not introduce a second ranking path. It maps tool inputs into the same `resolveCardIdentity()`, `discoverCards()`, `runListingComparison()`, and `buildAgentSearchUrl()` functions used by existing interfaces.
 
 ### Proven, Better, New
 
@@ -68,6 +79,8 @@ Each lens ranks the full eligible set independently; uniqueness is never forced.
 - Sold-history claims without an approved provider
 - Auth, payments, monitoring, saved collections, journals, planning, or recommendation feeds
 - Investment, profit, or guaranteed-condition advice
+- Embedded Apps SDK UI in the first MCP release; deep links are the visual continuation
+- Public-scale unauthenticated quotas; OAuth or per-user keys are a later distribution gate
 
 ## Pilot success
 

@@ -1,0 +1,30 @@
+{
+  "name": "tcglens",
+  "version": "1.0.0",
+  "description": "Source-backed trading-card identity, budget discovery, and exact-listing comparison through TCGlens.",
+  "author": {
+    "name": "Jun Hsu",
+    "url": "https://github.com/Junpapadiamond"
+  },
+  "homepage": "https://tcgpal.vercel.app",
+  "repository": "https://github.com/Junpapadiamond/TCGpal",
+  "license": "MIT",
+  "keywords": ["trading-cards", "pokemon", "one-piece", "listings", "mcp"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TCGlens",
+    "shortDescription": "Evidence-backed card identity and listing decisions.",
+    "longDescription": "Use TCGlens inside ChatGPT and Codex Work to browse exact Pokémon and One Piece prints, discover raw singles under a hard USD checkout budget, compare live eBay listings, and continue into the visual TCGlens interface.",
+    "developerName": "Jun Hsu",
+    "category": "Productivity",
+    "capabilities": ["Card identity", "Budget discovery", "Listing comparison", "Deep links"],
+    "websiteURL": "https://tcgpal.vercel.app",
+    "defaultPrompt": [
+      "Show me some English Nami cards.",
+      "Find a $200–$500 Near Mint Pikachu for ZIP 10001.",
+      "Compare Charizard ex 199/165 from Pokémon 151."
+    ],
+    "brandColor": "#0F766E"
+  },
+  "mcpServers": "./.mcp.json"
+}

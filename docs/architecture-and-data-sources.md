@@ -13,6 +13,18 @@
 
 Every AI failure falls back to deterministic behavior.
 
+## Interface architecture
+
+```text
+Website ────────┐
+REST routes ────┼── shared domain functions ── bounded provider adapters
+MCP tools ──────┘
+```
+
+`GET /api/agent/capabilities` publishes the versioned support matrix. `POST /mcp` uses Streamable HTTP through Vercel `mcp-handler`. MCP tool handlers validate public input with Zod, call the existing domain functions, and return bounded human-readable content plus machine-readable `structuredContent`. They intentionally omit the full technical trace.
+
+Deep links call `buildAgentSearchUrl()` and reopen the existing website identity/gallery or exact-card flow. No credentials, seller identifiers, listing URLs, ZIP codes, private notes, or request bodies are placed in handoff URLs.
+
 ## Source matrix
 
 | Source | v1 use | Automated | Notes |
@@ -30,6 +42,10 @@ Every AI failure falls back to deterministic behavior.
 | Local shop / show | User-supplied candidate | No | Tax, shipping, and protection can differ |
 
 ## API
+
+`GET /api/agent/capabilities`
+
+Returns contract versions, supported games/languages/product type/currency, live platforms, unsupported features, and separate live/reference/manual source tiers.
 
 `POST /api/agent/listing-compare`
 
@@ -62,6 +78,17 @@ The response includes:
 - Cache and rate-limit keys hash buyer/card context before backend storage; raw ZIPs, card names, URLs, listing text, seller identifiers, and images are not operational keys or log fields.
 - Sentry initializes only when a DSN is configured; source maps upload only when `SENTRY_AUTH_TOKEN` is present.
 - The comparison and explain routes emit `x-request-id` and rate-limit headers so production failures can be correlated without logging request bodies.
+- MCP adds its own request-ID and per-tool rate-limit boundary before tool execution. Browse, discovery, and comparison retain the existing identity/discovery/comparison quotas; discovery remains capped at five live comparisons. Provider timeouts and partial-failure isolation stay inside the shared comparison engine.
+- Operational events never include raw ZIPs, full queries, request bodies, listing URLs, seller identifiers, images, or secrets.
+
+## MCP and plugin distribution
+
+- Production endpoint: `https://tcgpal.vercel.app/mcp`.
+- Transport: Streamable HTTP; the legacy SSE transport is disabled.
+- Pilot authentication: public/no-login with bounded execution and rate limiting.
+- Scale gate: add OAuth, API keys, or another per-user quota before unrestricted distribution.
+- Plugin: `plugins/tcglens`; repo marketplace: `.agents/plugins/marketplace.json`.
+- v1 visual continuation: deep links. An inline MCP Apps / Apps SDK UI is a documented later phase.
 
 ## Analytics
 

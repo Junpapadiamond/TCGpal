@@ -1,0 +1,20 @@
+{
+  "name": "tcglens-team",
+  "interface": {
+    "displayName": "TCGlens Team"
+  },
+  "plugins": [
+    {
+      "name": "tcglens",
+      "source": {
+        "source": "local",
+        "path": "./plugins/tcglens"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

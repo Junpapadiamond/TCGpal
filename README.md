@@ -1,6 +1,6 @@
-# TCGpal
+# TCGlens
 
-TCGpal helps U.S. Pokémon and One Piece buyers compare condition-compatible raw singles without pretending incomplete data is comparable. It separates four questions ordinary price apps collapse:
+TCGlens is a source-backed card-decision engine available through the website, REST, and a remote MCP server. It helps U.S. Pokémon and One Piece buyers compare condition-compatible raw singles without pretending incomplete data is comparable.
 
 - Which actionable listing has the best overall value?
 - What is the lowest complete comparable cost?
@@ -54,7 +54,40 @@ NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
 All marketplace and AI keys stay server-side. The PostHog project key is public by design, but analytics payloads are restricted by an explicit property allowlist.
 
-## Public API
+## Agent interfaces
+
+The website, REST routes, and MCP tools call the same identity, discovery, comparison, eligibility, and ranking functions:
+
+| Interface | Purpose |
+|---|---|
+| `GET /api/agent/capabilities` | Versioned machine-readable support and source tiers |
+| `POST /api/agent/card-identity` | Catalog identity resolution without live listing search |
+| `POST /api/agent/card-discovery` | Bounded discovery under a hard USD checkout budget |
+| `POST /api/agent/listing-compare` | Exact-card live listing comparison |
+| `POST /api/agent/listing-compare/explain` | Grounded explanation of an existing report |
+| `POST /mcp` | Remote Streamable HTTP MCP transport |
+
+The MCP server exposes `tcglens_get_capabilities`, `tcglens_browse_cards`, `tcglens_discover_cards`, `tcglens_compare_card`, and `tcglens_build_deep_link`. Every tool returns concise text plus `structuredContent`. The website remains the visual evidence surface through deep links; there is no embedded Apps SDK UI in v1.
+
+The public pilot uses hashed-IP, per-tool quotas over a 10-minute window: browse follows the 60-request identity limit, discovery follows the stricter 10-request limit, comparison follows the 20-request limit, and protocol/capability/deep-link calls use the 60-request MCP limit. Redis makes quotas shared across instances when configured; otherwise the bounded in-process fallback applies. Operational logs contain request IDs, tool/route status, counts, duration buckets, and safe error codes—not raw ZIPs, full queries, request bodies, listing URLs, seller identifiers, images, or API keys.
+
+### Work plugin
+
+The distributable plugin is under `plugins/tcglens`, with the repo marketplace at `.agents/plugins/marketplace.json`. It connects to `https://tcgpal.vercel.app/mcp`; it never contains provider credentials.
+
+```bash
+codex plugin marketplace add Junpapadiamond/TCGpal --ref main
+```
+
+Restart ChatGPT/Codex, open Plugins, choose **TCGlens Team**, install **TCGlens**, and start a new conversation. The pilot endpoint is public/no-login. Production-scale distribution will require OAuth, API keys, or another per-user quota mechanism.
+
+Validate the bundle with the official plugin workflow:
+
+```bash
+python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/tcglens
+```
+
+## Public REST API
 
 `POST /api/agent/listing-compare`
 
@@ -97,7 +130,7 @@ confirm the correct print.
   "query": "Pikachu",
   "game": "pokemon",
   "language": "English",
-  "budget": { "min": 200, "max": 500, "currency": "USD" },
+  "budget": { "min": 200, "max": 500, "currency": "USD", "basis": "checkout" },
   "desiredCondition": "Near Mint",
   "postalCode": "10001",
   "maxResults": 3,
@@ -119,10 +152,11 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
+python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/tcglens
 ```
 
 `npm run test` includes the standard multi-card product flow in `src/lib/testing/standard-comparison-flow.ts`: five sequential card searches across Pokémon and One Piece, exercising both Edit and New search transitions.
 
 ## Product boundaries
 
-No marketplace crawling, sold-history claims, image grading, auth, payments, saved collections, monitoring, or investment promises. Seller condition labels remain claims; unknown shipping and unknown condition remain unknown.
+No marketplace crawling, sold-history claims, image grading, auth, payments, saved collections, monitoring, or investment promises. External models may interpret an image into possible identity fields, but TCGlens does not accept image input, grade images, or predict condition. Seller condition labels remain claims; unknown shipping and unknown condition remain unknown.

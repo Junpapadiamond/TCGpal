@@ -42,6 +42,7 @@ TCGpal is not a price predictor, grading app, investment advisor, marketplace sc
 - The full English One Piece special-print research ledger lives at `output/one-piece-exact-print-metadata.json`. It is evidence and a review queue, not a runtime catalog overlay. `output/one-piece-exact-print-audit.json` deterministically reports semantic gaps, reverse product-ID collisions, provenance gaps, and manual-review candidates. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect runtime identity or market anchors.
 - `npm run metadata:refresh` reruns the bounded TCGCSV/official-image research job and regenerates the audit. `.github/workflows/refresh-one-piece-metadata.yml` runs it weekly and opens a review PR when sources change. It never edits runtime matching code, auto-merges metadata, or publishes a TCGplayer mapping without review.
 - **Agent-only budget discovery pilot:** `POST /api/agent/card-discovery` accepts a broad card/character query, USD budget, minimum seller-stated condition, language, and a maximum of five results. It shortlists only exact catalog identities whose current market anchor is inside budget, then runs the normal live comparison for those identities in parallel. Cards without market anchors are omitted rather than guessed; a live listing must independently fit the budget and pass every existing exact-print, raw-single, condition, complete-cost, seller, and evidence gate. This is not yet a primary-navigation surface or an investment recommender.
+- **External agent distribution:** `GET /api/agent/capabilities` publishes a versioned support matrix and `/mcp` exposes five Streamable HTTP tools. MCP reuses the identity, discovery, comparison, ranking, and handoff domain functions; it has its own request-ID/rate-limit boundary and never receives provider credentials. `plugins/tcglens` packages the remote connection and concise Work skill through the repo marketplace at `.agents/plugins/marketplace.json`. v1 uses website deep links rather than an embedded Apps SDK UI.
 
 ## Product Guardrails
 
@@ -117,7 +118,9 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 - `src/lib/ai/listing-compare.ts`: comparison orchestration — identity + TCGplayer-reference extraction, deterministic platform fan-out, deterministic evidence summary, and trace. Model allocation/narrative is not on the initial comparison path.
 - `src/lib/ai/card-discovery.ts`: bounded agent-only discovery orchestration — market-anchored identity shortlist followed by up to five parallel calls through the unchanged comparison core.
 - `src/app/api/agent/card-discovery`: the public budget-discovery pilot route; independently rate limited.
+- `src/app/api/agent/capabilities`: the public versioned support/source-tier contract.
 - `src/app/api/agent/listing-compare`: the public comparison route.
+- `src/app/mcp`: the production Streamable HTTP MCP route; `src/lib/mcp/*` owns bounded tool schemas, response projections, request context, and registration—not ranking.
 - `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
 - `src/lib/analytics.ts`: explicit PostHog events and privacy allowlist.
 - `scripts/check-ebay.mjs`: dev utility to validate eBay creds (OAuth token + Browse search access).
@@ -176,6 +179,7 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
+python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/tcglens
 ```
 
 The automated product-flow standard is part of `npm run test`: `src/lib/testing/standard-comparison-flow.ts` must cover at least five sequential card-first searches in one session, include both Pokémon and One Piece, and exercise both edit-search and new-search transitions. Keep it hermetic: injected fetchers only, no API secrets, no browser automation against marketplaces, and no unmocked external network.

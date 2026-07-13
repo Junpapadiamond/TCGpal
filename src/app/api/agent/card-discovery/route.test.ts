@@ -39,7 +39,7 @@ describe("/api/agent/card-discovery", () => {
     expect(response.headers.get("x-request-id")).toBe("discovery-test-request");
     expect(discoverCards).toHaveBeenCalledWith(expect.objectContaining({
       query: "Pikachu",
-      budget: { min: 200, max: 500, currency: "USD" },
+      budget: { min: 200, max: 500, currency: "USD", basis: "checkout" },
       maxResults: 3,
     }), { now: expect.any(Function) });
   });
