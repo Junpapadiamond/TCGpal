@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin released and production verified | Pilot installation with another Work user |
-| WS-LOCAL | Dirty local experiments | Mixed | Base Set fix completed; photo search undecided | Decide D-PHOTO; preserve the original checkout |
+| WS-LOCAL | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts |
 <!-- progress:end -->
 
 <!-- progress:section id="GOALS" -->
@@ -211,10 +211,9 @@ The user must decide these; agents must not infer them:
 
 1. D-FOCUS: next primary focus - live accuracy corpus, metadata cohort review, pilot research, or a specific product bug.
 2. D-METADATA-COHORT: which special-print cohort receives human approval first.
-3. D-PHOTO: keep or discard the local photo-search experiment. It conflicts with the current “no scanning/image upload” scope and has not been approved.
-4. D-SPEND: which purchase band to target; the current “mostly above $50” belief needs research.
-5. D-NEXT-MOVES: which useful action should lead when no trustworthy buy exists.
-6. D-MONETIZATION: subscription, advertising, or neither; defer implementation until repeat demand is measured.
+3. D-SPEND: which purchase band to target; the current “mostly above $50” belief needs research.
+4. D-NEXT-MOVES: which useful action should lead when no trustworthy buy exists.
+5. D-MONETIZATION: subscription, advertising, or neither; defer implementation until repeat demand is measured.
 <!-- progress:end -->
 
 <!-- progress:section id="LOCAL-STATE" -->
@@ -222,11 +221,9 @@ The user must decide these; agents must not infer them:
 
 Observed on 2026-07-14 in /Users/chenjunhsu/Desktop/projects/TCGpal:
 
-- Local `main` and `origin/main` are synchronized at `f887012`, which includes the TCGlens MCP/plugin release (`2debff7`) and production verification (`7d2d23b`). The original checkout remains on `codex/identity-first-search` at `b2b1455` so its dirty work is preserved.
-- The original working tree contains seven tracked changes and 47 untracked status entries, including generated Graphify files and an uncommitted `PROGRESS.md` investigation update. Preserve them rather than resetting, cleaning, or committing them incidentally.
-- Unapproved experiment: photo-search route/tests and related package changes. Behavior and scope are not verified; see D-PHOTO.
-- Untracked UI concept: TCGpal_more_ui_refine.html.
-- Untracked council docs, research output, screenshots, Graphify backups, and cache files are artifacts, not automatically release work.
+- Local `main` and `origin/main` were synchronized at `c743f25` before this handoff update; the MCP/plugin implementation (`2debff7`) and production verification (`7d2d23b`) remain in the lineage. The original checkout stays on `codex/identity-first-search` at `b2b1455` to preserve local artifacts.
+- The original working tree contains seven tracked changes and 43 untracked status entries. The user explicitly discarded the incomplete photo-search tests and standalone UI concept; the old council docs were migrated into the auto-discovered product-leader skill at `~/.codex/skills/advisor` with list/add/refresh/validate workflows.
+- Preserve all Graphify changes, exact-print research, screenshots, readiness reports, and other Claude research artifacts. They are local acceleration/evidence, not automatically release work.
 
 Refresh this section with /progress; do not assume it remains current.
 <!-- progress:end -->
@@ -263,6 +260,7 @@ MCP/plugin release commit `7d2d23b0f0e1f15299b28c38403ed536b76eb91f` is publishe
 - Production `/mcp` initialization and `tools/list` passed; capabilities and all five tools returned content plus structured output.
 - Live examples passed: bounded English Nami identities, checkout-bounded English Pikachu discovery, and exact Charizard ex `sv3pt5-199` comparison. Live verification caught and fixed inconsistent market projection, `EN` language aliases, strict-print market-floor bypass, and stale cached ranking reports before release completion.
 - Production rate limiting returned 429 after the configured discovery quota. Vercel runtime logs contained no raw ZIPs, queries, listing URLs, seller identifiers, images, bodies, or secrets.
+- Advisor skill: five product-leader dossiers and the add scaffold passed `advisor_registry.py validate`; the official skill-creator validator passed with an isolated PyYAML dependency. No subagent council is involved.
 - Clean isolated worktree: `npm run lint` and `npm run typecheck` passed.
 - Clean isolated worktree: `npm run test` passed, 44 files / 473 tests; includes the bilingual set-only Edit CTA regression, identity route/client regressions, and the sequential multi-card flow.
 - Clean isolated worktree: `npm run build` passed on Next.js 16.2.6 and emitted `/api/agent/card-identity` as a dynamic route.
@@ -270,9 +268,9 @@ MCP/plugin release commit `7d2d23b0f0e1f15299b28c38403ed536b76eb91f` is publishe
 - Visual: result Edit with `luffy op01` shows Browse card versions / 浏览卡片版本 and transitions to the Luffy identity gallery; evidence is under `output/edit-search-cta-fix/`.
 - Visual: confirmed-card loader motion passed English desktop and Chinese mobile QA; sampled transforms changed over time, all four images resolved to the selected print, only the center anchor was accessible, and no horizontal overflow appeared. Evidence is under `output/confirmed-card-motion/`.
 - Reduced motion: the identity flow reads `prefers-reduced-motion`, and the global reduced-motion media rule remains present; a device-level emulation was not available in the in-app browser run.
-- Dirty-checkout caveat: the full commands in the original checkout still fail because untracked photo-search tests reference absent implementation files. Those experiment files were not modified; feature verification used an isolated worktree.
+- Dirty-checkout caveat: the incomplete photo-search tests that caused collection failures were removed by user decision; the full application gate was not rerun because no product source changed.
 - Peer review: identity and UX reviewers approved after fixes; chairman approved.
-- Remote: the production-verified MCP commit is `7d2d23b`; `main`/`origin/main` now match documentation tip `f887012`. Vercel deployment `dpl_3hXEkRDoSbaeb6JHP1vVnz8Q1WPL` reached READY and served `https://tcgpal.vercel.app/mcp`.
+- Remote: the production-verified MCP commit is `7d2d23b`; `main`/`origin/main` matched documentation tip `c743f25` before this handoff update. Vercel deployment `dpl_3hXEkRDoSbaeb6JHP1vVnz8Q1WPL` reached READY and served `https://tcgpal.vercel.app/mcp`.
 
 Still not verified:
 
