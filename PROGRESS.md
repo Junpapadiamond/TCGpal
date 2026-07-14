@@ -1,7 +1,7 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-07-13
+updated_at: 2026-07-14
 canonical_branch: origin/main
 last_verified_product_commit: 7d2d23b0f0e1f15299b28c38403ed536b76eb91f
 max_lines: 300
@@ -30,7 +30,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Released; live verification active | Run a human-adjudicated live corpus |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Known-bad live; remediation required | Fix positive-proof gates, then run a human-adjudicated corpus |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
@@ -60,7 +60,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - At least three voluntarily share a comparison receipt.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-IDENTITY" state="released-unverified-live" tags="selection,matching,ebay,tcgplayer,nami,manga,special-print" -->
+<!-- progress:workstream id="WS-IDENTITY" state="known-bad-live" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print" -->
 ## WS-IDENTITY - Exact-print accuracy
 
 ### Done
@@ -78,10 +78,12 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Earlier matching treated name, collector number, or broad alternate-art labels as sufficient and could substitute a cheaper sibling artwork.
 - TCGplayer group/product fallback could select an arbitrary parallel.
 - Special suffixes such as _p2 are not universally manga; suffix semantics cannot be guessed.
+- Live diagnostics on 2026-07-12 reproduced cross-facet false positives for Nami `OP01-016_p4`, Nami `EB03-053_p2`, Robin `EB03-055_p2`, and Zoro siblings. Later market-floor hardening rejects implausibly cheap rows but does not repair the underlying artwork-facet proof gap.
 
 ### Not finished or not verified
 
 - Verified: clean-worktree automated gates passed through 5315ba8: lint, typecheck, 44 test files / 473 tests, and build. Bilingual desktop/mobile identity and comparison-loader QA is recorded in VERIFICATION.
+- Known-bad: exact-print precision can still admit sibling artwork when shared release markers look unique inside an incorrectly prefiltered facet.
 - Unknown: representative live eBay recall, false exclusions, ePID coverage, and p95 latency across a 30-listing corpus.
 - Unknown: whether exact listings often fall below the bounded eBay item-detail enrichment window.
 - Required: live checks for reported Nami, Charmander, Portgas.D.Ace, manga, tournament, gold/silver, anniversary, and Pokemon variant cases.
@@ -218,10 +220,10 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-Observed on 2026-07-12 in /Users/chenjunhsu/Desktop/projects/TCGpal:
+Observed on 2026-07-14 in /Users/chenjunhsu/Desktop/projects/TCGpal:
 
-- Current checkout `codex/identity-first-search` is at 5315ba8 and matches `origin/main` (ahead 0, behind 0). Local `main` remains at 5e6899e; use `origin/main` as the source of truth until that local ref is intentionally reconciled.
-- The working tree contains user changes. The six tracked modifications are generated Graphify files; preserve them and all untracked entries rather than resetting, cleaning, or committing them incidentally.
+- Local `main` and `origin/main` are synchronized at `f887012`, which includes the TCGlens MCP/plugin release (`2debff7`) and production verification (`7d2d23b`). The original checkout remains on `codex/identity-first-search` at `b2b1455` so its dirty work is preserved.
+- The original working tree contains seven tracked changes and 47 untracked status entries, including generated Graphify files and an uncommitted `PROGRESS.md` investigation update. Preserve them rather than resetting, cleaning, or committing them incidentally.
 - Unapproved experiment: photo-search route/tests and related package changes. Behavior and scope are not verified; see D-PHOTO.
 - Untracked UI concept: TCGpal_more_ui_refine.html.
 - Untracked council docs, research output, screenshots, Graphify backups, and cache files are artifacts, not automatically release work.
@@ -240,7 +242,7 @@ Refresh this section with /progress; do not assume it remains current.
 | Ranking/recommendation | schemas.ts, ranking.ts, platforms.ts, ranking/platform tests |
 | UI/product flow | WS-UX, ComparisonApp.tsx, i18n, standard flow |
 | Product/demand decision | WS-PILOT, validation plan, product spec, council chairman |
-| Marketplace expansion | AGENTS.md data boundaries and `src/lib/comparison/platforms.ts`; the historical architecture/data-sources doc is missing |
+| Agent/MCP or marketplace expansion | AGENTS.md data boundaries, `src/app/mcp/route.ts`, `src/lib/mcp/tools.ts`, `docs/architecture-and-data-sources.md`, and `src/lib/comparison/platforms.ts` |
 | Dirty local work | LOCAL-STATE, then git diff for only the named files |
 
 Use Graphify before broad cross-file exploration. Verify ambiguous graph edges in source.
@@ -261,9 +263,7 @@ MCP/plugin release commit `7d2d23b0f0e1f15299b28c38403ed536b76eb91f` is publishe
 - Production `/mcp` initialization and `tools/list` passed; capabilities and all five tools returned content plus structured output.
 - Live examples passed: bounded English Nami identities, checkout-bounded English Pikachu discovery, and exact Charizard ex `sv3pt5-199` comparison. Live verification caught and fixed inconsistent market projection, `EN` language aliases, strict-print market-floor bypass, and stale cached ranking reports before release completion.
 - Production rate limiting returned 429 after the configured discovery quota. Vercel runtime logs contained no raw ZIPs, queries, listing URLs, seller identifiers, images, bodies, or secrets.
-
-- Clean isolated worktree: `npm run lint` passed.
-- Clean isolated worktree: `npm run typecheck` passed.
+- Clean isolated worktree: `npm run lint` and `npm run typecheck` passed.
 - Clean isolated worktree: `npm run test` passed, 44 files / 473 tests; includes the bilingual set-only Edit CTA regression, identity route/client regressions, and the sequential multi-card flow.
 - Clean isolated worktree: `npm run build` passed on Next.js 16.2.6 and emitted `/api/agent/card-identity` as a dynamic route.
 - Visual: identity-first English/Chinese desktop/mobile QA passed for the Pikachu identity shell/gallery, exact Umbreon VMAX 215/203 flow, and eight-print Nami OP01-016 sibling gallery. No mobile overflow or browser console errors were observed; evidence is under `output/identity-first-visual-qa/`.
@@ -272,11 +272,11 @@ MCP/plugin release commit `7d2d23b0f0e1f15299b28c38403ed536b76eb91f` is publishe
 - Reduced motion: the identity flow reads `prefers-reduced-motion`, and the global reduced-motion media rule remains present; a device-level emulation was not available in the in-app browser run.
 - Dirty-checkout caveat: the full commands in the original checkout still fail because untracked photo-search tests reference absent implementation files. Those experiment files were not modified; feature verification used an isolated worktree.
 - Peer review: identity and UX reviewers approved after fixes; chairman approved.
-- Remote: origin/main matched `7d2d23b0f0e1f15299b28c38403ed536b76eb91f`; Vercel deployment `dpl_3hXEkRDoSbaeb6JHP1vVnz8Q1WPL` reached READY and served `https://tcgpal.vercel.app/mcp`.
+- Remote: the production-verified MCP commit is `7d2d23b`; `main`/`origin/main` now match documentation tip `f887012`. Vercel deployment `dpl_3hXEkRDoSbaeb6JHP1vVnz8Q1WPL` reached READY and served `https://tcgpal.vercel.app/mcp`.
 
 Still not verified:
 
-- Representative live eBay accuracy/recall and latency.
+- Representative live eBay recall and latency; exact-print precision remains known-bad for the cross-facet sibling cases above.
 - Human-adjudicated 30-listing quality gate.
 - Ten-buyer demand/usability pilot.
 - Monetization, distribution economics, and public-launch legal/provider readiness.
