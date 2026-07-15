@@ -98,5 +98,7 @@
   "96": "UniversalListingBlockedError",
   "97": "postJsonWithRetry",
   "98": "TcgcsvUnavailableError",
+  "99": "analytics.ts",
+  "100": "card-identity.test.ts",
   "102": "page.tsx"
 }
