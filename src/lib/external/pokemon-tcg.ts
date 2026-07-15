@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { classifyPokemonName } from "@/lib/external/pokemon-name-match";
 
 const pokemonTcgCardSchema = z.object({
   id: z.string(),
@@ -199,6 +200,7 @@ async function fetchPokemonCards({
   url.searchParams.set("page", String(Math.max(page, 1)));
   url.searchParams.set("pageSize", String(Math.min(Math.max(pageSize, 1), 250)));
   url.searchParams.set("orderBy", "-set.releaseDate,name");
+  url.searchParams.set("select", "id,name,subtypes,number,rarity,set,images");
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -215,12 +217,15 @@ async function fetchPokemonCards({
 
   const json = pokemonTcgSearchResponseSchema.parse(await response.json());
 
+  const cards = !query || query.includes(":")
+    ? json.data
+    : json.data.filter((card) => classifyPokemonName(query, card.name) !== "unrelated");
   return {
     source: "pokemon-tcg-api",
     query,
     apiQuery,
-    cards: json.data,
-    count: json.count ?? json.data.length,
+    cards,
+    count: cards.length,
     totalCount: json.totalCount ?? null,
   };
 }
@@ -228,6 +233,9 @@ async function fetchPokemonCards({
 function buildPokemonCardQuery(query: string) {
   if (!query) return "";
   if (query.includes(":")) return query;
+  if (/\s(?:&|and)\s/i.test(query)) {
+    return wildcardAllTokens(nameTokens(query).filter((token) => !new Set(["ex", "gx", "v"]).has(token)));
+  }
   return `name:"${escapeLucenePhrase(query)}"`;
 }
 

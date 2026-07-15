@@ -173,6 +173,7 @@ function listingFor(card: CardIdentityCandidate, cost: number): NormalizedListin
     riskLabel: "low_risk",
     trustNotes: [],
     eligible: true,
+    eligibilityIssues: [],
     exclusionReasons: [],
     observedAt: "2026-07-12T00:00:00.000Z",
     demo: false,

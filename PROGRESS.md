@@ -1,7 +1,7 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-07-14
+updated_at: 2026-07-15
 canonical_branch: origin/main
 last_verified_product_commit: 6ff92cd0f04926fb3e6f8472a402f7af32ffe917
 max_lines: 300
@@ -30,7 +30,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v4 repaired; launch sampling pending | Run the 30-listing human-adjudicated pilot corpus |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v5 reliability repair implemented; release verification pending | Finish visual/live release gates |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
@@ -60,7 +60,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - At least three voluntarily share a comparison receipt.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-IDENTITY" state="v4-repaired-sampling-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print" -->
+<!-- progress:workstream id="WS-IDENTITY" state="v5-release-verification" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history" -->
 ## WS-IDENTITY - Exact-print accuracy
 
 ### Done
@@ -75,6 +75,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Shared collector-number parsing now owns zero-padding equivalence, boundary-safe matching, and conflicts across eBay, print fidelity, pasted/manual candidates, identity selection, crosswalk, and TCGCSV. Bubble Mew `232/91` accepts seller `232/091`; wrong numbers are explicit high-confidence mismatches.
 - One Piece positive proof now intersects evidence across every same-number sibling. Shared release/class wording and internal `_pN/_rN` IDs cannot prove a print; sibling/language/treatment conflicts veto acceptance.
 - Shared raw/slab detection covers PSA/BGS/CGC/SGC/ACE/TAG descriptor forms and ranking. MCP comparison/identity contract v4 and plugin 1.0.1 separate canonical print proof from seller/photo purchase review.
+- Comparison contract v5 and plugin 1.0.2 add typed product/condition/cost/price/language/identity/availability issues. Law Manga and Robin Heroines SP use seller-visible positive proof; graded, language, condition, and shipping exclusions no longer masquerade as artwork mismatches.
+- Pokémon search now keeps Mew/Mewtwo, combination cards, and Trainer products in strict name tiers, requests a bounded identity-only payload, and reloads full data only after stable-ID confirmation.
+- Client request generations abort stale identity/comparison work. Native Next.js 16 history entries restore search, confirmation, and result snapshots without placing buyer or listing facts in the URL.
 
 ### What went wrong
 
@@ -85,7 +88,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 ### Current evidence and remaining gate
 
-- Automated: 271 unsafe fixtures plus nine-family cross-sibling matrices admit zero substitutions. Six sealed holdout families report precision 1.0, recall 0.8919, abstention 0.1081, substitutions 0. The provisional 664-row title corpus accepts no sibling/unrelated/uncertain labels but has intentionally low title-only recall (0.06916).
+- Automated: all 39 historical unrelated-product fixtures remain ineligible at the complete v5 boundary; sibling matrices and six-family sealed holdout remain the identity substitution gates. The provisional corpus is pending human review and is no longer allowed to label correct Manga/SP identity as a mismatch merely because a row is graded or non-English.
 - Performance: classifier p99 0.0917 ms; hermetic full-comparison p95 changed +2.33%, within the 10% gate.
 - Official eBay Browse checks passed for Bubble Mew, Base Alakazam, Nami/Robin/Zoro, manga, anniversary, tournament, Winner, and graded/custom exclusions. Genuine evidence gaps still abstain.
 - Remaining: complete a human-adjudicated 30-listing production sample before claiming population accuracy; monitor live recall and the 12-item enrichment window. Gold/silver and broader market families retain automated coverage but still need periodic live sampling.

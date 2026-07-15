@@ -219,7 +219,7 @@ function summarizeComparisonToolResult(report: ComparisonReport, game: z.infer<t
       ? `TCGlens returned ${report.outcome} for ${card.name} ${card.cardNumber}. The listing condition remains the seller's claim.`
       : `TCGlens returned ${report.outcome ?? "next_moves"} for ${card.name} ${card.cardNumber}; no live listing was recommended.`,
     {
-      comparisonContractVersion: 4,
+      comparisonContractVersion: 5,
       outcome: report.outcome ?? "next_moves",
       identityConfirmation: {
         confirmed: true,
@@ -302,9 +302,11 @@ function summarizeListing(listing: NormalizedListing) {
       evidenceCompletenessScore: listing.evidenceCompletenessScore,
       photoCount: listing.evidence.photoCount,
       evidenceCautions: listing.evidence.missing,
+      eligibilityIssues: listing.eligibilityIssues,
       exclusionReasons: listing.exclusionReasons,
     },
     eligible: listing.eligible,
+    eligibilityIssues: listing.eligibilityIssues,
     exclusionReasons: listing.exclusionReasons,
     observedAt: listing.observedAt,
     imageUrl: listing.imageUrl,

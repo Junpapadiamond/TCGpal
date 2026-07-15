@@ -50,6 +50,7 @@ import { parsedCardQuerySchema, parseCardQuery, type ParsedCardQuery } from "@/l
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
 import { buildJapanReferenceLinks } from "@/lib/comparison/japan-references";
 import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
+import { classifyPokemonName } from "@/lib/external/pokemon-name-match";
 import {
   getOnePieceCard,
   mapOnePieceCardToIdentity,
@@ -133,6 +134,7 @@ export async function runListingComparison(
       outcome: "next_moves",
       inspectListingId: null,
       identityContractVersion: 4,
+      comparisonContractVersion: 5,
       demoMode: getConfiguredPlatformAgents().length === 0,
       generatedAt,
     });
@@ -360,6 +362,7 @@ export async function runListingComparison(
     outcome,
     inspectListingId: outcome === "inspect_first" ? inspectLead?.id ?? null : null,
     identityContractVersion: 4,
+    comparisonContractVersion: 5,
     demoMode,
     generatedAt,
   });
@@ -744,7 +747,7 @@ async function identifyCards(
         // page is enough; a name-only search (e.g. "pikachu") should return
         // every print the catalog has, not a truncated top slice — pageSize
         // 250 is the Pokémon TCG API's own maximum.
-        pageSize: request.cardHint.cardNumber ? 12 : 250,
+        pageSize: request.cardHint.cardNumber ? 12 : 100,
         fetcher,
         timeoutMs: 8000,
       },
@@ -756,7 +759,7 @@ async function identifyCards(
       const correctedName = corrected?.name.trim() ?? "";
       if (correctedName && normalizeWords(correctedName) !== normalizeWords(searchName)) {
         result = await searchPokemonWithRetry(
-          { query: correctedName, relaxed: false, pageSize: 250, fetcher, timeoutMs: 8000 },
+          { query: correctedName, relaxed: false, pageSize: 100, fetcher, timeoutMs: 8000 },
           warnings,
         );
         if (result?.cards.length) {
@@ -1265,15 +1268,9 @@ function evaluateIdentityFields(
 ): IdentityEvaluation {
   const requestedName = request.cardHint.name || cleanCardName(source.title);
   const requestedNumber = request.cardHint.cardNumber || extractCollectorNumber(source.title);
-  const requestedNameText = normalizeWords(requestedName);
-  const candidateNameText = normalizeWords(candidate.name);
-  const nameExact = Boolean(requestedNameText) && requestedNameText === candidateNameText;
-  const nameRelated = Boolean(requestedNameText) && (
-    nameExact
-    || requestedNameText.includes(candidateNameText)
-    || candidateNameText.includes(requestedNameText)
-    || tokenOverlap(requestedNameText, candidateNameText) >= 0.75
-  );
+  const nameClass = classifyPokemonName(requestedName, candidate.name);
+  const nameExact = nameClass === "exact";
+  const nameRelated = nameClass !== "unrelated";
 
   const requestedParts = collectorNumberParts(requestedNumber);
   const candidateParts = collectorNumberParts(candidate.cardNumber);
@@ -1285,7 +1282,7 @@ function evaluateIdentityFields(
   const setProvided = Boolean(request.cardHint.setCode.trim());
   const setMatches = setProvided && setHintMatches(candidate, request.cardHint.setCode);
 
-  let score = nameExact ? 50 : nameRelated ? 30 : 0;
+  let score = nameExact ? 50 : nameClass === "form" ? 40 : nameRelated ? 30 : 0;
   if (requestedParts.number) score += numberMatches ? 90 : -90;
   if (requestedParts.total) score += totalMatches ? 60 : -60;
   if (setProvided) score += setMatches ? 45 : -30;

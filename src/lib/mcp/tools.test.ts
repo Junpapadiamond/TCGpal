@@ -98,7 +98,7 @@ describe("TCGlens MCP tool mappings", () => {
       buyer: expect.objectContaining({ postalCode: "10001", desiredCondition: "Near Mint" }),
     }), expect.any(Object));
     expect(result.structuredContent).toMatchObject({
-      comparisonContractVersion: 4,
+      comparisonContractVersion: 5,
       outcome: "best_buy",
       identityConfirmation: {
         confirmed: true,
@@ -197,6 +197,6 @@ function listingFor(cardValue: CardIdentityCandidate): NormalizedListing {
     imageUrl: cardValue.imageUrl, seller: { feedbackPercentage: 99.9, feedbackCount: 2000, returnsAccepted: true, topRated: true, buyerProtection: true, subRatings: null },
     evidence: { photoCount: 4, frontBackExplicit: true, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: true, substantiveConditionNotes: false, missing: ["closeups"] },
     sellerTrustScore: 90, evidenceCompletenessScore: 60, conditionCompatibilityScore: 100, marketComparable: true, priceScore: 80, safetyScore: 78,
-    valueScore: 82, riskLabel: "some_risk", trustNotes: [], eligible: true, exclusionReasons: [], observedAt: "2026-07-13T00:00:00.000Z", demo: false, userSupplied: false, webDiscovered: false,
+    valueScore: 82, riskLabel: "some_risk", trustNotes: [], eligible: true, eligibilityIssues: [], exclusionReasons: [], observedAt: "2026-07-13T00:00:00.000Z", demo: false, userSupplied: false, webDiscovered: false,
   };
 }

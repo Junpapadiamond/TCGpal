@@ -11,7 +11,7 @@ export const maxDuration = 60;
 const mcpHandler = createMcpHandler(
   (server) => registerTcglensTools(server),
   {
-    serverInfo: { name: "tcglens", version: "1.0.1" },
+    serverInfo: { name: "tcglens", version: "1.0.2" },
     instructions: "TCGlens is a source-backed raw-single card identity and listing decision engine. Check capabilities when scope is uncertain. Browse identities before comparing an ambiguous print. Market references are not inventory. Near Mint is a seller claim. Do not predict grades or guarantee profit.",
   },
   { basePath: "/", maxDuration, verboseLogs: false, disableSse: true },

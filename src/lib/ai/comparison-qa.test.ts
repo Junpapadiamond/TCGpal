@@ -36,6 +36,7 @@ function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
     riskLabel: "unverified",
     trustNotes: [],
     eligible: true,
+    eligibilityIssues: [],
     exclusionReasons: [],
     observedAt: "2026-07-04T00:00:00.000Z",
     demo: false,

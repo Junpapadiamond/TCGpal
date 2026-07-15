@@ -22,7 +22,7 @@ import {
   IconX,
 } from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
-import { parseAgentSearchParams } from "@/lib/agent-search-link";
+import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
@@ -109,6 +109,16 @@ type RecentCarouselCard = {
   lastSeenAt: number;
 };
 
+type JourneyStep = "search" | "confirmation" | "result";
+type JourneySnapshot = {
+  form: ComparisonForm;
+  report: ComparisonReport | null;
+  identityResult: CardIdentitySearchResponse | null;
+  selectedIdentity: CardIdentityCandidate | null;
+  pendingRequest: ComparisonRequest | null;
+  journeyState: "idle" | "confirming" | "result";
+};
+
 class ApiResponseError extends Error {
   readonly retriable: boolean;
 
@@ -119,20 +129,20 @@ class ApiResponseError extends Error {
   }
 }
 
-async function requestComparisonReport(request: ComparisonRequest, fallbackMessage: string) {
-  const json = await postJsonWithRetry("/api/agent/listing-compare", request, fallbackMessage);
+async function requestComparisonReport(request: ComparisonRequest, fallbackMessage: string, signal?: AbortSignal) {
+  const json = await postJsonWithRetry("/api/agent/listing-compare", request, fallbackMessage, signal);
   return comparisonReportSchema.parse(json);
 }
 
-async function requestCardIdentity(request: ComparisonRequest, fallbackMessage: string) {
+async function requestCardIdentity(request: ComparisonRequest, fallbackMessage: string, signal?: AbortSignal) {
   const json = await postJsonWithRetry("/api/agent/card-identity", {
     query: request.query || request.cardHint.name,
     cardHint: request.cardHint,
-  }, fallbackMessage);
+  }, fallbackMessage, signal);
   return cardIdentitySearchResponseSchema.parse(json);
 }
 
-async function postJsonWithRetry(path: string, body: unknown, fallbackMessage: string) {
+async function postJsonWithRetry(path: string, body: unknown, fallbackMessage: string, signal?: AbortSignal) {
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
@@ -140,16 +150,22 @@ async function postJsonWithRetry(path: string, body: unknown, fallbackMessage: s
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        signal,
       });
       return await readJsonResponse(response, fallbackMessage);
     } catch (error) {
       lastError = error;
+      if (signal?.aborted || isAbortError(error)) throw error;
       const retriable = error instanceof ApiResponseError ? error.retriable : error instanceof TypeError;
       if (!retriable || attempt === 1) break;
       await sleep(650);
     }
   }
   throw lastError instanceof Error ? lastError : new Error(fallbackMessage);
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 async function readJsonResponse(response: Response, fallbackMessage: string) {
@@ -313,6 +329,10 @@ function ComparisonExperience() {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [compactSearchOpen, setCompactSearchOpen] = useState(false);
   const agentHandoffHandled = useRef(false);
+  const requestGeneration = useRef(0);
+  const activeRequest = useRef<AbortController | null>(null);
+  const journeySnapshots = useRef(new Map<number, JourneySnapshot>());
+  const nextJourneyId = useRef(1);
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
   const loading = journeyState === "identifying" || journeyState === "comparing";
 
@@ -345,6 +365,27 @@ function ComparisonExperience() {
   useEffect(() => {
     initializeAnalytics();
   }, []);
+
+  useEffect(() => {
+    const restore = (event: PopStateEvent) => {
+      const id = (event.state as { tcgpalJourneyId?: unknown } | null)?.tcgpalJourneyId;
+      if (typeof id !== "number") return;
+      const snapshot = journeySnapshots.current.get(id);
+      if (!snapshot) return;
+      activeRequest.current?.abort();
+      requestGeneration.current += 1;
+      form.reset(snapshot.form);
+      setReport(snapshot.report);
+      setIdentityResult(snapshot.identityResult);
+      setSelectedIdentity(snapshot.selectedIdentity);
+      setPendingRequest(snapshot.pendingRequest);
+      setJourneyState(snapshot.journeyState);
+      setError(null);
+      setCompactSearchOpen(false);
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [form]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -396,6 +437,54 @@ function ComparisonExperience() {
     });
   }
 
+  function beginRequest() {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    return { generation: ++requestGeneration.current, controller };
+  }
+
+  function requestIsCurrent(operation: { generation: number; controller: AbortController }) {
+    return operation.generation === requestGeneration.current && !operation.controller.signal.aborted;
+  }
+
+  function writeJourney(step: JourneyStep, mode: "push" | "replace", snapshot: JourneySnapshot) {
+    const id = nextJourneyId.current++;
+    journeySnapshots.current.set(id, snapshot);
+    const params = new URLSearchParams();
+    const query = snapshot.form.heroQuery.trim();
+    if (query) params.set("query", query);
+    params.set("game", snapshot.form.game);
+    params.set("step", step);
+    const cardId = snapshot.selectedIdentity?.id ?? snapshot.pendingRequest?.confirmedCardId;
+    if (cardId) params.set("card", cardId);
+    window.history[mode === "push" ? "pushState" : "replaceState"](
+      { tcgpalJourneyId: id, step },
+      "",
+      `?${params.toString()}`,
+    );
+  }
+
+  function currentSnapshot(overrides: Partial<JourneySnapshot> = {}): JourneySnapshot {
+    return {
+      form: form.getValues(), report, identityResult, selectedIdentity, pendingRequest,
+      journeyState: journeyState === "confirming" ? "confirming" : journeyState === "result" ? "result" : "idle",
+      ...overrides,
+    };
+  }
+
+  function preserveSearchBeforeSubmit(values: ComparisonForm) {
+    const currentStep = (window.history.state as { step?: unknown } | null)?.step;
+    writeJourney("search", currentStep === "search" || currentStep == null ? "replace" : "push", currentSnapshot({
+      form: values,
+      report: null,
+      identityResult: null,
+      selectedIdentity: null,
+      pendingRequest: null,
+      journeyState: "idle",
+    }));
+  }
+
   async function submitComparison(values: ComparisonForm, confirmedCardId?: string) {
     if (!values.heroQuery.trim() && !values.cardName.trim()) {
       form.setError("heroQuery", { type: "required", message: t.form.heroSearchRequired });
@@ -408,17 +497,19 @@ function ComparisonExperience() {
       });
     }
 
+    preserveSearchBeforeSubmit(values);
+    const operation = beginRequest();
     const request = buildRequest(values, confirmedCardId);
     setPendingRequest(request);
     setError(null);
     setFeedbackSent(false);
     try {
       if (confirmedCardId) {
-        await runConfirmedComparison(request, selectedIdentity);
+        await runConfirmedComparison(request, selectedIdentity, operation);
         return;
       }
       if (hasListingSubmission(request)) {
-        await runListingSubmission(request);
+        await runListingSubmission(request, operation);
         return;
       }
       setReport(null);
@@ -426,20 +517,30 @@ function ComparisonExperience() {
       setSelectedIdentity(null);
       setJourneyState("identifying");
       trackEvent("card_search_started");
-      const identity = await requestCardIdentity(request, t.error.identityTemporary);
+      const identity = await requestCardIdentity(request, t.error.identityTemporary, operation.controller.signal);
+      if (!requestIsCurrent(operation)) return;
       setIdentityResult(identity);
       if (identity.status === "resolved" && identity.confirmedCard) {
         const confirmedRequest = { ...request, confirmedCardId: identity.confirmedCard.id };
         setPendingRequest(confirmedRequest);
         setSelectedIdentity(identity.confirmedCard);
         rememberConfirmedCard(identity.confirmedCard, request.cardHint.game);
-        await runConfirmedComparison(confirmedRequest, identity.confirmedCard);
+        writeJourney("confirmation", "push", currentSnapshot({
+          form: values, report: null, identityResult: identity, selectedIdentity: identity.confirmedCard,
+          pendingRequest: confirmedRequest, journeyState: "confirming",
+        }));
+        await runConfirmedComparison(confirmedRequest, identity.confirmedCard, operation);
       } else {
         setJourneyState("confirming");
+        writeJourney("confirmation", "push", currentSnapshot({
+          form: values, report: null, identityResult: identity, selectedIdentity: null,
+          pendingRequest: request, journeyState: "confirming",
+        }));
         trackEvent("identity_gallery_viewed", { status: identity.status });
         focusComparisonTarget();
       }
     } catch (caught) {
+      if (!requestIsCurrent(operation) || isAbortError(caught)) return;
       const message = caught instanceof Error ? caught.message : t.error.temporary;
       setError(message);
       setJourneyState("error");
@@ -447,11 +548,12 @@ function ComparisonExperience() {
     }
   }
 
-  async function runListingSubmission(request: ComparisonRequest) {
+  async function runListingSubmission(request: ComparisonRequest, operation: { generation: number; controller: AbortController }) {
     setJourneyState("comparing");
     trackEvent("comparison_started", { marketplace: request.sourceListing.marketplace });
     trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
-    const parsed = await requestComparisonReport(request, t.error.temporary);
+    const parsed = await requestComparisonReport(request, t.error.temporary, operation.controller.signal);
+    if (!requestIsCurrent(operation)) return;
     setPendingRequest(parsed.request);
     if (parsed.status === "needs_confirmation") {
       setIdentityResult({
@@ -463,11 +565,25 @@ function ComparisonExperience() {
         generatedAt: parsed.generatedAt,
       });
       setJourneyState("confirming");
+      writeJourney("confirmation", "push", currentSnapshot({
+        report: null,
+        identityResult: {
+          identityContractVersion: 1,
+          status: parsed.identityCandidates.length > 0 ? "needs_confirmation" : "not_found",
+          candidates: parsed.identityCandidates,
+          confirmedCard: null,
+          warnings: parsed.warnings,
+          generatedAt: parsed.generatedAt,
+        },
+        pendingRequest: parsed.request,
+        journeyState: "confirming",
+      }));
       trackEvent("identity_gallery_viewed", { status: parsed.status });
       return;
     }
     setReport(parsed);
     setJourneyState("result");
+    writeJourney("result", "push", currentSnapshot({ report: parsed, pendingRequest: parsed.request, journeyState: "result" }));
     trackEvent("comparison_completed", {
       marketplace: request.sourceListing.marketplace,
       status: parsed.status,
@@ -477,17 +593,24 @@ function ComparisonExperience() {
     focusComparisonTarget();
   }
 
-  async function runConfirmedComparison(request: ComparisonRequest, identity: CardIdentityCandidate | null) {
+  async function runConfirmedComparison(request: ComparisonRequest, identity: CardIdentityCandidate | null, operation = beginRequest()) {
     const startedAt = readTimestamp();
     setSelectedIdentity(identity);
     setJourneyState("comparing");
     trackEvent("comparison_started", { marketplace: request.sourceListing.marketplace });
     trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
-    const parsed = await requestComparisonReport(request, t.error.temporary);
+    const parsed = await requestComparisonReport(request, t.error.temporary, operation.controller.signal);
+    if (!requestIsCurrent(operation)) return;
     setReport(parsed);
     setPendingRequest(parsed.request);
     if (parsed.confirmedCard) rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
     setJourneyState("result");
+    writeJourney("result", "push", currentSnapshot({
+      report: parsed,
+      selectedIdentity: parsed.confirmedCard ?? identity,
+      pendingRequest: parsed.request,
+      journeyState: "result",
+    }));
     const duration = readTimestamp() - startedAt;
     trackEvent("comparison_completed", {
       marketplace: request.sourceListing.marketplace,
@@ -507,13 +630,20 @@ function ComparisonExperience() {
     if (agentHandoffHandled.current) return;
     agentHandoffHandled.current = true;
     const handoff = parseAgentSearchParams(new URLSearchParams(window.location.search));
-    if (!handoff) return;
+    const journey = handoff ? null : parseJourneySearchParams(new URLSearchParams(window.location.search));
+    const restored = handoff ?? (journey ? {
+      query: journey.query,
+      game: journey.game,
+      confirmedCardId: journey.confirmedCardId,
+      autoSubmit: journey.step !== "search",
+    } : null);
+    if (!restored) return;
 
-    form.setValue("heroQuery", handoff.query);
-    form.setValue("game", handoff.game);
-    if (!handoff.autoSubmit) return;
+    form.setValue("heroQuery", restored.query);
+    form.setValue("game", restored.game);
+    if (!restored.autoSubmit) return;
 
-    void form.handleSubmit((values) => submitComparison(values, handoff.confirmedCardId))();
+    void form.handleSubmit((values) => submitComparison(values, restored.confirmedCardId))();
     // This is intentionally mount-only: a handoff must run at most once even as
     // form state and localized copy change during the comparison.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -531,9 +661,11 @@ function ComparisonExperience() {
     form.setValue("cardNumber", identity.cardNumber);
     rememberConfirmedCard(identity, pendingRequest.cardHint.game);
     trackEvent("card_identity_confirmed", { confidence: identity.confidence });
+    const operation = beginRequest();
     try {
-      await runConfirmedComparison(confirmedRequest, identity);
+      await runConfirmedComparison(confirmedRequest, identity, operation);
     } catch (caught) {
+      if (!requestIsCurrent(operation) || isAbortError(caught)) return;
       setError(caught instanceof Error ? caught.message : t.error.temporary);
       setJourneyState("error");
       trackEvent("comparison_failed", { marketplace: confirmedRequest.sourceListing.marketplace });
@@ -548,10 +680,12 @@ function ComparisonExperience() {
     const suggestedRequest = { ...pendingRequest, confirmedCardId: cardId };
     setPendingRequest(suggestedRequest);
     setError(null);
+    const operation = beginRequest();
     try {
-      await runConfirmedComparison(suggestedRequest, null);
+      await runConfirmedComparison(suggestedRequest, null, operation);
       trackEvent("card_identity_confirmed", { confidence: "high" });
     } catch (caught) {
+      if (!requestIsCurrent(operation) || isAbortError(caught)) return;
       setError(caught instanceof Error ? caught.message : t.error.temporary);
       setJourneyState("error");
       trackEvent("comparison_failed", { marketplace: suggestedRequest.sourceListing.marketplace });
@@ -608,6 +742,8 @@ function ComparisonExperience() {
   );
 
   function startNewSearch() {
+    activeRequest.current?.abort();
+    requestGeneration.current += 1;
     setReport(null);
     setPendingRequest(null);
     setError(null);
@@ -615,7 +751,11 @@ function ComparisonExperience() {
     setSelectedIdentity(null);
     setJourneyState("idle");
     setCompactSearchOpen(false);
-    form.reset(resetForNewCardSearch(form.getValues()));
+    const reset = resetForNewCardSearch(form.getValues());
+    form.reset(reset);
+    writeJourney("search", "push", currentSnapshot({
+      form: reset, report: null, identityResult: null, selectedIdentity: null, pendingRequest: null, journeyState: "idle",
+    }));
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
     });
@@ -2878,7 +3018,10 @@ function DecisionReceipt({
               <p key={listing.id}>
                 <span className="font-black uppercase tracking-[0.04em] text-[#9a4a2c]">{t.result.tooRiskySkip}</span>
                 {": "}
-                <strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}
+                <strong>{listing.title}</strong>: {listing.eligibilityIssues
+                  .filter((issue) => issue.disposition === "exclude")
+                  .map((issue) => localizeEligibilityIssue(issue.code, issue.message, lang))
+                  .join(" ") || listing.exclusionReasons.join(" ")}
               </p>
             ))}
           </div>
@@ -2887,6 +3030,28 @@ function DecisionReceipt({
       </div>
     </details>
   );
+}
+
+function localizeEligibilityIssue(code: string, fallback: string, lang: Lang) {
+  if (lang === "en") return fallback;
+  const messages: Record<string, string> = {
+    not_raw_single: "这不是未评级的单张卡。",
+    excluded_product_type: "标题显示这是评级卡、卡组、密封商品、定制品或其他不支持的产品。",
+    condition_unstated: "卖家没有说明卡况，无法满足你选择的最低卡况。",
+    condition_below_requested: "卖家声明的卡况低于你选择的最低卡况。",
+    title_condition_below_requested: "标题本身写明了更低卡况；区间按较差一端处理。",
+    unsupported_currency: "商品不是以美元计价。",
+    shipping_unknown: "运费未知，无法安全比较结账总价。",
+    listing_inactive: "商品目前不在售。",
+    price_far_below_market: "价格远低于市场参考，可能是复制品、定制品或错误标注。",
+    language_conflict: "商品明确写出的语言与已确认卡片冲突。",
+    identity_sibling_mismatch: "证据指向同编号的另一种卡图。",
+    identity_unverified: "商品文字仍不足以证明是已确认卡图，请先核对。",
+    identity_price_guard: "价格远低于确切版本参考价，且商品没有证明所选卡图。",
+    identity_variant_mismatch: "商品写的是另一种版本。",
+    identity_low_confidence: "卡片或版本匹配置信度过低。",
+  };
+  return messages[code] ?? fallback;
 }
 
 function MarketReferenceLine({

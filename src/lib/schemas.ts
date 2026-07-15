@@ -126,7 +126,7 @@ export const agentCapabilitiesSchema = z.object({
   maxDiscoveryResults: z.literal(5),
   identityContractVersion: z.literal(1),
   discoveryContractVersion: z.literal(1),
-  comparisonContractVersion: z.literal(4),
+  comparisonContractVersion: z.literal(5),
   handoffContractVersion: z.literal(1),
   sourceAccess: z.object({
     live: z.array(z.object({
@@ -320,6 +320,16 @@ export const cardDiscoveryRequestSchema = z.object({
 
 export const printMatchSchema = z.enum(["exact", "compatible", "unknown", "mismatch"]);
 export const printPriceGuardSchema = z.enum(["none", "inspect", "exclude"]);
+export const eligibilityIssueCategorySchema = z.enum([
+  "product", "condition", "cost", "price", "language", "identity", "availability",
+]);
+export const eligibilityIssueDispositionSchema = z.enum(["exclude", "review"]);
+export const eligibilityIssueSchema = z.object({
+  code: z.string(),
+  category: eligibilityIssueCategorySchema,
+  disposition: eligibilityIssueDispositionSchema,
+  message: z.string(),
+});
 
 export const normalizedListingSchema = z.object({
   id: z.string(),
@@ -371,6 +381,7 @@ export const normalizedListingSchema = z.object({
   // applied — the "check the math" trail for the trust score.
   trustNotes: z.array(z.string()).default([]),
   eligible: z.boolean(),
+  eligibilityIssues: z.array(eligibilityIssueSchema).default([]),
   exclusionReasons: z.array(z.string()),
   observedAt: z.string(),
   demo: z.boolean().default(false),
@@ -484,6 +495,7 @@ export const comparisonReportSchema = z.object({
   outcome: z.enum(["best_buy", "inspect_first", "next_moves"]).optional(),
   inspectListingId: z.string().nullable().optional(),
   identityContractVersion: z.literal(4).optional(),
+  comparisonContractVersion: z.literal(5).optional(),
   demoMode: z.boolean(),
   generatedAt: z.string(),
 }).superRefine((report, ctx) => {
@@ -676,6 +688,7 @@ export type ListingSeed = Omit<
   | "riskLabel"
   | "trustNotes"
   | "eligible"
+  | "eligibilityIssues"
   | "exclusionReasons"
   | "webDiscovered"
   | "listingLanguage"
@@ -704,6 +717,7 @@ export type ManualCandidate = z.infer<typeof manualCandidateSchema>;
 export type CardIdentityCandidate = z.infer<typeof cardIdentityCandidateSchema>;
 export type CanonicalPrintIdentity = z.infer<typeof canonicalPrintIdentitySchema>;
 export type PrintMatch = z.infer<typeof printMatchSchema>;
+export type EligibilityIssue = z.infer<typeof eligibilityIssueSchema>;
 export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;

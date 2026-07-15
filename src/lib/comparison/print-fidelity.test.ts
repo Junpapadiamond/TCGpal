@@ -19,8 +19,52 @@ const gearFivePrints = findOnePieceCatalogVariants("OP05-119").map((card) =>
 const op13LuffyPrints = findOnePieceCatalogVariants("OP13-118").map((card) =>
   mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
 );
+const lawPrints = findOnePieceCatalogVariants("OP10-119").map((card) =>
+  mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
+);
+const robinPrints = findOnePieceCatalogVariants("EB03-055").map((card) =>
+  mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
+);
 
 describe("exact-print fidelity", () => {
+  it("accepts seller-visible Manga evidence for the unique Trafalgar Law manga print", () => {
+    const manga = lawPrints.find((card) => card.id === "OP10-119_p2")!;
+    const titles = [
+      "Trafalgar Law (119) (Manga) OP10-119 Royal Blood Foil",
+      "Trafalgar Law MANGA OP10-119 Royal Blood Foil",
+      "One Piece Card Game Trafalgar Law MANGA Character Card OP10-119 Royal Blood EN",
+      "2025 One Piece Trafalgar Law Manga Alternate Art #OP10-119 NM",
+      "One Piece - Trafalgar Law OP10-119 Alt Art Manga - Royal Blood English",
+    ];
+
+    for (const matchText of titles) {
+      expect(assessPrintFidelity({
+        card: manga,
+        matchText,
+        listingPrice: 800,
+        exactMarketAnchor: 800,
+      }), matchText).toMatchObject({ match: "compatible", confidence: "high" });
+    }
+
+    expect(assessPrintFidelity({
+      card: manga,
+      matchText: "Monkey D. Luffy Manga OP10-119 Royal Blood",
+      listingPrice: 800,
+      exactMarketAnchor: 800,
+    }).match).toBe("unknown");
+  });
+
+  it("accepts seller-visible SP evidence for the unique Nico Robin Heroines print", () => {
+    const special = robinPrints.find((card) => card.id === "EB03-055_p2")!;
+
+    expect(assessPrintFidelity({
+      card: special,
+      matchText: "Nico Robin EB03-055 SP SR Parallel ONE PIECE Card Heroines edition 2025 - NM",
+      listingPrice: 200,
+      exactMarketAnchor: 200,
+    })).toMatchObject({ match: "compatible", confidence: "high" });
+  });
+
   it("keeps every bundled Nami print as a unique canonical identity", () => {
     expect(namiPrints).toHaveLength(8);
     expect(new Set(namiPrints.map((card) => card.id))).toHaveLength(8);
@@ -32,7 +76,7 @@ describe("exact-print fidelity", () => {
       it(`${selected.id} ${selected.id === observed.id ? "accepts" : "rejects"} explicit ${observed.id} evidence`, () => {
         const result = assessPrintFidelity({
           card: selected,
-          matchText: `${observed.id} ${observed.variant ?? "base print"} ${observed.setName} ${observed.language}`,
+          matchText: `${observed.name} ${observed.id} ${observed.variant ?? "base print"} ${observed.setName} ${observed.language}`,
           listingPrice: 100,
           exactMarketAnchor: 100,
         });

@@ -6,6 +6,7 @@ describe("Pokemon TCG API adapter", () => {
     const fetcher = vi.fn(async (url: URL) => {
       expect(url.searchParams.get("q")).toBe('name:"Charizard VSTAR"');
       expect(url.searchParams.get("pageSize")).toBe("4");
+      expect(url.searchParams.get("select")).toBe("id,name,subtypes,number,rarity,set,images");
 
       return new Response(
         JSON.stringify({
@@ -36,6 +37,31 @@ describe("Pokemon TCG API adapter", () => {
     expect(result.cards[0]?.name).toBe("Charizard VSTAR");
     expect(result.cards[0]?.rarity).toBe("Rare Holo VSTAR");
     expect(result.cards[0]?.set?.images?.symbol).toBe("https://example.com/brilliant-stars-symbol.png");
+  });
+
+  it("keeps Mew and Mewtwo families separate while preserving explicit combo searches", async () => {
+    const seenQueries: string[] = [];
+    const payload = {
+      data: [
+        { id: "mew", name: "Mew ex", number: "1", set: { name: "Test" } },
+        { id: "mewtwo", name: "Mewtwo", number: "2", set: { name: "Test" } },
+        { id: "combo", name: "Mewtwo & Mew-GX", number: "3", set: { name: "Test" } },
+      ],
+      count: 3,
+      totalCount: 3,
+    };
+    const fetcher = vi.fn(async (url: URL) => {
+      seenQueries.push(url.searchParams.get("q") ?? "");
+      return new Response(JSON.stringify(payload));
+    }) as unknown as typeof fetch;
+
+    await expect(searchPokemonCards({ query: "Mew", fetcher })).resolves.toMatchObject({
+      cards: [{ id: "mew" }],
+    });
+    await expect(searchPokemonCards({ query: "Mewtwo & Mew-GX", fetcher })).resolves.toMatchObject({
+      cards: [{ id: "combo" }],
+    });
+    expect(seenQueries.at(-1)).toBe("name:mewtwo* name:mew*");
   });
 
   it("browses cards by page without requiring a query", async () => {

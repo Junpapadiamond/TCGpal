@@ -65,6 +65,7 @@ type PrintWitness = {
   id: string;
   artworkClass: WitnessClass;
   treatments: Set<string>;
+  exactMarkers: Set<string>;
   markers: Set<string>;
 };
 
@@ -78,18 +79,16 @@ function classifyOnePiecePrintIdentity(
       ? result("mismatch", "high", "listing_names_different_collector_number")
       : result("unknown", "low", "one_piece_listing_missing_collector_number");
   }
+  const cardNameTokens = phraseTokens(card.name).filter((token) => token.length >= 3);
+  const listingNameTokens = phraseTokens(text);
+  if (cardNameTokens.length > 0 && !cardNameTokens.some((token) => listingNameTokens.includes(token))) {
+    return result("unknown", "low", "one_piece_listing_missing_card_name");
+  }
 
   const siblings = buildWitnesses(card.cardNumber);
   const selected = siblings.find((sibling) => sibling.id.toLowerCase() === card.id.toLowerCase());
   if (!selected || siblings.length === 0) {
     return result("unknown", "low", "one_piece_witness_set_unavailable");
-  }
-  const language = languageEvidence(text, card.language);
-  if (language.conflicts) {
-    return result("mismatch", "high", "listing_names_different_language");
-  }
-  if (/\b(?:extended\s+art\s+case|magnetic\s+(?:case|holder)|wall\s+art|poster\s+print|playmat|display\s+case|card\s+set|\d+\s*(?:pcs|cards?)|playset)\b/i.test(text)) {
-    return result("mismatch", "high", "listing_names_non_card_product");
   }
   if (/\bgold\b/i.test(text) && /\bsilver\b/i.test(text)) {
     return result("unknown", "low", "listing_names_conflicting_print_treatments");
@@ -138,24 +137,20 @@ function classifyOnePiecePrintIdentity(
     return result("unknown", "low", "one_piece_evidence_not_unique_across_siblings");
   }
 
-  const markerNarrowsFamily = markerEvidence.length > 0;
-  const genericClassOnly = !markerNarrowsFamily
+  const textTokens = phraseTokens(text);
+  const hasSelectedExactMarker = [...selected.exactMarkers]
+    .some((marker) => phraseTokens(marker).every((token) => textTokens.includes(token)));
+  const genericClassOnly = markerEvidence.length === 0
     && !observed.treatment
+    && !hasSelectedExactMarker
+    && observed.artworkClass !== "manga"
     && observed.artworkClass !== "wanted_poster"
     && observed.artworkClass !== "super_alternate"
     && !/\bbase\s+print\b/i.test(text);
   if (genericClassOnly) {
     return result("unknown", "low", "one_piece_class_evidence_requires_corroboration");
   }
-  if (!language.proven) {
-    return result("unknown", "low", "one_piece_listing_missing_language_proof");
-  }
-  if (
-    (selected.artworkClass === "manga" || selected.artworkClass === "wanted_poster")
-    && !hasCorroboratedCanonicalClaim(text, card)
-  ) {
-    return result("unknown", "low", "one_piece_artwork_class_requires_corroboration");
-  }
+
   if (
     (card.competitionTier === "winner" || card.competitionTier === "participation")
     && !/\b\d+(?:st|nd|rd|th)\s+anniversary\b/i.test(text)
@@ -168,10 +163,13 @@ function classifyOnePiecePrintIdentity(
 function buildWitnesses(cardNumber: string): PrintWitness[] {
   return findOnePieceCatalogVariants(cardNumber).map((sibling) => {
     const id = variantKey(sibling);
+    const exactMarkers = (sibling.exact_markers ?? [])
+      .map((marker) => marker.trim())
+      .filter((marker) => marker.length >= 4 && !isGenericMarker(marker));
     const markers = [
       sibling.set_name ?? "",
       ...(sibling.collector_aliases ?? []),
-      ...(sibling.exact_markers ?? []),
+      ...exactMarkers,
       ...releaseAliases(sibling.set_name ?? ""),
     ]
       .map((marker) => marker.trim())
@@ -180,6 +178,7 @@ function buildWitnesses(cardNumber: string): PrintWitness[] {
       id,
       artworkClass: witnessClass(sibling),
       treatments: new Set(sibling.treatments ?? []),
+      exactMarkers: new Set(exactMarkers),
       markers: new Set(markers),
     };
   });
@@ -232,25 +231,6 @@ function intersectEvidence(siblings: PrintWitness[], evidenceSets: Set<string>[]
     (possible, evidence) => new Set([...possible].filter((id) => evidence.has(id))),
     new Set(siblings.map((sibling) => sibling.id)),
   );
-}
-
-function languageEvidence(text: string, selectedLanguage: string): { conflicts: boolean; proven: boolean } {
-  const selected = selectedLanguage.toLowerCase();
-  const english = selected === "en" || selected.includes("english");
-  const japanese = selected === "jp" || selected === "jpn" || selected.includes("japanese");
-  const namesJapanese = /\b(?:japanese|jpn|jp)\b|日本語|日版/i.test(text);
-  const namesEnglish = /\b(?:english|eng|en)\b/i.test(text);
-  const namesOther = /\b(?:chinese|korean|french|german|spanish|italian|portuguese)\b/i.test(text);
-  return {
-    conflicts: (english && (namesJapanese || namesOther)) || (japanese && (namesEnglish || namesOther)),
-    proven: english ? namesEnglish : japanese ? namesJapanese : true,
-  };
-}
-
-function hasCorroboratedCanonicalClaim(text: string, card: Pick<CardIdentityCandidate, "id" | "cardNumber">): boolean {
-  if (!/_([pr])\d+$/i.test(card.id)) return false;
-  const escapedId = card.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?:^|[^a-z0-9])${escapedId}(?:[^a-z0-9]|$)`, "i").test(text);
 }
 
 function detectResearchedPrintFacet(text: string): {
@@ -337,6 +317,10 @@ function printClass(print: { rarity?: string | null; variant?: string | null }):
 
 function normalizePhrase(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function phraseTokens(value: string) {
+  return value.toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length >= 2 && token !== "card");
 }
 
 export function canonicalPrintIdentity(card: CardIdentityCandidate) {

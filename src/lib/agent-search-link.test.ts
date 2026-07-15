@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAgentSearchUrl, parseAgentSearchParams } from "@/lib/agent-search-link";
+import { buildAgentSearchUrl, parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 
 describe("agent search links", () => {
   it("round-trips an exact One Piece card handoff", () => {
@@ -14,6 +14,15 @@ describe("agent search links", () => {
       game: "onePiece",
       confirmedCardId: "OP05-119_manga_jp",
       autoSubmit: true,
+    });
+  });
+
+  it("parses only safe journey URL fields for refresh restoration", () => {
+    expect(parseJourneySearchParams(new URLSearchParams("query=Mew&game=pokemon&step=confirmation"))).toEqual({
+      query: "Mew", game: "pokemon", step: "confirmation", confirmedCardId: undefined,
+    });
+    expect(parseJourneySearchParams(new URLSearchParams("query=Nico+Robin+EB03-055&game=onePiece&step=result&card=EB03-055_p2&postalCode=10001"))).toEqual({
+      query: "Nico Robin EB03-055", game: "onePiece", step: "result", confirmedCardId: "EB03-055_p2",
     });
   });
 

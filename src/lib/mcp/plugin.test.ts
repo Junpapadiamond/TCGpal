@@ -11,7 +11,7 @@ describe("TCGlens Work plugin", () => {
 
     expect(plugin).toMatchObject({
       name: "tcglens",
-      version: "1.0.1",
+      version: "1.0.2",
       homepage: "https://tcgpal.vercel.app",
       repository: "https://github.com/Junpapadiamond/TCGpal",
       author: { name: "Jun Hsu" },
@@ -19,7 +19,7 @@ describe("TCGlens Work plugin", () => {
     });
     expect(mcp).toEqual({ mcpServers: { tcglens: { type: "http", url: "https://tcgpal.vercel.app/mcp" } } });
     const marketplace = JSON.parse(readFileSync(path.resolve(process.cwd(), ".agents/plugins/marketplace.json"), "utf8"));
-    expect(marketplace.plugins).toContainEqual(expect.objectContaining({ name: "tcglens", version: "1.0.1" }));
+    expect(marketplace.plugins).toContainEqual(expect.objectContaining({ name: "tcglens", version: "1.0.2" }));
   });
 
   it("ships a concise skill with the required intent routing and boundaries", () => {
@@ -28,7 +28,7 @@ describe("TCGlens Work plugin", () => {
     expect(skill).toContain("tcglens_discover_cards");
     expect(skill).toContain("tcglens_compare_card");
     expect(skill).toContain("seller’s claim");
-    expect(skill).toContain("comparison contract v4");
+    expect(skill).toContain("comparison contract v5");
     expect(skill).toContain("Never predict a grade");
   });
 });

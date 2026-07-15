@@ -81,6 +81,7 @@ describe("comparison condition controls", () => {
 
   beforeEach(() => {
     requests = [];
+    window.history.replaceState(null, "", "/");
     Object.defineProperty(window, "localStorage", {
       configurable: true,
       value: createMemoryStorage(),
@@ -160,6 +161,63 @@ describe("comparison condition controls", () => {
     }), { headers: { "Content-Type": "application/json" } }));
 
     expect(await screen.findByRole("heading", { name: "Choose your Pikachu" })).toBeTruthy();
+  });
+
+  it("ignores a stale Mew response after a newer Mewtwo search", async () => {
+    const resolvers = new Map<string, (response: Response) => void>();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!String(input).endsWith("/api/agent/card-identity")) throw new Error("unexpected comparison");
+      const body = JSON.parse(String(init?.body)) as { query: string };
+      return new Promise<Response>((resolve) => resolvers.set(body.query, resolve));
+    }));
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Mew" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Browse card versions" }));
+    await screen.findByRole("heading", { name: "Finding Mew versions" });
+    fireEvent.click(screen.getByRole("button", { name: "New search" }));
+    const nextQuery = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(nextQuery, { target: { value: "Mewtwo" } });
+    fireEvent.click(within(nextQuery.closest("form")!).getByRole("button", { name: "Browse card versions" }));
+
+    await waitFor(() => expect(resolvers.has("Mewtwo")).toBe(true));
+    resolvers.get("Mewtwo")!(new Response(JSON.stringify(identityResponse([identityForQuery("Mewtwo")], "needs_confirmation")), { headers: { "Content-Type": "application/json" } }));
+    expect(await screen.findByRole("heading", { name: "Choose your Mewtwo" })).toBeTruthy();
+    resolvers.get("Mew")!(new Response(JSON.stringify(identityResponse([identityForQuery("Mew")], "needs_confirmation")), { headers: { "Content-Type": "application/json" } }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Choose your Mew" })).toBeNull());
+  });
+
+  it("restores the filled search and confirmation steps through browser history", async () => {
+    const pushed: Array<{ state: unknown; url: string | URL | null | undefined }> = [];
+    const replaced: Array<{ state: unknown; url: string | URL | null | undefined }> = [];
+    const originalPush = window.history.pushState.bind(window.history);
+    const originalReplace = window.history.replaceState.bind(window.history);
+    vi.spyOn(window.history, "pushState").mockImplementation((state, unused, url) => {
+      pushed.push({ state, url });
+      originalPush(state, unused, url);
+    });
+    vi.spyOn(window.history, "replaceState").mockImplementation((state, unused, url) => {
+      replaced.push({ state, url });
+      originalReplace(state, unused, url);
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(
+      identityResponse([identityForQuery("Mew")], "needs_confirmation"),
+    ), { headers: { "Content-Type": "application/json" } })));
+    render(<ComparisonApp />);
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Mew" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Browse card versions" }));
+    expect(await screen.findByRole("heading", { name: "Choose your Mew" })).toBeTruthy();
+
+    const confirmation = pushed.find((entry) => String(entry.url).includes("step=confirmation"));
+    const searchState = [...replaced, ...pushed].find((entry) => String(entry.url).includes("step=search"))?.state;
+    expect(searchState).toBeTruthy();
+    window.dispatchEvent(new PopStateEvent("popstate", { state: searchState }));
+    await waitFor(() => expect((screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement).value).toBe("Mew"));
+    expect(confirmation).toBeTruthy();
+    window.dispatchEvent(new PopStateEvent("popstate", { state: confirmation!.state }));
+    expect(await screen.findByRole("heading", { name: "Choose your Mew" })).toBeTruthy();
   });
 
   it("bypasses the gallery for one proven print and anchors the comparison loader to that artwork", async () => {

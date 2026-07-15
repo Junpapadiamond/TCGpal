@@ -688,7 +688,7 @@ describe("listing comparison agent", () => {
     const response = await runListingComparison(
       {
         ...request,
-        query: "Lugia",
+        query: "Umbreon",
         sourceListing: { ...request.sourceListing, title: "", url: "" },
         cardHint: { game: "pokemon", name: "", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
       },

@@ -4,6 +4,7 @@ import {
   type BuyerContext,
   type CardIdentityCandidate,
   type ConditionClaim,
+  type EligibilityIssue,
   type ListingEvidence,
   type ListingSeed,
   type Marketplace,
@@ -44,6 +45,14 @@ const exclusionPatterns = [
   /\bkeychain\b/i,
   /\bplush\b/i,
   /\bnon[\s-]?textured\b/i,
+  /\bextended\s+art\s+case\b/i,
+  /\bmagnetic\s+(?:case|holder)\b/i,
+  /\bwall\s+art\b/i,
+  /\bposter\s+print\b/i,
+  /\bplaymat\b/i,
+  /\bdisplay\s+case\b/i,
+  /\bcard\s+set\b/i,
+  /\b\d+\s*(?:pcs|cards?)\b/i,
 ];
 
 // Which print the buyer confirmed: the plain base card, a generic alternate-art /
@@ -404,7 +413,7 @@ export function normalizeListing(input: {
     sellerTrustScore,
     evidenceCompletenessScore,
   });
-  const exclusionReasons = getExclusionReasons(
+  const eligibilityIssues = getEligibilityIssues(
     { ...listing, raw },
     buyer,
     marketPrice,
@@ -413,6 +422,9 @@ export function normalizeListing(input: {
     printAssessment,
     Boolean(input.confirmedCard),
   );
+  const exclusionReasons = eligibilityIssues
+    .filter((issue) => issue.disposition === "exclude")
+    .map((issue) => issue.message);
 
   // The risk label reflects the seller's track record, not evidence volume:
   // search-API rows legitimately carry thin evidence (no full description or
@@ -455,6 +467,7 @@ export function normalizeListing(input: {
     riskLabel,
     trustNotes,
     eligible: exclusionReasons.length === 0,
+    eligibilityIssues,
     exclusionReasons,
   });
 }
@@ -592,7 +605,7 @@ function aboveMarketContext(listing: NormalizedListing, marketPrice: number | nu
 // The threshold is deliberately conservative so real underpriced/played copies stay.
 const MARKET_FLOOR_RATIO = PRINT_IDENTITY_EXCLUDE_RATIO;
 
-function getExclusionReasons(
+function getEligibilityIssues(
   listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "shipping" | "claimedCondition" | "marketplace" | "userSupplied">
     & { listingLanguage?: string | null; matchAspectText?: string },
   buyer: BuyerContext,
@@ -605,17 +618,17 @@ function getExclusionReasons(
   // Structured item-specifics text (when the source adapter has it) plus the
   // title — see the variant/language gate functions for why both matter.
   const matchText = [listing.title, listing.matchAspectText].filter(Boolean).join(" ").trim();
-  const reasons: string[] = [];
-  if (!listing.active) reasons.push("Listing is not active.");
-  if (!listing.raw) reasons.push("Listing is not a raw single card.");
-  if (listing.currency !== "USD") reasons.push("Listing is not priced in USD.");
-  if (listing.shipping === null) reasons.push("Shipping cost is unknown, so the checkout total cannot be compared safely.");
-  if (listing.matchConfidence === "low") reasons.push("Exact card/version match is low confidence.");
+  const issues: EligibilityIssue[] = [];
+  const add = (issue: EligibilityIssue) => issues.push(issue);
+  if (!listing.raw) add({ code: "not_raw_single", category: "product", disposition: "exclude", message: "Listing is not a raw single card." });
+  if (isGradedListing(listing.title) || exclusionPatterns.some((pattern) => pattern.test(listing.title))) {
+    add({ code: "excluded_product_type", category: "product", disposition: "exclude", message: "Title suggests a slab, lot, sealed item, proxy, or other excluded product." });
+  }
   if (buyer.desiredCondition !== "Unknown") {
     if (listing.claimedCondition === "Unknown") {
-      reasons.push(`Seller condition is not stated; the buyer requested ${buyer.desiredCondition} or better.`);
+      add({ code: "condition_unstated", category: "condition", disposition: "exclude", message: `Seller condition is not stated; the buyer requested ${buyer.desiredCondition} or better.` });
     } else if (CONDITION_RANK[listing.claimedCondition] < CONDITION_RANK[buyer.desiredCondition]) {
-      reasons.push(`Seller claims ${listing.claimedCondition}; the buyer requested ${buyer.desiredCondition} or better.`);
+      add({ code: "condition_below_requested", category: "condition", disposition: "exclude", message: `Seller claims ${listing.claimedCondition}; the buyer requested ${buyer.desiredCondition} or better.` });
     }
     // The title is also the seller's claim: "NM-LP" with a structured Near Mint
     // field still admits Lightly Played, and the worst stated case governs.
@@ -624,54 +637,61 @@ function getExclusionReasons(
       ? null
       : titleConditionFloor(listing.title);
     if (conditionFloor && CONDITION_RANK[conditionFloor] < CONDITION_RANK[buyer.desiredCondition]) {
-      reasons.push(`Title itself mentions ${conditionFloor} — a stated condition range counts as its worst case; the buyer requested ${buyer.desiredCondition} or better.`);
+      add({ code: "title_condition_below_requested", category: "condition", disposition: "exclude", message: `Title itself mentions ${conditionFloor} — a stated condition range counts as its worst case; the buyer requested ${buyer.desiredCondition} or better.` });
     }
   }
-  if (isGradedListing(listing.title) || exclusionPatterns.some((pattern) => pattern.test(listing.title))) {
-    reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
-  }
+  if (listing.currency !== "USD") add({ code: "unsupported_currency", category: "cost", disposition: "exclude", message: "Listing is not priced in USD." });
+  if (listing.shipping === null) add({ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Shipping cost is unknown, so the checkout total cannot be compared safely." });
+  if (!listing.active) add({ code: "listing_inactive", category: "availability", disposition: "exclude", message: "Listing is not active." });
   const marketFloorApplies = buyer.desiredCondition === "Near Mint" || buyer.desiredCondition === "Lightly Played";
   // Exact-print evidence proves identity, not commercial plausibility. Keep the
   // conservative floor active even after strict print confirmation so auctions,
   // replicas, damaged/mislabeled rows, and anomalous prices cannot become a Buy.
   if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO) {
-    reasons.push("Priced far below market — likely a replica, proxy, or mislabeled item.");
+    add({ code: "price_far_below_market", category: "price", disposition: "exclude", message: "Priced far below market — likely a replica, proxy, or mislabeled item." });
   }
+  const language = languageAssessment(matchText, cardLanguage, listing.listingLanguage ?? null);
+  if (language === "conflict") add({ code: "language_conflict", category: "language", disposition: "exclude", message: "Listing explicitly names a language that conflicts with the confirmed card." });
+  else if (language === "unverified") add({ code: "language_unverified", category: "language", disposition: "review", message: "Listing language is not stated; verify it on the live page." });
   if (strictPrintFidelity && printAssessment) {
     if (printAssessment.match === "mismatch") {
-      reasons.push("Evidence points to a different print of the same card — you're comparing the confirmed artwork.");
+      add({ code: "identity_sibling_mismatch", category: "identity", disposition: "exclude", message: "Evidence points to a different print of the same card — you're comparing the confirmed artwork." });
     } else if (printAssessment.match === "unknown") {
-      reasons.push("The listing does not prove it is the exact confirmed artwork; inspect it before deciding.");
+      add({ code: "identity_unverified", category: "identity", disposition: "exclude", message: "The listing does not prove it is the exact confirmed artwork; inspect it before deciding." });
     }
     if (printAssessment.priceGuard === "exclude") {
-      reasons.push("Price is far below the verified exact-print market anchor and the listing does not prove the selected artwork.");
+      add({ code: "identity_price_guard", category: "price", disposition: "exclude", message: "Price is far below the verified exact-print market anchor and the listing does not prove the selected artwork." });
     }
   } else {
     const variantReason = variantMismatchReason(listing, matchText, variantIntent);
-    if (variantReason) reasons.push(variantReason);
+    if (variantReason) add({ code: "identity_variant_mismatch", category: "identity", disposition: "exclude", message: variantReason });
   }
-  const languageReason = languageMismatchReason(matchText, cardLanguage, listing.listingLanguage ?? null);
-  if (languageReason) reasons.push(languageReason);
-  return reasons;
+  if (listing.matchConfidence === "low") add({ code: "identity_low_confidence", category: "identity", disposition: "exclude", message: "Exact card/version match is low confidence." });
+  return issues;
 }
 
-function languageMismatchReason(matchText: string, targetLanguage: string | null, listingLanguage: string | null) {
-  if (!targetLanguage) return null;
+function languageAssessment(matchText: string, targetLanguage: string | null, listingLanguage: string | null): "proven" | "conflict" | "unverified" | "not_applicable" {
+  if (!targetLanguage) return "not_applicable";
   const target = targetLanguage.toLowerCase();
   const englishTarget = target === "en" || target.includes("english");
   const japaneseTarget = target === "jp" || target === "jpn" || target.includes("japanese");
-  const languageEvidence = `${listingLanguage ?? ""} ${matchText}`;
-  const explicitJapanese = /\b(japanese|jpn|jp)\b|日本語|日版/i.test(languageEvidence);
-  const explicitEnglish = /\b(english|eng)\b/i.test(languageEvidence);
-  const explicitOther = /\b(korean|chinese|french|german|spanish|italian|portuguese)\b/i.test(languageEvidence);
+  const structured = (listingLanguage ?? "").trim();
+  const languageText = matchText.replace(/\bjapanese\s+\d+(?:st|nd|rd|th)\s+anniversary\s+set\b/gi, "");
+  const explicitJapanese = /^(?:japanese|jpn|jp)$/i.test(structured)
+    || /\b(?:japanese|jpn|jp)\b|日本語|日版/i.test(languageText);
+  const explicitEnglish = /^(?:english|eng|en)$/i.test(structured)
+    || /\b(?:english|eng)\s+(?:card|version|language|edition)\b|\benglish\b/i.test(matchText);
+  const explicitOther = /^(?:korean|chinese|french|german|spanish|italian|portuguese)$/i.test(structured)
+    || /\b(?:korean|chinese|french|german|spanish|italian|portuguese)(?:\s+(?:card|version|language|edition))?\b/i.test(matchText);
 
   if (englishTarget && (explicitJapanese || explicitOther)) {
-    return "Title explicitly names a non-English card; the confirmed version is English.";
+    return "conflict";
   }
   if (japaneseTarget && (explicitEnglish || explicitOther)) {
-    return "Title explicitly names a non-Japanese card; the confirmed version is Japanese.";
+    return "conflict";
   }
-  return null;
+  if ((englishTarget && explicitEnglish) || (japaneseTarget && explicitJapanese)) return "proven";
+  return "unverified";
 }
 
 function makeChoice(

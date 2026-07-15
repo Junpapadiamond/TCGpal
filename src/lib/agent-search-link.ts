@@ -10,6 +10,23 @@ const agentSearchSchema = z.object({
 
 export type AgentSearchHandoff = z.infer<typeof agentSearchSchema>;
 
+const journeySearchSchema = z.object({
+  query: z.string().trim().min(2).max(200),
+  game: z.enum(["pokemon", "onePiece"]),
+  step: z.enum(["search", "confirmation", "result"]),
+  confirmedCardId: z.string().trim().min(1).max(160).optional(),
+});
+
+export function parseJourneySearchParams(params: URLSearchParams) {
+  const parsed = journeySearchSchema.safeParse({
+    query: params.get("query") ?? "",
+    game: params.get("game") ?? "",
+    step: params.get("step") ?? "",
+    confirmedCardId: params.get("card") || undefined,
+  });
+  return parsed.success ? parsed.data : null;
+}
+
 export function parseAgentSearchParams(params: URLSearchParams): AgentSearchHandoff | null {
   if (params.get("agent") !== "1") return null;
 

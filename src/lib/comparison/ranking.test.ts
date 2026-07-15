@@ -354,6 +354,46 @@ describe("comparison ranking", () => {
     }
   });
 
+  it("reports product eligibility before identity for a graded exact-print listing", () => {
+    const graded = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        title: "Trafalgar Law Manga OP10-119 PSA 10",
+      },
+      buyer,
+    });
+
+    expect(graded.eligibilityIssues[0]).toMatchObject({
+      category: "product",
+      disposition: "exclude",
+      code: "not_raw_single",
+    });
+  });
+
+  it("keeps an unstated language as a review note and excludes only explicit conflicts", () => {
+    const unstated = normalizeListing({
+      listing: { ...demoListingSeeds[0], title: "Trafalgar Law Manga OP10-119" },
+      buyer,
+      cardLanguage: "English",
+    });
+    const japanese = normalizeListing({
+      listing: { ...demoListingSeeds[0], title: "Trafalgar Law Manga OP10-119 Japanese card" },
+      buyer,
+      cardLanguage: "English",
+    });
+
+    expect(unstated.eligibilityIssues).toContainEqual(expect.objectContaining({
+      category: "language",
+      disposition: "review",
+      code: "language_unverified",
+    }));
+    expect(japanese.eligibilityIssues).toContainEqual(expect.objectContaining({
+      category: "language",
+      disposition: "exclude",
+      code: "language_conflict",
+    }));
+  });
+
   it("excludes TAG slabs from raw-single ranking", () => {
     const graded = normalizeListing({
       listing: { ...demoListingSeeds[0], id: "tag-slab", title: "Mew ex 232/091 TAG 8.5" },

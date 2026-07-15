@@ -1,6 +1,6 @@
 {
   "name": "tcglens",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Source-backed trading-card identity, budget discovery, and exact-listing comparison through TCGlens.",
   "author": {
     "name": "Jun Hsu",
