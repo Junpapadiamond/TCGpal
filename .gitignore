@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Graphify keeps date-stamped backups when refreshing the committed current graph.
+/graphify-out/20??-??-??/

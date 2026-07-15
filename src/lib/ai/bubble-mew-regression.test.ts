@@ -146,7 +146,13 @@ describe("Bubble Mew production-shaped regression", () => {
     expect(outsideWindow).toMatchObject({ printMatch: "compatible", eligible: true });
     expect(wrongCondition?.eligible).toBe(false);
     expect(unknownShipping?.eligible).toBe(false);
-    expect(wrongNumber).toMatchObject({ matchConfidence: "low", printMatch: "unknown", eligible: false });
+    expect(wrongNumber).toMatchObject({
+      matchConfidence: "low",
+      printMatch: "mismatch",
+      printMatchConfidence: "high",
+      printMatchReasons: ["listing_names_different_collector_number"],
+      eligible: false,
+    });
     expect(report.outcome).toBe("best_buy");
   });
 });

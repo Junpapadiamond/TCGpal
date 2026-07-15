@@ -145,6 +145,19 @@ describe("TCGlens MCP tool mappings", () => {
       .rejects.toThrow("exact card identity");
   });
 
+  it("refuses a canonical reload that returns a different card ID", async () => {
+    const substituted = report();
+    substituted.confirmedCard = { ...substituted.confirmedCard!, id: "sv3pt5-201" };
+    const handlers = createTcglensToolHandlers({ compare: async () => substituted });
+
+    await expect(handlers.tcglens_compare_card({
+      confirmedCardId: "sv3pt5-199",
+      game: "pokemon",
+      desiredCondition: "Near Mint",
+      postalCode: "10001",
+    })).rejects.toThrow("canonical card ID");
+  });
+
   it("uses the shared deep-link builder", async () => {
     const buildDeepLink = vi.fn(() => "https://tcgpal.vercel.app/?agent=1&card=sv3pt5-199");
     const handlers = createTcglensToolHandlers({ buildDeepLink });

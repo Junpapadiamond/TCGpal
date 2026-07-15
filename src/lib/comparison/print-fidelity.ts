@@ -291,7 +291,9 @@ function classifyPokemonPrintIdentity(
   const normalizedText = normalizePhrase(matchText);
   const numberPattern = collectorNumberPattern(card.cardNumber);
   if (!numberPattern?.test(matchText)) {
-    return result("unknown", "low", "pokemon_listing_missing_full_collector_number");
+    return collectorNumberConflict(matchText, card.cardNumber)
+      ? result("mismatch", "high", "listing_names_different_collector_number")
+      : result("unknown", "low", "pokemon_listing_missing_full_collector_number");
   }
 
   const genericNameTokens = new Set(["card", "pokemon", "v", "vmax", "vstar", "ex", "gx"]);

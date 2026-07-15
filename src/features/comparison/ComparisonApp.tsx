@@ -2621,7 +2621,7 @@ function RecommendedBuyHero({
       className="rounded-xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.08)] sm:p-5"
       title={`${verdict.why} ${verdict.catch}`}
     >
-      <div className="grid grid-cols-[136px_minmax(0,1fr)] gap-4 lg:grid-cols-[152px_minmax(0,1fr)_auto] lg:items-center">
+      <div className="grid gap-4 sm:grid-cols-[136px_minmax(0,1fr)] lg:grid-cols-[152px_minmax(0,1fr)_auto] lg:items-center">
         <div className="flex items-start gap-2" aria-label={t.result.versionConfirmed}>
           <EvidencePhoto
             src={confirmedCard?.imageUrl ?? null}
@@ -2657,7 +2657,7 @@ function RecommendedBuyHero({
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
         </div>
 
-        <div className="col-span-2 grid gap-3 sm:col-start-2 lg:col-span-1 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
+        <div className="grid gap-3 sm:col-start-2 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
           <div>
             <p className="font-mono text-3xl font-black leading-none text-[#24312f]">{formatMoney(total)}</p>
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{totalLabel}</p>

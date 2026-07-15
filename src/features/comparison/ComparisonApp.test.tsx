@@ -559,6 +559,8 @@ describe("comparison condition controls", () => {
     expect(screen.getByAltText("Listing evidence photo: Nami OP01-016 SP Special Art")).toBeTruthy();
     expect(screen.getAllByText("Awakening Of The New Era · OP01-016 · SP CARD · Special Art (P4)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
+    const hero = screen.getByRole("article", { name: "Best-supported buy" });
+    expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[136px_minmax(0,1fr)]");
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));
     expect(screen.getByAltText("Listing evidence photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();

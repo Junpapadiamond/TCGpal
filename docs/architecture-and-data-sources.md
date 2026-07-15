@@ -21,7 +21,7 @@ REST routes ────┼── shared domain functions ── bounded provide
 MCP tools ──────┘
 ```
 
-`GET /api/agent/capabilities` publishes the versioned support matrix. `POST /mcp` uses Streamable HTTP through Vercel `mcp-handler`. MCP tool handlers validate public input with Zod, call the existing domain functions, and return bounded human-readable content plus machine-readable `structuredContent`. They intentionally omit the full technical trace.
+`GET /api/agent/capabilities` publishes the versioned support matrix. `POST /mcp` uses Streamable HTTP through Vercel `mcp-handler`. MCP tool handlers validate public input with Zod, call the existing domain functions, and return bounded human-readable content plus machine-readable `structuredContent`. Comparison contract v4 explicitly separates canonical identity confirmation and per-listing print proof from seller/photo purchase review. The MCP projection intentionally omits the full technical trace.
 
 Deep links call `buildAgentSearchUrl()` and reopen the existing website identity/gallery or exact-card flow. No credentials, seller identifiers, listing URLs, ZIP codes, private notes, or request bodies are placed in handoff URLs.
 
@@ -88,6 +88,7 @@ The response includes:
 - Pilot authentication: public/no-login with bounded execution and rate limiting.
 - Scale gate: add OAuth, API keys, or another per-user quota before unrestricted distribution.
 - Plugin: `plugins/tcglens`; repo marketplace: `.agents/plugins/marketplace.json`.
+- Current plugin version: `1.0.1`; comparison/identity report contract: v4.
 - v1 visual continuation: deep links. An inline MCP Apps / Apps SDK UI is a documented later phase.
 
 ## Analytics

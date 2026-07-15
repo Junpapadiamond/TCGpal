@@ -151,6 +151,9 @@ export function createTcglensToolHandlers(dependencies: ToolDependencies = {}) {
       if (!report.confirmedCard || report.status === "needs_confirmation") {
         throw new Error("TCGlens could not reload an exact card identity; no listing comparison was presented as exact.");
       }
+      if (report.confirmedCard.id !== input.confirmedCardId) {
+        throw new Error("TCGlens reloaded a different canonical card ID; no listing comparison was presented as exact.");
+      }
       return summarizeComparisonToolResult(report, input.game, buildDeepLink);
     },
 

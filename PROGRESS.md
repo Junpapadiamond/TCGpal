@@ -30,7 +30,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Known-bad live; remediation required | Fix positive-proof gates, then run a human-adjudicated corpus |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v4 repaired; launch sampling pending | Run the 30-listing human-adjudicated pilot corpus |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
@@ -60,7 +60,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - At least three voluntarily share a comparison receipt.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-IDENTITY" state="known-bad-live" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print" -->
+<!-- progress:workstream id="WS-IDENTITY" state="v4-repaired-sampling-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print" -->
 ## WS-IDENTITY - Exact-print accuracy
 
 ### Done
@@ -72,6 +72,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - eBay ePID use and TCGplayer product resolution abstain when exact identity cannot be proven.
 - Signed/serialized aliases normalize to strict facets; unsupported textured/stamped searches abstain rather than show siblings.
 - Vintage Base Set crosswalks rank the most specific TCGCSV group and reject loose collector-number collisions with another card name.
+- Shared collector-number parsing now owns zero-padding equivalence, boundary-safe matching, and conflicts across eBay, print fidelity, pasted/manual candidates, identity selection, crosswalk, and TCGCSV. Bubble Mew `232/91` accepts seller `232/091`; wrong numbers are explicit high-confidence mismatches.
+- One Piece positive proof now intersects evidence across every same-number sibling. Shared release/class wording and internal `_pN/_rN` IDs cannot prove a print; sibling/language/treatment conflicts veto acceptance.
+- Shared raw/slab detection covers PSA/BGS/CGC/SGC/ACE/TAG descriptor forms and ranking. MCP comparison/identity contract v4 and plugin 1.0.1 separate canonical print proof from seller/photo purchase review.
 
 ### What went wrong
 
@@ -80,13 +83,12 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Special suffixes such as _p2 are not universally manga; suffix semantics cannot be guessed.
 - Live diagnostics on 2026-07-12 reproduced cross-facet false positives for Nami `OP01-016_p4`, Nami `EB03-053_p2`, Robin `EB03-055_p2`, and Zoro siblings. Later market-floor hardening rejects implausibly cheap rows but does not repair the underlying artwork-facet proof gap.
 
-### Not finished or not verified
+### Current evidence and remaining gate
 
-- Verified: clean-worktree automated gates passed through 5315ba8: lint, typecheck, 44 test files / 473 tests, and build. Bilingual desktop/mobile identity and comparison-loader QA is recorded in VERIFICATION.
-- Known-bad: exact-print precision can still admit sibling artwork when shared release markers look unique inside an incorrectly prefiltered facet.
-- Unknown: representative live eBay recall, false exclusions, ePID coverage, and p95 latency across a 30-listing corpus.
-- Unknown: whether exact listings often fall below the bounded eBay item-detail enrichment window.
-- Required: live checks for reported Nami, Charmander, Portgas.D.Ace, manga, tournament, gold/silver, anniversary, and Pokemon variant cases.
+- Automated: 271 unsafe fixtures plus nine-family cross-sibling matrices admit zero substitutions. Six sealed holdout families report precision 1.0, recall 0.8919, abstention 0.1081, substitutions 0. The provisional 664-row title corpus accepts no sibling/unrelated/uncertain labels but has intentionally low title-only recall (0.06916).
+- Performance: classifier p99 0.0917 ms; hermetic full-comparison p95 changed +2.33%, within the 10% gate.
+- Official eBay Browse checks passed for Bubble Mew, Base Alakazam, Nami/Robin/Zoro, manga, anniversary, tournament, Winner, and graded/custom exclusions. Genuine evidence gaps still abstain.
+- Remaining: complete a human-adjudicated 30-listing production sample before claiming population accuracy; monitor live recall and the 12-item enrichment window. Gold/silver and broader market families retain automated coverage but still need periodic live sampling.
 
 ### Read first
 
@@ -274,7 +276,7 @@ MCP/plugin release commit `7d2d23b0f0e1f15299b28c38403ed536b76eb91f` is publishe
 
 Still not verified:
 
-- Representative live eBay recall and latency; exact-print precision remains known-bad for the cross-facet sibling cases above.
+- Population-level live eBay recall and precision remain unproven until the 30-listing human-adjudicated sample; the known cross-facet sibling reproductions are fixed in v4 and covered by zero-substitution regressions.
 - Human-adjudicated 30-listing quality gate.
 - Ten-buyer demand/usability pilot.
 - Monetization, distribution economics, and public-launch legal/provider readiness.
