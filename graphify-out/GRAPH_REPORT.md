@@ -1,7 +1,7 @@
 # Graph Report - TCGpal-exact-print-identity-v2  (2026-07-15)
 
 ## Corpus Check
-- 174 files · ~565,751 words
+- 174 files · ~565,473 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6ff92cd0`
+- Built from commit: `e136eafc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -441,7 +441,7 @@ Cohesion: 0.14
 Nodes (14): ACCEPTED, sealedFamilies, ACCEPTED, candidate(), classify(), corpusFamilies, assessPrintFidelity(), card (+6 more)
 
 ## Knowledge Gaps
-- **597 isolated node(s):** `This is NOT the Next.js you know`, `Product`, `Current Status`, `Product Guardrails`, `Data Boundaries` (+592 more)
+- **597 isolated node(s):** `BOOTSTRAP`, `TASK-INDEX`, `Big goals`, `Small measurable gates`, `Done` (+592 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -454,7 +454,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.046) - this node is a cross-community bridge._
 - **Why does `CardIdentityCandidate` connect `page.tsx` to `provider.ts`, `ebay.ts`, `tcgcsv.ts`, `ranking.ts`, `us-sales-tax.ts`, `web-marketplace-discovery.ts`, `listing-compare.test.ts`, `schemas.ts`, `compilerOptions`, `market-agent.ts`, `platforms.ts`, `TCGpal Agent Guide`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **What connects `This is NOT the Next.js you know`, `Product`, `Current Status` to the rest of the system?**
+- **What connects `BOOTSTRAP`, `TASK-INDEX`, `Big goals` to the rest of the system?**
   _597 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `comparison-qa.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.05128205128205128 - nodes in this community are weakly interconnected._
