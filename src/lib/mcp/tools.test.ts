@@ -87,7 +87,9 @@ describe("TCGlens MCP tool mappings", () => {
   });
 
   it("reloads an exact confirmed card through the shared comparison function", async () => {
-    const compare = vi.fn(async () => report());
+    const exactReport = report();
+    exactReport.confirmedCard = { ...exactReport.confirmedCard!, confidence: "low", matchReasons: ["Catalog reload did not preserve query confidence."] };
+    const compare = vi.fn(async () => exactReport);
     const handlers = createTcglensToolHandlers({ compare });
     const result = await handlers.tcglens_compare_card({ confirmedCardId: "sv3pt5-199", game: "pokemon", desiredCondition: "Near Mint", postalCode: "10001" });
 
@@ -96,9 +98,35 @@ describe("TCGlens MCP tool mappings", () => {
       buyer: expect.objectContaining({ postalCode: "10001", desiredCondition: "Near Mint" }),
     }), expect.any(Object));
     expect(result.structuredContent).toMatchObject({
+      comparisonContractVersion: 4,
       outcome: "best_buy",
-      card: { id: "sv3pt5-199", cardNumber: "199/165" },
-      listing: { checkoutCost: 439.69, claimedCondition: "Near Mint" },
+      identityConfirmation: {
+        confirmed: true,
+        method: "canonical_id_reload",
+        canonicalCardId: "sv3pt5-199",
+        confidence: "high",
+        reasonCode: "canonical_id_reloaded",
+      },
+      card: { id: "sv3pt5-199", cardNumber: "199/165", confidence: "high" },
+      listing: {
+        title: "Charizard ex 199/165 Near Mint raw",
+        checkoutCost: 439.69,
+        claimedCondition: "Near Mint",
+        identity: {
+          printMatch: "exact",
+          confidence: "high",
+          reasonCodes: ["pokemon_full_number_and_name_match"],
+          priceGuard: "none",
+          proven: true,
+        },
+        purchaseReview: {
+          eligible: true,
+          sellerRisk: "some_risk",
+          sellerTrustScore: 90,
+          evidenceCompletenessScore: 60,
+          evidenceCautions: ["closeups"],
+        },
+      },
       tcglensUrl: expect.stringContaining("card=sv3pt5-199"),
     });
     expect(JSON.stringify(result)).not.toContain("EBAY_CLIENT_SECRET");
@@ -150,7 +178,8 @@ function report(): ComparisonReport {
 function listingFor(cardValue: CardIdentityCandidate): NormalizedListing {
   return {
     id: "listing-1", marketplace: "eBay", url: "https://www.ebay.com/itm/123", title: "Charizard ex 199/165 Near Mint raw", cardId: cardValue.id,
-    matchConfidence: "high", matchReasons: ["Exact identity."], matchAspectText: "", active: true, raw: true, currency: "USD", price: 405,
+    matchConfidence: "high", matchReasons: ["Exact identity."], printMatch: "exact", printMatchConfidence: "high",
+    printMatchReasons: ["pokemon_full_number_and_name_match"], printPriceGuard: "none", matchAspectText: "", active: true, raw: true, currency: "USD", price: 405,
     shipping: 0, costComplete: true, estimatedTax: 34.69, preTaxTotal: 405, estimatedLandedCost: 439.69, claimedCondition: "Near Mint", listingLanguage: "English",
     imageUrl: cardValue.imageUrl, seller: { feedbackPercentage: 99.9, feedbackCount: 2000, returnsAccepted: true, topRated: true, buyerProtection: true, subRatings: null },
     evidence: { photoCount: 4, frontBackExplicit: true, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: true, substantiveConditionNotes: false, missing: ["closeups"] },

@@ -544,7 +544,7 @@ describe("comparison condition controls", () => {
         candidates: [listing, alternative],
         rankedChoices: rankListings([listing, alternative], { marketPrice: 130 }),
         outcome: "best_buy",
-        identityContractVersion: 3,
+        identityContractVersion: 4,
       };
       return new Response(JSON.stringify(report), { status: 200, headers: { "Content-Type": "application/json" } });
     });
@@ -644,7 +644,7 @@ describe("comparison condition controls", () => {
         candidates: [listing],
         outcome: "inspect_first",
         inspectListingId: listing.id,
-        identityContractVersion: 3,
+        identityContractVersion: 4,
       } satisfies ComparisonReport), { status: 200, headers: { "Content-Type": "application/json" } });
     }));
     render(<ComparisonApp />);
@@ -670,7 +670,7 @@ describe("comparison condition controls", () => {
         status: "partial",
         outcome: "next_moves",
         inspectListingId: null,
-        identityContractVersion: 3,
+        identityContractVersion: 4,
         abstention: {
           reason: "Found listings, but none matched the selected SP print.",
           foundCount: 2,

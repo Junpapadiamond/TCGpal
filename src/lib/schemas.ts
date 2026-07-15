@@ -126,7 +126,7 @@ export const agentCapabilitiesSchema = z.object({
   maxDiscoveryResults: z.literal(5),
   identityContractVersion: z.literal(1),
   discoveryContractVersion: z.literal(1),
-  comparisonContractVersion: z.literal(3),
+  comparisonContractVersion: z.literal(4),
   handoffContractVersion: z.literal(1),
   sourceAccess: z.object({
     live: z.array(z.object({
@@ -483,20 +483,20 @@ export const comparisonReportSchema = z.object({
   abstention: comparisonAbstentionSchema.nullable().optional(),
   outcome: z.enum(["best_buy", "inspect_first", "next_moves"]).optional(),
   inspectListingId: z.string().nullable().optional(),
-  identityContractVersion: z.literal(3).optional(),
+  identityContractVersion: z.literal(4).optional(),
   demoMode: z.boolean(),
   generatedAt: z.string(),
 }).superRefine((report, ctx) => {
-  if (report.identityContractVersion !== 3) return;
+  if (report.identityContractVersion !== 4) return;
   if (!report.outcome) {
-    ctx.addIssue({ code: "custom", path: ["outcome"], message: "A v3 report requires an explicit outcome." });
+    ctx.addIssue({ code: "custom", path: ["outcome"], message: "A v4 report requires an explicit outcome." });
   }
   for (const [index, candidate] of report.identityCandidates.entries()) {
     if (!candidate.printIdentity) {
       ctx.addIssue({
         code: "custom",
         path: ["identityCandidates", index, "printIdentity"],
-        message: "A v3 identity candidate requires canonical print identity.",
+        message: "A v4 identity candidate requires canonical print identity.",
       });
     }
   }
@@ -504,7 +504,7 @@ export const comparisonReportSchema = z.object({
     ctx.addIssue({
       code: "custom",
       path: ["confirmedCard", "printIdentity"],
-      message: "A v3 confirmed card requires canonical print identity.",
+      message: "A v4 confirmed card requires canonical print identity.",
     });
   }
   for (const [index, listing] of report.candidates.entries()) {
@@ -512,7 +512,7 @@ export const comparisonReportSchema = z.object({
       ctx.addIssue({
         code: "custom",
         path: ["candidates", index, "printMatch"],
-        message: "A v3 candidate requires complete print assessment fields.",
+        message: "A v4 candidate requires complete print assessment fields.",
       });
     }
     if (listing.eligible && listing.printMatch !== "exact" && listing.printMatch !== "compatible") {

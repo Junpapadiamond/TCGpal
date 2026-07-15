@@ -21,7 +21,7 @@ describe("agent capabilities", () => {
       maxDiscoveryResults: 5,
       identityContractVersion: 1,
       discoveryContractVersion: 1,
-      comparisonContractVersion: 3,
+      comparisonContractVersion: 4,
       handoffContractVersion: 1,
     });
     expect(capabilities.sourceAccess.live).toContainEqual({

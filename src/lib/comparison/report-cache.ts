@@ -13,7 +13,7 @@ const COMPARISON_CACHE_REVISION = "ranking-v3";
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
   return [
-    "identity-v3",
+    "identity-v4",
     COMPARISON_CACHE_REVISION,
     ONE_PIECE_PRINT_METADATA_REVISION,
     confirmedCardId,
@@ -39,7 +39,7 @@ export async function getCachedComparison(key: string, now: Date = new Date()): 
     now,
     validate(value) {
       const parsed = comparisonReportSchema.safeParse(value);
-      return parsed.success && parsed.data.identityContractVersion === 3 ? parsed.data : null;
+      return parsed.success && parsed.data.identityContractVersion === 4 ? parsed.data : null;
     },
   });
 }
@@ -47,7 +47,7 @@ export async function getCachedComparison(key: string, now: Date = new Date()): 
 export async function setCachedComparison(key: string, report: ComparisonReport, now: Date = new Date()) {
   // Only cache reports built from live data; demo fixtures and failed runs
   // should re-attempt the live sources on the next request.
-  if (report.demoMode || report.status === "needs_confirmation" || report.identityContractVersion !== 3) return;
+  if (report.demoMode || report.status === "needs_confirmation" || report.identityContractVersion !== 4) return;
   await setJsonCache(CACHE_SCOPE, key, report, { ttlSeconds: CACHE_TTL_SECONDS, now });
 }
 

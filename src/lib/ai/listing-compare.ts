@@ -132,7 +132,7 @@ export async function runListingComparison(
       webDiscoveries: [],
       outcome: "next_moves",
       inspectListingId: null,
-      identityContractVersion: 3,
+      identityContractVersion: 4,
       demoMode: getConfiguredPlatformAgents().length === 0,
       generatedAt,
     });
@@ -359,7 +359,7 @@ export async function runListingComparison(
     abstention,
     outcome,
     inspectListingId: outcome === "inspect_first" ? inspectLead?.id ?? null : null,
-    identityContractVersion: 3,
+    identityContractVersion: 4,
     demoMode,
     generatedAt,
   });

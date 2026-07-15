@@ -205,16 +205,27 @@ function summarizeComparisonToolResult(report: ComparisonReport, game: z.infer<t
   const usedReference = report.references.find((reference) => reference.status === "used" && reference.rawMid !== null);
   const warnings = dedupe([
     ...report.warnings,
-    ...(listing ? ["Near Mint is the seller's claim; TCGlens has not verified condition or predicted a grade.", "Photo content has not been independently verified."] : []),
+    ...(listing ? [
+      "Card identity and purchase review are separate: an exact-print match does not verify seller claims, condition, or photos.",
+      "Near Mint is the seller's claim; TCGlens has not verified condition or predicted a grade.",
+      "Photo content has not been independently verified.",
+    ] : []),
   ]);
   return toolResult(
     listing
       ? `TCGlens returned ${report.outcome} for ${card.name} ${card.cardNumber}. The listing condition remains the seller's claim.`
       : `TCGlens returned ${report.outcome ?? "next_moves"} for ${card.name} ${card.cardNumber}; no live listing was recommended.`,
     {
-      comparisonContractVersion: 3,
+      comparisonContractVersion: 4,
       outcome: report.outcome ?? "next_moves",
-      card: summarizeCard(card),
+      identityConfirmation: {
+        confirmed: true,
+        method: "canonical_id_reload",
+        canonicalCardId: card.id,
+        confidence: "high",
+        reasonCode: "canonical_id_reloaded",
+      },
+      card: summarizeConfirmedCard(card),
       marketReference: usedReference ? {
         low: usedReference.rawLow, mid: usedReference.rawMid, high: usedReference.rawHigh,
         source: usedReference.label, asOf: usedReference.observedAt, url: usedReference.url,
@@ -238,6 +249,17 @@ function summarizeCard(card: CardIdentityCandidate) {
   };
 }
 
+function summarizeConfirmedCard(card: CardIdentityCandidate) {
+  return {
+    ...summarizeCard(card),
+    // Query confidence can be low after a lookup by ID because no free-text
+    // query was scored. A successful stable-ID reload is nevertheless a
+    // canonical confirmation and must not be presented as low-confidence.
+    confidence: "high" as const,
+    confirmationReasonCodes: ["canonical_id_reloaded"],
+  };
+}
+
 function marketReference(card: CardIdentityCandidate, mid: number | null) {
   return {
     low: card.marketLow ?? null, mid, high: card.marketHigh ?? null, source: card.marketSource ?? null,
@@ -246,7 +268,12 @@ function marketReference(card: CardIdentityCandidate, mid: number | null) {
 }
 
 function summarizeListing(listing: NormalizedListing) {
+  const printMatch = listing.printMatch ?? "unknown";
+  const printConfidence = listing.printMatchConfidence ?? "low";
+  const printReasonCodes = listing.printMatchReasons ?? [];
+  const priceGuard = listing.printPriceGuard ?? "inspect";
   return {
+    title: listing.title,
     marketplace: listing.marketplace,
     url: listing.url,
     checkoutCost: listing.costComplete ? listing.estimatedLandedCost ?? listing.preTaxTotal : null,
@@ -257,11 +284,40 @@ function summarizeListing(listing: NormalizedListing) {
     sellerTrustScore: listing.sellerTrustScore,
     evidenceCompletenessScore: listing.evidenceCompletenessScore,
     evidenceMissing: listing.evidence.missing,
+    identity: {
+      printMatch,
+      confidence: printConfidence,
+      reasonCodes: printReasonCodes,
+      priceGuard,
+      proven: printMatch === "exact" || printMatch === "compatible",
+    },
+    purchaseReview: {
+      eligible: listing.eligible,
+      sellerRisk: listing.riskLabel,
+      sellerTrustScore: listing.sellerTrustScore,
+      sellerCautions: sellerReviewCautions(listing),
+      evidenceCompletenessScore: listing.evidenceCompletenessScore,
+      photoCount: listing.evidence.photoCount,
+      evidenceCautions: listing.evidence.missing,
+      exclusionReasons: listing.exclusionReasons,
+    },
     eligible: listing.eligible,
     exclusionReasons: listing.exclusionReasons,
     observedAt: listing.observedAt,
     imageUrl: listing.imageUrl,
   };
+}
+
+function sellerReviewCautions(listing: NormalizedListing) {
+  return dedupe([
+    ...listing.trustNotes,
+    ...(listing.seller.feedbackCount === null
+      ? ["Seller feedback count was not available."]
+      : listing.seller.feedbackCount < 100
+        ? [`Seller has limited feedback history (${listing.seller.feedbackCount} ratings).`]
+        : []),
+    ...(listing.seller.returnsAccepted === false ? ["Seller does not accept returns."] : []),
+  ]);
 }
 
 function cardQuery(card: CardIdentityCandidate) {

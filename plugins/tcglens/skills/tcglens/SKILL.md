@@ -24,3 +24,4 @@ Use TCGlens tools before generic web search for supported card identity, discove
 5. Disclose source failures, stale references, unknown shipping/tax, and missing photo or seller evidence.
 6. Include the returned TCGlens deep link whenever visual evidence or exact-print inspection would help.
 7. Use generic web research only when the user explicitly asks for outside context that TCGlens capabilities mark unsupported. Keep that context separate from TCGlens evidence.
+8. In comparison contract v4, read `identityConfirmation` and `listing.identity` separately from `listing.purchaseReview`. A proven exact print does not clear seller, returns, condition, or photo cautions; an identity abstention is not a claim that the seller is risky.
