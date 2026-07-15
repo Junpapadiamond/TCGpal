@@ -483,6 +483,35 @@ describe("eBay active-listing search", () => {
     expect(results[0]?.matchAspectText).toBe("");
   });
 
+  it("marks TAG slabs non-raw and skips item-detail enrichment", async () => {
+    let detailCalls = 0;
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ itemSummaries: [{
+            itemId: "tag-1",
+            title: "Umbreon VMAX 215/203 TAG 8.5",
+            condition: "Graded",
+            price: { value: "420.00", currency: "USD" },
+          }] }),
+        } as Response;
+      }
+      detailCalls += 1;
+      return { ok: false, status: 500, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(card, buyer, fetcher);
+
+    expect(detailCalls).toBe(0);
+    expect(results[0]?.raw).toBe(false);
+  });
+
   it("caches the OAuth token across requests instead of refetching it every time", async () => {
     let tokenCalls = 0;
     const fetcher = (async (input: RequestInfo | URL) => {

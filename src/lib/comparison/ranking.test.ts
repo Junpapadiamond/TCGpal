@@ -354,6 +354,17 @@ describe("comparison ranking", () => {
     }
   });
 
+  it("excludes TAG slabs from raw-single ranking", () => {
+    const graded = normalizeListing({
+      listing: { ...demoListingSeeds[0], id: "tag-slab", title: "Mew ex 232/091 TAG 8.5" },
+      buyer,
+    });
+
+    expect(graded.raw).toBe(false);
+    expect(graded.eligible).toBe(false);
+    expect(graded.exclusionReasons).toContain("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
+  });
+
   // The same card number spans a base print and its (pricier) alternate arts, so a
   // comparison must stay on the confirmed side of that line.
   const ebayListing = {

@@ -6,6 +6,7 @@ import {
   collectorNumberNumerator,
   collectorNumberPattern,
 } from "@/lib/comparison/collector-number";
+import { isGradedListing } from "@/lib/comparison/graded-listing";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -322,7 +323,7 @@ export async function searchEbayAlternatives(
     .filter((item) => {
       const match = assessTitleMatch(item.title, card);
       return match.confidence !== "low"
-        && !/\b(psa|bgs|cgc|sgc|ace)[\s:._#-]*\d|\bgraded\s*\d|\bslab(?:bed)?\b/i.test(item.title);
+        && !isGradedListing(item.title);
     })
     .slice(0, 12);
   const details = await Promise.all(detailTargets.map(async (item) => {
@@ -610,7 +611,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     matchConfidence: match.confidence,
     matchReasons: searchNote ? [searchNote, ...match.reasons] : match.reasons,
     active: source.active,
-    raw: !/\b(psa|bgs|cgc|sgc|ace)[\s:._#-]*\d|\bgraded\s*\d|\bslab(?:bed)?\b/i.test(title),
+    raw: !isGradedListing(title),
     currency: "USD" as const,
     price: source.price ?? 0,
     shipping: source.shipping,

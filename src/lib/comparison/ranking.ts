@@ -17,16 +17,9 @@ import {
   PRINT_IDENTITY_EXCLUDE_RATIO,
   type PrintFidelityAssessment,
 } from "@/lib/comparison/print-fidelity";
+import { isGradedListing } from "@/lib/comparison/graded-listing";
 
 const exclusionPatterns = [
-  // Graded slabs. The grade can be joined to the grader by a space, colon, hash,
-  // or nothing at all in real titles ("PSA 10", "CGC: 9", "BGS9.5", "PSA#10"), so
-  // the separator is optional and permissive — but a digit must follow so a bare
-  // brand mention never trips it. A separate "graded 9" guard covers the spelled-out
-  // form without catching "ungraded"/"not graded" (no digit follows those).
-  /\b(psa|bgs|cgc|sgc|ace)[\s:._#-]*\d/i,
-  /\bgraded\s*\d/i,
-  /\bslab(?:bed)?\b/i,
   /\bsealed\b/i,
   /\bbooster\b/i,
   /\blot\b/i,
@@ -382,6 +375,7 @@ export function normalizeListing(input: {
   const conditionCompatibilityScore = calculateConditionCompatibilityScore(listing.claimedCondition, buyer.desiredCondition);
   const safetyScore = Math.round((sellerTrustScore * SAFETY_WEIGHTS.seller) + (evidenceCompletenessScore * SAFETY_WEIGHTS.evidence));
   const marketPrice = input.marketPrice ?? null;
+  const raw = listing.raw && !isGradedListing(listing.title);
   const matchText = [listing.title, listing.matchAspectText].filter(Boolean).join(" ").trim();
   const printAssessment = input.confirmedCard
     ? assessPrintFidelity({
@@ -411,7 +405,7 @@ export function normalizeListing(input: {
     evidenceCompletenessScore,
   });
   const exclusionReasons = getExclusionReasons(
-    listing,
+    { ...listing, raw },
     buyer,
     marketPrice,
     input.variantIntent ?? null,
@@ -442,6 +436,7 @@ export function normalizeListing(input: {
 
   return normalizedListingSchema.parse({
     ...listing,
+    raw,
     printMatch: printAssessment?.match ?? "unknown",
     printMatchConfidence: printAssessment?.confidence ?? "low",
     printMatchReasons: printAssessment?.reasons ?? ["print_identity_not_assessed"],
@@ -632,7 +627,9 @@ function getExclusionReasons(
       reasons.push(`Title itself mentions ${conditionFloor} — a stated condition range counts as its worst case; the buyer requested ${buyer.desiredCondition} or better.`);
     }
   }
-  if (exclusionPatterns.some((pattern) => pattern.test(listing.title))) reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
+  if (isGradedListing(listing.title) || exclusionPatterns.some((pattern) => pattern.test(listing.title))) {
+    reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
+  }
   const marketFloorApplies = buyer.desiredCondition === "Near Mint" || buyer.desiredCondition === "Lightly Played";
   // Exact-print evidence proves identity, not commercial plausibility. Keep the
   // conservative floor active even after strict print confirmation so auctions,

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CardIdentityCandidate, ListingSeed, Marketplace, WebDiscovery, WebDiscoveryProvider } from "@/lib/schemas";
+import { isGradedListing } from "@/lib/comparison/graded-listing";
 
 const SEARCH_TIMEOUT_MS = 5000;
 const RESULTS_PER_TARGET = 3;
@@ -303,7 +304,7 @@ function resultSeemsCardRelevant(text: string, query: string) {
 }
 
 function isGradedOrSlabResult(value: string) {
-  return /\b(psa|bgs|cgc|sgc|graded|slab|gem\s*mint)\b|鑑定/i.test(value);
+  return isGradedListing(value) || /\bgem\s*mint\b|鑑定/i.test(value);
 }
 
 function hasSoldOrClosedSignal(value: string) {

@@ -57,7 +57,7 @@ const LANGUAGE_TOKENS: Array<{ pattern: RegExp; language: string }> = [
   { pattern: /\bkorean\b/i, language: "Korean" },
 ];
 
-const GRADING_COMPANY_PATTERN = /\b(psa|bgs|cgc|sgc)\s*(\d{1,2}(?:\.\d)?)\b/i;
+const GRADING_COMPANY_PATTERN = /\b(psa|bgs|cgc|sgc|ace|tag)\s*(\d{1,2}(?:\.\d)?)\b/i;
 
 // Longest/most-specific phrases first so "Trainer Gallery" matches whole rather
 // than leaving a dangling "Gallery".

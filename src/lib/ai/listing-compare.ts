@@ -24,6 +24,7 @@ import {
   collectorNumberPattern,
   collectorNumbersEquivalent,
 } from "@/lib/comparison/collector-number";
+import { isGradedListing } from "@/lib/comparison/graded-listing";
 import {
   comparisonCacheKey,
   getCachedComparison,
@@ -994,7 +995,7 @@ function sourceToSeed(
         ? ["Confirmed collector number appears in the listing."]
         : ["User confirmed the card identity."],
     active: source.active,
-    raw: !/\b(psa|bgs|cgc|sgc)\s*\d|\bslab(?:bed)?\b/i.test(titleText),
+    raw: !isGradedListing(titleText),
     currency: "USD",
     price: source.price,
     shipping: source.shipping,
@@ -1047,7 +1048,7 @@ function manualCandidatesToSeeds(
       matchConfidence: explicitNumber ? "high" : "medium",
       matchReasons: [`Listing you entered from ${candidate.marketplace}.`],
       active: true,
-      raw: !/\b(psa|bgs|cgc|sgc)\s*\d|\bslab(?:bed)?\b/i.test(titleText),
+      raw: !isGradedListing(titleText),
       currency: "USD",
       price: candidate.price,
       shipping: candidate.shipping,
@@ -1436,7 +1437,7 @@ function numberOrNull(value: unknown) {
 
 function cleanCardName(title: string) {
   return title
-    .replace(/\b(psa|bgs|cgc|sgc)\s*\d+(?:\.\d+)?\b/gi, "")
+    .replace(/\b(psa|bgs|cgc|sgc|ace|tag)[\s:._#-]*\d+(?:\.\d+)?\b/gi, "")
     .replace(/\b\d{1,3}\/\d{1,3}\b/g, "")
     .replace(/\b(nm|lp|mp|hp|mint|raw|pokemon|card)\b/gi, "")
     .replace(/\s+/g, " ")
