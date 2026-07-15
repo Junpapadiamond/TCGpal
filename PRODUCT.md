@@ -10,7 +10,7 @@ U.S. raw-single trading-card buyers who already know the card they want and need
 
 ## Product Purpose
 
-TCGpal is an evidence-backed listing comparison tool. It confirms the exact card/version, fans out across configured concrete-listing sources, ranks condition-compatible listings by complete comparable cost, seller trust, and reviewable evidence, then returns one recommended buy with lens toggles for cheapest, safest, and best-documented alternatives. It should also abstain clearly when no listing is comparable.
+TCGlens is an evidence-backed listing comparison tool. It confirms the exact card/version, fans out across configured concrete-listing sources, ranks condition-compatible listings by complete comparable cost, seller trust, and reviewable evidence, then returns one recommended buy with lens toggles for cheapest, safest, and best-documented alternatives. It should also abstain clearly when no listing is comparable.
 
 Success means the buyer understands the recommendation, the sources, the assumptions, the missing information, and the confidence level without mistaking aggregate references or manual links for fetched seller inventory.
 
@@ -18,7 +18,7 @@ Success means the buyer understands the recommendation, the sources, the assumpt
 
 Careful, plainspoken, warm.
 
-TCGpal should feel like a knowledgeable collecting friend who is allergic to fake certainty: calm enough to trust, detailed enough to audit, and light enough that checking a card does not feel like reading a tax filing.
+TCGlens should feel like a knowledgeable collecting friend who is allergic to fake certainty: calm enough to trust, detailed enough to audit, and light enough that checking a card does not feel like reading a tax filing.
 
 ## Anti-references
 

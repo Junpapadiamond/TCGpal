@@ -1,8 +1,8 @@
-# TCGpal Validation Plan
+# TCGlens Validation Plan
 
 ## Question
 
-Will U.S. Pokémon and One Piece raw-single buyers trust TCGpal to replace part of their manual pre-purchase comparison workflow?
+Will U.S. Pokémon and One Piece raw-single buyers trust TCGlens to replace part of their manual pre-purchase comparison workflow?
 
 ## Pilot
 

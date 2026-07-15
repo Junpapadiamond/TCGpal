@@ -19,7 +19,7 @@ One listing may lead several lenses. The app can also abstain when condition or 
 - Optional PriceCharting reference pricing
 - Deterministic condition compatibility, complete-cost, seller-trust, evidence, eligibility, and ranking rules
 - Optional grounded listing Q&A; the initial comparison does not wait for model allocation or narrative
-- Labeled demo inventory only when no live or user-supplied listing exists
+- Honest `next_moves` results when no live or user-supplied listing is available; demo inventory is test-only
 - Privacy-restricted PostHog custom events
 
 ## Setup
@@ -32,7 +32,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The labeled demo works without credentials. Add eBay credentials for live active listings; TCGCSV is keyless reference data.
+The app works without marketplace credentials and returns an honest empty/`next_moves` result. Add eBay credentials for live active listings; TCGCSV is keyless reference data.
 
 ## Environment
 
@@ -113,7 +113,7 @@ https://tcgpal.vercel.app/?agent=1&game=onePiece&q=P-096%20Monkey.D.Luffy&card=P
 - `q` is the normalized human-readable identity (name, card number, language,
   and variant when visible).
 - `card` is optional. Include it only when the exact catalog ID is known; when
-  omitted, TCGpal keeps its normal exact-version confirmation step.
+  omitted, TCGlens keeps its normal exact-version confirmation step.
 - `auto=0` optionally fills the form without starting the search. By default the
   handoff searches immediately.
 
@@ -147,15 +147,18 @@ and never substitutes a prediction or sold-history claim for missing evidence.
 
 ## Verification
 
+`AGENTS.md` defines change-scoped verification. The full product/runtime release gate is:
+
 ```bash
 npm run lint
 npm run typecheck
 npm run test
 npm run build
-python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/tcglens
 ```
 
 `npm run test` includes the standard multi-card product flow in `src/lib/testing/standard-comparison-flow.ts`: five sequential card searches across Pokémon and One Piece, exercising both Edit and New search transitions.
+
+Documentation-only changes use document checks instead of the application gate. Validate `plugins/tcglens` separately when plugin files or exposed contracts change.
 
 ## Product boundaries
 

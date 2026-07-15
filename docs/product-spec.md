@@ -1,4 +1,4 @@
-# TCGpal v1 Product Spec
+# TCGlens v1 Product Spec
 
 ## Product thesis
 
@@ -20,7 +20,7 @@ MCP does not introduce a second ranking path. It maps tool inputs into the same 
 ### Proven, Better, New
 
 - Proven: high-intent buyers already compare TCGplayer price context with eBay listing photos, seller records, and shipping.
-- Better: TCGpal keeps exact version, minimum condition, complete comparable cost, seller trust, and evidence in one transparent receipt.
+- Better: TCGlens keeps exact version, minimum condition, complete comparable cost, seller trust, and evidence in one transparent receipt.
 - New: a grounded per-listing decision assistant explains the deterministic result without overriding it.
 
 ## Primary user
@@ -30,15 +30,15 @@ U.S. Pokémon and One Piece raw-single buyers, beginning with higher-considerati
 ## Core journey
 
 1. The buyer enters a card name, ideally with collector number, and chooses a minimum seller-stated condition.
-2. TCGpal auto-confirms explicit identities or pauses for one-tap version confirmation.
+2. TCGlens auto-confirms explicit identities or pauses for one-tap version confirmation.
 3. The official eBay adapter resolves an ePID when Catalog coverage exists, then returns concrete active Browse listings; TCGCSV resolves a separate aggregate market reference.
 4. Deterministic rules remove incompatible, incomplete, and ineligible rows.
-5. TCGpal returns one recommendation with four independently computed lenses:
+5. TCGlens returns one recommendation with four independently computed lenses:
    - Best Value
    - Cheapest complete comparable cost
    - Safest seller-and-evidence profile
    - Best documented / most reviewable evidence
-6. One listing may win multiple lenses. If no row has compatible condition and known shipping, TCGpal abstains.
+6. One listing may win multiple lenses. If no row has compatible condition and known shipping, TCGlens abstains.
 7. Every listing can open a listing-and-lens-specific explanation. Sources, assumptions, skipped rows, and the technical trace remain inspectable.
 
 ## Ranking definitions
@@ -47,7 +47,7 @@ Eligible candidates must be concrete active raw singles in USD with a high-confi
 
 `preTaxTotal = price + shipping`
 
-When shipping is known and the user supplies or TCGpal estimates a rate:
+When shipping is known and the user supplies or TCGlens estimates a rate:
 
 `estimatedTax = preTaxTotal × taxRate`
 
@@ -70,6 +70,8 @@ Best Value uses independent components:
 `0.40 × price + 0.25 × conditionCompatibility + 0.20 × sellerTrust + 0.15 × evidenceCompleteness`
 
 Each lens ranks the full eligible set independently; uniqueness is never forced.
+
+Every ranked choice states its position against the market reference when one exists. If every comparable listing is above market, the cheapest lens must say supply is thin rather than implying a bargain.
 
 ## Non-goals
 

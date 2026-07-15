@@ -35,7 +35,7 @@ Deep links call `buildAgentSearchUrl()` and reopen the existing website identity
 | One Piece catalog | Catalog identity and card images | Yes | Bundled catalog + adapter |
 | TCGCSV | TCGplayer product crosswalk and aggregate market reference | Yes | Keyless; never ranked as seller inventory |
 | PriceCharting | Reference price context | Yes | Optional token; not a guaranteed sale price |
-| eBay sold search | Manual verification link | No | TCGpal does not fetch the result |
+| eBay sold search | Manual verification link | No | TCGlens does not fetch the result |
 | TCGplayer | User-supplied candidate | No | New API access is not assumed |
 | Facebook / Reddit | User-supplied candidate | No | Trust signals must be entered by the user |
 | Mercari / Whatnot | User-supplied candidate | No | No automated v1 adapter |
@@ -67,13 +67,15 @@ The response includes:
 - Search-discovered and unsupported URLs are never fetched or ranked.
 - API keys remain server-side.
 - Provider requests use timeouts and fresh fetches.
-- Missing eBay credentials load labeled fixtures only when no user-supplied row exists.
+- Missing eBay credentials produce a visible unavailable/skipped source and an honest empty result unless the user supplied a concrete listing. Demo fixtures remain test-only.
 - Missing reference data produces a warning, not a fabricated value.
 - Existing localStorage keys from the previous product are ignored but not deleted.
 
 ## Operations
 
 - `src/lib/ops/*` owns request IDs, rate limiting, shared JSON cache, structured operational events, and Sentry capture.
+- Pure card searches cache successful live reports for 15 minutes by card, condition, and delivery context. Demo, confirmation-required, and incompatible contract-version reports are not cached.
+- Catalog lookups retry once with bounded per-attempt timeouts; provider failures remain isolated and visible.
 - Upstash Redis is optional. When `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are absent or fail, rate limiting and report caching fall back to bounded in-process memory.
 - Cache and rate-limit keys hash buyer/card context before backend storage; raw ZIPs, card names, URLs, listing text, seller identifiers, and images are not operational keys or log fields.
 - Sentry initializes only when a DSN is configured; source maps upload only when `SENTRY_AUTH_TOKEN` is present.

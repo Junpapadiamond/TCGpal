@@ -4,11 +4,11 @@
 This project uses Next.js 16. Read the relevant guide in `node_modules/next/dist/docs/` before framework-level changes and heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# TCGpal Agent Guide
+# TCGlens Agent Guide
 
 ## Product
 
-TCGpal is an evidence-backed listing comparison tool for U.S. trading-card raw-single buyers. Pokémon and One Piece are live; more TCGs are planned.
+TCGlens is an evidence-backed listing comparison tool for U.S. trading-card raw-single buyers. Pokémon and One Piece are live; more TCGs are planned. `TCGpal` remains the repository and legacy path name; use `TCGlens` for current product-facing copy and do not mechanically rename paths or historical artifacts.
 
 The primary flow is intentionally narrow and **card-first** (the buyer already knows the card; we find and rank the listings):
 
@@ -17,32 +17,21 @@ The primary flow is intentionally narrow and **card-first** (the buyer already k
 3. The agent fans out over configured concrete-listing platform agents (eBay Browse today), ranks condition-compatible listings with complete comparable cost, and shows source failures instead of hiding them. TCGplayer/TCGCSV remains a separate aggregate market reference.
 4. Return **one recommended buy** (default: Best Value: complete cost, condition fit, seller trust, and evidence combined) with a lens toggle to **Cheapest / Safest / Best-documented**. Lenses are independent and may select the same listing; the product abstains when no listing is comparable.
 
-TCGpal is not a price predictor, grading app, investment advisor, marketplace scraper, or generic collecting dashboard. It accelerates a decision the buyer has already made; it does not make the choice for them.
+TCGlens is not a price predictor, grading app, investment advisor, marketplace scraper, or generic collecting dashboard. It accelerates a decision the buyer has already made; it does not make the choice for them.
 
-## Current Status
+## Stable Runtime Contract
 
-- The app opens directly to the card-search form; there is no login or onboarding gate.
-- Raw singles in USD are the supported product category, across multiple TCGs. Pokémon (Pokémon TCG API) and One Piece (OPTCG adapter + bundled catalog) are wired end-to-end; the game toggle selects which. More games are planned.
-- **One live concrete-listing source plus one aggregate reference today.** eBay Browse `item_summary/search` supplies active seller listings (production keyset: `EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`/`EBAY_MARKETPLACE_ID` in `.env.local`; validate with `node scripts/check-ebay.mjs`). Official eBay Catalog `product_summary/search` is used only to resolve product identity metadata/ePID for confirmed cards; it is not a listing source. TCGplayer via the keyless TCGCSV daily dump supplies the crosswalk and market reference only; it never becomes a seller listing or ranking candidate.
-- A **canonical card crosswalk** (`src/lib/comparison/crosswalk.ts`, 6h in-memory cache) maps the confirmed catalog card id → eBay ePID + query fallback + TCGplayer product id. TCGCSV category is inferred from the confirmed card: Pokémon uses category `3`; One Piece uses category `68`. A missing crosswalk match degrades the market reference and/or eBay product-ID search visibly — never a hard failure.
-- The **market anchor** is the TCGplayer daily feed ("prices as of" freshness shown; >48h stale warns visibly) when the crosswalk resolves, else the inline pokemontcg.io TCGplayer price (`marketSource: "tcgcsv" | "pokemontcg"` on the confirmed card). It powers the vs-market read and the below-market eligibility filter.
-- **Paste-a-URL** (`src/lib/external/universal-listing.ts`): a listing URL from any marketplace is fetched once — user-initiated, exactly that page, robots.txt honored, https/public hosts only, size/time bounded — extracted deterministically (JSON-LD/meta first) with optional LLM gap-filling, identity-checked against the confirmed card (mismatch → excluded from the recommendation with a warning), and labeled "user-added". Extraction failure falls back to the user's typed facts.
-- **Risk calibration: unknown ≠ risky.** Missing seller data yields a neutral `unverified` risk label plus a platform-baseline trust prior (`getPlatformTrustPrior` in `ranking.ts`, documented in per-listing `trustNotes`) — never "higher risk". Known signals earn their points; unknown signals earn at the platform's prior rate. The risk label tracks seller track record only; evidence thinness has its own verdict.
-- Catalog lookups retry once with a short backoff and an 8s per-attempt ceiling; a failed comparison shows a one-tap Retry that reuses the exact request.
-- Pure card searches (no user-supplied listing facts) are cached 15 minutes keyed by card + condition + delivery context (`src/lib/comparison/report-cache.ts`).
-- Ranked choices state above-market context explicitly ("+N% over the market reference"); when everything is above market the cheapest lens says supply is thin.
-- PriceCharting is optional secondary reference behind `PRICECHARTING_API_TOKEN`, not a transaction price.
-- Japan reference searches (Yahoo Auctions JP, Mercari JP, SNKRDUNK, and game-specific shop links) are shown as one-click outbound manual checks. They are not fetched, parsed, ranked, or counted as live source rows until an approved provider/API is connected.
-- Facebook, Reddit, Mercari, Whatnot, Japan marketplaces, local shops, and other connector-less sources join via paste-a-URL or the manual ledger until an approved provider/API is connected. Roadmap platform agents remain visible as skipped/not connected.
-- Tavily/Exa are optional test infrastructure behind `TAVILY_API_KEY` and `EXA_API_KEY`. Their approved slots are: (1) the conversational assistant (`/api/agent/listing-compare/explain`) for cited web context on source-legitimacy, translation, manual-reference, and identity-help questions; (2) experimental web marketplace discovery that returns possible links only. Tavily/Exa citations and discovered links must stay separate from listing evidence and must never feed the ranking core.
-- When no live source returns a trustworthy listing, the response uses the `next_moves` outcome with refine, retry, paste-a-listing, and manual-check actions. Demo fixtures are test-only and are never presented as real recommendations or fallback inventory.
-- OpenAI is optional. Without it, the deterministic evidence summary remains usable.
-- The configured/default OpenAI-compatible model is `gpt-5.5`; `gpt-5.4` is the review/cheap fallback. The dated slug `gpt-5.5-2026-04-23` is not available on the current zjapi channel.
-- The technical trace stays collapsed for normal users.
-- The full English One Piece special-print research ledger lives at `output/one-piece-exact-print-metadata.json`. It is evidence and a review queue, not a runtime catalog overlay. `output/one-piece-exact-print-audit.json` deterministically reports semantic gaps, reverse product-ID collisions, provenance gaps, and manual-review candidates. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect runtime identity or market anchors.
-- `npm run metadata:refresh` reruns the bounded TCGCSV/official-image research job and regenerates the audit. `.github/workflows/refresh-one-piece-metadata.yml` runs it weekly and opens a review PR when sources change. It never edits runtime matching code, auto-merges metadata, or publishes a TCGplayer mapping without review.
-- **Agent-only budget discovery pilot:** `POST /api/agent/card-discovery` accepts a broad card/character query, USD budget, minimum seller-stated condition, language, and a maximum of five results. It shortlists only exact catalog identities whose current market anchor is inside budget, then runs the normal live comparison for those identities in parallel. Cards without market anchors are omitted rather than guessed; a live listing must independently fit the budget and pass every existing exact-print, raw-single, condition, complete-cost, seller, and evidence gate. This is not yet a primary-navigation surface or an investment recommender.
-- **External agent distribution:** `GET /api/agent/capabilities` publishes a versioned support matrix and `/mcp` exposes five Streamable HTTP tools. MCP reuses the identity, discovery, comparison, ranking, and handoff domain functions; it has its own request-ID/rate-limit boundary and never receives provider credentials. Comparison contract v4 separates canonical-ID/print proof from seller and photo purchase review. `plugins/tcglens` `1.0.1` packages the remote connection and concise Work skill through the repo marketplace at `.agents/plugins/marketplace.json`. v1 uses website deep links rather than an embedded Apps SDK UI.
+- The app opens directly to card search with no login. Raw USD singles are supported for Pokémon and One Piece; more catalog adapters may join behind the game selector.
+- eBay Browse is the only live concrete-listing source. eBay Catalog may resolve confirmed-card identity/ePID but is never inventory. TCGCSV/TCGplayer and PriceCharting are references, never ranking candidates.
+- The canonical crosswalk and market anchor may degrade visibly when a provider match is missing; they must not turn a partial source failure into a fabricated value or a hard failure for otherwise usable results.
+- A user-pasted listing URL may be fetched once through the bounded adapter. Other connector-less sources remain user-entered facts or outbound manual checks.
+- Missing seller data is `unverified`, not risky. Seller track record and evidence completeness remain separate signals.
+- No trustworthy live row means `next_moves`. Demo fixtures are test-only and never become fallback inventory or recommendations.
+- OpenAI, Tavily, and Exa are optional. Deterministic identity, eligibility, pricing, ranking, abstention, and summaries must remain usable without them; web context and discovered links never enter ranking evidence.
+- REST, MCP, and the Work plugin reuse the same domain functions and source boundaries. They may narrow or project responses but may not weaken validation or receive provider credentials.
+- One Piece research ledgers are review queues, not runtime overlays. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect identity or market anchors.
+
+Mutable release state, open decisions, verification evidence, and exact versions belong in sectioned `PROGRESS.md`, not this always-loaded guide. Detailed provider and interface behavior belongs in `docs/architecture-and-data-sources.md`.
 
 ## Product Guardrails
 
@@ -104,53 +93,22 @@ Deterministic TypeScript must own:
 
 AI failure must fall back to deterministic behavior. Model output must never override source truth or ranking math.
 
-## Architecture
+## Contract Ownership
 
-- `src/features/comparison/ComparisonApp.tsx`: the card-first comparison experience — search → confirm version → one recommended buy (`RecommendationBody` inside the verdict hero) with a lens toggle; verdict-led plain-language tags with the numeric scores de-emphasized; market-anchor chip and per-listing vs-market read.
-- `src/lib/comparison/*`: fixtures, scoring, landed-cost math, deterministic ranking (incl. `exclusionPatterns` and the `MARKET_FLOOR_RATIO` below-market gate), and the cross-platform **platform-agent registry + fan-out** (`platforms.ts`).
-- `src/lib/comparison/platforms.ts`: each concrete-listing marketplace is a `PlatformAgent` that self-gates on its own API credentials (`isConfigured()`). `runPlatformFanout` searches every configured agent in parallel with per-agent failure isolation. eBay is live today; TCGplayer/TCGCSV stays outside this registry as reference data; roadmap agents remain skipped/manual-ledger until an approved API/provider is connected.
-- `src/lib/external/*`: bounded eBay, Pokémon (incl. inline TCGplayer pricing), One Piece catalog, TCGCSV/TCGplayer, paste-a-URL universal listing, and PriceCharting adapters.
-- `src/lib/external/tavily.ts`: bounded Tavily Search/Extract helper for cited assistant context and exact-URL extraction experiments. No crawl support; no ranking-core integration.
-- `src/lib/external/web-marketplace-discovery.ts`: experimental Exa/Tavily Search helper for possible marketplace/reference links. It returns only title/URL/provider metadata for manual checks; discovered links are never fetched, parsed for price/seller facts, normalized as candidates, or ranked.
-- `src/lib/ai/agent/harness.ts`: provider-agnostic `runAgent` loop (model decides tools, deterministic execute, budget hard-stop).
-- `src/lib/ai/agent/market-agent.ts`: retained experimental allocator harness. It is not called by the production comparison route; keep it disabled until an offline evaluation proves better exact-match recall/precision without unacceptable latency or deterministic-coverage regressions.
-- `src/lib/comparison/japan-references.ts`: one-click Japan price/buy reference links. These are manual outbound checks only; they must never be counted as fetched inventory or analyzed prices.
-- `src/lib/ai/listing-compare.ts`: comparison orchestration — identity + TCGplayer-reference extraction, deterministic platform fan-out, deterministic evidence summary, and trace. Model allocation/narrative is not on the initial comparison path.
-- `src/lib/ai/card-discovery.ts`: bounded agent-only discovery orchestration — market-anchored identity shortlist followed by up to five parallel calls through the unchanged comparison core.
-- `src/app/api/agent/card-discovery`: the public budget-discovery pilot route; independently rate limited.
-- `src/app/api/agent/capabilities`: the public versioned support/source-tier contract.
-- `src/app/api/agent/listing-compare`: the public comparison route.
-- `src/app/mcp`: the production Streamable HTTP MCP route; `src/lib/mcp/*` owns bounded tool schemas, response projections, request context, and registration—not ranking.
-- `src/lib/schemas.ts`: Zod request, normalized listing, ranking, and response contracts (`CardIdentityCandidate` carries `marketLow/marketMid/marketHigh/marketUrl`).
-- `src/lib/analytics.ts`: explicit PostHog events and privacy allowlist.
-- `scripts/check-ebay.mjs`: dev utility to validate eBay creds (OAuth token + Browse search access).
-- `scripts/research-one-piece-exact-prints.mjs`: offline research generator over the bundled English catalog, official card-image URLs, and TCGCSV category 68. It records image hashes/margins and retains unresolved/conflicting rows; its output is never consumed by product routes.
-- `scripts/audit-one-piece-exact-prints.mjs`: deterministic gate for the research ledger. `npm run metadata:check` fails when the checked-in audit is stale.
+- `src/lib/schemas.ts`: authoritative public, cached, and shared payload contracts.
+- `src/lib/comparison/ranking.ts` and exact-print helpers: eligibility, exclusions, complete-cost math, scoring, print proof, and lens selection.
+- `src/lib/comparison/platforms.ts`: concrete-listing provider interface and isolated parallel fan-out. New live sources implement `PlatformAgent`.
+- `src/lib/ai/listing-compare.ts`: comparison orchestration; `src/lib/external/*` contains the only bounded external fetchers.
+- `src/features/comparison/ComparisonApp.tsx`: card-first UI; `src/lib/testing/standard-comparison-flow.ts` is its reusable behavior contract.
+- `src/app/api/agent/*` and `src/lib/mcp/*`: public REST/MCP validation and projections, not ranking ownership.
+- `src/lib/ops/*` and `src/lib/analytics.ts`: operational boundaries and privacy allowlists.
+- One Piece research scripts generate evidence and audits; reviewed runtime curation remains separate.
 
-Keep server/API secrets outside Client Components. Route handlers are dynamic and provider fetches use fresh data.
+Use `docs/architecture-and-data-sources.md` for the detailed interface/source matrix. Keep server/API secrets outside Client Components.
 
 ## Analytics Privacy
 
-PostHog uses explicit custom events only:
-
-- `comparison_started`
-- `card_search_started`
-- `identity_gallery_viewed`
-- `source_detected`
-- `card_identity_confirmed`
-- `manual_candidate_added`
-- `comparison_completed`
-- `comparison_failed`
-- `choice_opened`
-- `lens_selected`
-- `comparison_receipt_copied`
-- `decision_feedback_submitted`
-- `second_comparison_started`
-- `alternatives_expanded`
-- `method_opened`
-- `qa_opened`
-
-Autocapture, session replay, pageview capture, and person profiles stay disabled. Never transmit URLs, listing text, seller identifiers, or images.
+`src/lib/analytics.ts` is the event and property allowlist. PostHog uses explicit custom events only; autocapture, session replay, pageview capture, and person profiles stay disabled. Never transmit URLs, listing text, seller identifiers, or images.
 
 ## Scope
 
@@ -162,47 +120,30 @@ Retained `listing-risk` and `raw-vs-slab` modules are reusable deterministic uti
 
 - Use Zod at every public API boundary.
 - Use React Hook Form for form state.
-- Preserve the current cream/teal/gold TCGpal visual system.
+- Preserve the current cream/teal/gold TCGlens visual system.
 - Use real card images from allowed sources.
 - Never commit API keys; `.env.example` contains placeholders only.
 - Keep demo fixtures unmistakably labeled.
 - Prefer parallel provider work and partial results over failing the whole report.
 - Preserve accessibility: labels, keyboard navigation, visible focus, semantic headings, and reduced-motion support.
+- Keep the technical trace collapsed for normal users while preserving inspectability.
 
 ## Verification
 
-Run:
+Match verification cost to the change:
 
-```bash
-npm install
-npm run lint
-npm run typecheck
-npm run test
-npm run build
-python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/tcglens
-```
+- Documentation-only changes: run `git diff --check`, verify changed links/paths and section markers, and inspect the rendered Markdown when layout matters. Do not run the application gate or visual QA unless the docs change executable examples or release instructions.
+- Focused implementation: run the narrowest relevant tests during iteration. Behavior changes use TDD. TypeScript changes also run lint and typecheck before handoff.
+- Full product/runtime gate before merging or deploying: `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build`.
+- Run `npm install` only when dependencies changed or the workspace is missing them.
+- Validate `plugins/tcglens` only when plugin files or their exposed contracts change: `python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/tcglens`.
+- Run provider credential/live checks only when the affected provider, identity, ranking, or source behavior changed and credentials are available. Never make hermetic tests depend on live services.
 
 The automated product-flow standard is part of `npm run test`: `src/lib/testing/standard-comparison-flow.ts` must cover at least five sequential card-first searches in one session, include both Pokémon and One Piece, and exercise both edit-search and new-search transitions. Keep it hermetic: injected fetchers only, no API secrets, no browser automation against marketplaces, and no unmocked external network.
 
-Then run `npm run dev` and verify:
+For UI or comparison-flow changes, run the dev server and verify the changed flow in the built-in browser. Capture and share English and 中文 desktop views plus a mobile viewport. Run the sequential multi-card manual smoke only when search, confirmation, comparison, Edit, or New Search behavior changed. Use standalone Playwright only when explicitly requested or when the built-in browser is unavailable, and say why.
 
-- First open goes directly to the card-search form.
-- Run the five-card sequential smoke flow manually in the UI when the change touches comparison flow: search one card, reach a result or confirmation, use Edit or New search to move to the next card, and alternate Pokémon and One Piece. New Search must clear stale card/listing facts while preserving buyer context such as ZIP, tax, preferred lens, and desired condition.
-- Searching a card resolves real catalog identities and the TCGplayer market anchor; name-only pauses for one-tap confirmation, name + number auto-confirms.
-- With eBay creds, a card search returns live listings; novelty/replica titles and items priced below the market floor are excluded; the recommended buy defaults to Best Value with working Cheapest / Safest / Best-documented toggles and a real listing link.
-- One Piece cards resolve through the bundled/OPTCG catalog, use TCGCSV category `68` for TCGplayer crosswalk/prices when available, and degrade visibly when no TCGCSV product match exists.
-- Japan price checks appear as outbound manual reference buttons, open the relevant Japanese search pages, and remain labeled as not fetched/analyzed.
-- With no live or user-supplied rows, the result uses Next Moves, exposes useful follow-up actions, and never displays demo inventory as a recommendation.
-- A manual Facebook/local listing is never fetched server-side.
-- Tax-known and tax-unknown totals use the correct language.
-- Missing provider credentials remain clearly labeled while honest empty results use `demoMode:false` with Next Moves; demo mode is reserved for explicit test/demo fixtures.
-- Technical trace is collapsed.
-- No grade prediction or automated sold-history claim appears.
-- Desktop and mobile layouts remain usable.
-
-For any UI-affecting change, always verify visually before handing off: run the dev server, drive the changed flow in the Codex in-app/built-in browser by default, capture screenshots of the affected screens in both English and 中文 plus a mobile viewport, and share those screenshots with the user. Use standalone Playwright or another browser runner only when the user explicitly asks for it or when the built-in browser is unavailable, and say why you are falling back.
-
-When the work is finished — gate green and visually verified — push it to `main` (fast-forward from the working branch) so Vercel deploys it. Don't leave finished work sitting on a side branch waiting to be asked.
+When the applicable gate is green, fast-forward finished work to `main` and push so Vercel deploys it. Do not require product visual QA for documentation-only work.
 
 ## Agent Navigation Interfaces
 
@@ -219,19 +160,10 @@ Design the codebase so Codex can inspect it through stable, explicit interfaces 
 
 ## Graphify
 
-Graphify source: https://github.com/Graphify-Labs/graphify. The installed CLI is at `/Users/chenjunhsu/.codex/tools/graphify/bin/graphify`; the published PyPI package is `graphifyy`, while the command remains `graphify`.
-An AST-only graph exists at `graphify-out/graph.json` and is created or refreshed with `graphify update .`. Treat the generated graph as the source of truth for its size: run `graphify benchmark graphify-out/graph.json` for current node/edge counts and token reduction instead of relying on hard-coded snapshot statistics.
+The installed CLI is `/Users/chenjunhsu/.codex/tools/graphify/bin/graphify`; the AST graph is `graphify-out/graph.json`.
 
 When the user types `/graphify`, use Graphify before doing anything else.
 
-Rules:
-- For broad codebase questions, architecture review, refactors touching multiple areas, or unfamiliar flows, first use Graphify when `graphify-out/graph.json` exists:
-  - `graphify query "<question>"` for scoped context.
-  - `graphify path "<A>" "<B>"` for relationships between concepts.
-  - `graphify explain "<concept>"` for a focused concept and neighbors.
-- Treat Graphify edge labels carefully: `EXTRACTED` is stronger than `INFERRED`; `AMBIGUOUS` requires source verification before acting.
-- If `graphify-out/wiki/index.md` exists, use it for broad navigation before raw source browsing.
-- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or when query/path/explain do not surface enough context.
-- If no graph exists yet, say so briefly, fall back to `rg`/source files, and do not pretend Graphify verified the answer.
-- Dirty `graphify-out/` files are expected after hooks or incremental updates. Dirty graph files are not a reason to skip Graphify.
-- After modifying code and when a graph exists, run `graphify update .` to keep the graph current (AST-only, no API cost). For documentation/image/semantic changes, prefer `graphify extract . --mode deep` only when the task explicitly needs semantic graph refresh and required LLM credentials are configured.
+For broad or unfamiliar cross-file work, use `graphify query`, `graphify path`, or `graphify explain` before opening many files. Use the wiki for broad navigation and `GRAPH_REPORT.md` only when focused commands are insufficient. `EXTRACTED` edges are stronger than `INFERRED`; verify `AMBIGUOUS` and decision-critical edges in source. If the graph is absent, fall back to `rg` and source files.
+
+Run `graphify update .` only after structural code changes that alter symbols, imports, or relationships, and before committing those structural changes. Skip regeneration for documentation, copy, styles, images, data-only updates, and test-fixture changes that do not alter navigable structure. Use deep extraction only when the task explicitly needs a semantic graph refresh and credentials are configured.
