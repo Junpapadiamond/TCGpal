@@ -63,6 +63,31 @@ function product(overrides: Partial<TcgplayerProductMatch>): TcgplayerProductMat
 }
 
 describe("exact TCGplayer print crosswalk", () => {
+  it("accepts an authoritative Pokémon product whose fraction is zero padded", () => {
+    const bubbleMew = {
+      ...p4,
+      id: "sv4pt5-232",
+      name: "Mew ex",
+      setName: "Paldean Fates",
+      setCode: "SV4PT5",
+      cardNumber: "232/91",
+      tcgplayerProductId: 535065,
+      artworkClass: undefined,
+      treatments: undefined,
+    };
+    const exact = product({
+      categoryId: 3,
+      groupId: 22873,
+      groupName: "Paldean Fates",
+      productId: 535065,
+      productName: "Mew ex",
+      collectorNumber: "232/091",
+      productUrl: "https://www.tcgplayer.com/product/535065/mew-ex",
+    });
+
+    expect(selectExactTcgplayerProduct(bubbleMew, [exact])?.productId).toBe(535065);
+  });
+
   it("accepts an exact-release SP product for the selected Nami P4 print", () => {
     expect(selectExactTcgplayerProduct(p4, [product({})])?.productId).toBe(1);
   });

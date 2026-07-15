@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
+import { collectorNumberParts, normalizeCollectorNumber } from "@/lib/comparison/collector-number";
 
 // TCGCSV republishes the TCGplayer catalog and daily aggregate price dump.
 // It is a reference feed, never concrete seller inventory. Data is daily, so
@@ -293,7 +294,7 @@ async function tcgcsvFetch(url: URL, fetcher: typeof fetch, revalidateSeconds: n
 }
 
 function collectorNumberKey(value: string) {
-  return value.toUpperCase().replace(/[^A-Z0-9/]/g, "").split("/").map(stripLeadingZeros).join("/");
+  return normalizeCollectorNumber(value);
 }
 
 function productNumber(product: TcgcsvProduct) {
@@ -301,12 +302,7 @@ function productNumber(product: TcgcsvProduct) {
 }
 
 function collectorPrefixKey(value: string) {
-  return collectorNumberKey(value).split("/")[0] ?? "";
-}
-
-function stripLeadingZeros(segment: string) {
-  const match = segment.match(/^([A-Z]*)0*(\d+)$/);
-  return match ? `${match[1]}${match[2]}` : segment;
+  return collectorNumberParts(value).number;
 }
 
 function normalize(value: string) {

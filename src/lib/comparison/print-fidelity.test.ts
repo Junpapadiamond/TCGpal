@@ -269,4 +269,40 @@ describe("exact-print fidelity", () => {
       exactMarketAnchor: 420,
     })).toMatchObject({ match: "compatible", priceGuard: "none" });
   });
+
+  it("accepts Bubble Mew when the listing uses the official zero-padded denominator", () => {
+    const bubbleMew = {
+      id: "sv4pt5-232",
+      name: "Mew ex",
+      setName: "Paldean Fates",
+      setCode: "SV4PT5",
+      cardNumber: "232/91",
+      language: "English",
+      imageUrl: "https://images.pokemontcg.io/sv4pt5/232_hires.png",
+      confidence: "high" as const,
+      matchReasons: [],
+    };
+    const listingEvidence = [
+      "Mew ex 232/091 SV: Paldean Fates NM RAW",
+      "Card Number: 232/091",
+      "Card Name: Mew Ex",
+      "Set: SV: Paldean Fates",
+      "Rarity: Special Illustration Rare",
+      "Language: English",
+    ].join(". ");
+
+    const assessment = assessPrintFidelity({
+      card: bubbleMew,
+      matchText: listingEvidence,
+      listingPrice: 950,
+      exactMarketAnchor: 900,
+    });
+
+    expect(assessment).toMatchObject({
+      match: "compatible",
+      confidence: "high",
+      reasons: ["pokemon_full_number_and_name_match"],
+      priceGuard: "none",
+    });
+  });
 });

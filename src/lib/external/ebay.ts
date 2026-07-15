@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { deriveVariantIntent, isOnePieceCardKey, type VariantIntent } from "@/lib/comparison/ranking";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
+import {
+  collectorNumberConflict,
+  collectorNumberNumerator,
+  collectorNumberPattern,
+} from "@/lib/comparison/collector-number";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -527,7 +532,7 @@ export function assessTitleMatch(
   // tolerated, but boundaries are enforced so "4/102" never matches inside
   // "14/102". "partial" accepts the bare numerator the way titles write
   // "#215"; a partial hit alone never reaches high confidence.
-  const { numerator } = splitCollectorNumber(card.cardNumber);
+  const numerator = collectorNumberNumerator(card.cardNumber);
   const numberPattern = collectorNumberPattern(card.cardNumber);
   const fullNumber = numberPattern !== null && numberPattern.test(title);
   const partialNumber = fullNumber
@@ -542,7 +547,7 @@ export function assessTitleMatch(
   // of one character (One Piece "OP01-024" vs "OP01-003"; Pokémon "215/203" vs
   // "44/203"). Only fires when the card's own number is absent from the title, so a
   // correct listing that also mentions another number is never demoted.
-  const differentPrint = !fullNumber && titleNamesADifferentCollectorNumber(title, card.cardNumber);
+  const differentPrint = !fullNumber && collectorNumberConflict(title, card.cardNumber);
 
   // Set: full set name or the set code ("Evolving Skies" or "SWSH7").
   const setMatch = (Boolean(card.setName) && squashedTitle.includes(normalizeText(card.setName)))
@@ -569,62 +574,8 @@ export function assessTitleMatch(
   return { confidence: "low", reasons };
 }
 
-// Does the title spell out a collector number of the card's OWN scheme that isn't
-// the card's number? Used only when the card's number is absent from the title, to
-// catch a same-name, same-set sibling ("OP01-003" in an "OP01-024" search). Kept to
-// schemes with distinctive shapes - set codes, promo codes, and fractions - so
-// number-less titles and other formats are never falsely demoted.
-function titleNamesADifferentCollectorNumber(title: string, cardNumber: string): boolean {
-  const trimmed = cardNumber.trim();
-  if (/^[A-Za-z]{1,4}\d{0,2}-\d{1,4}$/.test(trimmed)) {
-    return /\b[A-Za-z]{1,4}\d{0,2}-\d{1,4}\b/i.test(title);
-  }
-  const promoCode = trimmed.match(/^([A-Za-z]{1,6})[-\s]*0*(\d{1,4})$/);
-  if (promoCode) {
-    const [, prefix, ownDigits] = promoCode;
-    const titleCode = title.match(new RegExp(`(?<![a-z0-9])${escapeRegExp(prefix)}[-\\s]*0*(\\d{1,4})(?![0-9])`, "i"));
-    return Boolean(titleCode && stripLeadingZeros(titleCode[1]) !== stripLeadingZeros(ownDigits));
-  }
-  const compact = trimmed.replace(/\s+/g, "");
-  if (/^[A-Za-z]{0,4}\d{1,3}\/[A-Za-z]{0,4}\d{1,3}$/.test(compact)) {
-    return /\b[A-Za-z]{0,4}\d{1,3}\s*\/\s*[A-Za-z]{0,4}\d{2,3}\b/i.test(title);
-  }
-  return false;
-}
-
-function splitCollectorNumber(cardNumber: string) {
-  const fraction = cardNumber.match(/^\s*([A-Za-z]{0,4}\d{1,3})\s*\/\s*([A-Za-z]{0,4}\d{1,3})\s*$/);
-  if (fraction) return { numerator: fraction[1].toLowerCase(), denominator: fraction[2].toLowerCase() };
-  return { numerator: normalizeText(cardNumber), denominator: "" };
-}
-
-// Builds an anchored, padding/separator-tolerant pattern for the catalog's
-// collector number. Fractions ("215/203", "TG23/TG30") keep the slash;
-// prefix codes ("SWSH144", "OP01-003") allow optional hyphens/spaces between
-// their letter and digit runs. Lookarounds stop partial-digit matches
-// ("4/102" inside "14/102", "SWSH14" inside "SWSH144").
-function collectorNumberPattern(cardNumber: string): RegExp | null {
-  const trimmed = cardNumber.trim().toLowerCase();
-  if (!trimmed) return null;
-  const fraction = trimmed.match(/^([a-z]{0,4})0*(\d{1,3})\s*\/\s*([a-z]{0,4})0*(\d{1,3})$/);
-  if (fraction) {
-    const [, prefixA, digitsA, prefixB, digitsB] = fraction;
-    return new RegExp(
-      `(?<![a-z0-9])${prefixA}[-\\s]*0*${digitsA}\\s*/\\s*${prefixB}[-\\s]*0*${digitsB}(?![0-9])`,
-      "i",
-    );
-  }
-  const runs = trimmed.match(/[a-z]+|\d+/g);
-  if (!runs) return null;
-  return new RegExp(`(?<![a-z0-9])${runs.join("[-\\s]*")}(?![0-9])`, "i");
-}
-
 function stripLeadingZeros(token: string) {
   return /^\d+$/.test(token) ? token.replace(/^0+(?=\d)/, "") : token;
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // eBay's structured item specifics (Parallel/Variant, Rarity, Features, ...)

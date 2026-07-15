@@ -20,6 +20,11 @@ import { getConfiguredPlatformAgents, runPlatformFanout } from "@/lib/comparison
 import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
 import { canonicalPrintIdentity } from "@/lib/comparison/print-fidelity";
 import {
+  collectorNumberParts,
+  collectorNumberPattern,
+  collectorNumbersEquivalent,
+} from "@/lib/comparison/collector-number";
+import {
   comparisonCacheKey,
   getCachedComparison,
   isCacheableRequest,
@@ -968,7 +973,7 @@ function sourceToSeed(
 ): DemoListingSeed | null {
   if (source.price === null) return null;
   const titleText = `${source.title} ${source.description}`;
-  const explicitNumber = normalizeText(titleText).includes(normalizeText(card.cardNumber));
+  const explicitNumber = collectorNumberPattern(card.cardNumber)?.test(titleText) ?? false;
 
   // R6 identity critic (deterministic): if the pasted page states a card name
   // or collector number that disagrees with the confirmed version, the listing
@@ -1004,9 +1009,14 @@ function sourceToSeed(
 }
 
 function detectIdentityMismatch(universal: UniversalListingResult, card: CardIdentityCandidate) {
-  const extractedNumber = collectorNumberParts(universal.extractedCard.number).number;
-  const confirmedNumber = collectorNumberParts(card.cardNumber).number;
-  if (extractedNumber && confirmedNumber && extractedNumber !== confirmedNumber) {
+  const extractedParts = collectorNumberParts(universal.extractedCard.number);
+  const confirmedParts = collectorNumberParts(card.cardNumber);
+  const numberConflicts = extractedParts.number
+    && confirmedParts.number
+    && (extractedParts.total
+      ? !collectorNumbersEquivalent(universal.extractedCard.number, card.cardNumber)
+      : extractedParts.number !== confirmedParts.number);
+  if (numberConflicts) {
     return `The pasted page states collector number ${universal.extractedCard.number}, which does not match the confirmed ${card.cardNumber}.`;
   }
   const extractedName = normalizeWords(universal.extractedCard.name);
@@ -1027,7 +1037,7 @@ function manualCandidatesToSeeds(
   return candidates.flatMap((candidate, index) => {
     if (candidate.price === null) return [];
     const titleText = candidate.title || `${card.name} ${card.cardNumber}`;
-    const explicitNumber = normalizeText(titleText).includes(normalizeText(card.cardNumber));
+    const explicitNumber = collectorNumberPattern(card.cardNumber)?.test(titleText) ?? false;
     return [{
       id: `manual-${index}`,
       marketplace: candidate.marketplace,
@@ -1347,22 +1357,6 @@ function formatCollectorNumber(number: string, printedTotal?: number) {
 
 function extractCollectorNumber(value: string) {
   return value.match(/\b(?:[A-Za-z]{1,4})?\d{1,3}\s*\/\s*(?:[A-Za-z]{1,4})?\d{1,3}\b/)?.[0] ?? "";
-}
-
-function collectorNumberParts(value: string) {
-  const [rawNumber = "", rawTotal = ""] = value.trim().replace(/\s+/g, "").split("/", 2);
-  return {
-    number: normalizeCollectorSegment(rawNumber),
-    total: normalizeCollectorSegment(rawTotal),
-  };
-}
-
-function normalizeCollectorSegment(value: string) {
-  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (!/\d/.test(normalized)) return "";
-  const match = normalized.match(/^([A-Z]*)(\d+)$/);
-  if (!match) return normalized;
-  return `${match[1]}${Number(match[2])}`;
 }
 
 function setHintMatches(

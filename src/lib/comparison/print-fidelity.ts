@@ -1,4 +1,5 @@
 import type { CardIdentityCandidate } from "@/lib/schemas";
+import { collectorNumberPattern } from "@/lib/comparison/collector-number";
 import { findOnePieceCatalogVariants } from "@/lib/external/one-piece-catalog";
 import { variantKey } from "@/lib/external/one-piece-tcg";
 
@@ -255,14 +256,8 @@ function classifyPokemonPrintIdentity(
   matchText: string,
 ): Omit<PrintFidelityAssessment, "priceGuard"> {
   const normalizedText = normalizePhrase(matchText);
-  const numberPattern = new RegExp(
-    `(?:^|[^a-z0-9])${card.cardNumber
-      .trim()
-      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-      .replace(/\s+/g, "\\s*")}(?:[^a-z0-9]|$)`,
-    "i",
-  );
-  if (!numberPattern.test(matchText)) {
+  const numberPattern = collectorNumberPattern(card.cardNumber);
+  if (!numberPattern?.test(matchText)) {
     return result("unknown", "low", "pokemon_listing_missing_full_collector_number");
   }
 

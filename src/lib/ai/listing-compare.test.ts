@@ -210,6 +210,33 @@ describe("listing comparison agent", () => {
     expect(response.outcome).toBe("inspect_first");
   });
 
+  it("uses padding-tolerant collector identity for pasted and manual listings", async () => {
+    const response = await runListingComparison(
+      {
+        ...request,
+        confirmedCardId: "swsh7-215",
+        sourceListing: {
+          ...request.sourceListing,
+          title: "Umbreon VMAX Evolving Skies 215/0203 raw",
+        },
+        manualCandidates: [{
+          marketplace: "Mercari",
+          url: "",
+          title: "Umbreon VMAX 0215/0203 Near Mint",
+          price: 1100,
+          shipping: 0,
+          claimedCondition: "Near Mint",
+        }],
+      },
+      { fetcher },
+    );
+
+    expect(response.candidates).toHaveLength(2);
+    expect(response.candidates.every((candidate) => candidate.matchConfidence === "high")).toBe(true);
+    expect(response.candidates.every((candidate) => candidate.printMatch === "compatible")).toBe(true);
+    expect(response.candidates.every((candidate) => candidate.evidence.identityExplicit)).toBe(true);
+  });
+
   it("returns a valid Best Buy report when an unresolved listing exists beside a recommendation", async () => {
     const response = await runListingComparison(
       {

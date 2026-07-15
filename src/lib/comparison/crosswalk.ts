@@ -2,6 +2,7 @@ import { resolveTcgplayerProductVariants, type TcgplayerProductMatch } from "@/l
 import { resolveEbayProductForCard, type EbayProductResolution } from "@/lib/external/ebay";
 import type { BuyerContext, CardIdentityCandidate } from "@/lib/schemas";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
+import { collectorNumbersEquivalent } from "@/lib/comparison/collector-number";
 import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 
 // R1: the canonical card id (pokemontcg.io id, confirmed at the version step)
@@ -114,13 +115,10 @@ export function selectExactTcgplayerProduct(
 }
 
 function exactProductIdentityMatches(card: CardIdentityCandidate, product: TcgplayerProductMatch) {
-  const expectedNumber = normalizeIdentityText(card.cardNumber);
-  const productNumber = normalizeIdentityText(product.collectorNumber);
   const expectedName = normalizeIdentityText(card.name);
   const productName = normalizeIdentityText(product.productName);
   return Boolean(
-    expectedNumber
-    && productNumber === expectedNumber
+    collectorNumbersEquivalent(card.cardNumber, product.collectorNumber)
     && expectedName
     && productName.includes(expectedName),
   );
