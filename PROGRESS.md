@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-07-14
 canonical_branch: origin/main
-last_verified_product_commit: 7d2d23b0f0e1f15299b28c38403ed536b76eb91f
+last_verified_product_commit: 6ff92cd0f04926fb3e6f8472a402f7af32ffe917
 max_lines: 300
 ---
 
@@ -196,8 +196,8 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 ## WS-DISTRIBUTION - Sources, distribution, and business model
 
 - A versioned capabilities REST endpoint and production-path Streamable HTTP MCP server expose identity browsing, bounded discovery, exact-card comparison, and deep-link continuation through the existing domain engine.
-- The repo/team `tcglens` Work plugin bundles the production remote MCP connection and an anti-FOMO usage skill; the official plugin validator passes locally. Other Codex users can add the public GitHub marketplace and install it, but it is not published in ChatGPT's universal plugin directory and therefore is not searchable/installable from the phone plugin catalog.
-- MCP has a separate rate-limit/request-ID/ops boundary and returns bounded structured evidence without full traces or provider credentials.
+- The repo/team `tcglens` Work plugin 1.0.1 bundles the production remote MCP connection and an anti-FOMO usage skill. Other Codex users can add the public GitHub marketplace and install it, but it is not published in ChatGPT's universal plugin directory and therefore is not searchable/installable from the phone plugin catalog.
+- MCP comparison contract v4 has a separate rate-limit/request-ID/ops boundary and separates canonical-ID/print proof from seller/photo purchase review without full traces or provider credentials.
 - v1 uses deep links back to the website. Inline Apps SDK UI, OAuth, and per-user quota are explicitly deferred.
 - eBay is the only live concrete-listing source. Manual links and pasted listings are clearly separate.
 - Cross-marketplace discovery is desirable but scraping or unlicensed server-side fetching is outside current boundaries.
@@ -250,29 +250,14 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-MCP/plugin release commit `7d2d23b0f0e1f15299b28c38403ed536b76eb91f` is published to `main` and production verified on 2026-07-13.
+Exact-print v4 release candidate `6ff92cd0f04926fb3e6f8472a402f7af32ffe917` was verified in the clean isolated worktree on 2026-07-14.
 
-- `npm install` / deterministic `npm ci` completed.
-- `npm run lint` passed.
-- `npm run typecheck` passed.
-- `npm run test` passed: 52 files / 499 tests, including MCP handshake/tools-list, all five tool mappings, invalid input, bounded browse, language normalization, ambiguity, partial failure, deep links, suspicious-price rejection, secret-safe output, and per-tool rate limits.
-- `npm run build` passed on Next.js 16.2.6 and emitted dynamic `/api/agent/capabilities` and `/mcp` routes.
-- Official plugin validation passed for `plugins/tcglens`.
-- No UI source changed; bilingual desktop/mobile visual QA is not applicable to this MCP-only release.
-- Production `/mcp` initialization and `tools/list` passed; capabilities and all five tools returned content plus structured output.
-- Live examples passed: bounded English Nami identities, checkout-bounded English Pikachu discovery, and exact Charizard ex `sv3pt5-199` comparison. Live verification caught and fixed inconsistent market projection, `EN` language aliases, strict-print market-floor bypass, and stale cached ranking reports before release completion.
-- Production rate limiting returned 429 after the configured discovery quota. Vercel runtime logs contained no raw ZIPs, queries, listing URLs, seller identifiers, images, bodies, or secrets.
-- Advisor skill: five product-leader dossiers and the add scaffold passed `advisor_registry.py validate`; the official skill-creator validator passed with an isolated PyYAML dependency. No subagent council is involved.
-- Clean isolated worktree: `npm run lint` and `npm run typecheck` passed.
-- Clean isolated worktree: `npm run test` passed, 44 files / 473 tests; includes the bilingual set-only Edit CTA regression, identity route/client regressions, and the sequential multi-card flow.
-- Clean isolated worktree: `npm run build` passed on Next.js 16.2.6 and emitted `/api/agent/card-identity` as a dynamic route.
-- Visual: identity-first English/Chinese desktop/mobile QA passed for the Pikachu identity shell/gallery, exact Umbreon VMAX 215/203 flow, and eight-print Nami OP01-016 sibling gallery. No mobile overflow or browser console errors were observed; evidence is under `output/identity-first-visual-qa/`.
-- Visual: result Edit with `luffy op01` shows Browse card versions / 浏览卡片版本 and transitions to the Luffy identity gallery; evidence is under `output/edit-search-cta-fix/`.
-- Visual: confirmed-card loader motion passed English desktop and Chinese mobile QA; sampled transforms changed over time, all four images resolved to the selected print, only the center anchor was accessible, and no horizontal overflow appeared. Evidence is under `output/confirmed-card-motion/`.
-- Reduced motion: the identity flow reads `prefers-reduced-motion`, and the global reduced-motion media rule remains present; a device-level emulation was not available in the in-app browser run.
-- Dirty-checkout caveat: the incomplete photo-search tests that caused collection failures were removed by user decision; the full application gate was not rerun because no product source changed.
-- Peer review: identity and UX reviewers approved after fixes; chairman approved.
-- Remote: the production-verified MCP commit is `7d2d23b`; `main`/`origin/main` matched documentation tip `c743f25` before this handoff update. Vercel deployment `dpl_3hXEkRDoSbaeb6JHP1vVnz8Q1WPL` reached READY and served `https://tcgpal.vercel.app/mcp`.
+- `npm install`, `npm run lint`, and `npm run typecheck` passed.
+- `npm run test` passed: 58 files / 811 tests, including Bubble Mew, collector properties, 271 unsafe fixtures, nine-family sibling matrices, six sealed holdouts, graded variants, MCP v4 invariants, and the six-card sequential flow.
+- `npm run build` passed on Next.js 16.2.6 and emitted all dynamic API/MCP routes. The final classifier benchmark measured 34,628 ops/s, mean 0.0289 ms, p99 0.0522 ms.
+- Official eBay OAuth/Browse passed. Live comparisons covered Bubble Mew, Base Alakazam, Nami/Robin/Zoro, manga, anniversary, tournament, and Winner families. Wrong numbers, observed slabs (including CGC Pristine and TAG), and custom products did not enter raw recommendations.
+- Built-in-browser English/中文 desktop and 390px mobile result QA passed after changing the mobile hero to a single column. DOM widths matched the viewport, identity reasons rendered in both languages, and console error count was zero. Evidence is under `output/exact-print-identity-v4/`.
+- Five-axis self-review found and fixed a canonical-ID substitution invariant in MCP before merge. No remaining critical or required findings; no dependencies or secrets were added.
 
 Still not verified:
 

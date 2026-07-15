@@ -49,7 +49,7 @@ A canonical-ID reload does not inherit low free-text query confidence, and a str
 - One Piece matrices: 271 unsafe fixtures and all cross-sibling combinations in nine curated families produced zero accepted sibling substitutions.
 - Sealed holdout: six families, 37 exact examples, 33 accepted; precision `1.0000`, recall `0.8919`, abstention `0.1081`, sibling substitutions `0`.
 - Existing 664-row pending-human-review title corpus: 24 accepted, all 24 labeled exact; precision `1.0000`, recall `0.06916`, substitutions/unrelated/uncertain accepted `0`, abstention `0.96386`. These provisional labels are conservative rejection evidence, not a claim of population accuracy.
-- Classifier benchmark: 33,150 ops/s, mean `0.0302 ms`, p99 `0.0917 ms` on the final checked-in benchmark; this is well below the `5 ms` p95 gate.
+- Classifier benchmark: 34,628 ops/s, mean `0.0289 ms`, p99 `0.0522 ms` on the final checked-in benchmark; this is well below the `5 ms` p95 gate.
 - Hermetic full comparison benchmark: p95 changed from `0.6961 ms` to `0.7123 ms` (`+2.33%`), within the 10% regression gate.
 - Official eBay Browse checks: Bubble Mew, Base Set Alakazam, Nami SP, Nico Robin SP, Zoro anniversary, manga, tournament, and Winner families completed through the bounded API path. Bubble Mew produced high-confidence compatible raw rows; wrong numbers and all observed graded/custom products were excluded. True low-evidence cases continued to abstain.
 

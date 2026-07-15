@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1635 nodes · 3257 edges · 104 communities (88 shown, 16 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.65)
+- 1635 nodes · 3059 edges · 96 communities (81 shown, 15 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 22 edges (avg confidence: 0.64)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ec6c7296`
+- Built from commit: `6ff92cd0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -80,7 +80,6 @@
 - [[_COMMUNITY_cache.ts|cache.ts]]
 - [[_COMMUNITY_check-ebay.mjs|check-ebay.mjs]]
 - [[_COMMUNITY_fetch-optcg.mjs|fetch-optcg.mjs]]
-- [[_COMMUNITY_variant-fidelity.test.ts|variant-fidelity.test.ts]]
 - [[_COMMUNITY_instrumentation-client.ts|instrumentation-client.ts]]
 - [[_COMMUNITY_harness.ts|harness.ts]]
 - [[_COMMUNITY_assessPrintFidelity|assessPrintFidelity]]
@@ -89,16 +88,13 @@
 - [[_COMMUNITY_postcss.config.mjs|postcss.config.mjs]]
 - [[_COMMUNITY_Filler & hedging|Filler & hedging]]
 - [[_COMMUNITY_TCGpal Agent Guide|TCGpal Agent Guide]]
-- [[_COMMUNITY_Language & grammar patterns|Language & grammar patterns]]
 - [[_COMMUNITY_page.tsx|page.tsx]]
 - [[_COMMUNITY_Content patterns|Content patterns]]
 - [[_COMMUNITY_VerdictMath|VerdictMath]]
 - [[_COMMUNITY_Filler & hedging|Filler & hedging]]
-- [[_COMMUNITY_config.ts|config.ts]]
 - [[_COMMUNITY_collectorNumberParts|collectorNumberParts]]
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_searchTcgplayerListings|searchTcgplayerListings]]
-- [[_COMMUNITY_schemas.test.ts|schemas.test.ts]]
 - [[_COMMUNITY_TCGlens|TCGlens]]
 - [[_COMMUNITY_one-piece-catalog.ts|one-piece-catalog.ts]]
 - [[_COMMUNITY_card-identity.test.ts|card-identity.test.ts]]
@@ -107,66 +103,62 @@
 - [[_COMMUNITY_tcglensDiscoveryInputSchema|tcglensDiscoveryInputSchema]]
 - [[_COMMUNITY_Exact-print identity contract v4|Exact-print identity contract v4]]
 - [[_COMMUNITY_postJsonWithRetry|postJsonWithRetry]]
-- [[_COMMUNITY_postJsonWithRetry|postJsonWithRetry]]
 - [[_COMMUNITY_print-fidelity.test.ts|print-fidelity.test.ts]]
-- [[_COMMUNITY_tools.test.ts|tools.test.ts]]
-- [[_COMMUNITY_print-fidelity.test.ts|print-fidelity.test.ts]]
-- [[_COMMUNITY_isGradedListing|isGradedListing]]
 - [[_COMMUNITY_page.tsx|page.tsx]]
 - [[_COMMUNITY_TcgcsvUnavailableError|TcgcsvUnavailableError]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `runListingComparison()` - 45 edges
-2. `useT()` - 31 edges
-3. `CardIdentityCandidate` - 28 edges
-4. `logOpsEvent()` - 24 edges
-5. `buildRecord()` - 21 edges
-6. `normalizeListing()` - 20 edges
-7. `mapOnePieceCardToIdentity()` - 20 edges
-8. `getAiConfig()` - 18 edges
-9. `getOperationalErrorCode()` - 17 edges
-10. `useLang()` - 16 edges
+1. `runListingComparison()` - 43 edges
+2. `logOpsEvent()` - 24 edges
+3. `CardIdentityCandidate` - 23 edges
+4. `buildRecord()` - 21 edges
+5. `normalizeListing()` - 19 edges
+6. `getAiConfig()` - 18 edges
+7. `mapOnePieceCardToIdentity()` - 18 edges
+8. `getOperationalErrorCode()` - 17 edges
+9. `fetchUniversalListing()` - 16 edges
+10. `compilerOptions` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `parseCachedValue()` --calls--> `validate()`  [INFERRED]
   src/lib/ops/cache.ts → scripts/research-one-piece-exact-prints.mjs
-- `identityForQuery()` --calls--> `parseCardQuery()`  [EXTRACTED]
-  src/features/comparison/ComparisonApp.test.tsx → src/lib/comparison/query-parser.ts
-- `ComparisonResult()` --indirect_call--> `candidate()`  [INFERRED]
-  src/features/comparison/ComparisonApp.tsx → src/lib/comparison/one-piece-witness.test.ts
 - `runAgent()` --indirect_call--> `result()`  [INFERRED]
   src/lib/ai/agent/harness.ts → src/lib/comparison/print-fidelity.ts
+- `extractTavilyUrl()` --indirect_call--> `result()`  [INFERRED]
+  src/lib/external/tavily.ts → src/lib/comparison/print-fidelity.ts
+- `searchTavilyContext()` --indirect_call--> `result()`  [INFERRED]
+  src/lib/external/tavily.ts → src/lib/comparison/print-fidelity.ts
 - `collectorNumberConflict()` --indirect_call--> `candidate()`  [INFERRED]
   src/lib/comparison/collector-number.ts → src/lib/comparison/one-piece-witness.test.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (104 total, 16 thin omitted)
+## Communities (96 total, 15 thin omitted)
 
 ### Community 0 - "comparison-qa.ts"
-Cohesion: 0.10
-Nodes (28): GET(), getAllocatorConfig(), isComparisonAgentEnabled(), parseFallbackModels(), AiConfig, AiModelRole, getModelForStep(), AiProbeResult (+20 more)
+Cohesion: 0.05
+Nodes (63): GET(), getAllocatorConfig(), isComparisonAgentEnabled(), parseFallbackModels(), answerComparisonQuestion(), answerWithWebContext(), asksAboutCheapest(), asksAboutRisk() (+55 more)
 
 ### Community 1 - "provider.ts"
-Cohesion: 0.14
-Nodes (24): canonicalHost(), canonicalPath(), canonicalSearch(), cleanText(), contextBlockedDomains, extractTavilyListingPage(), extractTavilyUrl(), isBlockedHost() (+16 more)
+Cohesion: 0.27
+Nodes (9): buildJapanReferenceLinks(), buildJapanSearchQuery(), isOnePiece(), JapanReferenceLink, manualNote(), searchUrl(), onePieceCard, pokemonCard (+1 more)
 
 ### Community 2 - "one-piece-tcg.ts"
 Cohesion: 0.11
 Nodes (17): loadSnapshot(), deriveOnePieceCatalogPrintEnrichment(), deriveOnePieceReleaseMetadata(), getOnePiecePrintEnrichment(), MetadataSeed, normalizeCanonicalPrintId(), normalizedSeeds, OnePieceArtworkClass (+9 more)
 
 ### Community 3 - "ComparisonApp.tsx"
-Cohesion: 0.06
-Nodes (43): buildMarqueeItems(), buildRequest(), CardKeyPreview(), CardMarquee(), CompactCandidateRow(), ComparisonLoading(), ComparisonQuestionBox(), ComparisonResult() (+35 more)
+Cohesion: 0.05
+Nodes (12): buildMarqueeItems(), CardMarquee(), conditions, DecisionReceipt(), fallbackCardBacks, gameTiles, HoloCardArt(), localizedCaution() (+4 more)
 
 ### Community 4 - "ebay.ts"
-Cohesion: 0.09
-Nodes (29): buildMatchAspectText(), cheapestUsdShipping(), ebayAmountSchema, ebayCatalogAspectSchema, ebayCatalogProductSchema, ebayCatalogSearchSchema, ebayImageSchema, ebayItemSchema (+21 more)
+Cohesion: 0.06
+Nodes (62): ingestSourceListing(), mergeSourceFacts(), alphaSignature(), canonicalGroups(), codeCandidates(), CollectorGroup, collectorNumberConflict(), collectorNumberNumerator() (+54 more)
 
 ### Community 5 - "universal-listing.ts"
-Cohesion: 0.08
-Nodes (44): detectMarketplaceFromUrl(), hostMarketplaces, AiExtraction, aiExtractionSchema, buildUniversalListingResult(), clampNullable(), conditionFromSchema(), decodeEntities() (+36 more)
+Cohesion: 0.05
+Nodes (70): detectMarketplaceFromUrl(), hostMarketplaces, canonicalHost(), canonicalPath(), canonicalSearch(), cleanText(), contextBlockedDomains, extractTavilyListingPage() (+62 more)
 
 ### Community 6 - "tcgcsv.ts"
 Cohesion: 0.15
@@ -174,7 +166,7 @@ Nodes (20): collectorNumberKey(), collectorPrefixKey(), inferTcgplayerCategoryId
 
 ### Community 7 - "ranking.ts"
 Cohesion: 0.07
-Nodes (45): buyer, makeListing(), demoIdentities, DemoListingSeed, demoListingSeeds, aboveMarketContext(), calculateBaseSellerTrustScore(), calculateConditionCompatibilityScore() (+37 more)
+Nodes (47): buyer, makeListing(), demoIdentities, DemoListingSeed, demoListingSeeds, GRADED_LISTING_PATTERNS, isGradedListing(), aboveMarketContext() (+39 more)
 
 ### Community 8 - "web-marketplace-discovery.ts"
 Cohesion: 0.09
@@ -193,12 +185,12 @@ Cohesion: 0.05
 Nodes (41): <a id="10"></a>10. Rule-of-three overuse, <a id="11"></a>11. Elegant variation (synonym cycling), <a id="12"></a>12. False ranges, <a id="13"></a>13. Passive voice & subjectless fragments, <a id="14"></a>14. Em/en dashes — cut them, <a id="15"></a>15. Boldface overuse, <a id="16"></a>16. Inline-header vertical lists, <a id="17"></a>17. Title Case in headings (+33 more)
 
 ### Community 12 - "schemas.ts"
-Cohesion: 0.04
-Nodes (46): pikachuCards, buyerContextSchema, CanonicalPrintIdentity, canonicalPrintIdentitySchema, cardDiscoveryCandidateSchema, cardDiscoveryOutcomeSchema, CardDiscoveryRequest, CardHint (+38 more)
+Cohesion: 0.05
+Nodes (43): pikachuCards, buyerContextSchema, CanonicalPrintIdentity, canonicalPrintIdentitySchema, cardDiscoveryCandidateSchema, cardDiscoveryOutcomeSchema, CardDiscoveryRequest, CardHint (+35 more)
 
 ### Community 13 - "cache.ts"
 Cohesion: 0.08
-Nodes (19): IconArrowUpRight(), IconCardFan(), IconCardSearch(), IconCaution(), IconCheck(), IconChevronDown(), IconComponent, IconExternal() (+11 more)
+Nodes (3): IconComponent, IconProps, strokeProps
 
 ### Community 15 - "rate-limit.ts"
 Cohesion: 0.29
@@ -209,28 +201,28 @@ Cohesion: 0.16
 Nodes (19): browsePokemonCards(), BrowsePokemonCardsOptions, buildPokemonCardQueries(), buildPokemonCardQuery(), buildSetFilter(), escapeLucenePhrase(), fetchPokemonCards(), GetPokemonCardOptions (+11 more)
 
 ### Community 17 - "compilerOptions"
-Cohesion: 0.15
-Nodes (22): ALLOWED_IMAGE_HOSTS, fetchJson(), fetchLiveAllSetCards(), getOnePieceCard(), GetOnePieceCardOptions, matchesToken(), normalizeOnePieceName(), normalizeSetToken() (+14 more)
+Cohesion: 0.13
+Nodes (27): GET(), ALLOWED_IMAGE_HOSTS, deriveSetCode(), fetchJson(), fetchLiveAllSetCards(), getOnePieceCard(), GetOnePieceCardOptions, mapOnePieceCardToIdentity() (+19 more)
 
 ### Community 18 - "i18n.tsx"
-Cohesion: 0.10
-Nodes (19): Header(), ParsedPreview(), PrintIdentitySummary(), Harness(), identityForQuery(), Dict, en, getServerSnapshot() (+11 more)
+Cohesion: 0.08
+Nodes (27): ComparisonForm, defaultComparisonFormValues, emptyLedgerRow, LedgerRow, LensRole, resetForNewCardSearch(), Dict, en (+19 more)
 
 ### Community 19 - "events.ts"
 Cohesion: 0.10
 Nodes (19): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+11 more)
 
 ### Community 20 - "useT"
-Cohesion: 0.21
-Nodes (19): alphaSignature(), canonicalGroups(), codeCandidates(), CollectorGroup, collectorNumberConflict(), collectorNumberNumerator(), collectorNumberPattern(), collectorNumbersEquivalent() (+11 more)
+Cohesion: 0.18
+Nodes (11): CompactCandidateRow(), ComparisonResult(), formatMoney(), InspectFirstHero(), LensControls(), listingCost(), MarketReferenceLine(), RecommendedBuyHero() (+3 more)
 
 ### Community 21 - "market-agent.ts"
 Cohesion: 0.16
 Nodes (14): CacheEntry, CardCrosswalkEntry, crosswalkCache, exactProductIdentityMatches(), normalizeIdentityText(), normalizeRelease(), releaseMatches(), selectExactTcgplayerProduct() (+6 more)
 
 ### Community 22 - "platforms.ts"
-Cohesion: 0.11
-Nodes (24): buildPlatformTools(), runAgentFanout(), sampleSeedsForAllocator(), DEFAULT_AGENTS, ebayPlatformAgent, PlatformAgent, PlatformFanout, PlatformOutcome (+16 more)
+Cohesion: 0.06
+Nodes (58): AgentDecision, AgentMessage, AgentModel, AgentRun, AgentStep, AgentTool, AgentToolCall, AgentToolResult (+50 more)
 
 ### Community 23 - "standard-comparison-flow.ts"
 Cohesion: 0.14
@@ -242,7 +234,7 @@ Nodes (22): buildAction(), buildListingCatch(), buildVerdictCopy(), buildWhyNotC
 
 ### Community 25 - "TCGpal Agent Guide"
 Cohesion: 0.14
-Nodes (28): applyMarketAnchor(), buildAbstention(), buildMarketReference(), buildNarrative(), buildSoldReference(), CATALOG_RETRY_DELAYS_MS, dedupeSeeds(), extractTcgplayerPricing() (+20 more)
+Nodes (27): applyMarketAnchor(), buildAbstention(), buildMarketReference(), buildNarrative(), buildSoldReference(), CATALOG_RETRY_DELAYS_MS, dedupeSeeds(), extractTcgplayerPricing() (+19 more)
 
 ### Community 26 - "harness.ts"
 Cohesion: 0.06
@@ -258,15 +250,15 @@ Nodes (12): 1. Landing: kill the generic, show a concrete example, 2. Results: v
 
 ### Community 29 - "evaluateIdentityFields"
 Cohesion: 0.13
-Nodes (18): clearLocalRateLimitStore(), CardIdentitySearchRequest, ConditionClaim, assertStandardComparisonFlowPlan(), buildStandardComparisonRequest(), runStandardComparisonFlow(), selectConfirmationId(), selectIdentityConfirmationId() (+10 more)
+Nodes (19): resetEbayTokenCacheForTests(), clearLocalRateLimitStore(), CardIdentitySearchRequest, comparisonReportSchema, assertStandardComparisonFlowPlan(), buildStandardComparisonRequest(), runStandardComparisonFlow(), selectConfirmationId() (+11 more)
 
 ### Community 30 - "build-optcg-catalog.mjs"
 Cohesion: 0.27
 Nodes (12): joinTag(), main(), OUT, parseSet(), require, setIdFromNumber(), source, titleCase() (+4 more)
 
 ### Community 31 - "logOpsEvent"
-Cohesion: 0.35
-Nodes (12): POST(), POST(), POST(), POST(), discoverCards(), resolveCardIdentity(), createRequestId(), getOperationalErrorCode() (+4 more)
+Cohesion: 0.24
+Nodes (12): POST(), POST(), POST(), POST(), discoverCards(), resolveCardIdentity(), createRequestId(), OpsRoute (+4 more)
 
 ### Community 32 - "query-parser.ts"
 Cohesion: 0.11
@@ -281,8 +273,8 @@ Cohesion: 0.21
 Nodes (10): getPriceChartingReference(), normalizeCents(), normalizeProduct(), PriceChartingProduct, priceChartingProductSchema, priceChartingSearchResponseSchema, PriceChartingSearchResult, PriceChartingUnavailableError (+2 more)
 
 ### Community 35 - "japan-references.ts"
-Cohesion: 0.11
-Nodes (14): consoleSink, OperationalEvent, OperationalEventName, OperationalEventRecord, OperationalEventSink, OpsLevel, opsLoggingEnabled(), OpsProvider (+6 more)
+Cohesion: 0.15
+Nodes (14): recordCacheBackendFailure(), consoleSink, getOperationalErrorCode(), logOpsEvent(), OperationalEvent, OperationalEventName, OperationalEventRecord, OperationalEventSink (+6 more)
 
 ### Community 36 - "config.ts"
 Cohesion: 0.20
@@ -290,7 +282,7 @@ Nodes (9): AI and agent boundary, Council verdict, Distribution, External source
 
 ### Community 37 - "standard-comparison-flow.ts"
 Cohesion: 0.18
-Nodes (18): buildMarkerOwners(), buildWitnesses(), classifyOnePiecePrintIdentity(), classifyPrintIdentity(), detectResearchedPrintFacet(), hasCorroboratedCanonicalClaim(), intersectEvidence(), isGenericMarker() (+10 more)
+Nodes (19): buildMarkerOwners(), buildWitnesses(), classifyOnePiecePrintIdentity(), classifyPokemonPrintIdentity(), classifyPrintIdentity(), detectResearchedPrintFacet(), hasCorroboratedCanonicalClaim(), intersectEvidence() (+11 more)
 
 ### Community 38 - "raw-vs-slab.ts"
 Cohesion: 0.35
@@ -301,12 +293,12 @@ Cohesion: 0.22
 Nodes (8): Competitor snapshots, Feature comparison, Landscape, Opportunities (gaps to exploit), Positioning, Strategic implications, TCGpal Competitive Brief — Pricing & Buy-Decision Tools, Threats
 
 ### Community 40 - "us-sales-tax.ts"
-Cohesion: 0.11
-Nodes (22): IdentityConfirmation(), applyIdentityFilterChange(), clearIdentityFilters(), computeIdentityFacets(), IdentityFacets, IdentityFilters, printTypeOf(), emptyFilters (+14 more)
+Cohesion: 0.27
+Nodes (8): applyIdentityFilterChange(), computeIdentityFacets(), IdentityFacets, IdentityFilters, printTypeOf(), emptyFilters, pool, uniqueSorted()
 
 ### Community 41 - "ComparisonExperience"
-Cohesion: 0.21
-Nodes (11): ComparisonExperience(), composeCarouselCards(), isRecentCarouselCard(), readRecentCarouselCards(), safeCarouselImageUrl(), toRecentCarouselCard(), allowedProperties, initializeAnalytics() (+3 more)
+Cohesion: 0.43
+Nodes (5): allowedProperties, initializeAnalytics(), sanitizeAnalyticsProperties(), TcgpalAnalyticsEvent, trackEvent()
 
 ### Community 42 - "listing-compare.test.ts"
 Cohesion: 0.12
@@ -317,8 +309,8 @@ Cohesion: 0.22
 Nodes (8): Accessibility & Inclusion, Anti-references, Brand Personality, Design Principles, Product, Product Purpose, Register, Users
 
 ### Community 44 - "Texture — subtler tells"
-Cohesion: 0.36
-Nodes (6): DecisionReceipt(), localizedCaution(), buildReceiptSummaryLine(), formatAsOf(), formatMoney(), ReceiptSummaryInput
+Cohesion: 0.53
+Nodes (4): buildReceiptSummaryLine(), formatAsOf(), formatMoney(), ReceiptSummaryInput
 
 ### Community 45 - "TCGpal Competitive Brief — Pricing & Buy-Decision Tools"
 Cohesion: 0.25
@@ -329,20 +321,20 @@ Cohesion: 0.25
 Nodes (7): Global Constraints, Task 1: Deterministic verdict copy, Task 2: Replace the landing methodology grid, Task 3: Reorder results and consolidate the receipt, Task 4: Winner image loading and visual polish, Task 5: Verification, review, and integration, Verdict-First TCGpal UI Implementation Plan
 
 ### Community 47 - "searchEbayAlternatives"
-Cohesion: 0.21
-Nodes (15): ingestSourceListing(), mergeSourceFacts(), assessTitleMatch(), buildEbaySearchEndpoint(), EBAY_HOSTS, ebayHeaders(), fetchWithTimeout(), getEbayItemDetail() (+7 more)
+Cohesion: 0.33
+Nodes (6): ComparisonExperience(), composeCarouselCards(), isRecentCarouselCard(), readRecentCarouselCards(), safeCarouselImageUrl(), toRecentCarouselCard()
 
 ### Community 48 - "market-agent.test.ts"
 Cohesion: 0.25
 Nodes (7): Do / don't, Protocol, Read-outs / pivots (pre-committed in `validation-plan.md`), Scaled gate (pass = keep investing), Setup (per session, ~20 min), TCGpal — 5-Session User Test Guide, What to log (drops straight into the tracker)
 
 ### Community 49 - "assessTitleMatch"
-Cohesion: 0.13
-Nodes (26): answerComparisonQuestion(), answerWithWebContext(), asksAboutCheapest(), asksAboutRisk(), asksForOutsideContext(), asksForVerificationSources(), asksReportOnlyQuestion(), buildWebContextQuery() (+18 more)
+Cohesion: 0.67
+Nodes (4): buildRequest(), hasSubstantiveConditionNotes(), nullableInteger(), nullableNumber()
 
 ### Community 50 - "TCGpal Product Principles"
-Cohesion: 0.11
-Nodes (17): AgentDecision, AgentMessage, AgentModel, AgentRun, AgentStep, AgentTool, AgentToolCall, AgentToolResult (+9 more)
+Cohesion: 0.67
+Nodes (3): evidenceVerdict(), ListingMetaLine(), sellerVerdict()
 
 ### Community 51 - "TCGpal — 5-Session User Test Guide"
 Cohesion: 0.40
@@ -353,12 +345,12 @@ Cohesion: 0.50
 Nodes (3): Procedure, Rules, Status — TCGpal session summary & handoff
 
 ### Community 54 - "variant-fidelity.test.ts"
-Cohesion: 0.15
-Nodes (10): bubbleMewCard, request, clearCrosswalkCache(), altPrint, basePrint, emptySourceListing, MIXED_TITLES, prints (+2 more)
+Cohesion: 0.22
+Nodes (6): altPrint, basePrint, emptySourceListing, MIXED_TITLES, prints, spPrint
 
 ### Community 55 - "readJsonResponse"
 Cohesion: 0.16
-Nodes (16): enforceLocalRateLimit(), enforceRateLimit(), EnforceRateLimitOptions, firstHeader(), getRateLimitIdentity(), getRateLimitRule(), getWindowReset(), LocalRateEntry (+8 more)
+Nodes (17): enforceLocalRateLimit(), enforceRateLimit(), EnforceRateLimitOptions, firstHeader(), getRateLimitIdentity(), getRateLimitRule(), getWindowReset(), LocalRateEntry (+9 more)
 
 ### Community 56 - "check-tavily.mjs"
 Cohesion: 0.33
@@ -369,32 +361,24 @@ Cohesion: 0.33
 Nodes (4): fraunces, metadata, notoSerifSC, plexMono
 
 ### Community 60 - "report-cache.ts"
-Cohesion: 0.26
-Nodes (11): clearComparisonCache(), comparisonCacheKey(), getCachedComparison(), isCacheableRequest(), setCachedComparison(), pureSearch, clearLocalCache(), getJsonCache() (+3 more)
+Cohesion: 0.16
+Nodes (21): clearComparisonCache(), comparisonCacheKey(), getCachedComparison(), isCacheableRequest(), setCachedComparison(), pureSearch, CacheBackend, clearLocalCache() (+13 more)
 
 ### Community 62 - "schemas.test.ts"
 Cohesion: 0.13
-Nodes (21): getMcpRequestContext(), McpRequestContext, storage, cardQuery(), createTcglensToolHandlers(), dedupe(), marketReference(), publicLanguage() (+13 more)
-
-### Community 63 - "cache.ts"
-Cohesion: 0.22
-Nodes (12): CacheBackend, getLocalValue(), JsonCacheGetOptions, JsonCacheSetOptions, localCache, LocalEntry, parseCachedValue(), pruneLocalCache() (+4 more)
+Nodes (21): cardQuery(), createTcglensToolHandlers(), dedupe(), marketReference(), publicLanguage(), registerTcglensTools(), sellerReviewCautions(), summarizeCard() (+13 more)
 
 ### Community 64 - "check-ebay.mjs"
 Cohesion: 0.50
 Nodes (3): auth, env, envText
-
-### Community 66 - "variant-fidelity.test.ts"
-Cohesion: 0.18
-Nodes (11): ComparisonForm, defaultComparisonFormValues, emptyLedgerRow, LedgerRow, LensRole, resetForNewCardSearch(), AgentSearchHandoff, agentSearchSchema (+3 more)
 
 ### Community 68 - "harness.ts"
 Cohesion: 0.40
 Nodes (4): Done, Problems / blocked, TCGpal Session Handoff — 2026-07-09, Unfinished — goals + next steps
 
 ### Community 69 - "assessPrintFidelity"
-Cohesion: 0.17
-Nodes (14): IdentityLoading(), COMMON_ALIAS_HINTS, extractFirst(), GAME_TOKENS, LANGUAGE_TOKENS, normalizeWhitespace(), ONE_PIECE_RELEASE_PHRASES, parseCardQuery() (+6 more)
+Cohesion: 0.18
+Nodes (13): COMMON_ALIAS_HINTS, extractFirst(), GAME_TOKENS, LANGUAGE_TOKENS, normalizeWhitespace(), ONE_PIECE_RELEASE_PHRASES, parseCardQuery(), ParsedCardQuery (+5 more)
 
 ### Community 75 - "Filler & hedging"
 Cohesion: 0.19
@@ -404,33 +388,25 @@ Nodes (13): audit, checkOnly, DATASET, OUTPUT, records, auditOnePieceMetadata(),
 Cohesion: 0.13
 Nodes (14): Agent and Rules Boundary, Agent Navigation Interfaces, Analytics Privacy, Architecture, Current Status, Data Boundaries, Engineering Rules, Graphify (+6 more)
 
-### Community 79 - "Language & grammar patterns"
-Cohesion: 0.21
-Nodes (17): AGENT_SYSTEM_PROMPT, AllocatorDialect, createAgentModel(), createChatCompletionsAgentModel(), createOpenAiAgentModel(), createResponsesAgentModel(), fetchWithTimeout(), parseArgs() (+9 more)
-
 ### Community 80 - "page.tsx"
-Cohesion: 0.40
-Nodes (3): cards, listingFor(), reportFor()
+Cohesion: 0.21
+Nodes (6): groupIdentitiesBySet(), IdentityGroup, cards, listingFor(), reportFor(), CardIdentityCandidate
 
 ### Community 81 - "Content patterns"
-Cohesion: 0.15
-Nodes (17): buildComparisonRequest(), comparableCost(), DiscoveryDependencies, isInsideBudget(), LIMITATIONS, normalizeLanguage(), summarizeComparison(), estimateSalesTaxRateFromZip() (+9 more)
+Cohesion: 0.11
+Nodes (20): buildComparisonRequest(), comparableCost(), DiscoveryDependencies, isInsideBudget(), LIMITATIONS, normalizeLanguage(), summarizeComparison(), estimateSalesTaxRateFromZip() (+12 more)
 
 ### Community 82 - "VerdictMath"
 Cohesion: 0.40
 Nodes (6): conditionInputsLine(), evidenceInputsLine(), riskFormula(), sellerInputsLine(), valueFormula(), VerdictMath()
 
 ### Community 83 - "Filler & hedging"
-Cohesion: 0.31
-Nodes (7): GET(), handleMcpRequest(), mcpHandler, POST(), readToolName(), withHeaders(), runWithMcpRequestContext()
-
-### Community 84 - "config.ts"
-Cohesion: 0.29
-Nodes (10): AiProviderName, AiReasoningEffort, AiWireApi, getAiConfig(), normalizeAnthropicBaseUrl(), normalizeBaseUrl(), parseBoolean(), parseProvider() (+2 more)
+Cohesion: 0.21
+Nodes (9): GET(), handleMcpRequest(), mcpHandler, POST(), readToolName(), withHeaders(), McpRequestContext, runWithMcpRequestContext() (+1 more)
 
 ### Community 85 - "collectorNumberParts"
-Cohesion: 0.19
-Nodes (13): cleanCardName(), detectIdentityMismatch(), evaluateIdentityFields(), evaluateOnePieceMatch(), extractCollectorNumber(), normalizeText(), normalizeWords(), rankLocalIdentities() (+5 more)
+Cohesion: 0.12
+Nodes (26): cleanCardName(), confidenceRank(), dedupeIdentities(), detectIdentityMismatch(), errorMessage(), evaluateIdentity(), evaluateIdentityFields(), evaluateOnePieceMatch() (+18 more)
 
 ### Community 86 - "route.ts"
 Cohesion: 0.39
@@ -440,21 +416,17 @@ Nodes (5): GET(), getAgentCapabilities(), AgentCapabilities, agentCapabilitiesSc
 Cohesion: 0.24
 Nodes (10): containmentTier(), findTcgplayerGroup(), getTcgcsvLastUpdated(), getTcgplayerPrices(), nameOverlap(), normalize(), productNameMatchesCard(), tcgcsvEnvelope() (+2 more)
 
-### Community 88 - "schemas.test.ts"
-Cohesion: 0.23
-Nodes (13): confidenceRank(), dedupeIdentities(), errorMessage(), evaluateIdentity(), filterByRequestedVariant(), formatCollectorNumber(), identifyCards(), identifyOnePieceCards() (+5 more)
-
 ### Community 89 - "TCGlens"
 Cohesion: 0.50
 Nodes (3): Choose the tool, Guardrails, TCGlens
 
 ### Community 90 - "one-piece-catalog.ts"
-Cohesion: 0.21
-Nodes (10): card(), catalogByNumber, catalogByPrint, curated, findOnePieceCatalogCard(), onePieceCatalog, ROMANCE_DAWN(), STRAW_HAT() (+2 more)
+Cohesion: 0.19
+Nodes (10): ACCEPTED, card(), catalogByNumber, catalogByPrint, curated, findOnePieceCatalogCard(), onePieceCatalog, ROMANCE_DAWN() (+2 more)
 
 ### Community 91 - "card-identity.test.ts"
-Cohesion: 0.20
-Nodes (9): applyParsedCardQuery(), applyQueryParser(), applyQueryParserWithAi(), hasStructuredQuerySignal(), isSimpleCardNameQuery(), catalogResponse, fetcher, request (+1 more)
+Cohesion: 0.18
+Nodes (10): applyParsedCardQuery(), applyQueryParser(), applyQueryParserWithAi(), hasStructuredQuerySignal(), isSimpleCardNameQuery(), catalogResponse, fetcher, request (+2 more)
 
 ### Community 95 - "Exact-print identity contract v4"
 Cohesion: 0.25
@@ -464,37 +436,29 @@ Nodes (7): Evaluation recorded 2026-07-14, Exact-print identity contract v4, MCP
 Cohesion: 0.25
 Nodes (8): apiErrorMessage(), isRetriableStatus(), nonJsonMessage(), postJsonWithRetry(), readJsonResponse(), requestCardIdentity(), requestComparisonReport(), sleep()
 
-### Community 98 - "print-fidelity.test.ts"
-Cohesion: 0.40
-Nodes (4): gearFivePrints, kidAndKillerPrints, namiPrints, op13LuffyPrints
-
-### Community 99 - "tools.test.ts"
-Cohesion: 0.60
-Nodes (4): card(), listingFor(), namiCards, report()
-
 ### Community 100 - "print-fidelity.test.ts"
-Cohesion: 0.15
-Nodes (14): GET(), ACCEPTED, sealedFamilies, ACCEPTED, ACCEPTED, candidate(), classify(), corpusFamilies (+6 more)
+Cohesion: 0.14
+Nodes (14): ACCEPTED, sealedFamilies, ACCEPTED, candidate(), classify(), corpusFamilies, assessPrintFidelity(), card (+6 more)
 
 ## Knowledge Gaps
-- **589 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+584 more)
+- **597 isolated node(s):** `This is NOT the Next.js you know`, `Product`, `Current Status`, `Product Guardrails`, `Data Boundaries` (+592 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `CardIdentityCandidate` connect `us-sales-tax.ts` to `ComparisonApp.tsx`, `ebay.ts`, `tcgcsv.ts`, `ranking.ts`, `web-marketplace-discovery.ts`, `schemas.ts`, `compilerOptions`, `i18n.tsx`, `market-agent.ts`, `platforms.ts`, `TCGpal Agent Guide`, `standard-comparison-flow.ts`, `listing-compare.test.ts`, `searchEbayAlternatives`, `TCGpal Product Principles`, `schemas.test.ts`, `Language & grammar patterns`, `page.tsx`, `tools.test.ts`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
-- **Why does `parseCachedValue()` connect `cache.ts` to `query-parser.ts`, `report-cache.ts`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `validate()` connect `query-parser.ts` to `cache.ts`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
-  _589 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `parseCachedValue()` connect `report-cache.ts` to `query-parser.ts`?**
+  _High betweenness centrality (0.046) - this node is a cross-community bridge._
+- **Why does `validate()` connect `query-parser.ts` to `report-cache.ts`?**
+  _High betweenness centrality (0.046) - this node is a cross-community bridge._
+- **Why does `CardIdentityCandidate` connect `page.tsx` to `provider.ts`, `ebay.ts`, `tcgcsv.ts`, `ranking.ts`, `us-sales-tax.ts`, `web-marketplace-discovery.ts`, `listing-compare.test.ts`, `schemas.ts`, `compilerOptions`, `market-agent.ts`, `platforms.ts`, `TCGpal Agent Guide`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **What connects `This is NOT the Next.js you know`, `Product`, `Current Status` to the rest of the system?**
+  _597 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `comparison-qa.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.09581646423751687 - nodes in this community are weakly interconnected._
-- **Should `provider.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.13666666666666666 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05128205128205128 - nodes in this community are weakly interconnected._
 - **Should `one-piece-tcg.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.10666666666666667 - nodes in this community are weakly interconnected._
+- **Should `ComparisonApp.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.05110336817653891 - nodes in this community are weakly interconnected._
