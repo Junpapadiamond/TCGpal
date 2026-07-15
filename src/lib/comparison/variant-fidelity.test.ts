@@ -14,7 +14,7 @@ import type { ComparisonRequest } from "@/lib/schemas";
 // ranking) hermetically: injected fetchers, real bundled catalog, no network.
 
 const MIXED_TITLES = [
-  { itemId: "v1|sp|0", title: "Nami OP01-016 SP Special Art", price: "310.00" },
+  { itemId: "v1|sp|0", title: "Nami OP01-016 SP Special Art Awakening of the New Era", price: "310.00" },
   { itemId: "v1|alt|0", title: "Nami OP01-016 Alternate Art Parallel", price: "95.00" },
   { itemId: "v1|base|0", title: "Nami OP01-016 Romance Dawn base print", price: "4.00" },
 ];
@@ -54,7 +54,7 @@ function ebayFetcher(titles: Array<{ itemId: string; title: string; price: strin
           title: entry.title,
           condition: "Ungraded",
           conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
-          localizedAspects: entry.aspects ?? [],
+          localizedAspects: [{ name: "Language", value: "English" }, ...(entry.aspects ?? [])],
           price: { value: entry.price, currency: "USD" },
           shippingOptions: [{ shippingCost: { value: "4.00", currency: "USD" } }],
         }),
@@ -181,7 +181,7 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
   // eBay's own item specifics (fetched into matchAspectText) do name the
   // print — reading title + aspects together turns this into a real
   // recommendation instead of a false abstention.
-  it("keeps generic alternate-art item specifics at Inspect First when several alternate prints exist", async () => {
+  it("requires release corroboration before generic alternate-art specifics can rank", async () => {
     const titles = [
       { itemId: "v1|plain-alt|0", title: "Nami OP01-016", price: "95.00", aspects: [{ name: "Parallel/Variant", value: "Alternate Art" }] },
       { itemId: "v1|plain-alt2|0", title: "Nami OP01-016 Romance Dawn", price: "110.00", aspects: [{ name: "Parallel/Variant", value: "Alternate Art" }] },
@@ -195,9 +195,11 @@ describe("variant fidelity sweep (One Piece multi-print numbers)", () => {
     );
 
     expect(response.demoMode).toBe(false);
-    expect(response.rankedChoices).toHaveLength(0);
-    expect(response.outcome).toBe("inspect_first");
-    expect(response.inspectListingId).not.toBeNull();
+    expect(response.outcome).toBe("best_buy");
+    expect(response.rankedChoices.find((choice) => choice.role === "best_value")?.listingId).toBe("ebay-v1|plain-alt2|0");
+    const uncorroborated = response.candidates.find((candidate) => candidate.id === "ebay-v1|plain-alt|0");
+    expect(uncorroborated?.printMatch).toBe("unknown");
+    expect(uncorroborated?.eligible).toBe(false);
     const spListing = response.candidates.find((candidate) => candidate.id === "ebay-v1|plain-sp|0");
     expect(spListing?.eligible).toBe(false);
   });

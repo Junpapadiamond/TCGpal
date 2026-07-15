@@ -48,6 +48,19 @@ function researchedPrintQueryToken(card: CardIdentityCandidate): string | null {
   return null;
 }
 
+function sellerVocabularyPrintQueryToken(card: CardIdentityCandidate): string | null {
+  const researched = researchedPrintQueryToken(card);
+  if (researched) return researched;
+  const printClass = VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null;
+  if (!printClass) return null;
+  // The catalog's release name is seller-facing vocabulary (unlike `_pN`). It
+  // supplies the corroborating witness that broad class words such as "SP" or
+  // "alt art" cannot provide by themselves. The following plain-query attempt
+  // remains the recall fallback when sellers omit the release name.
+  const releaseName = card.variant?.trim() ? card.setName.trim() : "";
+  return [printClass, releaseName].filter(Boolean).join(" ");
+}
+
 const ebayAmountSchema = z.object({
   value: z.string(),
   currency: z.string(),
@@ -236,24 +249,12 @@ export async function searchEbayAlternatives(
   // Applied on top of query overrides too: the crosswalk template is the same
   // deterministic name+number string, and the fallback attempt protects recall.
   const variantToken = isOnePieceCardKey(card.cardNumber, card.id)
-    ? researchedPrintQueryToken(card) ?? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null
-    : null;
-  const exactPrintToken = isOnePieceCardKey(card.cardNumber, card.id)
-    ? card.id.match(/_([a-z]\d+)$/i)?.[1]?.toUpperCase() ?? null
+    ? sellerVocabularyPrintQueryToken(card)
     : null;
 
   const attempts = [
     ...(ebayProduct?.epid
       ? [{ mode: "epid" as const, epid: ebayProduct.epid, query: "", fallbackReason: "" }]
-      : []),
-    ...(variantToken && exactPrintToken
-      ? [{
-        mode: "keyword" as const,
-        query: `${query} ${exactPrintToken} ${variantToken}`,
-        fallbackReason: ebayProduct?.epid
-          ? `eBay product-ID search returned no USD candidates; broadened to the exact-print keyword query.`
-          : "",
-      }]
       : []),
     ...(variantToken
       ? [{

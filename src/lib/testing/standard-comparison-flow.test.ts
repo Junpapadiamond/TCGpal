@@ -71,6 +71,7 @@ const standardFlowFetcher = vi.fn(async (input: RequestInfo | URL) => {
         condition: "Ungraded",
         price: { value: "250.00", currency: "USD" },
         shippingOptions: [{ shippingCost: { value: "5.00", currency: "USD" } }],
+        localizedAspects: [{ name: "Language", value: "English" }],
       }],
     });
   }
@@ -81,6 +82,7 @@ const standardFlowFetcher = vi.fn(async (input: RequestInfo | URL) => {
       title: standardListingTitles.get(itemId) ?? "Exact card listing",
       condition: "Ungraded",
       conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
+      localizedAspects: [{ name: "Language", value: "English" }],
       price: { value: "250.00", currency: "USD" },
       shippingOptions: [{ shippingCost: { value: "5.00", currency: "USD" } }],
     });
@@ -126,7 +128,9 @@ describe("standard multi-card comparison flow", () => {
     expect(result.cards.every((card) => card.finalStatus !== "needs_confirmation")).toBe(true);
     expect(result.cards.every((card) => card.identityStatus === "resolved" || card.identityStatus === "needs_confirmation")).toBe(true);
     expect(result.cards.every((card) => card.confirmedCardId)).toBe(true);
-    expect(result.cards.every((card) => card.rankedChoiceCount > 0)).toBe(true);
+    expect(result.cards
+      .filter((card) => card.rankedChoiceCount === 0)
+      .map((card) => card.label)).toEqual([]);
     expect(result.cards.every((card) => card.sourceResultCount > 0)).toBe(true);
     // The SP step must confirm the exact special print, not the base art.
     expect(result.cards[5]?.confirmedCardId).toBe("OP01-016_p4");

@@ -1,0 +1,2174 @@
+{
+  "sourceStatus": "pendingHumanReview",
+  "purpose": "Conservative rejection regression only; never runtime metadata or an overall accuracy claim.",
+  "fixtures": [
+    {
+      "family": "EB03-053",
+      "rowIndex": 1,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) Foil SR Extra Booster: One Piece Heroines Edition EB03-053 NM",
+      "priceUsd": 18.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 2,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) EB03-053 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 14.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 4,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) Foil SR Extra Booster: One Piece Heroines Edition EB03-053 NM",
+      "priceUsd": 22.49,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 5,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) EB03-053 Extra Booster: One Piece Heroines Edition Foil SR",
+      "priceUsd": 18.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 7,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) Foil SR Extra Booster: One Piece Heroines Edition EB03-053 NM",
+      "priceUsd": 18.49,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 11,
+      "printId": "EB03-053_P2",
+      "title": "Bandai One Piece CCG Nami EB03-053 SP Alt Art Holo 6000 Power English",
+      "priceUsd": 17.5,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 12,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) EB03-053 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 18,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 15,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) EB03-053 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 12,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 16,
+      "printId": "EB03-053_P2",
+      "title": "Extra Booster: One Piece Heroines Edition #EB03-053 Nami (053)",
+      "priceUsd": 19.25,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 17,
+      "printId": "EB03-053_P2",
+      "title": "One Piece Nami (EB03-053/102) EB03 One Piece Heroines Edition NM FOIL",
+      "priceUsd": 18.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 18,
+      "printId": "EB03-053_P2",
+      "title": "One Piece Nami (053) (EB03-053/102) EB03 One Piece Heroines Edition LP FOIL",
+      "priceUsd": 18.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 19,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SR ONE PIECE Heroines Edition ONE PIECE Card Japanese Near Mint",
+      "priceUsd": 14.6,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 22,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) - Extra Booster: One Piece Heroines Edition (EB-03)",
+      "priceUsd": 19.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 23,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 Extra Booster: One Piece Heroines Edition Foil - NM English",
+      "priceUsd": 19.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 24,
+      "printId": "EB03-053_P2",
+      "title": "One Piece (EB03): One Piece Heroines Edition-BUILD YOUR DECK! SINGLES",
+      "priceUsd": 35.75,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 25,
+      "printId": "EB03-053_P2",
+      "title": "One Piece TCG Extra Booster: One Piece Heroines Edition #EB03-053 Nami (053)",
+      "priceUsd": 20,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 26,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SP SR Parallel ONE PIECE Card Heroines edition 2025 Japanese NM",
+      "priceUsd": 449.49,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 32,
+      "printId": "EB03-053_P2",
+      "title": "PSA 9 Nami EB03-053 SP Alt Art SR Heroines Edition One Piece Card Japanese",
+      "priceUsd": 546.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 33,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SP SR Parallel ONE PIECE Card Heroines edition 2025 NM",
+      "priceUsd": 685,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 35,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) Alternate Art EB03-053 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 100,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 38,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SP SR Parallel ONE PIECE Card Heroines edition 2025",
+      "priceUsd": 750,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 39,
+      "printId": "EB03-053_P2",
+      "title": "Nami (SP Alt Art) EB03-053 SR ONE PIECE Heroines Edition Near Mint",
+      "priceUsd": 1005.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 40,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SP SR Parallel ONE PIECE Card Heroines edition 2025 Chinese NM",
+      "priceUsd": 459.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 42,
+      "printId": "EB03-053_P2",
+      "title": "PSA 10 Nami Hancock Robin SP EB03-053 EB03-026 EB03 ONE PIECE Card Heroines 3set",
+      "priceUsd": 5000.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 43,
+      "printId": "EB03-053_P1",
+      "title": "Nami (Alt Art) EB03-053 SR ONE PIECE Heroines Edition - ONE PIECE Card Japanese",
+      "priceUsd": 47.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 43,
+      "printId": "EB03-053_P2",
+      "title": "Nami (Alt Art) EB03-053 SR ONE PIECE Heroines Edition - ONE PIECE Card Japanese",
+      "priceUsd": 47.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 44,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SR NM One Piece Heroines Edition English ",
+      "priceUsd": 18.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 46,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SP SR Parallel ONE PIECE Card Heroines edition 2025 NM",
+      "priceUsd": 629.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 47,
+      "printId": "EB03-053_P2",
+      "title": "Nami EB03-053 SP SR Parallel ONE PIECE Card Heroines edition 2025 NM",
+      "priceUsd": 606.1,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 49,
+      "printId": "EB03-053_P1",
+      "title": "2026 One Piece EB03 Heroines Edition Special Alternate Art EN #053 Nami PSA 8",
+      "priceUsd": 1699.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 50,
+      "printId": "EB03-053_P1",
+      "title": "2026 One Piece EB03 Heroines Edition Special Alternate Art EN #053 Nami PSA 10",
+      "priceUsd": 2381,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 52,
+      "printId": "EB03-053_P2",
+      "title": "Nami (006) EB03-006 Foil Extra Booster: One Piece Heroines Edition NM",
+      "priceUsd": 1.59,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 53,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) (Alternate Art) EB03-053 Extra Booster: One Piece Heroines Edition...",
+      "priceUsd": 94,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 55,
+      "printId": "EB03-053_P2",
+      "title": "Nami (053) (Alternate Art) EB03-053 Extra Booster: One Piece Heroines Edition...",
+      "priceUsd": 95,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-053",
+      "rowIndex": 58,
+      "printId": "EB03-053_P2",
+      "title": "Extra Booster: One Piece Heroines Edition Nami (053)",
+      "priceUsd": 31.2,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 1,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 13,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 2,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil SR",
+      "priceUsd": 12.98,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 5,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 SR Extra Booster: One Piece Heroines Edition Foil NM",
+      "priceUsd": 8.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 6,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 SR Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 9.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 7,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 12,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 14,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil Mint",
+      "priceUsd": 14.88,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 15,
+      "printId": "EB03-055_P2",
+      "title": "ONE PIECE Nico Robin (055) #EB03-055 Foil EB One Piece Heroines Edition NM",
+      "priceUsd": 12.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 16,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 14.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 19,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil TAG 10",
+      "priceUsd": 100,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 21,
+      "printId": "EB03-055_P2",
+      "title": "Extra Booster: One Piece Heroines Edition #EB03-055 Nico Robin (055)",
+      "priceUsd": 11.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 22,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 50,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 23,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (055) EB03-055 Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 13.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 24,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (SP Alt Art) EB03-055 SR ONE PIECE Heroines Edition  Near Mint",
+      "priceUsd": 925.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 25,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 One Piece Heroines Edition Rare NM One Piece Card OPTCG",
+      "priceUsd": 13.98,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 26,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 SP SR Parallel ONE PIECE Card Heroines edition 2025 NM",
+      "priceUsd": 599.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 28,
+      "printId": "EB03-055_P2",
+      "title": "One Piece 2025 Nico Robin EB03-055 Alt Art SP Japanese GEM MINT PSA 10",
+      "priceUsd": 1300,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 29,
+      "printId": "EB03-055_P2",
+      "title": "PSA 10 Nico Robin EB03-055 SP Special Alternate Art One Piece Card JP",
+      "priceUsd": 1300,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 30,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin SP EB03-055 SR Parallel One Piece Card Game EB03 Memorial Collection",
+      "priceUsd": 650,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 32,
+      "printId": "EB03-055_P2",
+      "title": "BGS 10 Nico Robin EB03-055 SP SR Parallel ONE PIECE Card Heroines 2025 Japanese",
+      "priceUsd": 2200,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 35,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 SP SR Parallel ONE PIECE Card Heroines edition 2025 NM",
+      "priceUsd": 664.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 36,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 SP Alt Art SR Heroines Edition One Piece Card Japanese NM JP",
+      "priceUsd": 656.67,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 37,
+      "printId": "EB03-055_P2",
+      "title": "PSA 10 Nico Robin EB03-055 SP SR Parallel ONE PIECE Card Heroines Edition 2025",
+      "priceUsd": 1474.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 38,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 SP SR ONE PIECE Card Heroines edition 2025 Chinese",
+      "priceUsd": 389,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 40,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin EB03-055 SP Alt Art SR Heroines Edition One Piece Card Japanese",
+      "priceUsd": 760,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 41,
+      "printId": "EB03-055_P2",
+      "title": "ONE PIECE Card Nico Robin EB03-055 SP 945375",
+      "priceUsd": 872.77,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 42,
+      "printId": "EB03-055_P1",
+      "title": "2025 ONE PIECE JPN EB03-55 Special Alternate Art- NICO ROBIN PSA 10",
+      "priceUsd": 1000,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 44,
+      "printId": "EB03-055_P2",
+      "title": "PSA 10 Nico Robin (SP Alt Art) EB03-055 SR ONE PIECE Card Game Japanese 2025",
+      "priceUsd": 1250,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 45,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin SP Extra Booster Heroines edition EB03 japanese ONE PIECE Card Game",
+      "priceUsd": 665.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 47,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (054) C Extra Booster: One Piece Heroines Edition EB03-054 NM",
+      "priceUsd": 1,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 48,
+      "printId": "EB03-055_P2",
+      "title": "DON!! Card Nico Robin Extra Booster: One Piece Heroines Edition (EB-03) Foil NM",
+      "priceUsd": 4.3,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 49,
+      "printId": "EB03-055_P2",
+      "title": "DON!! Card (Nico Robin) (Gold) Extra Booster: One Piece Heroines Edition Foil",
+      "priceUsd": 95,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 50,
+      "printId": "EB03-055_P2",
+      "title": "Lot Of 10 DON!!  (Nico Robin) Extra Booster: One Piece Heroines Edition(EB-03)",
+      "priceUsd": 32,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 54,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (054) EB03-054 Extra Booster: One Piece Heroines Edition One Piece NM",
+      "priceUsd": 0.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "EB03-055",
+      "rowIndex": 55,
+      "printId": "EB03-055_P2",
+      "title": "Nico Robin (054) EB03-054 Extra Booster: One Piece Heroines Edition One Piece NM",
+      "priceUsd": 0.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 5,
+      "printId": "OP01-016_P7",
+      "title": "One Piece Card Game Nami OP01-016 25th Anniversary",
+      "priceUsd": 49.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 8,
+      "printId": "OP01-016_P4",
+      "title": "Nami OP01-016 R SP | NM | Awakening of the New Era | One Piece TCG | Japanese ",
+      "priceUsd": 235.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 9,
+      "printId": "OP01-016_P7",
+      "title": "One Piece TCG Card Game Chinese Nami OP01-016 R Exclusive 1st Anniversary Alt",
+      "priceUsd": 498.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 22,
+      "printId": "OP01-016_P8",
+      "title": "One Piece 2024 Nami Manga Alternate Art OP01-016 PRB01 JP",
+      "priceUsd": 800,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 27,
+      "printId": "OP01-016_P4",
+      "title": "Nami (SP) OP01-016 Awakening of the New Era Foil BGS 9.5",
+      "priceUsd": 725,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 28,
+      "printId": "OP01-016_P4",
+      "title": "Nami (SP) OP01-016 Awakening of the New Era Foil One Piece",
+      "priceUsd": 254.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 29,
+      "printId": "OP01-016_P4",
+      "title": "BGS 9.5 GEM MINT Nami Alt Art SP OP01-016 OP05 Awakening of the New Era",
+      "priceUsd": 750,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 32,
+      "printId": "OP01-016_P4",
+      "title": "Nami OP01-016 R SP Japanese Anime ONE PIECE Card Game Awakening of the New Era",
+      "priceUsd": 210,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 33,
+      "printId": "OP01-016_P4",
+      "title": "Nami OP01-016 SP PAR Parallel SR Awakening of The New Era OP05 One Piece Japan",
+      "priceUsd": 267.97,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 34,
+      "printId": "OP01-016_P4",
+      "title": "[NM] Nami ONE PIECE Card Game Japanese SP Awakening of the New Era D29 OP01-016",
+      "priceUsd": 314.93,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 36,
+      "printId": "OP01-016_P4",
+      "title": "2023 One Piece OP05 Nami OP01-016 Alt Art SP Japanese PSA 10 Gem",
+      "priceUsd": 489.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 40,
+      "printId": "OP01-016_P4",
+      "title": "Nami SP Alt Art OP01-016 Awakening of the New Era Japanese ONE PIECE TCG! LP!",
+      "priceUsd": 174.24,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 41,
+      "printId": "OP01-016_P4",
+      "title": "2023 One Piece OP05 Nami OP01-016 Alt Art SP Japanese PSA 10",
+      "priceUsd": 499,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 51,
+      "printId": "OP01-016_P4",
+      "title": "PSA 10 Nami SP Alt Art OP01-016 Awakening of the New Era Japanese ONE PIECE Card",
+      "priceUsd": 500,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 52,
+      "printId": "OP01-016_P8",
+      "title": "2024 ONE PIECE JAPANESE PRB01-PREMIUM BOOSTER MANGA ALT ART #016 NAMI PSA 10",
+      "priceUsd": 1290,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 53,
+      "printId": "OP01-016_P8",
+      "title": "CGC Pristine 10 Auto 10 Luci Christian Nami 25th Aniv Manga Alt Art OP01-016",
+      "priceUsd": 399.99,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 54,
+      "printId": "OP01-016_P8",
+      "title": "One Piece Card Nami OP01-016 Manga Alt Art Parallel Japanese The Best TCG Rare",
+      "priceUsd": 888.9,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 59,
+      "printId": "OP01-016_P8",
+      "title": "NAMI MANGA ALT ART OP01-016 R ONE PIECE CARD THE BEST PRB-01 COMIC PARALLEL NM",
+      "priceUsd": 731,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 60,
+      "printId": "OP01-016_P7",
+      "title": "Nami - OP01-016 - PSA 10 - 25th Anniversary - Japanese - One Piece - 149-22",
+      "priceUsd": 200,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 61,
+      "printId": "OP01-016_P7",
+      "title": "Nami OP01-016 Parallel 25th Anniversary ONE PIECE Card Japanese NM",
+      "priceUsd": 47.96,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 62,
+      "printId": "OP01-016_P7",
+      "title": "Nami OP01-016 Alternate Art (25th Anniversary)",
+      "priceUsd": 120,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 64,
+      "printId": "OP01-016_P7",
+      "title": "PSA 10 NAMI OP01-016 25th Anniversary 2022 One Piece Card Japanese GEM MT",
+      "priceUsd": 201.98,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 65,
+      "printId": "OP01-016_P7",
+      "title": "Nami OP01-016 Alternate Art (25th Anniversary) PSA 10",
+      "priceUsd": 369,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 66,
+      "printId": "OP01-016_P7",
+      "title": "One Piece Card Game Nami OP01-016 25th Anniversary",
+      "priceUsd": 105,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 67,
+      "printId": "OP01-016_P7",
+      "title": "Nami (English 25th Anniversary Set) OP01-016 One Piece Promotion Cards...",
+      "priceUsd": 215,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 68,
+      "printId": "OP01-016_P7",
+      "title": "2023 One Piece Nami Premium 25th Anniversary OP01-016 PSA 10 Gem Mint English",
+      "priceUsd": 349.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 70,
+      "printId": "OP01-016_P7",
+      "title": "Nami OP01-016 Promo Parallel 25th Anniversary ONE PIECE Card Japanese Near Mint",
+      "priceUsd": 48.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 71,
+      "printId": "OP01-016_P7",
+      "title": "Nami - 25th Anniversary OP01-016 (Alternate Art) ",
+      "priceUsd": 115.09,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 72,
+      "printId": "OP01-016_P7",
+      "title": "Nami - OP01-016 (Alternate Art) 25Th Anniversary Edition Promo BGS 10",
+      "priceUsd": 400,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 74,
+      "printId": "OP01-016_P7",
+      "title": "PSA10 One Piece Chinese Nami OP01-016 1st Anniversary Set GEM MT 10",
+      "priceUsd": 7450,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 77,
+      "printId": "OP01-016_P7",
+      "title": "Nami - OP01-016 (Alternate Art) 25Th Anniversary Edition Promo BGS 9.5",
+      "priceUsd": 250,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 78,
+      "printId": "OP01-016_P7",
+      "title": "Nami OP01-016 25th Anniversary Premium Card Collection (2023) PSA 10",
+      "priceUsd": 425.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 81,
+      "printId": "OP01-016_P8",
+      "title": "Nami OP01-016 Manga PSA 9 Japanese",
+      "priceUsd": 999,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 82,
+      "printId": "OP01-016_P8",
+      "title": "ONE PIECE 2024 THE BEST PREMIUM BOOSTER JP NAMI MANGA ART OP01-016 BGS 9",
+      "priceUsd": 1000,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 83,
+      "printId": "OP01-016_P8",
+      "title": "Nami OP01-016 Manga Alt Art ONE PIECE Card The Best Japanese Comic Parallel",
+      "priceUsd": 708.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 84,
+      "printId": "OP01-016_P8",
+      "title": "2024 ONE PIECE JAPANESE PRB01-PREMIUM BOOSTER MANGA ALT ART #016 NAMI PSA 9",
+      "priceUsd": 985,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 85,
+      "printId": "OP01-016_P8",
+      "title": "2024 ONE PIECE: JAPANESE MANGA ALTERNATE ART #OP01-016 NAMI BGS 10",
+      "priceUsd": 1375,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 86,
+      "printId": "OP01-016_P8",
+      "title": "Nami OP01-016 Manga Alt Art ONE PIECE Card The Best Japanese Comic Parallel",
+      "priceUsd": 690.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 87,
+      "printId": "OP01-016_P8",
+      "title": " 2024 One Piece the best premium booster Japanese OP01-016 Nami Manga art foil R",
+      "priceUsd": 1099,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 88,
+      "printId": "OP01-016_P8",
+      "title": "Nami OP01-016 Manga Alt Art ONE PIECE Card The Best Japanese Comic Parallel JP",
+      "priceUsd": 712.4,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 89,
+      "printId": "OP01-016_P2",
+      "title": "2022 PREMIUM COLLECTION 25TH ANNIV. MANGA ALT. ART PARALLEL NAMI CGC 10 PRISTINE",
+      "priceUsd": 150,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 89,
+      "printId": "OP01-016_P8",
+      "title": "2022 PREMIUM COLLECTION 25TH ANNIV. MANGA ALT. ART PARALLEL NAMI CGC 10 PRISTINE",
+      "priceUsd": 150,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 90,
+      "printId": "OP01-016_P8",
+      "title": "ONE PIECE 2024 THE BEST PREMIUM BOOSTER JP NAMI MANGA ART OP01-016 BGS 9.5",
+      "priceUsd": 1299.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 91,
+      "printId": "OP01-016_P8",
+      "title": "PSA 10 Nami OP01-016 Manga Alt Art ONE PIECE Card The Best Japanese PRB-01",
+      "priceUsd": 1549.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 94,
+      "printId": "OP01-016_P8",
+      "title": "Bandai One Piece Card Game 2024 JP Nami OP01-016 Manga Alt Art Foil PSA 10",
+      "priceUsd": 1350,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 96,
+      "printId": "OP01-016_P8",
+      "title": "2024 One Piece MANGA NAMI #OP01-016 PRB01 The Best Alt Art Japanese PSA 10",
+      "priceUsd": 1799.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-016",
+      "rowIndex": 97,
+      "printId": "OP01-016_P8",
+      "title": "Nami (Manga Alt Art) OP01-016 The Best Japanese ONE PIECE Card 2024 Comic Para",
+      "priceUsd": 935.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 4,
+      "printId": "OP01-025_P3",
+      "title": "Roronoa Zoro OP01-025 Alt Art English ",
+      "priceUsd": 400,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 8,
+      "printId": "OP01-025_P3",
+      "title": "Roronoa Zoro OP01-025 Alt Art PSA 10",
+      "priceUsd": 850,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 18,
+      "printId": "OP01-025_P3",
+      "title": "Roronoa Zoro OP01-025 SR Parallel Alt Art ONE PIECE Card",
+      "priceUsd": 359.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 25,
+      "printId": "OP01-025_P3",
+      "title": "One Piece Card Game Roronoa Zoro SR Parallel OP01-025 Japanese TCG Card",
+      "priceUsd": 66.99,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 26,
+      "printId": "OP01-025_P3",
+      "title": "Roronoa Zoro - OP01-025 - Super Rare - ST10 Alt Art - English - NM - OP CCG",
+      "priceUsd": 5.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 29,
+      "printId": "OP01-025_P3",
+      "title": "Bandai One Piece Card Game Roronoa Zoro OP01-025 SR Alt Art Foil 5000",
+      "priceUsd": 3.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 30,
+      "printId": "OP01-025_P3",
+      "title": "Roronoa Zoro OP10-095 R - Alt Art One Piece TCG (The Best of Vol.2 set) English",
+      "priceUsd": 19.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 31,
+      "printId": "OP01-025_P3",
+      "title": "RORONOA ZORO 25TH ANNIVERSARY ALT ART OP01-001 - ONE PIECE CARD GAME",
+      "priceUsd": 175,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 33,
+      "printId": "OP01-025_P3",
+      "title": "RORONOA ZORO 25TH ANNIVERSARY ALT ART OP01-001 - ONE PIECE CARD GAME",
+      "priceUsd": 169.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 34,
+      "printId": "OP01-025_P3",
+      "title": "2023 One Piece Zoro OP01-025 Japanese Exclusive Alt Art Mini Non-Holo Perforated",
+      "priceUsd": 12.34,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 37,
+      "printId": "OP01-025_P3",
+      "title": "One Piece Roronoa Zoro OP01-025 Alt Art PSA 10 Used",
+      "priceUsd": 483.01,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 38,
+      "printId": "OP01-025_P3",
+      "title": "RORONOA ZORO 25TH ANNIVERSARY ALT ART OP01-001 - ONE PIECE CARD GAME",
+      "priceUsd": 154.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 40,
+      "printId": "OP01-025_P3",
+      "title": "Bandai One Piece Card Game Roronoa Zoro OP09-076 Alt Art Foil JP 5000",
+      "priceUsd": 14.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 44,
+      "printId": "OP01-025_P3",
+      "title": "2024 One Piece Chinese 1st Anniversary Roronoa Zoro #OP01-025",
+      "priceUsd": 1850.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 45,
+      "printId": "OP01-025_P3",
+      "title": "ONE PIECE 2024 CHINESE 1ST ANNIVERSARY SET RORONOA ZORO OP01-025 PSA 9",
+      "priceUsd": 2698.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 46,
+      "printId": "OP01-025_P3",
+      "title": "2024 One Piece Chinese 1st Anniversary Set OP01-025 Roronoa Zoro PSA 10 GEM MINT",
+      "priceUsd": 2750,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 50,
+      "printId": "OP01-025_P3",
+      "title": "One Piece TCG Card Game Chinese Zoro OP01-025 SR Exclusive 1st Anniversary Alt",
+      "priceUsd": 1888.88,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 54,
+      "printId": "OP01-025_P3",
+      "title": "PSA 10 Roronoa Zoro OP01-025 1st Anniversary Set Promo ONE PIECE Card Chinese",
+      "priceUsd": 3600,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 55,
+      "printId": "OP01-025_P3",
+      "title": "2024 One Piece Chinese 1st Anniversary Set OP01-025 Roronoa Zoro PSA 10 GEM MINT",
+      "priceUsd": 3500,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 56,
+      "printId": "OP01-025_P3",
+      "title": "PSA 10 Roronoa Zoro OP01-025 1st Anniversary Set Promo ONE PIECE Card Chinese",
+      "priceUsd": 3454,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 58,
+      "printId": "OP01-025_P3",
+      "title": "2024 One Piece Chinese 1st Anniversary Set OP01-025 Roronoa Zoro PSA 10 GEM MINT",
+      "priceUsd": 3350,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 59,
+      "printId": "OP01-025_P3",
+      "title": "PSA 10 Roronoa Zoro OP01-025 1st Anniversary Set Promo ONE PIECE Card Chinese",
+      "priceUsd": 5000,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 61,
+      "printId": "OP01-025_P3",
+      "title": "OPCG One Piece TCG Chinese丨OP01-025 Roronoa Zoro-Alt Art丨Near Mint",
+      "priceUsd": 21.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 65,
+      "printId": "OP01-025_P3",
+      "title": "PSA 10 Roronoa Zoro OP01-025 1st Anniversary Set Promo ONE PIECE Card Chinese",
+      "priceUsd": 3872.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP01-025",
+      "rowIndex": 66,
+      "printId": "OP01-025_P3",
+      "title": "PSA 10 Roronoa Zoro OP01-025 1st Anniversary Set Promo ONE PIECE Card Chinese",
+      "priceUsd": 4999.85,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 2,
+      "printId": "OP05-119_P2",
+      "title": "Monkey D Luffy OP05-119 SEC Secret Rare Awakening of the New Era ",
+      "priceUsd": 19.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 3,
+      "printId": "OP05-119_P2",
+      "title": "2023 ONE PIECE OP05-AWAKENING OF THE NEW ERA #119 MONKEY D. LUFFY PSA 10",
+      "priceUsd": 849.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 9,
+      "printId": "OP05-119_R2",
+      "title": "Monkey D Luffy OP05-119 (SEC) Para PRB01 Premium Booster One Piece Card The Best",
+      "priceUsd": 185,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 13,
+      "printId": "OP05-119_P2",
+      "title": "Monkey.D.Luffy OP05-119 Awakening of the New Era One Piece Japanese NM",
+      "priceUsd": 9.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 14,
+      "printId": "OP05-119_P2",
+      "title": "ONE PIECE CARD Monkey D Luffy OP05-119 (Alternate Art) Awakening of the New Era",
+      "priceUsd": 220,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 16,
+      "printId": "OP05-119_R2",
+      "title": "Monkey D Luffy OP05-119 (SEC) JP PRB01 Premium Booster One Piece Card The Best",
+      "priceUsd": 89,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 18,
+      "printId": "OP05-119_P2",
+      "title": "PSA 10 Monkey D Luffy One Piece Awakening Of The New Era OP05-119 Alternate Art",
+      "priceUsd": 795,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 21,
+      "printId": "OP05-119_P2",
+      "title": "Monkey D. Luffy (Alt Art) OP05-119 SEC Awakening of the New Era - ONE PIECE",
+      "priceUsd": 115.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 22,
+      "printId": "OP05-119_P2",
+      "title": "Monkey.D.Luffy (Parallel) OP05-119 Awakening of the New Era [OP-05] One Piece NM",
+      "priceUsd": 250.49,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 24,
+      "printId": "OP05-119_P2",
+      "title": "Monkey D. Luffy (Alt Art) OP05-119 SEC Awakening of the New Era - ONE PIECE",
+      "priceUsd": 119.8,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 25,
+      "printId": "OP05-119_P2",
+      "title": "Monkey.D.Luffy (119) OP05-119 Awakening of the New Era Foil",
+      "priceUsd": 17.49,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 42,
+      "printId": "OP05-119_P7",
+      "title": "PSA 10 Luffy Gold Silver OP05-119 Manga Alt Art Parallel One Piece Set of 3",
+      "priceUsd": 35678.5,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 42,
+      "printId": "OP05-119_P8",
+      "title": "PSA 10 Luffy Gold Silver OP05-119 Manga Alt Art Parallel One Piece Set of 3",
+      "priceUsd": 35678.5,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 50,
+      "printId": "OP05-119_P7",
+      "title": "One Piece Monkey D Luffy Silver OP05-119 Manga Alt Art PSA 10 Gem Mint",
+      "priceUsd": 12557.6,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 51,
+      "printId": "OP05-119_P7",
+      "title": "Silver Luffy 3rd Anniversary Monkey D. Luffy OP05-119 SP One Piece CCG (LP) JP",
+      "priceUsd": 3499.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 53,
+      "printId": "OP05-119_P8",
+      "title": "Monkey D Luffy OP05-119 Gold SP Alt Art Card One Piece BGS 9.5 Gem Mint",
+      "priceUsd": 12995,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 55,
+      "printId": "OP05-119_P2",
+      "title": "Monkey D Luffy OP05-119 SEC Secret Rare Awakening of the New Era ",
+      "priceUsd": 19.21,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 56,
+      "printId": "OP05-119_P7",
+      "title": "BGS 10 Monkey.D.Luffy Gold Foil SP OP05-119 A Fist of Divine Speed",
+      "priceUsd": 30000,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 57,
+      "printId": "OP05-119_P8",
+      "title": "PSA 10 Luffy Gold OP05-119 SEC Parallel 3rd Anniversary One Piece Card Japanese",
+      "priceUsd": 16750,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 58,
+      "printId": "OP05-119_P7",
+      "title": "PSA 10 GEM MT 2025 ONE PIECE OP11 JP Luffy OP05-119 3rd Anniv Silver",
+      "priceUsd": 7700,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 59,
+      "printId": "OP05-119_P7",
+      "title": "PSA 8 Luffy Silver OP05-119 SEC 3rd Anniversary Special One Piece Card Japanese",
+      "priceUsd": 4900,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 60,
+      "printId": "OP05-119_P7",
+      "title": "Monkey D. Luffy Silver 3rd Anni OP05-119 SP SEC Fist of Divine Speed JP TAG 10",
+      "priceUsd": 7649.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 62,
+      "printId": "OP05-119_P7",
+      "title": "Silver Luffy 3rd Anniversary Monkey D. Luffy OP05-119 SP One Piece CCG (LP) JP",
+      "priceUsd": 5000,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 63,
+      "printId": "OP05-119_P2",
+      "title": "One Piece Monkey.D.Luffy OP05-119 SEC Awakening of the New Era - Secret Rare",
+      "priceUsd": 26,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 66,
+      "printId": "OP05-119_P7",
+      "title": "Monkey.D.Luffy Gold OP05-119 English. A Fist of Divine Speed - One Piece PSA 9",
+      "priceUsd": 15500,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 69,
+      "printId": "OP05-119_P7",
+      "title": "Monkey D Luffy OP05-119 SEC SP Silver OP11 Alt Art ONE PIECE Extended Art Case",
+      "priceUsd": 12,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 70,
+      "printId": "OP05-119_P7",
+      "title": "PSA 9 Luffy Silver OP05-119 SEC 3rd Anniversary Special One Piece Card Japanese",
+      "priceUsd": 5699.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 71,
+      "printId": "OP05-119_P7",
+      "title": "Beckett BGS 10 Monkey.D.Luffy Gold Foil SP OP05-119 A Fist of Divine Speed",
+      "priceUsd": 35000,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 73,
+      "printId": "OP05-119_P2",
+      "title": "Monkey D. Luffy OP05-119 SEC Awakening of the New Era  ONE PIECE Card Game - ",
+      "priceUsd": 29.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 74,
+      "printId": "OP05-119_P8",
+      "title": "Luffy OP05-119 SEC Parallel Fist of Divine Speed 3rd Anniversary ONE PIECE Gold",
+      "priceUsd": 9499.7,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 76,
+      "printId": "OP05-119_P8",
+      "title": "Luffy OP05-119 SEC Parallel Fist of Divine Speed 3rd Anniversary ONE PIECE Gold",
+      "priceUsd": 9900,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 77,
+      "printId": "OP05-119_P7",
+      "title": "Monkey.D.Luffy (119) (SP) (Gold) OP05-119 A Fist of Divine Speed Foil",
+      "priceUsd": 16000,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 79,
+      "printId": "OP05-119_P8",
+      "title": "PSA 10 Luffy OP05-119 SEC Parallel Fist of Divine Speed 3rd Anniversary Gold",
+      "priceUsd": 16779.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 80,
+      "printId": "OP05-119_P7",
+      "title": "PSA 10 Luffy OP05-119 SEC Gold Silver 3rd Anniversary Parallel Special Card Set",
+      "priceUsd": 25779.85,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 80,
+      "printId": "OP05-119_P8",
+      "title": "PSA 10 Luffy OP05-119 SEC Gold Silver 3rd Anniversary Parallel Special Card Set",
+      "priceUsd": 25779.85,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 81,
+      "printId": "OP05-119_P8",
+      "title": "Monkey.d.luffy Sec OP05-119 Gaming Bgs 9.5 Gold",
+      "priceUsd": 94.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 82,
+      "printId": "OP05-119_P8",
+      "title": "PSA 9 One Piece Luffy OP05-119 Fist of Divine Speed 3rd Anniversary Gold Japan",
+      "priceUsd": 13802.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 83,
+      "printId": "OP05-119_P7",
+      "title": "Monkey D. Luffy Gold OP05-119 Bandai SR A Fist of Divine Speed Extended Art Case",
+      "priceUsd": 12,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 83,
+      "printId": "OP05-119_P8",
+      "title": "Monkey D. Luffy Gold OP05-119 Bandai SR A Fist of Divine Speed Extended Art Case",
+      "priceUsd": 12,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 86,
+      "printId": "OP05-119_P7",
+      "title": "Luffy OP05-119 SEC Gold Silver 3rd Anniversary Parallel Special Card Set of 2 JP",
+      "priceUsd": 15000,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 86,
+      "printId": "OP05-119_P8",
+      "title": "Luffy OP05-119 SEC Gold Silver 3rd Anniversary Parallel Special Card Set of 2 JP",
+      "priceUsd": 15000,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 87,
+      "printId": "OP05-119_P8",
+      "title": "PSA 10 Luffy Gold OP05-119 SEC Parallel 3rd Anniversary One Piece Card Japanese",
+      "priceUsd": 18299.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 88,
+      "printId": "OP05-119_P7",
+      "title": "PSA 10 Luffy OP05-119 SEC Parallel Gold Silver 3rd Anniversary Special Card Set",
+      "priceUsd": 24399.7,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 88,
+      "printId": "OP05-119_P8",
+      "title": "PSA 10 Luffy OP05-119 SEC Parallel Gold Silver 3rd Anniversary Special Card Set",
+      "priceUsd": 24399.7,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 89,
+      "printId": "OP05-119_P8",
+      "title": "Monkey.d.luffy Alt Art Foil Sec OP05119 One Piece Bgs 9.5 Gold",
+      "priceUsd": 799.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 90,
+      "printId": "OP05-119_P8",
+      "title": "Monkey D. Luffy Gold OP05-119 Bandai SR Magnetic 🧲 Extended Art Case",
+      "priceUsd": 16,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 93,
+      "printId": "OP05-119_P6",
+      "title": "One Piece TCG English Monkey D Luffy OP05-119 Wanted Poster Wall ART 4x3",
+      "priceUsd": 14.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 97,
+      "printId": "OP05-119_P6",
+      "title": "PSA 10 Wanted Poster One Piece Op09 051 093 119 004 Luffy Shanks Buggy Teach",
+      "priceUsd": 3399.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 98,
+      "printId": "OP05-119_P6",
+      "title": "Monkey.D.Luffy SP (Wanted Poster) OP13-118 Carrying On His Will One Piece TCG🔥",
+      "priceUsd": 340,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 100,
+      "printId": "OP05-119_P6",
+      "title": "One Piece Wanted Poster Card Set (2pcs) OP05-119 SRC & OP13-118 SRC | Luffy",
+      "priceUsd": 398,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 102,
+      "printId": "OP05-119_P6",
+      "title": "***FOIL Monkey D Luffy ST01-012 Wanted Poster*** One Piece Kid Icarus",
+      "priceUsd": 474.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 103,
+      "printId": "OP05-119_P6",
+      "title": "Monkey.D.Luffy (Wanted Poster) OP05-119  Foil SP Japanese",
+      "priceUsd": 399,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 104,
+      "printId": "OP05-119_P6",
+      "title": "ONE PIECE Marine Issued Official Wanted Poster Luffy 3B Bounty 16.5×11.2 in Mint",
+      "priceUsd": 29.95,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 105,
+      "printId": "OP05-119_P6",
+      "title": "Monkey D. Luffy Wanted Poster Alt Art One Piece -OP05-119 Extended Art Case",
+      "priceUsd": 12,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 106,
+      "printId": "OP05-119_P6",
+      "title": "One Piece Wanted Poster Card Set (2pcs) OP05-119 SRC & OP13-118 SRC | Luffy",
+      "priceUsd": 465.6,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 108,
+      "printId": "OP05-119_P6",
+      "title": "One Piece Monkey.D.Luffy OP03 Wanted Poster ST01-012 NM",
+      "priceUsd": 550,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 109,
+      "printId": "OP05-119_P6",
+      "title": "Monkey D Luffy OP13-118 Wanted Poster Carrying On His Will\tOne Piece Card En",
+      "priceUsd": 374.99,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 110,
+      "printId": "OP05-119_P6",
+      "title": "One Piece Toei Animation CCG Variety Wanted Poster Cards",
+      "priceUsd": 28,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 111,
+      "printId": "OP05-119_P6",
+      "title": "Monkey D. Luffy OP05-119 Wanted Poster (Nika) Price Negotiable",
+      "priceUsd": 731.19,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 113,
+      "printId": "OP05-119_P6",
+      "title": "Monkey D. Luffy 2023 Japanese One Piece OP03 Wanted Poster Art ST01-012",
+      "priceUsd": 250,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP05-119",
+      "rowIndex": 114,
+      "printId": "OP05-119_P6",
+      "title": "CHOOSE YOUR WANTED POSTER! • Unisex fit (true to size) • High-quality DTG print",
+      "priceUsd": 20,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 3,
+      "printId": "OP06-118_P2",
+      "title": "2024 ONE PIECE OP06-WINGS OF THE CAPTAIN #118 RORONOA ZORO PSA 10 GEM MINT!",
+      "priceUsd": 119.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 4,
+      "printId": "OP06-118_P4",
+      "title": "One Piece Roronoa Zoro OP06-118 SEC Alt Art Optcg",
+      "priceUsd": 179.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 5,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro OP06-118 SEC Alt Art One Piece (PRB-02) - Wings Of The Captain",
+      "priceUsd": 7,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 6,
+      "printId": "OP06-118_P2",
+      "title": "PSA 10 RORONOA ZORO ONE PIECE OP06-118 WINGS OF THE CAPTAIN | ALTERNATE ART",
+      "priceUsd": 494.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 7,
+      "printId": "OP06-118_P4",
+      "title": "One Piece Card Game Roronoa Zoro OP06-118 SEC Alt Art PSA 10",
+      "priceUsd": 525,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 8,
+      "printId": "OP06-118_P2",
+      "title": "RORONOA ZORO OP06-118 ALTERNATE ART ONE PIECE BANDAI WINGS OF THE CAPTAIN SEC",
+      "priceUsd": 169.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 11,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro (Alternate Art) OP06-118 Wings of the Captain Foil PSA 10",
+      "priceUsd": 599,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 12,
+      "printId": "OP06-118_P4",
+      "title": "One Piece | Roronoa Zoro | OP06-118 | Alt Art (SEC) | NM",
+      "priceUsd": 199.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 13,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro OP06-118 Wings of the Captain Foil",
+      "priceUsd": 7.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 16,
+      "printId": "OP06-118_P2",
+      "title": "2023 One Piece JPN OP06-118 Roronoa Zoro Wings Of The Captain AGS 10 SEC #118",
+      "priceUsd": 65,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 18,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro (Alternate Art) OP06-118 - Wings of the Captain",
+      "priceUsd": 150,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 19,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro (Alternate Art) OP06-118 - Wings of the Captain",
+      "priceUsd": 250,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 20,
+      "printId": "OP06-118_P2",
+      "title": "Bandai One Piece CCG Roronoa Zoro OP06-118 Wings of the Captain Foil BGS 9.5",
+      "priceUsd": 350,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 22,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro OP06-118 Wings of the Captain! SEC PSA 10",
+      "priceUsd": 99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 29,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro (Alternate Art) (Manga) OP06-118 Wings of the Captain Foil",
+      "priceUsd": 3000,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 30,
+      "printId": "OP06-118_P2",
+      "title": "NM Roronoa Zoro Manga OP06-118 One Piece Wings of the Captain English",
+      "priceUsd": 2999.96,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 42,
+      "printId": "OP06-118_P2",
+      "title": "OP06-118 Zoro Manga Rare Secret Wings Of The Captain Original English Mint",
+      "priceUsd": 4999.95,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 43,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro (Alternate Art) (Manga) OP06-118 Wings of the Captain Foil",
+      "priceUsd": 1900,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 51,
+      "printId": "OP06-118_P4",
+      "title": "One Piece Roronoa Zoro OP06-118 SEC Alt Art Optcg",
+      "priceUsd": 180,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 52,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 SEC Secret Rare One Piece Card Game Alt Art Straw Hat Crew",
+      "priceUsd": 19.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 53,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 Parallel Alt Art SEC-Wings of Captain-ONE PIECE TCG",
+      "priceUsd": 160,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 54,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro OP06-118 SEC Alt Art One Piece (PRB-02) - Wings Of The Captain",
+      "priceUsd": 9.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 55,
+      "printId": "OP06-118_P4",
+      "title": "PSA10 Roronoa Zoro OP06-118 Alt Art SEC Wings of Captain One Piece Japanese",
+      "priceUsd": 239.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 56,
+      "printId": "OP06-118_P4",
+      "title": "ONE PIECE Card Game Roronoa Zoro (Parallel) OP06-118 Alt Art Wings of Captain NM",
+      "priceUsd": 28.6,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 57,
+      "printId": "OP06-118_P4",
+      "title": "2024 One Piece CCG OP06-118 Roronoa Zoro Alt Art Foil PSA 9 SEC 9000",
+      "priceUsd": 160,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 58,
+      "printId": "OP06-118_P2",
+      "title": "Roronoa Zoro SEC Alt Art OP06-118 Wings of the Captain Japanese One Piece CCG",
+      "priceUsd": 88.88,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 59,
+      "printId": "OP06-118_P4",
+      "title": "Bandai One Piece Card Game Roronoa Zoro OP06-118 SEC Alt Art Foil JP",
+      "priceUsd": 74,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 60,
+      "printId": "OP06-118_P4",
+      "title": "One Piece TCG Roronoa Zoro OP06-118 SEC Alt Art Japanese PSA 10 Graded",
+      "priceUsd": 427.47,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 61,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 SEC Secret Rare One Piece Card Game Alt Art Straw Hat Crew",
+      "priceUsd": 12,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 62,
+      "printId": "OP06-118_P4",
+      "title": "PSA 10 GEM MT 2023 One Piece JPN Roronoa Zoro OP06-118 SEC (Alt Art)",
+      "priceUsd": 300,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 63,
+      "printId": "OP06-118_P4",
+      "title": "Bandai One Piece Card Game Roronoa Zoro OP06-118 SEC Alt Art Foil JP",
+      "priceUsd": 101.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 64,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 SEC Alt Art – One Piece Card Game Secret Rare",
+      "priceUsd": 18.99,
+      "severity": "uncertain_accept"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 65,
+      "printId": "OP06-118_P4",
+      "title": "ONE PIECE Card Game Roronoa Zoro (Parallel) OP06-118 Alt Art Wings of Captain NM",
+      "priceUsd": 29.7,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 66,
+      "printId": "OP06-118_P2",
+      "title": "One Piece Card Game Roronoa Zoro OP06-118 SEC Alt Art Wings of the Captain JP NM",
+      "priceUsd": 44.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 68,
+      "printId": "OP06-118_P4",
+      "title": "ONE PIECE Card Game Roronoa Zoro OP06-118 SEC 2nd ANNIVERSARY SET Japanese",
+      "priceUsd": 90,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 69,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 Secret Promo ONE PIECE Card Game 2nd Anniversary Set Japan",
+      "priceUsd": 173.02,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 70,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro One Piece 2024 2nd Anniversary Promo Japanese OP06-118 PSA 10",
+      "priceUsd": 399.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 72,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 SEC 2nd ANNIVERSARY SET - ONE PIECE Card Game Chinese NM",
+      "priceUsd": 25.38,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 75,
+      "printId": "OP06-118_P4",
+      "title": "OP06-118 Roronoa Zoro SEC [2nd ANNIVERSARY SET] One Piece japanese NM",
+      "priceUsd": 115.89,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 78,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro One Piece Card TCG Japanese 2nd Anniversary Set OP06-118 English",
+      "priceUsd": 250,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 80,
+      "printId": "OP06-118_P4",
+      "title": "[NM] Roronoa Zoro ONE PIECE Japanese OP06-118 2nd Anniversary Set AH73",
+      "priceUsd": 89.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 81,
+      "printId": "OP06-118_P4",
+      "title": "Zoro OP06-118 SEC ONE PIECE Card Game 2nd ANNIVERSARY SET 2024 Japanese NM",
+      "priceUsd": 129.95,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 82,
+      "printId": "OP06-118_P4",
+      "title": "Chinese Roronoa Zoro OP06-118 2nd ANNIVERSARY SET Limited Edition",
+      "priceUsd": 40.8,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 85,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 SEC 2nd ANNIVERSARY SET - ONE PIECE Card Game Chinese NM",
+      "priceUsd": 42.17,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 86,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 One Piece JPN 2nd Anniversary Set SEC ACE 10 Perfect Subs",
+      "priceUsd": 167.55,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 87,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 SEC 2nd ANNIVERSARY SET - ONE PIECE Card Game Chinese NM",
+      "priceUsd": 42.17,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 88,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro OP06-118 SEC 2nd Anniversary ONE PIECE Card Game Japanese NM",
+      "priceUsd": 107.39,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 89,
+      "printId": "OP06-118_P4",
+      "title": "Roronoa Zoro 2nd ANNIVERSARY SET OP06 118",
+      "priceUsd": 141.69,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP06-118",
+      "rowIndex": 90,
+      "printId": "OP06-118_P4",
+      "title": "Zoro OP06-118 SEC 2nd ANNIVERSARY SET 2024 ONE PIECE Card Game Japanese NM",
+      "priceUsd": 128.49,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP07-053",
+      "rowIndex": 6,
+      "printId": "OP07-053_P4",
+      "title": "Portgas.D.Ace (Winner Pack 2024 Oct.-Dec.) OP07-053 One Piece Single",
+      "priceUsd": 39.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP07-053",
+      "rowIndex": 7,
+      "printId": "OP07-053_P4",
+      "title": "Portgas D Ace OP07-053 Promo Full Art Foil 2024 Winner One Piece Card Japan",
+      "priceUsd": 9.87,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP07-053",
+      "rowIndex": 9,
+      "printId": "OP07-053_P4",
+      "title": "Portgas.D.Ace (Winner Pack 2024 Oct.-Dec.) OP07-053 One Piece Promotion Card NM",
+      "priceUsd": 52.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP07-053",
+      "rowIndex": 15,
+      "printId": "OP07-053_P4",
+      "title": "Portgas.D.Ace Winner Pack 2024 Oct.-Dec. OP07-053 x4 Playset",
+      "priceUsd": 120,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP07-053",
+      "rowIndex": 17,
+      "printId": "OP07-053_P4",
+      "title": "One Piece Portgas.D.Ace Winner Pack 2024 OP07-053 One Piece TCG Promo NM/MT ",
+      "priceUsd": 100,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP07-053",
+      "rowIndex": 31,
+      "printId": "OP07-053_P4",
+      "title": "Portgas.D.Ace (Winner Pack 2024 Oct.-Dec.) OP07-053 One Piece Promotion (1320)",
+      "priceUsd": 48,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP07-053",
+      "rowIndex": 33,
+      "printId": "OP07-053_P4",
+      "title": "• Portgas.D.Ace • OP07-053 Full Art Foil Winner Pack 2024 Promo One Piece TCG NM",
+      "priceUsd": 45,
+      "severity": "substitution"
+    },
+    {
+      "family": "OP09-027",
+      "rowIndex": 11,
+      "printId": "OP09-027_P3",
+      "title": "One Piece Sabo (3rd Anniversary Winner) One Piece Promotion Cards  OP09-027 Foil",
+      "priceUsd": 17.25,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 5,
+      "printId": "ST01-012_P1",
+      "title": "Monkey D. Luffy ST01-012 SR SP Wanted Mighty Enemies - ONE PIECE Card Game NM",
+      "priceUsd": 103.32,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 26,
+      "printId": "ST01-012_P1",
+      "title": "🔥Monkey D Luffy SP Wanted Poster From OP03 - ST01-012 Pillars of Strength 📈📈",
+      "priceUsd": 295,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 27,
+      "printId": "ST01-012_P1",
+      "title": "One Piece Card Game - Monkey D. Luffy ST01-012 SP SR Wanted Poster Ver.",
+      "priceUsd": 205,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 28,
+      "printId": "ST01-012_P1",
+      "title": "Monkey D. Luffy ST01 012 Wanted Poster",
+      "priceUsd": 202.41,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 31,
+      "printId": "ST01-012_P1",
+      "title": "Monkey D. Luffy 2023 Japanese One Piece OP03 Wanted Poster Art ST01-012",
+      "priceUsd": 250,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 36,
+      "printId": "ST01-012_P1",
+      "title": "2023 MONKEY D. LUFFY Japanese One Piece Wanted Poster Art ST01-012 SR BGS 9.5",
+      "priceUsd": 249.88,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 38,
+      "printId": "ST01-012_P1",
+      "title": "Monkey D. Luffy ST01 012 Wanted Poster SP",
+      "priceUsd": 259.08,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 39,
+      "printId": "ST01-012_P1",
+      "title": "Monkey D. Luffy Wanted Poster 2-Card Set ST01-012 OP13-118",
+      "priceUsd": 437.14,
+      "severity": "unrelated_accept"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 40,
+      "printId": "ST01-012_P1",
+      "title": "Monkey D. Luffy 2023 Japanese One Piece OP03 Wanted Poster Art ST01-012",
+      "priceUsd": 595,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 49,
+      "printId": "ST01-012_P1",
+      "title": "One Piece Card Game - Monkey D. Luffy ST01-012 SP SR Wanted Poster Ver.",
+      "priceUsd": 220,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 55,
+      "printId": "ST01-012_P6",
+      "title": "BGS 10 One Piece ST01-012 SR - Monkey.D.Luffy - EN - Foil - Tournament Winner",
+      "priceUsd": 903.99,
+      "severity": "substitution"
+    },
+    {
+      "family": "ST01-012",
+      "rowIndex": 63,
+      "printId": "ST01-012_P6",
+      "title": "Ace 10 WINNER Monkey.D.Luffy ST01-012 SR One Piece Tournament Vol.5 perfect sub",
+      "priceUsd": 402.12,
+      "severity": "substitution"
+    }
+  ]
+}

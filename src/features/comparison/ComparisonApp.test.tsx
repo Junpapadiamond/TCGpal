@@ -491,6 +491,8 @@ describe("comparison condition controls", () => {
         price: 120,
         shipping: 5,
         claimedCondition: "Near Mint",
+        listingLanguage: "English",
+        matchAspectText: "Language: English. Set: Awakening Of The New Era. Rarity: SP CARD. Features: Special Art",
         imageUrl: "https://i.ebayimg.com/images/g/nami/s-l1600.jpg",
         seller: {
           feedbackPercentage: 99.8,
@@ -556,7 +558,7 @@ describe("comparison condition controls", () => {
     expect(await screen.findAllByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toHaveLength(2);
     expect(screen.getByAltText("Listing evidence photo: Nami OP01-016 SP Special Art")).toBeTruthy();
     expect(screen.getAllByText("Awakening Of The New Era · OP01-016 · SP CARD · Special Art (P4)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("The listing names the uniquely identifiable selected print class.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));
     expect(screen.getByAltText("Listing evidence photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();

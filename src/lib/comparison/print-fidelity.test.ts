@@ -32,12 +32,17 @@ describe("exact-print fidelity", () => {
       it(`${selected.id} ${selected.id === observed.id ? "accepts" : "rejects"} explicit ${observed.id} evidence`, () => {
         const result = assessPrintFidelity({
           card: selected,
-          matchText: `${observed.id} ${observed.variant ?? "base print"} ${observed.setName}`,
+          matchText: `${observed.id} ${observed.variant ?? "base print"} ${observed.setName} ${observed.language}`,
           listingPrice: 100,
           exactMarketAnchor: 100,
         });
 
-        expect(result.match).toBe(selected.id === observed.id ? "exact" : "mismatch");
+        if (selected.id === observed.id) {
+          expect(["compatible", "exact"]).toContain(result.match);
+          expect(result.match).not.toBe("exact");
+        } else {
+          expect(["compatible", "exact"]).not.toContain(result.match);
+        }
       });
     }
   }
@@ -54,26 +59,26 @@ describe("exact-print fidelity", () => {
     });
 
     expect(result.match).toBe("unknown");
-    expect(result.reasons).toContain("multiple_siblings_share_researched_artwork");
+    expect(result.reasons).toContain("one_piece_evidence_not_unique_across_siblings");
   });
 
-  it("uses a seller-stated P-number without parentheses as exact sibling evidence", () => {
+  it("ignores seller-stated internal P-numbers as artwork evidence", () => {
     const selected = namiPrints.find((card) => card.id === "OP01-016_p2")!;
     expect(assessPrintFidelity({
       card: selected,
       matchText: "Nami OP01-016 Alternate Art P2",
       listingPrice: 90,
       exactMarketAnchor: 100,
-    }).match).toBe("exact");
+    }).match).toBe("unknown");
     expect(assessPrintFidelity({
       card: selected,
       matchText: "Nami OP01-016 Alternate Art P1",
       listingPrice: 90,
       exactMarketAnchor: 100,
-    }).match).toBe("mismatch");
+    }).match).toBe("unknown");
   });
 
-  it("accepts SP wording as compatible when the selected card number has one SP print", () => {
+  it("keeps generic SP wording unresolved without release corroboration", () => {
     const selected = namiPrints.find((card) => card.id === "OP01-016_p4");
     expect(selected).toBeDefined();
 
@@ -84,7 +89,7 @@ describe("exact-print fidelity", () => {
       exactMarketAnchor: 100,
     });
 
-    expect(result.match).toBe("compatible");
+    expect(result.match).toBe("unknown");
   });
 
   it("keeps a plain One Piece name and number unresolved for every sibling print", () => {
@@ -100,7 +105,7 @@ describe("exact-print fidelity", () => {
     }
   });
 
-  it("recognizes exact SP wording even when the title also calls it a parallel", () => {
+  it("does not let generic SP plus parallel wording prove an exact print", () => {
     const selected = namiPrints.find((card) => card.id === "OP01-016_p4")!;
 
     const result = assessPrintFidelity({
@@ -110,8 +115,8 @@ describe("exact-print fidelity", () => {
       exactMarketAnchor: 100,
     });
 
-    expect(result.match).toBe("compatible");
-    expect(result.reasons).toContain("listing_names_unique_researched_artwork");
+    expect(result.match).toBe("unknown");
+    expect(result.reasons).toContain("one_piece_class_evidence_requires_corroboration");
   });
 
   it("treats explicit generic alternate-art evidence as a known mismatch for selected SP", () => {
@@ -150,7 +155,7 @@ describe("exact-print fidelity", () => {
     expect(inspect.priceGuard).toBe("inspect");
   });
 
-  it("never rejects an explicitly exact print solely because it is a bargain", () => {
+  it("does not let an internal suffix bypass unresolved-print price guards", () => {
     const selected = namiPrints.find((card) => card.id === "OP01-016_p4")!;
     const result = assessPrintFidelity({
       card: selected,
@@ -159,8 +164,8 @@ describe("exact-print fidelity", () => {
       exactMarketAnchor: 100,
     });
 
-    expect(result.match).toBe("exact");
-    expect(result.priceGuard).toBe("none");
+    expect(result.match).toBe("unknown");
+    expect(result.priceGuard).toBe("exclude");
   });
 
   it("does not apply a price identity gate without an exact-print anchor", () => {
@@ -183,9 +188,9 @@ describe("exact-print fidelity", () => {
     const gold = gearFivePrints.find((card) => card.id === "OP05-119_p8")!;
 
     expect(assessPrintFidelity({ card: manga, matchText: "Gear 5 Luffy OP05-119 Manga Rare", listingPrice: 800, exactMarketAnchor: 800 }).match).toBe("unknown");
-    expect(assessPrintFidelity({ card: manga, matchText: `Gear 5 Luffy OP05-119 Manga Rare ${manga.setName}`, listingPrice: 800, exactMarketAnchor: 800 }).match).toBe("compatible");
-    expect(assessPrintFidelity({ card: wanted, matchText: "Gear 5 Luffy OP05-119 Wanted Poster", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
-    expect(assessPrintFidelity({ card: gold, matchText: "Gear 5 Luffy OP05-119 Gold Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: manga, matchText: `${manga.id} Gear 5 Luffy OP05-119 Manga Rare ${manga.setName} English`, listingPrice: 800, exactMarketAnchor: 800 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: wanted, matchText: `${wanted.id} Gear 5 Luffy OP05-119 Wanted Poster English`, listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: gold, matchText: "Gear 5 Luffy OP05-119 Gold Special Art English", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
     expect(assessPrintFidelity({ card: gold, matchText: "Gear 5 Luffy OP05-119 Silver Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
     expect(assessPrintFidelity({ card: silver, matchText: "Gear 5 Luffy OP05-119 Gold Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
     expect(assessPrintFidelity({ card: gold, matchText: "Gear 5 Luffy OP05-119 SP Special Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
@@ -197,10 +202,10 @@ describe("exact-print fidelity", () => {
     const redSuperAlt = op13LuffyPrints.find((card) => card.id === "OP13-118_p3")!;
     const wanted = op13LuffyPrints.find((card) => card.id === "OP13-118_p4")!;
 
-    expect(assessPrintFidelity({ card: superAlt, matchText: "Luffy OP13-118 Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
-    expect(assessPrintFidelity({ card: redSuperAlt, matchText: "Luffy OP13-118 Red Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
-    expect(assessPrintFidelity({ card: redSuperAlt, matchText: "Luffy OP13-118 Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
-    expect(assessPrintFidelity({ card: wanted, matchText: "Luffy OP13-118 Wanted Poster", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: superAlt, matchText: "Luffy OP13-118 Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
+    expect(assessPrintFidelity({ card: redSuperAlt, matchText: "Luffy OP13-118 Red Super Alternate Art English", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: redSuperAlt, matchText: "Luffy OP13-118 Super Alternate Art", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
+    expect(assessPrintFidelity({ card: wanted, matchText: `${wanted.id} Luffy OP13-118 Wanted Poster English`, listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
     expect(assessPrintFidelity({ card: ordinary, matchText: "Luffy OP13-118 Wanted Poster", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
   });
 
@@ -214,8 +219,8 @@ describe("exact-print fidelity", () => {
 
     expect(assessPrintFidelity({ card: pack, matchText: generic, listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
     expect(assessPrintFidelity({ card: winner, matchText: generic, listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("unknown");
-    expect(assessPrintFidelity({ card: pack, matchText: "Luffy ST01-012 3rd Anniversary Tournament Pack", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
-    expect(assessPrintFidelity({ card: winner, matchText: "Luffy ST01-012 3rd Anniversary Winner", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: pack, matchText: "Luffy ST01-012 3rd Anniversary Tournament Pack English", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
+    expect(assessPrintFidelity({ card: winner, matchText: "Luffy ST01-012 3rd Anniversary Winner English", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("compatible");
     expect(assessPrintFidelity({ card: winner, matchText: "Luffy ST01-012 3rd Anniversary Tournament Pack", listingPrice: 100, exactMarketAnchor: 100 }).match).toBe("mismatch");
   });
 
@@ -234,7 +239,7 @@ describe("exact-print fidelity", () => {
       matchText: "Kid & Killer EB01-003 SP Special Art Parallel",
       listingPrice: 100,
       exactMarketAnchor: 100,
-    }).match).toBe("compatible");
+    }).match).toBe("unknown");
   });
 
   it("requires Pokémon listing text to prove the selected collector number and card name", () => {

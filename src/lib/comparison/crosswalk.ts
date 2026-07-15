@@ -104,7 +104,7 @@ export function selectExactTcgplayerProduct(
   const credible = pool.filter((product) => {
     const assessment = assessPrintFidelity({
       card,
-      matchText: `${product.productName} ${product.groupName} ${product.productUrl}`,
+      matchText: `${product.productName} ${product.collectorNumber} ${product.groupName} ${card.language} ${product.productUrl}`,
       listingPrice: 0,
       exactMarketAnchor: null,
     });

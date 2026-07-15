@@ -242,8 +242,8 @@ describe("eBay active-listing search", () => {
   const spCard = {
     id: "OP01-016_p4",
     name: "Nami",
-    setName: "Romance Dawn",
-    setCode: "OP-01",
+    setName: "Awakening Of The New Era",
+    setCode: "OP-05",
     cardNumber: "OP01-016",
     language: "EN",
     imageUrl: null,
@@ -256,17 +256,17 @@ describe("eBay active-listing search", () => {
   it("searches a One Piece SP print with the variant token first", async () => {
     const captured: { searchUrl?: string } = {};
     await searchEbayAlternatives(spCard, buyer, searchFetcher(captured));
-    expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 P4 SP");
+    expect(new URL(captured.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 SP Awakening Of The New Era");
   });
 
   it.each([
-    ["OP11-118_p2", "Monkey.D.Luffy OP11-118 P2 manga"],
-    ["OP05-119_p7", "Monkey.D.Luffy OP05-119 P7 silver"],
-    ["OP05-119_p8", "Monkey.D.Luffy OP05-119 P8 gold"],
-    ["OP13-118_p4", "Monkey.D.Luffy OP13-118 P4 wanted poster"],
-    ["OP11-119_p2", "Koby OP11-119 P2 treasure cup"],
-    ["ST01-012_p6", "Monkey.D.Luffy ST01-012 P6 tournament winner"],
-    ["OP01-016_p2", "Nami OP01-016 P2 premium collection"],
+    ["OP11-118_p2", "Monkey.D.Luffy OP11-118 manga"],
+    ["OP05-119_p7", "Monkey.D.Luffy OP05-119 silver"],
+    ["OP05-119_p8", "Monkey.D.Luffy OP05-119 gold"],
+    ["OP13-118_p4", "Monkey.D.Luffy OP13-118 wanted poster"],
+    ["OP11-119_p2", "Koby OP11-119 treasure cup"],
+    ["ST01-012_p6", "Monkey.D.Luffy ST01-012 tournament winner"],
+    ["OP01-016_p2", "Nami OP01-016 premium collection"],
   ])("uses verified semantic aliases in the exact-print query for %s", async (printId, expectedQuery) => {
     const print = findOnePieceCatalogVariant(printId);
     if (!print) throw new Error(`Missing bundled print ${printId}.`);
@@ -290,7 +290,7 @@ describe("eBay active-listing search", () => {
       if (url.includes("/item_summary/search")) {
         const query = new URL(url).searchParams.get("q") ?? "";
         searchQueries.push(query);
-        const exact = !query.includes(" P6 ");
+        const exact = query.includes("tournament winner");
         return { ok: true, status: 200, json: async () => ({ itemSummaries: [{
           itemId: exact ? "winner" : "pack",
           title: exact ? "Luffy ST01-012 3rd Anniversary Winner" : "Luffy ST01-012 3rd Anniversary Tournament Pack",
@@ -301,7 +301,7 @@ describe("eBay active-listing search", () => {
     }) as unknown as typeof fetch;
 
     const results = await searchEbayAlternatives(winner, buyer, fetcher);
-    expect(searchQueries.length).toBeGreaterThan(1);
+    expect(searchQueries).toContain("Monkey.D.Luffy ST01-012 tournament winner");
     expect(results.map((listing) => listing.id)).toContain("ebay-winner");
   });
 
@@ -315,7 +315,7 @@ describe("eBay active-listing search", () => {
       if (url.includes("/item_summary/search")) {
         searchUrls.push(url);
         const q = new URL(url).searchParams.get("q") ?? "";
-        if (q.endsWith(" P4 SP") || q.endsWith(" SP")) {
+        if (q.includes("SP Awakening Of The New Era")) {
           return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
         }
         return {
@@ -331,8 +331,7 @@ describe("eBay active-listing search", () => {
 
     const results = await searchEbayAlternatives(spCard, buyer, fetcher);
     expect(searchUrls.map((url) => new URL(url).searchParams.get("q"))).toEqual([
-      "Nami OP01-016 P4 SP",
-      "Nami OP01-016 SP",
+      "Nami OP01-016 SP Awakening Of The New Era",
       "Nami OP01-016",
     ]);
     expect(results.map((listing) => listing.id)).toEqual(["ebay-9"]);
@@ -348,7 +347,7 @@ describe("eBay active-listing search", () => {
     // variant token still leads, with the raw override as the fallback attempt.
     const overridden: { searchUrl?: string } = {};
     await searchEbayAlternatives(spCard, buyer, searchFetcher(overridden), "Nami OP01-016 custom");
-    expect(new URL(overridden.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 custom P4 SP");
+    expect(new URL(overridden.searchUrl ?? "").searchParams.get("q")).toBe("Nami OP01-016 custom SP Awakening Of The New Era");
   });
 
   it("uses the cheapest shipping option, not the first, so landed cost matches the listing", async () => {

@@ -889,7 +889,8 @@ describe("listing comparison agent", () => {
 
       // The listing search led with the SP token (the other captured query is the
       // separate ePID-consensus metadata leg, which stays a plain keyword probe).
-      expect(searchQueries).toContain("Nami OP01-016 P4 SP");
+      expect(searchQueries).toContain("Nami OP01-016 SP Awakening Of The New Era");
+      expect(searchQueries.some((query) => /\bP4\b/.test(query))).toBe(false);
 
       expect(response.demoMode).toBe(false);
       expect(response.rankedChoices).toHaveLength(0);
