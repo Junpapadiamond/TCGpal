@@ -12,6 +12,10 @@ Primary reasons are ordered product → condition → cost/availability → pric
 
 Print fidelity considers collector number, card name context, artwork class, treatment, reviewed release markers, and sibling conflicts. Product type and language are handled by eligibility. Seller-facing `Manga` can uniquely prove a manga sibling without an internal `_pN` suffix. Generic `SP` remains insufficient unless a reviewed seller-visible release or treatment marker makes the sibling intersection unique; for example, `EB03-055 + SP + Heroines` proves the Nico Robin Heroines SP.
 
+## Research provenance
+
+When a new alias, release marker, or sibling distinction needs investigation, follow `docs/card-identity-research-policy.md`. Official sources establish canonical facts; structured catalogs cross-check them; specialist guides, forums, Reddit, and marketplace examples surface terminology and failure modes. Community evidence never auto-promotes a runtime identity rule.
+
 ## Pokémon search and journey state
 
 Pokémon name matching classifies exact, form, related, and unrelated names. Single-character searches exclude combination cards, Trainers, and overlapping longer names: Mew does not accept Mewtwo, and Mewtwo does not accept Mewtwo Spirit Link. Explicit combination-card input remains supported. Identity search requests only catalog fields needed by the gallery and cap name pages at 100; full price data is fetched after stable-ID confirmation.

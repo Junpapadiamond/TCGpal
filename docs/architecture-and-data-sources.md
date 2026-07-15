@@ -41,6 +41,12 @@ Deep links call `buildAgentSearchUrl()` and reopen the existing website identity
 | Mercari / Whatnot | User-supplied candidate | No | No automated v1 adapter |
 | Local shop / show | User-supplied candidate | No | Tax, shipping, and protection can differ |
 
+## Offline identity investigations
+
+The source matrix above describes product runtime access. A scoped offline or human-in-the-loop card-version investigation may also consult official publisher pages, structured catalogs, specialist wikis/guides, forums, Reddit, and concrete marketplace examples. These sources help reconstruct release history, learn seller-facing aliases, and find repeatable mislisting patterns; they do not become fetched inventory or ranking evidence.
+
+Investigation findings follow `docs/card-identity-research-policy.md`. Community posts are leads or corroboration, never the sole deciding source for a runtime print rule. Every promoted claim requires recorded provenance, conflict review, human approval, and sibling-negative regression tests. Product routes must not reuse the investigation process as a general web crawler.
+
 ## API
 
 `GET /api/agent/capabilities`

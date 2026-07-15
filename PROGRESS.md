@@ -114,6 +114,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Publication fails closed on weak confidence, conflicts, shared mappings, unknown provenance, missing hashes, insufficient global image margin, missing human approval, or an empty ledger.
 - The generator retains unresolved/conflicting rows and refuses to overwrite output when candidate discovery is empty.
 - Runtime imports no research ledger or audit artifact.
+- Card-version investigations now follow `docs/card-identity-research-policy.md`: official evidence first, structured/specialist cross-checks second, and Reddit/forums/community reports as discovery or corroboration only. Promotion still requires explicit human approval and sibling-negative tests.
 
 ### Not finished
 
@@ -132,6 +133,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - scripts/research-one-piece-exact-prints.mjs
 - scripts/lib/one-piece-metadata-audit.mjs
 - src/lib/external/one-piece-print-metadata.ts
+- docs/card-identity-research-policy.md
 - .github/workflows/refresh-one-piece-metadata.yml
 
 Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.

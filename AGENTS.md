@@ -30,6 +30,7 @@ TCGlens is not a price predictor, grading app, investment advisor, marketplace s
 - OpenAI, Tavily, and Exa are optional. Deterministic identity, eligibility, pricing, ranking, abstention, and summaries must remain usable without them; web context and discovered links never enter ranking evidence.
 - REST, MCP, and the Work plugin reuse the same domain functions and source boundaries. They may narrow or project responses but may not weaken validation or receive provider credentials.
 - One Piece research ledgers are review queues, not runtime overlays. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect identity or market anchors.
+- Card-version investigations may use official card lists and announcements, structured catalogs, specialist guides, forums, and Reddit. Community material is discovery/corroboration evidence only: record the URL and access date, resolve conflicts against stronger sources, and require human-reviewed curation plus tests before changing runtime identity behavior. Follow `docs/card-identity-research-policy.md`.
 
 Mutable release state, open decisions, verification evidence, and exact versions belong in sectioned `PROGRESS.md`, not this always-loaded guide. Detailed provider and interface behavior belongs in `docs/architecture-and-data-sources.md`.
 
@@ -72,6 +73,8 @@ Not allowed:
 - Client-side API secrets.
 
 Only the bounded adapters in `src/lib/external/*` may fetch external URLs. Anything they refuse (robots-blocked, non-https, private hosts, non-USD) remains user-supplied text.
+
+The product-route boundary above does not prohibit explicit offline or human-in-the-loop card-identity research. During an investigation, an agent may open public official or community pages to understand print history, aliases, treatments, and known mislisting vocabulary. It must not bulk-crawl those sites, treat a marketplace result as a sold comp, or move unreviewed findings into runtime code.
 
 ## Agent and Rules Boundary
 
