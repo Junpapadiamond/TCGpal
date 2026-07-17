@@ -1,7 +1,7 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-07-15
+updated_at: 2026-07-17
 canonical_branch: origin/main
 last_verified_product_commit: 6ff92cd0f04926fb3e6f8472a402f7af32ffe917
 max_lines: 300
@@ -78,6 +78,8 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Comparison contract v5 and plugin 1.0.2 add typed product/condition/cost/price/language/identity/availability issues. Law Manga and Robin Heroines SP use seller-visible positive proof; graded, language, condition, and shipping exclusions no longer masquerade as artwork mismatches.
 - Pokémon search now keeps Mew/Mewtwo, combination cards, and Trainer products in strict name tiers, requests a bounded identity-only payload, and reloads full data only after stable-ID confirmation.
 - Client request generations abort stale identity/comparison work. Native Next.js 16 history entries restore search, confirmation, and result snapshots without placing buyer or listing facts in the URL.
+- Identity search now carries cancellation from browser to route, resolver, and Pokémon fetch; one 10-second server budget prevents nested retries from stretching into 20–40 second stalls. Identical requests coalesce per server instance, successful identities use hashed 15-minute cache entries with a six-hour stale fallback, and provider deadlines return an explicit temporary-unavailable result.
+- Closed One Piece version groups no longer mount their cards until opened. A 2026-07-17 alternating five-card live check measured One Piece resolution at 16–50 ms server time, an uncached Pokémon resolution at 7.427 s, and its cached repeat at 20 ms; the full release gates remain authoritative.
 
 ### What went wrong
 
@@ -92,11 +94,13 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Performance: classifier p99 0.0917 ms; hermetic full-comparison p95 changed +2.33%, within the 10% gate.
 - Official eBay Browse checks passed for Bubble Mew, Base Alakazam, Nami/Robin/Zoro, manga, anniversary, tournament, Winner, and graded/custom exclusions. Genuine evidence gaps still abstain.
 - Remaining: complete a human-adjudicated 30-listing production sample before claiming population accuracy; monitor live recall and the 12-item enrichment window. Gold/silver and broader market families retain automated coverage but still need periodic live sampling.
+- Review the seven-day production identity timeout rate on 2026-07-24. If more than 5% of uncached Pokémon searches hit the 10-second deadline, or p95 remains above 8 seconds, promote the lightweight local Pokémon identity index from a parked option to a separately evaluated workstream.
 
 ### Read first
 
 - src/lib/schemas.ts
 - src/lib/ai/listing-compare.ts
+- src/lib/ai/card-identity-runtime.ts
 - src/lib/comparison/print-fidelity.ts
 - src/lib/comparison/ranking.ts
 - src/lib/external/ebay.ts

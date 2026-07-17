@@ -84,4 +84,26 @@ describe("resolveCardIdentity", () => {
     expect(unavailable.status).toBe("unavailable");
     expect(unavailable.warnings.join(" ")).toMatch(/unavailable|offline/i);
   });
+
+  it("does not retry a Pokemon lookup after its parent request is cancelled", async () => {
+    const controller = new AbortController();
+    const fetcher = vi.fn((_url: URL, init?: RequestInit) => (
+      new Promise<Response>((_resolve, reject) => {
+        const signal = init?.signal as AbortSignal;
+        signal.addEventListener("abort", () => {
+          reject(new DOMException("The operation was aborted.", "AbortError"));
+        }, { once: true });
+      })
+    )) as unknown as typeof fetch;
+
+    const pending = resolveCardIdentity(
+      { query: "Charizard", cardHint: { game: "pokemon" } },
+      { fetcher, signal: controller.signal },
+    );
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
 });

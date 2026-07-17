@@ -9,7 +9,7 @@ import {
 
 export async function resolveCardIdentity(
   rawInput: CardIdentitySearchRequestInput,
-  dependencies: { fetcher?: typeof fetch; now?: () => Date } = {},
+  dependencies: { fetcher?: typeof fetch; now?: () => Date; signal?: AbortSignal } = {},
 ): Promise<CardIdentitySearchResponse> {
   const input = cardIdentitySearchRequestSchema.parse(rawInput);
   const comparisonRequest = comparisonRequestSchema.parse({

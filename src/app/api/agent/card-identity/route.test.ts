@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
-import { resolveCardIdentity } from "@/lib/ai/card-identity";
+import { resolveCardIdentityRuntime } from "@/lib/ai/card-identity-runtime";
 import { clearLocalRateLimitStore } from "@/lib/ops/rate-limit";
 
-vi.mock("@/lib/ai/card-identity", () => ({
-  resolveCardIdentity: vi.fn(async () => ({
+vi.mock("@/lib/ai/card-identity-runtime", () => ({
+  resolveCardIdentityRuntime: vi.fn(async () => ({
     identityContractVersion: 1,
     status: "needs_confirmation",
     candidates: [],
@@ -33,9 +33,12 @@ describe("/api/agent/card-identity", () => {
       identityContractVersion: 1,
       status: "needs_confirmation",
     });
-    expect(resolveCardIdentity).toHaveBeenCalledWith(
+    expect(resolveCardIdentityRuntime).toHaveBeenCalledWith(
       expect.objectContaining({ query: "Pikachu" }),
-      { now: expect.any(Function) },
+      expect.objectContaining({
+        now: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
     );
   });
 
@@ -43,7 +46,7 @@ describe("/api/agent/card-identity", () => {
     const response = await POST(requestFor({ query: "" }));
 
     expect(response.status).toBe(400);
-    expect(resolveCardIdentity).not.toHaveBeenCalled();
+    expect(resolveCardIdentityRuntime).not.toHaveBeenCalled();
   });
 
   it("rate limits repeated catalog searches independently", async () => {
@@ -53,7 +56,7 @@ describe("/api/agent/card-identity", () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(429);
     expect(second.headers.get("Retry-After")).toBeTruthy();
-    expect(resolveCardIdentity).toHaveBeenCalledTimes(1);
+    expect(resolveCardIdentityRuntime).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { resolveCardIdentity } from "@/lib/ai/card-identity";
+import { resolveCardIdentityRuntime } from "@/lib/ai/card-identity-runtime";
 import { createRequestId, getOperationalErrorCode, logOpsEvent } from "@/lib/ops/events";
 import { rateLimitHeaders, rateLimitRequest } from "@/lib/ops/rate-limit";
 import { captureOperationalException } from "@/lib/ops/sentry";
@@ -38,7 +38,10 @@ export async function POST(request: Request) {
   try {
     const input = cardIdentitySearchRequestSchema.parse(await request.json());
     requestValidated = true;
-    const result = await resolveCardIdentity(input, { now: () => new Date() });
+    const result = await resolveCardIdentityRuntime(input, {
+      now: () => new Date(),
+      signal: request.signal,
+    });
     logOpsEvent({
       event: "api_request_completed",
       requestId,

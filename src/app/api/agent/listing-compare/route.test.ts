@@ -59,7 +59,10 @@ describe("/api/agent/listing-compare route ops wrapper", () => {
     expect(runListingComparison).toHaveBeenCalledTimes(1);
     expect(runListingComparison).toHaveBeenCalledWith(
       expect.objectContaining({ query: "Umbreon VMAX 215/203" }),
-      { opsContext: { requestId: "route-test-request", route: "listing-compare" } },
+      {
+        opsContext: { requestId: "route-test-request", route: "listing-compare" },
+        signal: expect.any(AbortSignal),
+      },
     );
   });
 });

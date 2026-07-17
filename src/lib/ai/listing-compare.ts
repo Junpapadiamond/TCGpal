@@ -32,6 +32,7 @@ import {
   setCachedComparison,
 } from "@/lib/comparison/report-cache";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
+import { abortableDelay } from "@/lib/ops/abort";
 import {
   isTcgcsvStale,
   searchTcgplayerListings,
@@ -87,6 +88,7 @@ export async function runListingComparison(
   dependencies: {
     fetcher?: typeof fetch;
     now?: () => Date;
+    signal?: AbortSignal;
     opsContext?: {
       requestId?: string;
       route?: OpsRoute;
@@ -104,7 +106,7 @@ export async function runListingComparison(
   const request = await applyQueryParserWithAi(comparisonRequestSchema.parse(rawRequest), trace);
 
   const { source: sourceResult, universal } = await ingestSourceListing(request, fetcher, warnings, trace);
-  const identities = (await identifyCards(request, sourceResult, fetcher, warnings, trace))
+  const identities = (await identifyCards(request, sourceResult, fetcher, warnings, trace, dependencies.signal))
     .map((identity) => ({ ...identity, printIdentity: canonicalPrintIdentity(identity) }));
   let confirmedCard = resolveConfirmedCard(request, identities);
 
@@ -373,14 +375,14 @@ export async function runListingComparison(
 
 export async function resolveCardIdentityCandidates(
   rawRequest: ComparisonRequest,
-  dependencies: { fetcher?: typeof fetch; now?: () => Date } = {},
+  dependencies: { fetcher?: typeof fetch; now?: () => Date; signal?: AbortSignal } = {},
 ) {
   const fetcher = dependencies.fetcher ?? fetch;
   const now = dependencies.now ?? (() => new Date());
   const warnings: string[] = [];
   const trace: ComparisonTrace[] = [];
   const request = await applyQueryParserWithAi(comparisonRequestSchema.parse(rawRequest), trace);
-  const identities = (await identifyCards(request, request.sourceListing, fetcher, warnings, trace))
+  const identities = (await identifyCards(request, request.sourceListing, fetcher, warnings, trace, dependencies.signal))
     .map((identity) => ({ ...identity, printIdentity: canonicalPrintIdentity(identity) }));
   const explicitNumber = collectorNumberParts(request.cardHint.cardNumber);
   const sameNumber = explicitNumber.number
@@ -700,6 +702,7 @@ async function identifyCards(
   fetcher: typeof fetch,
   warnings: string[],
   trace: ComparisonTrace[],
+  signal?: AbortSignal,
 ) {
   const searchName = request.cardHint.name || cleanCardName(source.title);
 
@@ -715,6 +718,7 @@ async function identifyCards(
         id: request.confirmedCardId,
         fetcher,
         timeoutMs: 15000,
+        signal,
       });
       const match = evaluateIdentity(card, request, source);
       trace.push({
@@ -750,6 +754,7 @@ async function identifyCards(
         pageSize: request.cardHint.cardNumber ? 12 : 100,
         fetcher,
         timeoutMs: 8000,
+        signal,
       },
       warnings,
     );
@@ -759,7 +764,7 @@ async function identifyCards(
       const correctedName = corrected?.name.trim() ?? "";
       if (correctedName && normalizeWords(correctedName) !== normalizeWords(searchName)) {
         result = await searchPokemonWithRetry(
-          { query: correctedName, relaxed: false, pageSize: 100, fetcher, timeoutMs: 8000 },
+          { query: correctedName, relaxed: false, pageSize: 100, fetcher, timeoutMs: 8000, signal },
           warnings,
         );
         if (result?.cards.length) {
@@ -825,11 +830,12 @@ async function searchPokemonWithRetry(
 ): Promise<Awaited<ReturnType<typeof searchPokemonCards>> | null> {
   for (let attempt = 0; attempt <= CATALOG_RETRY_DELAYS_MS.length; attempt += 1) {
     if (attempt > 0) {
-      await new Promise((resolve) => setTimeout(resolve, CATALOG_RETRY_DELAYS_MS[attempt - 1]));
+      await abortableDelay(CATALOG_RETRY_DELAYS_MS[attempt - 1], options.signal);
     }
     try {
       return await searchPokemonCards(options);
     } catch (error) {
+      if (options.signal?.aborted) throw error;
       if (attempt === CATALOG_RETRY_DELAYS_MS.length) {
         warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
       }

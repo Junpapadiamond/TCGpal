@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { classifyPokemonName } from "@/lib/external/pokemon-name-match";
+import { createLinkedAbortSignal } from "@/lib/ops/abort";
 
 const pokemonTcgCardSchema = z.object({
   id: z.string(),
@@ -72,6 +73,7 @@ type SearchPokemonCardsOptions = {
   apiKey?: string;
   fetcher?: typeof fetch;
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 type GetPokemonCardOptions = {
@@ -79,6 +81,7 @@ type GetPokemonCardOptions = {
   apiKey?: string;
   fetcher?: typeof fetch;
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 type BrowsePokemonCardsOptions = {
@@ -88,6 +91,7 @@ type BrowsePokemonCardsOptions = {
   apiKey?: string;
   fetcher?: typeof fetch;
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 const POKEMON_TCG_API_BASE_URL = "https://api.pokemontcg.io/v2";
@@ -101,6 +105,7 @@ export async function searchPokemonCards({
   apiKey = process.env.POKEMON_TCG_API_KEY,
   fetcher = fetch,
   timeoutMs = 8000,
+  signal,
 }: SearchPokemonCardsOptions): Promise<PokemonTcgSearchResult> {
   const normalizedQuery = query.trim();
   if (normalizedQuery.length < 2) throw new Error("Pokemon card search query must be at least 2 characters.");
@@ -122,6 +127,7 @@ export async function searchPokemonCards({
       apiKey,
       fetcher,
       timeoutMs,
+      signal,
     });
     lastResult = result;
     if (result.cards.length > 0) return result;
@@ -135,20 +141,20 @@ export async function getPokemonCard({
   apiKey = process.env.POKEMON_TCG_API_KEY,
   fetcher = fetch,
   timeoutMs = 8000,
+  signal,
 }: GetPokemonCardOptions): Promise<PokemonTcgCard> {
   const normalizedId = id.trim();
   if (!normalizedId) throw new Error("Pokemon card id is required.");
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const linked = createLinkedAbortSignal(signal, timeoutMs);
   const response = await fetcher(
     new URL(`${POKEMON_TCG_API_BASE_URL}/cards/${encodeURIComponent(normalizedId)}`),
     {
       headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
       next: { revalidate: 3600 },
-      signal: controller.signal,
+      signal: linked.signal,
     } as RequestInit & { next: { revalidate: number } },
-  ).finally(() => clearTimeout(timeout));
+  ).finally(linked.cleanup);
 
   if (!response.ok) {
     throw new Error(`Pokemon TCG API card lookup failed with ${response.status}.`);
@@ -164,6 +170,7 @@ export async function browsePokemonCards({
   apiKey = process.env.POKEMON_TCG_API_KEY,
   fetcher = fetch,
   timeoutMs = 8000,
+  signal,
 }: BrowsePokemonCardsOptions): Promise<PokemonTcgSearchResult> {
   const normalizedQuery = query.trim();
   const apiQuery = buildPokemonCardQuery(normalizedQuery);
@@ -175,6 +182,7 @@ export async function browsePokemonCards({
     apiKey,
     fetcher,
     timeoutMs,
+    signal,
   });
 }
 
@@ -186,6 +194,7 @@ async function fetchPokemonCards({
   apiKey,
   fetcher,
   timeoutMs,
+  signal,
 }: {
   query: string;
   apiQuery: string;
@@ -194,6 +203,7 @@ async function fetchPokemonCards({
   apiKey?: string;
   fetcher: typeof fetch;
   timeoutMs: number;
+  signal?: AbortSignal;
 }): Promise<PokemonTcgSearchResult> {
   const url = new URL(`${POKEMON_TCG_API_BASE_URL}/cards`);
   if (apiQuery) url.searchParams.set("q", apiQuery);
@@ -202,14 +212,13 @@ async function fetchPokemonCards({
   url.searchParams.set("orderBy", "-set.releaseDate,name");
   url.searchParams.set("select", "id,name,subtypes,number,rarity,set,images");
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const linked = createLinkedAbortSignal(signal, timeoutMs);
 
   const response = await fetcher(url, {
     headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
     next: { revalidate: 3600 },
-    signal: controller.signal,
-  } as RequestInit & { next: { revalidate: number } }).finally(() => clearTimeout(timeout));
+    signal: linked.signal,
+  } as RequestInit & { next: { revalidate: number } }).finally(linked.cleanup);
 
   if (!response.ok) {
     throw new Error(`Pokemon TCG API request failed with ${response.status}.`);

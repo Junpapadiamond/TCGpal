@@ -138,13 +138,19 @@ async function requestCardIdentity(request: ComparisonRequest, fallbackMessage: 
   const json = await postJsonWithRetry("/api/agent/card-identity", {
     query: request.query || request.cardHint.name,
     cardHint: request.cardHint,
-  }, fallbackMessage, signal);
+  }, fallbackMessage, signal, 1);
   return cardIdentitySearchResponseSchema.parse(json);
 }
 
-async function postJsonWithRetry(path: string, body: unknown, fallbackMessage: string, signal?: AbortSignal) {
+async function postJsonWithRetry(
+  path: string,
+  body: unknown,
+  fallbackMessage: string,
+  signal?: AbortSignal,
+  maxAttempts = 2,
+) {
   let lastError: unknown;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       const response = await fetch(path, {
         method: "POST",
@@ -157,7 +163,7 @@ async function postJsonWithRetry(path: string, body: unknown, fallbackMessage: s
       lastError = error;
       if (signal?.aborted || isAbortError(error)) throw error;
       const retriable = error instanceof ApiResponseError ? error.retriable : error instanceof TypeError;
-      if (!retriable || attempt === 1) break;
+      if (!retriable || attempt === maxAttempts - 1) break;
       await sleep(650);
     }
   }
@@ -1778,22 +1784,15 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
             </section>
           )}
           <div aria-label={t.identity.otherVersions} className="space-y-3">
-          {remainingGroups.map((group, index) => {
-            const headingId = `identity-set-${index}`;
-            return (
-              <details key={group.setName} className="rounded-lg border border-[#d6ded5] bg-[#fffef9] p-3" open={index < 2}>
-                <summary id={headingId} className="cursor-pointer text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
-                  {group.setName}
-                  <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">{t.identity.versions(group.items.length)}</span>
-                </summary>
-                <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {group.items.map((identity) => (
-                    <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" />
-                  ))}
-                </div>
-              </details>
-            );
-          })}
+          {remainingGroups.map((group, index) => (
+            <LazyIdentityGroup
+              key={group.setName}
+              group={group}
+              defaultOpen={index < 2}
+              headingId={`identity-set-${index}`}
+              onConfirm={onConfirm}
+            />
+          ))}
           </div>
         </div>
       ) : (
@@ -1804,6 +1803,40 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
         </div>
       )}
     </section>
+  );
+}
+
+function LazyIdentityGroup({
+  group,
+  defaultOpen,
+  headingId,
+  onConfirm,
+}: {
+  group: ReturnType<typeof groupIdentitiesBySet>[number];
+  defaultOpen: boolean;
+  headingId: string;
+  onConfirm: (identity: CardIdentityCandidate) => void;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <details
+      className="rounded-lg border border-[#d6ded5] bg-[#fffef9] p-3"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary id={headingId} className="cursor-pointer text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
+        {group.setName}
+        <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">{t.identity.versions(group.items.length)}</span>
+      </summary>
+      {open && (
+        <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {group.items.map((identity) => (
+            <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" />
+          ))}
+        </div>
+      )}
+    </details>
   );
 }
 

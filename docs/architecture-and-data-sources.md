@@ -72,7 +72,7 @@ The response includes:
 - URL fetching is public-HTTPS-only, robots-aware, size/time bounded, and limited to the exact user-pasted page.
 - Search-discovered and unsupported URLs are never fetched or ranked.
 - API keys remain server-side.
-- Provider requests use timeouts and fresh fetches.
+- Provider requests use timeouts and fresh fetches. Card-identity cancellation propagates from the browser through the route and resolver to the Pokémon adapter.
 - Missing eBay credentials produce a visible unavailable/skipped source and an honest empty result unless the user supplied a concrete listing. Demo fixtures remain test-only.
 - Missing reference data produces a warning, not a fabricated value.
 - Existing localStorage keys from the previous product are ignored but not deleted.
@@ -81,7 +81,9 @@ The response includes:
 
 - `src/lib/ops/*` owns request IDs, rate limiting, shared JSON cache, structured operational events, and Sentry capture.
 - Pure card searches cache successful live reports for 15 minutes by card, condition, and delivery context. Demo, confirmation-required, and incompatible contract-version reports are not cached.
-- Catalog lookups retry once with bounded per-attempt timeouts; provider failures remain isolated and visible.
+- Card-identity resolution has one 10-second server budget. The browser does not add a second identity retry, and cancellation or deadline expiry stops resolver retries and backoff before Vercel's route limit.
+- Identical in-flight identity requests coalesce within one server instance. Successful identity responses use hashed 15-minute cache entries and a six-hour stale fallback through the shared JSON cache; a failed refresh may serve a schema-validated stale success with an explicit warning. Deadlines without a safe stale value return a temporary-unavailable response, never a false no-match.
+- Full comparison catalog lookups retain bounded per-attempt retries because comparison has different partial-result behavior; provider failures remain isolated and visible.
 - Upstash Redis is optional. When `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are absent or fail, rate limiting and report caching fall back to bounded in-process memory.
 - Cache and rate-limit keys hash buyer/card context before backend storage; raw ZIPs, card names, URLs, listing text, seller identifiers, and images are not operational keys or log fields.
 - Sentry initializes only when a DSN is configured; source maps upload only when `SENTRY_AUTH_TOKEN` is present.

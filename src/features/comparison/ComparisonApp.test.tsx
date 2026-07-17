@@ -188,6 +188,58 @@ describe("comparison condition controls", () => {
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Choose your Mew" })).toBeNull());
   });
 
+  it("does not multiply a server-side identity failure with a second client retry", async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (!String(input).endsWith("/api/agent/card-identity")) throw new Error("unexpected comparison");
+      return new Response(JSON.stringify({ error: "The card catalog is temporarily unavailable." }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Charizard" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Browse card versions" }));
+
+    expect(await screen.findByText("The card catalog is temporarily unavailable.")).toBeTruthy();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("mounts cards in a collapsed identity group only after the group opens", async () => {
+    const candidates = Array.from({ length: 8 }, (_, index): CardIdentityCandidate => ({
+      id: `card-${index}`,
+      name: `Pikachu print ${index + 1}`,
+      setName: `Set ${Math.floor(index / 2) + 1}`,
+      setCode: `S${Math.floor(index / 2) + 1}`,
+      cardNumber: `${index + 1}/100`,
+      language: "English",
+      imageUrl: null,
+      confidence: "low",
+      matchReasons: ["Broad name match."],
+    }));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(
+      identityResponse(candidates, "needs_confirmation"),
+    ), { headers: { "Content-Type": "application/json" } })));
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Pikachu" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Browse card versions" }));
+    expect(await screen.findByRole("heading", { name: /Choose your Pikachu print 1/i })).toBeTruthy();
+
+    expect(screen.getByText("Pikachu print 1")).toBeTruthy();
+    expect(screen.getByText("Pikachu print 4")).toBeTruthy();
+    expect(screen.queryByText("Pikachu print 5")).toBeNull();
+
+    fireEvent.click(screen.getByText("Set 3", { selector: "summary" }));
+
+    expect(await screen.findByText("Pikachu print 5")).toBeTruthy();
+    expect(screen.getByText("Pikachu print 6")).toBeTruthy();
+    expect(screen.queryByText("Pikachu print 7")).toBeNull();
+  });
+
   it("restores the filled search and confirmation steps through browser history", async () => {
     const pushed: Array<{ state: unknown; url: string | URL | null | undefined }> = [];
     const replaced: Array<{ state: unknown; url: string | URL | null | undefined }> = [];

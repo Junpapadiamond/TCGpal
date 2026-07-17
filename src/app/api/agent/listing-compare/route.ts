@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     requestValidated = true;
     const report = await runListingComparison(parsed, {
       opsContext: { requestId, route },
+      signal: request.signal,
     });
     logOpsEvent({
       event: "api_request_completed",

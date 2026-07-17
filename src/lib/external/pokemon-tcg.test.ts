@@ -245,4 +245,30 @@ describe("Pokemon TCG API adapter", () => {
 
     expect(card.name).toBe("Umbreon VMAX");
   });
+
+  it("propagates a caller cancellation into the active Pokemon API fetch", async () => {
+    const controller = new AbortController();
+    let upstreamSignal: AbortSignal | null = null;
+    const fetcher = vi.fn((_url: URL, init?: RequestInit) => {
+      upstreamSignal = init?.signal as AbortSignal;
+      return new Promise<Response>((_resolve, reject) => {
+        upstreamSignal?.addEventListener("abort", () => {
+          reject(new DOMException("The operation was aborted.", "AbortError"));
+        }, { once: true });
+      });
+    }) as unknown as typeof fetch;
+
+    const pending = searchPokemonCards({
+      query: "Charizard",
+      fetcher,
+      signal: controller.signal,
+      timeoutMs: 10_000,
+    });
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect((upstreamSignal as AbortSignal | null)?.aborted).toBe(true);
+  });
 });
