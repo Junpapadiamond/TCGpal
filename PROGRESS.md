@@ -30,7 +30,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v5 reliability repair implemented; release verification pending | Finish visual/live release gates |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v5 reliability repair released and verified | Review live timeout and recall evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; listing-photo hierarchy corrected | Observe trust and empty outcomes with buyers |
@@ -60,7 +60,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - At least three voluntarily share a comparison receipt.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-IDENTITY" state="v5-release-verification" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history" -->
+<!-- progress:workstream id="WS-IDENTITY" state="v5-released-needs-observation" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history" -->
 ## WS-IDENTITY - Exact-print accuracy
 
 ### Done
@@ -263,6 +263,7 @@ Latest verified product commit: `61119f25d88b3182dd24f71f2c9b8bc21de31317` on 20
 
 - `npm run lint`, `npm run typecheck`, `npm test` (60 files / 841 tests), and `npm run build` passed on Next.js 16.2.6.
 - A built-in-browser live eBay comparison for Nico Robin Heroines SP passed in English, 中文, desktop, and 390px mobile: each row showed one labeled listing photo, while the confirmed print stayed in its separate identity text block.
+- Production deployment `2bc4f3c` reached Vercel `READY` and `https://tcgpal.vercel.app` returned HTTP 200 on 2026-07-23.
 - Exact-print v5 reliability, Bubble Mew/One Piece regressions, graded/custom exclusions, the multi-card flow, MCP/plugin contracts, and bounded identity latency remain covered in the passing lineage. No dependency, schema, ranking, or source-access changes were made.
 
 Still not verified:
