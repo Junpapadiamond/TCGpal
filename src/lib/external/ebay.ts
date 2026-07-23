@@ -14,6 +14,11 @@ import type {
   SourceListing,
 } from "@/lib/schemas";
 
+export type EbaySourceListing = SourceListing & {
+  imageUrl: string | null;
+  imageUrls: string[];
+};
+
 // Query token appended when the confirmed One Piece print is a special class,
 // so Best Match surfaces the right print instead of the cheaper base copies.
 const VARIANT_QUERY_TOKENS: Partial<Record<VariantIntent, string>> = {
@@ -210,7 +215,7 @@ export async function getEbayListingByUrl(
   url: string,
   buyer: BuyerContext,
   fetcher: typeof fetch = fetch,
-): Promise<SourceListing> {
+): Promise<EbaySourceListing> {
   const parsed = parseEbayUrl(url);
   if (!parsed.supported) throw new Error("Only allowlisted eBay URLs may be fetched automatically.");
   if (!parsed.itemId) throw new Error("The eBay item ID could not be read from this URL.");
@@ -444,7 +449,18 @@ function normalizeCatalogAspects(aspects: z.infer<typeof ebayCatalogAspectSchema
   });
 }
 
-function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: string): SourceListing {
+function sellerImageUrls(item: z.infer<typeof ebayItemSchema>) {
+  const primary = item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl;
+  const additional = item.additionalImages?.length
+    ? item.additionalImages
+    : item.thumbnailImages;
+  return [...new Set([
+    ...(primary ? [primary] : []),
+    ...(additional ?? []).map((image) => image.imageUrl),
+  ])].slice(0, 24);
+}
+
+function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: string): EbaySourceListing {
   const descriptorDetails = (item.conditionDescriptors ?? [])
     .flatMap((descriptor) => descriptor.values ?? [])
     .flatMap((value) => value.additionalInfo ?? [])
@@ -455,7 +471,8 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     .filter(Boolean)
     .join(". ");
   const description = [item.shortDescription ?? "", descriptorText].filter(Boolean).join(". ");
-  const photoCount = 1 + (item.additionalImages?.length ?? item.thumbnailImages?.length ?? 0);
+  const imageUrls = sellerImageUrls(item);
+  const photoCount = imageUrls.length;
   const evidence = evidenceFromText(`${item.title} ${description}`, photoCount, descriptorDetails.length > 0);
   return {
     marketplace: "eBay",
@@ -466,6 +483,8 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     shipping: cheapestUsdShipping(item.shippingOptions),
     claimedCondition: normalizeCondition(`${descriptorText} ${item.condition ?? ""} ${item.title}`),
     active: !item.itemEndDate || new Date(item.itemEndDate).getTime() > Date.now(),
+    imageUrl: imageUrls[0] ?? null,
+    imageUrls,
     seller: {
       feedbackPercentage: numberOrNull(item.seller?.feedbackPercentage),
       feedbackCount: nonNegativeIntegerOrNull(item.seller?.feedbackScore),
@@ -602,6 +621,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
   const source = toSourceListing(item, item.itemWebUrl ?? item.itemAffiliateWebUrl ?? "https://www.ebay.com");
   const title = item.title;
   const match = assessTitleMatch(title, card);
+  const imageUrls = sellerImageUrls(item);
 
   return {
     id: `ebay-${item.itemId}`,
@@ -619,7 +639,8 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     claimedCondition: source.claimedCondition,
     listingLanguage: item.localizedAspects?.find((aspect) => aspect.name.toLowerCase() === "language")?.value ?? null,
     matchAspectText: buildMatchAspectText(item),
-    imageUrl: item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? null,
+    imageUrl: imageUrls[0] ?? null,
+    imageUrls,
     seller: source.seller,
     evidence: source.evidence,
     observedAt: new Date().toISOString(),

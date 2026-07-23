@@ -363,6 +363,9 @@ export const normalizedListingSchema = z.object({
   claimedCondition: conditionClaimSchema,
   listingLanguage: z.string().trim().nullable().default(null),
   imageUrl: z.string().url().nullable().default(null),
+  // Seller-provided listing photos. The primary image is first when available;
+  // clients must not treat these URLs as condition or authenticity verification.
+  imageUrls: z.array(z.string().url()).max(24).default([]),
   seller: sellerTrustSignalsSchema,
   evidence: listingEvidenceSchema,
   sellerTrustScore: z.number().int().min(0).max(100),
@@ -697,7 +700,8 @@ export type ListingSeed = Omit<
   | "printMatchConfidence"
   | "printMatchReasons"
   | "printPriceGuard"
-> & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string };
+  | "imageUrls"
+> & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string; imageUrls?: string[] };
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;

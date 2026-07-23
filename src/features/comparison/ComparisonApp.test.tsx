@@ -604,6 +604,11 @@ describe("comparison condition controls", () => {
         listingLanguage: "English",
         matchAspectText: "Language: English. Set: Awakening Of The New Era. Rarity: SP CARD. Features: Special Art",
         imageUrl: "https://i.ebayimg.com/images/g/nami/s-l1600.jpg",
+        imageUrls: [
+          "https://i.ebayimg.com/images/g/nami/s-l1600.jpg",
+          "https://i.ebayimg.com/images/g/nami-back/s-l1600.jpg",
+          "https://i.ebayimg.com/images/g/nami-closeup/s-l1600.jpg",
+        ],
         seller: {
           feedbackPercentage: 99.8,
           feedbackCount: 1200,
@@ -635,6 +640,7 @@ describe("comparison condition controls", () => {
       id: "ebay-nami-sp-alternative",
       title: "Nami OP01-016 P4 SP alternate seller",
       imageUrl: "https://i.ebayimg.com/images/g/nami-alternative/s-l1600.jpg",
+      imageUrls: ["https://i.ebayimg.com/images/g/nami-alternative/s-l1600.jpg"],
       price: 150,
       preTaxTotal: 155,
       estimatedTax: 12.4,
@@ -666,6 +672,22 @@ describe("comparison condition controls", () => {
     fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
     expect(await screen.findByAltText("Listing photo: Nami OP01-016 SP Special Art")).toBeTruthy();
+    const openGallery = screen.getByRole("button", { name: "Inspect 3 seller photos: Nami OP01-016 SP Special Art" });
+    expect(screen.queryByRole("dialog", { name: "Seller photos" })).toBeNull();
+    expect(screen.queryByAltText("Seller photo 2 of 3: Nami OP01-016 SP Special Art")).toBeNull();
+    fireEvent.click(openGallery);
+    const gallery = screen.getByRole("dialog", { name: "Seller photos" });
+    expect(gallery.className.split(" ")).toContain("h-[100dvh]");
+    expect(within(gallery).getByText("Seller-provided eBay photos. TCGlens has not verified condition or authenticity.")).toBeTruthy();
+    expect(within(gallery).getByAltText("Seller photo 1 of 3: Nami OP01-016 SP Special Art")).toBeTruthy();
+    fireEvent.click(within(gallery).getByRole("button", { name: "Next photo" }));
+    const secondPhoto = within(gallery).getByAltText("Seller photo 2 of 3: Nami OP01-016 SP Special Art");
+    expect(secondPhoto.getAttribute("src")).toContain("nami-back");
+    fireEvent.click(within(gallery).getByRole("button", { name: "Zoom in" }));
+    expect(secondPhoto.className).toContain("scale-150");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Seller photos" })).toBeNull();
+    expect(document.activeElement).toBe(openGallery);
     expect(screen.queryByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toBeNull();
     expect(screen.getAllByText("Awakening Of The New Era · OP01-016 · SP CARD · Special Art (P4)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
@@ -675,6 +697,11 @@ describe("comparison condition controls", () => {
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));
     expect(screen.getByAltText("Listing photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect 1 seller photo: Nami OP01-016 P4 SP alternate seller" }));
+    const singlePhotoGallery = screen.getByRole("dialog", { name: "Seller photos" });
+    expect(within(singlePhotoGallery).getByAltText("Seller photo 1 of 1: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
+    expect(within(singlePhotoGallery).queryByRole("button", { name: "Next photo" })).toBeNull();
+    fireEvent.click(within(singlePhotoGallery).getByRole("button", { name: "Close seller photos" }));
     expect(screen.queryByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toBeNull();
   });
 

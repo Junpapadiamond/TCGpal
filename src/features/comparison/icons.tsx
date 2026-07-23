@@ -155,6 +155,40 @@ export function IconChevronDown({ className }: IconProps) {
   );
 }
 
+export function IconChevronLeft({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="m14.5 6-6 6 6 6" />
+    </Svg>
+  );
+}
+
+export function IconChevronRight({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="m9.5 6 6 6-6 6" />
+    </Svg>
+  );
+}
+
+export function IconZoomIn({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.4 15.4 4.1 4.1M10.5 7.5v6M7.5 10.5h6" />
+    </Svg>
+  );
+}
+
+export function IconZoomOut({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.4 15.4 4.1 4.1M7.5 10.5h6" />
+    </Svg>
+  );
+}
+
 export function IconCheck({ className }: IconProps) {
   return (
     <Svg className={className}>

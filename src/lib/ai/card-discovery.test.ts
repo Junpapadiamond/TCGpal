@@ -161,6 +161,7 @@ function listingFor(card: CardIdentityCandidate, cost: number): NormalizedListin
     claimedCondition: "Near Mint",
     listingLanguage: "English",
     imageUrl: card.imageUrl,
+    imageUrls: card.imageUrl ? [card.imageUrl] : [],
     seller: { feedbackPercentage: 100, feedbackCount: 1000, returnsAccepted: true, topRated: true, buyerProtection: true, subRatings: null },
     evidence: { photoCount: 4, frontBackExplicit: true, closeupsExplicit: true, surfaceExplicit: false, identityExplicit: true, substantiveConditionNotes: true, missing: [] },
     sellerTrustScore: 90,

@@ -157,6 +157,71 @@ describe("listing comparison agent", () => {
     expect(response.candidates.filter((candidate) => candidate.userSupplied).every((candidate) => candidate.imageUrl === null)).toBe(true);
   });
 
+  it("preserves official eBay seller photos through source ingestion into comparison candidates", async () => {
+    vi.stubEnv("EBAY_CLIENT_ID", "id");
+    vi.stubEnv("EBAY_CLIENT_SECRET", "secret");
+    const { resetEbayTokenCacheForTests } = await import("@/lib/external/ebay");
+    resetEbayTokenCacheForTests();
+
+    const primary = "https://i.ebayimg.com/images/g/front/s-l1600.jpg";
+    const back = "https://i.ebayimg.com/images/g/back/s-l1600.jpg";
+    const closeup = "https://i.ebayimg.com/images/g/closeup/s-l1600.jpg";
+    const ebayFetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("api.pokemontcg.io")) return fetcher(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return new Response(JSON.stringify({ access_token: "token", expires_in: 7200 }));
+      }
+      if (url.includes("/buy/browse/v1/item/get_item_by_legacy_id")) {
+        return new Response(JSON.stringify({
+          itemId: "v1|123456789012|0",
+          legacyItemId: "123456789012",
+          title: "Umbreon VMAX 215/203 Evolving Skies raw card",
+          itemWebUrl: "https://www.ebay.com/itm/123456789012",
+          price: { value: "1200.00", currency: "USD" },
+          condition: "Near Mint or Better",
+          image: { imageUrl: primary },
+          additionalImages: [
+            { imageUrl: back },
+            { imageUrl: closeup },
+          ],
+          seller: { feedbackPercentage: "100.0", feedbackScore: 1000 },
+          buyingOptions: ["FIXED_PRICE"],
+        }));
+      }
+      if (url.includes("/buy/browse/v1/item_summary/search")) {
+        return new Response(JSON.stringify({ itemSummaries: [] }));
+      }
+      if (url.includes("/commerce/catalog/v1_beta/product_summary/search")) {
+        return new Response(JSON.stringify({ productSummaries: [] }));
+      }
+      throw new Error(`unexpected fetch in eBay photo ingestion test: ${url}`);
+    }) as unknown as typeof fetch;
+
+    try {
+      const response = await runListingComparison({
+        ...request,
+        confirmedCardId: "swsh7-215",
+        sourceListing: {
+          ...request.sourceListing,
+          marketplace: "eBay",
+          url: "https://www.ebay.com/itm/123456789012",
+          title: "",
+          description: "",
+          price: null,
+          shipping: null,
+        },
+      }, { fetcher: ebayFetcher });
+
+      const pastedListing = response.candidates.find((candidate) => candidate.userSupplied);
+      expect(pastedListing?.imageUrl).toBe(primary);
+      expect(pastedListing?.imageUrls).toEqual([primary, back, closeup]);
+      expect(pastedListing?.evidence.photoCount).toBe(3);
+    } finally {
+      resetEbayTokenCacheForTests();
+    }
+  });
+
   it("returns next moves instead of fabricated inventory when a pure search has no live rows", async () => {
     const pureSearch: ComparisonRequest = {
       ...request,

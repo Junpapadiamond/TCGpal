@@ -194,7 +194,7 @@ function listingFor(cardValue: CardIdentityCandidate): NormalizedListing {
     matchConfidence: "high", matchReasons: ["Exact identity."], printMatch: "exact", printMatchConfidence: "high",
     printMatchReasons: ["pokemon_full_number_and_name_match"], printPriceGuard: "none", matchAspectText: "", active: true, raw: true, currency: "USD", price: 405,
     shipping: 0, costComplete: true, estimatedTax: 34.69, preTaxTotal: 405, estimatedLandedCost: 439.69, claimedCondition: "Near Mint", listingLanguage: "English",
-    imageUrl: cardValue.imageUrl, seller: { feedbackPercentage: 99.9, feedbackCount: 2000, returnsAccepted: true, topRated: true, buyerProtection: true, subRatings: null },
+    imageUrl: cardValue.imageUrl, imageUrls: cardValue.imageUrl ? [cardValue.imageUrl] : [], seller: { feedbackPercentage: 99.9, feedbackCount: 2000, returnsAccepted: true, topRated: true, buyerProtection: true, subRatings: null },
     evidence: { photoCount: 4, frontBackExplicit: true, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: true, substantiveConditionNotes: false, missing: ["closeups"] },
     sellerTrustScore: 90, evidenceCompletenessScore: 60, conditionCompatibilityScore: 100, marketComparable: true, priceScore: 80, safetyScore: 78,
     valueScore: 82, riskLabel: "some_risk", trustNotes: [], eligible: true, eligibilityIssues: [], exclusionReasons: [], observedAt: "2026-07-13T00:00:00.000Z", demo: false, userSupplied: false, webDiscovered: false,

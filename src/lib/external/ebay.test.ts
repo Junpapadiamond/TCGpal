@@ -84,6 +84,46 @@ describe("eBay URL boundary", () => {
     }
   });
 
+  it("preserves seller photos when a buyer pastes a specific eBay listing", async () => {
+    process.env.EBAY_CLIENT_ID = "test-id";
+    process.env.EBAY_CLIENT_SECRET = "test-secret";
+    resetEbayTokenCacheForTests();
+    const primary = "https://i.ebayimg.com/images/g/pasted-front/s-l1600.jpg";
+    const back = "https://i.ebayimg.com/images/g/pasted-back/s-l1600.jpg";
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          itemId: "123456789012",
+          title: "Umbreon VMAX 215/203",
+          price: { value: "420.00", currency: "USD" },
+          image: { imageUrl: primary },
+          additionalImages: [{ imageUrl: back }],
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    try {
+      const listing = await getEbayListingByUrl(
+        "https://www.ebay.com/itm/Umbreon/123456789012",
+        { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
+        fetcher,
+      );
+
+      expect(listing.imageUrl).toBe(primary);
+      expect(listing.imageUrls).toEqual([primary, back]);
+    } finally {
+      delete process.env.EBAY_CLIENT_ID;
+      delete process.env.EBAY_CLIENT_SECRET;
+      resetEbayTokenCacheForTests();
+    }
+  });
+
   it("treats a negative eBay feedback sentinel as unknown", async () => {
     process.env.EBAY_CLIENT_ID = "test-id";
     process.env.EBAY_CLIENT_SECRET = "test-secret";
@@ -235,6 +275,56 @@ describe("eBay active-listing search", () => {
     const captured: { searchUrl?: string } = {};
     const results = await searchEbayAlternatives(card, buyer, searchFetcher(captured));
     expect(results.map((listing) => listing.id)).toEqual(["ebay-1"]);
+  });
+
+  it("preserves the seller photo gallery from the enriched eBay item", async () => {
+    const primary = "https://i.ebayimg.com/images/g/primary/s-l1600.jpg";
+    const back = "https://i.ebayimg.com/images/g/back/s-l1600.jpg";
+    const closeup = "https://i.ebayimg.com/images/g/closeup/s-l1600.jpg";
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [{
+              itemId: "1",
+              title: "Umbreon VMAX 215/203",
+              price: { value: "420.00", currency: "USD" },
+              image: { imageUrl: primary },
+            }],
+          }),
+        } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item/1")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemId: "1",
+            title: "Umbreon VMAX 215/203",
+            price: { value: "420.00", currency: "USD" },
+            image: { imageUrl: primary },
+            additionalImages: [
+              { imageUrl: back },
+              { imageUrl: primary },
+              { imageUrl: closeup },
+            ],
+          }),
+        } as Response;
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(card, buyer, fetcher);
+
+    expect(results[0]?.imageUrl).toBe(primary);
+    expect(results[0]?.imageUrls).toEqual([primary, back, closeup]);
+    expect(results[0]?.evidence.photoCount).toBe(3);
   });
 
   // One Piece special prints share their card number with the (far cheaper) base

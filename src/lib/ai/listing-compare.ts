@@ -15,6 +15,7 @@ import {
   EbayUnavailableError,
   getEbayListingByUrl,
   parseEbayUrl,
+  type EbaySourceListing,
 } from "@/lib/external/ebay";
 import { getConfiguredPlatformAgents, runPlatformFanout } from "@/lib/comparison/platforms";
 import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
@@ -82,6 +83,7 @@ import {
 // that protects the response payload; the IdentityConfirmation UI groups and
 // filters (by set/rarity) so the full list stays scannable.
 const MAX_IDENTITY_CANDIDATES = 200;
+type IngestedSourceListing = SourceListing & Partial<Pick<EbaySourceListing, "imageUrl" | "imageUrls">>;
 
 export async function runListingComparison(
   rawRequest: ComparisonRequest,
@@ -602,7 +604,7 @@ async function ingestSourceListing(
   fetcher: typeof fetch,
   warnings: string[],
   trace: ComparisonTrace[],
-): Promise<{ source: SourceListing; universal: UniversalListingResult | null }> {
+): Promise<{ source: IngestedSourceListing; universal: UniversalListingResult | null }> {
   const url = request.sourceListing.url?.trim();
   if (!url) {
     trace.push({
@@ -976,7 +978,7 @@ function resolveConfirmedCard(request: ComparisonRequest, identities: CardIdenti
 }
 
 function sourceToSeed(
-  source: SourceListing,
+  source: IngestedSourceListing,
   card: CardIdentityCandidate,
   observedAt: string,
   universal: UniversalListingResult | null = null,
@@ -1009,7 +1011,8 @@ function sourceToSeed(
     price: source.price,
     shipping: source.shipping,
     claimedCondition: source.claimedCondition,
-    imageUrl: null,
+    imageUrl: source.imageUrl ?? null,
+    imageUrls: source.imageUrls ?? [],
     seller: source.seller,
     evidence: source.evidence,
     observedAt,
