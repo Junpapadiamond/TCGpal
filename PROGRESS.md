@@ -1,9 +1,9 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-07-17
+updated_at: 2026-07-23
 canonical_branch: origin/main
-last_verified_product_commit: 6ff92cd0f04926fb3e6f8472a402f7af32ffe917
+last_verified_product_commit: 61119f25d88b3182dd24f71f2c9b8bc21de31317
 max_lines: 300
 ---
 
@@ -33,7 +33,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v5 reliability repair implemented; release verification pending | Finish visual/live release gates |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; user validation pending | Observe empty and ambiguous outcomes |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; listing-photo hierarchy corrected | Observe trust and empty outcomes with buyers |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin released and production verified | Pilot installation with another Work user |
 | WS-LOCAL | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts |
 <!-- progress:end -->
@@ -148,7 +148,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 
 ### Current evidence
 
-- Council conclusion: conditional GO for a private moderated pilot and NO-GO for paid acquisition or subscription work.
+- Council conclusion: conditional GO for a private moderated pilot and NO-GO for paid acquisition or subscription work; no new buyer-session evidence was recorded from July 17 through July 23.
 - The likely pain is reducing noisy listings for condition-sensitive, higher-consideration raw purchases.
 - No completed buyer sessions, repeat-use evidence, willingness-to-pay result, or measured time savings exist.
 
@@ -180,7 +180,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - Exact version image selection immediately submits the canonical print.
 - Results distinguish best_buy, inspect_first, and next_moves.
 - Empty results do not use demo or low-confidence inventory as real recommendations.
-- Selected catalog image and listing evidence remain visible; minimum condition can be edited.
+- Result listings show only the seller/listing image; the selected print remains explicit in the separate text identity block, avoiding an unsupported implication that TCGlens visually compared it with the catalog reference. Minimum condition remains editable.
 - English and Chinese desktop/mobile states have automated and visual coverage.
 
 ### Not finished or not verified
@@ -230,11 +230,11 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-Observed on 2026-07-14 in /Users/chenjunhsu/Desktop/projects/TCGpal:
+Observed on 2026-07-23 in /Users/chenjunhsu/Desktop/projects/TCGpal:
 
-- Local `main` and `origin/main` were synchronized at `c743f25` before this handoff update; the MCP/plugin implementation (`2debff7`) and production verification (`7d2d23b`) remain in the lineage. The original checkout stays on `codex/identity-first-search` at `b2b1455` to preserve local artifacts.
-- The original working tree contains seven tracked changes and 43 untracked status entries. The user explicitly discarded the incomplete photo-search tests and standalone UI concept; the old council docs were migrated into the auto-discovered product-leader skill at `~/.codex/skills/advisor` with list/add/refresh/validate workflows.
-- Preserve all Graphify changes, exact-print research, screenshots, readiness reports, and other Claude research artifacts. They are local acceleration/evidence, not automatically release work.
+- Production `origin/main` began this task at `b20af03`; the isolated `codex/listing-image-hierarchy` worktree contains the verified seller-photo hierarchy fix at `61119f2` pending this handoff update and deployment.
+- The original checkout remains untouched on `codex/identity-first-search` at `ce4c1c4`, one commit ahead and 26 behind the pre-task `origin/main`, with eight tracked changes and 126 untracked entries.
+- Preserve the original Graphify changes, research, screenshots, and readiness artifacts. They are local acceleration/evidence, not automatically release work.
 
 Refresh this section with /progress; do not assume it remains current.
 <!-- progress:end -->
@@ -259,14 +259,11 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Exact-print v4 release candidate `6ff92cd0f04926fb3e6f8472a402f7af32ffe917` was verified in the clean isolated worktree on 2026-07-14.
+Latest verified product commit: `61119f25d88b3182dd24f71f2c9b8bc21de31317` on 2026-07-23.
 
-- `npm install`, `npm run lint`, and `npm run typecheck` passed.
-- `npm run test` passed: 58 files / 811 tests, including Bubble Mew, collector properties, 271 unsafe fixtures, nine-family sibling matrices, six sealed holdouts, graded variants, MCP v4 invariants, and the six-card sequential flow.
-- `npm run build` passed on Next.js 16.2.6 and emitted all dynamic API/MCP routes. The final classifier benchmark measured 34,628 ops/s, mean 0.0289 ms, p99 0.0522 ms.
-- Official eBay OAuth/Browse passed. Live comparisons covered Bubble Mew, Base Alakazam, Nami/Robin/Zoro, manga, anniversary, tournament, and Winner families. Wrong numbers, observed slabs (including CGC Pristine and TAG), and custom products did not enter raw recommendations.
-- Built-in-browser English/中文 desktop and 390px mobile result QA passed after changing the mobile hero to a single column. DOM widths matched the viewport, identity reasons rendered in both languages, and console error count was zero. Evidence is under `output/exact-print-identity-v4/`.
-- Five-axis self-review found and fixed a canonical-ID substitution invariant in MCP before merge. No remaining critical or required findings; no dependencies or secrets were added.
+- `npm run lint`, `npm run typecheck`, `npm test` (60 files / 841 tests), and `npm run build` passed on Next.js 16.2.6.
+- A built-in-browser live eBay comparison for Nico Robin Heroines SP passed in English, 中文, desktop, and 390px mobile: each row showed one labeled listing photo, while the confirmed print stayed in its separate identity text block.
+- Exact-print v5 reliability, Bubble Mew/One Piece regressions, graded/custom exclusions, the multi-card flow, MCP/plugin contracts, and bounded identity latency remain covered in the passing lineage. No dependency, schema, ranking, or source-access changes were made.
 
 Still not verified:
 
