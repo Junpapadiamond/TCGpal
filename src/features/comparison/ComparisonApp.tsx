@@ -2300,13 +2300,8 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
   const t = useT();
   return (
     <article className="mx-auto max-w-[860px] rounded-xl border-2 border-[#d7a84e] bg-[#fffaf0] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.06)] sm:p-5">
-      <div className="grid gap-4 sm:grid-cols-[152px_minmax(0,1fr)_auto] sm:items-center">
-        <div className="flex items-start gap-2">
-          <EvidencePhoto
-            src={confirmedCard?.imageUrl ?? null}
-            alt={confirmedCard ? t.result.confirmedReferenceAlt(confirmedCard.name, confirmedCard.cardNumber, confirmedCard.variant ?? "") : t.result.confirmedReference}
-            label={t.result.confirmedReference}
-          />
+      <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center">
+        <div>
           <EvidencePhoto src={listing.imageUrl} alt={t.result.listingEvidenceAlt(listing.title)} label={t.result.listingEvidencePhoto} />
         </div>
         <div>
@@ -2315,7 +2310,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
           <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.result.inspectFirstBody}</p>
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
         </div>
-        <div className="sm:text-right">
+        <div className="col-span-2 sm:col-span-1 sm:text-right">
           <p className="font-mono text-2xl font-black text-[#24312f]">{formatMoney(listing.estimatedLandedCost ?? listing.preTaxTotal)}</p>
           {listing.url && (
             <a className="secondary-button mt-3 inline-flex" href={listing.url} target="_blank" rel="noreferrer">
@@ -2794,13 +2789,8 @@ function RecommendedBuyHero({
       className="rounded-xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.08)] sm:p-5"
       title={`${verdict.why} ${verdict.catch}`}
     >
-      <div className="grid gap-4 sm:grid-cols-[136px_minmax(0,1fr)] lg:grid-cols-[152px_minmax(0,1fr)_auto] lg:items-center">
-        <div className="flex items-start gap-2" aria-label={t.result.versionConfirmed}>
-          <EvidencePhoto
-            src={confirmedCard?.imageUrl ?? null}
-            alt={confirmedCard ? t.result.confirmedReferenceAlt(confirmedCard.name, confirmedCard.cardNumber, confirmedCard.variant ?? "") : t.result.confirmedReference}
-            label={t.result.confirmedReference}
-          />
+      <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-4 sm:grid-cols-[72px_minmax(0,1fr)] lg:grid-cols-[72px_minmax(0,1fr)_auto] lg:items-center">
+        <div>
           <EvidencePhoto
             src={listing.imageUrl}
             alt={t.result.listingEvidenceAlt(listing.title)}
@@ -2830,7 +2820,7 @@ function RecommendedBuyHero({
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
         </div>
 
-        <div className="grid gap-3 sm:col-start-2 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
+        <div className="col-span-2 grid gap-3 sm:col-span-1 sm:col-start-2 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
           <div>
             <p className="font-mono text-3xl font-black leading-none text-[#24312f]">{formatMoney(total)}</p>
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{totalLabel}</p>
@@ -3166,12 +3156,7 @@ function CompactCandidateRow({
   return (
     <article className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2.5 transition hover:border-[#9fb3a8]">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <div className="flex shrink-0 items-start gap-2" aria-label={t.result.versionConfirmed}>
-          <EvidencePhoto
-            src={confirmedCard?.imageUrl ?? null}
-            alt={confirmedCard ? t.result.confirmedReferenceAlt(confirmedCard.name, confirmedCard.cardNumber, confirmedCard.variant ?? "") : t.result.confirmedReference}
-            label={t.result.confirmedReference}
-          />
+        <div className="shrink-0">
           <EvidencePhoto src={listing.imageUrl} alt={t.result.listingEvidenceAlt(listing.title)} label={t.result.listingEvidencePhoto} />
         </div>
         <div className="min-w-0 flex-1 basis-52">

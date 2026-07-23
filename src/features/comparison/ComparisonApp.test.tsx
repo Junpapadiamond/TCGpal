@@ -547,7 +547,7 @@ describe("comparison condition controls", () => {
     await user.click(screen.getByRole("button", { name: "English test" }));
   });
 
-  it("shows the confirmed reference art beside the seller listing photo", async () => {
+  it("shows seller listing photos without repeating the confirmed reference art beside them", async () => {
     const confirmedCard = {
       id: "OP01-016_p4",
       name: "Nami",
@@ -665,16 +665,17 @@ describe("comparison condition controls", () => {
     fireEvent.change(query, { target: { value: "Nami SP OP01-016" } });
     fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
-    expect(await screen.findAllByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toHaveLength(2);
-    expect(screen.getByAltText("Listing evidence photo: Nami OP01-016 SP Special Art")).toBeTruthy();
+    expect(await screen.findByAltText("Listing photo: Nami OP01-016 SP Special Art")).toBeTruthy();
+    expect(screen.queryByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toBeNull();
     expect(screen.getAllByText("Awakening Of The New Era · OP01-016 · SP CARD · Special Art (P4)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
     const hero = screen.getByRole("article", { name: "Best-supported buy" });
-    expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[136px_minmax(0,1fr)]");
+    expect(hero.querySelector(":scope > div")?.className.split(" ")).toContain("grid-cols-[72px_minmax(0,1fr)]");
+    expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[72px_minmax(0,1fr)]");
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));
-    expect(screen.getByAltText("Listing evidence photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
-    expect(screen.getAllByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toHaveLength(2);
+    expect(screen.getByAltText("Listing photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
+    expect(screen.queryByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toBeNull();
   });
 
   it("shows an unresolved same-number listing as Inspect First, never as the buy", async () => {
@@ -767,6 +768,9 @@ describe("comparison condition controls", () => {
 
     expect(await screen.findByRole("heading", { name: "Best inspect lead" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Inspect listing" })).toBeTruthy();
+    expect(screen.getByAltText("Listing photo: Nami OP01-016 Alternate Art Parallel")).toBeTruthy();
+    expect(screen.queryByAltText("Confirmed card reference: Nami OP01-016 Alternate Art (P2)")).toBeNull();
+    expect(screen.getByText("Review the seller's photos and verify the live page before deciding.", { exact: false })).toBeTruthy();
     expect(screen.queryByText("Our pick")).toBeNull();
   });
 
