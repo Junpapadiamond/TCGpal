@@ -33,7 +33,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v5 reliability repair released and verified | Review live timeout and recall evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Seller-photo gallery verified; deployment pending | Observe trust and empty outcomes with buyers |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Seller-photo gallery released and verified | Observe trust and empty outcomes with buyers |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin released and production verified | Pilot installation with another Work user |
 | WS-LOCAL | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts |
 <!-- progress:end -->
@@ -233,7 +233,7 @@ The user must decide these; agents must not infer them:
 
 Observed on 2026-07-23 in isolated worktree `/Users/chenjunhsu/Desktop/projects/.codex-worktrees/TCGpal-ebay-photo-gallery`:
 
-- `codex/ebay-photo-gallery` is based on deployed `origin/main` `737dddf`; the verified feature commit is `b621552`, with refreshed Graphify output at `e6d5a47`, pending deployment.
+- `codex/ebay-photo-gallery` contains the verified feature commit `b621552`, refreshed Graphify output at `e6d5a47`, and production handoff at `97a8edf`; all are pushed to `main`.
 - The original checkout remains untouched on `codex/identity-first-search` at `ce4c1c4`, one commit ahead and 29 behind `origin/main`, with eight tracked changes and 127 untracked entries.
 - Preserve the original Graphify changes, research, screenshots, and readiness artifacts. They are local acceleration/evidence, not automatically release work.
 
@@ -265,7 +265,7 @@ Latest verified product commit: `b621552a15422e3319beb74671f93a6e41ad3568` on 20
 - `npm run lint`, `npm run typecheck`, `npm test` (60 files / 844 tests), and `npm run build` passed on Next.js 16.2.6.
 - A built-in-browser live eBay comparison for Nico Robin Heroines SP passed in English, 中文, desktop, and 390px mobile: the winning listing exposed all six seller photos in the in-page gallery; next/previous, zoom, Escape, focus restoration, and localized caveat were verified.
 - Seller photos remain display-only evidence: no automated condition/authenticity inference and no ranking integration. Extra images mount only after the gallery opens.
-- Production deployment of `b621552` is pending; the prior deployed `origin/main` `737dddf` remained live at task start.
+- Production deployment `dpl_AhvHyLfrw8mvfxkegV7oM7w56iNa` for `97a8edf` reached Vercel `READY`; `https://tcgpal.vercel.app/` returned HTTP 200 on 2026-07-23.
 
 Still not verified:
 
