@@ -95,9 +95,20 @@
   "93": "plugin.test.ts",
   "94": "tcglensDiscoveryInputSchema",
   "95": "Exact-print identity contract v4",
+  "96": "listing-compare.test.ts",
   "97": "postJsonWithRetry",
   "98": "TcgcsvUnavailableError",
   "99": "analytics.ts",
   "100": "card-identity.test.ts",
-  "104": "schemas.test.ts"
+  "101": "AI-Writing Patterns · English Catalog",
+  "102": "pokemon-name-match.ts",
+  "103": "Language & grammar patterns",
+  "104": "schemas.test.ts",
+  "105": "Style patterns",
+  "106": "Content patterns",
+  "107": "isGradedListing",
+  "108": "buildRequest",
+  "109": "Filler & hedging",
+  "110": "ApiResponseError",
+  "111": "UniversalListingBlockedError"
 }
