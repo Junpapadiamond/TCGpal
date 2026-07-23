@@ -235,6 +235,7 @@ const en = {
     zoomOut: "Zoom out",
     exactPrintDetails: "Confirmed print",
     exactPrintMeta: (set: string, number: string, rarity: string, variant: string) => [set, number, rarity, variant].filter(Boolean).join(" · "),
+    printConfirmedShort: "print",
     printCheck: "Listing identity check",
     printReason: (reason: string) => ({
       canonical_print_id_matches: "The listing names the exact canonical print ID.",
@@ -656,6 +657,7 @@ const zh: Dict = {
     zoomOut: "缩小",
     exactPrintDetails: "已确认版本",
     exactPrintMeta: (set: string, number: string, rarity: string, variant: string) => [set, number, rarity, variant].filter(Boolean).join(" · "),
+    printConfirmedShort: "版本",
     printCheck: "商品版本核对",
     printReason: (reason: string) => ({
       canonical_print_id_matches: "商品明确写出了完全一致的标准版本编号。",

@@ -531,7 +531,7 @@ describe("comparison condition controls", () => {
       return <>
         <button type="button" onClick={() => setLang("zh")}>中文测试</button>
         <button type="button" onClick={() => setLang("en")}>English test</button>
-        <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
+        <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
       </>;
     }
 
@@ -545,6 +545,30 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("商品写的是不同的闪膜或颜色工艺。")).toBeTruthy();
     expect(screen.getByText("商品没有写明已选版本的特殊工艺。")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "English test" }));
+  });
+
+  it("reduces generic compact-row print evidence to an accessible confirmation tag", () => {
+    const confirmedCard: CardIdentityCandidate = {
+      id: "swshp-SWSH144",
+      name: "Greninja Gold Star",
+      setName: "SWSH Black Star Promos",
+      setCode: "SWSH",
+      cardNumber: "SWSH144",
+      language: "English",
+      imageUrl: "https://images.pokemontcg.io/swshp/SWSH144.png",
+      rarity: "Promo",
+      confidence: "high",
+      matchReasons: ["User confirmed this version."],
+    };
+    const listing = {
+      printMatchReasons: ["pokemon_full_number_and_name_match"],
+    } as NormalizedListing;
+
+    render(<PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />);
+
+    expect(screen.getByLabelText("Confirmed print: SWSH Black Star Promos · SWSH144 · Promo").textContent).toContain("✓ print");
+    expect(screen.queryByText("Confirmed print:")).toBeNull();
+    expect(screen.queryByText("The full collector number and card name identify the selected print.")).toBeNull();
   });
 
   it("shows seller listing photos without repeating the confirmed reference art beside them", async () => {

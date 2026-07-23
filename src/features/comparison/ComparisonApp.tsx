@@ -110,6 +110,17 @@ type RecentCarouselCard = {
   lastSeenAt: number;
 };
 
+const CURATED_MARQUEE_CARDS: RecentCarouselCard[] = [
+  { id: "curated-swsh7-215", game: "pokemon", name: "Umbreon VMAX", setName: "Evolving Skies", setCode: "SWSH7", cardNumber: "215/203", imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png", lastSeenAt: 0 },
+  { id: "curated-sv3pt5-151", game: "pokemon", name: "Mew ex", setName: "151", setCode: "MEW", cardNumber: "151/165", imageUrl: "https://images.pokemontcg.io/sv3pt5/151_hires.png", lastSeenAt: 0 },
+  { id: "curated-swsh12pt5gg-GG44", game: "pokemon", name: "Mewtwo VSTAR", setName: "Crown Zenith: Galarian Gallery", setCode: "CRZ", cardNumber: "GG44/GG70", imageUrl: "https://images.pokemontcg.io/swsh12pt5gg/GG44_hires.png", lastSeenAt: 0 },
+  { id: "curated-sv6-214", game: "pokemon", name: "Greninja ex", setName: "Twilight Masquerade", setCode: "TWM", cardNumber: "214/167", imageUrl: "https://images.pokemontcg.io/sv6/214_hires.png", lastSeenAt: 0 },
+  { id: "curated-sm12-251", game: "pokemon", name: "Venusaur & Snivy GX", setName: "Cosmic Eclipse", setCode: "CEC", cardNumber: "251/236", imageUrl: "https://images.pokemontcg.io/sm12/251_hires.png", lastSeenAt: 0 },
+  { id: "curated-swshp-SWSH144", game: "pokemon", name: "Greninja Gold Star", setName: "SWSH Black Star Promos", setCode: "SWSH", cardNumber: "SWSH144", imageUrl: "https://images.pokemontcg.io/swshp/SWSH144_hires.png", lastSeenAt: 0 },
+  { id: "curated-sv4-245", game: "pokemon", name: "Iron Valiant ex", setName: "Paradox Rift", setCode: "PAR", cardNumber: "245/182", imageUrl: "https://images.pokemontcg.io/sv4/245_hires.png", lastSeenAt: 0 },
+  { id: "curated-base1-4", game: "pokemon", name: "Charizard", setName: "Base", setCode: "BS", cardNumber: "4/102", imageUrl: "https://images.pokemontcg.io/base1/4_hires.png", lastSeenAt: 0 },
+];
+
 type JourneyStep = "search" | "confirmation" | "result";
 type JourneySnapshot = {
   form: ComparisonForm;
@@ -250,8 +261,6 @@ function safeCarouselImageUrl(value: string | null) {
       && (
         host === "images.pokemontcg.io"
         || host === "images.scrydex.com"
-        || host === "en.onepiece-cardgame.com"
-        || host.endsWith(".optcgapi.com")
       );
     return allowed ? value : null;
   } catch {
@@ -1298,26 +1307,16 @@ function Footer() {
   );
 }
 
-// Stylized card backs stay as first-run fallback; real card art is used only
-// after a card has been confirmed, so the rail never reflects raw typed guesses.
-const fallbackCardBacks = [
-  "linear-gradient(150deg, #2f6f73, #24585c)",
-  "linear-gradient(150deg, #d8a03a, #b97f24)",
-  "linear-gradient(150deg, #9a4a2c, #7c3a22)",
-  "linear-gradient(150deg, #4a7d55, #38623f)",
-  "linear-gradient(150deg, #3d5a80, #2c4360)",
-  "linear-gradient(150deg, #6d5a8c, #544370)",
-];
-
-type MarqueeItem =
-  | { kind: "real"; card: RecentCarouselCard }
-  | { kind: "back"; background: string };
+type MarqueeItem = { kind: "real"; card: RecentCarouselCard };
 
 function buildMarqueeItems(cards: RecentCarouselCard[], minimum = 8): MarqueeItem[] {
-  const realCards = cards.filter((card) => card.imageUrl);
-  const source: MarqueeItem[] = realCards.length > 0
-    ? realCards.map((card) => ({ kind: "real" as const, card }))
-    : fallbackCardBacks.map((background) => ({ kind: "back" as const, background }));
+  const cleanCards = [...cards, ...CURATED_MARQUEE_CARDS]
+    .map((card) => ({ ...card, imageUrl: safeCarouselImageUrl(card.imageUrl) }))
+    .filter((card): card is RecentCarouselCard & { imageUrl: string } => Boolean(card.imageUrl));
+  const deduped = new Map(cleanCards.map((card) => [card.imageUrl, card]));
+  const source: MarqueeItem[] = Array.from(deduped.values())
+    .slice(0, Math.max(minimum, MAX_MARQUEE_REAL_CARDS))
+    .map((card) => ({ kind: "real", card }));
   const base: MarqueeItem[] = [];
   while (base.length < Math.max(minimum, source.length)) {
     base.push(...source);
@@ -1332,7 +1331,7 @@ function CardMarquee({ cards }: { cards: RecentCarouselCard[] }) {
     <div aria-hidden="true" className="card-marquee relative hidden h-[128px] overflow-hidden lg:block">
       <div className="card-marquee-track flex w-max items-center">
         {items.map((item, index) => (
-          <CardMarqueeItem key={`${item.kind}-${item.kind === "real" ? item.card.id : item.background}-${index}`} item={item} index={index} />
+          <CardMarqueeItem key={`${item.card.id}-${index}`} item={item} index={index} />
         ))}
       </div>
     </div>
@@ -1341,32 +1340,12 @@ function CardMarquee({ cards }: { cards: RecentCarouselCard[] }) {
 
 function CardMarqueeItem({ item, index }: { item: MarqueeItem; index: number }) {
   const rotation = `${index % 2 ? 3 : -3}deg`;
-  if (item.kind === "real") {
-    return (
-      <span
-        className="card-marquee-card card-marquee-card-real relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(36,49,47,0.13)] bg-[#fcfbf6] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
-        style={{ transform: `rotate(${rotation})` }}
-      >
-        {item.card.imageUrl && (
-          <Image
-            src={item.card.imageUrl}
-            alt=""
-            fill
-            sizes="80px"
-            className="object-contain"
-          />
-        )}
-        <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
-      </span>
-    );
-  }
   return (
     <span
-      className="card-marquee-card relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(255,255,255,0.55)] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
-      style={{ background: item.background, transform: `rotate(${rotation})` }}
+      className="card-marquee-card card-marquee-card-real relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(36,49,47,0.13)] bg-[#fcfbf6] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
+      style={{ transform: `rotate(${rotation})` }}
     >
-      <span className="card-marquee-inner absolute inset-[6px] rounded-[6px] border border-[rgba(255,255,255,0.35)]" />
-      <span className="card-marquee-orb absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(255,255,255,0.45)]" />
+      <Image src={item.card.imageUrl!} alt="" fill sizes="80px" className="object-contain" />
       <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
     </span>
   );
@@ -1797,7 +1776,7 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
           </div>
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className={identities.length === 1 ? "mx-auto mt-6 max-w-sm" : "mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
           {filteredIdentities.map((identity) => (
             <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h3" />
           ))}
@@ -2156,7 +2135,7 @@ function ComparisonResult({
                 {t.result.compareOthers(alternativeListings.length)}
                 <IconChevronDown className="h-4 w-4 shrink-0" />
               </summary>
-              <div className="space-y-2 px-4 pb-4">
+              <div className="overflow-hidden border-t border-[#d6ded5]">
                 {alternativeListings.map((listing) => (
                   <CompactCandidateRow
                     key={listing.id}
@@ -2840,26 +2819,21 @@ function RecommendedBuyHero({
           <strong className="font-black">{verdict.action.label}</strong>
           <span className="basis-full font-semibold sm:basis-auto">{verdict.action.note}</span>
         </p>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#2f6f73]">{t.result.whyItStandsOut}</h3>
-            <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.why}</p>
-          </div>
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.whatToKnow}</h3>
-            <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.catch}</p>
-          </div>
-          {verdict.whyNotCheapest ? (
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.whyNotCheapest}</h3>
-              <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.whyNotCheapest}</p>
-            </div>
-          ) : (
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{t.result.nextBestOption}</h3>
-              <p className="mt-1 text-sm leading-6 text-[#52635c]">{verdict.alternative ?? t.result.noAlternative}</p>
-            </div>
-          )}
+        <div className="mt-3 space-y-2 text-sm leading-6 text-[#52635c]">
+          <p>
+            <span className="mr-2 text-xs font-black uppercase tracking-[0.08em] text-[#2f6f73]">{t.result.whyItStandsOut}</span>
+            {verdict.why}
+          </p>
+          <p className="border-l-2 border-[#d8a03a] pl-3">
+            <span className="mr-2 text-xs font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.whatToKnow}</span>
+            {verdict.catch}
+          </p>
+          <p className="border-t border-[#e4ebe3] pt-2 text-xs leading-5 text-[#64736c]">
+            <span className="mr-2 font-black uppercase tracking-[0.08em]">
+              {verdict.whyNotCheapest ? t.result.whyNotCheapest : t.result.nextBestOption}
+            </span>
+            {verdict.whyNotCheapest ?? verdict.alternative ?? t.result.noAlternative}
+          </p>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
@@ -2907,6 +2881,23 @@ export function PrintIdentitySummary({
     identity?.variantLabel ?? confirmedCard.variant ?? "",
   );
   const reasons = listing.printMatchReasons ?? [];
+  const genericCompactEvidence = compact
+    && reasons.length > 0
+    && reasons.every((reason) => reason === "pokemon_full_number_and_name_match" || reason === "pokemon_full_number_and_set_match");
+
+  if (genericCompactEvidence) {
+    const accessibleLabel = `${t.result.exactPrintDetails}: ${metadata}`;
+    return (
+      <span
+        className="mt-1.5 inline-flex items-center rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+        aria-label={accessibleLabel}
+        title={accessibleLabel}
+        tabIndex={0}
+      >
+        ✓ {t.result.printConfirmedShort}
+      </span>
+    );
+  }
 
   return (
     <div className={`${compact ? "mt-1.5" : "mt-3"} rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-2 text-xs leading-5 text-[#52635c]`}>
@@ -3136,7 +3127,7 @@ function CompactCandidateRow({
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
 
   return (
-    <article className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2.5 transition hover:border-[#9fb3a8]">
+    <article className="border-b border-[#d6ded5] px-4 py-2 transition-colors last:border-b-0 hover:bg-[#f7f9f5]">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <div className="shrink-0">
           <ListingPhoto listing={listing} />
@@ -3151,7 +3142,7 @@ function CompactCandidateRow({
           <p className="mt-0.5 truncate text-xs font-semibold leading-5 text-[#64736c]">
             {t.conditions[listing.claimedCondition]} · {t.card.photos(listing.evidence.photoCount)}
             {" · "}
-            <button className="underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
+            <button className="inline-flex min-h-11 items-center underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
               {t.candidate.ask}
             </button>
           </p>
@@ -3164,7 +3155,7 @@ function CompactCandidateRow({
         <MarketDeltaBadge listing={listing} marketPrice={marketPrice} compact />
         {listing.url ? (
           <a
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-[#c9d7ce] px-3 text-xs font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-[#c9d7ce] px-3 text-xs font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
             href={listing.url}
             target="_blank"
             rel="noreferrer"
