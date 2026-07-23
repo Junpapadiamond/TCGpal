@@ -33,7 +33,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v5 reliability repair released and verified | Review live timeout and recall evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Released; listing-photo hierarchy corrected | Observe trust and empty outcomes with buyers |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Seller-photo gallery verified; deployment pending | Observe trust and empty outcomes with buyers |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin released and production verified | Pilot installation with another Work user |
 | WS-LOCAL | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts |
 <!-- progress:end -->
@@ -181,6 +181,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - Results distinguish best_buy, inspect_first, and next_moves.
 - Empty results do not use demo or low-confidence inventory as real recommendations.
 - Result listings show only the seller/listing image; the selected print remains explicit in the separate text identity block, avoiding an unsupported implication that TCGlens visually compared it with the catalog reference. Minimum condition remains editable.
+- eBay results preserve up to 24 official seller-photo URLs and open them in a lazy-mounted in-page gallery with thumbnails, keyboard navigation, focus restoration, and zoom. Copy explicitly says TCGlens has not verified condition or authenticity from the photos.
 - English and Chinese desktop/mobile states have automated and visual coverage.
 
 ### Not finished or not verified
@@ -230,10 +231,10 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-Observed on 2026-07-23 in /Users/chenjunhsu/Desktop/projects/TCGpal:
+Observed on 2026-07-23 in isolated worktree `/Users/chenjunhsu/Desktop/projects/.codex-worktrees/TCGpal-ebay-photo-gallery`:
 
-- Production `origin/main` began this task at `b20af03`; the isolated `codex/listing-image-hierarchy` worktree contains the verified seller-photo hierarchy fix at `61119f2` pending this handoff update and deployment.
-- The original checkout remains untouched on `codex/identity-first-search` at `ce4c1c4`, one commit ahead and 26 behind the pre-task `origin/main`, with eight tracked changes and 126 untracked entries.
+- `codex/ebay-photo-gallery` is based on deployed `origin/main` `737dddf`; the verified feature commit is `b621552`, with refreshed Graphify output at `e6d5a47`, pending deployment.
+- The original checkout remains untouched on `codex/identity-first-search` at `ce4c1c4`, one commit ahead and 29 behind `origin/main`, with eight tracked changes and 127 untracked entries.
 - Preserve the original Graphify changes, research, screenshots, and readiness artifacts. They are local acceleration/evidence, not automatically release work.
 
 Refresh this section with /progress; do not assume it remains current.
@@ -259,12 +260,12 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Latest verified product commit: `61119f25d88b3182dd24f71f2c9b8bc21de31317` on 2026-07-23.
+Latest verified product commit: `b621552a15422e3319beb74671f93a6e41ad3568` on 2026-07-23.
 
-- `npm run lint`, `npm run typecheck`, `npm test` (60 files / 841 tests), and `npm run build` passed on Next.js 16.2.6.
-- A built-in-browser live eBay comparison for Nico Robin Heroines SP passed in English, 中文, desktop, and 390px mobile: each row showed one labeled listing photo, while the confirmed print stayed in its separate identity text block.
-- Production deployment `2bc4f3c` reached Vercel `READY` and `https://tcgpal.vercel.app` returned HTTP 200 on 2026-07-23.
-- Exact-print v5 reliability, Bubble Mew/One Piece regressions, graded/custom exclusions, the multi-card flow, MCP/plugin contracts, and bounded identity latency remain covered in the passing lineage. No dependency, schema, ranking, or source-access changes were made.
+- `npm run lint`, `npm run typecheck`, `npm test` (60 files / 844 tests), and `npm run build` passed on Next.js 16.2.6.
+- A built-in-browser live eBay comparison for Nico Robin Heroines SP passed in English, 中文, desktop, and 390px mobile: the winning listing exposed all six seller photos in the in-page gallery; next/previous, zoom, Escape, focus restoration, and localized caveat were verified.
+- Seller photos remain display-only evidence: no automated condition/authenticity inference and no ranking integration. Extra images mount only after the gallery opens.
+- Production deployment of `b621552` is pending; the prior deployed `origin/main` `737dddf` remained live at task start.
 
 Still not verified:
 
