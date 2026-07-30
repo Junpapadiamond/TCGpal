@@ -30,7 +30,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | v5 reliability repair released and verified | Review live timeout and recall evidence |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Pokémon retry-budget repair ready for release | Verify Suicune and monitor live timeout evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Design de-generic polish released and verified | Observe trust and empty outcomes with buyers |
@@ -78,8 +78,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Comparison contract v5 and plugin 1.0.2 add typed product/condition/cost/price/language/identity/availability issues. Law Manga and Robin Heroines SP use seller-visible positive proof; graded, language, condition, and shipping exclusions no longer masquerade as artwork mismatches.
 - Pokémon search now keeps Mew/Mewtwo, combination cards, and Trainer products in strict name tiers, requests a bounded identity-only payload, and reloads full data only after stable-ID confirmation.
 - Client request generations abort stale identity/comparison work. Native Next.js 16 history entries restore search, confirmation, and result snapshots without placing buyer or listing facts in the URL.
-- Identity search now carries cancellation from browser to route, resolver, and Pokémon fetch; one 10-second server budget prevents nested retries from stretching into 20–40 second stalls. Identical requests coalesce per server instance, successful identities use hashed 15-minute cache entries with a six-hour stale fallback, and provider deadlines return an explicit temporary-unavailable result.
+- Identity search now carries cancellation from browser to route, resolver, and Pokémon fetch; one 18-second server budget permits the adapter's bounded 8-second attempt, 400 ms backoff, and retry while still returning before the 20-second route cap. Identical requests coalesce per server instance, successful identities use hashed 15-minute cache entries with a six-hour stale fallback, and provider deadlines return an explicit temporary-unavailable result.
 - Closed One Piece version groups no longer mount their cards until opened. A 2026-07-17 alternating five-card live check measured One Piece resolution at 16–50 ms server time, an uncached Pokémon resolution at 7.427 s, and its cached repeat at 20 ms; the full release gates remain authoritative.
+- A 2026-07-30 production check reproduced `Suicune` returning unavailable after 13.76 s while `Pikachu` resolved. The catalog's first attempt can consume its full 8-second timeout, but the former 10-second shared deadline cancelled the intended retry before it could complete. Regression coverage now proves a successful 10.5-second recovery is preserved.
 
 ### What went wrong
 
@@ -94,7 +95,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Performance: classifier p99 0.0917 ms; hermetic full-comparison p95 changed +2.33%, within the 10% gate.
 - Official eBay Browse checks passed for Bubble Mew, Base Alakazam, Nami/Robin/Zoro, manga, anniversary, tournament, Winner, and graded/custom exclusions. Genuine evidence gaps still abstain.
 - Remaining: complete a human-adjudicated 30-listing production sample before claiming population accuracy; monitor live recall and the 12-item enrichment window. Gold/silver and broader market families retain automated coverage but still need periodic live sampling.
-- Review the seven-day production identity timeout rate on 2026-07-24. If more than 5% of uncached Pokémon searches hit the 10-second deadline, or p95 remains above 8 seconds, promote the lightweight local Pokémon identity index from a parked option to a separately evaluated workstream.
+- Review the seven-day production identity timeout rate after the 2026-07-30 repair. If more than 5% of uncached Pokémon searches still hit the 18-second deadline, or p95 remains above 8 seconds, promote the lightweight local Pokémon identity index from a parked option to a separately evaluated workstream.
 
 ### Read first
 

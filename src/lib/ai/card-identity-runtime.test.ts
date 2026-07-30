@@ -131,6 +131,28 @@ describe("card identity runtime", () => {
     expect(result.warnings.join(" ")).toMatch(/catalog lookup unavailable/i);
   });
 
+  it("lets the Pokémon catalog retry finish after the first 8-second provider timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      const resolver = vi.fn((_input, dependencies) => (
+        new Promise<CardIdentitySearchResponse>((resolve, reject) => {
+          const retry = setTimeout(() => resolve(resolved), 10_500);
+          dependencies.signal?.addEventListener("abort", () => {
+            clearTimeout(retry);
+            reject(dependencies.signal?.reason);
+          }, { once: true });
+        })
+      ));
+
+      const pending = resolveCardIdentityRuntime(input, { resolver });
+      await vi.advanceTimersByTimeAsync(10_500);
+
+      await expect(pending).resolves.toEqual(resolved);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("enforces the deadline even when an upstream resolver ignores cancellation", async () => {
     const resolver = vi.fn(() => (
       new Promise<CardIdentitySearchResponse>((resolve) => {

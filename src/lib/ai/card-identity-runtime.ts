@@ -11,7 +11,10 @@ import {
 const CACHE_SCOPE = "card-identity-v1";
 const FRESH_TTL_MS = 15 * 60 * 1000;
 const STALE_TTL_SECONDS = 6 * 60 * 60;
-const DEFAULT_DEADLINE_MS = 10_000;
+// A Pokémon identity lookup permits one 8s provider attempt, a 400ms backoff,
+// and one retry. Keep the shared deadline long enough for that recovery path to
+// finish while still returning before the route's 20s hard timeout.
+const DEFAULT_DEADLINE_MS = 18_000;
 
 type CachedIdentity = {
   cachedAt: string;
