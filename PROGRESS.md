@@ -30,7 +30,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Pokémon retry-budget repair ready for release | Verify Suicune and monitor live timeout evidence |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Pokémon retry-budget repair released and verified | Monitor live timeout and recall evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Design de-generic polish released and verified | Observe trust and empty outcomes with buyers |
@@ -80,7 +80,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Client request generations abort stale identity/comparison work. Native Next.js 16 history entries restore search, confirmation, and result snapshots without placing buyer or listing facts in the URL.
 - Identity search now carries cancellation from browser to route, resolver, and Pokémon fetch; one 18-second server budget permits the adapter's bounded 8-second attempt, 400 ms backoff, and retry while still returning before the 20-second route cap. Identical requests coalesce per server instance, successful identities use hashed 15-minute cache entries with a six-hour stale fallback, and provider deadlines return an explicit temporary-unavailable result.
 - Closed One Piece version groups no longer mount their cards until opened. A 2026-07-17 alternating five-card live check measured One Piece resolution at 16–50 ms server time, an uncached Pokémon resolution at 7.427 s, and its cached repeat at 20 ms; the full release gates remain authoritative.
-- A 2026-07-30 production check reproduced `Suicune` returning unavailable after 13.76 s while `Pikachu` resolved. The catalog's first attempt can consume its full 8-second timeout, but the former 10-second shared deadline cancelled the intended retry before it could complete. Regression coverage now proves a successful 10.5-second recovery is preserved.
+- A 2026-07-30 production check reproduced `Suicune` returning unavailable after 13.76 s while `Pikachu` resolved. The catalog's first attempt can consume its full 8-second timeout, but the former 10-second shared deadline cancelled the intended retry before it could complete. Regression coverage now proves a successful 10.5-second recovery is preserved. After deployment, the same `Suicune` request returned 27 candidates without warnings in 5.65 s.
 
 ### What went wrong
 
