@@ -1,7 +1,7 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-07-23
+updated_at: 2026-07-31
 canonical_branch: origin/main
 last_verified_product_commit: d613d662520f2147b3e22fc4347f26a153f1e15e
 max_lines: 300
@@ -34,7 +34,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Design de-generic polish released and verified | Observe trust and empty outcomes with buyers |
-| WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP/plugin released and production verified | Pilot installation with another Work user |
+| WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP released; Firecrawl frontier tracer killed | Keep Firecrawl out of production; revisit only after tracer failure modes change |
 | WS-LOCAL | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts |
 <!-- progress:end -->
 
@@ -205,7 +205,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - src/lib/testing/standard-comparison-flow.ts
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-released" tags="mcp,plugin,agents,marketplaces,distribution,business" -->
+<!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-released-firecrawl-frontier-killed" tags="mcp,plugin,agents,marketplaces,distribution,business,firecrawl,frontier" -->
 ## WS-DISTRIBUTION - Sources, distribution, and business model
 
 - A versioned capabilities REST endpoint and production-path Streamable HTTP MCP server expose identity browsing, bounded discovery, exact-card comparison, and deep-link continuation through the existing domain engine.
@@ -217,6 +217,8 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - Subscription and advertising are hypotheses, not implemented models.
 - Marketplace expansion, paid acquisition, and monetization are deferred until WS-IDENTITY and WS-PILOT gates pass.
 - Open launch question: marketplace/data terms and any required partner agreements need review before a public commercial launch.
+- Firecrawl `/scrape` JSON mode failed the 2026-07-31 six-platform frontier tracer: 3/6 reviewable pages, 56.25% raw factual precision, 0/6 cost-comparable, 14.768-second median latency, and 72 total credits. Yahoo Auctions JP and SNKRDUNK returned high-confidence schema-shaped example payloads; Mercari JP was region-blocked after a JP tunnel failure.
+- The deterministic frontier harness discards placeholder payloads, unsupported zero defaults, `N/A` sentinels, and generic seller boilerplate. It is isolated from product routes, `PlatformAgent`, caches, analytics, and ranking. The 30-page expansion was stopped by its predefined kill criteria; evidence and retest conditions are in `docs/frontier-firecrawl-pilot.md`.
 <!-- progress:end -->
 
 <!-- progress:section id="DECISIONS" -->
@@ -256,7 +258,7 @@ Refresh this section with /progress; do not assume it remains current.
 | Ranking/recommendation | schemas.ts, ranking.ts, platforms.ts, ranking/platform tests |
 | UI/product flow | WS-UX, ComparisonApp.tsx, i18n, standard flow |
 | Product/demand decision | WS-PILOT, validation plan, product spec, council chairman |
-| Agent/MCP or marketplace expansion | AGENTS.md data boundaries, `src/app/mcp/route.ts`, `src/lib/mcp/tools.ts`, `docs/architecture-and-data-sources.md`, and `src/lib/comparison/platforms.ts` |
+| Agent/MCP or marketplace expansion | AGENTS.md production/frontier boundaries, `src/app/mcp/route.ts`, `src/lib/mcp/tools.ts`, `docs/architecture-and-data-sources.md`, `docs/frontier-firecrawl-pilot.md`, and `src/lib/comparison/platforms.ts` |
 | Dirty local work | LOCAL-STATE, then git diff for only the named files |
 
 Use Graphify before broad cross-file exploration. Verify ambiguous graph edges in source.
@@ -272,6 +274,7 @@ Latest verified product commit: `d613d662520f2147b3e22fc4347f26a153f1e15e` on 20
 - The merged result retained the eBay seller-photo gallery, 44px listing actions, keyboard order, and reduced-motion behavior; browser error logs were empty.
 - Seller photos remain display-only evidence: no automated condition/authenticity inference and no ranking integration. Extra images mount only after the gallery opens.
 - Production deployment `dpl_7mhj9Wqm4ZvYTKo3euBh8w3nPvYx` for `321db7c` reached Vercel `READY`; `https://tcgpal.vercel.app/` returned HTTP 200 on 2026-07-23.
+- Firecrawl frontier harness verification on 2026-07-31: report regeneration, lint, typecheck, 61 test files / 852 tests, Next.js 16.2.6 production build, Graphify update (1,861 nodes / 3,573 edges), and `git diff --check` passed. No UI or product-route behavior changed, so visual QA was not applicable.
 
 Still not verified:
 

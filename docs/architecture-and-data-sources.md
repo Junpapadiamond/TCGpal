@@ -47,6 +47,12 @@ The source matrix above describes product runtime access. A scoped offline or hu
 
 Investigation findings follow `docs/card-identity-research-policy.md`. Community posts are leads or corroboration, never the sole deciding source for a runtime print rule. Every promoted claim requires recorded provenance, conflict review, human approval, and sibling-negative regression tests. Product routes must not reuse the investigation process as a general web crawler.
 
+## Frontier marketplace research
+
+Founder-triggered marketplace experiments run outside the interface architecture above. `src/lib/frontier-research/*`, `scripts/frontier-research/*`, and `output/frontier-research/*` are the isolated harness, evaluator, and sanitized artifact namespaces. They may observe public pages only under the Frontier Research Mode contract in `AGENTS.md`; they never register a `PlatformAgent`, write report cache entries, emit product analytics, or feed production ranking.
+
+Firecrawl `/scrape` JSON mode was evaluated on 2026-07-31 and failed the six-platform tracer gate. It remains research infrastructure only. See `docs/frontier-firecrawl-pilot.md` for the evidence, failure modes, and retest boundary.
+
 ## API
 
 `GET /api/agent/capabilities`

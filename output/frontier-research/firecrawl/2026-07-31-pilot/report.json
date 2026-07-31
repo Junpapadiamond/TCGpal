@@ -1,0 +1,807 @@
+{
+  "experimentId": "firecrawl-frontier-pilot-2026-07-31",
+  "label": "frontier-research",
+  "owner": "Founder",
+  "reviewDate": "2026-08-03",
+  "observerConfig": {
+    "endpoint": "/scrape",
+    "format": "json",
+    "storeInCache": false,
+    "redactPII": true,
+    "proxy": "basic",
+    "usdPerCredit": 0.0032,
+    "discoveryCreditsUsed": 18,
+    "pricingAssumption": "Conservative allocated cost using the public Hobby plan: US$16 / 5,000 credits.",
+    "pricingSourceUrl": "https://www.firecrawl.dev/pricing"
+  },
+  "thresholds": {
+    "pageObservedRate": 0.8,
+    "factualPrecision": 0.95,
+    "costComparableRate": 0.6,
+    "medianLatencyMs": 8000,
+    "maxCostUsd": 1
+  },
+  "summary": {
+    "totalFixtures": 6,
+    "pageObservedCount": 3,
+    "pageObservedRate": 0.5,
+    "factualLabels": 20,
+    "factualPredictions": 16,
+    "factualErrors": 7,
+    "factualCoverage": 0.8,
+    "factualPrecision": 0.5625,
+    "knownSiblingSubstitutions": 0,
+    "costComparableCount": 0,
+    "costComparableRate": 0,
+    "medianLatencyMs": 14768,
+    "scrapeCreditsUsed": 54,
+    "discoveryCreditsUsed": 18,
+    "totalCreditsUsed": 72,
+    "totalCostUsd": 0.23
+  },
+  "gates": {
+    "pageObserved": false,
+    "factualPrecision": false,
+    "zeroSiblingSubstitutions": true,
+    "costComparable": false,
+    "latency": false,
+    "cost": true,
+    "accessPolicy": true,
+    "evidenceReplayable": true,
+    "overall": false
+  },
+  "results": [
+    {
+      "fixtureId": "mercari-us-01",
+      "platform": "Mercari US",
+      "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+      "observedAt": "2026-07-31T08:30:00.000Z",
+      "acquisitionMethod": "firecrawl-scrape-json",
+      "status": "observed",
+      "attemptCount": 1,
+      "evidenceState": "page-observed",
+      "identity": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "plain_family_listing_does_not_identify_print"
+        ],
+        "priceGuard": "none"
+      },
+      "comparableCost": null,
+      "durationMs": 13882,
+      "creditsUsed": 9,
+      "costUsd": 0.028800000000000003,
+      "accessNotes": [],
+      "criticNotes": [],
+      "fields": {
+        "title": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Character Card Nami OP01-016 One Piece TCG",
+          "evidence": "Title displayed prominently on the page",
+          "confidence": "high"
+        },
+        "cardName": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Nami OP01-016",
+          "evidence": "Nami OP01-016 mentioned in item description",
+          "confidence": "high"
+        },
+        "collectorNumber": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "OP01-016",
+          "evidence": "Collector number OP01-016 visible in the title",
+          "confidence": "high"
+        },
+        "setName": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "One Piece TCG",
+          "evidence": "Set name displayed under the title",
+          "confidence": "high"
+        },
+        "variant": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Character Card",
+          "evidence": "Variant noted in the description",
+          "confidence": "high"
+        },
+        "itemPrice": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": 4,
+          "evidence": "Listed price is $4.00",
+          "confidence": "high"
+        },
+        "currency": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "USD",
+          "evidence": "Currency is US dollars indicated on the page",
+          "confidence": "high"
+        },
+        "shippingCost": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": 0.74,
+          "evidence": "Shipping fee listed as $0.74",
+          "confidence": "high"
+        },
+        "tax": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "availability": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "sold",
+          "evidence": "Item is marked as sold out",
+          "confidence": "high"
+        },
+        "condition": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "like new",
+          "evidence": "Condition noted as like new in the description",
+          "confidence": "high"
+        },
+        "sellerEvidence": {
+          "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Profile verified",
+          "evidence": "A verified profile signal is visible",
+          "confidence": "high"
+        }
+      }
+    },
+    {
+      "fixtureId": "whatnot-01",
+      "platform": "Whatnot",
+      "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+      "observedAt": "2026-07-31T08:30:00.000Z",
+      "acquisitionMethod": "firecrawl-scrape-json",
+      "status": "observed",
+      "attemptCount": 1,
+      "evidenceState": "page-observed",
+      "identity": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      },
+      "comparableCost": null,
+      "durationMs": 11549,
+      "creditsUsed": 9,
+      "costUsd": 0.028800000000000003,
+      "accessNotes": [],
+      "criticNotes": [
+        "shippingCost: discarded unsupported default value.",
+        "tax: discarded unsupported default value."
+      ],
+      "fields": {
+        "title": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Nami - OP01-016 (Alternate Art) - One Piece Promotion Cards (OP-PR)",
+          "evidence": "Product title from the listing.",
+          "confidence": "high"
+        },
+        "cardName": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Nami - OP01-016 (Alternate Art)",
+          "evidence": "Displayed card name in the product section.",
+          "confidence": "high"
+        },
+        "collectorNumber": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "OP01-016",
+          "evidence": "Collector number mentioned in listing details.",
+          "confidence": "high"
+        },
+        "setName": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "One Piece Promotion Cards (OP-PR)",
+          "evidence": "Set name listed under product details.",
+          "confidence": "high"
+        },
+        "variant": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Alternate Art",
+          "evidence": "Variant type specified in the title.",
+          "confidence": "high"
+        },
+        "itemPrice": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": 96,
+          "evidence": "Price stated as $96.00 in the listing.",
+          "confidence": "high"
+        },
+        "currency": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "USD",
+          "evidence": "The price is formatted in US dollars.",
+          "confidence": "high"
+        },
+        "shippingCost": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Shipping cost is not specified, defaulting to zero.",
+          "confidence": "low"
+        },
+        "tax": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Taxes are mentioned but not specified, defaulting to zero.",
+          "confidence": "low"
+        },
+        "availability": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "available",
+          "evidence": "Product is marked as '1 Available'.",
+          "confidence": "high"
+        },
+        "condition": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "Near Mint",
+          "evidence": "Condition stated in the product details.",
+          "confidence": "high"
+        },
+        "sellerEvidence": {
+          "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "High rating and many reviews are visible.",
+          "evidence": "A 5.0 rating based on 267 reviews is shown.",
+          "confidence": "high"
+        }
+      }
+    },
+    {
+      "fixtureId": "yahoo-jp-01",
+      "platform": "Yahoo Auctions JP",
+      "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+      "observedAt": "2026-07-31T08:30:00.000Z",
+      "acquisitionMethod": "firecrawl-scrape-json",
+      "status": "observed",
+      "attemptCount": 2,
+      "evidenceState": "link-only",
+      "identity": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "page_not_observed"
+        ],
+        "priceGuard": "none"
+      },
+      "comparableCost": null,
+      "durationMs": 19695,
+      "creditsUsed": 9,
+      "costUsd": 0.028800000000000003,
+      "accessNotes": [
+        "Initial JP-egress attempt failed with an internal Firecrawl tunnel error; retried once with default egress."
+      ],
+      "criticNotes": [
+        "Discarded schema-shaped placeholder payload."
+      ],
+      "fields": {
+        "title": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Visible on the product page.",
+          "confidence": "low"
+        },
+        "cardName": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Displayed as the card name on the page.",
+          "confidence": "low"
+        },
+        "collectorNumber": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Collector number is shown under the product details.",
+          "confidence": "low"
+        },
+        "setName": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Set name appears prominently on the page.",
+          "confidence": "low"
+        },
+        "variant": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Variant information is provided in the product specs.",
+          "confidence": "low"
+        },
+        "itemPrice": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Price listed at the top of the product page.",
+          "confidence": "low"
+        },
+        "currency": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Currency is indicated next to the price.",
+          "confidence": "low"
+        },
+        "shippingCost": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Shipping cost is visible in the pricing section.",
+          "confidence": "low"
+        },
+        "tax": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Tax information is presented with the price breakdown.",
+          "confidence": "low"
+        },
+        "availability": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Availability status shows 'in stock'.",
+          "confidence": "low"
+        },
+        "condition": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Condition labeled as 'new' on the page.",
+          "confidence": "low"
+        },
+        "sellerEvidence": {
+          "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "General seller reputation signals are claimed.",
+          "confidence": "low"
+        }
+      }
+    },
+    {
+      "fixtureId": "mercari-jp-01",
+      "platform": "Mercari JP",
+      "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+      "observedAt": "2026-07-31T08:30:00.000Z",
+      "acquisitionMethod": "firecrawl-scrape-json",
+      "status": "blocked",
+      "attemptCount": 2,
+      "evidenceState": "link-only",
+      "identity": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "page_not_observed"
+        ],
+        "priceGuard": "none"
+      },
+      "comparableCost": null,
+      "durationMs": 10732,
+      "creditsUsed": 9,
+      "costUsd": 0.028800000000000003,
+      "accessNotes": [
+        "Initial JP-egress attempt failed with an internal Firecrawl tunnel error.",
+        "Default egress returned a region-restriction page rather than product details."
+      ],
+      "criticNotes": [],
+      "fields": {
+        "title": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "cardName": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "collectorNumber": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "setName": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "variant": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "itemPrice": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "currency": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "shippingCost": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "tax": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "availability": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "condition": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        },
+        "sellerEvidence": {
+          "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": null,
+          "confidence": "low"
+        }
+      }
+    },
+    {
+      "fixtureId": "snkrdunk-01",
+      "platform": "SNKRDUNK",
+      "sourceUrl": "https://snkrdunk.com/apparels/310224",
+      "observedAt": "2026-07-31T08:30:00.000Z",
+      "acquisitionMethod": "firecrawl-scrape-json",
+      "status": "observed",
+      "attemptCount": 2,
+      "evidenceState": "link-only",
+      "identity": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "page_not_observed"
+        ],
+        "priceGuard": "none"
+      },
+      "comparableCost": null,
+      "durationMs": 15653,
+      "creditsUsed": 9,
+      "costUsd": 0.028800000000000003,
+      "accessNotes": [
+        "Initial JP-egress attempt failed with an internal Firecrawl tunnel error; retried once with default egress."
+      ],
+      "criticNotes": [
+        "Discarded schema-shaped placeholder payload."
+      ],
+      "fields": {
+        "title": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Displayed prominently at the top of the page.",
+          "confidence": "low"
+        },
+        "cardName": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Listed in the card section of the marketplace.",
+          "confidence": "low"
+        },
+        "collectorNumber": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Found in the product specifications section.",
+          "confidence": "low"
+        },
+        "setName": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Noted under the product details.",
+          "confidence": "low"
+        },
+        "variant": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Mentioned in the options available for the product.",
+          "confidence": "low"
+        },
+        "itemPrice": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Clearly stated next to the product image.",
+          "confidence": "low"
+        },
+        "currency": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Indicated near the price.",
+          "confidence": "low"
+        },
+        "shippingCost": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Specified under the shipping details.",
+          "confidence": "low"
+        },
+        "tax": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Calculated and noted at the bottom of the price breakdown.",
+          "confidence": "low"
+        },
+        "availability": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Marked as in stock on the product page.",
+          "confidence": "low"
+        },
+        "condition": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Labeled in the condition section of the details.",
+          "confidence": "low"
+        },
+        "sellerEvidence": {
+          "sourceUrl": "https://snkrdunk.com/apparels/310224",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Testimonials and ratings are claimed.",
+          "confidence": "low"
+        }
+      }
+    },
+    {
+      "fixtureId": "shops-01",
+      "platform": "Card Rush",
+      "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+      "observedAt": "2026-07-31T08:30:00.000Z",
+      "acquisitionMethod": "firecrawl-scrape-json",
+      "status": "observed",
+      "attemptCount": 2,
+      "evidenceState": "page-observed",
+      "identity": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_listing_missing_card_name"
+        ],
+        "priceGuard": "none"
+      },
+      "comparableCost": null,
+      "durationMs": 21649,
+      "creditsUsed": 9,
+      "costUsd": 0.028800000000000003,
+      "accessNotes": [
+        "Initial JP-egress attempt failed with an internal Firecrawl tunnel error; retried once with default egress."
+      ],
+      "criticNotes": [
+        "setName: normalized unsupported sentinel or boilerplate to unknown.",
+        "condition: normalized unsupported sentinel or boilerplate to unknown.",
+        "sellerEvidence: normalized unsupported sentinel or boilerplate to unknown."
+      ],
+      "fields": {
+        "title": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "ナミ(illust:Ai Nina)【R】{OP01-016}",
+          "evidence": "Product title displayed on the page.",
+          "confidence": "high"
+        },
+        "cardName": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "ナミ",
+          "evidence": "Card name mentioned in the product description.",
+          "confidence": "high"
+        },
+        "collectorNumber": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "OP01-016",
+          "evidence": "Collector number found in the product title.",
+          "confidence": "high"
+        },
+        "setName": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Set name not explicitly provided.",
+          "confidence": "low"
+        },
+        "variant": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "R",
+          "evidence": "Variant indicated in the product title.",
+          "confidence": "high"
+        },
+        "itemPrice": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": 39800,
+          "evidence": "Posted sale price is 39,800円(税込).",
+          "confidence": "high"
+        },
+        "currency": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "JPY",
+          "evidence": "Currency implied by the price format in yen.",
+          "confidence": "high"
+        },
+        "shippingCost": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Shipping cost is not mentioned.",
+          "confidence": "low"
+        },
+        "tax": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Tax details are not provided separately.",
+          "confidence": "low"
+        },
+        "availability": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": "available",
+          "evidence": "11枚 available as mentioned on the page.",
+          "confidence": "high"
+        },
+        "condition": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Condition not explicitly stated.",
+          "confidence": "low"
+        },
+        "sellerEvidence": {
+          "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+          "observedAt": "2026-07-31T08:30:00.000Z",
+          "acquisitionMethod": "firecrawl-scrape-json",
+          "extractedValue": null,
+          "evidence": "Page structure reflects an organized online marketplace environment.",
+          "confidence": "low"
+        }
+      }
+    }
+  ]
+}

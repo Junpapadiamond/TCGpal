@@ -1,0 +1,455 @@
+[
+  {
+    "fixtureId": "mercari-us-01",
+    "sourceUrl": "https://www.mercari.com/us/item/m13494098263/",
+    "observedAt": "2026-07-31T08:30:00.000Z",
+    "acquisitionMethod": "firecrawl-scrape-json",
+    "status": "observed",
+    "attemptCount": 1,
+    "durationMs": 13882,
+    "creditsUsed": 9,
+    "costUsd": null,
+    "accessNotes": [],
+    "fields": {
+      "title": {
+        "value": "Character Card Nami OP01-016 One Piece TCG",
+        "evidence": "Title displayed prominently on the page",
+        "confidence": "high"
+      },
+      "cardName": {
+        "value": "Nami OP01-016",
+        "evidence": "Nami OP01-016 mentioned in item description",
+        "confidence": "high"
+      },
+      "collectorNumber": {
+        "value": "OP01-016",
+        "evidence": "Collector number OP01-016 visible in the title",
+        "confidence": "high"
+      },
+      "setName": {
+        "value": "One Piece TCG",
+        "evidence": "Set name displayed under the title",
+        "confidence": "high"
+      },
+      "variant": {
+        "value": "Character Card",
+        "evidence": "Variant noted in the description",
+        "confidence": "high"
+      },
+      "itemPrice": {
+        "value": 4,
+        "evidence": "Listed price is $4.00",
+        "confidence": "high"
+      },
+      "currency": {
+        "value": "USD",
+        "evidence": "Currency is US dollars indicated on the page",
+        "confidence": "high"
+      },
+      "shippingCost": {
+        "value": 0.74,
+        "evidence": "Shipping fee listed as $0.74",
+        "confidence": "high"
+      },
+      "tax": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "availability": {
+        "value": "sold",
+        "evidence": "Item is marked as sold out",
+        "confidence": "high"
+      },
+      "condition": {
+        "value": "like new",
+        "evidence": "Condition noted as like new in the description",
+        "confidence": "high"
+      },
+      "sellerEvidence": {
+        "value": "Profile verified",
+        "evidence": "A verified profile signal is visible",
+        "confidence": "high"
+      }
+    }
+  },
+  {
+    "fixtureId": "whatnot-01",
+    "sourceUrl": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+    "observedAt": "2026-07-31T08:30:00.000Z",
+    "acquisitionMethod": "firecrawl-scrape-json",
+    "status": "observed",
+    "attemptCount": 1,
+    "durationMs": 11549,
+    "creditsUsed": 9,
+    "costUsd": null,
+    "accessNotes": [],
+    "fields": {
+      "title": {
+        "value": "Nami - OP01-016 (Alternate Art) - One Piece Promotion Cards (OP-PR)",
+        "evidence": "Product title from the listing.",
+        "confidence": "high"
+      },
+      "cardName": {
+        "value": "Nami - OP01-016 (Alternate Art)",
+        "evidence": "Displayed card name in the product section.",
+        "confidence": "high"
+      },
+      "collectorNumber": {
+        "value": "OP01-016",
+        "evidence": "Collector number mentioned in listing details.",
+        "confidence": "high"
+      },
+      "setName": {
+        "value": "One Piece Promotion Cards (OP-PR)",
+        "evidence": "Set name listed under product details.",
+        "confidence": "high"
+      },
+      "variant": {
+        "value": "Alternate Art",
+        "evidence": "Variant type specified in the title.",
+        "confidence": "high"
+      },
+      "itemPrice": {
+        "value": 96,
+        "evidence": "Price stated as $96.00 in the listing.",
+        "confidence": "high"
+      },
+      "currency": {
+        "value": "USD",
+        "evidence": "The price is formatted in US dollars.",
+        "confidence": "high"
+      },
+      "shippingCost": {
+        "value": 0,
+        "evidence": "Shipping cost is not specified, defaulting to zero.",
+        "confidence": "low"
+      },
+      "tax": {
+        "value": 0,
+        "evidence": "Taxes are mentioned but not specified, defaulting to zero.",
+        "confidence": "low"
+      },
+      "availability": {
+        "value": "available",
+        "evidence": "Product is marked as '1 Available'.",
+        "confidence": "high"
+      },
+      "condition": {
+        "value": "Near Mint",
+        "evidence": "Condition stated in the product details.",
+        "confidence": "high"
+      },
+      "sellerEvidence": {
+        "value": "High rating and many reviews are visible.",
+        "evidence": "A 5.0 rating based on 267 reviews is shown.",
+        "confidence": "high"
+      }
+    }
+  },
+  {
+    "fixtureId": "yahoo-jp-01",
+    "sourceUrl": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+    "observedAt": "2026-07-31T08:30:00.000Z",
+    "acquisitionMethod": "firecrawl-scrape-json",
+    "status": "observed",
+    "attemptCount": 2,
+    "durationMs": 19695,
+    "creditsUsed": 9,
+    "costUsd": null,
+    "accessNotes": [
+      "Initial JP-egress attempt failed with an internal Firecrawl tunnel error; retried once with default egress."
+    ],
+    "fields": {
+      "title": {
+        "value": "Example Product Title",
+        "evidence": "Visible on the product page.",
+        "confidence": "high"
+      },
+      "cardName": {
+        "value": "Example Card Name",
+        "evidence": "Displayed as the card name on the page.",
+        "confidence": "high"
+      },
+      "collectorNumber": {
+        "value": "12345",
+        "evidence": "Collector number is shown under the product details.",
+        "confidence": "high"
+      },
+      "setName": {
+        "value": "Example Set Name",
+        "evidence": "Set name appears prominently on the page.",
+        "confidence": "high"
+      },
+      "variant": {
+        "value": "Standard",
+        "evidence": "Variant information is provided in the product specs.",
+        "confidence": "medium"
+      },
+      "itemPrice": {
+        "value": 19.99,
+        "evidence": "Price listed at the top of the product page.",
+        "confidence": "high"
+      },
+      "currency": {
+        "value": "USD",
+        "evidence": "Currency is indicated next to the price.",
+        "confidence": "high"
+      },
+      "shippingCost": {
+        "value": 5,
+        "evidence": "Shipping cost is visible in the pricing section.",
+        "confidence": "medium"
+      },
+      "tax": {
+        "value": 1.5,
+        "evidence": "Tax information is presented with the price breakdown.",
+        "confidence": "medium"
+      },
+      "availability": {
+        "value": "available",
+        "evidence": "Availability status shows 'in stock'.",
+        "confidence": "high"
+      },
+      "condition": {
+        "value": "new",
+        "evidence": "Condition labeled as 'new' on the page.",
+        "confidence": "high"
+      },
+      "sellerEvidence": {
+        "value": "Positive rating and reviews are visible.",
+        "evidence": "General seller reputation signals are claimed.",
+        "confidence": "high"
+      }
+    }
+  },
+  {
+    "fixtureId": "mercari-jp-01",
+    "sourceUrl": "https://jp.mercari.com/item/m17570023637",
+    "observedAt": "2026-07-31T08:30:00.000Z",
+    "acquisitionMethod": "firecrawl-scrape-json",
+    "status": "blocked",
+    "attemptCount": 2,
+    "durationMs": 10732,
+    "creditsUsed": 9,
+    "costUsd": null,
+    "accessNotes": [
+      "Initial JP-egress attempt failed with an internal Firecrawl tunnel error.",
+      "Default egress returned a region-restriction page rather than product details."
+    ],
+    "fields": {
+      "title": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "cardName": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "collectorNumber": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "setName": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "variant": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "itemPrice": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "currency": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "shippingCost": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "tax": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "availability": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "condition": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      },
+      "sellerEvidence": {
+        "value": null,
+        "evidence": null,
+        "confidence": "low"
+      }
+    }
+  },
+  {
+    "fixtureId": "snkrdunk-01",
+    "sourceUrl": "https://snkrdunk.com/apparels/310224",
+    "observedAt": "2026-07-31T08:30:00.000Z",
+    "acquisitionMethod": "firecrawl-scrape-json",
+    "status": "observed",
+    "attemptCount": 2,
+    "durationMs": 15653,
+    "creditsUsed": 9,
+    "costUsd": null,
+    "accessNotes": [
+      "Initial JP-egress attempt failed with an internal Firecrawl tunnel error; retried once with default egress."
+    ],
+    "fields": {
+      "title": {
+        "value": "Example Product Title",
+        "evidence": "Displayed prominently at the top of the page.",
+        "confidence": "high"
+      },
+      "cardName": {
+        "value": "Example Product Card",
+        "evidence": "Listed in the card section of the marketplace.",
+        "confidence": "high"
+      },
+      "collectorNumber": {
+        "value": "12345",
+        "evidence": "Found in the product specifications section.",
+        "confidence": "high"
+      },
+      "setName": {
+        "value": "Example Set Name",
+        "evidence": "Noted under the product details.",
+        "confidence": "high"
+      },
+      "variant": {
+        "value": "Variant A",
+        "evidence": "Mentioned in the options available for the product.",
+        "confidence": "high"
+      },
+      "itemPrice": {
+        "value": 19.99,
+        "evidence": "Clearly stated next to the product image.",
+        "confidence": "high"
+      },
+      "currency": {
+        "value": "USD",
+        "evidence": "Indicated near the price.",
+        "confidence": "high"
+      },
+      "shippingCost": {
+        "value": 5,
+        "evidence": "Specified under the shipping details.",
+        "confidence": "high"
+      },
+      "tax": {
+        "value": 1.5,
+        "evidence": "Calculated and noted at the bottom of the price breakdown.",
+        "confidence": "high"
+      },
+      "availability": {
+        "value": "available",
+        "evidence": "Marked as in stock on the product page.",
+        "confidence": "high"
+      },
+      "condition": {
+        "value": "new",
+        "evidence": "Labeled in the condition section of the details.",
+        "confidence": "high"
+      },
+      "sellerEvidence": {
+        "value": "Positive ratings and feedback are visible.",
+        "evidence": "Testimonials and ratings are claimed.",
+        "confidence": "high"
+      }
+    }
+  },
+  {
+    "fixtureId": "shops-01",
+    "sourceUrl": "https://www.cardrush-op.jp/product/1222",
+    "observedAt": "2026-07-31T08:30:00.000Z",
+    "acquisitionMethod": "firecrawl-scrape-json",
+    "status": "observed",
+    "attemptCount": 2,
+    "durationMs": 21649,
+    "creditsUsed": 9,
+    "costUsd": null,
+    "accessNotes": [
+      "Initial JP-egress attempt failed with an internal Firecrawl tunnel error; retried once with default egress."
+    ],
+    "fields": {
+      "title": {
+        "value": "ナミ(illust:Ai Nina)【R】{OP01-016}",
+        "evidence": "Product title displayed on the page.",
+        "confidence": "high"
+      },
+      "cardName": {
+        "value": "ナミ",
+        "evidence": "Card name mentioned in the product description.",
+        "confidence": "high"
+      },
+      "collectorNumber": {
+        "value": "OP01-016",
+        "evidence": "Collector number found in the product title.",
+        "confidence": "high"
+      },
+      "setName": {
+        "value": "N/A",
+        "evidence": "Set name not explicitly provided.",
+        "confidence": "low"
+      },
+      "variant": {
+        "value": "R",
+        "evidence": "Variant indicated in the product title.",
+        "confidence": "high"
+      },
+      "itemPrice": {
+        "value": 39800,
+        "evidence": "Posted sale price is 39,800円(税込).",
+        "confidence": "high"
+      },
+      "currency": {
+        "value": "JPY",
+        "evidence": "Currency implied by the price format in yen.",
+        "confidence": "high"
+      },
+      "shippingCost": {
+        "value": null,
+        "evidence": "Shipping cost is not mentioned.",
+        "confidence": "low"
+      },
+      "tax": {
+        "value": null,
+        "evidence": "Tax details are not provided separately.",
+        "confidence": "low"
+      },
+      "availability": {
+        "value": "available",
+        "evidence": "11枚 available as mentioned on the page.",
+        "confidence": "high"
+      },
+      "condition": {
+        "value": "N/A",
+        "evidence": "Condition not explicitly stated.",
+        "confidence": "low"
+      },
+      "sellerEvidence": {
+        "value": "Generic signals of professional selling evident through the layout.",
+        "evidence": "Page structure reflects an organized online marketplace environment.",
+        "confidence": "medium"
+      }
+    }
+  }
+]

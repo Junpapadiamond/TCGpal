@@ -103,12 +103,15 @@
   "101": "AI-Writing Patterns · English Catalog",
   "102": "pokemon-name-match.ts",
   "103": "Language & grammar patterns",
-  "104": "schemas.test.ts",
-  "105": "Style patterns",
-  "106": "Content patterns",
-  "107": "isGradedListing",
-  "108": "buildRequest",
-  "109": "Filler & hedging",
-  "110": "ApiResponseError",
-  "111": "UniversalListingBlockedError"
+  "104": "runListingComparison",
+  "105": "24 类 AI 写作痕迹 · 改写目录",
+  "106": "extractDeterministic",
+  "107": "Texture — subtler tells",
+  "108": "Style patterns",
+  "109": "Content patterns",
+  "110": "语言与语法模式",
+  "111": "UniversalListingBlockedError",
+  "112": "风格模式",
+  "113": "内容模式",
+  "114": "Communication patterns"
 }

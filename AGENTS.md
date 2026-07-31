@@ -44,7 +44,20 @@ Mutable release state, open decisions, verification evidence, and exact versions
 - When tax is absent, say “pre-tax total,” not “all-in” or “landed cost.”
 - Every result must show sources, timestamps, assumptions, missing information, and confidence.
 
-## Data Boundaries
+## Founder Decision Challenge
+
+For consequential product, source-access, ranking, or agent-boundary decisions, do not silently agree with the founder's proposed implementation. Before making the change:
+
+1. Separate the underlying instinct from the proposed mechanism.
+2. State the strongest case for the proposal and at least two serious objections.
+3. Identify observed evidence, assumptions, and claims that are being treated as known without evidence.
+4. Recommend one decision, the smallest falsifiable test, success criteria, kill criteria, an owner, and a review date.
+
+Use the `advisor` skill when it is available or explicitly invoked. Debate is for improving the decision, not for blocking reversible experiments. Once the test boundary is explicit, execute decisively inside it.
+
+## Production Data Boundaries
+
+These boundaries govern the public application, product routes, scheduled jobs, production ranking, and any output presented as TCGlens-verified. They do not prohibit the separately defined Frontier Research Mode below.
 
 Allowed:
 
@@ -72,9 +85,41 @@ Not allowed:
 - Claims that manual search links were fetched or analyzed.
 - Client-side API secrets.
 
-Only the bounded adapters in `src/lib/external/*` may fetch external URLs. Anything they refuse (robots-blocked, non-https, private hosts, non-USD) remains user-supplied text.
+Only the bounded adapters in `src/lib/external/*` may fetch external URLs for the production application. Anything they refuse (robots-blocked, non-https, private hosts, non-USD) remains user-supplied text in production.
 
-The product-route boundary above does not prohibit explicit offline or human-in-the-loop card-identity research. During an investigation, an agent may open public official or community pages to understand print history, aliases, treatments, and known mislisting vocabulary. It must not bulk-crawl those sites, treat a marketplace result as a sold comp, or move unreviewed findings into runtime code.
+## Frontier Research Mode
+
+TCGlens may run founder-triggered, non-production experiments to test whether current models and agents can achieve trustworthy cross-platform, cross-market listing search beyond official APIs. This mode exists to discover capability and failure boundaries; it is not a quiet backdoor into production ranking.
+
+Frontier Research Mode may:
+
+- Use search providers and interactive browser agents to find and open public marketplace search results and listing pages that the founder did not paste individually.
+- Search across regions, languages, currencies, marketplaces, community-sale venues, and specialist shops.
+- Extract experimental listing facts from pages the agent actually observed, including title, price, shipping, stated condition, seller signals, availability hints, and card identity evidence.
+- Use model judgment to reconcile ambiguous page structure, translation, and candidate identity, provided uncertainty and conflicting evidence are retained.
+- Produce an experimental comparison or recommendation when every winning fact is traceable and the output is unmistakably labeled `frontier-research`, not production truth.
+
+Frontier Research Mode must:
+
+- Run only after an explicit founder/user research request. No scheduled crawling, background monitoring, or autonomous inventory harvesting.
+- Use a visibly separate harness and artifact namespace from product routes, caches, analytics, and the `PlatformAgent` production registry.
+- Record field-level provenance: source URL, observation time, acquisition method, extracted value, supporting page evidence, and confidence. A search snippet is discovery evidence, not proof of a listing fact.
+- Preserve evidence states instead of flattening them: `link-only` → `page-observed` → `identity-checked` → `cost-comparable`. Unknown shipping, tax, availability, seller history, or condition stays unknown.
+- Keep exact-print identity checks, novelty/replica exclusions, comparable-cost math, and unsupported-claim criticism deterministic wherever the required inputs exist. The model may propose; it may not silently manufacture missing inputs.
+- Respect access boundaries. Do not bypass authentication, CAPTCHAs, paywalls, rate limits, robots exclusions applicable to automated access, or technical blocks; do not use stealth, credential extraction, or anti-detection techniques.
+- Never purchase, bid, message a seller, create an account, post, or mutate marketplace state without a separate explicit user instruction.
+- Keep credentials, session material, personal data, seller identifiers, and raw page captures out of committed artifacts. Store only the minimum evidence needed for the experiment.
+- Surface source failures and abstain when the exact card, current availability, or comparable cost cannot be supported.
+
+Frontier findings may enter production only through a deliberate promotion gate:
+
+1. A repeatable evaluation demonstrates useful coverage and acceptable exact-print precision, factual precision, completeness, latency, and cost.
+2. The acquisition method receives an explicit source-rights, platform-policy, privacy, and operational review appropriate to the intended deployment.
+3. The source becomes a bounded adapter with Zod contracts, rate limits, failure isolation, observability, and tests.
+4. Deterministic ranking consumes only facts that meet the production evidence contract.
+5. AGENTS.md is updated again to name the newly approved production boundary.
+
+Until all five gates pass, frontier outputs remain research evidence and may not be presented to normal users as verified live inventory, market prices, sold comps, or ranked production candidates.
 
 ## Agent and Rules Boundary
 

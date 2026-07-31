@@ -1,0 +1,166 @@
+{
+  "experimentId": "firecrawl-frontier-pilot-2026-07-31",
+  "label": "frontier-research",
+  "owner": "Founder",
+  "reviewDate": "2026-08-03",
+  "observerConfig": {
+    "endpoint": "/scrape",
+    "format": "json",
+    "storeInCache": false,
+    "redactPII": true,
+    "proxy": "basic",
+    "usdPerCredit": 0.0032,
+    "discoveryCreditsUsed": 18,
+    "pricingAssumption": "Conservative allocated cost using the public Hobby plan: US$16 / 5,000 credits.",
+    "pricingSourceUrl": "https://www.firecrawl.dev/pricing"
+  },
+  "thresholds": {
+    "pageObservedRate": 0.8,
+    "factualPrecision": 0.95,
+    "costComparableRate": 0.6,
+    "medianLatencyMs": 8000,
+    "maxCostUsd": 1
+  },
+  "fixtures": [
+    {
+      "id": "mercari-us-01",
+      "platform": "Mercari US",
+      "url": "https://www.mercari.com/us/item/m13494098263/",
+      "card": {
+        "id": "OP01-016",
+        "name": "Nami",
+        "setName": "Romance Dawn",
+        "setCode": "OP01",
+        "cardNumber": "OP01-016",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": []
+      },
+      "expectedIdentity": "uncertain",
+      "expectedFacts": {
+        "title": "Character Card Nami OP01-016 One Piece TCG",
+        "itemPrice": 4,
+        "currency": "USD",
+        "availability": "sold"
+      }
+    },
+    {
+      "id": "whatnot-01",
+      "platform": "Whatnot",
+      "url": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MTg2MjAyNzAzOA==",
+      "card": {
+        "id": "OP01-016_p7",
+        "name": "Nami",
+        "setName": "English Version 1st Anniversary Set",
+        "setCode": "OP01",
+        "cardNumber": "OP01-016",
+        "language": "English",
+        "imageUrl": null,
+        "variant": "Alternate Art (P7)",
+        "confidence": "high",
+        "matchReasons": []
+      },
+      "expectedIdentity": "uncertain",
+      "expectedFacts": {}
+    },
+    {
+      "id": "yahoo-jp-01",
+      "platform": "Yahoo Auctions JP",
+      "url": "https://auctions.yahoo.co.jp/jp/auction/v1223345671",
+      "card": {
+        "id": "OP01-016_p8",
+        "name": "Nami",
+        "setName": "One Piece Card The Best",
+        "setCode": "OP01",
+        "cardNumber": "OP01-016",
+        "language": "Japanese",
+        "imageUrl": null,
+        "variant": "Alternate Art (P8)",
+        "artworkClass": "manga",
+        "confidence": "high",
+        "matchReasons": []
+      },
+      "expectedIdentity": "exact",
+      "expectedFacts": {
+        "title": "K0318-4A/ ワンピースカード ナミ OP01-016 R コミパラ トレカ",
+        "itemPrice": 39000,
+        "currency": "JPY",
+        "availability": "sold"
+      }
+    },
+    {
+      "id": "mercari-jp-01",
+      "platform": "Mercari JP",
+      "url": "https://jp.mercari.com/item/m17570023637",
+      "card": {
+        "id": "OP01-016_p1",
+        "name": "Nami",
+        "setName": "Romance Dawn",
+        "setCode": "OP01",
+        "cardNumber": "OP01-016",
+        "language": "Japanese",
+        "imageUrl": null,
+        "variant": "Alternate Art (P1)",
+        "artworkClass": "alternate",
+        "confidence": "high",
+        "matchReasons": []
+      },
+      "expectedIdentity": "exact",
+      "expectedFacts": {
+        "title": "ワンピースカード OP01-016 ナミ パラレル 赤",
+        "itemPrice": 9000,
+        "currency": "JPY",
+        "availability": "sold"
+      }
+    },
+    {
+      "id": "snkrdunk-01",
+      "platform": "SNKRDUNK",
+      "url": "https://snkrdunk.com/apparels/310224",
+      "card": {
+        "id": "OP01-016_p8",
+        "name": "Nami",
+        "setName": "One Piece Card The Best",
+        "setCode": "OP01",
+        "cardNumber": "OP01-016",
+        "language": "Japanese",
+        "imageUrl": null,
+        "variant": "Alternate Art (P8)",
+        "artworkClass": "manga",
+        "confidence": "high",
+        "matchReasons": []
+      },
+      "expectedIdentity": "exact",
+      "expectedFacts": {
+        "title": "ナミ R-SP (コミパラ) [OP01-016](プレミアムブースター「ONE PIECE CARD THE BEST」)",
+        "itemPrice": null,
+        "currency": "JPY",
+        "availability": "available"
+      }
+    },
+    {
+      "id": "shops-01",
+      "platform": "Card Rush",
+      "url": "https://www.cardrush-op.jp/product/1222",
+      "card": {
+        "id": "OP01-016",
+        "name": "Nami",
+        "setName": "Romance Dawn",
+        "setCode": "OP01",
+        "cardNumber": "OP01-016",
+        "language": "Japanese",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": []
+      },
+      "expectedIdentity": "exact",
+      "expectedFacts": {
+        "title": "ナミ(illust:Ai Nina)【R】{OP01-016}",
+        "itemPrice": 39800,
+        "currency": "JPY",
+        "availability": "available"
+      }
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pageStatus", "accessNotes", "fields"],
+  "properties": {
+    "pageStatus": {
+      "type": "string",
+      "enum": ["observed", "blocked", "failed"]
+    },
+    "accessNotes": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 240 }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "cardName",
+        "collectorNumber",
+        "setName",
+        "variant",
+        "itemPrice",
+        "currency",
+        "shippingCost",
+        "tax",
+        "availability",
+        "condition",
+        "sellerEvidence"
+      ],
+      "properties": {
+        "title": { "$ref": "#/$defs/textField" },
+        "cardName": { "$ref": "#/$defs/textField" },
+        "collectorNumber": { "$ref": "#/$defs/textField" },
+        "setName": { "$ref": "#/$defs/textField" },
+        "variant": { "$ref": "#/$defs/textField" },
+        "itemPrice": { "$ref": "#/$defs/moneyField" },
+        "currency": { "$ref": "#/$defs/textField" },
+        "shippingCost": { "$ref": "#/$defs/moneyField" },
+        "tax": { "$ref": "#/$defs/moneyField" },
+        "availability": { "$ref": "#/$defs/availabilityField" },
+        "condition": { "$ref": "#/$defs/textField" },
+        "sellerEvidence": { "$ref": "#/$defs/textField" }
+      }
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "textField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "evidence", "confidence"],
+      "properties": {
+        "value": { "type": ["string", "null"] },
+        "evidence": { "type": ["string", "null"], "maxLength": 500 },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "moneyField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "evidence", "confidence"],
+      "properties": {
+        "value": { "type": ["number", "null"], "minimum": 0 },
+        "evidence": { "type": ["string", "null"], "maxLength": 500 },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "availabilityField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "evidence", "confidence"],
+      "properties": {
+        "value": {
+          "type": ["string", "null"],
+          "enum": ["available", "sold", "unavailable", "unknown", null]
+        },
+        "evidence": { "type": ["string", "null"], "maxLength": 500 },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    }
+  }
+}
