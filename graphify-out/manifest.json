@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "src/features/comparison/ComparisonApp.tsx": {
-    "mtime": 1785493328.1393037,
-    "ast_hash": "f1085950ef45d1420dd26549484aaa12",
+    "mtime": 1785495679.948071,
+    "ast_hash": "db3756c4db6d00edbf32015df7cc34a5",
     "semantic_hash": ""
   },
   "src/features/comparison/comparison-form-state.test.ts": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "src/features/comparison/i18n.tsx": {
-    "mtime": 1785493217.5592387,
-    "ast_hash": "1ab460b636ebb4d13a42104516793814",
+    "mtime": 1785495679.947101,
+    "ast_hash": "50c6c8cd37552d254977c63b6996e467",
     "semantic_hash": ""
   },
   "src/features/comparison/icons.tsx": {
@@ -335,13 +335,13 @@
     "semantic_hash": ""
   },
   "src/lib/external/pokemon-tcg.test.ts": {
-    "mtime": 1785492284.3906925,
-    "ast_hash": "f42bf35457007b7975db13063d4b6bb2",
+    "mtime": 1785495728.5152094,
+    "ast_hash": "e76aa19ae3abf21ce9372f24f0d87485",
     "semantic_hash": ""
   },
   "src/lib/external/pokemon-tcg.ts": {
-    "mtime": 1785492284.3908916,
-    "ast_hash": "dffc4e8fbbf164ec0445eff55e546095",
+    "mtime": 1785495728.5148265,
+    "ast_hash": "1ed57e91b933ad32f6ca9f5cde4171fd",
     "semantic_hash": ""
   },
   "src/lib/external/price-charting.test.ts": {
@@ -520,8 +520,8 @@
     "semantic_hash": ""
   },
   "docs/architecture-and-data-sources.md": {
-    "mtime": 1785493246.0339677,
-    "ast_hash": "d1e437707495490ea6e0b1de49587861",
+    "mtime": 1785495710.756282,
+    "ast_hash": "6bc1b13cad8ecb1f6b24161b100b37a0",
     "semantic_hash": ""
   },
   "docs/competitive-brief.md": {
@@ -675,8 +675,8 @@
     "semantic_hash": ""
   },
   "src/features/comparison/ComparisonApp.test.tsx": {
-    "mtime": 1785493328.140461,
-    "ast_hash": "e3ec855f4ee4c4fda5440d46c79c58e4",
+    "mtime": 1785495665.105039,
+    "ast_hash": "0d5c0c7ed1a78b2e8a13042466bc8e7d",
     "semantic_hash": ""
   },
   "src/features/comparison/identity-filters.test.ts": {
@@ -830,7 +830,7 @@
     "semantic_hash": ""
   },
   "src/app/api/agent/card-identity/route.ts": {
-    "mtime": 1785492284.349025,
+    "mtime": 1785496025.6796505,
     "ast_hash": "044e7d37278f985b0dc06d2eadc25ce7",
     "semantic_hash": ""
   },
