@@ -1270,6 +1270,7 @@ function ComparisonExperience() {
             identities={identityResult.candidates}
             warnings={identityResult.warnings}
             onConfirm={confirmIdentity}
+            onRetry={() => void retryComparison()}
             onRefine={() => {
               setCompactSearchOpen(true);
               window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('#results-edit-panel input[name="heroQuery"]')?.focus());
@@ -1770,11 +1771,13 @@ function IdentityConfirmation({
   identities,
   warnings = [],
   onConfirm,
+  onRetry,
   onRefine,
 }: {
   identities: CardIdentityCandidate[];
   warnings?: string[];
   onConfirm: (identity: CardIdentityCandidate) => void;
+  onRetry: () => void;
   onRefine: () => void;
 }) {
   const t = useT();
@@ -1818,14 +1821,16 @@ function IdentityConfirmation({
     ? identities[0]?.cardNumber ?? ""
     : "";
   const heading = identities.length === 0
-    ? t.identity.noMatchTitle
+    ? (lookupUnavailable ? t.identity.lookupUnavailableTitle : t.identity.noMatchTitle)
     : t.identity.chooseHeading(identities[0]?.name ?? "card", sharedNumber);
   return (
     <section id="comparison-result" tabIndex={-1} className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 outline-none sm:p-7">
       <div className="max-w-2xl">
         <p className="eyebrow">
           <IconSeal className="h-4 w-4" />
-          {identities.length === 0 ? t.identity.noMatchEyebrow : t.identity.eyebrow}
+          {identities.length === 0
+            ? (lookupUnavailable ? t.identity.lookupUnavailableEyebrow : t.identity.noMatchEyebrow)
+            : t.identity.eyebrow}
         </p>
         <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{heading}</h2>
         <p className="mt-2 leading-7 text-[#64736c]">
@@ -1883,7 +1888,9 @@ function IdentityConfirmation({
       )}
       {identities.length === 0 ? (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
-          {!lookupUnavailable && (
+          {lookupUnavailable ? (
+            <button className="secondary-button" type="button" onClick={onRetry}>{t.identity.retryCatalog}</button>
+          ) : (
             <>
               <ul className="list-disc space-y-1 pl-5">
                 {t.identity.noMatchSuggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}

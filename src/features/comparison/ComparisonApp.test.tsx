@@ -205,6 +205,42 @@ describe("comparison condition controls", () => {
     expect(screen.getByRole("textbox", { name: "Search for a card" })).toBeTruthy();
   });
 
+  it("retries a temporarily unavailable catalog lookup without making the buyer retype", async () => {
+    const exactCard = identityForQuery("Mew ex 232/091");
+    let attempts = 0;
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (!String(input).endsWith("/api/agent/card-identity")) throw new Error("unexpected comparison");
+      attempts += 1;
+      if (attempts === 1) {
+        return new Response(JSON.stringify({
+          identityContractVersion: 1,
+          status: "unavailable",
+          candidates: [],
+          confirmedCard: null,
+          warnings: ["Pokémon catalog lookup unavailable: The operation timed out."],
+          generatedAt: "2026-07-31T10:00:00.000Z",
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify(identityResponse([exactCard], "needs_confirmation")), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Mew ex 232/091" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Compare exact listings" }));
+
+    expect(await screen.findByRole("heading", { name: "Card catalog needs another try" })).toBeTruthy();
+    const retry = await screen.findByRole("button", { name: "Retry card catalog" });
+    fireEvent.click(retry);
+
+    expect(await screen.findByRole("heading", { name: "Choose your Mew ex" })).toBeTruthy();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it("ignores a stale Mew response after a newer Mewtwo search", async () => {
     const resolvers = new Map<string, (response: Response) => void>();
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

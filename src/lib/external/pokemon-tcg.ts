@@ -117,23 +117,48 @@ export async function searchPokemonCards({
     relaxed,
   });
   let lastResult: PokemonTcgSearchResult | null = null;
+  let lastError: unknown = null;
 
   for (const apiQuery of apiQueries) {
-    const result = await fetchPokemonCards({
-      query: normalizedQuery,
-      apiQuery,
-      page: 1,
-      pageSize: Math.min(Math.max(pageSize, 1), 50),
-      apiKey,
-      fetcher,
-      timeoutMs,
-      signal,
-    });
-    lastResult = result;
-    if (result.cards.length > 0) return result;
+    try {
+      const result = await fetchPokemonCards({
+        query: normalizedQuery,
+        apiQuery,
+        page: 1,
+        pageSize: Math.min(Math.max(pageSize, 1), 50),
+        apiKey,
+        fetcher,
+        timeoutMs,
+        signal,
+      });
+      lastResult = result;
+      if (result.cards.length > 0) return result;
+    } catch (error) {
+      if (signal?.aborted || !canTrySaferPokemonQuery(error)) throw error;
+      // The API occasionally times out or returns 500 for one expensive or
+      // overly-specific Lucene query while a simpler name query succeeds. A
+      // failed tier must not discard the rest of the deterministic search
+      // ladder and make the buyer submit the same card again.
+      lastError = error;
+    }
   }
 
+  if (lastError) throw lastError;
   return lastResult as PokemonTcgSearchResult;
+}
+
+class PokemonTcgRequestError extends Error {
+  constructor(readonly status: number) {
+    super(`Pokemon TCG API request failed with ${status}.`);
+    this.name = "PokemonTcgRequestError";
+  }
+}
+
+function canTrySaferPokemonQuery(error: unknown) {
+  if (error instanceof PokemonTcgRequestError) {
+    return error.status === 400 || error.status === 404 || error.status === 500;
+  }
+  return Boolean(error && typeof error === "object" && "name" in error && error.name === "TimeoutError");
 }
 
 export async function getPokemonCard({
@@ -221,7 +246,7 @@ async function fetchPokemonCards({
   } as RequestInit & { next: { revalidate: number } }).finally(linked.cleanup);
 
   if (!response.ok) {
-    throw new Error(`Pokemon TCG API request failed with ${response.status}.`);
+    throw new PokemonTcgRequestError(response.status);
   }
 
   const json = pokemonTcgSearchResponseSchema.parse(await response.json());

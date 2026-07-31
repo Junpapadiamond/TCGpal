@@ -155,6 +155,96 @@ describe("Pokemon TCG API adapter", () => {
     expect(result.cards[0]?.id).toBe("swsh7-215");
   });
 
+  it("continues to a safer name query when an exact-number query fails transiently", async () => {
+    const seenQueries: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      const query = url.searchParams.get("q") ?? "";
+      seenQueries.push(query);
+      if (query === "number:232 set.printedTotal:91") {
+        return new Response("upstream query failed", { status: 500 });
+      }
+      expect(query).toBe('name:"Mew ex"');
+      return new Response(JSON.stringify({
+        data: [{
+          id: "sv4pt5-232",
+          name: "Mew ex",
+          number: "232",
+          set: { id: "sv4pt5", name: "Paldean Fates", printedTotal: 91 },
+        }],
+        count: 1,
+        totalCount: 1,
+      }));
+    }) as unknown as typeof fetch;
+
+    const result = await searchPokemonCards({
+      query: "Mew ex",
+      cardNumber: "232/091",
+      fetcher,
+    });
+
+    expect(seenQueries).toEqual([
+      "number:232 set.printedTotal:91",
+      'name:"Mew ex"',
+    ]);
+    expect(result.cards[0]?.id).toBe("sv4pt5-232");
+  });
+
+  it("continues to a safer name query when an exact-number query times out", async () => {
+    const fetcher = vi.fn(async (url: URL) => {
+      const query = url.searchParams.get("q") ?? "";
+      if (query === "number:232 set.printedTotal:91") {
+        throw new DOMException("The operation timed out.", "TimeoutError");
+      }
+      expect(query).toBe('name:"Mew ex"');
+      return new Response(JSON.stringify({
+        data: [{
+          id: "sv4pt5-232",
+          name: "Mew ex",
+          number: "232",
+          set: { id: "sv4pt5", name: "Paldean Fates", printedTotal: 91 },
+        }],
+        count: 1,
+        totalCount: 1,
+      }));
+    }) as unknown as typeof fetch;
+
+    const result = await searchPokemonCards({
+      query: "Mew ex",
+      cardNumber: "232/091",
+      fetcher,
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(result.cards[0]?.id).toBe("sv4pt5-232");
+  });
+
+  it("stops the query ladder when the Pokemon provider is broadly unavailable", async () => {
+    const fetcher = vi.fn(async () => new Response("service unavailable", { status: 503 })) as unknown as typeof fetch;
+
+    await expect(searchPokemonCards({
+      query: "Mew ex",
+      cardNumber: "232/091",
+      fetcher,
+    })).rejects.toThrow("503");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not turn a failed exact query into a false no-match when safer queries are empty", async () => {
+    const fetcher = vi.fn(async (url: URL) => {
+      if (url.searchParams.get("q") === "number:232 set.printedTotal:91") {
+        return new Response("upstream query failed", { status: 500 });
+      }
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    await expect(searchPokemonCards({
+      query: "Mew ex",
+      cardNumber: "232/091",
+      fetcher,
+    })).rejects.toThrow("500");
+    expect(fetcher).toHaveBeenCalledTimes(4);
+  });
+
   it("treats non-numeric collector placeholders as blank and searches card themes", async () => {
     const fetcher = vi.fn(async (url: URL) => {
       expect(url.searchParams.get("q")).toBe(

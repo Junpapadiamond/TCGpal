@@ -170,6 +170,8 @@ const en = {
     eyebrow: "Version confirmation required",
     noMatchEyebrow: "Search needs a correction",
     noMatchTitle: "No card match yet",
+    lookupUnavailableEyebrow: "Catalog connection issue",
+    lookupUnavailableTitle: "Card catalog needs another try",
     heading: "Which exact card do you want?",
     findingEyebrow: "Finding card versions",
     findingHeading: (query: string) => `Finding ${query} versions`,
@@ -186,6 +188,7 @@ const en = {
       "No catalog match was found. Check the card name, then add the printed collector number (for example, 215/203) or a set name/code and try again.",
     noMatchSuggestions: ["Check the spelling", "Add the printed collector number", "Add the set name or code"],
     editSearch: "Edit search",
+    retryCatalog: "Retry card catalog",
     imageUnavailable: "Image unavailable",
     marketReference: (price: string) => `${price} market reference`,
     lookupUnavailable:
@@ -607,6 +610,8 @@ const zh: Dict = {
     eyebrow: "需要确认版本",
     noMatchEyebrow: "请调整搜索内容",
     noMatchTitle: "暂时没有匹配的卡片",
+    lookupUnavailableEyebrow: "卡片库连接异常",
+    lookupUnavailableTitle: "卡片库需要再试一次",
     heading: "你要找的是哪一张？",
     findingEyebrow: "正在查找卡片版本",
     findingHeading: (query: string) => `正在查找 ${query} 的版本`,
@@ -623,6 +628,7 @@ const zh: Dict = {
       "没找到对得上的卡片。先核对一下卡片名称，再补上卡面上的收藏编号（比如 215/203）或系列名称 / 代码，然后重试。",
     noMatchSuggestions: ["核对卡名拼写", "补上卡面收藏编号", "补上系列名称或代码"],
     editSearch: "修改搜索",
+    retryCatalog: "重新查询卡片库",
     imageUnavailable: "图片暂时无法显示",
     marketReference: (price: string) => `市场参考 ${price}`,
     lookupUnavailable:
