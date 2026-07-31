@@ -131,6 +131,14 @@ type JourneySnapshot = {
   journeyState: "idle" | "confirming" | "result";
 };
 
+type ResultSnapshot = {
+  id: string | null;
+  durable: boolean;
+  restored: boolean;
+  savedAt: string;
+  reportGeneratedAt: string;
+};
+
 class ApiResponseError extends Error {
   readonly retriable: boolean;
 
@@ -335,7 +343,8 @@ function ComparisonExperience() {
   const [selectedIdentity, setSelectedIdentity] = useState<CardIdentityCandidate | null>(null);
   const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
   const [pendingRequest, setPendingRequest] = useState<ComparisonRequest | null>(null);
-  const [journeyState, setJourneyState] = useState<"idle" | "identifying" | "confirming" | "comparing" | "result" | "error">("idle");
+  const [journeyState, setJourneyState] = useState<"idle" | "identifying" | "confirming" | "comparing" | "restoring" | "result" | "error">("idle");
+  const [resultSnapshot, setResultSnapshot] = useState<ResultSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Two doors below the hero search, grouped by intent: refine what we search
   // for, or bring a listing you already found (with its evidence and any
@@ -349,6 +358,7 @@ function ComparisonExperience() {
   const activeRequest = useRef<AbortController | null>(null);
   const journeySnapshots = useRef(new Map<number, JourneySnapshot>());
   const nextJourneyId = useRef(1);
+  const snapshotAttempts = useRef(new Set<string>());
   const ledger = useFieldArray({ control: form.control, name: "manualCandidates" });
   const loading = journeyState === "identifying" || journeyState === "comparing";
 
@@ -402,6 +412,45 @@ function ComparisonExperience() {
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
   }, [form]);
+
+  useEffect(() => {
+    if (journeyState !== "result" || !report?.confirmedCard) return;
+    const reportKey = `${report.generatedAt}|${report.confirmedCard.id}`;
+    if (resultSnapshot?.reportGeneratedAt === report.generatedAt || snapshotAttempts.current.has(reportKey)) return;
+    snapshotAttempts.current.add(reportKey);
+    let cancelled = false;
+    void fetch("/api/comparison-snapshots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        request: report.request,
+        confirmedCardId: report.confirmedCard.id,
+        generatedAt: report.generatedAt,
+      }),
+    }).then(async (response) => {
+      if (!response.ok) return null;
+      return response.json() as Promise<{ receiptId?: unknown; savedAt?: unknown; durable?: unknown }>;
+    }).then((payload) => {
+      if (cancelled || !payload || typeof payload.receiptId !== "string" || typeof payload.savedAt !== "string") return;
+      const durable = payload.durable === true;
+      const next: ResultSnapshot = {
+        id: payload.receiptId,
+        durable,
+        restored: false,
+        savedAt: payload.savedAt,
+        reportGeneratedAt: report.generatedAt,
+      };
+      setResultSnapshot(next);
+      if (!durable) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set("receipt", payload.receiptId);
+      window.history.replaceState(window.history.state, "", `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+    }).catch(() => {
+      // Snapshot creation is additive. A comparison result stays usable when
+      // durable storage is unavailable; the receipt button falls back to text.
+    });
+    return () => { cancelled = true; };
+  }, [journeyState, report, resultSnapshot?.reportGeneratedAt]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -516,6 +565,7 @@ function ComparisonExperience() {
     preserveSearchBeforeSubmit(values);
     const operation = beginRequest();
     const request = buildRequest(values, confirmedCardId);
+    setResultSnapshot(null);
     setPendingRequest(request);
     setError(null);
     setFeedbackSent(false);
@@ -645,8 +695,42 @@ function ComparisonExperience() {
   useEffect(() => {
     if (agentHandoffHandled.current) return;
     agentHandoffHandled.current = true;
-    const handoff = parseAgentSearchParams(new URLSearchParams(window.location.search));
-    const journey = handoff ? null : parseJourneySearchParams(new URLSearchParams(window.location.search));
+    const searchParams = new URLSearchParams(window.location.search);
+    const receiptId = searchParams.get("receipt");
+    if (receiptId && /^[a-f0-9]{32}$/.test(receiptId)) {
+      queueMicrotask(() => setJourneyState("restoring"));
+      void fetch(`/api/comparison-snapshots?id=${encodeURIComponent(receiptId)}`)
+        .then((response) => readJsonResponse(response, t.error.temporary))
+        .then((payload) => {
+          if (!payload || typeof payload !== "object" || !("snapshot" in payload)) throw new Error(t.error.temporary);
+          const rawSnapshot = (payload as { snapshot?: unknown }).snapshot;
+          if (!rawSnapshot || typeof rawSnapshot !== "object") throw new Error(t.error.temporary);
+          const snapshot = rawSnapshot as { id?: unknown; report?: unknown; savedAt?: unknown };
+          const restoredReport = comparisonReportSchema.parse(snapshot.report);
+          if (snapshot.id !== receiptId || typeof snapshot.savedAt !== "string") throw new Error(t.error.temporary);
+          setReport(restoredReport);
+          setPendingRequest(restoredReport.request);
+          setSelectedIdentity(restoredReport.confirmedCard);
+          form.setValue("heroQuery", restoredReport.request.query ?? restoredReport.request.cardHint.name);
+          form.setValue("game", restoredReport.request.cardHint.game);
+          form.setValue("desiredCondition", restoredReport.request.buyer.desiredCondition);
+          setResultSnapshot({
+            id: receiptId,
+            durable: true,
+            restored: true,
+            savedAt: snapshot.savedAt,
+            reportGeneratedAt: restoredReport.generatedAt,
+          });
+          setJourneyState("result");
+        })
+        .catch((caught) => {
+          setError(caught instanceof Error ? caught.message : t.error.temporary);
+          setJourneyState("error");
+        });
+      return;
+    }
+    const handoff = parseAgentSearchParams(searchParams);
+    const journey = handoff ? null : parseJourneySearchParams(searchParams);
     const restored = handoff ?? (journey ? {
       query: journey.query,
       game: journey.game,
@@ -765,6 +849,7 @@ function ComparisonExperience() {
     setError(null);
     setIdentityResult(null);
     setSelectedIdentity(null);
+    setResultSnapshot(null);
     setJourneyState("idle");
     setCompactSearchOpen(false);
     const reset = resetForNewCardSearch(form.getValues());
@@ -1173,12 +1258,23 @@ function ComparisonExperience() {
         )}
 
         {journeyState === "identifying" && <IdentityLoading query={pendingRequest?.cardHint.name || pendingRequest?.query || ""} />}
+        {journeyState === "restoring" && <SnapshotLoading />}
         {journeyState === "comparing" && (selectedIdentity
           ? <ComparisonLoading identity={selectedIdentity} />
-          : <ListingSubmissionLoading />)}
+          : pendingRequest?.confirmedCardId
+            ? <ComparisonReplayLoading query={pendingRequest.query || pendingRequest.cardHint.name} />
+            : <ListingSubmissionLoading />)}
         {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
         {journeyState === "confirming" && identityResult && (
-          <IdentityConfirmation identities={identityResult.candidates} warnings={identityResult.warnings} onConfirm={confirmIdentity} />
+          <IdentityConfirmation
+            identities={identityResult.candidates}
+            warnings={identityResult.warnings}
+            onConfirm={confirmIdentity}
+            onRefine={() => {
+              setCompactSearchOpen(true);
+              window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('#results-edit-panel input[name="heroQuery"]')?.focus());
+            }}
+          />
         )}
         {journeyState === "result" && report && report.status !== "needs_confirmation" && (
           <ComparisonResult
@@ -1190,11 +1286,22 @@ function ComparisonExperience() {
             onRefineSearch={() => setCompactSearchOpen(true)}
             onRetrySources={() => void retryComparison()}
             onPasteListing={startPasteListing}
+            snapshot={resultSnapshot}
           />
         )}
       </div>
       <Footer />
     </main>
+  );
+}
+
+function SnapshotLoading() {
+  const t = useT();
+  return (
+    <section className="market-agent-panel mt-6 flex items-center gap-3 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5" aria-live="polite" aria-busy="true">
+      <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73] motion-reduce:animate-none" />
+      <h2 className="font-serif text-xl font-bold text-[#2f6f73]">{t.result.restoringSnapshot}</h2>
+    </section>
   );
 }
 
@@ -1502,19 +1609,36 @@ function ComparisonLoading({ identity }: { identity: CardIdentityCandidate }) {
           <ul className="mt-5 grid gap-2 sm:grid-cols-2">
             {t.loading.checks.map((check) => (
               <li key={check} className="flex items-center gap-2 rounded-md border border-[#d6ded5] bg-[#fcfbf6] px-3 py-2 text-sm font-bold text-[#52635c]">
-                <IconSpinner className="h-4 w-4 text-[#2f6f73]" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[#2f6f73]" aria-hidden="true" />
                 {check}
               </li>
             ))}
           </ul>
         </div>
-        <ConfirmedCardMotion identity={identity} />
+        <ConfirmedCardMotion key={identity.imageUrl ?? identity.id} identity={identity} />
+      </div>
+    </section>
+  );
+}
+
+function ComparisonReplayLoading({ query }: { query: string }) {
+  const t = useT();
+  return (
+    <section className="market-agent-panel mt-6 rounded-md border border-[#c9d7ce] bg-[#e7efe8] p-5 sm:p-6" aria-live="polite" aria-busy="true">
+      <div className="flex items-start gap-3">
+        <IconSpinner className="mt-1 h-5 w-5 animate-spin text-[#2f6f73] motion-reduce:animate-none" />
+        <div>
+          <h2 className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.comparingQuery(query)}</h2>
+          <p className="mt-1 text-sm leading-6 text-[#64736c]">{t.loading.steps}</p>
+        </div>
       </div>
     </section>
   );
 }
 
 function ConfirmedCardMotion({ identity }: { identity: CardIdentityCandidate }) {
+  const t = useT();
+  const [failed, setFailed] = useState(false);
   return (
     <div
       data-testid="confirmed-card-motion"
@@ -1564,7 +1688,7 @@ function ConfirmedCardMotion({ identity }: { identity: CardIdentityCandidate }) 
           .confirmed-card-motion-track { display: none; }
         }
       `}</style>
-      {identity.imageUrl ? (
+      {identity.imageUrl && !failed ? (
         <>
           <div className="confirmed-card-motion-track" aria-hidden="true">
             {Array.from({ length: 3 }, (_, index) => (
@@ -1574,10 +1698,14 @@ function ConfirmedCardMotion({ identity }: { identity: CardIdentityCandidate }) 
             ))}
           </div>
           <div className="confirmed-card-motion-anchor">
-            <Image src={identity.imageUrl} alt={`${identity.name} ${identity.cardNumber}`} width={132} height={185} className="h-auto w-full" />
+            <Image src={identity.imageUrl} alt={`${identity.name} ${identity.cardNumber}`} width={132} height={185} className="h-auto w-full" onError={() => setFailed(true)} />
           </div>
         </>
-      ) : null}
+      ) : (
+        <div className="relative z-[2] mx-auto grid aspect-[2.5/3.5] w-[132px] place-items-center rounded-md bg-[#e7efe8] p-3 text-xs font-black text-[#64736c]">
+          {t.identity.imageUnavailable}
+        </div>
+      )}
       <p className="relative z-[2] mt-2 text-xs font-black text-[#52635c]">{identity.cardNumber}</p>
     </div>
   );
@@ -1638,7 +1766,17 @@ function DesiredConditionField({ form }: { form: UseFormReturn<ComparisonForm> }
   );
 }
 
-function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identities: CardIdentityCandidate[]; warnings?: string[]; onConfirm: (identity: CardIdentityCandidate) => void }) {
+function IdentityConfirmation({
+  identities,
+  warnings = [],
+  onConfirm,
+  onRefine,
+}: {
+  identities: CardIdentityCandidate[];
+  warnings?: string[];
+  onConfirm: (identity: CardIdentityCandidate) => void;
+  onRefine: () => void;
+}) {
   const t = useT();
   const [filters, setFilters] = useState<IdentityFilters>({ setFilter: "", rarityFilter: "", printTypeFilter: "" });
   // A print's rarity and its print-type bucket are not independent (SP CARD
@@ -1679,17 +1817,19 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
   const sharedNumber = identities.length > 1 && identities.every((identity) => identity.cardNumber === identities[0]?.cardNumber)
     ? identities[0]?.cardNumber ?? ""
     : "";
-  const heading = t.identity.chooseHeading(identities[0]?.name ?? "card", sharedNumber);
+  const heading = identities.length === 0
+    ? t.identity.noMatchTitle
+    : t.identity.chooseHeading(identities[0]?.name ?? "card", sharedNumber);
   return (
     <section id="comparison-result" tabIndex={-1} className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 outline-none sm:p-7">
       <div className="max-w-2xl">
         <p className="eyebrow">
           <IconSeal className="h-4 w-4" />
-          {t.identity.eyebrow}
+          {identities.length === 0 ? t.identity.noMatchEyebrow : t.identity.eyebrow}
         </p>
         <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{heading}</h2>
         <p className="mt-2 leading-7 text-[#64736c]">
-          {t.identity.desc}
+          {identities.length === 0 ? (lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch) : t.identity.desc}
         </p>
       </div>
       {showFilters && (
@@ -1743,7 +1883,14 @@ function IdentityConfirmation({ identities, warnings = [], onConfirm }: { identi
       )}
       {identities.length === 0 ? (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
-          {lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch}
+          {!lookupUnavailable && (
+            <>
+              <ul className="list-disc space-y-1 pl-5">
+                {t.identity.noMatchSuggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}
+              </ul>
+              <button className="secondary-button mt-4" type="button" onClick={onRefine}>{t.identity.editSearch}</button>
+            </>
+          )}
         </div>
       ) : filteredIdentities.length === 0 ? (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
@@ -1822,7 +1969,7 @@ function LazyIdentityGroup({
 
 function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { identity: CardIdentityCandidate; onConfirm: (identity: CardIdentityCandidate) => void; titleAs: "h3" | "h4"; compact?: boolean }) {
   const t = useT();
-  const titleClass = "mt-1 font-serif text-xl font-bold text-[#2f6f73]";
+  const titleClass = "font-serif text-xl font-bold text-[#2f6f73]";
   const titleDetails = [
     identity.cardNumber ? `#${identity.cardNumber}` : null,
     identity.variant,
@@ -1831,6 +1978,7 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
     <article className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
       {identity.imageUrl ? (
         <HoloCardArt
+          key={identity.imageUrl}
           src={identity.imageUrl}
           alt={[identity.name, identity.cardNumber, identity.variant, identity.setName].filter(Boolean).join(" · ")}
           sizes={compact ? "112px" : "144px"}
@@ -1839,9 +1987,11 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
       ) : (
         <div className={`mx-auto aspect-[2.5/3.5] ${compact ? "w-28" : "w-36"} rounded-md bg-[#e7efe8]`} />
       )}
-      <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[#b26a4c]">{t.identity.confidence(identity.confidence)}</p>
-      {titleAs === "h4" ? <h4 className={titleClass}>{identity.name}</h4> : <h3 className={titleClass}>{identity.name}</h3>}
+      {titleAs === "h4" ? <h4 className={`${titleClass} mt-4`}>{identity.name}</h4> : <h3 className={`${titleClass} mt-4`}>{identity.name}</h3>}
       {titleDetails && <p className="mt-1 text-sm font-black text-[#24312f]">{titleDetails}</p>}
+      {typeof identity.marketMid === "number" && (
+        <p className="mt-2 font-mono text-sm font-black text-[#2f6f73]">{t.identity.marketReference(formatMoney(identity.marketMid))}</p>
+      )}
       <CardIdentityRail identity={identity} className="mt-3" />
       <button
         className="secondary-button mt-4 w-full"
@@ -1865,6 +2015,7 @@ function ComparisonResult({
   onRefineSearch,
   onRetrySources,
   onPasteListing,
+  snapshot,
 }: {
   report: ComparisonReport;
   preferredRole: LensRole;
@@ -1874,6 +2025,7 @@ function ComparisonResult({
   onRefineSearch: () => void;
   onRetrySources: () => void;
   onPasteListing: () => void;
+  snapshot: ResultSnapshot | null;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -2011,7 +2163,14 @@ function ComparisonResult({
       `Generated ${new Date(report.generatedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}`,
     ].filter(Boolean).join("\n");
     try {
-      await navigator.clipboard.writeText(receipt);
+      const shareUrl = snapshot?.id && snapshot.durable
+        ? (() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("receipt", snapshot.id!);
+            return url.toString();
+          })()
+        : null;
+      await navigator.clipboard.writeText(shareUrl ?? receipt);
       setReceiptCopied(true);
       trackEvent("comparison_receipt_copied");
       window.setTimeout(() => setReceiptCopied(false), 2000);
@@ -2057,6 +2216,15 @@ function ComparisonResult({
 
   return (
     <section id="comparison-result" tabIndex={-1} className="scroll-mt-24 space-y-4 outline-none">
+      {snapshot?.restored && (
+        <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm text-[#6f5a22]">
+          <p>
+            <strong>{t.result.savedSnapshot}.</strong>{" "}
+            {t.result.savedSnapshotBody(new Date(snapshot.savedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}
+          </p>
+          <button className="secondary-button" type="button" onClick={onRetrySources}>{t.result.refreshLive}</button>
+        </div>
+      )}
       {report.demoMode && (
         <div className="flex items-start gap-3 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
           <IconInfo className="mt-1 h-4 w-4 shrink-0" />
@@ -2187,6 +2355,7 @@ function ComparisonResult({
             cautions={report.narrative.cautions}
             receiptCopied={receiptCopied}
             canCopy={Boolean(selectedListing && selectedChoice)}
+            shareReady={Boolean(snapshot?.id && snapshot.durable)}
             onCopy={() => void copyComparisonReceipt()}
           />
 
@@ -2541,7 +2710,6 @@ function evidenceInputsLine(listing: NormalizedListing, t: Dict) {
 // composite formulas. A buyer can check any row against the live listing page.
 function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; marketPrice: number | null }) {
   const t = useT();
-  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   // Demo listings are scored market-free end to end (the server ranks them the
   // same way), so no vs-market read — not even a bare score — can be
   // reconstructed from fabricated demo prices.
@@ -2553,7 +2721,7 @@ function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; mar
       inputs: listing.demo
         ? t.card.mathDemoHidden
         : listing.marketComparable && anchor && anchor > 0
-          ? t.card.mathVs(formatMoney(total), formatMoney(anchor))
+          ? t.card.mathVs(formatMoney(listing.price), formatMoney(anchor))
           : listing.costComplete ? t.card.mathNoMarket : t.card.estBeforeShipping,
       score: priceComponent,
     },
@@ -2603,6 +2771,8 @@ function HoloCardArt({
   sizes: string;
   className?: string;
 }) {
+  const t = useT();
+  const [failed, setFailed] = useState(false);
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch") return;
 
@@ -2636,7 +2806,13 @@ function HoloCardArt({
       onPointerLeave={resetTilt}
       onPointerCancel={resetTilt}
     >
-      <Image src={src} alt={alt} fill className="holo-card-image" sizes={sizes} />
+      {failed ? (
+        <div className="absolute inset-0 grid place-items-center bg-[#e7efe8] p-3 text-center text-xs font-black text-[#64736c]">
+          {t.identity.imageUnavailable}
+        </div>
+      ) : (
+        <Image src={src} alt={alt} fill className="holo-card-image" sizes={sizes} onError={() => setFailed(true)} />
+      )}
     </div>
   );
 }
@@ -2665,9 +2841,8 @@ function MarketDeltaBadge({
   compact?: boolean;
 }) {
   const t = useT();
-  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const marketDelta = listing.marketComparable && listing.costComplete && marketPrice && marketPrice > 0
-    ? (total - marketPrice) / marketPrice
+    ? (listing.price - marketPrice) / marketPrice
     : null;
   if (marketDelta === null || listing.demo) return null;
   const nearMarket = Math.abs(marketDelta) < 0.005;
@@ -2927,6 +3102,7 @@ function DecisionReceipt({
   cautions,
   receiptCopied,
   canCopy,
+  shareReady,
   onCopy,
 }: {
   card: CardIdentityCandidate | null;
@@ -2941,6 +3117,7 @@ function DecisionReceipt({
   cautions: string[];
   receiptCopied: boolean;
   canCopy: boolean;
+  shareReady: boolean;
   onCopy: () => void;
 }) {
   const t = useT();
@@ -2969,10 +3146,10 @@ function DecisionReceipt({
               event.stopPropagation();
               onCopy();
             }}
-            title={!canCopy ? t.result.shareUnavailable : t.result.shareReceipt}
+            title={!canCopy ? t.result.shareUnavailable : shareReady ? t.result.shareReceipt : t.result.copyReceipt}
           >
             <IconReceipt className="h-4 w-4" />
-            {receiptCopied ? t.result.receiptCopied : t.result.shareReceipt}
+            {receiptCopied ? t.result.receiptCopied : shareReady ? t.result.shareReceipt : t.result.copyReceipt}
           </button>
           <IconChevronDown className="h-4 w-4 text-[#64736c]" />
         </span>
@@ -3104,8 +3281,8 @@ function SourceStatusLine({
   );
 }
 
-// Compact one-line alternative row: the decision layer stays singular, so the
-// ledger inside the fold shows just enough to compare — title, condition,
+// Compact alternative row: the decision layer stays singular, so the ledger
+// inside the fold shows just enough to compare — title, condition,
 // photos, total, vs-market — with view/ask one tap away.
 function CompactCandidateRow({
   listing,
@@ -3133,17 +3310,22 @@ function CompactCandidateRow({
           <ListingPhoto listing={listing} />
         </div>
         <div className="min-w-0 flex-1 basis-52">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-start gap-2">
             {listing.demo && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
             {listing.userSupplied && <span className="shrink-0 rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
             {listing.webDiscovered && <span className="shrink-0 rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
-            <h3 className="min-w-0 truncate text-sm font-bold leading-snug text-[#24312f]">{listing.title}</h3>
+            <h3 className="min-w-0 break-words text-sm font-bold leading-snug text-[#24312f]">{listing.title}</h3>
           </div>
           <p className="mt-0.5 truncate text-xs font-semibold leading-5 text-[#64736c]">
             {t.conditions[listing.claimedCondition]} · {t.card.photos(listing.evidence.photoCount)}
             {" · "}
-            <button className="inline-flex min-h-11 items-center underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]" type="button" onClick={() => onAsk(listing)}>
-              {t.candidate.ask}
+            <button
+              aria-label={t.candidate.askAbout(listing.title)}
+              className="inline-flex min-h-11 items-center underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]"
+              type="button"
+              onClick={() => onAsk(listing)}
+            >
+              {t.candidate.askListing}
             </button>
           </p>
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />

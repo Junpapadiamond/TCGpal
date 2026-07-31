@@ -24,6 +24,8 @@ TCGlens is not a price predictor, grading app, investment advisor, marketplace s
 - The app opens directly to card search with no login. Raw USD singles are supported for Pokémon and One Piece; more catalog adapters may join behind the game selector.
 - eBay Browse is the only live concrete-listing source. eBay Catalog may resolve confirmed-card identity/ePID but is never inventory. TCGCSV/TCGplayer and PriceCharting are references, never ranking candidates.
 - The canonical crosswalk and market anchor may degrade visibly when a provider match is missing; they must not turn a partial source failure into a fabricated value or a hard failure for otherwise usable results.
+- The aggregate market anchor is item-only. Item-price position compares item price to that reference; shipping and optional tax remain separate checkout-cost facts used for landed-cost ranking.
+- Completed pure card searches may create 30-day receipt snapshots from the server-verified 15-minute report cache. Snapshot storage strips the buyer ZIP and only publishes a stable URL when shared Redis is available; pasted and manual listing facts are never published this way.
 - A user-pasted listing URL may be fetched once through the bounded adapter. Other connector-less sources remain user-entered facts or outbound manual checks.
 - Missing seller data is `unverified`, not risky. Seller track record and evidence completeness remain separate signals.
 - No trustworthy live row means `next_moves`. Demo fixtures are test-only and never become fallback inventory or recommendations.
@@ -145,6 +147,7 @@ AI failure must fall back to deterministic behavior. Model output must never ove
 
 - `src/lib/schemas.ts`: authoritative public, cached, and shared payload contracts.
 - `src/lib/comparison/ranking.ts` and exact-print helpers: eligibility, exclusions, complete-cost math, scoring, print proof, and lens selection.
+- `src/lib/comparison/report-cache.ts` and `report-snapshot.ts`: short-lived live report reuse and server-verified, privacy-reduced receipt persistence.
 - `src/lib/comparison/platforms.ts`: concrete-listing provider interface and isolated parallel fan-out. New live sources implement `PlatformAgent`.
 - `src/lib/ai/listing-compare.ts`: comparison orchestration; `src/lib/external/*` contains the only bounded external fetchers.
 - `src/features/comparison/ComparisonApp.tsx`: card-first UI; `src/lib/testing/standard-comparison-flow.ts` is its reusable behavior contract.

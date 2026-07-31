@@ -192,6 +192,28 @@ describe("comparison ranking", () => {
     expect(calculatePriceComponent(500, 0)).toBe(50);
   });
 
+  it("compares an item-only market reference to item price, not shipping and tax", () => {
+    const listing = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        demo: false,
+        price: 380,
+        shipping: 12,
+        claimedCondition: "Near Mint",
+      },
+      buyer: { ...buyer, desiredCondition: "Near Mint" },
+      marketPrice: 377.63,
+    });
+
+    expect(listing.estimatedLandedCost).toBe(423.36);
+    expect(listing.priceScore).toBe(calculatePriceComponent(380, 377.63));
+    expect(listing.priceScore).not.toBe(calculatePriceComponent(423.36, 377.63));
+
+    const bestValue = rankListings([listing], { marketPrice: 377.63 })
+      .find((choice) => choice.role === "best_value");
+    expect(bestValue?.reason).not.toContain("costs +12% over");
+  });
+
   it("weights independent price, condition, seller, and evidence signals", () => {
     const base = {
       priceComponent: 100,

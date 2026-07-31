@@ -73,6 +73,8 @@ The response includes:
 - cautious narrative
 - warnings, source timestamps, trace, and `demoMode`
 
+`POST /api/comparison-snapshots` creates an opaque receipt only when the supplied request, confirmed card ID, and generation timestamp resolve to a pure-search report already present in the server report cache. `GET /api/comparison-snapshots?id=…` returns that immutable snapshot until its 30-day expiry; it never reruns marketplace providers.
+
 ## Security and failure behavior
 
 - URL fetching is public-HTTPS-only, robots-aware, size/time bounded, and limited to the exact user-pasted page.
@@ -87,6 +89,7 @@ The response includes:
 
 - `src/lib/ops/*` owns request IDs, rate limiting, shared JSON cache, structured operational events, and Sentry capture.
 - Pure card searches cache successful live reports for 15 minutes by card, condition, and delivery context. Demo, confirmation-required, and incompatible contract-version reports are not cached.
+- A completed pure-search report may be copied into a 30-day receipt snapshot. Snapshot creation is verified against the server report cache, strips the buyer ZIP, and refuses pasted or manually entered listing facts. Only Redis-backed snapshots are exposed as stable share URLs; process-memory snapshots are a local fallback and the UI says “Copy result.”
 - Card-identity resolution has one 10-second server budget. The browser does not add a second identity retry, and cancellation or deadline expiry stops resolver retries and backoff before Vercel's route limit.
 - Identical in-flight identity requests coalesce within one server instance. Successful identity responses use hashed 15-minute cache entries and a six-hour stale fallback through the shared JSON cache; a failed refresh may serve a schema-validated stale success with an explicit warning. Deadlines without a safe stale value return a temporary-unavailable response, never a false no-match.
 - Full comparison catalog lookups retain bounded per-attempt retries because comparison has different partial-result behavior; provider failures remain isolated and visible.

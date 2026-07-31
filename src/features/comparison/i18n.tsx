@@ -147,9 +147,10 @@ const en = {
   loading: {
     title: "TCGlens is comparing listings",
     comparing: (name: string) => `Comparing listings for ${name}`,
+    comparingQuery: (query: string) => `Comparing listings for ${query}`,
     listingSubmissionTitle: "Reading your listing",
     listingSubmissionDesc: "We are extracting the facts you supplied and checking the card identity before any recommendation is made.",
-    steps: "We are working through these checks now. Nothing is marked complete until the report is ready.",
+    steps: "These checks run in parallel. The report appears when every included fact is ready.",
     checks: [
       "Checking connected listing sources",
       "Verifying version and condition fit",
@@ -167,6 +168,8 @@ const en = {
   },
   identity: {
     eyebrow: "Version confirmation required",
+    noMatchEyebrow: "Search needs a correction",
+    noMatchTitle: "No card match yet",
     heading: "Which exact card do you want?",
     findingEyebrow: "Finding card versions",
     findingHeading: (query: string) => `Finding ${query} versions`,
@@ -181,6 +184,10 @@ const en = {
     selectAria: (name: string, number: string, variant: string) => `Select ${name} ${number}${variant ? ` ${variant}` : " base print"}`,
     noMatch:
       "No catalog match was found. Check the card name, then add the printed collector number (for example, 215/203) or a set name/code and try again.",
+    noMatchSuggestions: ["Check the spelling", "Add the printed collector number", "Add the set name or code"],
+    editSearch: "Edit search",
+    imageUnavailable: "Image unavailable",
+    marketReference: (price: string) => `${price} market reference`,
     lookupUnavailable:
       "The card catalog is temporarily unavailable, so we couldn't list versions. This is a lookup hiccup, not a missing card. Please try again in a moment.",
     filterSetLabel: "Set",
@@ -191,7 +198,9 @@ const en = {
     filterAllPrintTypes: "All print types",
     filterClear: "Clear filters",
     filterNoMatches: "No versions match these filters.",
-    filterShowingCount: (shown: number, total: number) => `Showing ${shown} of ${total} versions`,
+    filterShowingCount: (shown: number, total: number) => shown === total
+      ? `Showing ${shown} catalog matches`
+      : `Showing ${shown} of ${total} loaded matches`,
     basePrint: "Base print",
   },
   result: {
@@ -296,6 +305,10 @@ const en = {
     decisionReceipt: "Decision receipt",
     shareReceipt: "Share receipt",
     shareUnavailable: "Share links are not available yet. Copy the receipt instead.",
+    savedSnapshot: "Saved comparison",
+    savedSnapshotBody: (date: string) => `Snapshot from ${date}. Prices and availability may have changed since it was saved.`,
+    refreshLive: "Refresh live listings",
+    restoringSnapshot: "Opening saved comparison",
     reviewListing: "Review listing",
     marketReferenceShort: "Market reference",
     sourceCalmSummary: (sources: string, hasMarketReference: boolean, time: string) =>
@@ -392,9 +405,9 @@ const en = {
     shippingCost: (shipping: string) => `${shipping} shipping`,
     priceBreakdown: (item: string, shipping: string, tax: string | null) =>
       `Item ${item} · ${shipping}${tax ? ` · Est. tax ${tax}` : " · tax not included"}`,
-    underMarket: (pct: number) => `${pct}% under reference`,
-    aboveMarket: (pct: number) => `+${pct}% above reference`,
-    nearMarket: "near reference",
+    underMarket: (pct: number) => `item ${pct}% under reference`,
+    aboveMarket: (pct: number) => `item +${pct}% above reference`,
+    nearMarket: "item near reference",
     trustedSeller: "Trusted seller",
     unverifiedSeller: "Unverified seller",
     decentSeller: "Decent seller",
@@ -425,7 +438,7 @@ const en = {
     mathDemoHidden: "demo listing, market comparison hidden",
     mathRiskFormula: (seller: number, evidence: number) => `= ${seller}% seller trust + ${evidence}% evidence`,
     mathValueFormula: (price: number, condition: number, seller: number, evidence: number) => `= ${price}% price + ${condition}% condition + ${seller}% seller + ${evidence}% evidence`,
-    mathVs: (total: string, market: string) => `${total} vs ${market} aggregate reference`,
+    mathVs: (item: string, market: string) => `item ${item} vs ${market} aggregate reference`,
     mathFeedback: (pct: number) => `${pct}% positive`,
     mathRatings: (n: number) => `${n} ratings`,
     mathReturns: "returns accepted",
@@ -448,7 +461,8 @@ const en = {
     photosHeader: "Photos",
     total: "Total",
     ask: "Ask",
-    askAbout: (title: string) => `Ask about ${title}`,
+    askListing: "Ask about listing",
+    askAbout: (title: string) => `Ask about listing: ${title}`,
     priceLine: (item: string, shipping: string) => `${item} · ${shipping}`,
   },
   footer: {
@@ -570,9 +584,10 @@ const zh: Dict = {
   loading: {
     title: "TCGlens 正在比较商品",
     comparing: (name: string) => `正在比较 ${name} 的商品`,
+    comparingQuery: (query: string) => `正在比较 ${query} 的商品`,
     listingSubmissionTitle: "正在读取你提供的商品",
     listingSubmissionDesc: "我们正在整理你提供的资料并先核对卡片版本，之后才会给出建议。",
-    steps: "这些检查正在进行中；报告完成前不会显示为已完成。",
+    steps: "这些检查会并行进行；所有纳入报告的资料准备好后，结果会一次显示。",
     checks: [
       "查询已连接的商品来源",
       "核对版本与品相是否匹配",
@@ -590,6 +605,8 @@ const zh: Dict = {
   },
   identity: {
     eyebrow: "需要确认版本",
+    noMatchEyebrow: "请调整搜索内容",
+    noMatchTitle: "暂时没有匹配的卡片",
     heading: "你要找的是哪一张？",
     findingEyebrow: "正在查找卡片版本",
     findingHeading: (query: string) => `正在查找 ${query} 的版本`,
@@ -604,6 +621,10 @@ const zh: Dict = {
     selectAria: (name: string, number: string, variant: string) => `选择 ${name} ${number}${variant ? ` ${variant}` : " 基础版"}`,
     noMatch:
       "没找到对得上的卡片。先核对一下卡片名称，再补上卡面上的收藏编号（比如 215/203）或系列名称 / 代码，然后重试。",
+    noMatchSuggestions: ["核对卡名拼写", "补上卡面收藏编号", "补上系列名称或代码"],
+    editSearch: "修改搜索",
+    imageUnavailable: "图片暂时无法显示",
+    marketReference: (price: string) => `市场参考 ${price}`,
     lookupUnavailable:
       "卡片库暂时连不上，没能列出版本。这是查询出了点小问题，不是没有这张卡。过一会儿再试一下。",
     filterSetLabel: "系列",
@@ -614,7 +635,9 @@ const zh: Dict = {
     filterAllPrintTypes: "所有版本类型",
     filterClear: "清除筛选",
     filterNoMatches: "没有符合筛选条件的版本。",
-    filterShowingCount: (shown: number, total: number) => `显示 ${total} 个版本中的 ${shown} 个`,
+    filterShowingCount: (shown: number, total: number) => shown === total
+      ? `显示 ${shown} 个目录匹配结果`
+      : `显示已载入 ${total} 个结果中的 ${shown} 个`,
     basePrint: "基础版",
   },
   result: {
@@ -718,6 +741,10 @@ const zh: Dict = {
     decisionReceipt: "决策凭据",
     shareReceipt: "分享凭据",
     shareUnavailable: "暂不支持分享链接，请先复制这份凭据。",
+    savedSnapshot: "已保存的比较",
+    savedSnapshotBody: (date: string) => `这是保存于 ${date} 的快照；商品价格与在售状态之后可能已经变化。`,
+    refreshLive: "刷新在售商品",
+    restoringSnapshot: "正在打开已保存的比较",
     reviewListing: "查看商品",
     marketReferenceShort: "市场参考",
     sourceCalmSummary: (sources: string, hasMarketReference: boolean, time: string) =>
@@ -812,9 +839,9 @@ const zh: Dict = {
     shippingCost: (shipping: string) => `运费 ${shipping}`,
     priceBreakdown: (item: string, shipping: string, tax: string | null) =>
       `商品 ${item} · ${shipping}${tax ? ` · 预估税 ${tax}` : " · 未含税"}`,
-    underMarket: (pct: number) => `低于参考价 ${pct}%`,
-    aboveMarket: (pct: number) => `高于参考价 ${pct}%`,
-    nearMarket: "接近参考价",
+    underMarket: (pct: number) => `商品标价低于参考价 ${pct}%`,
+    aboveMarket: (pct: number) => `商品标价高于参考价 ${pct}%`,
+    nearMarket: "商品标价接近参考价",
     trustedSeller: "可信卖家",
     unverifiedSeller: "信息不足的卖家",
     decentSeller: "尚可卖家",
@@ -845,7 +872,7 @@ const zh: Dict = {
     mathDemoHidden: "示例商品，不展示市价对比",
     mathRiskFormula: (seller: number, evidence: number) => `= ${seller}% 卖家可信度 + ${evidence}% 证据`,
     mathValueFormula: (price: number, condition: number, seller: number, evidence: number) => `= ${price}% 价格 + ${condition}% 品相 + ${seller}% 卖家 + ${evidence}% 证据`,
-    mathVs: (total: string, market: string) => `${total}，汇总参考价 ${market}`,
+    mathVs: (item: string, market: string) => `商品标价 ${item}，汇总参考价 ${market}`,
     mathFeedback: (pct: number) => `好评率 ${pct}%`,
     mathRatings: (n: number) => `${n} 条评价`,
     mathReturns: "支持退货",
@@ -868,7 +895,8 @@ const zh: Dict = {
     photosHeader: "照片",
     total: "总价",
     ask: "询问",
-    askAbout: (title: string) => `询问 ${title}`,
+    askListing: "询问这条商品",
+    askAbout: (title: string) => `询问这条商品：${title}`,
     priceLine: (item: string, shipping: string) => `${item} · ${shipping}`,
   },
   footer: {

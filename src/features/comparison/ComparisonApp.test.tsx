@@ -11,6 +11,8 @@ import { normalizeListing, rankListings } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
 import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
+import { demoListingSeeds } from "@/lib/comparison/fixtures";
+import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
 
 vi.mock("@/lib/analytics", () => ({
   initializeAnalytics: vi.fn(),
@@ -88,6 +90,14 @@ describe("comparison condition controls", () => {
     });
     setLanguage("en");
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/comparison-snapshots")) {
+        return new Response(JSON.stringify({
+          receiptId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          savedAt: "2026-07-31T10:00:00.000Z",
+          expiresAt: "2026-08-30T10:00:00.000Z",
+          durable: false,
+        }), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
       if (String(input).endsWith("/api/agent/card-identity")) {
         return new Response(JSON.stringify(identityResponse([identityForQuery(String(request.query))])), {
@@ -154,6 +164,7 @@ describe("comparison condition controls", () => {
         imageUrl: "https://images.pokemontcg.io/sv5/18.png",
         confidence: "medium",
         matchReasons: ["Card name matches."],
+        marketMid: 412.5,
       }],
       confirmedCard: null,
       warnings: [],
@@ -161,6 +172,37 @@ describe("comparison condition controls", () => {
     }), { headers: { "Content-Type": "application/json" } }));
 
     expect(await screen.findByRole("heading", { name: "Choose your Pikachu" })).toBeTruthy();
+    expect(screen.getByText("$412.50 market reference")).toBeTruthy();
+    expect(screen.queryByText("Medium confidence")).toBeNull();
+
+    fireEvent.error(screen.getByAltText("Pikachu · 18/91 · Paldean Fates"));
+    expect(screen.getByText("Image unavailable")).toBeTruthy();
+    expect(screen.getAllByText("#18/91").length).toBeGreaterThan(0);
+  });
+
+  it("turns a catalog miss into a recovery state with an edit-search action", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify({
+          identityContractVersion: 1,
+          status: "not_found",
+          candidates: [],
+          confirmedCard: null,
+          warnings: [],
+          generatedAt: "2026-07-31T10:00:00.000Z",
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      throw new Error("listing comparison must not run after a catalog miss");
+    }));
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Not A Real Card 999/999" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Compare exact listings" }));
+
+    expect(await screen.findByRole("heading", { name: "No card match yet" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Edit search" }));
+    expect(screen.getByRole("textbox", { name: "Search for a card" })).toBeTruthy();
   });
 
   it("ignores a stale Mew response after a newer Mewtwo search", async () => {
@@ -232,6 +274,7 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("Pikachu print 1")).toBeTruthy();
     expect(screen.getByText("Pikachu print 4")).toBeTruthy();
     expect(screen.queryByText("Pikachu print 5")).toBeNull();
+    expect(screen.getByText("Showing 8 catalog matches")).toBeTruthy();
 
     fireEvent.click(screen.getByText("Set 3", { selector: "summary" }));
 
@@ -321,6 +364,9 @@ describe("comparison condition controls", () => {
     expect(new Set(motionSources).size).toBe(1);
     expect(motionSources[0]).toContain("swsh7/215.png");
     expect(motionImages.filter((image) => image.getAttribute("alt"))).toHaveLength(1);
+    fireEvent.error(screen.getByAltText("Umbreon VMAX 215/203"));
+    expect(screen.getByText("Image unavailable")).toBeTruthy();
+    expect(screen.getByText("215/203")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Choose your/i })).toBeNull();
     await waitFor(() => expect(requests[0]?.confirmedCardId).toBe("swsh7-215"));
 
@@ -328,6 +374,94 @@ describe("comparison condition controls", () => {
       ...reportFor(requests[0]),
       confirmedCard: exactCard,
     }), { headers: { "Content-Type": "application/json" } }));
+  });
+
+  it("uses card-comparison loading copy when a result URL is replayed", async () => {
+    window.history.replaceState(null, "", "/?query=Charizard+ex+199%2F165&game=pokemon&step=result&card=sv3pt5-199");
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+
+    render(<ComparisonApp />);
+
+    expect(await screen.findByRole("heading", { name: "Comparing listings for Charizard ex 199/165" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Reading your listing" })).toBeNull();
+  });
+
+  it("restores a saved result without rerunning the comparison pipeline", async () => {
+    const request = buildStandardComparisonRequest(STANDARD_COMPARISON_FLOW_CARDS[0]);
+    const savedReport = {
+      ...reportFor(request),
+      confirmedCard: identityForQuery("Umbreon VMAX 215/203"),
+      outcome: "next_moves" as const,
+    };
+    const receiptId = "0123456789abcdef0123456789abcdef";
+    window.history.replaceState(null, "", `/?receipt=${receiptId}`);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).includes("/api/comparison-snapshots?")) {
+        return new Response(JSON.stringify({
+          snapshot: {
+            id: receiptId,
+            report: savedReport,
+            savedAt: "2026-07-31T10:00:00.000Z",
+            expiresAt: "2026-08-30T10:00:00.000Z",
+          },
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      throw new Error(`comparison pipeline must not rerun: ${String(input)}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ComparisonApp />);
+
+    expect(await screen.findByText(/Saved comparison/i)).toBeTruthy();
+    expect(screen.getByText(/Prices and availability may have changed/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Refresh live listings" })).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("creates a durable receipt link for a pure card result and shares that URL", async () => {
+    const exactCard = identityForQuery("Umbreon VMAX 215/203");
+    const listing = normalizeListing({
+      listing: { ...demoListingSeeds[0], id: "shareable", demo: false, claimedCondition: "Near Mint" },
+      buyer: { country: "US", postalCode: "", taxRate: null, desiredCondition: "Near Mint" },
+      marketPrice: 2000,
+    });
+    const receiptId = "fedcba9876543210fedcba9876543210";
+    const clipboard = { writeText: vi.fn<(text: string) => Promise<void>>(async () => undefined) };
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: clipboard });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([exactCard])), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (String(input).endsWith("/api/agent/listing-compare")) {
+        const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+        return new Response(JSON.stringify({
+          ...reportFor(request),
+          confirmedCard: exactCard,
+          candidates: [listing],
+          rankedChoices: rankListings([listing], { marketPrice: 2000 }),
+          outcome: "best_buy",
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (String(input).endsWith("/api/comparison-snapshots")) {
+        return new Response(JSON.stringify({
+          receiptId,
+          savedAt: "2026-07-31T10:00:00.000Z",
+          expiresAt: "2026-08-30T10:00:00.000Z",
+          durable: true,
+        }), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      throw new Error(`unexpected request ${String(input)}`);
+    }));
+
+    render(<ComparisonApp />);
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Umbreon VMAX 215/203" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Compare exact listings" }));
+
+    await waitFor(() => expect(window.location.search).toContain(`receipt=${receiptId}`));
+    fireEvent.click(screen.getByRole("button", { name: "Share receipt" }));
+    await waitFor(() => expect(clipboard.writeText).toHaveBeenCalledWith(expect.stringContaining(`receipt=${receiptId}`)));
+    expect(String(clipboard.writeText.mock.calls[0]?.[0])).not.toContain("postalCode");
   });
 
   it("shows the active minimum before search and submits a refined condition", async () => {
@@ -479,6 +613,14 @@ describe("comparison condition controls", () => {
       return mapOnePieceCardToIdentity(card, { confidence: "medium", matchReasons: ["Card name matches."] });
     });
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/comparison-snapshots")) {
+        return new Response(JSON.stringify({
+          receiptId: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          savedAt: "2026-07-31T10:00:00.000Z",
+          expiresAt: "2026-08-30T10:00:00.000Z",
+          durable: false,
+        }), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;
       if (String(input).endsWith("/api/agent/card-identity")) {
         return new Response(JSON.stringify(identityResponse(candidates, "needs_confirmation")), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -721,6 +863,9 @@ describe("comparison condition controls", () => {
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));
     expect(screen.getByAltText("Listing photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
+    const alternativeTitle = screen.getByRole("heading", { name: "Nami OP01-016 P4 SP alternate seller" });
+    expect(alternativeTitle.className.split(" ")).not.toContain("truncate");
+    expect(screen.getByRole("button", { name: "Ask about listing: Nami OP01-016 P4 SP alternate seller" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Inspect 1 seller photo: Nami OP01-016 P4 SP alternate seller" }));
     const singlePhotoGallery = screen.getByRole("dialog", { name: "Seller photos" });
     expect(within(singlePhotoGallery).getByAltText("Seller photo 1 of 1: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();

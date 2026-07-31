@@ -259,9 +259,9 @@ function sellerSubRatingToScore(value: number) {
 // signal), at market (100%) scores 50, 30%+ above market scores 0. When no market
 // price is known, returns a neutral midpoint so the composite still ranks on
 // safety/evidence alone rather than collapsing to zero.
-export function calculatePriceComponent(landedOrPreTaxTotal: number, marketPrice: number | null) {
+export function calculatePriceComponent(itemPrice: number, marketPrice: number | null) {
   if (marketPrice === null || marketPrice <= 0) return 50;
-  const ratio = landedOrPreTaxTotal / marketPrice;
+  const ratio = itemPrice / marketPrice;
   if (ratio <= 0.7) return 100;
   // "+ 0" normalizes -0 (floating-point rounding can land exactly on a boundary,
   // e.g. ratio === 1.3, and produce -0, which fails strict equality against 0).
@@ -404,8 +404,11 @@ export function normalizeListing(input: {
     && marketPrice > 0
     && buyer.desiredCondition === "Near Mint"
     && listing.claimedCondition === "Near Mint";
+  // TCGCSV/TCGplayer is an item-only aggregate reference. Compare like with
+  // like here; shipping and estimated tax still determine checkout cost and
+  // the Cheapest lens, but must not manufacture an above-market warning.
   const priceScore = costComplete
-    ? calculatePriceComponent(estimatedLandedCost ?? preTaxTotal, marketComparable ? marketPrice : null)
+    ? calculatePriceComponent(listing.price, marketComparable ? marketPrice : null)
     : 0;
   const valueScore = calculateValueScore({
     priceComponent: priceScore,
@@ -591,13 +594,12 @@ export function rankListings(
 // so. For the cheapest lens this means supply is thin right now.
 function aboveMarketContext(listing: NormalizedListing, marketPrice: number | null, cheapestLens = false) {
   if (marketPrice === null || marketPrice <= 0 || listing.demo || !listing.marketComparable || !listing.costComplete) return "";
-  const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
-  const delta = (total - marketPrice) / marketPrice;
+  const delta = (listing.price - marketPrice) / marketPrice;
   if (delta <= 0.02) return "";
   const pct = Math.round(delta * 100);
   return cheapestLens
-    ? ` Supply is thin right now — even the cheapest eligible copy is +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference.`
-    : ` Note: this copy costs +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference; it leads the field, not the market.`;
+    ? ` Supply is thin right now — even the cheapest eligible copy has an item price +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference.`
+    : ` Note: this copy's item price is +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference; it leads the field, not the market.`;
 }
 
 // A genuine raw single never costs a tiny fraction of its catalog market price;

@@ -246,15 +246,15 @@ function buildAction(
   }
   const marketUsable = marketPrice !== null && marketPrice > 0 && listing.marketComparable && listing.costComplete && !listing.demo;
   if (marketUsable) {
-    const delta = (listingCost(listing) - marketPrice) / marketPrice;
+    const delta = (listing.price - marketPrice) / marketPrice;
     if (delta > ACTION_ABOVE_MARKET_RATIO) {
       const pct = Math.round(delta * 100);
       return {
         kind: "wait",
         label: lang === "zh" ? "建议再等等" : "Consider waiting",
         note: lang === "zh"
-          ? `这份比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%——除非急需，等待更接近市场价的货源是合理的。`
-          : `This copy runs about ${pct}% over the ${formatMoney(marketPrice)} market reference — unless you need it now, waiting for closer-to-market supply is reasonable.`,
+          ? `这条商品的标价比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%——除非急需，等待更接近市场价的货源是合理的。`
+          : `This copy's item price runs about ${pct}% over the ${formatMoney(marketPrice)} market reference — unless you need it now, waiting for closer-to-market supply is reasonable.`,
       };
     }
   }

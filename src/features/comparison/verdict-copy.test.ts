@@ -20,6 +20,7 @@ function makeListing({
   returnsAccepted = null,
   userSupplied = false,
   taxRate = null,
+  shipping = 5,
 }: {
   id: string;
   price: number;
@@ -29,6 +30,7 @@ function makeListing({
   returnsAccepted?: boolean | null;
   userSupplied?: boolean;
   taxRate?: number | null;
+  shipping?: number;
 }): NormalizedListing {
   return normalizeListing({
     listing: {
@@ -36,7 +38,7 @@ function makeListing({
       id,
       title: `${id} seller-stated Near Mint listing`,
       price,
-      shipping: 5,
+      shipping,
       claimedCondition: "Near Mint",
       demo: false,
       userSupplied,
@@ -288,6 +290,28 @@ describe("buildVerdictCopy", () => {
 
       expect(copy.action.kind).toBe("wait");
       expect(copy.action.note).toContain("market reference");
+    });
+
+    it("does not warn that supply is expensive when only shipping and tax lift checkout total", () => {
+      const winner = makeListing({
+        id: "winner",
+        price: 202,
+        shipping: 28,
+        taxRate: 0.08,
+        photoCount: 8,
+      });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(winner.estimatedLandedCost).toBe(248.4);
+      expect(copy.action.kind).toBe("buy");
+      expect(copy.action.note).not.toContain("over the $200.00 market reference");
     });
 
     it("suggests waiting for more evidence when there is almost nothing to review", () => {
