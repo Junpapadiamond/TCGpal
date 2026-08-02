@@ -880,7 +880,7 @@ describe("comparison condition controls", () => {
     fireEvent.click(openGallery);
     const gallery = screen.getByRole("dialog", { name: "Seller photos" });
     expect(gallery.className.split(" ")).toContain("h-[100dvh]");
-    expect(within(gallery).getByText("Seller-provided eBay photos. TCGlens has not verified condition or authenticity.")).toBeTruthy();
+    expect(within(gallery).getByText("Seller-provided eBay photos. Lens TCG has not verified condition or authenticity.")).toBeTruthy();
     expect(within(gallery).getByAltText("Seller photo 1 of 3: Nami OP01-016 SP Special Art")).toBeTruthy();
     fireEvent.click(within(gallery).getByRole("button", { name: "Next photo" }));
     const secondPhoto = within(gallery).getByAltText("Seller photo 2 of 3: Nami OP01-016 SP Special Art");

@@ -28,11 +28,11 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "TCGlens — Compare Pokémon & One Piece card listings with evidence",
+  title: "Lens TCG — Compare Pokémon & One Piece card listings with evidence",
   description: "Compare landed cost, seller signals, and condition evidence before buying Pokémon or One Piece cards.",
   icons: {
     icon: [
-      { url: "/tcgpal-icon.svg", type: "image/svg+xml" },
+      { url: "/lens-favicon.svg", type: "image/svg+xml" },
       { url: "/icon-16.png", sizes: "16x16", type: "image/png" },
       { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/icon-48.png", sizes: "48x48", type: "image/png" },

@@ -1313,7 +1313,7 @@ function Header({ onLogoClick }: { onLogoClick: () => void }) {
     <header className="border-b border-[#d6ded5] bg-[#f7f9f5]/95">
       <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <button className="flex items-center gap-3" type="button" onClick={onLogoClick} aria-label={t.header.home}>
-          <Image src="/tcgpal-logo-horizontal.svg" alt="TCGlens" width={142} height={41} priority />
+          <Image src="/lens-logo-horizontal.svg" alt="Lens TCG" width={140} height={40} priority />
         </button>
         <div className="flex items-center gap-3 sm:gap-6">
           <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
@@ -1350,7 +1350,7 @@ function ResultsHeader({
     <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fcfbf6]/95 shadow-[0_1px_10px_rgba(36,49,47,0.04)] backdrop-blur">
       <div className="relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-2 px-4 py-2.5 sm:gap-3 sm:px-6 lg:flex-nowrap lg:px-8">
         <button className="shrink-0" type="button" onClick={onNewSearch} aria-label={t.header.home}>
-          <Image src="/tcgpal-logo-horizontal.svg" alt="TCGlens" width={104} height={30} priority />
+          <Image src="/lens-logo-horizontal.svg" alt="Lens TCG" width={105} height={30} priority />
         </button>
         <button
           className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
@@ -2157,7 +2157,7 @@ function ComparisonResult({
     const total = selectedListing.estimatedLandedCost ?? selectedListing.preTaxTotal;
     const totalLabel = selectedListing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
     const receipt = [
-      "TCGlens comparison",
+      "Lens TCG comparison",
       report.confirmedCard
         ? `${report.confirmedCard.name} · ${report.confirmedCard.setCode} #${report.confirmedCard.cardNumber}`
         : selectedListing.title,

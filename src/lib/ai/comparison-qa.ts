@@ -41,7 +41,7 @@ export async function answerComparisonQuestion(
       schemaName: "comparison_question_answer",
       schema: comparisonQuestionResponseSchema.omit({ usedAi: true }),
       system: [
-        "You answer buyer questions about one TCGlens comparison report.",
+        "You answer buyer questions about one Lens TCG comparison report.",
         "Use only the supplied sanitized report facts. Never browse, infer hidden seller data, invent sold comps, predict grades, or call a seller a scam.",
         "If targetListingId is supplied, answer about that exact listing even when the question is short or vague.",
         "Do not introduce sold comps, sold-history, or sold-transaction language; this report is active-listing and reference-price evidence only.",
@@ -105,7 +105,7 @@ async function answerWithWebContext(
       schemaName: "comparison_question_answer_with_web_context",
       schema: comparisonQuestionResponseSchema.omit({ usedAi: true, webContextChecked: true, webCitations: true }),
       system: [
-        "You answer buyer questions about one TCGlens comparison report with optional cited web context.",
+        "You answer buyer questions about one Lens TCG comparison report with optional cited web context.",
         "Use report facts for rankings, prices, seller risk, and listing evidence. Web context is only for source legitimacy, translation, reference discovery, or card identity help.",
         "Never treat Tavily results as fetched marketplace inventory, sold comps, ranked listings, seller history, or price evidence.",
         "Do not browse beyond the supplied citations. If citations are weak, say what is missing.",
@@ -177,7 +177,7 @@ function localAnswer(
       ? ` Its seller risk label is ${formatRiskLabel(target.riskLabel)}, with seller trust ${target.sellerTrustScore}/100 and evidence ${target.evidenceCompletenessScore}/100.`
       : "";
     return comparisonQuestionResponseSchema.parse({
-      answer: `${target.marketplace} "${target.title}" leads the ${lens} lens because it has ${lensEvidence(target, lensChoice?.role ?? activeRole)} among eligible listings, with comparable cost ${money(target.estimatedLandedCost ?? target.preTaxTotal)}.${risk} Still inspect the live listing because TCGlens does not grade the card from photos.`,
+      answer: `${target.marketplace} "${target.title}" leads the ${lens} lens because it has ${lensEvidence(target, lensChoice?.role ?? activeRole)} among eligible listings, with comparable cost ${money(target.estimatedLandedCost ?? target.preTaxTotal)}.${risk} Still inspect the live listing because Lens TCG does not grade the card from photos.`,
       cautions: [...target.trustNotes, ...report.narrative.cautions].slice(0, 2),
       usedAi: false,
     });
@@ -185,7 +185,7 @@ function localAnswer(
 
   if (best) {
     return comparisonQuestionResponseSchema.parse({
-      answer: `The ${lens} leader is ${best.marketplace} "${best.title}" with ${lensEvidence(best, lensChoice?.role ?? activeRole)}, seller trust ${best.sellerTrustScore}/100, and evidence ${best.evidenceCompletenessScore}/100. The result still depends on the listed evidence; TCGlens does not grade the card from photos.`,
+      answer: `The ${lens} leader is ${best.marketplace} "${best.title}" with ${lensEvidence(best, lensChoice?.role ?? activeRole)}, seller trust ${best.sellerTrustScore}/100, and evidence ${best.evidenceCompletenessScore}/100. The result still depends on the listed evidence; Lens TCG does not grade the card from photos.`,
       cautions: [],
       usedAi: false,
     });

@@ -236,7 +236,7 @@ export async function fetchUniversalListing(
 
   if (!(await isPathAllowedByRobots(url, fetcher))) {
     throw new UniversalListingBlockedError(
-      "This site's robots.txt disallows automated access to that page, so TCGlens did not fetch it. Add the listing facts manually instead.",
+      "This site's robots.txt disallows automated access to that page, so Lens TCG did not fetch it. Add the listing facts manually instead.",
     );
   }
 
@@ -331,7 +331,7 @@ function buildUniversalListingResult(
   const price = deterministic.price ?? ai?.price ?? tavily?.price ?? null;
   const currency = (deterministic.currency ?? ai?.currency ?? tavily?.currency ?? "USD").toUpperCase();
   if (currency && currency !== "USD") {
-    throw new Error(`The pasted listing is priced in ${currency}; TCGlens compares USD listings only.`);
+    throw new Error(`The pasted listing is priced in ${currency}; Lens TCG compares USD listings only.`);
   }
   if (price === null && !title) {
     throw new Error("No price or title could be extracted from the pasted page.");

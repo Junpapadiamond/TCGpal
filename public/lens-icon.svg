@@ -1,0 +1,34 @@
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lens icon">
+  <defs>
+    <clipPath id="lensGlass">
+      <circle cx="48" cy="58" r="27"/>
+    </clipPath>
+    <g id="lensCards">
+      <g transform="translate(44,38) rotate(-13)">
+        <rect x="-18" y="-27" width="36" height="54" rx="6" fill="#d7a84e" stroke="#b88a35" stroke-width="2"/>
+      </g>
+      <g transform="translate(48,40) rotate(5)">
+        <rect x="-18" y="-27" width="36" height="54" rx="6" fill="#2f6f73" stroke="#1f474a" stroke-width="2"/>
+        <rect x="-13" y="-22" width="26" height="18" rx="3.5" fill="#fcfbf6"/>
+        <rect x="-13" y="10" width="26" height="4" rx="2" fill="#fcfbf6"/>
+        <rect x="-13" y="17" width="15" height="4" rx="2" fill="#fcfbf6" opacity="0.6"/>
+      </g>
+    </g>
+  </defs>
+
+  <!-- the card, seen plainly -->
+  <use href="#lensCards"/>
+
+  <!-- the same card refracted through the glass: wider silhouette, thicker detail -->
+  <g clip-path="url(#lensGlass)">
+    <circle cx="48" cy="58" r="27" fill="#fcfbf6"/>
+    <g transform="translate(48,58) scale(1.38) translate(-48,-58)">
+      <use href="#lensCards"/>
+    </g>
+    <path d="M21 58 A27 27 0 0 1 48 31 L48 58 Z" fill="#fcfbf6" opacity="0.14"/>
+  </g>
+
+  <!-- glass rim -->
+  <circle cx="48" cy="58" r="27" fill="none" stroke="#d7a84e" stroke-width="3.6"/>
+  <circle cx="48" cy="58" r="24.4" fill="none" stroke="#1f474a" stroke-width="1" opacity="0.22"/>
+</svg>
