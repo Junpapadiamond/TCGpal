@@ -363,6 +363,37 @@ describe("comparison ranking", () => {
     expect(altered.eligible).toBe(false);
   });
 
+  it("keeps singles from Extra Booster sets while still excluding sealed product", () => {
+    // "Booster" is part of the set name on every One Piece "Extra Booster: <set>"
+    // single, so a bare word filter drops the raw singles it exists to protect.
+    // Sealed product names the container; the set name never does.
+    for (const title of [
+      "Nami (053) Foil SR Extra Booster: One Piece Heroines Edition EB03-053 NM",
+      "One Piece TCG Extra Booster: Heroines Edition EB03-053 Nami SR NM English Foil",
+      "Nami R Foil Extra Booster: Anime 25th Collection EB02-017 NM One Piece TCG",
+    ]) {
+      const single = normalizeListing({
+        listing: { ...demoListingSeeds[0], id: `single-${title}`, title },
+        buyer,
+      });
+      expect(single.exclusionReasons.join(" "), title).not.toMatch(/sealed item/);
+    }
+
+    for (const title of [
+      "One Piece OP-09 Booster Box Sealed English",
+      "One Piece Emperors in the New World Booster Pack",
+      "One Piece OP07 Booster Case",
+      "One Piece Romance Dawn Booster Packs x10",
+      "One Piece OP05 Booster-Box",
+    ]) {
+      const sealedProduct = normalizeListing({
+        listing: { ...demoListingSeeds[0], id: `sealed-${title}`, title },
+        buyer,
+      });
+      expect(sealedProduct.exclusionReasons.join(" "), title).toMatch(/sealed item/);
+    }
+  });
+
   it("excludes graded slabs even when the grade is joined by a colon or hash", () => {
     // Real eBay titles write the grade many ways; a raw-single comparison must catch
     // every one so a slab never lands as the recommended raw buy.

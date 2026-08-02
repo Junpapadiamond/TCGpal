@@ -22,7 +22,10 @@ import { isGradedListing } from "@/lib/comparison/graded-listing";
 
 const exclusionPatterns = [
   /\bsealed\b/i,
-  /\bbooster\b/i,
+  // "Booster" on its own is a set name, not a sealed product: every One Piece
+  // "Extra Booster: <set>" single carries it, so a bare word filter dropped the
+  // raw singles this list exists to protect. Sealed product names its container.
+  /\bbooster[\s-]*(?:box(?:es)?|packs?|cases?|bundles?)\b/i,
   /\blot\b/i,
   /\bproxy\b/i,
   /\breprint\b/i,
