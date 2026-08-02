@@ -24,7 +24,10 @@ const exclusionPatterns = [
   /\bgraded\s*\d/i,
   /\bslab(?:bed)?\b/i,
   /\bsealed\b/i,
-  /\bbooster\b/i,
+  // "Booster" alone is a set name, not a sealed product: every One Piece
+  // "Extra Booster: <set>" single carries it, and a bare word filter threw all of
+  // them away. Sealed product names the container it comes in.
+  /\bbooster[\s-]*(?:box(?:es)?|packs?|cases?|bundles?)\b/i,
   /\blot\b/i,
   /\bproxy\b/i,
   /\breprint\b/i,
@@ -593,6 +596,19 @@ function aboveMarketContext(listing: NormalizedListing, marketPrice: number | nu
 // The threshold is deliberately conservative so real underpriced/played copies stay.
 const MARKET_FLOOR_RATIO = 0.25;
 
+// Print identity and product authenticity are different questions. A "compatible"
+// read only proves the listing names the confirmed card — the Pokemon path grants
+// it on collector number + name alone — which is exactly what a gold-metal replica
+// or sticker of that card also does. Only a canonical print id in the listing
+// ("exact") is direct evidence of the item itself, and that earns a lower floor so
+// a genuinely underpriced copy survives; it is not removed, because replica money
+// is replica money whatever the title claims.
+const PROVEN_EXACT_MARKET_FLOOR_RATIO = 0.1;
+
+function marketFloorRatio(printAssessment: PrintFidelityAssessment | null) {
+  return printAssessment?.match === "exact" ? PROVEN_EXACT_MARKET_FLOOR_RATIO : MARKET_FLOOR_RATIO;
+}
+
 function getExclusionReasons(
   listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "shipping" | "claimedCondition" | "marketplace" | "userSupplied">
     & { listingLanguage?: string | null; matchAspectText?: string },
@@ -630,7 +646,8 @@ function getExclusionReasons(
   }
   if (exclusionPatterns.some((pattern) => pattern.test(listing.title))) reasons.push("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
   const marketFloorApplies = buyer.desiredCondition === "Near Mint" || buyer.desiredCondition === "Lightly Played";
-  if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * MARKET_FLOOR_RATIO && !strictPrintFidelity) {
+  const floorRatio = marketFloorRatio(strictPrintFidelity ? printAssessment : null);
+  if (marketFloorApplies && marketPrice !== null && marketPrice > 0 && listing.price < marketPrice * floorRatio) {
     reasons.push("Priced far below market — likely a replica, proxy, or mislabeled item.");
   }
   if (strictPrintFidelity && printAssessment) {

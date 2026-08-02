@@ -237,6 +237,100 @@ describe("exact-print fidelity", () => {
     }).match).toBe("compatible");
   });
 
+  describe("silent-title base prior", () => {
+    // A One Piece card number is a family, not a print. When the family is exactly
+    // one base print plus one alternate art from the same release, a title that
+    // never says "alternate art" is weak positive evidence for the base print:
+    // sellers of the expensive sibling say so, because it is what they are selling.
+    // The prior is deliberately one-directional — see the selected-alternate case.
+    const eb02Nami = findOnePieceCatalogVariants("EB02-017").map((card) =>
+      mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }),
+    );
+
+    it("resolves a silent title to the base print of a base-plus-one-alternate family", () => {
+      const base = eb02Nami.find((card) => card.id === "EB02-017")!;
+
+      expect(assessPrintFidelity({
+        card: base,
+        matchText: "Nami EB02-017 Rare Anime 25th collection [EB-02] One Piece Near Mint",
+        listingPrice: 4,
+        exactMarketAnchor: 4,
+      })).toMatchObject({
+        match: "compatible",
+        confidence: "medium",
+        priceGuard: "none",
+      });
+    });
+
+    it("withholds the base prior when the price sits in the alternate-art band", () => {
+      const base = eb02Nami.find((card) => card.id === "EB02-017")!;
+
+      expect(assessPrintFidelity({
+        card: base,
+        matchText: "Nami EB02-017 Rare Anime 25th collection [EB-02] One Piece Near Mint",
+        listingPrice: 40,
+        exactMarketAnchor: 4,
+      })).toMatchObject({ match: "unknown" });
+    });
+
+    it("still rejects a silent-title base print when the listing names the alternate", () => {
+      const base = eb02Nami.find((card) => card.id === "EB02-017")!;
+
+      expect(assessPrintFidelity({
+        card: base,
+        matchText: "Nami EB02-017 Alternate Art Anime 25th collection",
+        listingPrice: 4,
+        exactMarketAnchor: 4,
+      }).match).toBe("mismatch");
+    });
+
+    it("does not let silence prove the selected alternate print", () => {
+      const alternate = eb02Nami.find((card) => card.id === "EB02-017_p1")!;
+
+      expect(assessPrintFidelity({
+        card: alternate,
+        matchText: "Nami EB02-017 Rare Anime 25th collection [EB-02] One Piece Near Mint",
+        listingPrice: 40,
+        exactMarketAnchor: 40,
+      }).match).toBe("unknown");
+    });
+
+    it("does not apply the base prior to a family with more than one alternate print", () => {
+      const base = namiPrints.find((card) => card.id === "OP01-016")!;
+
+      expect(assessPrintFidelity({
+        card: base,
+        matchText: "Nami OP01-016 Romance Dawn",
+        listingPrice: 4,
+        exactMarketAnchor: 4,
+      }).match).toBe("unknown");
+    });
+
+    it("does not apply the base prior when the sibling print is from another release", () => {
+      const base = findOnePieceCatalogVariants("EB01-007")
+        .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+        .find((card) => card.id === "EB01-007")!;
+
+      expect(assessPrintFidelity({
+        card: base,
+        matchText: "Kaku EB01-007 Memorial Collection",
+        listingPrice: 4,
+        exactMarketAnchor: 4,
+      }).match).toBe("unknown");
+    });
+
+    it("keeps the base prior available without an exact-print anchor", () => {
+      const base = eb02Nami.find((card) => card.id === "EB02-017")!;
+
+      expect(assessPrintFidelity({
+        card: base,
+        matchText: "Nami EB02-017 Anime 25th collection",
+        listingPrice: 4,
+        exactMarketAnchor: null,
+      }).match).toBe("compatible");
+    });
+  });
+
   it("requires Pokémon listing text to prove the selected collector number and card name", () => {
     const pokemon = {
       id: "swsh7-215",

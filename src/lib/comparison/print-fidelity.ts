@@ -1,9 +1,12 @@
 import type { CardIdentityCandidate } from "@/lib/schemas";
 import { findOnePieceCatalogVariants } from "@/lib/external/one-piece-catalog";
-import { variantKey } from "@/lib/external/one-piece-tcg";
+import { variantKey, type OnePieceTcgCard } from "@/lib/external/one-piece-tcg";
 
 export const PRINT_IDENTITY_EXCLUDE_RATIO = 0.45;
 export const PRINT_IDENTITY_REVIEW_RATIO = 0.70;
+// Above this multiple of the base print's anchor, the premium is better evidence
+// of which print is in the box than the seller's silence about it.
+export const PRINT_IDENTITY_PREMIUM_RATIO = 2.0;
 
 export type PrintMatch = "exact" | "compatible" | "unknown" | "mismatch";
 export type PrintPriceGuard = "none" | "inspect" | "exclude";
@@ -30,12 +33,13 @@ export function assessPrintFidelity(input: {
   listingPrice: number;
   exactMarketAnchor: number | null;
 }): PrintFidelityAssessment {
-  const identity = classifyPrintIdentity(input.card, input.matchText);
-  if (identity.match !== "unknown" || input.exactMarketAnchor === null || input.exactMarketAnchor <= 0) {
+  const anchored = input.exactMarketAnchor !== null && input.exactMarketAnchor > 0;
+  const ratio = anchored ? input.listingPrice / input.exactMarketAnchor! : null;
+  const identity = classifyPrintIdentity(input.card, input.matchText, ratio);
+  if (identity.match !== "unknown" || ratio === null) {
     return { ...identity, priceGuard: "none" };
   }
 
-  const ratio = input.listingPrice / input.exactMarketAnchor;
   if (ratio < PRINT_IDENTITY_EXCLUDE_RATIO) {
     return {
       ...identity,
@@ -56,6 +60,7 @@ export function assessPrintFidelity(input: {
 function classifyPrintIdentity(
   card: CardIdentityCandidate,
   matchText: string,
+  priceRatio: number | null,
 ): Omit<PrintFidelityAssessment, "priceGuard"> {
   if (!isOnePiecePrint(card)) {
     return classifyPokemonPrintIdentity(card, matchText);
@@ -101,7 +106,9 @@ function classifyPrintIdentity(
       return result("mismatch", "high", "listing_names_sibling_print");
     }
     if (siblings.length > 1) {
-      return result("unknown", "low", "plain_family_listing_does_not_identify_print");
+      return silentTitleResolvesToBasePrint(card, siblings, priceRatio)
+        ? result("compatible", "medium", "silent_title_implies_base_print")
+        : result("unknown", "low", "plain_family_listing_does_not_identify_print");
     }
     return result("compatible", "medium", "plain_family_listing_matches_base_print");
   }
@@ -212,6 +219,34 @@ function classifyResearchedOnePiecePrint(
     return result("mismatch", "high", "listing_names_generic_alternate_sibling");
   }
   return result("unknown", "low", "listing_does_not_prove_selected_print");
+}
+
+// A One Piece card number names a family, not a print, so a plain title normally
+// proves nothing. The exception is the family shape where silence is informative:
+// one base print and exactly one alternate art from the release the buyer
+// confirmed. There, a seller with the alternate says so — it is the whole reason
+// their copy is worth more — so an unmarked title is weak evidence for the base.
+// The prior is one-directional by design. Reading silence the other way would
+// have the buyer paying an alternate's price for a base print; this way the worst
+// case is an unmarked alternate ranked at base money.
+//
+// Any extra alternate print, any sibling from another release, or a price already
+// in the alternate's band and silence stops narrowing anything — fall back to
+// asking the buyer to look.
+function silentTitleResolvesToBasePrint(
+  card: CardIdentityCandidate,
+  siblings: readonly OnePieceTcgCard[],
+  priceRatio: number | null,
+) {
+  if (siblings.length !== 2) return false;
+  if (priceRatio !== null && priceRatio >= PRINT_IDENTITY_PREMIUM_RATIO) return false;
+  const selectedRelease = normalizePhrase(card.setName);
+  if (!selectedRelease) return false;
+  const alternates = siblings.filter((sibling) => variantKey(sibling) !== card.id);
+  return alternates.length === 1
+    && alternates.every((sibling) =>
+      printClass(sibling) === "alt"
+      && normalizePhrase(sibling.set_name ?? "") === selectedRelease);
 }
 
 function phraseMarkerMatches(text: string, marker: string) {

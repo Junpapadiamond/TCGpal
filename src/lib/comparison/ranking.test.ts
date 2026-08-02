@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
+import { findOnePieceCatalogVariants } from "@/lib/external/one-piece-catalog";
+import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 import {
   calculateEvidenceCompletenessScore,
   calculatePriceComponent,
@@ -17,6 +19,18 @@ const buyer = {
   postalCode: "10001",
   taxRate: 0.08,
   desiredCondition: "Unknown" as const,
+};
+
+const umbreonIdentity = {
+  id: "swsh7-215",
+  name: "Umbreon VMAX",
+  setName: "Evolving Skies",
+  setCode: "SWSH7",
+  cardNumber: "215/203",
+  language: "English",
+  imageUrl: null,
+  confidence: "high" as const,
+  matchReasons: [],
 };
 
 describe("comparison ranking", () => {
@@ -222,38 +236,71 @@ describe("comparison ranking", () => {
     expect(listing.estimatedLandedCost).toBeNull();
   });
 
-  it("does not reject a proven compatible Pokemon print solely for being below the legacy market floor", () => {
-    const exactPokemonCard = {
-      id: "swsh7-215",
-      name: "Umbreon VMAX",
-      setName: "Evolving Skies",
-      setCode: "SWSH7",
-      cardNumber: "215/203",
-      language: "English",
-      imageUrl: null,
-      confidence: "high" as const,
-      matchReasons: [],
-    };
-    const exactBargain = normalizeListing({
+  // Observed live 2026-08-02: Umbreon VMAX 215/203 (market reference $2,332.50)
+  // surfaced a $30 eBay row as the cheapest *comparable* listing. The Pokemon path
+  // reads "compatible" from collector number + name alone, which proves the card
+  // family — not that the item in the box is a genuine single — so the replica
+  // floor still has to run on it.
+  it("floors a listing far below the market anchor even when the print reads compatible", () => {
+    const compatibleBargain = normalizeListing({
       listing: {
         ...demoListingSeeds[0],
-        id: "exact-pokemon-bargain",
+        id: "compatible-pokemon-replica",
+        marketplace: "eBay",
         title: "Umbreon VMAX 215/203 Evolving Skies Near Mint",
-        price: 20,
+        price: 30,
+        shipping: 0,
+        claimedCondition: "Near Mint",
+      },
+      buyer: { ...buyer, desiredCondition: "Near Mint" },
+      marketPrice: 2332.5,
+      confirmedCard: umbreonIdentity,
+    });
+
+    expect(compatibleBargain.printMatch).toBe("compatible");
+    expect(compatibleBargain.eligible).toBe(false);
+    expect(compatibleBargain.exclusionReasons).toContain(
+      "Priced far below market — likely a replica, proxy, or mislabeled item.",
+    );
+  });
+
+  // A canonical print id in the title is direct proof of which print is in the box,
+  // so a proven-exact row is allowed to be a genuine bargain — but not at replica money.
+  it("lets a proven-exact print be a bargain while still flooring replica pricing", () => {
+    const namiSpecialArt = findOnePieceCatalogVariants("OP01-016")
+      .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+      .find((card) => card.id === "OP01-016_p4")!;
+    const provenExactListing = (id: string, price: number) => normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        id,
+        marketplace: "eBay",
+        title: "Nami OP01-016_p4 SP Special Art (P4) Near Mint",
+        price,
         shipping: 0,
         claimedCondition: "Near Mint",
       },
       buyer: { ...buyer, desiredCondition: "Near Mint" },
       marketPrice: 100,
-      confirmedCard: exactPokemonCard,
+      confirmedCard: namiSpecialArt,
     });
 
-    expect(exactBargain.printMatch).toBe("compatible");
-    expect(exactBargain.eligible).toBe(true);
-    expect(exactBargain.exclusionReasons).not.toContain(
+    const bargain = provenExactListing("proven-exact-bargain", 20);
+    expect(bargain.printMatch).toBe("exact");
+    expect(bargain.eligible).toBe(true);
+    expect(bargain.exclusionReasons).not.toContain(
       "Priced far below market — likely a replica, proxy, or mislabeled item.",
     );
 
+    const replicaMoney = provenExactListing("proven-exact-replica", 5);
+    expect(replicaMoney.printMatch).toBe("exact");
+    expect(replicaMoney.eligible).toBe(false);
+    expect(replicaMoney.exclusionReasons).toContain(
+      "Priced far below market — likely a replica, proxy, or mislabeled item.",
+    );
+  });
+
+  it("still excludes a print the listing does not prove at all", () => {
     const unprovenMarketplaceListing = normalizeListing({
       listing: {
         ...demoListingSeeds[0],
@@ -266,7 +313,7 @@ describe("comparison ranking", () => {
       },
       buyer: { ...buyer, desiredCondition: "Near Mint" },
       marketPrice: 100,
-      confirmedCard: exactPokemonCard,
+      confirmedCard: umbreonIdentity,
     });
     expect(unprovenMarketplaceListing.printMatch).toBe("unknown");
     expect(unprovenMarketplaceListing.eligible).toBe(false);
@@ -314,6 +361,33 @@ describe("comparison ranking", () => {
     });
     expect(lightlyPlayed.eligible).toBe(true);
     expect(lightlyPlayed.marketComparable).toBe(false);
+  });
+
+  it("keeps singles whose set name contains Booster while still excluding sealed product", () => {
+    // Every One Piece "Extra Booster:" set carries the word in its eBay set name,
+    // so a bare /booster/ filter throws away the singles it was meant to protect.
+    const single = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        id: "eb-single",
+        title: "Nami R Foil Extra Booster: Anime 25th Collection EB02-017 NM One Piece TCG",
+      },
+      buyer,
+    });
+    expect(single.exclusionReasons.join(" ")).not.toMatch(/sealed item/);
+
+    for (const title of [
+      "One Piece OP-09 Booster Box Sealed English",
+      "One Piece Emperors in the New World Booster Pack",
+      "One Piece OP07 Booster Case",
+      "One Piece Romance Dawn Booster Packs x10",
+    ]) {
+      const sealedProduct = normalizeListing({
+        listing: { ...demoListingSeeds[0], id: `sealed-${title}`, title },
+        buyer,
+      });
+      expect(sealedProduct.exclusionReasons.join(" "), title).toMatch(/sealed item/);
+    }
   });
 
   it("excludes slabs, altered cards, lots, and low-confidence matches", () => {
