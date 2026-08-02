@@ -1,9 +1,9 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-07-31
+updated_at: 2026-08-03
 canonical_branch: origin/main
-last_verified_product_commit: d613d662520f2147b3e22fc4347f26a153f1e15e
+last_verified_product_commit: 0e83f9c
 max_lines: 300
 ---
 
@@ -30,7 +30,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Pokémon retry-budget repair released and verified | Monitor live timeout and recall evidence |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Catalog-outage fixture leak closed and verified | Monitor live timeout and recall evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Design de-generic polish released and verified | Observe trust and empty outcomes with buyers |
@@ -79,8 +79,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Pokémon search now keeps Mew/Mewtwo, combination cards, and Trainer products in strict name tiers, requests a bounded identity-only payload, and reloads full data only after stable-ID confirmation.
 - Client request generations abort stale identity/comparison work. Native Next.js 16 history entries restore search, confirmation, and result snapshots without placing buyer or listing facts in the URL.
 - Identity search now carries cancellation from browser to route, resolver, and Pokémon fetch; one 18-second server budget permits the adapter's bounded 8-second attempt, 400 ms backoff, and retry while still returning before the 20-second route cap. Identical requests coalesce per server instance, successful identities use hashed 15-minute cache entries with a six-hour stale fallback, and provider deadlines return an explicit temporary-unavailable result.
-- Closed One Piece version groups no longer mount their cards until opened. A 2026-07-17 alternating five-card live check measured One Piece resolution at 16–50 ms server time, an uncached Pokémon resolution at 7.427 s, and its cached repeat at 20 ms; the full release gates remain authoritative.
-- A 2026-07-30 production check reproduced `Suicune` returning unavailable after 13.76 s while `Pikachu` resolved. The catalog's first attempt can consume its full 8-second timeout, but the former 10-second shared deadline cancelled the intended retry before it could complete. Regression coverage now proves a successful 10.5-second recovery is preserved. After deployment, the same `Suicune` request returned 27 candidates without warnings in 5.65 s.
+- Closed One Piece version groups no longer mount their cards until opened. A 2026-07-17 five-card live check measured One Piece resolution at 16–50 ms, uncached Pokémon at 7.427 s, cached repeat at 20 ms.
+- A catalog-outage lookup now returns an explicit empty/unavailable result instead of the bundled demo identities: while pokemontcg.io was 500ing, `umbreon` resolved to the two Umbreon VMAX fixtures rather than the catalog's 42 prints. Retries are two backoffs (300 ms, 1200 ms) under a 14 s ceiling, and single-word names walk the relaxed wildcard ladder.
+- A 2026-07-30 production check reproduced `Suicune` unavailable after 13.76 s: the catalog's first attempt can consume its full 8 s timeout, and the former 10 s shared deadline cancelled the retry. Regression coverage preserves a 10.5 s recovery; after deployment `Suicune` returned 27 candidates in 5.65 s.
 
 ### What went wrong
 
@@ -88,6 +89,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - TCGplayer group/product fallback could select an arbitrary parallel.
 - Special suffixes such as _p2 are not universally manga; suffix semantics cannot be guessed.
 - Live diagnostics on 2026-07-12 reproduced cross-facet false positives for Nami `OP01-016_p4`, Nami `EB03-053_p2`, Robin `EB03-055_p2`, and Zoro siblings. Later market-floor hardening rejects implausibly cheap rows but does not repair the underlying artwork-facet proof gap.
+- The demo-fixture identity fallback survived because every outage test used a name no fixture matched, so the leak only ever fired for Umbreon; outage tests now assert an empty candidate list for a name the fixtures *do* match. Separately, `exclusionPatterns` required the literal `extended art case`, so a bare `... 215/203 Extended Art` ranked as an eligible raw single — neither game has that print class, and the phrase only names aftermarket product.
 
 ### Current evidence and remaining gate
 
@@ -165,8 +167,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - docs/validation-plan.md
 - docs/product-spec.md
 - docs/product-principles.md
-- output/product-readiness-audit-2026-07-10/council/chairman.md (historical; missing from origin/main, retained as an artifact in the original checkout)
-- docs/councils/tcgpal_feature_scorecard.md (historical; missing from origin/main, retained as an artifact in the original checkout)
+- Historical council artifacts (`output/product-readiness-audit-2026-07-10/council/chairman.md`, `docs/councils/tcgpal_feature_scorecard.md`) are absent from origin/main and retained only in the original checkout.
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
@@ -186,6 +187,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - Supporting listings now read as one hairline ledger; generic exact-print evidence collapses to a keyboard-focusable `✓ print` / `✓ 版本` tag while special-print reasons retain the full evidence block.
 - Single identity candidates are centered, the recommendation explainer is compressed, and the landing marquee excludes SAMPLE-watermarked One Piece hosts while filling from curated clean card art.
 - English and Chinese desktop/mobile states have automated and visual coverage, including the seller-photo gallery retained inside the polished listing rows.
+- Non-NM searches now show an item-price read again. `deriveMarketRead` in `ranking.ts` reports the delta plus a `conditionMatched` flag: NM↔NM keeps the existing badge, everything else renders neutral as "under/above NM reference" with the condition-blind caveat and stays out of `priceScore`. No condition multiplier is invented.
 
 ### Not finished or not verified
 
@@ -237,12 +239,11 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-Observed on 2026-07-23 in isolated worktree `/Users/chenjunhsu/Desktop/projects/TCGpal-design-degeneric`:
+Observed on 2026-08-03 in the primary checkout `/Users/chenjunhsu/Desktop/projects/TCGpal`:
 
-- `codex/design-degeneric` contains the verified UI feature commit `d613d66` and canonical Graphify refresh `321db7c`; both are pushed to `main` without changing the seller-photo gallery.
-- QA screenshots were moved out of the release worktree to the Codex visualization area; they remain review evidence and are not committed product artifacts.
-- The original checkout remains untouched on `codex/identity-first-search`, one commit ahead and 35 behind `origin/main`, with eight tracked changes and 127 untracked entries.
-- Preserve the original Graphify changes, research, screenshots, and readiness artifacts. They are local acceleration/evidence, not automatically release work.
+- `graphify-out/` (~33k lines) and `package-lock.json` carry uncommitted changes predating the 2026-08-03 fix and were deliberately left out of `0e83f9c`. That commit adds one exported symbol (`deriveMarketRead`), so a `graphify update .` refresh is owed once those pending changes are resolved.
+- Eighteen worktrees exist under `.codex-worktrees/`, `.claude/worktrees/`, and sibling directories; several are prunable. `output/` and several `docs/` drafts remain untracked evidence, not release work.
+- Preserve the Graphify, research, screenshot, and readiness artifacts. They are local acceleration/evidence.
 
 Refresh this section with /progress; do not assume it remains current.
 <!-- progress:end -->
@@ -267,10 +268,11 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Latest verified product commit: `d613d662520f2147b3e22fc4347f26a153f1e15e` on 2026-07-23.
+Latest verified product commit: `0e83f9c` on 2026-08-03.
 
-- `npm run lint`, `npm run typecheck`, `npm test` (60 files / 845 tests), and `npm run build` passed on Next.js 16.2.6 after the final rebase and graph cleanup.
-- Built-in-browser live comparisons passed in English, 中文, desktop, and 390px mobile: generic supporting rows used compact accessible print tags, Nami special-print rows retained full reasons, single-candidate confirmation centered, the clean marquee stayed source-safe, and no horizontal overflow appeared.
+- 2026-08-03 catalog-outage/market-read fix: lint, typecheck, 62 files / 858 src tests, and a Next.js production build passed. A live re-check while pokemontcg.io was ~60% 500ing returned 42 real `umbreon` prints on three consecutive runs with no warnings (browser: 42 matches across 25 sets). Built-in-browser QA covered EN/中文 desktop and 375px mobile — Lightly Played rendered the neutral "under NM reference" badge, Near Mint kept the condition-matched badge, console empty. Caveat: `npm run test` also runs 115 pre-existing failures and 4 lint errors under untracked `output/` research artifacts (`corpus-false-positives.test.ts` is titled "expected to fail today"), confirmed byte-identical on the base commit; `vitest.config.ts` now excludes `.claude/worktrees/**`, which was running other branches' copies of every test.
+- Earlier, on commit `d613d66` (2026-07-23): `npm run lint`, `npm run typecheck`, `npm test` (60 files / 845 tests), and `npm run build` passed on Next.js 16.2.6 after the final rebase and graph cleanup.
+- Built-in-browser live comparisons passed in English, 中文, desktop, and 390px mobile: compact accessible print tags on generic rows, full reasons on Nami special-print rows, centered single-candidate confirmation, source-safe marquee, no horizontal overflow.
 - The merged result retained the eBay seller-photo gallery, 44px listing actions, keyboard order, and reduced-motion behavior; browser error logs were empty.
 - Seller photos remain display-only evidence: no automated condition/authenticity inference and no ranking integration. Extra images mount only after the gallery opens.
 - Production deployment `dpl_7mhj9Wqm4ZvYTKo3euBh8w3nPvYx` for `321db7c` reached Vercel `READY`; `https://tcgpal.vercel.app/` returned HTTP 200 on 2026-07-23.
