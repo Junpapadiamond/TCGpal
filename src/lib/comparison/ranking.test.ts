@@ -5,6 +5,7 @@ import {
   calculatePriceComponent,
   calculateSellerTrustScore,
   calculateValueScore,
+  deriveMarketRead,
   deriveVariantIntent,
   finalizeListingScores,
   normalizeListing,
@@ -338,6 +339,38 @@ describe("comparison ranking", () => {
     expect(lightlyPlayed.marketComparable).toBe(false);
   });
 
+  it("still reports an item-price read for played conditions, flagged as not condition-matched", () => {
+    // TCGCSV has no condition-level SKUs, so its anchor is effectively the NM
+    // price. That makes a played copy's delta a real fact ("this is what it
+    // costs against the NM reference") but not a bargain verdict. It used to be
+    // suppressed entirely, so a buyer who filtered to anything other than Near
+    // Mint saw no percentage at all.
+    const live = { ...demoListingSeeds[0], demo: false, price: 800, shipping: 0 };
+    const nmMatched = normalizeListing({
+      listing: { ...live, claimedCondition: "Near Mint" },
+      buyer: { ...buyer, desiredCondition: "Near Mint" },
+      marketPrice: 1000,
+    });
+    expect(deriveMarketRead(nmMatched, 1000)).toEqual({ delta: -0.2, conditionMatched: true });
+
+    const played = normalizeListing({
+      listing: { ...live, claimedCondition: "Lightly Played" },
+      buyer: { ...buyer, desiredCondition: "Lightly Played" },
+      marketPrice: 1000,
+    });
+    expect(played.marketComparable).toBe(false);
+    expect(deriveMarketRead(played, 1000)).toEqual({ delta: -0.2, conditionMatched: false });
+    // The un-matched read must not leak into the value math as a price reward.
+    expect(played.priceScore).toBe(50);
+
+    // Nothing to compare against stays nothing: fabricated demo prices, missing
+    // checkout cost, and an absent anchor all abstain.
+    expect(deriveMarketRead(played, null)).toBeNull();
+    expect(deriveMarketRead(played, 0)).toBeNull();
+    expect(deriveMarketRead({ ...played, demo: true }, 1000)).toBeNull();
+    expect(deriveMarketRead({ ...played, costComplete: false }, 1000)).toBeNull();
+  });
+
   it("excludes slabs, altered cards, lots, and low-confidence matches", () => {
     const slab = normalizeListing({
       listing: {
@@ -404,6 +437,37 @@ describe("comparison ranking", () => {
     ]) {
       const graded = normalizeListing({ listing: { ...demoListingSeeds[0], id: title, title }, buyer });
       expect(graded.eligible, title).toBe(false);
+    }
+  });
+
+  it("excludes 'extended art' novelty items however the title phrases them", () => {
+    // Neither Pokémon nor One Piece has an "extended art" print class — it is a
+    // Magic term. On eBay it always names an aftermarket item: a display case,
+    // an acrylic stand, a DIY/custom card, or an art print that carries the real
+    // card's name and collector number. The old filter required the exact phrase
+    // "extended art case", so every other phrasing reached the buyer as a raw
+    // single, sometimes as the recommended buy.
+    for (const title of [
+      "Umbreon VMAX 215/203 Extended Art Case Custom Display",
+      "Umbreon VMAX Evolving Skies 215/203 Extended Art Display Case 3D",
+      "Umbreon VMAX 215/203 Extended Art",
+      "Pokemon Umbreon VMAX 215/203 Extended-Art Holo",
+      "Umbreon VMAX Alt Art 215/203 EXTENDED ART Premium Art Case",
+    ]) {
+      const novelty = normalizeListing({ listing: { ...demoListingSeeds[0], id: title, title }, buyer });
+      expect(novelty.eligible, title).toBe(false);
+      expect(novelty.exclusionReasons.join(" "), title).toMatch(/not a raw single|sealed item|novelty/i);
+    }
+
+    // The real print classes must survive: "art rare", "alternate art", "full
+    // art" and friends are genuine and must not be swept up by the filter.
+    for (const title of [
+      "Umbreon VMAX Alternate Art Secret Rare 215/203 Evolving Skies NM",
+      "Monkey D. Luffy OP01-024 Alternate Art Romance Dawn NM",
+      "Umbreon VMAX Full Art 215/203 NM English",
+    ]) {
+      const real = normalizeListing({ listing: { ...demoListingSeeds[0], id: title, title }, buyer });
+      expect(real.exclusionReasons.join(" "), title).not.toMatch(/not a raw single/i);
     }
   });
 

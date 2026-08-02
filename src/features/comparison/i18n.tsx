@@ -411,6 +411,11 @@ const en = {
     underMarket: (pct: number) => `item ${pct}% under reference`,
     aboveMarket: (pct: number) => `item +${pct}% above reference`,
     nearMarket: "item near reference",
+    underNmReference: (pct: number) => `item ${pct}% under NM reference`,
+    aboveNmReference: (pct: number) => `item +${pct}% above NM reference`,
+    nearNmReference: "item near NM reference",
+    nmReferenceHint:
+      "The aggregate reference has no condition-level price, so it reads as Near Mint. Played copies normally sell below it — treat this as a reference point, not a bargain signal. It is not counted in the value score.",
     trustedSeller: "Trusted seller",
     unverifiedSeller: "Unverified seller",
     decentSeller: "Decent seller",
@@ -848,6 +853,11 @@ const zh: Dict = {
     underMarket: (pct: number) => `商品标价低于参考价 ${pct}%`,
     aboveMarket: (pct: number) => `商品标价高于参考价 ${pct}%`,
     nearMarket: "商品标价接近参考价",
+    underNmReference: (pct: number) => `商品标价低于 NM 参考价 ${pct}%`,
+    aboveNmReference: (pct: number) => `商品标价高于 NM 参考价 ${pct}%`,
+    nearNmReference: "商品标价接近 NM 参考价",
+    nmReferenceHint:
+      "汇总参考价没有分品相的价格，实际相当于 NM 价。有使用痕迹的卡通常低于该价格，请把它当作参考点，而不是低价信号。该数值不计入价值评分。",
     trustedSeller: "可信卖家",
     unverifiedSeller: "信息不足的卖家",
     decentSeller: "尚可卖家",

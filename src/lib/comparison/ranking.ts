@@ -48,7 +48,16 @@ const exclusionPatterns = [
   /\bkeychain\b/i,
   /\bplush\b/i,
   /\bnon[\s-]?textured\b/i,
-  /\bextended\s+art\s+case\b/i,
+  // "Extended art" is a Magic print class. Neither Pokémon nor One Piece has
+  // one, so on eBay the phrase only ever names an aftermarket item — a display
+  // case, an acrylic stand, a DIY/custom card, or an art print — carrying the
+  // real card's name and collector number. Requiring the exact phrase
+  // "extended art case" let every other phrasing ("... Extended Art Display
+  // Case", a bare "... 215/203 Extended Art") through as a raw single. The real
+  // print classes sellers do use — "alternate art", "full art", "art rare",
+  // "special art" — are matched by altArtTitlePattern and unaffected.
+  /\bextended[\s-]*art\b/i,
+  /\bart\s+case\b/i,
   /\bmagnetic\s+(?:case|holder)\b/i,
   /\bwall\s+art\b/i,
   /\bposter\s+print\b/i,
@@ -603,6 +612,37 @@ function aboveMarketContext(listing: NormalizedListing, marketPrice: number | nu
   return cheapestLens
     ? ` Supply is thin right now — even the cheapest eligible copy has an item price +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference.`
     : ` Note: this copy's item price is +${pct}% over the $${marketPrice.toFixed(2)} TCGplayer market reference; it leads the field, not the market.`;
+}
+
+// The item-price read against the aggregate market anchor, owned here so the UI
+// renders it rather than recomputing it.
+//
+// `conditionMatched` is true only when the buyer asked for Near Mint and the
+// seller claims Near Mint — the one case where TCGCSV's condition-blind anchor
+// is a like-for-like comparison and the delta can be read as a bargain or a
+// premium. For any other condition the delta is still a real, useful fact (this
+// is what the copy costs against the NM reference) so it is reported, but the
+// caller must present it as a reference point, not a verdict: played copies
+// normally sit below the NM anchor, and a condition multiplier that would turn
+// this into a true value read is not something any allowed source publishes.
+// Either way it never feeds priceScore — that stays gated on marketComparable.
+export type MarketRead = {
+  delta: number;
+  conditionMatched: boolean;
+};
+
+export function deriveMarketRead(
+  listing: Pick<NormalizedListing, "price" | "demo" | "costComplete" | "marketComparable">,
+  marketPrice: number | null,
+): MarketRead | null {
+  if (marketPrice === null || marketPrice <= 0) return null;
+  // Demo prices are fabricated and checkout cost must be known, or the read
+  // would compare against an incomplete number.
+  if (listing.demo || !listing.costComplete) return null;
+  return {
+    delta: (listing.price - marketPrice) / marketPrice,
+    conditionMatched: listing.marketComparable,
+  };
 }
 
 // A genuine raw single never costs a tiny fraction of its catalog market price;

@@ -1023,8 +1023,7 @@ describe("listing comparison agent", () => {
 
   it("surfaces a lookup-unavailable warning (and retries) instead of a silent 'no match'", async () => {
     // The Pokémon catalog API is down: a transient failure must not look like
-    // "this card doesn't exist". It should retry once, then
-    // report the real reason.
+    // "this card doesn't exist". It should retry, then report the real reason.
     let pokemonCalls = 0;
     const failing = (async (input: RequestInfo | URL) => {
       if (String(input).includes("api.pokemontcg.io")) {
@@ -1045,8 +1044,69 @@ describe("listing comparison agent", () => {
 
     expect(response.status).toBe("needs_confirmation");
     expect(response.identityCandidates).toEqual([]);
-    expect(pokemonCalls).toBe(2);
+    // One initial attempt plus every configured backoff retry.
+    expect(pokemonCalls).toBe(3);
     expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(true);
+  });
+
+  it("does not substitute demo fixture identities when the catalog is unavailable", async () => {
+    // Regression: pokemontcg.io 500s intermittently. The failure path used to
+    // return the bundled demo identities whenever the query happened to match
+    // one by name, so "umbreon" silently resolved to the two Umbreon VMAX
+    // fixtures instead of the catalog's real prints. Demo fixtures are
+    // test-only and must never stand in for a live catalog answer.
+    let pokemonCalls = 0;
+    const failing = (async (input: RequestInfo | URL) => {
+      if (String(input).includes("api.pokemontcg.io")) {
+        pokemonCalls += 1;
+        return { ok: false, status: 500, json: async () => ({}) } as Response;
+      }
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "pokemon", name: "Umbreon", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      { fetcher: failing },
+    );
+
+    expect(pokemonCalls).toBeGreaterThan(0);
+    expect(response.identityCandidates).toEqual([]);
+    expect(response.confirmedCard).toBeNull();
+    expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(true);
+  });
+
+  it("walks the relaxed query ladder for a single-word name so one bad tier is survivable", async () => {
+    // A one-word search used to build exactly one Lucene tier, so a single 500
+    // consumed the whole attempt. The wildcard fallbacks give a flaky catalog
+    // more than one chance inside the same attempt.
+    const queries: string[] = [];
+    const flaky = (async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.hostname !== "api.pokemontcg.io") throw new Error("network disabled in test");
+      const q = url.searchParams.get("q") ?? "";
+      queries.push(q);
+      // The exact-phrase tier fails; the wildcard tier succeeds.
+      if (q.includes('name:"')) return { ok: false, status: 500, json: async () => ({}) } as Response;
+      return { ok: true, status: 200, json: async () => catalogResponse } as Response;
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      {
+        ...request,
+        sourceListing: { ...request.sourceListing, title: "", url: "" },
+        cardHint: { game: "pokemon", name: "Umbreon", setCode: "", cardNumber: "", language: "English", variant: "", gradingClaim: "" },
+      },
+      { fetcher: flaky },
+    );
+
+    expect(queries.some((q) => q.includes('name:"'))).toBe(true);
+    expect(queries.some((q) => q.includes("name:umbreon*"))).toBe(true);
+    expect(response.identityCandidates.length).toBeGreaterThan(0);
+    expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(false);
   });
 
   it("ranks the requested One Piece set first and confirms it as high confidence", async () => {

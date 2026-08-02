@@ -739,16 +739,21 @@ async function identifyCards(
   // limits), so resolve real card identities whenever we have a usable query.
   if (searchName.length >= 2) {
     // pokemontcg.io's first (uncached) response can take 5-8s because it carries
-    // pricing payloads. Retry once, but keep each attempt bounded so identity
-    // selection cannot inherit the comparison route's much larger time budget: a
-    // transient rate-limit/network blip should not look like "this card doesn't
-    // exist". Responses are cached for an hour.
+    // pricing payloads. Retry with backoff, but keep each attempt bounded so
+    // identity selection cannot inherit the comparison route's much larger time
+    // budget: a transient rate-limit/network blip should not look like "this
+    // card doesn't exist". Responses are cached for an hour.
     let result = await searchPokemonWithRetry(
       {
         query: searchName,
         cardNumber: request.cardHint.cardNumber,
         setHint: request.cardHint.setCode,
-        relaxed: searchName.trim().split(/\s+/).length > 1,
+        // Always walk the relaxed ladder. The tiers only run when the tier above
+        // returns nothing or fails, so an exact one-word name still resolves on
+        // the first phrase query — but a one-word search no longer stakes the
+        // whole attempt on a single Lucene query against a catalog that 500s in
+        // bursts, and typo recovery stops depending on the AI parser.
+        relaxed: true,
         // A known collector number resolves to one specific print, so a small
         // page is enough; a name-only search (e.g. "pikachu") should return
         // every print the catalog has, not a truncated top slice — pageSize
@@ -797,13 +802,19 @@ async function identifyCards(
 
     // The lookup itself failed (warning already recorded). Surface that as an
     // unavailable lookup, not a confident "no match", so the UI can say "try again".
+    //
+    // Demo identities are never an outage fallback. pokemontcg.io 500s in
+    // bursts, and the bundled fixtures happen to be Umbreon VMAX, so returning
+    // `localMatches` here made every "umbreon" search during a bad window
+    // resolve to two fixture prints — unlabeled, and indistinguishable from a
+    // real catalog answer. An honest "unavailable" is the only correct output.
     trace.push({
       step: "card_identification",
       actor: "Pokémon catalog adapter",
-      summary: "Catalog lookup was unavailable after a retry; could not list versions.",
+      summary: "Catalog lookup was unavailable after retries; demo fixtures were not substituted for real prints.",
       status: "fallback",
     });
-    if (!localMatches.length) return [];
+    return [];
   }
 
   const fallback = localMatches;
@@ -818,31 +829,45 @@ async function identifyCards(
   return fallback;
 }
 
-// One retry on a transient Pokémon catalog failure. Returns null (and records a
-// user-facing warning) only when both attempts fail, so the caller can distinguish
-// "lookup unavailable" from a genuine empty result.
+// Retries on a transient Pokémon catalog failure. Returns null (and records a
+// user-facing warning) only when every attempt fails, so the caller can
+// distinguish "lookup unavailable" from a genuine empty result.
 // R5: the catalog's cold-start hiccup must not surface as "card catalog
 // temporarily unavailable" on a buyer's very first search — retry transient
-// failures once after a short backoff before giving up.
-const CATALOG_RETRY_DELAYS_MS = [400];
+// failures after a short backoff before giving up.
+//
+// pokemontcg.io does not fail cleanly: it 500s in bursts, alternating with 200s
+// over a few hundred milliseconds. A single 400ms retry lands inside the same
+// bad window often enough to matter, so back off twice and spread the second
+// wait past a typical burst.
+const CATALOG_RETRY_DELAYS_MS = [300, 1200];
+
+// Ceiling on the whole retry sequence. The identity runtime aborts everything at
+// 18s and the route at 20s; stopping at 14s leaves room to still return a
+// warning-carrying response instead of being killed mid-flight.
+const CATALOG_RETRY_BUDGET_MS = 14_000;
 
 async function searchPokemonWithRetry(
   options: Parameters<typeof searchPokemonCards>[0],
   warnings: string[],
 ): Promise<Awaited<ReturnType<typeof searchPokemonCards>> | null> {
+  const startedAt = Date.now();
+  let lastError: unknown = null;
+
   for (let attempt = 0; attempt <= CATALOG_RETRY_DELAYS_MS.length; attempt += 1) {
     if (attempt > 0) {
+      if (Date.now() - startedAt >= CATALOG_RETRY_BUDGET_MS) break;
       await abortableDelay(CATALOG_RETRY_DELAYS_MS[attempt - 1], options.signal);
     }
     try {
       return await searchPokemonCards(options);
     } catch (error) {
       if (options.signal?.aborted) throw error;
-      if (attempt === CATALOG_RETRY_DELAYS_MS.length) {
-        warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
-      }
+      lastError = error;
     }
   }
+
+  warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(lastError)}`);
   return null;
 }
 

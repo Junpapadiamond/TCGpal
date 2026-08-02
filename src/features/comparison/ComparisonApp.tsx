@@ -24,7 +24,7 @@ import {
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
-import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
+import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
@@ -2848,33 +2848,40 @@ function MarketDeltaBadge({
   compact?: boolean;
 }) {
   const t = useT();
-  const marketDelta = listing.marketComparable && listing.costComplete && marketPrice && marketPrice > 0
-    ? (listing.price - marketPrice) / marketPrice
-    : null;
-  if (marketDelta === null || listing.demo) return null;
+  const read = deriveMarketRead(listing, marketPrice);
+  if (!read) return null;
+  const { delta: marketDelta, conditionMatched } = read;
   const nearMarket = Math.abs(marketDelta) < 0.005;
-  const label = nearMarket
-    ? t.card.nearMarket
-    : marketDelta < 0
-      ? t.card.underMarket(Math.max(1, Math.round(Math.abs(marketDelta) * 100)))
-      : t.card.aboveMarket(Math.max(1, Math.round(marketDelta * 100)));
+  const pct = Math.max(1, Math.round(Math.abs(marketDelta) * 100));
+  // A played copy is compared against a condition-blind (effectively NM) anchor,
+  // so the number is a reference point rather than a bargain verdict: it says so
+  // in the label, carries the caveat in its title, and stays visually neutral
+  // instead of borrowing the green "under market" tone that reads as a deal.
+  const label = conditionMatched
+    ? nearMarket ? t.card.nearMarket : marketDelta < 0 ? t.card.underMarket(pct) : t.card.aboveMarket(pct)
+    : nearMarket ? t.card.nearNmReference : marketDelta < 0 ? t.card.underNmReference(pct) : t.card.aboveNmReference(pct);
   const prefix = nearMarket ? "≈" : marketDelta < 0 ? "▼" : "▲";
-  const tone = nearMarket
+  const neutral = nearMarket || !conditionMatched;
+  const tone = neutral
     ? "border-[#d6ded5] bg-[#f7f9f5] text-[#64736c]"
     : marketDelta < 0
       ? "border-[#c9d7ce] bg-[#dcecdf] text-[#2f6f73]"
       : "border-[#e5b8a3] bg-[#fcefe8] text-[#9a4a2c]";
+  const title = conditionMatched ? undefined : t.card.nmReferenceHint;
 
   if (compact) {
     return (
-      <span className={`text-xs font-black ${nearMarket ? "text-[#64736c]" : marketDelta < 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}>
+      <span
+        title={title}
+        className={`text-xs font-black ${neutral ? "text-[#64736c]" : marketDelta < 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}
+      >
         {prefix} {label}
       </span>
     );
   }
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-sm font-black ${tone}`}>
+    <span title={title} className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-sm font-black ${tone}`}>
       {prefix} {label}
     </span>
   );
