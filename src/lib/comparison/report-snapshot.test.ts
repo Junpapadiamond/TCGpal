@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { clearLocalCache } from "@/lib/ops/cache";
 import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
 import type { ComparisonReport } from "@/lib/schemas";
-import { getComparisonSnapshot, saveComparisonSnapshot } from "./report-snapshot";
+import {
+  getComparisonSnapshot,
+  getLatestComparisonSnapshot,
+  saveComparisonSnapshot,
+} from "./report-snapshot";
 
 function report(): ComparisonReport {
   const request = buildStandardComparisonRequest(STANDARD_COMPARISON_FLOW_CARDS[0]);
@@ -54,5 +58,32 @@ describe("comparison report snapshots", () => {
 
   it("rejects malformed snapshot identifiers", async () => {
     await expect(getComparisonSnapshot("../../secret")).resolves.toBeNull();
+  });
+
+  it("indexes the newest matching receipt without mutating the previous snapshot", async () => {
+    const confirmedCardId = STANDARD_COMPARISON_FLOW_CARDS[0].expectedCardId;
+    const first = await saveComparisonSnapshot(report(), {
+      id: "0123456789abcdef0123456789abcdef",
+      now: new Date("2026-07-31T10:00:00.000Z"),
+      confirmedCardId,
+    });
+    const nextReport = report();
+    nextReport.generatedAt = "2026-07-31T10:54:00.000Z";
+    const second = await saveComparisonSnapshot(nextReport, {
+      id: "fedcba9876543210fedcba9876543210",
+      now: new Date("2026-07-31T11:00:00.000Z"),
+      confirmedCardId,
+    });
+
+    const latest = await getLatestComparisonSnapshot({
+      confirmedCardId,
+      game: "pokemon",
+      desiredCondition: "Near Mint",
+    }, new Date("2026-08-01T10:00:00.000Z"));
+    const original = await getComparisonSnapshot(first.id, new Date("2026-08-01T10:00:00.000Z"));
+
+    expect(latest?.id).toBe(second.id);
+    expect(latest?.report.generatedAt).toBe("2026-07-31T10:54:00.000Z");
+    expect(original?.report.generatedAt).toBe("2026-07-31T09:54:00.000Z");
   });
 });

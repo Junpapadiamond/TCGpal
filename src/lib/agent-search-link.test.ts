@@ -7,6 +7,7 @@ describe("agent search links", () => {
       query: "Monkey.D.Luffy OP05-119 Japanese manga rare",
       game: "onePiece",
       confirmedCardId: "OP05-119_manga_jp",
+      desiredCondition: "Lightly Played",
     });
 
     expect(parseAgentSearchParams(new URL(url).searchParams)).toEqual({
@@ -14,12 +15,13 @@ describe("agent search links", () => {
       game: "onePiece",
       confirmedCardId: "OP05-119_manga_jp",
       autoSubmit: true,
+      desiredCondition: "Lightly Played",
     });
   });
 
   it("parses only safe journey URL fields for refresh restoration", () => {
-    expect(parseJourneySearchParams(new URLSearchParams("query=Mew&game=pokemon&step=confirmation"))).toEqual({
-      query: "Mew", game: "pokemon", step: "confirmation", confirmedCardId: undefined,
+    expect(parseJourneySearchParams(new URLSearchParams("query=Mew&game=pokemon&step=confirmation&condition=Near+Mint"))).toEqual({
+      query: "Mew", game: "pokemon", step: "confirmation", confirmedCardId: undefined, desiredCondition: "Near Mint",
     });
     expect(parseJourneySearchParams(new URLSearchParams("query=Nico+Robin+EB03-055&game=onePiece&step=result&card=EB03-055_p2&postalCode=10001"))).toEqual({
       query: "Nico Robin EB03-055", game: "onePiece", step: "result", confirmedCardId: "EB03-055_p2",
@@ -39,5 +41,11 @@ describe("agent search links", () => {
       confirmedCardId: undefined,
       autoSubmit: false,
     });
+  });
+
+  it("rejects an unsupported condition instead of changing the buyer request", () => {
+    expect(parseAgentSearchParams(new URLSearchParams(
+      "agent=1&game=pokemon&q=Umbreon+VMAX+215%2F203&condition=Gem+Mint",
+    ))).toBeNull();
   });
 });

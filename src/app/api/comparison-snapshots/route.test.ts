@@ -59,6 +59,13 @@ describe("/api/comparison-snapshots", () => {
     }));
     expect(restored.status).toBe(200);
     expect((await restored.json()).snapshot.report.generatedAt).toBe("2026-07-31T09:54:00.000Z");
+
+    const latest = await GET(new Request(
+      `https://tcglens.test/api/comparison-snapshots?card=${confirmedCardId}&game=pokemon&condition=Near%20Mint`,
+      { headers: { "x-forwarded-for": "203.0.113.8" } },
+    ));
+    expect(latest.status).toBe(200);
+    expect((await latest.json()).snapshot.id).toBe(body.receiptId);
   });
 
   it("refuses to create a receipt from a report that was not produced by the comparison service", async () => {

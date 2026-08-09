@@ -1,11 +1,12 @@
 import { z } from "zod";
-import type { TcgGame } from "@/lib/schemas";
+import { conditionClaimSchema, type ConditionClaim, type TcgGame } from "@/lib/schemas";
 
 const agentSearchSchema = z.object({
   query: z.string().trim().min(2).max(200),
   game: z.enum(["pokemon", "onePiece"]),
   confirmedCardId: z.string().trim().min(1).max(160).optional(),
   autoSubmit: z.boolean(),
+  desiredCondition: conditionClaimSchema.optional(),
 });
 
 export type AgentSearchHandoff = z.infer<typeof agentSearchSchema>;
@@ -15,6 +16,7 @@ const journeySearchSchema = z.object({
   game: z.enum(["pokemon", "onePiece"]),
   step: z.enum(["search", "confirmation", "result"]),
   confirmedCardId: z.string().trim().min(1).max(160).optional(),
+  desiredCondition: conditionClaimSchema.optional(),
 });
 
 export function parseJourneySearchParams(params: URLSearchParams) {
@@ -23,6 +25,7 @@ export function parseJourneySearchParams(params: URLSearchParams) {
     game: params.get("game") ?? "",
     step: params.get("step") ?? "",
     confirmedCardId: params.get("card") || undefined,
+    ...(params.has("condition") ? { desiredCondition: params.get("condition") } : {}),
   });
   return parsed.success ? parsed.data : null;
 }
@@ -35,13 +38,20 @@ export function parseAgentSearchParams(params: URLSearchParams): AgentSearchHand
     game: params.get("game") ?? "",
     confirmedCardId: params.get("card") || undefined,
     autoSubmit: params.get("auto") !== "0",
+    ...(params.has("condition") ? { desiredCondition: params.get("condition") } : {}),
   });
   return parsed.success ? parsed.data : null;
 }
 
 export function buildAgentSearchUrl(
   origin: string,
-  input: { query: string; game: TcgGame; confirmedCardId?: string; autoSubmit?: boolean },
+  input: {
+    query: string;
+    game: TcgGame;
+    confirmedCardId?: string;
+    autoSubmit?: boolean;
+    desiredCondition?: ConditionClaim;
+  },
 ) {
   const url = new URL("/", origin);
   url.searchParams.set("agent", "1");
@@ -49,5 +59,6 @@ export function buildAgentSearchUrl(
   url.searchParams.set("q", input.query.trim());
   if (input.confirmedCardId) url.searchParams.set("card", input.confirmedCardId.trim());
   if (input.autoSubmit === false) url.searchParams.set("auto", "0");
+  if (input.desiredCondition) url.searchParams.set("condition", input.desiredCondition);
   return url.toString();
 }

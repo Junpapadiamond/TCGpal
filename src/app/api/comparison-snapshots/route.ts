@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
+  comparisonSnapshotLookupSchema,
   getComparisonSnapshot,
+  getLatestComparisonSnapshot,
   saveComparisonSnapshot,
 } from "@/lib/comparison/report-snapshot";
 import {
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
         { status: 404, headers },
       );
     }
-    const snapshot = await saveComparisonSnapshot(report);
+    const snapshot = await saveComparisonSnapshot(report, { confirmedCardId: input.confirmedCardId });
     return NextResponse.json({
       receiptId: snapshot.id,
       savedAt: snapshot.savedAt,
@@ -67,8 +69,16 @@ export async function GET(request: Request) {
     );
   }
 
-  const id = new URL(request.url).searchParams.get("id") ?? "";
-  const snapshot = await getComparisonSnapshot(id);
+  const searchParams = new URL(request.url).searchParams;
+  const id = searchParams.get("id") ?? "";
+  const latestLookup = comparisonSnapshotLookupSchema.safeParse({
+    confirmedCardId: searchParams.get("card") ?? "",
+    game: searchParams.get("game") ?? "",
+    desiredCondition: searchParams.get("condition") ?? "",
+  });
+  const snapshot = id
+    ? await getComparisonSnapshot(id)
+    : latestLookup.success ? await getLatestComparisonSnapshot(latestLookup.data) : null;
   if (!snapshot) {
     return NextResponse.json({ error: "This saved comparison is unavailable or has expired." }, { status: 404, headers });
   }

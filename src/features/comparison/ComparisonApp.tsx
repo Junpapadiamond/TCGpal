@@ -442,6 +442,7 @@ function ComparisonExperience() {
       };
       setResultSnapshot(next);
       if (!durable) return;
+      trackEvent("receipt_created");
       const url = new URL(window.location.href);
       url.searchParams.set("receipt", payload.receiptId);
       window.history.replaceState(window.history.state, "", `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
@@ -521,6 +522,7 @@ function ComparisonExperience() {
     if (query) params.set("query", query);
     params.set("game", snapshot.form.game);
     params.set("step", step);
+    params.set("condition", snapshot.form.desiredCondition);
     const cardId = snapshot.selectedIdentity?.id ?? snapshot.pendingRequest?.confirmedCardId;
     if (cardId) params.set("card", cardId);
     window.history[mode === "push" ? "pushState" : "replaceState"](
@@ -696,33 +698,37 @@ function ComparisonExperience() {
     if (agentHandoffHandled.current) return;
     agentHandoffHandled.current = true;
     const searchParams = new URLSearchParams(window.location.search);
+    const restoreSnapshot = (payload: unknown, expectedReceiptId?: string) => {
+      if (!payload || typeof payload !== "object" || !("snapshot" in payload)) throw new Error(t.error.temporary);
+      const rawSnapshot = (payload as { snapshot?: unknown }).snapshot;
+      if (!rawSnapshot || typeof rawSnapshot !== "object") throw new Error(t.error.temporary);
+      const snapshot = rawSnapshot as { id?: unknown; report?: unknown; savedAt?: unknown };
+      const restoredReport = comparisonReportSchema.parse(snapshot.report);
+      if (typeof snapshot.id !== "string" || !/^[a-f0-9]{32}$/.test(snapshot.id) || typeof snapshot.savedAt !== "string") {
+        throw new Error(t.error.temporary);
+      }
+      if (expectedReceiptId && snapshot.id !== expectedReceiptId) throw new Error(t.error.temporary);
+      setReport(restoredReport);
+      setPendingRequest(restoredReport.request);
+      setSelectedIdentity(restoredReport.confirmedCard);
+      form.setValue("heroQuery", restoredReport.request.query ?? restoredReport.request.cardHint.name);
+      form.setValue("game", restoredReport.request.cardHint.game);
+      form.setValue("desiredCondition", restoredReport.request.buyer.desiredCondition);
+      setResultSnapshot({
+        id: snapshot.id,
+        durable: true,
+        restored: true,
+        savedAt: snapshot.savedAt,
+        reportGeneratedAt: restoredReport.generatedAt,
+      });
+      setJourneyState("result");
+    };
     const receiptId = searchParams.get("receipt");
     if (receiptId && /^[a-f0-9]{32}$/.test(receiptId)) {
       queueMicrotask(() => setJourneyState("restoring"));
       void fetch(`/api/comparison-snapshots?id=${encodeURIComponent(receiptId)}`)
         .then((response) => readJsonResponse(response, t.error.temporary))
-        .then((payload) => {
-          if (!payload || typeof payload !== "object" || !("snapshot" in payload)) throw new Error(t.error.temporary);
-          const rawSnapshot = (payload as { snapshot?: unknown }).snapshot;
-          if (!rawSnapshot || typeof rawSnapshot !== "object") throw new Error(t.error.temporary);
-          const snapshot = rawSnapshot as { id?: unknown; report?: unknown; savedAt?: unknown };
-          const restoredReport = comparisonReportSchema.parse(snapshot.report);
-          if (snapshot.id !== receiptId || typeof snapshot.savedAt !== "string") throw new Error(t.error.temporary);
-          setReport(restoredReport);
-          setPendingRequest(restoredReport.request);
-          setSelectedIdentity(restoredReport.confirmedCard);
-          form.setValue("heroQuery", restoredReport.request.query ?? restoredReport.request.cardHint.name);
-          form.setValue("game", restoredReport.request.cardHint.game);
-          form.setValue("desiredCondition", restoredReport.request.buyer.desiredCondition);
-          setResultSnapshot({
-            id: receiptId,
-            durable: true,
-            restored: true,
-            savedAt: snapshot.savedAt,
-            reportGeneratedAt: restoredReport.generatedAt,
-          });
-          setJourneyState("result");
-        })
+        .then((payload) => restoreSnapshot(payload, receiptId))
         .catch((caught) => {
           setError(caught instanceof Error ? caught.message : t.error.temporary);
           setJourneyState("error");
@@ -736,12 +742,37 @@ function ComparisonExperience() {
       game: journey.game,
       confirmedCardId: journey.confirmedCardId,
       autoSubmit: journey.step !== "search",
+      desiredCondition: journey.desiredCondition,
     } : null);
     if (!restored) return;
 
     form.setValue("heroQuery", restored.query);
     form.setValue("game", restored.game);
+    if (restored.desiredCondition) form.setValue("desiredCondition", restored.desiredCondition);
     if (!restored.autoSubmit) return;
+
+    if (!handoff && journey?.step === "result" && journey.confirmedCardId && journey.desiredCondition) {
+      const runFreshComparison = () => {
+        void form.handleSubmit((values) => submitComparison(values, restored.confirmedCardId))();
+      };
+      const lookupUrl = `/api/comparison-snapshots?card=${encodeURIComponent(journey.confirmedCardId)}`
+        + `&game=${encodeURIComponent(journey.game)}`
+        + `&condition=${encodeURIComponent(journey.desiredCondition)}`;
+      queueMicrotask(() => setJourneyState("restoring"));
+      void fetch(lookupUrl)
+        .then(async (response) => {
+          if (response.status === 404) {
+            runFreshComparison();
+            return null;
+          }
+          return readJsonResponse(response, t.error.temporary);
+        })
+        .then((payload) => {
+          if (payload) restoreSnapshot(payload);
+        })
+        .catch(runFreshComparison);
+      return;
+    }
 
     void form.handleSubmit((values) => submitComparison(values, restored.confirmedCardId))();
     // This is intentionally mount-only: a handoff must run at most once even as
@@ -2162,14 +2193,13 @@ function ComparisonResult({
     try {
       const shareUrl = snapshot?.id && snapshot.durable
         ? (() => {
-            const url = new URL(window.location.href);
-            url.searchParams.set("receipt", snapshot.id!);
+            const url = new URL(`/r/${snapshot.id}`, window.location.origin);
             return url.toString();
           })()
         : null;
       await navigator.clipboard.writeText(shareUrl ?? receipt);
       setReceiptCopied(true);
-      trackEvent("comparison_receipt_copied");
+      trackEvent(shareUrl ? "receipt_link_copied" : "comparison_receipt_copied");
       window.setTimeout(() => setReceiptCopied(false), 2000);
     } catch {
       setReceiptCopied(false);

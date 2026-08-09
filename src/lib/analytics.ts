@@ -14,6 +14,10 @@ export type TcgpalAnalyticsEvent =
   | "choice_opened"
   | "lens_selected"
   | "comparison_receipt_copied"
+  | "receipt_created"
+  | "receipt_viewed"
+  | "receipt_recheck_clicked"
+  | "receipt_link_copied"
   | "decision_feedback_submitted"
   | "second_comparison_started"
   // Fold-rate signals: fired once per report on first open of a Layer-2/3
@@ -33,7 +37,9 @@ const allowedProperties = new Set([
   "confidence",
   "duration_bucket",
   "changed_decision",
+  "referrer_class",
 ]);
+const allowedReferrerClasses = new Set(["direct", "reddit", "discord", "other"]);
 
 let initialized = false;
 
@@ -73,6 +79,9 @@ export function trackEvent(event: TcgpalAnalyticsEvent, properties: Record<strin
 
 export function sanitizeAnalyticsProperties(properties: Record<string, unknown>) {
   return Object.fromEntries(
-    Object.entries(properties).filter(([key]) => allowedProperties.has(key)),
+    Object.entries(properties).filter(([key, value]) => (
+      allowedProperties.has(key)
+      && (key !== "referrer_class" || (typeof value === "string" && allowedReferrerClasses.has(value)))
+    )),
   );
 }

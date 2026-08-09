@@ -438,14 +438,36 @@ describe("comparison condition controls", () => {
     }), { headers: { "Content-Type": "application/json" } }));
   });
 
-  it("uses card-comparison loading copy when a result URL is replayed", async () => {
-    window.history.replaceState(null, "", "/?query=Charizard+ex+199%2F165&game=pokemon&step=result&card=sv3pt5-199");
-    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+  it("resolves a result journey URL to the newest matching receipt without rerunning the pipeline", async () => {
+    const request = buildStandardComparisonRequest(STANDARD_COMPARISON_FLOW_CARDS[0]);
+    const savedReport = {
+      ...reportFor(request),
+      confirmedCard: identityForQuery("Umbreon VMAX 215/203"),
+      outcome: "next_moves" as const,
+    };
+    const receiptId = "0123456789abcdef0123456789abcdef";
+    window.history.replaceState(null, "", "/?query=Umbreon+VMAX+215%2F203&game=pokemon&step=result&condition=Near+Mint&card=swsh7-215");
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).includes("/api/comparison-snapshots?")) {
+        return new Response(JSON.stringify({
+          snapshot: {
+            id: receiptId,
+            report: savedReport,
+            savedAt: "2026-07-31T10:00:00.000Z",
+            expiresAt: "2026-08-30T10:00:00.000Z",
+          },
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      throw new Error(`comparison pipeline must not rerun: ${String(input)}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<ComparisonApp />);
 
-    expect(await screen.findByRole("heading", { name: "Comparing listings for Charizard ex 199/165" })).toBeTruthy();
-    expect(screen.queryByRole("heading", { name: "Reading your listing" })).toBeNull();
+    expect(await screen.findByText(/Saved comparison/i)).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("card=swsh7-215");
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("condition=Near%20Mint");
   });
 
   it("restores a saved result without rerunning the comparison pipeline", async () => {
@@ -522,7 +544,7 @@ describe("comparison condition controls", () => {
 
     await waitFor(() => expect(window.location.search).toContain(`receipt=${receiptId}`));
     fireEvent.click(screen.getByRole("button", { name: "Share receipt" }));
-    await waitFor(() => expect(clipboard.writeText).toHaveBeenCalledWith(expect.stringContaining(`receipt=${receiptId}`)));
+    await waitFor(() => expect(clipboard.writeText).toHaveBeenCalledWith(`http://localhost/r/${receiptId}`));
     expect(String(clipboard.writeText.mock.calls[0]?.[0])).not.toContain("postalCode");
   });
 
