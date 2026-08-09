@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
@@ -37,6 +37,7 @@ import {
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
 import { PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
+import { cardImageSource } from "@/lib/external/card-image";
 import {
   defaultComparisonFormValues,
   emptyLedgerRow,
@@ -86,8 +87,10 @@ const conditions: ConditionClaim[] = [
 ];
 
 const RECENT_CONFIRMED_CARDS_KEY = "tcgpal:recent-confirmed-cards";
-const MAX_MARQUEE_REAL_CARDS = 8;
-export const RAIL_SLOTS = 14;
+// Kept as an exported compatibility name for callers that imported the former
+// cap. The default rail is intentionally unbounded; a finite value can still
+// be passed to buildRail by a constrained embedding surface.
+export const RAIL_SLOTS = Number.POSITIVE_INFINITY;
 
 export type RecentCarouselCard = {
   id: string;
@@ -97,21 +100,21 @@ export type RecentCarouselCard = {
   setCode: string;
   cardNumber: string;
   imageUrl: string | null;
+  variant?: string | null;
   lastSeenAt: number;
 };
 
-// TODO(catalog rail): replace this Pokémon-only pool with a verified,
-// freshness-bounded catalog source before adding One Piece cards or making any
-// "newest" / "chase right now" claim about the rail.
-const CURATED_MARQUEE_CARDS: RecentCarouselCard[] = [
+// Onboarding seed only: these are stable, exact prints that make the rail useful
+// before the buyer has searched. Once a buyer searches, their own history leads;
+// the seed remains as a small fallback pool after it.
+export const DEFAULT_MARQUEE_CARDS: RecentCarouselCard[] = [
   { id: "curated-swsh7-215", game: "pokemon", name: "Umbreon VMAX", setName: "Evolving Skies", setCode: "SWSH7", cardNumber: "215/203", imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png", lastSeenAt: 0 },
-  { id: "curated-sv3pt5-151", game: "pokemon", name: "Mew ex", setName: "151", setCode: "MEW", cardNumber: "151/165", imageUrl: "https://images.pokemontcg.io/sv3pt5/151_hires.png", lastSeenAt: 0 },
-  { id: "curated-swsh12pt5gg-GG44", game: "pokemon", name: "Mewtwo VSTAR", setName: "Crown Zenith: Galarian Gallery", setCode: "CRZ", cardNumber: "GG44/GG70", imageUrl: "https://images.pokemontcg.io/swsh12pt5gg/GG44_hires.png", lastSeenAt: 0 },
-  { id: "curated-sv6-214", game: "pokemon", name: "Greninja ex", setName: "Twilight Masquerade", setCode: "TWM", cardNumber: "214/167", imageUrl: "https://images.pokemontcg.io/sv6/214_hires.png", lastSeenAt: 0 },
-  { id: "curated-sm12-251", game: "pokemon", name: "Venusaur & Snivy GX", setName: "Cosmic Eclipse", setCode: "CEC", cardNumber: "251/236", imageUrl: "https://images.pokemontcg.io/sm12/251_hires.png", lastSeenAt: 0 },
-  { id: "curated-swshp-SWSH144", game: "pokemon", name: "Greninja Gold Star", setName: "SWSH Black Star Promos", setCode: "SWSH", cardNumber: "SWSH144", imageUrl: "https://images.pokemontcg.io/swshp/SWSH144_hires.png", lastSeenAt: 0 },
-  { id: "curated-sv4-245", game: "pokemon", name: "Iron Valiant ex", setName: "Paradox Rift", setCode: "PAR", cardNumber: "245/182", imageUrl: "https://images.pokemontcg.io/sv4/245_hires.png", lastSeenAt: 0 },
   { id: "curated-base1-4", game: "pokemon", name: "Charizard", setName: "Base", setCode: "BS", cardNumber: "4/102", imageUrl: "https://images.pokemontcg.io/base1/4_hires.png", lastSeenAt: 0 },
+  { id: "curated-base1-58", game: "pokemon", name: "Pikachu", setName: "Base", setCode: "BS", cardNumber: "58/102", imageUrl: "https://images.pokemontcg.io/base1/58_hires.png", lastSeenAt: 0 },
+  { id: "curated-swsh11-186", game: "pokemon", name: "Giratina V", setName: "Lost Origin", setCode: "SWSH11", cardNumber: "186/196", imageUrl: "https://images.pokemontcg.io/swsh11/186_hires.png", lastSeenAt: 0 },
+  { id: "OP05-119_p2", game: "onePiece", name: "Monkey.D.Luffy", setName: "Awakening Of The New Era", setCode: "OP-05", cardNumber: "OP05-119", imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP05-119_p2.png", variant: "Manga Art", lastSeenAt: 0 },
+  { id: "OP06-118_p2", game: "onePiece", name: "Roronoa Zoro", setName: "Wings Of The Captain", setCode: "OP-06", cardNumber: "OP06-118", imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP06-118_p2.png", variant: "Manga Art", lastSeenAt: 0 },
+  { id: "OP01-016_p4", game: "onePiece", name: "Nami", setName: "Awakening Of The New Era", setCode: "OP-01", cardNumber: "OP01-016", imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP01-016_p4.png", variant: "SP", lastSeenAt: 0 },
 ];
 
 export type RailItem = {
@@ -144,10 +147,7 @@ export function buildRail(
     // The set code is deliberately excluded — the catalog and the curated pool
     // use different vocabularies for one set (SV6 vs TWM), which let the same
     // card sit in the rail twice. Name plus printed number is the stable pair.
-    const key = `${card.game}:${card.name}:${card.cardNumber}`
-      .toLowerCase()
-      .replace(/\s+/g, " ")
-      .trim();
+    const key = recentCarouselCardKey(card);
     if (!byCard.has(key)) byCard.set(key, { card: { ...card, imageUrl }, source });
   };
 
@@ -279,6 +279,7 @@ function toRecentCarouselCard(identity: CardIdentityCandidate, game: TcgGame): R
     setCode: identity.setCode,
     cardNumber: identity.cardNumber,
     imageUrl: identity.imageUrl ?? null,
+    variant: identity.variant ?? null,
     lastSeenAt: Date.now(),
   };
 }
@@ -293,6 +294,7 @@ function isRecentCarouselCard(value: unknown): value is RecentCarouselCard {
     && typeof candidate.setCode === "string"
     && typeof candidate.cardNumber === "string"
     && (typeof candidate.imageUrl === "string" || candidate.imageUrl === null)
+    && (typeof candidate.variant === "string" || candidate.variant === null || candidate.variant === undefined)
     && typeof candidate.lastSeenAt === "number";
 }
 
@@ -305,6 +307,10 @@ function safeCarouselImageUrl(value: string | null) {
       && (
         host === "images.pokemontcg.io"
         || host === "images.scrydex.com"
+        || host === "en.onepiece-cardgame.com"
+        || host === "onepiece-cardgame.com"
+        || host === "optcgapi.com"
+        || host === "www.optcgapi.com"
       );
     return allowed ? value : null;
   } catch {
@@ -321,7 +327,7 @@ function readRecentCarouselCards(): RecentCarouselCard[] {
       .filter(isRecentCarouselCard)
       .map((card) => ({ ...card, imageUrl: safeCarouselImageUrl(card.imageUrl) }))
       .filter((card) => card.imageUrl !== null)
-      .slice(0, MAX_MARQUEE_REAL_CARDS);
+      .sort((a, b) => b.lastSeenAt - a.lastSeenAt);
   } catch {
     return [];
   }
@@ -330,14 +336,26 @@ function readRecentCarouselCards(): RecentCarouselCard[] {
 function writeRecentCarouselCards(cards: RecentCarouselCard[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(RECENT_CONFIRMED_CARDS_KEY, JSON.stringify(cards.slice(0, MAX_MARQUEE_REAL_CARDS)));
+    window.localStorage.setItem(RECENT_CONFIRMED_CARDS_KEY, JSON.stringify(cards));
   } catch {
     /* ignore unavailable storage */
   }
 }
 
-function mergeRecentCarouselCard(cards: RecentCarouselCard[], card: RecentCarouselCard) {
-  return [card, ...cards.filter((existing) => existing.id !== card.id)].slice(0, MAX_MARQUEE_REAL_CARDS);
+export function recentCarouselCardKey(card: RecentCarouselCard) {
+  const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
+  // One Piece alternate arts share a printed number, so their stable catalog
+  // print id must remain part of the key. Pokémon's catalog id can vary across
+  // adapters while name + printed number remains the useful crosswalk identity.
+  const identity = card.game === "onePiece"
+    ? normalize(card.id)
+    : `${normalize(card.name)}:${normalize(card.cardNumber)}`;
+  return `${card.game}:${identity}`;
+}
+
+export function mergeRecentCarouselCard(cards: RecentCarouselCard[], card: RecentCarouselCard) {
+  const key = recentCarouselCardKey(card);
+  return [card, ...cards.filter((existing) => recentCarouselCardKey(existing) !== key)];
 }
 
 function focusComparisonTarget() {
@@ -891,7 +909,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
 
   const compactMode = Boolean(pendingRequest || report);
   const activeCard = report?.confirmedCard ?? null;
-  const railItems = buildRail(recentCarouselCards, CURATED_MARQUEE_CARDS);
+  const railItems = buildRail(recentCarouselCards, DEFAULT_MARQUEE_CARDS);
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.variant, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
@@ -950,7 +968,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     form.reset({
       ...values,
       game: card.game,
-      heroQuery: `${card.name} ${card.cardNumber}`.trim(),
+      heroQuery: [card.name, card.cardNumber, card.variant].filter(Boolean).join(" ").trim(),
       cardName: card.name,
       setCode: card.setCode,
       cardNumber: card.cardNumber,
@@ -1497,6 +1515,10 @@ function CardMarquee({
   const t = useT();
   const marqueeItems = buildMarqueeItems(items);
   if (marqueeItems.length === 0) return null;
+  // Keep the card pitch stable as history grows: the track gets longer and the
+  // duration scales with it, so cards do not accelerate into a blur after a
+  // buyer has checked many unique prints.
+  const durationSeconds = Math.max(46, items.length * 5.75);
   return (
     <section className="card-marquee-wrap mt-8 sm:mt-10" aria-label={t.rail.ariaLabel}>
       {/*
@@ -1506,7 +1528,10 @@ function CardMarquee({
         froze with no card hovered, so the check button never appeared.
       */}
       <div className="card-marquee">
-        <div className="card-marquee-track">
+        <div
+          className="card-marquee-track"
+          style={{ "--card-marquee-duration": `${durationSeconds}s` } as CSSProperties}
+        >
           {marqueeItems.map((item, index) => (
             <CardMarqueeItem
               key={`${item.card.id}-${item.clone ? "clone" : "real"}-${index}`}
@@ -1544,7 +1569,14 @@ function CardMarqueeItem({
       onClick={() => onCheck(card, source)}
     >
       <span className="card-marquee-art">
-        <Image src={card.imageUrl} alt="" fill sizes="132px" className="object-contain" unoptimized />
+        <Image
+          src={cardImageSource(card.imageUrl) ?? card.imageUrl}
+          alt=""
+          fill
+          sizes="132px"
+          className="object-contain"
+          unoptimized={card.game === "pokemon"}
+        />
         <span className="card-marquee-veil" />
         <span className="card-marquee-go">
           {t.rail.checkThisCard}
@@ -1728,6 +1760,7 @@ function ComparisonReplayLoading({ query }: { query: string }) {
 function ConfirmedCardMotion({ identity }: { identity: CardIdentityCandidate }) {
   const t = useT();
   const [failed, setFailed] = useState(false);
+  const imageSrc = cardImageSource(identity.imageUrl);
   return (
     <div
       data-testid="confirmed-card-motion"
@@ -1777,17 +1810,17 @@ function ConfirmedCardMotion({ identity }: { identity: CardIdentityCandidate }) 
           .confirmed-card-motion-track { display: none; }
         }
       `}</style>
-      {identity.imageUrl && !failed ? (
+      {imageSrc && !failed ? (
         <>
           <div className="confirmed-card-motion-track" aria-hidden="true">
             {Array.from({ length: 3 }, (_, index) => (
               <span className="confirmed-card-motion-copy" key={index}>
-                <Image src={identity.imageUrl!} alt="" width={78} height={109} className="h-auto w-full" />
+                <Image src={imageSrc} alt="" width={78} height={109} className="h-auto w-full" />
               </span>
             ))}
           </div>
           <div className="confirmed-card-motion-anchor">
-            <Image src={identity.imageUrl} alt={`${identity.name} ${identity.cardNumber}`} width={132} height={185} className="h-auto w-full" onError={() => setFailed(true)} />
+            <Image src={imageSrc} alt={`${identity.name} ${identity.cardNumber}`} width={132} height={185} className="h-auto w-full" onError={() => setFailed(true)} />
           </div>
         </>
       ) : (
@@ -2806,6 +2839,7 @@ function HoloCardArt({
 }) {
   const t = useT();
   const [failed, setFailed] = useState(false);
+  const imageSrc = cardImageSource(src) ?? src;
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch") return;
 
@@ -2844,7 +2878,7 @@ function HoloCardArt({
           {t.identity.imageUnavailable}
         </div>
       ) : (
-        <Image src={src} alt={alt} fill className="holo-card-image" sizes={sizes} onError={() => setFailed(true)} />
+        <Image src={imageSrc} alt={alt} fill className="holo-card-image" sizes={sizes} onError={() => setFailed(true)} />
       )}
     </div>
   );
@@ -3012,7 +3046,19 @@ function MarketDeltaBadge({
 }) {
   const t = useT();
   const read = deriveMarketRead(listing, marketPrice);
-  if (!read) return null;
+  if (!read) {
+    // A missing catalog crosswalk is a real source state, not a zero delta. Keep
+    // it visible beside the price so the buyer knows why no under/above read is
+    // present and can distinguish it from a bug or a hidden calculation.
+    if (marketPrice === null && !listing.demo && listing.costComplete) {
+      return (
+        <span className="inline-flex items-center rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1 text-sm font-black text-[#64736c]">
+          {t.card.marketReferenceUnavailable}
+        </span>
+      );
+    }
+    return null;
+  }
   const { delta: marketDelta, conditionMatched } = read;
   const nearMarket = Math.abs(marketDelta) < 0.005;
   const pct = Math.max(1, Math.round(Math.abs(marketDelta) * 100));

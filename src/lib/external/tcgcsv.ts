@@ -237,22 +237,37 @@ async function findTcgplayerGroup(
     return groups.find((group) => group.groupId === preferredGroupId) ?? null;
   }
 
-  const wanted = normalize(setName);
-  if (!wanted) return null;
+  const wantedTerms = setNameMatchTerms(setName);
+  if (!wantedTerms[0]) return null;
 
   // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies").
   // Rank every containment candidate so a short name such as "Base" cannot
   // select "Scarlet & Violet Base Set" merely because it appears first.
   const contained = groups
-    .map((group) => ({ group, tier: containmentTier(normalize(group.name), wanted) }))
+    .map((group) => ({
+      group,
+      tier: Math.max(...wantedTerms.map((wanted) => containmentTier(normalize(group.name), wanted))),
+    }))
     .filter((entry) => entry.tier > 0)
     .sort((a, b) => b.tier - a.tier || normalize(a.group.name).length - normalize(b.group.name).length);
   if (contained[0]) return contained[0].group;
 
   const bestTokens = groups
-    .map((group) => ({ group, overlap: nameOverlap(group.name, setName) }))
+    .map((group) => ({
+      group,
+      overlap: Math.max(...wantedTerms.map((wanted) => nameOverlap(group.name, wanted))),
+    }))
     .sort((a, b) => b.overlap - a.overlap)[0];
   return bestTokens && bestTokens.overlap >= 0.8 ? bestTokens.group : null;
+}
+
+function setNameMatchTerms(setName: string) {
+  const wanted = normalize(setName);
+  // pokemontcg.io calls this release "SM Black Star Promos" while TCGplayer
+  // publishes the same group as "SM Promos". Keep the alias narrow so a broad
+  // promo search cannot silently cross into a different era's group.
+  if (wanted === "smblackstarpromos") return [wanted, "smpromos"];
+  return [wanted];
 }
 
 export function inferTcgplayerCategoryId(card: Pick<CardIdentityCandidate, "cardNumber"> & Partial<Pick<CardIdentityCandidate, "id" | "setCode">>) {

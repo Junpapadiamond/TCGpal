@@ -7,8 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildRail,
   ComparisonApp,
+  DEFAULT_MARQUEE_CARDS,
+  mergeRecentCarouselCard,
   PrintIdentitySummary,
-  RAIL_SLOTS,
   type RecentCarouselCard,
 } from "@/features/comparison/ComparisonApp";
 import { setLanguage, useLang } from "@/features/comparison/i18n";
@@ -161,9 +162,48 @@ describe("landing rail helpers", () => {
     expect(rail[0]?.card.setCode).toBe("SV6");
   });
 
-  it("caps the rail so a long history cannot grow it without bound", () => {
+  it("keeps the complete unique history so the loop can repeat without a short cap", () => {
     const recent = Array.from({ length: 40 }, (_, index) => carouselCard(String(index), "recent"));
-    expect(buildRail(recent, curated)).toHaveLength(RAIL_SLOTS);
+    expect(buildRail(recent, curated)).toHaveLength(48);
+  });
+
+  it("accepts official One Piece card art in the rolling rail", () => {
+    const onePieceCard: RecentCarouselCard = {
+      id: "OP05-119_p2",
+      game: "onePiece",
+      name: "Monkey.D.Luffy",
+      setName: "Awakening Of The New Era",
+      setCode: "OP-05",
+      cardNumber: "OP05-119",
+      imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP05-119_p2.png",
+      lastSeenAt: 0,
+    };
+
+    expect(buildRail([onePieceCard], [])).toMatchObject([{
+      card: { id: "OP05-119_p2", imageUrl: onePieceCard.imageUrl },
+      source: "recent",
+    }]);
+  });
+
+  it("dedupes the same searched print even when its result id changes", () => {
+    const first = carouselCard("pikachu", "recent");
+    const refreshed = { ...first, id: "catalog-pikachu", lastSeenAt: 2 };
+    expect(mergeRecentCarouselCard([first], refreshed)).toHaveLength(1);
+    expect(mergeRecentCarouselCard([first], refreshed)[0]?.id).toBe("catalog-pikachu");
+  });
+
+  it("seeds the landing rail with the requested iconic Pokémon and One Piece cards", () => {
+    expect(DEFAULT_MARQUEE_CARDS).toHaveLength(7);
+    expect(DEFAULT_MARQUEE_CARDS.map((card) => card.name)).toEqual([
+      "Umbreon VMAX",
+      "Charizard",
+      "Pikachu",
+      "Giratina V",
+      "Monkey.D.Luffy",
+      "Roronoa Zoro",
+      "Nami",
+    ]);
+    expect(new Set(DEFAULT_MARQUEE_CARDS.map((card) => card.game))).toEqual(new Set(["pokemon", "onePiece"]));
   });
 
   it("drops cards with no usable image rather than rendering a hole", () => {
@@ -268,7 +308,7 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     const rail = screen.getByRole("region", { name: "Cards you can check" });
-    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
+    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(7));
     const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
     expect(accessibleCards.every((button) => button.getAttribute("data-rail-source") === "chase")).toBe(true);
 
@@ -280,7 +320,7 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     const rail = screen.getByRole("region", { name: "Cards you can check" });
-    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
+    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(7));
     const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
 
     const clones = rail.querySelectorAll('button[data-clone="true"]');
@@ -353,7 +393,7 @@ describe("comparison condition controls", () => {
     });
 
     const cards = screen.getAllByRole("button", { name: /^Check / });
-    expect(cards).toHaveLength(8);
+    expect(cards).toHaveLength(7);
     expect(cards.some((card) => card.getAttribute("aria-label")?.includes("Recent without image"))).toBe(false);
   });
 
@@ -816,6 +856,7 @@ describe("comparison condition controls", () => {
       buyer: { country: "US", postalCode: "", taxRate: null, desiredCondition: "Near Mint" },
       marketPrice: 2000,
     });
+    expect(listing).toMatchObject({ marketComparable: true, costComplete: true, price: 1225 });
     const receiptId = "fedcba9876543210fedcba9876543210";
     const clipboard = { writeText: vi.fn<(text: string) => Promise<void>>(async () => undefined) };
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: clipboard });
@@ -861,6 +902,7 @@ describe("comparison condition controls", () => {
     expect(within(hero).getByText(/Item price/)).toBeTruthy();
     expect(within(hero).getByText(/Shipping/)).toBeTruthy();
     expect(within(hero).getByText(/Tax not estimated/)).toBeTruthy();
+    expect(within(hero).getByText(/item 39% under reference/)).toBeTruthy();
     expect(within(hero).getByText("High confidence")).toBeTruthy();
     expect(screen.getByText("Reference prices can lag behind the live market.")).toBeTruthy();
     expect(screen.queryByText("How we checked: sources, reference pricing, and the validation trace")).toBeNull();

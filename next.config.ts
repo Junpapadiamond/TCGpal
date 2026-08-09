@@ -5,6 +5,17 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   devIndicators: false,
   images: {
+    // The card-image route validates the upstream URL itself; this local
+    // pattern lets next/image optimize only that same-origin image endpoint.
+    localPatterns: [
+      {
+        pathname: "/**",
+        search: "",
+      },
+      {
+        pathname: "/api/card-image",
+      },
+    ],
     remotePatterns: [
       {
         protocol: "https",

@@ -433,6 +433,7 @@ const en = {
     underNmReference: (pct: number) => `item ${pct}% under NM reference`,
     aboveNmReference: (pct: number) => `item +${pct}% above NM reference`,
     nearNmReference: "item near NM reference",
+    marketReferenceUnavailable: "Market reference unavailable",
     nmReferenceHint:
       "The aggregate reference has no condition-level price, so it reads as Near Mint. Played copies normally sell below it — treat this as a reference point, not a bargain signal. It is not counted in the value score.",
     trustedSeller: "Trusted seller",
@@ -895,6 +896,7 @@ const zh: Dict = {
     underNmReference: (pct: number) => `标价低于 NM 参考价 ${pct}%`,
     aboveNmReference: (pct: number) => `标价高于 NM 参考价 ${pct}%`,
     nearNmReference: "标价接近 NM 参考价",
+    marketReferenceUnavailable: "参考价暂不可用",
     nmReferenceHint:
       "参考价不分品相，就当是 NM 价。有瑕的卡本来就卖得比它低，所以低价不代表捡漏。这个数不参与打分。",
     trustedSeller: "可信卖家",

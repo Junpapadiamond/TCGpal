@@ -126,6 +126,34 @@ const baseCharizardCard: CardIdentityCandidate = {
   matchReasons: [],
 };
 
+const smPromoCard: CardIdentityCandidate = {
+  id: "smp-SM229",
+  name: "Venusaur & Snivy GX",
+  setName: "SM Black Star Promos",
+  setCode: "SMP",
+  cardNumber: "SM229",
+  language: "English",
+  imageUrl: "https://images.pokemontcg.io/smp/SM229_hires.png",
+  confidence: "high",
+  matchReasons: [],
+};
+
+const smPromoGroupsPayload = {
+  results: [
+    { groupId: 1861, name: "SM Promos", abbreviation: "SMP" },
+  ],
+};
+
+const smPromoProductsPayload = {
+  results: [{
+    productId: 205162,
+    name: "Venusaur & Snivy GX - SM229",
+    cleanName: "Venusaur and Snivy GX SM229",
+    url: "https://www.tcgplayer.com/product/205162/pokemon-sm-promos-venusaur-and-snivy-gx-sm229",
+    extendedData: [{ name: "Number", value: "SM229" }],
+  }],
+};
+
 const baseCollisionGroupsPayload = {
   results: [
     { groupId: 20001, name: "SV01: Scarlet & Violet Base Set", abbreviation: "SV01" },
@@ -199,6 +227,15 @@ function unresolvedVintageBaseFetcher() {
   }) as unknown as typeof fetch;
 }
 
+function smPromoFetcher() {
+  return vi.fn(async (url: URL | RequestInfo) => {
+    const href = String(url);
+    if (href.endsWith("/3/groups")) return new Response(JSON.stringify(smPromoGroupsPayload));
+    if (href.endsWith("/3/1861/products")) return new Response(JSON.stringify(smPromoProductsPayload));
+    throw new Error(`unexpected fetch ${href}`);
+  }) as unknown as typeof fetch;
+}
+
 describe("TCGCSV TCGplayer connector", () => {
   it("resolves the crosswalk product by set name and collector number", async () => {
     const product = await resolveTcgplayerProduct(card, tcgcsvFetcher());
@@ -222,6 +259,16 @@ describe("TCGCSV TCGplayer connector", () => {
     const product = await resolveTcgplayerProduct(baseCharizardCard, unresolvedVintageBaseFetcher());
 
     expect(product).toBeNull();
+  });
+
+  it("resolves SM Black Star Promos through TCGplayer's SM Promos group", async () => {
+    const product = await resolveTcgplayerProduct(smPromoCard, smPromoFetcher());
+
+    expect(product).toMatchObject({
+      groupId: 1861,
+      productId: 205162,
+      collectorNumber: "SM229",
+    });
   });
 
   it("routes One Piece cards through TCGCSV category 68", async () => {
