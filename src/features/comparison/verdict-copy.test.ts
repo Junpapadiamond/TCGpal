@@ -228,6 +228,29 @@ describe("buildVerdictCopy", () => {
       expect(copy.whyNotCheapest).not.toMatch(/scam|fake|counterfeit/i);
     });
 
+    it("names the cheaper copy's seller numbers instead of calling them signals", () => {
+      const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
+      const cheaper = makeListing({
+        id: "cheaper",
+        price: 100,
+        photoCount: 8,
+        feedbackPercentage: 82,
+        feedbackCount: 40,
+      });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [cheaper],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(cheaper.riskLabel).toBe("higher_risk");
+      expect(copy.whyNotCheapest).toContain("82%");
+      expect(copy.whyNotCheapest).toContain("40");
+    });
+
     it("renders the cheaper-copy tradeoff in Chinese", () => {
       const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
       const cheaper = makeListing({ id: "cheaper", price: 100, photoCount: 1 });
@@ -388,6 +411,53 @@ describe("buildVerdictCopy", () => {
 
       expect(copy.action.kind).toBe("pass");
       expect(copy.action.note).not.toMatch(/scam|fraud/i);
+      // "carries risk signals" told the buyer nothing. The numbers that set the
+      // label are already on the listing, so name them.
+      expect(copy.action.note).toContain("82%");
+      expect(copy.action.note).toContain("40");
+    });
+
+    it("names the same seller numbers in Chinese", () => {
+      const winner = makeListing({
+        id: "winner",
+        price: 100,
+        photoCount: 8,
+        feedbackPercentage: 82,
+        feedbackCount: 40,
+      });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "zh",
+      });
+
+      expect(copy.action.kind).toBe("pass");
+      expect(copy.action.note).toContain("82%");
+      expect(copy.action.note).toContain("40");
+    });
+
+    it("falls back to the general wording when the seller numbers are missing", () => {
+      const winner = makeListing({
+        id: "winner",
+        price: 100,
+        photoCount: 8,
+        feedbackPercentage: null,
+        feedbackCount: 3,
+      });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      // Whatever the label, the note must never invent a percentage.
+      expect(copy.action.note).not.toMatch(/\d+% positive/);
     });
 
     it("keeps the action cautious without a market reference", () => {

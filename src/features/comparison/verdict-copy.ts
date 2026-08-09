@@ -39,6 +39,19 @@ function listingCost(listing: NormalizedListing) {
   return listing.estimatedLandedCost ?? listing.preTaxTotal;
 }
 
+// "Carries risk signals" names nothing. The numbers that set riskLabel are
+// already on the listing — feedback percentage and count drive sellerTrustScore,
+// and <50 is what makes a verified seller higher_risk (ranking.ts). Say them.
+// Returns null rather than guessing when a field is missing, so the copy can
+// never imply a percentage the source did not supply.
+function sellerRecordDetail(listing: NormalizedListing, lang: VerdictCopyInput["lang"]) {
+  const { feedbackPercentage, feedbackCount } = listing.seller;
+  if (feedbackPercentage === null || feedbackCount === null) return null;
+  return lang === "zh"
+    ? `${feedbackCount} 条评价里 ${feedbackPercentage}% 好评`
+    : `${feedbackPercentage}% positive across ${feedbackCount} ratings`;
+}
+
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 }
@@ -233,7 +246,10 @@ function cheaperTradeoffs(cheapest: NormalizedListing, listing: NormalizedListin
       : `less to review (${cheapest.evidence.photoCount} vs ${listing.evidence.photoCount} item-specific photos)`);
   }
   if (cheapest.riskLabel === "higher_risk") {
-    reasons.push(lang === "zh" ? "卖家记录上有风险信号" : "risk signals on its seller track record");
+    const record = sellerRecordDetail(cheapest, lang);
+    reasons.push(record
+      ? (lang === "zh" ? `卖家 ${record}` : `a seller with ${record}`)
+      : (lang === "zh" ? "卖家记录上有风险信号" : "risk signals on its seller track record"));
   } else if (cheapest.sellerTrustScore + CHEAPER_TRADEOFF_MARGIN <= listing.sellerTrustScore) {
     reasons.push(lang === "zh" ? "卖家记录更弱" : "a weaker seller record");
   }
@@ -275,12 +291,17 @@ function buildAction(
   alternatives: NormalizedListing[] = [],
 ): VerdictAction {
   if (listing.riskLabel === "higher_risk") {
+    const record = sellerRecordDetail(listing, lang);
     return {
       kind: "pass",
       label: lang === "zh" ? "建议放弃" : "Consider passing",
       note: lang === "zh"
-        ? "这个卖家的记录在本次比较里有风险信号。除非商品页能打消疑虑，不如先放掉这条。"
-        : "This seller's track record carries risk signals in this comparison — consider passing unless the listing page resolves them.",
+        ? record
+          ? `这个卖家 ${record}，卖家信任分 ${listing.sellerTrustScore}/100。除非商品页能打消疑虑，不如先放掉这条。`
+          : `这个卖家的信任分只有 ${listing.sellerTrustScore}/100。除非商品页能打消疑虑，不如先放掉这条。`
+        : record
+          ? `This seller shows ${record}, scoring ${listing.sellerTrustScore}/100 on seller trust — consider passing unless the listing page resolves it.`
+          : `This seller scores ${listing.sellerTrustScore}/100 on seller trust — consider passing unless the listing page resolves it.`,
     };
   }
   const marketUsable = marketPrice !== null && marketPrice > 0 && listing.marketComparable && listing.costComplete && !listing.demo;
