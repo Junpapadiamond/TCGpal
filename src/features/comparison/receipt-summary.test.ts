@@ -31,7 +31,8 @@ describe("buildReceiptSummaryLine", () => {
 
     expect(line).toContain("eBay");
     expect(line).toContain("$1,303.00");
-    expect(line).toContain("排除 2 条");
+    expect(line).toContain("已排除 2 条");
+    expect(line).toContain("市场参考价");
     expect(line).toContain("23:20");
   });
 

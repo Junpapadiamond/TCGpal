@@ -4,6 +4,7 @@ import posthog from "posthog-js";
 
 export type TcgpalAnalyticsEvent =
   | "card_search_started"
+  | "rail_card_clicked"
   | "identity_gallery_viewed"
   | "comparison_started"
   | "source_detected"
@@ -38,6 +39,8 @@ const allowedProperties = new Set([
   "duration_bucket",
   "changed_decision",
   "referrer_class",
+  "game",
+  "source",
 ]);
 const allowedReferrerClasses = new Set(["direct", "reddit", "discord", "other"]);
 

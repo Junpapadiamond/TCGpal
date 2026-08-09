@@ -39,19 +39,19 @@ export function buildReceiptSummaryLine({
 
   parts.push(liveSources.trim()
     ? (zh ? `${liveSources} 实时` : `${liveSources} live`)
-    : (zh ? "无实时来源" : "No live source"));
+    : (zh ? "没有实时来源" : "No live source"));
 
   if (marketMid !== null) {
     const asOf = marketAsOf ? formatAsOf(marketAsOf, lang) : null;
     parts.push(zh
-      ? `市场参考 ${formatMoney(marketMid)}${asOf ? `（截至 ${asOf}）` : ""}`
+      ? `市场参考价 ${formatMoney(marketMid)}${asOf ? `（截至 ${asOf}）` : ""}`
       : `market ${formatMoney(marketMid)}${asOf ? ` (as of ${asOf})` : ""}`);
   } else {
-    parts.push(zh ? "无市场参考" : "no market reference");
+    parts.push(zh ? "没有市场参考价" : "no market reference");
   }
 
   if (excludedCount > 0) {
-    parts.push(zh ? `排除 ${excludedCount} 条` : `${excludedCount} excluded`);
+    parts.push(zh ? `已排除 ${excludedCount} 条` : `${excludedCount} excluded`);
   }
 
   parts.push(observedTime);

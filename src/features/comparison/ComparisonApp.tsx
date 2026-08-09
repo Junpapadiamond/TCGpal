@@ -18,7 +18,6 @@ import {
   IconReceipt,
   IconSeal,
   IconSpinner,
-  IconTag,
   IconX,
 } from "./icons";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
@@ -77,15 +76,6 @@ const marketplaces: Marketplace[] = [
   "Other",
 ];
 
-// Branded selector tiles per game: the official logo (operator-supplied
-// assets in /public; marks belong to their respective owners) plus the game's
-// signature accent. Adding a TCG later = one more entry here plus its catalog
-// adapter. logoZoom compensates for built-in whitespace in an asset.
-const gameTiles: Array<{ id: TcgGame; logo: string; accent: string; tint: string; logoZoom: number }> = [
-  { id: "pokemon", logo: "/logo-pokemon-tcg.png", accent: "#2a75bb", tint: "#eef4fb", logoZoom: 1 },
-  { id: "onePiece", logo: "/logo-one-piece-card-game.png", accent: "#d0202e", tint: "#fdf0ef", logoZoom: 2.1 },
-];
-
 const conditions: ConditionClaim[] = [
   "Unknown",
   "Near Mint",
@@ -96,10 +86,10 @@ const conditions: ConditionClaim[] = [
 ];
 
 const RECENT_CONFIRMED_CARDS_KEY = "tcgpal:recent-confirmed-cards";
-const MAX_RECENT_CONFIRMED_CARDS = 10;
 const MAX_MARQUEE_REAL_CARDS = 8;
+const RAIL_SLOTS = 14;
 
-type RecentCarouselCard = {
+export type RecentCarouselCard = {
   id: string;
   game: TcgGame;
   name: string;
@@ -110,6 +100,9 @@ type RecentCarouselCard = {
   lastSeenAt: number;
 };
 
+// TODO(catalog rail): replace this Pokémon-only pool with a verified,
+// freshness-bounded catalog source before adding One Piece cards or making any
+// "newest" / "chase right now" claim about the rail.
 const CURATED_MARQUEE_CARDS: RecentCarouselCard[] = [
   { id: "curated-swsh7-215", game: "pokemon", name: "Umbreon VMAX", setName: "Evolving Skies", setCode: "SWSH7", cardNumber: "215/203", imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png", lastSeenAt: 0 },
   { id: "curated-sv3pt5-151", game: "pokemon", name: "Mew ex", setName: "151", setCode: "MEW", cardNumber: "151/165", imageUrl: "https://images.pokemontcg.io/sv3pt5/151_hires.png", lastSeenAt: 0 },
@@ -120,6 +113,37 @@ const CURATED_MARQUEE_CARDS: RecentCarouselCard[] = [
   { id: "curated-sv4-245", game: "pokemon", name: "Iron Valiant ex", setName: "Paradox Rift", setCode: "PAR", cardNumber: "245/182", imageUrl: "https://images.pokemontcg.io/sv4/245_hires.png", lastSeenAt: 0 },
   { id: "curated-base1-4", game: "pokemon", name: "Charizard", setName: "Base", setCode: "BS", cardNumber: "4/102", imageUrl: "https://images.pokemontcg.io/base1/4_hires.png", lastSeenAt: 0 },
 ];
+
+/** Recent share ramps with real usage and caps at 70%. Zero history = pure curated. */
+export function recentShare(historyCount: number): number {
+  if (historyCount <= 0) return 0;
+  return Math.min(0.7, 0.18 + 0.13 * historyCount);
+}
+
+/** Spread recents through the loop instead of clumping them at one end. */
+export function blendRail(
+  recent: RecentCarouselCard[],
+  curated: RecentCarouselCard[],
+  historyCount: number,
+  slots = RAIL_SLOTS,
+): RecentCarouselCard[] {
+  if (slots <= 0 || (recent.length === 0 && curated.length === 0)) return [];
+  const share = recentShare(historyCount);
+  const out: RecentCarouselCard[] = [];
+  let acc = 0;
+  let r = 0;
+  let c = 0;
+  for (let i = 0; i < slots; i += 1) {
+    acc += share;
+    if ((acc >= 1 || curated.length === 0) && recent.length > 0) {
+      acc -= 1;
+      out.push(recent[r++ % recent.length]!);
+    } else if (curated.length > 0) {
+      out.push(curated[c++ % curated.length]!);
+    }
+  }
+  return out;
+}
 
 type JourneyStep = "search" | "confirmation" | "result";
 type JourneySnapshot = {
@@ -284,7 +308,8 @@ function readRecentCarouselCards(): RecentCarouselCard[] {
     return parsed
       .filter(isRecentCarouselCard)
       .map((card) => ({ ...card, imageUrl: safeCarouselImageUrl(card.imageUrl) }))
-      .slice(0, MAX_RECENT_CONFIRMED_CARDS);
+      .filter((card) => card.imageUrl !== null)
+      .slice(0, MAX_MARQUEE_REAL_CARDS);
   } catch {
     return [];
   }
@@ -293,23 +318,14 @@ function readRecentCarouselCards(): RecentCarouselCard[] {
 function writeRecentCarouselCards(cards: RecentCarouselCard[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(RECENT_CONFIRMED_CARDS_KEY, JSON.stringify(cards.slice(0, MAX_RECENT_CONFIRMED_CARDS)));
+    window.localStorage.setItem(RECENT_CONFIRMED_CARDS_KEY, JSON.stringify(cards.slice(0, MAX_MARQUEE_REAL_CARDS)));
   } catch {
     /* ignore unavailable storage */
   }
 }
 
 function mergeRecentCarouselCard(cards: RecentCarouselCard[], card: RecentCarouselCard) {
-  return [card, ...cards.filter((existing) => existing.id !== card.id)].slice(0, MAX_RECENT_CONFIRMED_CARDS);
-}
-
-function composeCarouselCards(current: RecentCarouselCard | null, recent: RecentCarouselCard[]) {
-  const ordered = current ? [current, ...recent] : recent;
-  const deduped = new Map<string, RecentCarouselCard>();
-  for (const card of ordered) {
-    if (!deduped.has(card.id)) deduped.set(card.id, card);
-  }
-  return Array.from(deduped.values()).slice(0, MAX_MARQUEE_REAL_CARDS);
+  return [card, ...cards.filter((existing) => existing.id !== card.id)].slice(0, MAX_MARQUEE_REAL_CARDS);
 }
 
 function focusComparisonTarget() {
@@ -848,10 +864,11 @@ function ComparisonExperience() {
 
   const compactMode = Boolean(pendingRequest || report);
   const activeCard = report?.confirmedCard ?? null;
-  const currentCarouselCard = activeCard
-    ? toRecentCarouselCard(activeCard, pendingRequest?.cardHint.game ?? game)
-    : null;
-  const carouselCards = composeCarouselCards(currentCarouselCard, recentCarouselCards);
+  const carouselCards = blendRail(
+    recentCarouselCards,
+    CURATED_MARQUEE_CARDS,
+    recentCarouselCards.length,
+  );
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.variant, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
@@ -903,6 +920,20 @@ function ComparisonExperience() {
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="url"]')?.focus();
     });
+  }
+
+  function checkCardFromRail(card: RecentCarouselCard, source: "chase" | "recent") {
+    const values = resetForNewCardSearch(form.getValues());
+    form.reset({
+      ...values,
+      game: card.game,
+      heroQuery: `${card.name} ${card.cardNumber}`.trim(),
+      cardName: card.name,
+      setCode: card.setCode,
+      cardNumber: card.cardNumber,
+    });
+    trackEvent("rail_card_clicked", { game: card.game, source });
+    void submitComparison(form.getValues());
   }
 
   return (
@@ -962,119 +993,85 @@ function ComparisonExperience() {
       <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-6 sm:pt-8"}`}>
         {!compactMode && (
           <>
-        <section id="compare" className="paper-panel overflow-hidden shadow-[0_18px_60px_rgba(36,49,47,0.06)]">
-          <form className="p-4 sm:p-6 lg:p-7" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-start">
-              <div className="flex min-h-full min-w-0 flex-col justify-between gap-5">
-                <div>
-                  <h1 className="display-soft max-w-2xl font-serif text-3xl font-black leading-[1.04] tracking-[-0.03em] text-[#2f6f73] sm:text-4xl lg:text-5xl">
-                    {t.hero.title}
-                  </h1>
-                  <p className="mt-3 max-w-lg text-sm leading-6 text-[#52635c] sm:text-base">
-                    {t.hero.subtitle}
-                  </p>
-                </div>
-                <CardMarquee cards={carouselCards} />
-              </div>
+        <section id="compare" className="mx-auto max-w-[720px] pt-4 text-center sm:pt-7">
+          <h1 className="display-soft mx-auto max-w-2xl font-serif text-3xl font-black leading-[1.08] tracking-normal text-[#24312f] sm:text-4xl lg:text-[42px]">
+            {t.hero.title}
+          </h1>
 
-              <div className="min-w-0 space-y-4">
-              <section className="rounded-xl border border-[#d6ded5] bg-[#fffef9] p-4 shadow-[0_8px_24px_rgba(36,49,47,0.04)] sm:p-5" aria-label={t.form.heroSearchLabel}>
-                <label className="field">
-                  <span className="sr-only">{t.form.heroSearchLabel}</span>
-                  <div className="input-with-icon rounded-lg border-[#2f6f73] bg-[#fffef9] px-3 py-1.5 shadow-[0_0_0_3px_rgba(47,111,115,0.09)]">
-                    <IconCardSearch className="h-5 w-5 text-[#2f6f73]" />
-                    <input
-                      {...form.register("heroQuery")}
-                      placeholder={t.form.heroSearchPlaceholder}
-                      className="text-lg font-semibold"
-                      autoFocus
-                    />
-                  </div>
-                </label>
-                {form.formState.errors.heroQuery && (
-                  <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
-                )}
-
-                <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
-
-                <fieldset className="mt-4">
-                  <legend className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-[#64736c]">{t.form.gameLabel}</legend>
-                  {/* Each game gets its own branded tile (TCGpal-drawn emblem +
-                      signature accent), Collectr-style, instead of a plain text
-                      toggle. The parser still auto-selects from the search text. */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {gameTiles.map(({ id, logo, accent, tint, logoZoom }) => {
-                      const active = game === id;
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          aria-pressed={active}
-                          aria-label={t.form.games[id]}
-                          onClick={() => form.setValue("game", id)}
-                          style={active ? { borderColor: accent, background: tint } : undefined}
-                          className={`relative flex min-h-16 flex-col items-center justify-center gap-1 overflow-hidden rounded-md border-2 px-3 py-2 transition ${
-                            active ? "shadow-[0_2px_0_rgba(36,49,47,0.12)]" : "border-[#d6ded5] bg-[#fffef9] opacity-70 grayscale-[0.35] hover:opacity-100 hover:grayscale-0"
-                          }`}
-                        >
-                          <span className="relative block h-8 w-full">
-                            <Image
-                              src={logo}
-                              alt={t.form.games[id]}
-                              fill
-                              sizes="176px"
-                              className="object-contain mix-blend-multiply"
-                              style={logoZoom !== 1 ? { transform: `scale(${logoZoom})` } : undefined}
-                            />
-                          </span>
-                          <span className="relative z-10 text-[11px] font-black uppercase tracking-[0.08em] text-[#24312f]">{t.form.games[id]}</span>
-                          {active && <IconCheck className="absolute right-2 top-2 h-4 w-4 shrink-0 text-[#24312f]" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </fieldset>
-
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button className="primary-button flex-1 justify-center" type="submit" disabled={loading}>
-                    {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
+          <form className="paper-panel mt-6 p-4 text-left shadow-[0_14px_40px_rgba(36,49,47,0.07)] sm:p-5" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
+            <label className="block">
+              <span className="sr-only">{t.form.heroSearchLabel}</span>
+              <span className="landing-search-row">
+                <IconCardSearch className="landing-search-icon h-[22px] w-[22px]" />
+                <input
+                  {...form.register("heroQuery")}
+                  aria-label={t.form.heroSearchLabel}
+                  placeholder={t.form.heroSearchPlaceholder}
+                  autoFocus
+                />
+                <button type="submit" disabled={loading}>
+                  {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
                   {loading ? t.form.submitLoading : hasExplicitCardKey ? t.form.submitIdle : t.form.browseVersions}
-                  </button>
-                  <button
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-2 text-sm font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4 hover:text-[#24585c]"
-                    type="button"
-                    aria-expanded={listingOpen}
-                    onClick={() => setListingOpen((current) => !current)}
-                  >
-                    <IconLink className="h-4 w-4" />
-                    {t.form.pasteListingInstead}
-                  </button>
+                </button>
+              </span>
+            </label>
+            {form.formState.errors.heroQuery && (
+              <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
+            )}
+
+            <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
+
+            <div className="landing-control-row">
+              <fieldset>
+                <legend className="sr-only">{t.form.gameLabel}</legend>
+                <div className="landing-game-segment">
+                  {(["pokemon", "onePiece"] as const).map((id) => {
+                    const active = game === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => form.setValue("game", id)}
+                      >
+                        <span className={`landing-game-dot ${id === "pokemon" ? "is-pokemon" : "is-one-piece"}`} />
+                        {t.form.games[id]}
+                      </button>
+                    );
+                  })}
                 </div>
-              </section>
-              </div>
+              </fieldset>
+
+              <label className="landing-zip">
+                <span>{t.form.deliveryZip}</span>
+                <input {...form.register("postalCode")} inputMode="numeric" placeholder={t.form.ph.zip} />
+              </label>
+
+              <button
+                className="landing-link-button"
+                type="button"
+                aria-expanded={refineOpen}
+                aria-controls="search-refinement-panel"
+                aria-label={`${t.form.refineToggle}, ${t.form.desiredCondition}: ${selectedConditionLabel}`}
+                onClick={() => setRefineOpen((current) => !current)}
+              >
+                {selectedConditionLabel}
+                <IconChevronDown className={`h-3.5 w-3.5 transition ${refineOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              <button
+                className="landing-link-button"
+                type="button"
+                aria-expanded={listingOpen}
+                onClick={() => setListingOpen((current) => !current)}
+              >
+                <IconLink className="h-3.5 w-3.5" />
+                {t.form.pasteListingInstead}
+              </button>
             </div>
 
-            <button
-              className="mt-4 flex w-full items-center justify-between rounded-md border border-[#d6ded5] bg-[#f4f7f3] px-4 py-3 text-left text-sm font-bold text-[#52635c]"
-              type="button"
-              aria-expanded={refineOpen}
-              aria-controls="search-refinement-panel"
-              aria-label={`${t.form.refineToggle}, ${t.form.desiredCondition}: ${selectedConditionLabel}`}
-              onClick={() => setRefineOpen((current) => !current)}
-            >
-              <span className="flex items-center gap-2">
-                <IconTag className="h-4 w-4 text-[#2f6f73]" />
-                <span>
-                  <span className="block">{t.form.refineToggle}</span>
-                  <span className="mt-0.5 block text-xs font-semibold text-[#64736c]">
-                    <strong className="text-[#2f6f73]">{selectedConditionLabel}</strong>
-                  </span>
-                </span>
-              </span>
-              <IconChevronDown className={`h-4 w-4 transition ${refineOpen ? "rotate-180" : ""}`} />
-            </button>
             {refineOpen && (
-              <div id="search-refinement-panel" className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
+              <div id="search-refinement-panel" className="mt-4 border-t border-[#d6ded5] pt-4">
                 <div className="grid gap-4 md:grid-cols-3">
                   <label className="field">
                     <span>{t.form.cardName}</span>
@@ -1104,7 +1101,7 @@ function ComparisonExperience() {
             )}
 
             {listingOpen && (
-            <div className="mt-4 rounded-md border border-dashed border-[#c9d7ce] bg-[#f7f9f5] p-5">
+            <div className="mt-4 border-t border-[#d6ded5] pt-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">
                   <IconLink className="h-4 w-4 text-[#2f6f73]" />
@@ -1280,6 +1277,15 @@ function ComparisonExperience() {
           </form>
         </section>
 
+        <CardMarquee
+          cards={carouselCards}
+          recentCards={recentCarouselCards}
+          onCheck={checkCardFromRail}
+        />
+        <p className="mt-1 text-center text-[12.5px] font-semibold text-[#7a8982]">
+          {t.hero.scope}
+        </p>
+
           </>
         )}
 
@@ -1439,47 +1445,98 @@ function Footer() {
   );
 }
 
-type MarqueeItem = { kind: "real"; card: RecentCarouselCard };
+type MarqueeItem = {
+  card: RecentCarouselCard & { imageUrl: string };
+  clone: boolean;
+  source: "chase" | "recent";
+};
 
-function buildMarqueeItems(cards: RecentCarouselCard[], minimum = 8): MarqueeItem[] {
-  const cleanCards = [...cards, ...CURATED_MARQUEE_CARDS]
-    .map((card) => ({ ...card, imageUrl: safeCarouselImageUrl(card.imageUrl) }))
-    .filter((card): card is RecentCarouselCard & { imageUrl: string } => Boolean(card.imageUrl));
-  const deduped = new Map(cleanCards.map((card) => [card.imageUrl, card]));
-  const source: MarqueeItem[] = Array.from(deduped.values())
-    .slice(0, Math.max(minimum, MAX_MARQUEE_REAL_CARDS))
-    .map((card) => ({ kind: "real", card }));
-  const base: MarqueeItem[] = [];
-  while (base.length < Math.max(minimum, source.length)) {
-    base.push(...source);
-  }
-  const loopBase = base.slice(0, Math.max(minimum, source.length));
-  return [...loopBase, ...loopBase];
+function buildMarqueeItems(cards: RecentCarouselCard[], recentCards: ReadonlySet<RecentCarouselCard>): MarqueeItem[] {
+  const source = cards
+    .map((card) => ({
+      card: { ...card, imageUrl: safeCarouselImageUrl(card.imageUrl) },
+      source: recentCards.has(card) ? "recent" as const : "chase" as const,
+    }))
+    .filter((item): item is { card: RecentCarouselCard & { imageUrl: string }; source: "chase" | "recent" } => Boolean(item.card.imageUrl));
+  return [
+    ...source.map((item) => ({ ...item, clone: false })),
+    ...source.map((item) => ({ ...item, clone: true })),
+  ];
 }
 
-function CardMarquee({ cards }: { cards: RecentCarouselCard[] }) {
-  const items = buildMarqueeItems(cards);
+function CardMarquee({
+  cards,
+  recentCards,
+  onCheck,
+}: {
+  cards: RecentCarouselCard[];
+  recentCards: RecentCarouselCard[];
+  onCheck: (card: RecentCarouselCard, source: "chase" | "recent") => void;
+}) {
+  const t = useT();
+  const [paused, setPaused] = useState(false);
+  const items = buildMarqueeItems(cards, new Set(recentCards));
   return (
-    <div aria-hidden="true" className="card-marquee relative hidden h-[128px] overflow-hidden lg:block">
-      <div className="card-marquee-track flex w-max items-center">
-        {items.map((item, index) => (
-          <CardMarqueeItem key={`${item.card.id}-${index}`} item={item} index={index} />
-        ))}
+    <section className="card-marquee-wrap mt-8 sm:mt-10" aria-label={t.rail.ariaLabel}>
+      <div
+        className="card-marquee"
+        data-paused={paused ? "true" : "false"}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocus={() => setPaused(true)}
+        onBlur={() => setPaused(false)}
+      >
+        <div className="card-marquee-track">
+          {items.map((item, index) => (
+            <CardMarqueeItem
+              key={`${item.card.id}-${item.clone ? "clone" : "real"}-${index}`}
+              item={item}
+              source={item.source}
+              onCheck={onCheck}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
-function CardMarqueeItem({ item, index }: { item: MarqueeItem; index: number }) {
-  const rotation = `${index % 2 ? 3 : -3}deg`;
+function CardMarqueeItem({
+  item,
+  source,
+  onCheck,
+}: {
+  item: MarqueeItem;
+  source: "chase" | "recent";
+  onCheck: (card: RecentCarouselCard, source: "chase" | "recent") => void;
+}) {
+  const t = useT();
+  const { card, clone } = item;
   return (
-    <span
-      className="card-marquee-card card-marquee-card-real relative mx-1.5 block h-[110px] w-[78px] shrink-0 overflow-hidden rounded-[9px] border border-[rgba(36,49,47,0.13)] bg-[#fcfbf6] shadow-[0_10px_22px_rgba(36,49,47,0.18)]"
-      style={{ transform: `rotate(${rotation})` }}
+    <button
+      type="button"
+      className="card-marquee-card"
+      data-clone={clone ? "true" : undefined}
+      data-rail-source={source}
+      tabIndex={clone ? -1 : undefined}
+      aria-hidden={clone ? true : undefined}
+      aria-label={t.rail.checkCard(card.name, card.setName, card.cardNumber)}
+      onClick={() => onCheck(card, source)}
     >
-      <Image src={item.card.imageUrl!} alt="" fill sizes="80px" className="object-contain" />
-      <span className="card-marquee-gloss absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.2)_45%,transparent_60%)]" />
-    </span>
+      <span className="card-marquee-art">
+        <Image src={card.imageUrl} alt="" fill sizes="132px" className="object-contain" unoptimized />
+        <span className="card-marquee-veil" />
+        <span className="card-marquee-go">
+          {t.rail.checkThisCard}
+          <IconArrowUpRight className="h-3 w-3" />
+        </span>
+        <span className="card-marquee-gloss" />
+      </span>
+      <span className="card-marquee-caption">
+        <strong>{card.name}</strong>
+        <span className="card-marquee-meta">{card.cardNumber}</span>
+      </span>
+    </button>
   );
 }
 
@@ -1494,15 +1551,13 @@ function ParsedPreview({
   lang: Lang;
   t: Dict;
 }) {
-  if (!preview) return null;
-
   const chips = [
-    preview.game && { label: t.form.games[preview.game], tone: "blue" },
-    preview.name && { label: preview.name, tone: "green" },
-    preview.cardNumber && { label: `#${preview.cardNumber}`, tone: "gold" },
-    preview.language && { label: preview.language, tone: "neutral" },
-    preview.variant && { label: localizeVariantLabel(lang, preview.variant), tone: "neutral" },
-    preview.gradingClaim && { label: preview.gradingClaim, tone: "neutral" },
+    preview?.game && { label: t.form.games[preview.game], tone: "blue" },
+    preview?.name && { label: preview.name, tone: "green" },
+    preview?.cardNumber && { label: `#${preview.cardNumber}`, tone: "gold" },
+    preview?.language && { label: preview.language, tone: "neutral" },
+    preview?.variant && { label: localizeVariantLabel(lang, preview.variant), tone: "neutral" },
+    preview?.gradingClaim && { label: preview.gradingClaim, tone: "neutral" },
   ].filter(Boolean) as Array<{ label: string; tone: "blue" | "green" | "gold" | "neutral" }>;
 
   if (chips.length === 0) {
@@ -1510,22 +1565,14 @@ function ParsedPreview({
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-dashed border-[#c9d7ce] bg-[#f7f9f5] px-3 py-2.5">
-      <div className="flex flex-wrap gap-1.5">
-        {chips.map((chip) => (
-          <span
-            key={`${chip.tone}-${chip.label}`}
-            className={`rounded-md px-2.5 py-1 text-xs font-black ${
-              chip.tone === "blue"
-                ? "border border-[#cfe0f2] bg-[#eef4fb] text-[#2a6099]"
-                : chip.tone === "gold"
-                  ? "border border-[#e2c879] bg-[#fff8dc] font-mono text-[#6f5a22]"
-                  : chip.tone === "green"
-                    ? "border border-[#c9d7ce] bg-[#e7efe8] text-[#2f6f73]"
-                    : "border border-[#d6ded5] bg-[#fcfbf6] text-[#52635c]"
-            }`}
-          >
-            {chip.label}
+    <div className="mt-2 flex min-h-9 items-center" aria-live="polite">
+      <div className="flex flex-wrap items-center gap-x-1.5 text-xs font-bold text-[#64736c]">
+        {chips.map((chip, index) => (
+          <span key={`${chip.tone}-${chip.label}`} className="inline-flex items-center gap-1.5">
+            <span className={chip.tone === "green" ? "text-[#2f6f73]" : chip.tone === "gold" ? "font-mono text-[#6f5a22]" : ""}>
+              {chip.label}
+            </span>
+            {index < chips.length - 1 && <span aria-hidden="true" className="text-[#9fb3a8]">·</span>}
           </span>
         ))}
       </div>
@@ -2246,7 +2293,7 @@ function ComparisonResult({
       {snapshot?.restored && (
         <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm text-[#6f5a22]">
           <p>
-            <strong>{t.result.savedSnapshot}.</strong>{" "}
+            <strong>{t.result.savedSnapshot}{lang === "zh" ? "。" : "."}</strong>{" "}
             {t.result.savedSnapshotBody(new Date(snapshot.savedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}
           </p>
           <button className="secondary-button" type="button" onClick={onRetrySources}>{t.result.refreshLive}</button>
@@ -3242,21 +3289,21 @@ function DecisionReceipt({
 function localizeEligibilityIssue(code: string, fallback: string, lang: Lang) {
   if (lang === "en") return fallback;
   const messages: Record<string, string> = {
-    not_raw_single: "这不是未评级的单张卡。",
-    excluded_product_type: "标题显示这是评级卡、卡组、密封商品、定制品或其他不支持的产品。",
-    condition_unstated: "卖家没有说明卡况，无法满足你选择的最低卡况。",
-    condition_below_requested: "卖家声明的卡况低于你选择的最低卡况。",
-    title_condition_below_requested: "标题本身写明了更低卡况；区间按较差一端处理。",
-    unsupported_currency: "商品不是以美元计价。",
-    shipping_unknown: "运费未知，无法安全比较结账总价。",
-    listing_inactive: "商品目前不在售。",
-    price_far_below_market: "价格远低于市场参考，可能是复制品、定制品或错误标注。",
-    language_conflict: "商品明确写出的语言与已确认卡片冲突。",
-    identity_sibling_mismatch: "证据指向同编号的另一种卡图。",
-    identity_unverified: "商品文字仍不足以证明是已确认卡图，请先核对。",
-    identity_price_guard: "价格远低于确切版本参考价，且商品没有证明所选卡图。",
-    identity_variant_mismatch: "商品写的是另一种版本。",
-    identity_low_confidence: "卡片或版本匹配置信度过低。",
+    not_raw_single: "这不是裸卡。",
+    excluded_product_type: "标题显示这是评级卡、卡组、原盒或定制品，不在支持范围里。",
+    condition_unstated: "卖家没写品相，达不到你设的最低品相。",
+    condition_below_requested: "卖家标注的品相低于你设的最低品相。",
+    title_condition_below_requested: "标题里写了更低的品相；给出区间时按差的那一端算。",
+    unsupported_currency: "这条不是美元计价。",
+    shipping_unknown: "运费未知，结账总价没法安全比较。",
+    listing_inactive: "这条目前不在售。",
+    price_far_below_market: "价格远低于市场参考价，可能是复制品、定制品，或者标错了。",
+    language_conflict: "商品写明的语言和已确认卡片对不上。",
+    identity_sibling_mismatch: "证据指向同卡号的另一种卡图。",
+    identity_unverified: "商品文字还证明不了是已确认卡图，先核对一下。",
+    identity_price_guard: "价格远低于确切版本参考价，商品也没证明是所选卡图。",
+    identity_variant_mismatch: "商品写的是另一个版本。",
+    identity_low_confidence: "卡片或版本的匹配把握太低。",
   };
   return messages[code] ?? fallback;
 }

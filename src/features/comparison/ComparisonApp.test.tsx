@@ -1,10 +1,16 @@
 // @vitest-environment jsdom
 // @vitest-environment-options { "url": "http://localhost/" }
 
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ComparisonApp, PrintIdentitySummary } from "@/features/comparison/ComparisonApp";
+import {
+  blendRail,
+  ComparisonApp,
+  PrintIdentitySummary,
+  recentShare,
+  type RecentCarouselCard,
+} from "@/features/comparison/ComparisonApp";
 import { setLanguage, useLang } from "@/features/comparison/i18n";
 import type { CardIdentityCandidate, ComparisonReport, ComparisonRequest, NormalizedListing } from "@/lib/schemas";
 import { normalizeListing, rankListings } from "@/lib/comparison/ranking";
@@ -13,6 +19,7 @@ import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
 import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
+import { trackEvent } from "@/lib/analytics";
 
 vi.mock("@/lib/analytics", () => ({
   initializeAnalytics: vi.fn(),
@@ -78,6 +85,45 @@ function createMemoryStorage(): Storage {
   };
 }
 
+function carouselCard(id: string, source: "recent" | "curated"): RecentCarouselCard {
+  return {
+    id: `${source}-${id}`,
+    game: "pokemon",
+    name: `${source} ${id}`,
+    setName: "Test set",
+    setCode: "TEST",
+    cardNumber: id,
+    imageUrl: `https://images.pokemontcg.io/base1/${id}.png`,
+    lastSeenAt: source === "recent" ? 1 : 0,
+  };
+}
+
+describe("landing rail helpers", () => {
+  it("ramps recent share with history and caps it at seventy percent", () => {
+    expect(recentShare(0)).toBe(0);
+    expect(recentShare(1)).toBeCloseTo(0.31);
+    expect(recentShare(3)).toBeCloseTo(0.57);
+    expect(recentShare(12)).toBe(0.7);
+  });
+
+  it.each([
+    { historyCount: 0, expectedRecent: 0 },
+    { historyCount: 1, expectedRecent: 4 },
+    { historyCount: 3, expectedRecent: 7 },
+    { historyCount: 12, expectedRecent: 9 },
+  ])("spreads $expectedRecent recent cards through fourteen slots for history $historyCount", ({ historyCount, expectedRecent }) => {
+    const recent = Array.from({ length: 12 }, (_, index) => carouselCard(String(index + 1), "recent"));
+    const curated = Array.from({ length: 14 }, (_, index) => carouselCard(String(index + 1), "curated"));
+
+    const blended = blendRail(recent, curated, historyCount);
+
+    expect(blended).toHaveLength(14);
+    expect(blended.filter((card) => card.id.startsWith("recent-")).length).toBe(expectedRecent);
+    expect(blended[0]?.id).toMatch(/^curated-/);
+    expect(blended.some((card) => card.id.startsWith("curated-"))).toBe(true);
+  });
+});
+
 describe("comparison condition controls", () => {
   let requests: ComparisonRequest[];
 
@@ -134,14 +180,15 @@ describe("comparison condition controls", () => {
     vi.restoreAllMocks();
   });
 
-  it("keeps the default screen focused on one promise and the core search controls", () => {
+  it("keeps the default screen focused on one promise and the core search controls", async () => {
     render(<ComparisonApp />);
 
     expect(screen.getByRole("heading", { name: "Find the best listing for your exact card." })).toBeTruthy();
-    expect(screen.getByText("Live raw singles—or a clear pass.")).toBeTruthy();
+    expect(screen.queryByText("Live raw singles—or a clear pass.")).toBeNull();
+    expect(screen.getByText("Pokémon & One Piece · raw singles · U.S. listings")).toBeTruthy();
 
     const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
-    expect(query.placeholder).toBe("Card name or number");
+    expect(query.placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
     expect(screen.getByRole("button", { name: "Browse card versions" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Paste listing" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Filters.+Near Mint/i })).toBeTruthy();
@@ -153,11 +200,101 @@ describe("comparison condition controls", () => {
     expect(screen.queryByText("We understood:")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(screen.getByRole("heading", { name: "为确切版本找到最值得买的商品。" })).toBeTruthy();
-    expect(screen.getByText("在售裸卡，或明确放弃。")).toBeTruthy();
-    expect((screen.getByRole("textbox", { name: "搜索卡片" }) as HTMLInputElement).placeholder).toBe("卡名或编号");
-    expect(screen.getByRole("button", { name: "粘贴商品" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "认准你要的那张卡，挑出最值得买的一件。" })).toBeTruthy();
+    expect((screen.getByRole("textbox", { name: "搜索卡片" }) as HTMLInputElement).placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
+    expect(screen.getByRole("button", { name: "粘贴链接" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /筛选.+近全新/i })).toBeTruthy();
+  });
+
+  it("renders only curated cards without stored history and keeps the cloned loop inert", async () => {
+    render(<ComparisonApp />);
+
+    const rail = screen.getByRole("region", { name: "Cards you can check" });
+    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(14));
+    const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
+    expect(accessibleCards.every((button) => button.getAttribute("data-rail-source") === "chase")).toBe(true);
+
+    const clones = rail.querySelectorAll('button[data-clone="true"]');
+    expect(clones).toHaveLength(accessibleCards.length);
+    expect(Array.from(clones).every((button) => button.getAttribute("tabindex") === "-1")).toBe(true);
+    expect(Array.from(clones).every((button) => button.getAttribute("aria-hidden") === "true")).toBe(true);
+    expect(accessibleCards.every((button) => !button.hasAttribute("data-clone") && !button.hasAttribute("aria-hidden"))).toBe(true);
+  });
+
+  it("keeps curated and recent analytics sources distinct when the same card appears in both pools", async () => {
+    window.localStorage.setItem("tcgpal:recent-confirmed-cards", JSON.stringify([{
+      id: "curated-swsh7-215",
+      game: "pokemon",
+      name: "Umbreon VMAX",
+      setName: "Evolving Skies",
+      setCode: "SWSH7",
+      cardNumber: "215/203",
+      imageUrl: "https://images.pokemontcg.io/swsh7/215_hires.png",
+      lastSeenAt: 1,
+    }]));
+
+    render(<ComparisonApp />);
+
+    await waitFor(() => {
+      const cards = screen.getAllByRole("button", { name: "Check Umbreon VMAX, Evolving Skies 215/203" });
+      expect(new Set(cards.map((card) => card.getAttribute("data-rail-source")))).toEqual(new Set(["chase", "recent"]));
+    });
+  });
+
+  it("keeps fourteen entrances when a stored recent card has no renderable image", async () => {
+    window.localStorage.setItem("tcgpal:recent-confirmed-cards", JSON.stringify([{
+      id: "recent-without-image",
+      game: "pokemon",
+      name: "Recent without image",
+      setName: "Test set",
+      setCode: "TEST",
+      cardNumber: "1/1",
+      imageUrl: null,
+      lastSeenAt: 1,
+    }]));
+
+    render(<ComparisonApp />);
+    await act(async () => {
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+    });
+
+    expect(screen.getAllByRole("button", { name: /^Check / })).toHaveLength(14);
+  });
+
+  it("starts the normal comparison flow from a rail card with its explicit catalog key", async () => {
+    render(<ComparisonApp />);
+
+    const card = screen.getAllByRole("button", { name: "Check Umbreon VMAX, Evolving Skies 215/203" })[0]!;
+    fireEvent.click(card);
+
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]?.query).toBe("Umbreon VMAX 215/203");
+    expect(requests[0]?.cardHint).toMatchObject({
+      game: "pokemon",
+      name: "Umbreon VMAX",
+      setCode: "SWSH7",
+      cardNumber: "215/203",
+    });
+    expect(vi.mocked(trackEvent)).toHaveBeenCalledWith("rail_card_clicked", {
+      game: "pokemon",
+      source: "chase",
+    });
+  });
+
+  it("includes the landing ZIP in the first comparison request", async () => {
+    render(<ComparisonApp />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Search for a card" }), {
+      target: { value: "Charizard 4/102" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Delivery ZIP" }), {
+      target: { value: "10001" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Compare exact listings" }));
+
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]?.buyer.postalCode).toBe("10001");
+    expect(requests[0]?.buyer.taxRate).toBe(0.0852);
   });
 
   it("opens a gallery-shaped identity state without comparison language for a name-only search", async () => {
@@ -499,6 +636,8 @@ describe("comparison condition controls", () => {
     expect(await screen.findByText(/Saved comparison/i)).toBeTruthy();
     expect(screen.getByText(/Prices and availability may have changed/i)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Refresh live listings" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "中文" }));
+    expect(screen.getByText(/^已保存的比价/).textContent).toBe("已保存的比价。");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -628,9 +767,11 @@ describe("comparison condition controls", () => {
     })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(within(editForm as HTMLFormElement).getByRole("button", {
-      name: "浏览卡片版本",
-    })).toBeTruthy();
+    await waitFor(() => {
+      expect(within(editForm as HTMLFormElement).getByRole("button", {
+        name: "浏览全部版本",
+      })).toBeTruthy();
+    });
   });
 
   it("selects the Nami P4 image and immediately searches that exact print", async () => {
@@ -767,9 +908,9 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("The listing does not state the selected print treatment.")).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "中文测试" }));
-    expect(screen.getByText("商品明确写出了已选版本的特殊工艺。")).toBeTruthy();
-    expect(screen.getByText("商品写的是不同的闪膜或颜色工艺。")).toBeTruthy();
-    expect(screen.getByText("商品没有写明已选版本的特殊工艺。")).toBeTruthy();
+    expect(screen.getByText("商品写出了已选版本的特殊工艺。")).toBeTruthy();
+    expect(screen.getByText("商品写的是另一种闪膜或配色工艺。")).toBeTruthy();
+    expect(screen.getByText("商品没写明已选版本的特殊工艺。")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "English test" }));
   });
 
@@ -1086,7 +1227,7 @@ describe("comparison condition controls", () => {
     expect(screen.getByRole("button", { name: "Retry sources" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Paste a listing" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(await screen.findByRole("heading", { name: "暂时没有可信的购买建议" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "暂时没有能放心买的" })).toBeTruthy();
     expect(screen.queryByText("Found listings, but none matched the selected SP print.")).toBeNull();
   });
 });

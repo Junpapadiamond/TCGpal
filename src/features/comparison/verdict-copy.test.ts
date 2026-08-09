@@ -106,7 +106,7 @@ describe("buildVerdictCopy", () => {
       lang: "zh",
     });
 
-    expect(copy.why).toContain("卖家标注的近全新");
+    expect(copy.why).toContain("卖家标注近全新（NM）");
     expect(copy.catch).toContain("2 张实物照片");
     expect(copy.alternative).toContain("7 张实物照片");
     expect(copy.alternative).toContain("贵 $27.00");

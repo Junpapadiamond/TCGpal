@@ -10,6 +10,9 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
+    // Research artifacts have their own explicit validation commands and may
+    // contain intentionally failing evaluation fixtures.
+    "output/**",
     "build/**",
     "next-env.d.ts",
   ]),
