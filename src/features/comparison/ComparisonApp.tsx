@@ -3231,7 +3231,15 @@ function RecommendedBuyHero({
               )}
             </p>
           </div>
-          <MarketDeltaBadge listing={listing} marketPrice={marketPrice} />
+          <div className="grid gap-1.5 lg:justify-items-end">
+            <MarketDeltaBadge listing={listing} marketPrice={marketPrice} />
+            {/* Always available, unlike the market badge: it needs no external
+                anchor, so it still answers "is this expensive?" for the cards
+                TCGCSV does not cover. */}
+            {verdict.pricePosition && (
+              <p className="text-xs font-bold text-[#52635c]">{verdict.pricePosition}</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -3260,7 +3268,7 @@ function RecommendedBuyHero({
           </p>
           <p className="border-t border-[#e4ebe3] pt-2 text-xs leading-5 text-[#64736c]">
             <span className="mr-2 font-black uppercase tracking-[0.08em]">
-              {verdict.whyNotCheapest ? t.result.whyNotCheapest : t.result.nextBestOption}
+              {verdict.whyNotCheapest ? t.result.cheaperOption : t.result.nextBestOption}
             </span>
             {verdict.whyNotCheapest ?? verdict.alternative ?? t.result.noAlternative}
           </p>

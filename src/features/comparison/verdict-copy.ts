@@ -11,6 +11,10 @@ export type VerdictCopy = {
   catch: string;
   alternative: string | null;
   whyNotCheapest: string | null;
+  // Where this pick sits among the copies we actually found. Unlike the market
+  // badge it needs no external anchor, so it renders for the cards TCGCSV does
+  // not cover, and it cannot be thrown off by a stale dump or a bad crosswalk.
+  pricePosition: string | null;
   action: VerdictAction;
 };
 
@@ -180,10 +184,45 @@ function chineseAlternative(listing: NormalizedListing, alternative: NormalizedL
   return `下一条可比的 ${alternative.marketplace} 商品${difference}。`;
 }
 
-// "Why not the cheapest" — the trust-building read. When the pick is not the
-// cheapest eligible copy, state the savings being skipped and the specific,
-// factual weakness of the cheaper copy. Deterministic facts only: no scam
-// language, no authenticity or grading claims.
+// Measured 2026-08-10: same-day eBay asks for one card spread 33-36 points
+// (Umbreon -22.7%..+13.9%, Giratina -16.0%..+16.9%), and 5 of 8 sampled cards
+// had no TCGCSV anchor at all. So "where does this sit among the copies we
+// found" is both more available and more stable than "how far from reference".
+function ordinal(value: number) {
+  const rest = value % 100;
+  if (rest >= 11 && rest <= 13) return `${value}th`;
+  switch (value % 10) {
+    case 1: return `${value}st`;
+    case 2: return `${value}nd`;
+    case 3: return `${value}rd`;
+    default: return `${value}th`;
+  }
+}
+
+function buildPricePosition(
+  listing: NormalizedListing,
+  alternatives: NormalizedListing[],
+  lang: VerdictCopyInput["lang"],
+): string | null {
+  if (alternatives.length === 0) return null;
+  const total = alternatives.length + 1;
+  // Rank on comparable cost, the same number the buyer is shown, not item price.
+  const cost = listingCost(listing);
+  const rank = alternatives.filter((alternative) => listingCost(alternative) < cost).length + 1;
+  if (lang === "zh") {
+    return rank === 1
+      ? `${total} 条可比商品里最便宜`
+      : `${total} 条可比商品里第 ${rank} 便宜`;
+  }
+  return rank === 1
+    ? `Cheapest of ${total} comparable copies`
+    : `${ordinal(rank)} cheapest of ${total} comparable copies`;
+}
+
+// The cheaper-option line. Earlier copy argued against the cheaper listing —
+// which is incoherent, because that same listing is what the Cheapest lens
+// recommends one tap away. State the saving and the specific weakness, pass no
+// judgement, and let the buyer choose. Deterministic facts only.
 const CHEAPER_TRADEOFF_MARGIN = 10;
 
 function cheaperTradeoffs(cheapest: NormalizedListing, listing: NormalizedListing, lang: VerdictCopyInput["lang"]) {
@@ -218,10 +257,9 @@ function buildWhyNotCheapest(
   if (savings < 0.01) return null;
   const reasons = cheaperTradeoffs(cheapest, listing, lang);
   if (lang === "zh") {
-    return `最便宜的那条（${cheapest.marketplace}，${chineseTotal(cheapest)}）能省 ${formatMoney(savings)}，但它${reasons.join("、")}。省下的钱换来的是更多不确定。`;
+    return `${formatMoney(listingCost(cheapest))} 能省 ${formatMoney(savings)} —— ${reasons.join("、")}。`;
   }
-  const joined = reasons.join(" and ");
-  return `The cheapest comparable copy (${englishTotal(cheapest)} on ${cheapest.marketplace}) would save ${formatMoney(savings)}, but it has ${joined} — the saving buys extra uncertainty this pick avoids.`;
+  return `${formatMoney(listingCost(cheapest))} saves ${formatMoney(savings)} — ${reasons.join(" and ")}.`;
 }
 
 // The action line — the last element of the decision layer: buy / wait / pass
@@ -234,13 +272,14 @@ function buildAction(
   listing: NormalizedListing,
   marketPrice: number | null,
   lang: VerdictCopyInput["lang"],
+  alternatives: NormalizedListing[] = [],
 ): VerdictAction {
   if (listing.riskLabel === "higher_risk") {
     return {
       kind: "pass",
       label: lang === "zh" ? "建议放弃" : "Consider passing",
       note: lang === "zh"
-        ? "这个卖家的记录在本次比较里有风险信号。除非商品页能打消疑虑，不如放掉这条，等更稳的货。"
+        ? "这个卖家的记录在本次比较里有风险信号。除非商品页能打消疑虑，不如先放掉这条。"
         : "This seller's track record carries risk signals in this comparison — consider passing unless the listing page resolves them.",
     };
   }
@@ -249,30 +288,51 @@ function buildAction(
     const delta = (listing.price - marketPrice) / marketPrice;
     if (delta > ACTION_ABOVE_MARKET_RATIO) {
       const pct = Math.round(delta * 100);
+      // Never imply that cheaper supply will appear later — we hold no restock
+      // or price-history data. Point at the cheaper rows we can actually see,
+      // or at the buyer's own urgency.
+      const cheaperHere = alternatives.some((alternative) => listingCost(alternative) < listingCost(listing));
       return {
         kind: "wait",
         label: lang === "zh" ? "建议再等等" : "Consider waiting",
         note: lang === "zh"
-          ? `这条标价比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%。不急的话，等更贴近市价的货更划算。`
-          : `This copy's item price runs about ${pct}% over the ${formatMoney(marketPrice)} market reference — unless you need it now, waiting for closer-to-market supply is reasonable.`,
+          ? cheaperHere
+            ? `这条标价比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%。先看看这次比较里更便宜的几条。`
+            : `这条标价比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%。不是急着要的话，可以先不下手。`
+          : cheaperHere
+            ? `About ${pct}% over the ${formatMoney(marketPrice)} market reference — check the cheaper copies in this comparison first.`
+            : `About ${pct}% over the ${formatMoney(marketPrice)} market reference. No rush unless you need this exact copy.`,
       };
     }
   }
   if (listing.evidenceCompletenessScore < ACTION_THIN_EVIDENCE_SCORE) {
+    const photos = listing.evidence.photoCount;
     return {
       kind: "wait",
       label: lang === "zh" ? "建议再等等" : "Consider waiting",
       note: lang === "zh"
-        ? "能查的材料太少。下单前先找卖家要实物照片或更多细节。"
-        : "There is very little to review here — ask the seller for item photos or more detail before committing.",
+        ? photos === 0
+          ? "没有实物照片可看。下单前先找卖家要正反面照片。"
+          : `只有 ${photos} 张实物照片可看。下单前先找卖家要正反面照片。`
+        : photos === 0
+          ? "No item-specific photos to review — ask the seller for front and back before you commit."
+          : `Only ${photos} item-specific photo${photos === 1 ? "" : "s"} to review — ask the seller for front and back before you commit.`,
     };
   }
+  // The note is the next step, not a summary. "What to know" already states the
+  // single biggest caveat, and repeating it there is what made every buy result
+  // read identically.
+  const photos = listing.evidence.photoCount;
   return {
     kind: "buy",
     label: lang === "zh" ? "可以考虑入手" : "Reasonable to buy",
     note: lang === "zh"
-      ? "数据支持这笔。先确认商品页和这些信息对得上，品相仍是卖家自己说的。"
-      : "The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.",
+      ? photos === 0
+        ? "下单前回商品页确认版本和品相说明对得上。"
+        : `下单前把 ${photos} 张实物照片过一遍，确认版本对得上。`
+      : photos === 0
+        ? "Confirm the print and condition notes on the listing page before you commit."
+        : `Open the ${photos} photo${photos === 1 ? "" : "s"} and confirm the print before you commit.`,
   };
 }
 
@@ -293,6 +353,7 @@ export function buildVerdictCopy({
         : englishAlternative(listing, alternative)
       : null,
     whyNotCheapest: buildWhyNotCheapest(listing, alternatives, lang),
-    action: buildAction(listing, marketPrice, lang),
+    pricePosition: buildPricePosition(listing, alternatives, lang),
+    action: buildAction(listing, marketPrice, lang, alternatives),
   };
 }

@@ -273,8 +273,21 @@ describe("buildVerdictCopy", () => {
       });
 
       expect(copy.action.kind).toBe("buy");
-      expect(copy.action.note).toContain("seller's claim");
+      // The note is the next step, not a restatement: "What to know" already
+      // carries the caveat, and repeating it is what made this read generic.
+      expect(copy.action.note).toContain("8 photos");
       expect(copy.action.label.toLowerCase()).not.toContain("must");
+    });
+
+    it("writes a different buy note depending on how much there is to inspect", () => {
+      const many = makeListing({ id: "many", price: 100, photoCount: 8 });
+      const few = makeListing({ id: "few", price: 100, photoCount: 4 });
+
+      const manyCopy = buildVerdictCopy({ listing: many, choice: choice("best_value", many.id), alternatives: [], marketPrice: 200, lang: "en" });
+      const fewCopy = buildVerdictCopy({ listing: few, choice: choice("best_value", few.id), alternatives: [], marketPrice: 200, lang: "en" });
+
+      expect(manyCopy.action.note).not.toBe(fewCopy.action.note);
+      expect(fewCopy.action.note).toContain("4 photos");
     });
 
     it("suggests waiting when the pick sits well above the market reference", () => {
@@ -290,6 +303,25 @@ describe("buildVerdictCopy", () => {
 
       expect(copy.action.kind).toBe("wait");
       expect(copy.action.note).toContain("market reference");
+      // We have no supply or restock data, so the note must not imply that
+      // cheaper copies will appear later.
+      expect(copy.action.note).not.toMatch(/turn up|come down|cool|drop|regularly|supply/i);
+    });
+
+    it("points an over-market wait at the cheaper copies already in the comparison", () => {
+      const winner = makeListing({ id: "winner", price: 250, photoCount: 8 });
+      const cheaper = makeListing({ id: "cheaper", price: 190, photoCount: 5 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [cheaper],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.action.kind).toBe("wait");
+      expect(copy.action.note).toMatch(/cheaper copies in this comparison/i);
     });
 
     it("does not warn that supply is expensive when only shipping and tax lift checkout total", () => {
@@ -370,7 +402,7 @@ describe("buildVerdictCopy", () => {
       });
 
       expect(copy.action.kind).toBe("buy");
-      expect(copy.action.note).toContain("seller's claim");
+      expect(copy.action.note).toContain("8 photos");
     });
 
     it("renders the action in Chinese", () => {
@@ -386,6 +418,137 @@ describe("buildVerdictCopy", () => {
 
       expect(copy.action.kind).toBe("wait");
       expect(copy.action.note).toContain("市场参考价");
+    });
+  });
+
+  // We hold no restock, supply, or price-history data, so no action note in
+  // either language may imply that a cheaper or better copy will show up later.
+  it("never promises future supply in any action note", () => {
+    const cases: NormalizedListing[] = [
+      makeListing({ id: "buy", price: 100, photoCount: 8 }),
+      makeListing({ id: "over-market", price: 250, photoCount: 8 }),
+      makeListing({ id: "thin", price: 100, photoCount: 0, feedbackPercentage: null, feedbackCount: null }),
+      makeListing({ id: "risky", price: 100, photoCount: 8, feedbackPercentage: 82, feedbackCount: 40 }),
+    ];
+
+    for (const listing of cases) {
+      for (const lang of ["en", "zh"] as const) {
+        const copy = buildVerdictCopy({
+          listing,
+          choice: choice("best_value", listing.id),
+          alternatives: [],
+          marketPrice: 200,
+          lang,
+        });
+        expect(copy.action.note, `${listing.id}/${lang}`).not.toMatch(
+          /turn up|come down|cool off|restock|more will|supply is|等更稳|等降价|会降|再等等更/i,
+        );
+      }
+    }
+  });
+
+  // The anchor is missing for a large share of the catalogue (both Base Set
+  // cards and every One Piece card measured on 2026-08-10), and where it does
+  // exist, same-day asks for one card spread over 30+ points — wider than the
+  // wait threshold. Position within the comparison needs no anchor and cannot
+  // be miscalibrated, so it is the price read that always works.
+  describe("pricePosition", () => {
+    it("ranks the pick among the comparable copies", () => {
+      const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
+      const alternatives = [90, 100, 150].map((price, index) => makeListing({ id: `alt-${index}`, price, photoCount: 4 }));
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives,
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.pricePosition).toBe("3rd cheapest of 4 comparable copies");
+    });
+
+    it("says so plainly when the pick is the cheapest", () => {
+      const winner = makeListing({ id: "winner", price: 80, photoCount: 8 });
+      const alternatives = [90, 100].map((price, index) => makeListing({ id: `alt-${index}`, price, photoCount: 4 }));
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives,
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.pricePosition).toBe("Cheapest of 3 comparable copies");
+    });
+
+    it("works with no market reference at all", () => {
+      const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
+      const alternatives = [90, 100].map((price, index) => makeListing({ id: `alt-${index}`, price, photoCount: 4 }));
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives,
+        marketPrice: null,
+        lang: "en",
+      });
+
+      expect(copy.pricePosition).toBe("3rd cheapest of 3 comparable copies");
+    });
+
+    it("is null when there is nothing to compare against", () => {
+      const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(copy.pricePosition).toBeNull();
+    });
+
+    it("renders the position in Chinese", () => {
+      const winner = makeListing({ id: "winner", price: 120, photoCount: 8 });
+      const alternatives = [90, 100].map((price, index) => makeListing({ id: `alt-${index}`, price, photoCount: 4 }));
+
+      const cheapest = buildVerdictCopy({
+        listing: makeListing({ id: "cheap", price: 10, photoCount: 8 }),
+        choice: choice("best_value", "cheap"),
+        alternatives,
+        marketPrice: 200,
+        lang: "zh",
+      });
+      const third = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives,
+        marketPrice: 200,
+        lang: "zh",
+      });
+
+      expect(cheapest.pricePosition).toBe("3 条可比商品里最便宜");
+      expect(third.pricePosition).toBe("3 条可比商品里第 3 便宜");
+    });
+
+    it("ranks on comparable cost, not item price alone", () => {
+      const winner = makeListing({ id: "winner", price: 100, shipping: 40, photoCount: 8 });
+      const rival = makeListing({ id: "rival", price: 110, shipping: 5, photoCount: 8 });
+
+      const copy = buildVerdictCopy({
+        listing: winner,
+        choice: choice("best_value", winner.id),
+        alternatives: [rival],
+        marketPrice: 200,
+        lang: "en",
+      });
+
+      expect(winner.preTaxTotal).toBeGreaterThan(rival.preTaxTotal);
+      expect(copy.pricePosition).toBe("2nd cheapest of 2 comparable copies");
     });
   });
 });

@@ -196,6 +196,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 ### Not finished or not verified
 
 - The no-trustworthy-listing state and Next Moves avoid false certainty, but no user study proves which action preserves momentum.
+- Market-anchor calibration (`docs/market-anchor-calibration-2026-08-10.md`, rerun with `npm run measure:market-anchor`): the anchor is fresh and unbiased, but same-day asks for one card spread 33-36 points so the 15% wait threshold fires on ~1 in 5 listings from ordinary seller variance; 5 of 8 sampled cards had no anchor at all; the Mewtwo & Mew-GX 222/236 anchor looks crosswalked to the wrong printing. The new `pricePosition` read covers the gap; the threshold itself is not yet retuned.
 - The landing rail's cold-start pool remains eight hardcoded Pokémon cards. Replace it with a verified, freshness-bounded catalog source before adding One Piece entries or making any "newest" or "chase right now" claim; the current UI makes neither claim.
 - The “exact buy list” aha moment, receipt trust surface, and shareability have not been tested with target buyers.
 

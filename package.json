@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit",
     "test": "npm run metadata:check && vitest run",
     "benchmark:print-fidelity": "vitest bench src/lib/comparison/print-fidelity.bench.ts --run",
-    "verdict:review": "AI_VERDICT_NOTE=1 VERDICT_NOTE_REVIEW=1 vitest run src/lib/ai/verdict-note-review.test.ts"
+    "verdict:review": "AI_VERDICT_NOTE=1 VERDICT_NOTE_REVIEW=1 vitest run src/lib/ai/verdict-note-review.test.ts",
+    "measure:market-anchor": "node scripts/measure-market-anchor.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

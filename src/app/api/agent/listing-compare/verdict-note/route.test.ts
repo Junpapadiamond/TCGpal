@@ -71,7 +71,9 @@ describe("/api/agent/listing-compare/verdict-note route", () => {
     const [input] = vi.mocked(generateVerdictNote).mock.calls[0];
     expect(input.decision.kind).toBe("buy");
     expect(input.decision.label).toBe("Reasonable to buy");
-    expect(input.decision.fallbackNote).toContain("condition is still the seller's claim");
+    // The route must hand over the live deterministic sentence, whatever
+    // verdict-copy currently produces, so the model never invents the fallback.
+    expect(input.decision.fallbackNote).toContain("before you commit");
   });
 
   it("reuses one model call for a repeated view of the same report and lens", async () => {
