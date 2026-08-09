@@ -1,13 +1,12 @@
 // The decision receipt's closed-state line: one calm sentence-length string
 // carrying the guardrail facts — which sources were live, the market reference
-// and its freshness, how many listings were excluded, and when this was
-// observed — so folding the receipt never hides sources or timestamps.
+// and its freshness, and when this was observed — so folding the receipt never
+// hides sources or timestamps without exposing internal pipeline counts.
 
 export type ReceiptSummaryInput = {
   liveSources: string;
   marketMid: number | null;
   marketAsOf: string | null;
-  excludedCount: number;
   observedTime: string;
   lang: "en" | "zh";
 };
@@ -30,7 +29,6 @@ export function buildReceiptSummaryLine({
   liveSources,
   marketMid,
   marketAsOf,
-  excludedCount,
   observedTime,
   lang,
 }: ReceiptSummaryInput): string {
@@ -48,10 +46,6 @@ export function buildReceiptSummaryLine({
       : `market ${formatMoney(marketMid)}${asOf ? ` (as of ${asOf})` : ""}`);
   } else {
     parts.push(zh ? "没有市场参考价" : "no market reference");
-  }
-
-  if (excludedCount > 0) {
-    parts.push(zh ? `已排除 ${excludedCount} 条` : `${excludedCount} excluded`);
   }
 
   parts.push(observedTime);

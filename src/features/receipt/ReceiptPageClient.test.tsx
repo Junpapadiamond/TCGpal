@@ -55,17 +55,41 @@ describe("receipt page interactions", () => {
   afterEach(() => cleanup());
 
   it("copies the stable receipt URL and renders the same receipt in Chinese", async () => {
-    render(<ReceiptPageClient snapshot={snapshot()} />);
+    const saved = snapshot();
+    saved.report.platforms = [{
+      id: "ebay",
+      marketplace: "eBay",
+      label: "eBay Browse",
+      sourceMode: "official_api",
+      status: "complete",
+      configured: true,
+      count: 50,
+      detail: "provider detail",
+    }];
+    saved.report.trace = [{ step: "rank", actor: "ranking.ts", summary: "full validation trace", status: "complete" }];
+    saved.report.warnings = ["raw adapter warning"];
+    render(<ReceiptPageClient snapshot={saved} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Copy receipt" }));
     await waitFor(() => expect(clipboard.writeText).toHaveBeenCalledWith(window.location.href));
     expect(trackEvent).toHaveBeenCalledWith("receipt_link_copied");
+    expect(screen.getByText("Sources")).toBeTruthy();
+    expect(screen.getByText("Assumptions")).toBeTruthy();
+    expect(screen.getByText("Important exclusions")).toBeTruthy();
+    expect(screen.getByText("Missing information")).toBeTruthy();
+    expect(screen.getByText("Confidence and caution")).toBeTruthy();
+    expect(screen.getByText("eBay Browse")).toBeTruthy();
+    expect(screen.queryByText(/50/)).toBeNull();
+    expect(screen.queryByText("official_api")).toBeNull();
+    expect(screen.queryByText("full validation trace")).toBeNull();
+    expect(screen.queryByText("raw adapter warning")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     expect(screen.getByRole("heading", { name: "决策凭证" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "重新查在售商品" })).toBeTruthy();
     const noBuyLabel = screen.getAllByText(/^暂时没有能放心买的/).find((element) => element.tagName === "STRONG");
     expect(noBuyLabel?.textContent).toBe("暂时没有能放心买的。");
+    expect(screen.getByText("可信度较低。")).toBeTruthy();
   });
 
   it("classifies only a coarse referrer category", () => {

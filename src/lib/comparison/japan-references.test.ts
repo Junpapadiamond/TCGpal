@@ -40,6 +40,7 @@ describe("Japan reference links", () => {
     ]);
     expect(links.every((link) => link.status === "missing")).toBe(true);
     expect(links.every((link) => link.note.includes("not fetched or analyzed"))).toBe(true);
+    expect(links.every((link) => !link.note.toLowerCase().includes("paste"))).toBe(true);
     expect(links.find((link) => link.label === "Card Rush OP price check")?.url).toContain("OP01-024");
   });
 

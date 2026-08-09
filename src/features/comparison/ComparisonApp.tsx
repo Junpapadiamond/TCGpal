@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
-  IconCardFan,
   IconCardSearch,
   IconCaution,
   IconCheck,
@@ -37,6 +36,7 @@ import {
 } from "./identity-filters";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
+import { PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
 import {
   defaultComparisonFormValues,
   emptyLedgerRow,
@@ -87,7 +87,7 @@ const conditions: ConditionClaim[] = [
 
 const RECENT_CONFIRMED_CARDS_KEY = "tcgpal:recent-confirmed-cards";
 const MAX_MARQUEE_REAL_CARDS = 8;
-const RAIL_SLOTS = 14;
+export const RAIL_SLOTS = 14;
 
 export type RecentCarouselCard = {
   id: string;
@@ -114,35 +114,47 @@ const CURATED_MARQUEE_CARDS: RecentCarouselCard[] = [
   { id: "curated-base1-4", game: "pokemon", name: "Charizard", setName: "Base", setCode: "BS", cardNumber: "4/102", imageUrl: "https://images.pokemontcg.io/base1/4_hires.png", lastSeenAt: 0 },
 ];
 
-/** Recent share ramps with real usage and caps at 70%. Zero history = pure curated. */
-export function recentShare(historyCount: number): number {
-  if (historyCount <= 0) return 0;
-  return Math.min(0.7, 0.18 + 0.13 * historyCount);
-}
+export type RailItem = {
+  card: RecentCarouselCard & { imageUrl: string };
+  source: "chase" | "recent";
+};
 
-/** Spread recents through the loop instead of clumping them at one end. */
-export function blendRail(
+/**
+ * The rail is a history surface first: the cards the buyer already checked lead,
+ * newest first, and curated chase cards fill whatever is left.
+ *
+ * This replaces a share-based blend that interleaved the two pools by a ramping
+ * percentage. With a short history that cycled one recent card into several
+ * slots, so the rail showed the same card three or four times instead of
+ * reading as "what you looked at".
+ */
+export function buildRail(
   recent: RecentCarouselCard[],
   curated: RecentCarouselCard[],
-  historyCount: number,
   slots = RAIL_SLOTS,
-): RecentCarouselCard[] {
-  if (slots <= 0 || (recent.length === 0 && curated.length === 0)) return [];
-  const share = recentShare(historyCount);
-  const out: RecentCarouselCard[] = [];
-  let acc = 0;
-  let r = 0;
-  let c = 0;
-  for (let i = 0; i < slots; i += 1) {
-    acc += share;
-    if ((acc >= 1 || curated.length === 0) && recent.length > 0) {
-      acc -= 1;
-      out.push(recent[r++ % recent.length]!);
-    } else if (curated.length > 0) {
-      out.push(curated[c++ % curated.length]!);
-    }
-  }
-  return out;
+): RailItem[] {
+  if (slots <= 0) return [];
+  const byCard = new Map<string, RailItem>();
+
+  const add = (card: RecentCarouselCard, source: "chase" | "recent") => {
+    const imageUrl = safeCarouselImageUrl(card.imageUrl);
+    if (!imageUrl) return;
+    // Identity, not id or URL: a checked card and its curated twin carry
+    // different ids and different image sizes, and should occupy one slot.
+    // The set code is deliberately excluded — the catalog and the curated pool
+    // use different vocabularies for one set (SV6 vs TWM), which let the same
+    // card sit in the rail twice. Name plus printed number is the stable pair.
+    const key = `${card.game}:${card.name}:${card.cardNumber}`
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!byCard.has(key)) byCard.set(key, { card: { ...card, imageUrl }, source });
+  };
+
+  for (const card of recent) add(card, "recent");
+  for (const card of curated) add(card, "chase");
+
+  return Array.from(byCard.values()).slice(0, slots);
 }
 
 type JourneyStep = "search" | "confirmation" | "result";
@@ -342,15 +354,19 @@ function readTimestamp() {
   return Date.now();
 }
 
-export function ComparisonApp() {
+export function ComparisonApp({
+  runtimeEnvironment = process.env.NODE_ENV,
+}: {
+  runtimeEnvironment?: "development" | "production" | "test";
+} = {}) {
   return (
     <LanguageProvider>
-      <ComparisonExperience />
+      <ComparisonExperience runtimeEnvironment={runtimeEnvironment} />
     </LanguageProvider>
   );
 }
 
-function ComparisonExperience() {
+function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "development" | "production" | "test" }) {
   const t = useT();
   const { lang } = useLang();
   const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
@@ -369,6 +385,7 @@ function ComparisonExperience() {
   const [listingOpen, setListingOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [compactSearchOpen, setCompactSearchOpen] = useState(false);
+  const [inspectorEnabled, setInspectorEnabled] = useState(false);
   const agentHandoffHandled = useRef(false);
   const requestGeneration = useRef(0);
   const activeRequest = useRef<AbortController | null>(null);
@@ -407,6 +424,16 @@ function ComparisonExperience() {
   useEffect(() => {
     initializeAnalytics();
   }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setInspectorEnabled(
+        runtimeEnvironment === "development"
+        && new URLSearchParams(window.location.search).get("inspect") === "1",
+      );
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [runtimeEnvironment]);
 
   useEffect(() => {
     const restore = (event: PopStateEvent) => {
@@ -864,11 +891,7 @@ function ComparisonExperience() {
 
   const compactMode = Boolean(pendingRequest || report);
   const activeCard = report?.confirmedCard ?? null;
-  const carouselCards = blendRail(
-    recentCarouselCards,
-    CURATED_MARQUEE_CARDS,
-    recentCarouselCards.length,
-  );
+  const railItems = buildRail(recentCarouselCards, CURATED_MARQUEE_CARDS);
   const headerQuery = activeCard
     ? [activeCard.name, activeCard.cardNumber, activeCard.variant, activeCard.setName].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
@@ -877,7 +900,7 @@ function ComparisonExperience() {
     : t.conditions[desiredCondition];
   const appliedCondition = pendingRequest?.buyer.desiredCondition ?? desiredCondition;
   const headerContext = [
-    t.form.games[pendingRequest?.cardHint.game ?? game],
+    (pendingRequest?.cardHint.game ?? game) === "onePiece" ? t.form.onePieceBetaLabel : t.form.games.pokemon,
     (pendingRequest?.buyer.postalCode ?? postalCode) ? `ZIP ${pendingRequest?.buyer.postalCode ?? postalCode}` : null,
     appliedCondition === "Unknown"
       ? t.form.anyCondition
@@ -972,7 +995,7 @@ function ComparisonExperience() {
                 <span>{t.form.gameLabel}</span>
                 <select {...form.register("game")}>
                   <option value="pokemon">{t.form.games.pokemon}</option>
-                  <option value="onePiece">{t.form.games.onePiece}</option>
+                  <option value="onePiece">{t.form.onePieceBetaLabel}</option>
                 </select>
               </label>
               <DesiredConditionField form={form} />
@@ -1032,10 +1055,20 @@ function ComparisonExperience() {
                         key={id}
                         type="button"
                         aria-pressed={active}
-                        onClick={() => form.setValue("game", id)}
+                        onClick={() => {
+                          form.setValue("game", id);
+                          trackEvent("game_selected", { game: id });
+                        }}
                       >
-                        <span className={`landing-game-dot ${id === "pokemon" ? "is-pokemon" : "is-one-piece"}`} />
-                        {t.form.games[id]}
+                        <Image
+                          src={id === "pokemon" ? "/logo-pokemon-tcg.png" : "/logo-one-piece-card-game.png"}
+                          alt={id === "pokemon" ? "Pokémon TCG" : "One Piece Card Game"}
+                          width={id === "pokemon" ? 58 : 66}
+                          height={24}
+                          className="landing-game-logo"
+                        />
+                        <span>{t.form.games[id]}</span>
+                        {id === "onePiece" && <span className="landing-beta-label">Beta</span>}
                       </button>
                     );
                   })}
@@ -1059,7 +1092,7 @@ function ComparisonExperience() {
                 <IconChevronDown className={`h-3.5 w-3.5 transition ${refineOpen ? "rotate-180" : ""}`} />
               </button>
 
-              <button
+              {PASTE_LISTING_UI_ENABLED && <button
                 className="landing-link-button"
                 type="button"
                 aria-expanded={listingOpen}
@@ -1067,8 +1100,10 @@ function ComparisonExperience() {
               >
                 <IconLink className="h-3.5 w-3.5" />
                 {t.form.pasteListingInstead}
-              </button>
+              </button>}
             </div>
+
+            {game === "onePiece" && <p className="mt-2 text-xs font-semibold text-[#7a8982]">{t.form.onePieceBetaNote}</p>}
 
             {refineOpen && (
               <div id="search-refinement-panel" className="mt-4 border-t border-[#d6ded5] pt-4">
@@ -1100,7 +1135,7 @@ function ComparisonExperience() {
               </div>
             )}
 
-            {listingOpen && (
+            {PASTE_LISTING_UI_ENABLED && listingOpen && (
             <div className="mt-4 border-t border-[#d6ded5] pt-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#64736c]">
@@ -1277,11 +1312,7 @@ function ComparisonExperience() {
           </form>
         </section>
 
-        <CardMarquee
-          cards={carouselCards}
-          recentCards={recentCarouselCards}
-          onCheck={checkCardFromRail}
-        />
+        <CardMarquee items={railItems} onCheck={checkCardFromRail} />
         <p className="mt-1 text-center text-[12.5px] font-semibold text-[#7a8982]">
           {t.hero.scope}
         </p>
@@ -1320,6 +1351,7 @@ function ComparisonExperience() {
             onRetrySources={() => void retryComparison()}
             onPasteListing={startPasteListing}
             snapshot={resultSnapshot}
+            inspectorEnabled={inspectorEnabled}
           />
         )}
       </div>
@@ -1445,49 +1477,37 @@ function Footer() {
   );
 }
 
-type MarqueeItem = {
-  card: RecentCarouselCard & { imageUrl: string };
-  clone: boolean;
-  source: "chase" | "recent";
-};
+type MarqueeItem = RailItem & { clone: boolean };
 
-function buildMarqueeItems(cards: RecentCarouselCard[], recentCards: ReadonlySet<RecentCarouselCard>): MarqueeItem[] {
-  const source = cards
-    .map((card) => ({
-      card: { ...card, imageUrl: safeCarouselImageUrl(card.imageUrl) },
-      source: recentCards.has(card) ? "recent" as const : "chase" as const,
-    }))
-    .filter((item): item is { card: RecentCarouselCard & { imageUrl: string }; source: "chase" | "recent" } => Boolean(item.card.imageUrl));
+/** The loop is the rail twice over; the second pass is the seam-free clone. */
+function buildMarqueeItems(items: RailItem[]): MarqueeItem[] {
   return [
-    ...source.map((item) => ({ ...item, clone: false })),
-    ...source.map((item) => ({ ...item, clone: true })),
+    ...items.map((item) => ({ ...item, clone: false })),
+    ...items.map((item) => ({ ...item, clone: true })),
   ];
 }
 
 function CardMarquee({
-  cards,
-  recentCards,
+  items,
   onCheck,
 }: {
-  cards: RecentCarouselCard[];
-  recentCards: RecentCarouselCard[];
+  items: RailItem[];
   onCheck: (card: RecentCarouselCard, source: "chase" | "recent") => void;
 }) {
   const t = useT();
-  const [paused, setPaused] = useState(false);
-  const items = buildMarqueeItems(cards, new Set(recentCards));
+  const marqueeItems = buildMarqueeItems(items);
+  if (marqueeItems.length === 0) return null;
   return (
     <section className="card-marquee-wrap mt-8 sm:mt-10" aria-label={t.rail.ariaLabel}>
-      <div
-        className="card-marquee"
-        data-paused={paused ? "true" : "false"}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onFocus={() => setPaused(true)}
-        onBlur={() => setPaused(false)}
-      >
+      {/*
+        Pausing is CSS-only (`.card-marquee:hover`). Driving it from React state
+        put a re-render between "pointer entered" and "motion stopped", and in
+        those frames the card slid out from under a stationary cursor — the rail
+        froze with no card hovered, so the check button never appeared.
+      */}
+      <div className="card-marquee">
         <div className="card-marquee-track">
-          {items.map((item, index) => (
+          {marqueeItems.map((item, index) => (
             <CardMarqueeItem
               key={`${item.card.id}-${item.clone ? "clone" : "real"}-${index}`}
               item={item}
@@ -2091,6 +2111,7 @@ function ComparisonResult({
   onRetrySources,
   onPasteListing,
   snapshot,
+  inspectorEnabled,
 }: {
   report: ComparisonReport;
   preferredRole: LensRole;
@@ -2101,6 +2122,7 @@ function ComparisonResult({
   onRetrySources: () => void;
   onPasteListing: () => void;
   snapshot: ResultSnapshot | null;
+  inspectorEnabled: boolean;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -2149,10 +2171,8 @@ function ComparisonResult({
   const alternativeListings = selectedListing
     ? prioritizedEligibleListings.filter((listing) => listing.id !== selectedListing.id)
     : prioritizedEligibleListings;
-  const visiblePlatforms = report.platforms.filter((platform) => platform.configured || platform.status === "fallback");
-  const livePlatforms = visiblePlatforms.filter((platform) => platform.status === "complete");
+  const livePlatforms = report.platforms.filter((platform) => platform.configured && platform.status === "complete");
   const connectedSourceLabels = livePlatforms.map((platform) => platform.marketplace).join(" + ");
-  const unavailablePlatformCount = visiblePlatforms.filter((platform) => platform.status !== "complete").length;
   const marketReferenceAvailable = typeof report.confirmedCard?.marketMid === "number";
   const listingTotals = eligibleListings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
   const listedRange = listingTotals.length > 0
@@ -2171,12 +2191,12 @@ function ComparisonResult({
   // buyer asks — via the hero's "Why is this the top pick?", a row's Ask link,
   // or the standalone opener under the alternatives fold.
   const [qaOpen, setQaOpen] = useState(false);
-  const [receiptCopied, setReceiptCopied] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<"url" | "text" | null>(null);
 
   // Fold-rate signals, once per report: a buyer opening Layer-2/3 folds is
   // measurable re-research behavior (see the analytics event union).
   const foldEventsFired = useRef({ reportKey: "", fired: new Set<string>() });
-  function trackFoldOpened(event: "alternatives_expanded" | "method_opened" | "qa_opened") {
+  function trackFoldOpened(event: "alternatives_expanded" | "qa_opened") {
     if (foldEventsFired.current.reportKey !== report.generatedAt) {
       foldEventsFired.current = { reportKey: report.generatedAt, fired: new Set() };
     }
@@ -2225,7 +2245,7 @@ function ComparisonResult({
     const total = selectedListing.estimatedLandedCost ?? selectedListing.preTaxTotal;
     const totalLabel = selectedListing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
     const receipt = [
-      "Lens TCG comparison",
+      "TCGlens result",
       report.confirmedCard
         ? `${report.confirmedCard.name} · ${report.confirmedCard.setCode} #${report.confirmedCard.cardNumber}`
         : selectedListing.title,
@@ -2245,11 +2265,12 @@ function ComparisonResult({
           })()
         : null;
       await navigator.clipboard.writeText(shareUrl ?? receipt);
-      setReceiptCopied(true);
-      trackEvent(shareUrl ? "receipt_link_copied" : "comparison_receipt_copied");
-      window.setTimeout(() => setReceiptCopied(false), 2000);
+      const shareMethod = shareUrl ? "url" : "text";
+      setShareFeedback(shareMethod);
+      trackEvent("result_shared", { share_method: shareMethod, result_state: outcome });
+      window.setTimeout(() => setShareFeedback(null), 4000);
     } catch {
-      setReceiptCopied(false);
+      setShareFeedback(null);
     }
   }
 
@@ -2306,6 +2327,8 @@ function ComparisonResult({
         </div>
       )}
 
+      {report.request.cardHint.game === "onePiece" && <GameBetaNotice />}
+
       {outcome === "next_moves" && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.nextMovesTitle}</h3>
@@ -2323,8 +2346,7 @@ function ComparisonResult({
           <div className="mt-4 flex flex-wrap gap-2">
             <button className="secondary-button" type="button" onClick={onRefineSearch}>{t.result.refineSearch}</button>
             <button className="secondary-button" type="button" onClick={onRetrySources}>{t.result.retrySources}</button>
-            <button className="secondary-button" type="button" onClick={onPasteListing}>{t.result.pasteListing}</button>
-            <a className="secondary-button inline-flex" href="#method">{t.result.nextMovesMethod}</a>
+            {PASTE_LISTING_UI_ENABLED && <button className="secondary-button" type="button" onClick={onPasteListing}>{t.result.pasteListing}</button>}
           </div>
         </div>
       )}
@@ -2345,11 +2367,13 @@ function ComparisonResult({
                 marketPrice: report.demoMode ? null : report.confirmedCard?.marketMid ?? null,
                 lang,
               })}
-              comparableCount={eligibleCount}
               confirmedCard={report.confirmedCard}
               marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
               demoMode={report.demoMode}
               onAsk={askAboutListing}
+              shareFeedback={shareFeedback}
+              shareReady={Boolean(snapshot?.id && snapshot.durable)}
+              onShare={() => void copyComparisonReceipt()}
             />
           )}
 
@@ -2416,87 +2440,22 @@ function ComparisonResult({
             </button>
           )}
 
+          <BuyerSourceNotice report={report} hasComparableListings={eligibleCount > 0} />
+
+          <OtherMarketplaces report={report} />
+
           <DecisionReceipt
             card={report.confirmedCard}
             generatedAt={report.generatedAt}
             listedRange={listedRange}
             liveSources={connectedSourceLabels}
             hasMarketReference={marketReferenceAvailable}
-            unavailableCount={unavailablePlatformCount}
             observedTime={observedTime}
-            warningsCount={report.warnings.length}
             excluded={excluded}
             cautions={report.narrative.cautions}
-            receiptCopied={receiptCopied}
-            canCopy={Boolean(selectedListing && selectedChoice)}
-            shareReady={Boolean(snapshot?.id && snapshot.durable)}
-            onCopy={() => void copyComparisonReceipt()}
           />
 
-          <details
-            id="method"
-            className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5"
-            onToggle={(event) => {
-              if ((event.target as HTMLDetailsElement).open) trackFoldOpened("method_opened");
-            }}
-          >
-            <summary className="cursor-pointer font-bold text-[#52635c]">{t.result.howWeChecked}</summary>
-
-            {selectedListing && (
-              <div className="mt-4">
-                <VerdictMath
-                  listing={selectedListing}
-                  marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
-                />
-              </div>
-            )}
-
-            {report.platforms.length > 0 && <SourcesChecked platforms={report.platforms} />}
-
-            {report.references.length > 0 && (
-              <div className="mt-5">
-                <p className="text-sm font-black text-[#24312f]">{t.result.referenceContext}</p>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {report.references.map((reference) => (
-                    <div key={reference.label} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-bold">{reference.label}</p>
-                        <StatusPill status={reference.status} />
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-[#64736c]">{reference.note}</p>
-                      {reference.rawMid !== null && <p className="mt-2 font-mono text-lg font-black text-[#2f6f73]">{t.result.reference(reference.rawMid.toFixed(2))}</p>}
-                      {reference.url && (
-                        <a className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#2f6f73] underline" href={reference.url} target="_blank" rel="noreferrer">
-                          {t.result.openManualCheck} <IconExternal className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="mt-5">
-              <p className="text-sm font-black text-[#24312f]">{t.result.technicalTrace}</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                {report.trace.map((step) => (
-                  <div key={`${step.step}-${step.actor}`} className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-black text-[#64736c]">{step.step.replaceAll("_", " ")}</p>
-                      <StatusPill status={step.status === "complete" ? "used" : step.status === "fallback" ? "unavailable" : "missing"} />
-                    </div>
-                    <p className="mt-2 font-bold text-[#24312f]">{step.actor}</p>
-                    <p className="mt-1 text-sm leading-6 text-[#64736c]">{step.summary}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {report.warnings.length > 0 && (
-              <div className="mt-4 rounded-md border border-[#e2c879] bg-[#fff8dc] p-4 text-sm leading-6 text-[#6f5a22]">
-                {report.warnings.map((warning) => <p key={warning}>{warning}</p>)}
-              </div>
-            )}
-          </details>
+          {inspectorEnabled && <DevelopmentInspector report={report} selectedListing={selectedListing} />}
 
           {/* Pilot signal: one quiet row, always visible (never folded) so
               decision_feedback_submitted keeps flowing without shouting. */}
@@ -2905,6 +2864,143 @@ function ListingMetaLine({ listing }: { listing: NormalizedListing }) {
   );
 }
 
+function formatObservedAt(value: string, lang: Lang) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(lang === "zh" ? "zh-CN" : "en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function MarketplaceBrand({ marketplace }: { marketplace: Marketplace }) {
+  const t = useT();
+  const assetIncludesName = marketplace === "eBay" || marketplace === "TCGplayer" || marketplace === "SNKRDUNK";
+  const asset = marketplace === "eBay"
+    ? { src: "/marketplace-ebay.png", width: 55, height: 23 }
+    : marketplace === "TCGplayer"
+      ? { src: "/marketplace-tcgplayer.svg", width: 92, height: 28 }
+      : marketplace === "Mercari"
+        ? { src: "/marketplace-mercari.png", width: 28, height: 28 }
+        : marketplace === "SNKRDUNK"
+          ? { src: "/marketplace-snkrdunk.png", width: 116, height: 18 }
+          : null;
+
+  return (
+    <span className="inline-flex min-h-6 items-center gap-2 font-black text-[#24312f]">
+      {asset && <Image src={asset.src} alt="" width={asset.width} height={asset.height} className="max-h-6 w-auto object-contain" />}
+      <span className={assetIncludesName ? "sr-only" : undefined}>{t.marketplaces[marketplace] ?? marketplace}</span>
+    </span>
+  );
+}
+
+function GameBetaNotice() {
+  const t = useT();
+  return (
+    <div className="mx-auto flex max-w-[860px] flex-wrap items-center gap-2 rounded-md border border-[#e2c879] bg-[#fff8dc] px-4 py-2 text-xs font-semibold text-[#6f5a22]">
+      <strong>{t.form.onePieceBetaLabel}</strong>
+      <span>{t.form.onePieceBetaNote}</span>
+    </div>
+  );
+}
+
+function BuyerSourceNotice({ report, hasComparableListings }: { report: ComparisonReport; hasComparableListings: boolean }) {
+  const t = useT();
+  const messages = report.platforms
+    .filter((platform) => platform.configured && platform.status === "fallback")
+    .map((platform) => platform.marketplace === "eBay"
+      ? t.result.ebayUnavailable
+      : t.result.marketplaceUnavailable(platform.marketplace));
+  const ebay = report.platforms.find((platform) => platform.id === "ebay");
+  if (!hasComparableListings && ebay?.status === "complete") messages.push(t.result.ebayNoComparable);
+  if (messages.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm leading-6 text-[#6f5a22]">
+      {Array.from(new Set(messages)).map((message) => <p key={message}>{message}</p>)}
+    </div>
+  );
+}
+
+function OtherMarketplaces({ report }: { report: ComparisonReport }) {
+  const t = useT();
+  const card = report.confirmedCard;
+  if (!card) return null;
+  const query = [card.name, card.cardNumber, card.variant, card.setName].filter(Boolean).join(" ");
+  const tcgplayerUrl = card.tcgplayerProductId && card.marketUrl ? card.marketUrl : null;
+  const rows = [
+    {
+      marketplace: "TCGplayer" as const,
+      label: t.result.marketReferenceLabel,
+      detail: typeof card.marketMid === "number"
+        ? `${formatMoney(card.marketMid)} · ${marketFreshnessText(card, report.generatedAt, t)}`
+        : t.result.marketReferenceUnavailable,
+      note: t.result.aggregateReferenceOnly,
+      url: tcgplayerUrl,
+    },
+    {
+      marketplace: "Mercari" as const,
+      label: t.result.manualCheck,
+      detail: t.result.notChecked,
+      note: t.result.mercariManualNote,
+      url: `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`,
+    },
+    {
+      marketplace: "SNKRDUNK" as const,
+      label: t.result.japanManualCheck,
+      detail: t.result.notChecked,
+      note: t.result.snkrdunkManualNote,
+      url: `https://snkrdunk.com/search?keyword=${encodeURIComponent(query)}`,
+    },
+  ];
+
+  return (
+    <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]" aria-label={t.result.otherMarketplacesTitle}>
+      <div className="border-b border-[#d6ded5] px-4 py-3">
+        <h3 className="font-serif text-lg font-black text-[#24312f]">{t.result.otherMarketplacesTitle}</h3>
+      </div>
+      <div className="divide-y divide-[#e4ebe3]">
+        {rows.map((row) => (
+          <div key={row.marketplace} className="grid gap-3 px-4 py-3 sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center">
+            <MarketplaceBrand marketplace={row.marketplace} />
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{row.label}</p>
+              <p className="mt-0.5 text-sm font-bold text-[#24312f]">{row.detail}</p>
+              <p className="mt-0.5 text-xs leading-5 text-[#7a8982]">{row.note}</p>
+            </div>
+            {row.url ? (
+              <a
+                className="secondary-button min-h-10 justify-center px-3 py-2 text-xs"
+                href={row.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent("other_marketplace_clicked", {
+                  marketplace: row.marketplace,
+                  game: report.request.cardHint.game,
+                })}
+              >
+                {t.result.openMarketplace(row.marketplace)}
+                <IconExternal className="h-3.5 w-3.5" />
+              </a>
+            ) : <span className="text-xs font-bold text-[#7a8982]">{t.result.noExactLink}</span>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function marketFreshnessText(card: CardIdentityCandidate, generatedAt: string, t: Dict) {
+  if (!card.marketAsOf) return t.result.marketCatalogApprox;
+  const asOf = new Date(card.marketAsOf);
+  if (Number.isNaN(asOf.getTime())) return t.result.marketCatalogApprox;
+  const label = asOf.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const stale = new Date(generatedAt).getTime() - asOf.getTime() > 48 * 60 * 60 * 1000;
+  return `${t.result.marketAsOf(label)}${stale ? ` · ${t.result.marketStale}` : ""}`;
+}
+
 function MarketDeltaBadge({
   listing,
   marketPrice,
@@ -2997,22 +3093,27 @@ function RecommendedBuyHero({
   listing,
   choice,
   verdict,
-  comparableCount,
   confirmedCard,
   marketPrice,
   demoMode,
   onAsk,
+  shareFeedback,
+  shareReady,
+  onShare,
 }: {
   listing: NormalizedListing;
   choice: RankedChoice;
   verdict: VerdictCopy;
-  comparableCount: number;
   confirmedCard: CardIdentityCandidate | null;
   marketPrice: number | null;
   demoMode: boolean;
   onAsk: (listing: NormalizedListing) => void;
+  shareFeedback: "url" | "text" | null;
+  shareReady: boolean;
+  onShare: () => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
   const total = listing.estimatedLandedCost ?? listing.preTaxTotal;
   const totalLabel = listing.shipping === null
     ? t.card.estBeforeShipping
@@ -3038,17 +3139,22 @@ function RecommendedBuyHero({
             <span className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
               {roleToggleLabel(choice.role, t)}
             </span>
-            <span className="text-xs font-bold text-[#7a8982]">{t.result.oneOfComparable(comparableCount)}</span>
             {listing.demo && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
             {listing.userSupplied && <span className="rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-bold text-[#52635c]">{t.card.userAdded}</span>}
             {listing.webDiscovered && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-bold text-[#6f5a22]">{t.card.webDiscovered}</span>}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-[#64736c]">
+            <MarketplaceBrand marketplace={listing.marketplace} />
+            {listing.marketplace === "eBay" && !listing.userSupplied && !listing.demo && <span>{t.result.liveEbayListing}</span>}
+            <span>{t.candidate.observed(formatObservedAt(listing.observedAt, lang))}</span>
           </div>
           <h2 className="mt-2 font-serif text-xl font-bold leading-tight text-[#24312f] sm:text-2xl">
             {listing.title}
           </h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-[#52635c]">
-            <ListingMetaLine listing={listing} />
+            {t.result.sellerClaimedCondition(t.conditions[listing.claimedCondition])}
           </p>
+          <p className="mt-1 text-xs font-black text-[#2f6f73]">{t.result.confidenceLabel(choice.confidence)}</p>
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
         </div>
 
@@ -3056,6 +3162,13 @@ function RecommendedBuyHero({
           <div>
             <p className="font-mono text-3xl font-black leading-none text-[#24312f]">{formatMoney(total)}</p>
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{totalLabel}</p>
+            <p className="mt-2 max-w-[230px] text-xs font-semibold leading-5 text-[#64736c] lg:text-right">
+              {t.result.priceFacts(
+                formatMoney(listing.price),
+                listing.shipping === null ? t.card.shippingUnknown : listing.shipping === 0 ? t.card.freeShipping : formatMoney(listing.shipping),
+                listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
+              )}
+            </p>
           </div>
           <MarketDeltaBadge listing={listing} marketPrice={marketPrice} />
         </div>
@@ -3093,6 +3206,10 @@ function RecommendedBuyHero({
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
+            <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={onShare}>
+              <IconReceipt className="h-4 w-4" />
+              {t.result.shareResult}
+            </button>
             <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={() => onAsk(listing)}>
               <IconInfo className="h-4 w-4" />
               {t.result.askWhyThis}
@@ -3112,6 +3229,11 @@ function RecommendedBuyHero({
             )}
           </div>
         </div>
+        {shareFeedback && (
+          <p aria-live="polite" className="mt-2 text-right text-xs font-bold text-[#2f6f73]">
+            {shareFeedback === "url" && shareReady ? t.result.shareUrlCopied : t.result.shareTextCopied}
+          </p>
+        )}
       </div>
     </article>
   );
@@ -3176,30 +3298,18 @@ function DecisionReceipt({
   listedRange,
   liveSources,
   hasMarketReference,
-  unavailableCount,
   observedTime,
-  warningsCount,
   excluded,
   cautions,
-  receiptCopied,
-  canCopy,
-  shareReady,
-  onCopy,
 }: {
   card: CardIdentityCandidate | null;
   generatedAt: string;
   listedRange: string;
   liveSources: string;
   hasMarketReference: boolean;
-  unavailableCount: number;
   observedTime: string;
-  warningsCount: number;
   excluded: NormalizedListing[];
   cautions: string[];
-  receiptCopied: boolean;
-  canCopy: boolean;
-  shareReady: boolean;
-  onCopy: () => void;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -3209,7 +3319,6 @@ function DecisionReceipt({
     liveSources,
     marketMid: card?.marketMid ?? null,
     marketAsOf: card?.marketAsOf ?? null,
-    excludedCount: excluded.length,
     observedTime,
     lang,
   });
@@ -3217,23 +3326,7 @@ function DecisionReceipt({
     <details className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]" aria-label={t.result.decisionReceipt}>
       <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3">
         <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#52635c]" title={summaryLine}>{summaryLine}</span>
-        <span className="flex shrink-0 items-center gap-2">
-          <button
-            className="secondary-button min-h-9 px-2.5 py-1.5 text-xs"
-            type="button"
-            disabled={!canCopy}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onCopy();
-            }}
-            title={!canCopy ? t.result.shareUnavailable : shareReady ? t.result.shareReceipt : t.result.copyReceipt}
-          >
-            <IconReceipt className="h-4 w-4" />
-            {receiptCopied ? t.result.receiptCopied : shareReady ? t.result.shareReceipt : t.result.copyReceipt}
-          </button>
-          <IconChevronDown className="h-4 w-4 text-[#64736c]" />
-        </span>
+        <IconChevronDown className="h-4 w-4 shrink-0 text-[#64736c]" />
       </summary>
 
       <div className="px-4 pb-4 sm:px-5">
@@ -3244,9 +3337,7 @@ function DecisionReceipt({
         <SourceStatusLine
           liveSources={liveSources}
           hasMarketReference={hasMarketReference}
-          unavailableCount={unavailableCount}
           observedTime={observedTime}
-          warningsCount={warningsCount}
         />
       </div>
 
@@ -3257,7 +3348,7 @@ function DecisionReceipt({
             {cautions.map((caution) => (
               <li key={caution} className="flex gap-2">
                 <IconCaution className="mt-1 h-4 w-4 shrink-0 text-[#8d6032]" />
-                <span>{localizedCaution(caution, t)}</span>
+                <span>{lang === "en" ? caution : localizedCaution(caution, t)}</span>
               </li>
             ))}
           </ul>
@@ -3266,7 +3357,7 @@ function DecisionReceipt({
 
       {excluded.length > 0 && (
         <details className="mt-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
-          <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.excluded(excluded.length)}</summary>
+          <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.importantExclusions}</summary>
           <div className="mt-3 space-y-2 text-sm leading-6 text-[#64736c]">
             {excluded.map((listing) => (
               <p key={listing.id}>
@@ -3333,15 +3424,11 @@ function MarketReferenceLine({
 function SourceStatusLine({
   liveSources,
   hasMarketReference,
-  unavailableCount,
   observedTime,
-  warningsCount,
 }: {
   liveSources: string;
   hasMarketReference: boolean;
-  unavailableCount: number;
   observedTime: string;
-  warningsCount: number;
 }) {
   const t = useT();
   const summary = liveSources
@@ -3352,11 +3439,6 @@ function SourceStatusLine({
       <IconCheck className="mt-1 h-4 w-4 shrink-0 text-[#2f6f73]" />
       <p>
         {summary}
-        {(unavailableCount > 0 || warningsCount > 0) && <> {t.result.someSourcesSatOut}</>}
-        {" "}
-        <a className="font-black text-[#2f6f73] underline decoration-[#9fb3a8] underline-offset-4" href="#method">
-          {t.result.seeHowChecked}
-        </a>
       </p>
     </div>
   );
@@ -3434,49 +3516,170 @@ function CompactCandidateRow({
   );
 }
 
-// The cross-platform fan-out is transparent: show every marketplace agent and
-// whether it was queried, was unavailable, or sat out because its API is not
-// connected. Lives inside the "How we checked" drawer so it informs without
-// competing with the verdict.
-function SourcesChecked({ platforms }: { platforms: ComparisonReport["platforms"] }) {
-  const t = useT();
-  const visiblePlatforms = platforms.filter((platform) => platform.configured || platform.status === "fallback");
-  if (visiblePlatforms.length === 0) return null;
+function DevelopmentInspector({
+  report,
+  selectedListing,
+}: {
+  report: ComparisonReport;
+  selectedListing: NormalizedListing | null;
+}) {
+  const eligible = report.candidates.filter((candidate) => candidate.eligible);
+  const excluded = report.candidates.filter((candidate) => !candidate.eligible);
+  const queried = report.platforms.reduce((total, platform) => total + platform.count, 0);
+  const diagnostic = useMemo(() => sanitizeDiagnosticReport(report), [report]);
+
+  function downloadDiagnostic() {
+    const blob = new Blob([JSON.stringify(diagnostic, null, 2)], { type: "application/json" });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `tcglens-diagnostic-${report.generatedAt.replaceAll(":", "-")}.json`;
+    anchor.click();
+    URL.revokeObjectURL(href);
+  }
+
   return (
-    <div className="mt-5">
-      <p className="eyebrow">
-        <IconCardFan className="h-4 w-4" />
-        {t.result.sourcesTitle}
-      </p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {visiblePlatforms.map((platform) => {
-          const tone = platform.status === "complete"
-            ? "bg-[#dcecdf] text-[#2f6f73]"
-            : platform.status === "fallback"
-              ? "bg-[#fff0d5] text-[#8d6032]"
-              : "bg-[#ecefeb] text-[#64736c]";
-          const label = platform.status === "complete"
-            ? t.result.sourceQueried
-            : platform.status === "fallback"
-              ? t.result.sourceUnavailable
-              : t.result.sourceNotConnected;
-          return (
-            <div
-              key={platform.id}
-              className="inline-flex items-center gap-2 rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-1.5 text-sm"
-            >
-              <span className="font-bold text-[#24312f]">{platform.marketplace}</span>
-              <span className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${tone}`}>{label}</span>
-              {platform.status === "complete" && (
-                <span className="text-xs text-[#64736c]">{t.result.sourceCount(platform.count)}</span>
-              )}
-            </div>
-          );
-        })}
+    <section className="rounded-xl border-2 border-dashed border-[#8d6032] bg-[#fffaf0] p-5" role="region" aria-label="Development inspector">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.1em] text-[#8d6032]">Development only</p>
+          <h3 className="mt-1 font-serif text-xl font-black text-[#24312f]">Result inspector</h3>
+        </div>
+        <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={downloadDiagnostic}>
+          <IconReceipt className="h-4 w-4" />
+          Download diagnostic JSON
+        </button>
       </div>
-      <p className="mt-3 text-xs leading-5 text-[#64736c]">{t.result.sourcesHint}</p>
-    </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+        {[
+          ["Queried", queried],
+          ["Eligible", eligible.length],
+          ["Excluded", excluded.length],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3">
+            <p className="font-mono text-xl font-black text-[#24312f]">{value}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {selectedListing && (
+        <div className="mt-5">
+          <p className="text-sm font-black text-[#24312f]">Ranking breakdown</p>
+          <p className="mt-1 text-xs text-[#64736c]"><ListingMetaLine listing={selectedListing} /></p>
+          <VerdictMath listing={selectedListing} marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null} />
+        </div>
+      )}
+
+      {report.platforms.length > 0 && (
+        <div className="mt-5">
+          <p className="text-sm font-black text-[#24312f]">Provider status and source mode</p>
+          <div className="mt-2 grid gap-2 md:grid-cols-2">
+            {report.platforms.map((platform) => (
+              <div key={platform.id} className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3 text-sm">
+                <p className="font-black text-[#24312f]">{platform.label}</p>
+                <p className="mt-1 text-[#64736c]">{platform.status} · <span>{platform.sourceMode}</span></p>
+                <p className="mt-1">{platform.count} · {platform.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {report.references.length > 0 && (
+        <div className="mt-5">
+          <p className="text-sm font-black text-[#24312f]">Reference diagnostics</p>
+          <div className="mt-2 grid gap-2 md:grid-cols-2">
+            {report.references.map((reference) => (
+              <div key={reference.label} className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-black text-[#24312f]">{reference.label}</p>
+                  <StatusPill status={reference.status} />
+                </div>
+                <p className="mt-1 text-[#64736c]">{reference.note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {excluded.length > 0 && (
+        <div className="mt-5">
+          <p className="text-sm font-black text-[#24312f]">Exclusions</p>
+          <ul className="mt-2 space-y-2 text-sm text-[#64736c]">
+            {excluded.map((listing) => <li key={listing.id}><strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {report.warnings.length > 0 && (
+        <div className="mt-5">
+          <p className="text-sm font-black text-[#24312f]">Raw warnings</p>
+          {report.warnings.map((warning) => <p key={warning} className="mt-1 text-sm text-[#64736c]">{warning}</p>)}
+        </div>
+      )}
+
+      {report.trace.length > 0 && (
+        <div className="mt-5">
+          <p className="text-sm font-black text-[#24312f]">Validation trace</p>
+          <div className="mt-2 space-y-2">
+            {report.trace.map((step) => (
+              <div key={`${step.step}-${step.actor}`} className="rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3 text-sm">
+                <p className="font-black text-[#24312f]">{step.step} · {step.actor} · {step.status}</p>
+                <p className="mt-1 text-[#64736c]">{step.summary}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <details className="mt-5 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-3">
+        <summary className="cursor-pointer text-sm font-black text-[#24312f]">Sanitized payload preview</summary>
+        <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words text-xs text-[#52635c]">{JSON.stringify(diagnostic, null, 2)}</pre>
+      </details>
+    </section>
   );
+}
+
+function sanitizeDiagnosticReport(report: ComparisonReport) {
+  return {
+    generatedAt: report.generatedAt,
+    status: report.status,
+    outcome: report.outcome,
+    demoMode: report.demoMode,
+    request: {
+      query: report.request.query,
+      cardHint: report.request.cardHint,
+      confirmedCardId: report.request.confirmedCardId,
+      desiredCondition: report.request.buyer.desiredCondition,
+      webDiscoveryMode: report.request.webDiscoveryMode,
+    },
+    confirmedCard: report.confirmedCard,
+    platforms: report.platforms,
+    references: report.references.map((reference) => ({ ...reference, url: null })),
+    rankedChoices: report.rankedChoices,
+    candidates: report.candidates.map((candidate) => ({
+      id: candidate.id,
+      marketplace: candidate.marketplace,
+      title: candidate.title,
+      eligible: candidate.eligible,
+      matchConfidence: candidate.matchConfidence,
+      printMatch: candidate.printMatch,
+      costComplete: candidate.costComplete,
+      sellerTrustScore: candidate.sellerTrustScore,
+      evidenceCompletenessScore: candidate.evidenceCompletenessScore,
+      conditionCompatibilityScore: candidate.conditionCompatibilityScore,
+      priceScore: candidate.priceScore,
+      safetyScore: candidate.safetyScore,
+      valueScore: candidate.valueScore,
+      eligibilityIssues: candidate.eligibilityIssues,
+      exclusionReasons: candidate.exclusionReasons,
+    })),
+    abstention: report.abstention,
+    warnings: report.warnings,
+    trace: report.trace,
+  };
 }
 
 function StatusPill({ status }: { status: "used" | "unavailable" | "missing" }) {

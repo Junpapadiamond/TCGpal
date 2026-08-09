@@ -19,6 +19,9 @@ export type TcgpalAnalyticsEvent =
   | "receipt_viewed"
   | "receipt_recheck_clicked"
   | "receipt_link_copied"
+  | "result_shared"
+  | "other_marketplace_clicked"
+  | "game_selected"
   | "decision_feedback_submitted"
   | "second_comparison_started"
   // Fold-rate signals: fired once per report on first open of a Layer-2/3
@@ -41,8 +44,29 @@ const allowedProperties = new Set([
   "referrer_class",
   "game",
   "source",
+  "share_method",
+  "result_state",
 ]);
 const allowedReferrerClasses = new Set(["direct", "reddit", "discord", "other"]);
+const allowedMarketplaces = new Set([
+  "eBay",
+  "TCGplayer",
+  "Cardmarket",
+  "Facebook",
+  "Reddit",
+  "Mercari",
+  "Whatnot",
+  "SNKRDUNK",
+  "Yahoo Auctions JP",
+  "Xianyu",
+  "集换社",
+  "Shopee Taiwan",
+  "Local shop",
+  "Other",
+]);
+const allowedGames = new Set(["pokemon", "onePiece"]);
+const allowedShareMethods = new Set(["url", "text"]);
+const allowedResultStates = new Set(["best_buy", "inspect_first", "next_moves"]);
 
 let initialized = false;
 
@@ -85,6 +109,10 @@ export function sanitizeAnalyticsProperties(properties: Record<string, unknown>)
     Object.entries(properties).filter(([key, value]) => (
       allowedProperties.has(key)
       && (key !== "referrer_class" || (typeof value === "string" && allowedReferrerClasses.has(value)))
+      && (key !== "marketplace" || (typeof value === "string" && allowedMarketplaces.has(value)))
+      && (key !== "game" || (typeof value === "string" && allowedGames.has(value)))
+      && (key !== "share_method" || (typeof value === "string" && allowedShareMethods.has(value)))
+      && (key !== "result_state" || (typeof value === "string" && allowedResultStates.has(value)))
     )),
   );
 }

@@ -5,10 +5,10 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  blendRail,
+  buildRail,
   ComparisonApp,
   PrintIdentitySummary,
-  recentShare,
+  RAIL_SLOTS,
   type RecentCarouselCard,
 } from "@/features/comparison/ComparisonApp";
 import { setLanguage, useLang } from "@/features/comparison/i18n";
@@ -99,28 +99,77 @@ function carouselCard(id: string, source: "recent" | "curated"): RecentCarouselC
 }
 
 describe("landing rail helpers", () => {
-  it("ramps recent share with history and caps it at seventy percent", () => {
-    expect(recentShare(0)).toBe(0);
-    expect(recentShare(1)).toBeCloseTo(0.31);
-    expect(recentShare(3)).toBeCloseTo(0.57);
-    expect(recentShare(12)).toBe(0.7);
+  const curated = Array.from({ length: 8 }, (_, index) => carouselCard(String(index + 1), "curated"));
+
+  it("shows curated chase cards when the buyer has no history", () => {
+    const rail = buildRail([], curated);
+    expect(rail).toHaveLength(8);
+    expect(rail.every((item) => item.source === "chase")).toBe(true);
   });
 
-  it.each([
-    { historyCount: 0, expectedRecent: 0 },
-    { historyCount: 1, expectedRecent: 4 },
-    { historyCount: 3, expectedRecent: 7 },
-    { historyCount: 12, expectedRecent: 9 },
-  ])("spreads $expectedRecent recent cards through fourteen slots for history $historyCount", ({ historyCount, expectedRecent }) => {
-    const recent = Array.from({ length: 12 }, (_, index) => carouselCard(String(index + 1), "recent"));
-    const curated = Array.from({ length: 14 }, (_, index) => carouselCard(String(index + 1), "curated"));
+  it("leads with the cards the buyer actually checked, newest first", () => {
+    const recent = [carouselCard("a", "recent"), carouselCard("b", "recent")];
+    const rail = buildRail(recent, curated);
 
-    const blended = blendRail(recent, curated, historyCount);
+    expect(rail.slice(0, 2).map((item) => item.card.id)).toEqual(["recent-a", "recent-b"]);
+    expect(rail.slice(0, 2).every((item) => item.source === "recent")).toBe(true);
+  });
 
-    expect(blended).toHaveLength(14);
-    expect(blended.filter((card) => card.id.startsWith("recent-")).length).toBe(expectedRecent);
-    expect(blended[0]?.id).toMatch(/^curated-/);
-    expect(blended.some((card) => card.id.startsWith("curated-"))).toBe(true);
+  it("fills the rest of the rail with curated cards", () => {
+    const rail = buildRail([carouselCard("a", "recent")], curated);
+    expect(rail).toHaveLength(9);
+    expect(rail.filter((item) => item.source === "chase")).toHaveLength(8);
+  });
+
+  it("never repeats one recent card to pad the rail", () => {
+    // The share-based blend cycled a single recent card into four slots, which
+    // read as a stutter rather than as history.
+    const rail = buildRail([carouselCard("a", "recent")], curated);
+    expect(rail.filter((item) => item.card.id === "recent-a")).toHaveLength(1);
+  });
+
+  it("keeps a checked card out of the curated filler it duplicates", () => {
+    const alsoCurated = { ...curated[0]!, id: "recent-dupe", lastSeenAt: 5 };
+    const rail = buildRail([alsoCurated], curated);
+
+    expect(rail).toHaveLength(8);
+    expect(rail[0]?.card.id).toBe("recent-dupe");
+    expect(rail[0]?.source).toBe("recent");
+  });
+
+  it("dedupes a checked card against its curated twin across set-code vocabularies", () => {
+    // The catalog calls Twilight Masquerade "SV6"; the curated entry uses the
+    // TCGplayer code "TWM". Keying on the set code showed the card twice.
+    const curatedGreninja = {
+      ...carouselCard("214/167", "curated"),
+      name: "Greninja ex",
+      setName: "Twilight Masquerade",
+      setCode: "TWM",
+      cardNumber: "214/167",
+    };
+    const checkedGreninja = {
+      ...curatedGreninja,
+      id: "sv6-214",
+      setCode: "SV6",
+      lastSeenAt: 9,
+    };
+
+    const rail = buildRail([checkedGreninja], [curatedGreninja, ...curated]);
+
+    expect(rail.filter((item) => item.card.name === "Greninja ex")).toHaveLength(1);
+    expect(rail[0]?.source).toBe("recent");
+    expect(rail[0]?.card.setCode).toBe("SV6");
+  });
+
+  it("caps the rail so a long history cannot grow it without bound", () => {
+    const recent = Array.from({ length: 40 }, (_, index) => carouselCard(String(index), "recent"));
+    expect(buildRail(recent, curated)).toHaveLength(RAIL_SLOTS);
+  });
+
+  it("drops cards with no usable image rather than rendering a hole", () => {
+    const broken = { ...carouselCard("broken", "recent"), imageUrl: null };
+    const rail = buildRail([broken], curated);
+    expect(rail.some((item) => item.card.id === "recent-broken")).toBe(false);
   });
 });
 
@@ -129,6 +178,7 @@ describe("comparison condition controls", () => {
 
   beforeEach(() => {
     requests = [];
+    vi.mocked(trackEvent).mockClear();
     window.history.replaceState(null, "", "/");
     Object.defineProperty(window, "localStorage", {
       configurable: true,
@@ -190,8 +240,15 @@ describe("comparison condition controls", () => {
     const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
     expect(query.placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
     expect(screen.getByRole("button", { name: "Browse card versions" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Paste listing" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Paste listing" })).toBeNull();
+    expect(screen.queryByText(/paste marketplace links back/i)).toBeNull();
     expect(screen.getByRole("button", { name: /Filters.+Near Mint/i })).toBeTruthy();
+    expect(screen.getByRole("img", { name: "Pokémon TCG" }).getAttribute("src")).toContain("logo-pokemon-tcg.png");
+    expect(screen.getByRole("img", { name: "One Piece Card Game" }).getAttribute("src")).toContain("logo-one-piece-card-game.png");
+
+    fireEvent.click(screen.getByRole("button", { name: /One Piece.*Beta/i }));
+    expect(screen.getByText("One Piece coverage is in beta and may be less stable.")).toBeTruthy();
+    expect(trackEvent).toHaveBeenCalledWith("game_selected", { game: "onePiece" });
 
     expect(screen.queryByText("Find the card")).toBeNull();
     expect(screen.queryByText("Which card are you checking?")).toBeNull();
@@ -202,26 +259,41 @@ describe("comparison condition controls", () => {
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     expect(await screen.findByRole("heading", { name: "认准你要的那张卡，挑出最值得买的一件。" })).toBeTruthy();
     expect((screen.getByRole("textbox", { name: "搜索卡片" }) as HTMLInputElement).placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
-    expect(screen.getByRole("button", { name: "粘贴链接" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "粘贴链接" })).toBeNull();
+    expect(screen.getByText("One Piece 仍在 Beta 阶段，覆盖稳定性可能稍弱。")).toBeTruthy();
     expect(screen.getByRole("button", { name: /筛选.+近全新/i })).toBeTruthy();
   });
 
-  it("renders only curated cards without stored history and keeps the cloned loop inert", async () => {
+  it("renders each curated card once without stored history, never repeating one to fill slots", async () => {
     render(<ComparisonApp />);
 
     const rail = screen.getByRole("region", { name: "Cards you can check" });
-    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(14));
+    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
     const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
     expect(accessibleCards.every((button) => button.getAttribute("data-rail-source") === "chase")).toBe(true);
+
+    const labels = accessibleCards.map((button) => button.getAttribute("aria-label"));
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it("keeps the cloned loop out of the a11y tree while leaving it clickable", async () => {
+    render(<ComparisonApp />);
+
+    const rail = screen.getByRole("region", { name: "Cards you can check" });
+    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
+    const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
 
     const clones = rail.querySelectorAll('button[data-clone="true"]');
     expect(clones).toHaveLength(accessibleCards.length);
     expect(Array.from(clones).every((button) => button.getAttribute("tabindex") === "-1")).toBe(true);
     expect(Array.from(clones).every((button) => button.getAttribute("aria-hidden") === "true")).toBe(true);
+    // The clone half is on screen for half of every loop. It stayed inert to
+    // the pointer, so hovering it paused the rail and showed no check button.
+    expect(Array.from(clones).every((button) => !button.hasAttribute("disabled"))).toBe(true);
     expect(accessibleCards.every((button) => !button.hasAttribute("data-clone") && !button.hasAttribute("aria-hidden"))).toBe(true);
   });
 
-  it("keeps curated and recent analytics sources distinct when the same card appears in both pools", async () => {
+  it("shows a card the buyer checked once, as history, not twice alongside its curated twin", async () => {
     window.localStorage.setItem("tcgpal:recent-confirmed-cards", JSON.stringify([{
       id: "curated-swsh7-215",
       game: "pokemon",
@@ -237,11 +309,33 @@ describe("comparison condition controls", () => {
 
     await waitFor(() => {
       const cards = screen.getAllByRole("button", { name: "Check Umbreon VMAX, Evolving Skies 215/203" });
-      expect(new Set(cards.map((card) => card.getAttribute("data-rail-source")))).toEqual(new Set(["chase", "recent"]));
+      expect(cards).toHaveLength(1);
+      expect(cards[0]?.getAttribute("data-rail-source")).toBe("recent");
     });
   });
 
-  it("keeps fourteen entrances when a stored recent card has no renderable image", async () => {
+  it("leads the rail with the most recently checked card", async () => {
+    window.localStorage.setItem("tcgpal:recent-confirmed-cards", JSON.stringify([{
+      id: "sv6-214",
+      game: "pokemon",
+      name: "Greninja ex",
+      setName: "Twilight Masquerade",
+      setCode: "TWM",
+      cardNumber: "214/167",
+      imageUrl: "https://images.pokemontcg.io/sv6/214_hires.png",
+      lastSeenAt: 9,
+    }]));
+
+    render(<ComparisonApp />);
+
+    await waitFor(() => {
+      const cards = screen.getAllByRole("button", { name: /^Check / });
+      expect(cards[0]?.getAttribute("data-rail-source")).toBe("recent");
+      expect(cards[0]?.getAttribute("aria-label")).toContain("Greninja ex");
+    });
+  });
+
+  it("drops a stored recent card with no renderable image instead of rendering a hole", async () => {
     window.localStorage.setItem("tcgpal:recent-confirmed-cards", JSON.stringify([{
       id: "recent-without-image",
       game: "pokemon",
@@ -258,7 +352,9 @@ describe("comparison condition controls", () => {
       await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
     });
 
-    expect(screen.getAllByRole("button", { name: /^Check / })).toHaveLength(14);
+    const cards = screen.getAllByRole("button", { name: /^Check / });
+    expect(cards).toHaveLength(8);
+    expect(cards.some((card) => card.getAttribute("aria-label")?.includes("Recent without image"))).toBe(false);
   });
 
   it("starts the normal comparison flow from a rail card with its explicit catalog key", async () => {
@@ -641,10 +737,82 @@ describe("comparison condition controls", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("shows diagnostics only for a development build with inspect=1", async () => {
+    const request = buildStandardComparisonRequest(STANDARD_COMPARISON_FLOW_CARDS[0]);
+    const savedReport: ComparisonReport = {
+      ...reportFor(request),
+      confirmedCard: identityForQuery("Umbreon VMAX 215/203"),
+      outcome: "next_moves",
+      warnings: ["raw provider warning"],
+      trace: [{ step: "validate", actor: "ranking.ts", summary: "full validation trace", status: "complete" }],
+      platforms: [{
+        id: "ebay",
+        marketplace: "eBay",
+        label: "eBay Browse",
+        sourceMode: "official_api",
+        status: "complete",
+        configured: true,
+        count: 50,
+        detail: "provider detail",
+      }],
+      references: [{
+        label: "TCGplayer aggregate",
+        status: "used",
+        observedAt: "2026-07-31T09:50:00.000Z",
+        url: "https://www.tcgplayer.com/product/777",
+        note: "reference diagnostic",
+        rawLow: 100,
+        rawMid: 120,
+        rawHigh: 140,
+      }],
+    };
+    const receiptId = "0123456789abcdef0123456789abcdef";
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      snapshot: {
+        id: receiptId,
+        report: savedReport,
+        savedAt: "2026-07-31T10:00:00.000Z",
+        expiresAt: "2026-08-30T10:00:00.000Z",
+      },
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    window.history.replaceState(null, "", `/?receipt=${receiptId}&inspect=1`);
+    render(<ComparisonApp runtimeEnvironment="development" />);
+
+    const inspector = await screen.findByRole("region", { name: "Development inspector" });
+    expect(within(inspector).getByText("raw provider warning")).toBeTruthy();
+    expect(within(inspector).getByText("full validation trace")).toBeTruthy();
+    expect(within(inspector).getByText("official_api")).toBeTruthy();
+    expect(within(inspector).getByText("50")).toBeTruthy();
+    expect(within(inspector).getByText("reference diagnostic")).toBeTruthy();
+    expect(within(inspector).getByRole("button", { name: "Download diagnostic JSON" })).toBeTruthy();
+
+    cleanup();
+    window.history.replaceState(null, "", `/?receipt=${receiptId}&inspect=1`);
+    render(<ComparisonApp runtimeEnvironment="production" />);
+    await screen.findByText(/Saved comparison/i);
+    expect(screen.queryByRole("region", { name: "Development inspector" })).toBeNull();
+    expect(screen.queryByText("raw provider warning")).toBeNull();
+  });
+
   it("creates a durable receipt link for a pure card result and shares that URL", async () => {
-    const exactCard = identityForQuery("Umbreon VMAX 215/203");
+    const exactCard = {
+      ...identityForQuery("Umbreon VMAX 215/203"),
+      marketMid: 2000,
+      marketSource: "tcgcsv" as const,
+      marketAsOf: "2026-07-30T00:00:00.000Z",
+      tcgplayerProductId: 777,
+      marketUrl: "https://www.tcgplayer.com/product/777",
+    };
     const listing = normalizeListing({
-      listing: { ...demoListingSeeds[0], id: "shareable", demo: false, claimedCondition: "Near Mint" },
+      listing: {
+        ...demoListingSeeds[0],
+        id: "shareable",
+        demo: false,
+        claimedCondition: "Near Mint",
+        observedAt: "2026-07-31T09:45:00.000Z",
+      },
       buyer: { country: "US", postalCode: "", taxRate: null, desiredCondition: "Near Mint" },
       marketPrice: 2000,
     });
@@ -662,6 +830,10 @@ describe("comparison condition controls", () => {
           confirmedCard: exactCard,
           candidates: [listing],
           rankedChoices: rankListings([listing], { marketPrice: 2000 }),
+          narrative: { summary: "One supported buy.", cautions: ["Reference prices can lag behind the live market."] },
+          warnings: ["raw provider warning"],
+          trace: [{ step: "rank", actor: "ranking.ts", summary: "internal trace", status: "complete" }],
+          platforms: [{ id: "ebay", marketplace: "eBay", label: "eBay Browse", sourceMode: "official_api", status: "complete", configured: true, count: 50, detail: "queried" }],
           outcome: "best_buy",
         }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
@@ -682,9 +854,75 @@ describe("comparison condition controls", () => {
     fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Compare exact listings" }));
 
     await waitFor(() => expect(window.location.search).toContain(`receipt=${receiptId}`));
-    fireEvent.click(screen.getByRole("button", { name: "Share receipt" }));
+    const hero = screen.getByRole("article", { name: "Best-supported buy" });
+    expect(within(hero).getByText("Live eBay listing")).toBeTruthy();
+    expect(within(hero).getByText(/Observed/)).toBeTruthy();
+    expect(within(hero).getByText("Seller-claimed condition: Near Mint")).toBeTruthy();
+    expect(within(hero).getByText(/Item price/)).toBeTruthy();
+    expect(within(hero).getByText(/Shipping/)).toBeTruthy();
+    expect(within(hero).getByText(/Tax not estimated/)).toBeTruthy();
+    expect(within(hero).getByText("High confidence")).toBeTruthy();
+    expect(screen.getByText("Reference prices can lag behind the live market.")).toBeTruthy();
+    expect(screen.queryByText("How we checked: sources, reference pricing, and the validation trace")).toBeNull();
+    expect(screen.queryByText("Check the math behind these labels")).toBeNull();
+    expect(screen.queryByText("Sources checked")).toBeNull();
+    expect(screen.queryByText("Queried")).toBeNull();
+    expect(screen.queryByText("50 listings")).toBeNull();
+    expect(screen.queryByText("internal trace")).toBeNull();
+
+    fireEvent.click(within(hero).getByRole("button", { name: "Share result" }));
     await waitFor(() => expect(clipboard.writeText).toHaveBeenCalledWith(`http://localhost/r/${receiptId}`));
     expect(String(clipboard.writeText.mock.calls[0]?.[0])).not.toContain("postalCode");
+    expect(trackEvent).toHaveBeenCalledWith("result_shared", { share_method: "url", result_state: "best_buy" });
+    expect(screen.getByText("Link copied. This receipt expires in 30 days.")).toBeTruthy();
+  });
+
+  it("copies a text summary when durable receipt storage is unavailable", async () => {
+    const exactCard = identityForQuery("Umbreon VMAX 215/203");
+    const listing = normalizeListing({
+      listing: { ...demoListingSeeds[0], id: "text-share", demo: false, claimedCondition: "Near Mint" },
+      buyer: { country: "US", postalCode: "", taxRate: null, desiredCondition: "Near Mint" },
+      marketPrice: 2000,
+    });
+    const clipboard = { writeText: vi.fn<(text: string) => Promise<void>>(async () => undefined) };
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: clipboard });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([exactCard])), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (String(input).endsWith("/api/agent/listing-compare")) {
+        const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+        return new Response(JSON.stringify({
+          ...reportFor(request),
+          confirmedCard: exactCard,
+          candidates: [listing],
+          rankedChoices: rankListings([listing], { marketPrice: 2000 }),
+          outcome: "best_buy",
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (String(input).endsWith("/api/comparison-snapshots")) {
+        return new Response(JSON.stringify({
+          receiptId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          savedAt: "2026-07-31T10:00:00.000Z",
+          expiresAt: "2026-08-30T10:00:00.000Z",
+          durable: false,
+        }), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      throw new Error(`unexpected request ${String(input)}`);
+    }));
+
+    render(<ComparisonApp />);
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Umbreon VMAX 215/203" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Compare exact listings" }));
+
+    const hero = await screen.findByRole("article", { name: "Best-supported buy" });
+    fireEvent.click(within(hero).getByRole("button", { name: "Share result" }));
+    await waitFor(() => expect(clipboard.writeText).toHaveBeenCalled());
+    expect(String(clipboard.writeText.mock.calls[0]?.[0])).toContain("TCGlens result");
+    expect(String(clipboard.writeText.mock.calls[0]?.[0])).not.toContain("/r/");
+    expect(trackEvent).toHaveBeenCalledWith("result_shared", { share_method: "text", result_state: "best_buy" });
+    expect(screen.getByText("Result summary copied.")).toBeTruthy();
   });
 
   it("shows the active minimum before search and submits a refined condition", async () => {
@@ -1202,12 +1440,24 @@ describe("comparison condition controls", () => {
         return new Response(JSON.stringify(identityResponse([identityForQuery(String(request.query))])), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       requests.push(request);
+      const confirmedCard = {
+        ...identityForQuery(String(request.query)),
+        name: "Nami",
+        cardNumber: "OP01-016",
+        setCode: "OP-01",
+        setName: "Romance Dawn",
+        marketMid: 128,
+        marketSource: "tcgcsv" as const,
+        marketAsOf: "2026-08-08T00:00:00.000Z",
+        tcgplayerProductId: 123456,
+        marketUrl: "https://www.tcgplayer.com/product/123456",
+      };
       return new Response(JSON.stringify({
         ...reportFor(request),
         status: "partial",
+        confirmedCard,
         outcome: "next_moves",
         inspectListingId: null,
-        identityContractVersion: 4,
         abstention: {
           reason: "Found listings, but none matched the selected SP print.",
           foundCount: 2,
@@ -1225,9 +1475,24 @@ describe("comparison condition controls", () => {
 
     expect(await screen.findByRole("button", { name: "Refine search" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Retry sources" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Paste a listing" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Paste a listing" })).toBeNull();
+    expect(screen.getByText("One Piece Beta")).toBeTruthy();
+    expect(screen.getByText("One Piece coverage is in beta and may be less stable.")).toBeTruthy();
+    const followUps = screen.getByRole("region", { name: "Check other marketplaces" });
+    expect(within(followUps).getByText("Market reference")).toBeTruthy();
+    expect(within(followUps).getByText("Manual check")).toBeTruthy();
+    expect(within(followUps).getByText("Japan manual check")).toBeTruthy();
+    expect(within(followUps).getAllByText("Not checked by TCGlens")).toHaveLength(2);
+    expect(within(followUps).getByRole("link", { name: /TCGplayer/ }).getAttribute("href")).toBe("https://www.tcgplayer.com/product/123456");
+    const mercariLink = within(followUps).getByRole("link", { name: /Mercari/ });
+    expect(mercariLink.getAttribute("href")).toContain("mercari.com/search");
+    expect(within(followUps).getByRole("link", { name: /SNKRDUNK/ }).getAttribute("href")).toContain("snkrdunk.com/search");
+    fireEvent.click(mercariLink);
+    expect(trackEvent).toHaveBeenCalledWith("other_marketplace_clicked", { marketplace: "Mercari", game: "onePiece" });
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     expect(await screen.findByRole("heading", { name: "暂时没有能放心买的" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "去其他平台看看" })).toBeTruthy();
+    expect(screen.getByText("Mercari（煤炉）")).toBeTruthy();
     expect(screen.queryByText("Found listings, but none matched the selected SP print.")).toBeNull();
   });
 });

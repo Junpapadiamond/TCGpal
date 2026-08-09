@@ -91,6 +91,7 @@ const copy = {
     exactReview: "Identity needs a final visual check on the live listing",
     sourceEvidence: "Source evidence",
     open: "Open listing",
+    recommendation: "Recommendation",
     compared: (eligible: number) => `${eligible} comparable listing${eligible === 1 ? "" : "s"} survived`,
     excluded: (count: number) => `${count} listing${count === 1 ? "" : "s"} excluded`,
     sources: "Sources and boundaries",
@@ -100,6 +101,23 @@ const copy = {
     oldReceipt: "Prices and availability may have changed. Re-checking creates a new receipt; this one does not change.",
     shareNote: "Share this receipt when you want another collector to audit the same evidence.",
     newSearch: "Check another card",
+    auditSources: "Sources",
+    auditAssumptions: "Assumptions",
+    auditExclusions: "Important exclusions",
+    auditMissing: "Missing information",
+    auditConfidence: "Confidence and caution",
+    noLiveSource: "No live listing source returned a comparable result.",
+    activeSource: (source: string) => source,
+    assumptionsBody: "Raw USD singles only. Condition is seller-claimed, and tax is included only when it could be estimated.",
+    exclusionsBody: "Listings that failed exact-print, raw-single, requested-condition, availability, or complete-cost checks were not eligible.",
+    noImportantExclusions: "No important exclusions were recorded for this result.",
+    missingComparable: "No concrete listing met every required comparison check.",
+    missingTax: "Tax was not estimated.",
+    missingShipping: "Shipping was not stated.",
+    missingSeller: "Seller track record was unavailable.",
+    noMissingInformation: "No material missing information was recorded beyond the stated assumptions.",
+    confidenceLabel: (confidence: "high" | "medium" | "low") => confidence === "high" ? "High confidence" : confidence === "medium" ? "Moderate confidence" : "Low confidence",
+    confidenceBody: "Confidence describes support for the comparison, not card condition, authenticity, or a guaranteed outcome.",
   },
   zh: {
     home: "Lens TCG 首页",
@@ -146,6 +164,7 @@ const copy = {
     exactReview: "还得在商品页看一眼卡图",
     sourceEvidence: "来源证据",
     open: "打开商品",
+    recommendation: "推荐结果",
     compared: (eligible: number) => `${eligible} 条可比商品通过筛选`,
     excluded: (count: number) => `已排除 ${count} 条`,
     sources: "来源与边界",
@@ -155,6 +174,23 @@ const copy = {
     oldReceipt: "价格和在售状态可能已经变了。重新查会生成一份新凭证，这份不会动。",
     shareNote: "想让别的玩家帮你复核，把这份凭证发给他，看到的是同一组证据。",
     newSearch: "再查一张卡",
+    auditSources: "来源",
+    auditAssumptions: "前提",
+    auditExclusions: "重要排除项",
+    auditMissing: "缺失信息",
+    auditConfidence: "可信度与提醒",
+    noLiveSource: "没有实时商品来源返回可比结果。",
+    activeSource: (source: string) => source,
+    assumptionsBody: "只比较美元计价的裸卡。品相沿用卖家标注；只有能估算时才计入税费。",
+    exclusionsBody: "未通过确切版本、裸卡、目标品相、在售状态或完整价格核对的商品，不会进入推荐。",
+    noImportantExclusions: "这次结果没有记录重要排除项。",
+    missingComparable: "没有具体商品同时通过全部可比性核对。",
+    missingTax: "税费没有估算。",
+    missingShipping: "卖家没有写明运费。",
+    missingSeller: "没有拿到卖家历史记录。",
+    noMissingInformation: "除已列明的前提外，没有记录其他重要缺失信息。",
+    confidenceLabel: (confidence: "high" | "medium" | "low") => confidence === "high" ? "可信度高" : confidence === "medium" ? "可信度中等" : "可信度较低",
+    confidenceBody: "这里的可信度只表示比价证据是否充分，不代表品相、真伪或结果保证。",
   },
 };
 
@@ -219,6 +255,17 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
 
   const checkedAt = formatDateTime(snapshot.savedAt, lang);
   const expiresAt = formatDate(snapshot.expiresAt, lang);
+  const auditListing = model.primary?.listing ?? model.inspectListing ?? null;
+  const liveSourceLabels = snapshot.report.platforms
+    .filter((platform) => platform.configured && platform.status === "complete")
+    .map((platform) => platform.label);
+  const missingInformation = [
+    !auditListing ? text.missingComparable : null,
+    auditListing?.shipping === null ? text.missingShipping : null,
+    auditListing?.estimatedTax === null ? text.missingTax : null,
+    auditListing && auditListing.seller.feedbackPercentage === null ? text.missingSeller : null,
+  ].filter((value): value is string => Boolean(value));
+  const receiptConfidence = model.primary?.choice.confidence ?? (model.inspectListing ? "low" : "low");
 
   return (
     <main className="min-h-screen bg-[#f4f7f3] text-[#24312f]">
@@ -283,12 +330,11 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
         <section aria-labelledby="recommendation-heading" className="py-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="eyebrow"><IconCheck className="h-4 w-4" />{model.primary ? text.compared(model.eligibleCount) : model.outcome === "inspect_first" ? text.inspect : text.noBuy}</p>
+              <p className="eyebrow"><IconCheck className="h-4 w-4" />{model.primary ? text.recommendation : model.outcome === "inspect_first" ? text.inspect : text.noBuy}</p>
               <h2 id="recommendation-heading" className="mt-2 font-serif text-2xl font-black sm:text-3xl">
                 {model.primary ? formatReceiptChoiceLabel(model.primary.choice, lang) : snapshot.report.narrative.summary}
               </h2>
             </div>
-            {model.excluded.length > 0 && <span className="text-xs font-bold text-[#7a8982]">{text.excluded(model.excluded.length)}</span>}
           </div>
 
           {model.primary ? (
@@ -336,22 +382,36 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
           </div>
         </section>
 
-        <details className="mt-4 rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
-          <summary className="cursor-pointer font-serif text-lg font-black text-[#24312f]">{text.sources}</summary>
-          <div className="mt-4 grid gap-5 text-sm leading-6 text-[#52635c] md:grid-cols-2">
+        <section className="mt-4 border-y border-[#c9d7ce] py-6" aria-label={text.sources}>
+          <div className="grid gap-x-8 gap-y-6 text-sm leading-6 text-[#52635c] md:grid-cols-2">
             <div>
-              <h3 className="font-black text-[#24312f]">{text.sourceChecked}</h3>
-              <ul className="mt-2 space-y-2">
-                {snapshot.report.platforms.map((platform) => <li key={platform.id}>{platform.label}: {platform.status} · {platform.count}</li>)}
-              </ul>
-              {snapshot.report.warnings.length > 0 && <><h3 className="mt-4 font-black text-[#24312f]">{text.warnings}</h3><ul className="mt-2 list-disc pl-5">{snapshot.report.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></>}
+              <h2 className="font-serif text-lg font-black text-[#24312f]">{text.auditSources}</h2>
+              {liveSourceLabels.length > 0 ? (
+                <ul className="mt-2 space-y-1">
+                  {liveSourceLabels.map((source) => <li key={source}>{text.activeSource(source)}</li>)}
+                </ul>
+              ) : <p className="mt-2">{text.noLiveSource}</p>}
             </div>
             <div>
-              <h3 className="font-black text-[#24312f]">{text.exclusions}</h3>
-              {model.excluded.length > 0 ? <ul className="mt-2 space-y-3">{model.excluded.map((listing) => <li key={listing.id}><strong>{listing.title}</strong>: {listing.exclusionReasons.join(" ")}</li>)}</ul> : <p className="mt-2">—</p>}
+              <h2 className="font-serif text-lg font-black text-[#24312f]">{text.auditAssumptions}</h2>
+              <p className="mt-2">{text.assumptionsBody}</p>
+            </div>
+            <div>
+              <h2 className="font-serif text-lg font-black text-[#24312f]">{text.auditExclusions}</h2>
+              <p className="mt-2">{model.excluded.length > 0 ? text.exclusionsBody : text.noImportantExclusions}</p>
+            </div>
+            <div>
+              <h2 className="font-serif text-lg font-black text-[#24312f]">{text.auditMissing}</h2>
+              {missingInformation.length > 0 ? (
+                <ul className="mt-2 list-disc space-y-1 pl-5">{missingInformation.map((item) => <li key={item}>{item}</li>)}</ul>
+              ) : <p className="mt-2">{text.noMissingInformation}</p>}
+            </div>
+            <div className="md:col-span-2">
+              <h2 className="font-serif text-lg font-black text-[#24312f]">{text.auditConfidence}</h2>
+              <p className="mt-2"><strong>{text.confidenceLabel(receiptConfidence)}{lang === "zh" ? "。" : "."}</strong> {text.confidenceBody}</p>
             </div>
           </div>
-        </details>
+        </section>
 
         <footer className="mt-8 flex flex-col gap-3 border-t border-[#c9d7ce] py-6 text-sm text-[#64736c] sm:flex-row sm:items-center sm:justify-between">
           <p>{text.shareNote}</p>

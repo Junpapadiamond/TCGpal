@@ -22,4 +22,27 @@ describe("analytics privacy boundary", () => {
     expect(sanitizeAnalyticsProperties({ referrer_class: "discord" })).toEqual({ referrer_class: "discord" });
     expect(sanitizeAnalyticsProperties({ referrer_class: "https://example.com/private-path" })).toEqual({});
   });
+
+  it("allows only approved enums for result sharing and marketplace follow-ups", () => {
+    expect(sanitizeAnalyticsProperties({
+      marketplace: "Mercari",
+      game: "onePiece",
+      share_method: "url",
+      result_state: "best_buy",
+      url: "https://www.mercari.com/search/?keyword=private-card-name",
+      card_name: "private card name",
+    })).toEqual({
+      marketplace: "Mercari",
+      game: "onePiece",
+      share_method: "url",
+      result_state: "best_buy",
+    });
+
+    expect(sanitizeAnalyticsProperties({
+      marketplace: "not-a-marketplace",
+      game: "private-game",
+      share_method: "clipboard-with-card-name",
+      result_state: "secret-state",
+    })).toEqual({});
+  });
 });
