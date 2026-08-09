@@ -1,0 +1,67 @@
+name: Check catalog freshness
+
+# Identity data (pokemontcg.io for English Pokemon, the committed One Piece
+# snapshot) can fall behind the live TCGCSV market anchor without anyone
+# noticing, which lets the price feed quote a card search cannot find. This job
+# reports the gap weekly. It only reads — promoting data into runtime identity
+# stays a reviewed change.
+
+on:
+  workflow_dispatch:
+    inputs:
+      lookback-days:
+        description: "How far back to look for released sets"
+        required: false
+        default: "240"
+  schedule:
+    - cron: "17 5 * * 1"
+
+concurrency:
+  group: catalog-freshness
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Report catalog coverage
+        id: freshness
+        run: |
+          set -o pipefail
+          node scripts/check-catalog-freshness.mjs \
+            --check \
+            --lookback-days "${{ github.event.inputs.lookback-days || '240' }}" \
+            --json catalog-freshness.json \
+            | tee catalog-freshness.txt
+
+      - name: Publish report to the job summary
+        if: always()
+        run: |
+          {
+            echo '## TCGlens catalog freshness'
+            echo
+            echo '```'
+            cat catalog-freshness.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-freshness
+          path: |
+            catalog-freshness.json
+            catalog-freshness.txt
+          if-no-files-found: warn

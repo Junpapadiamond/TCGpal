@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "catalog:freshness": "node scripts/check-catalog-freshness.mjs",
+    "catalog:freshness:check": "node scripts/check-catalog-freshness.mjs --check",
     "check:tavily": "node scripts/check-tavily.mjs",
     "frontier:firecrawl:evaluate": "node scripts/frontier-research/firecrawl/evaluate.mjs",
     "metadata:audit": "node scripts/audit-one-piece-exact-prints.mjs",
