@@ -134,6 +134,32 @@ describe("comparison condition controls", () => {
     vi.restoreAllMocks();
   });
 
+  it("keeps the default screen focused on one promise and the core search controls", () => {
+    render(<ComparisonApp />);
+
+    expect(screen.getByRole("heading", { name: "Find the best listing for your exact card." })).toBeTruthy();
+    expect(screen.getByText("Live raw singles—or a clear pass.")).toBeTruthy();
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
+    expect(query.placeholder).toBe("Card name or number");
+    expect(screen.getByRole("button", { name: "Browse card versions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Paste listing" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Filters.+Near Mint/i })).toBeTruthy();
+
+    expect(screen.queryByText("Find the card")).toBeNull();
+    expect(screen.queryByText("Which card are you checking?")).toBeNull();
+    expect(screen.queryByText(/Name plus number is fastest/i)).toBeNull();
+    expect(screen.queryByText(/Treating this as a plain name search/i)).toBeNull();
+    expect(screen.queryByText("We understood:")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "中文" }));
+    expect(screen.getByRole("heading", { name: "为确切版本找到最值得买的商品。" })).toBeTruthy();
+    expect(screen.getByText("在售裸卡，或明确放弃。")).toBeTruthy();
+    expect((screen.getByRole("textbox", { name: "搜索卡片" }) as HTMLInputElement).placeholder).toBe("卡名或编号");
+    expect(screen.getByRole("button", { name: "粘贴商品" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /筛选.+近全新/i })).toBeTruthy();
+  });
+
   it("opens a gallery-shaped identity state without comparison language for a name-only search", async () => {
     let resolveIdentity!: (response: Response) => void;
     const identityResponse = new Promise<Response>((resolve) => { resolveIdentity = resolve; });
@@ -504,7 +530,7 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     const refineButton = screen.getByRole("button", {
-      name: /Refine the search.+Minimum seller-stated condition.+Near Mint/i,
+      name: /Filters.+Minimum seller-stated condition.+Near Mint/i,
     });
     fireEvent.click(refineButton);
 
