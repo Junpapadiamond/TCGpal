@@ -274,7 +274,9 @@ describe("generating the verdict note", () => {
     // under 25s, only ~50% under the shared 12s default.
     const [input] = completeJson.mock.calls[0] as unknown as [{ timeoutMs?: number; reasoningEffort?: string }];
     expect(input.timeoutMs).toBeGreaterThanOrEqual(30_000);
-    expect(input.reasoningEffort).toBe("low");
+    // Nothing is left for the model to reason about: the verdict is decided and
+    // the numbers are precomputed, so effort is pure latency.
+    expect(input.reasoningEffort).toBe("none");
   });
 
   it("returns a grounded model note when the flag is on", async () => {

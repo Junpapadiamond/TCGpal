@@ -197,9 +197,9 @@ class OpenAiChatCompletionsProvider implements AiProvider {
         model,
         temperature: 0,
         response_format: { type: "json_object" },
-        // Only sent when a caller asks for it. Measured on the configured
-        // gateway: "low" trims the slow tail (22.4s → 13.3s) with no loss of
-        // answer quality, while "minimal" is rejected outright.
+        // Only sent when a caller asks for it, so gateways that reject the field
+        // are unaffected. Accepted values are model-specific — gpt-5.6-luna takes
+        // none/low/medium/high/xhigh/max and refuses "minimal".
         ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
         messages: [
           {

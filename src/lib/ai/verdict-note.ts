@@ -50,14 +50,19 @@ const NOTE_MAX_CHARS = 300;
 const NOTE_MAX_SENTENCES = 3;
 
 // The note is fetched after the result is already on screen, so it does not
-// share buildNarrative's strict critical-path budget. Measured on the configured
-// gateway: only ~50% of calls finish inside the 12s default but 100% finish
-// inside 25s, and the model spends ~230 reasoning tokens to write ~70 tokens of
-// prose. A 30s ceiling plus "low" effort converts almost every timeout fallback
-// into a real note, at no risk to the buyer — the deterministic sentence is
-// already rendered while this is in flight.
+// share buildNarrative's strict critical-path budget. Left on the 12s default,
+// only ~half of calls returned in time; the 30s ceiling took the review corpus
+// from 15/21 notes to 21/21.
 const NOTE_TIMEOUT_MS = 30_000;
-const NOTE_REASONING_EFFORT = "low" as const;
+
+// Writing this note requires no deliberation: ranking.ts already decided, and
+// buildVerdictFactSheet already computed every number the model is allowed to
+// use. Reasoning effort therefore buys nothing but latency and tokens — the
+// deterministic checker, not the model's thinking, is what makes the note safe.
+// Measured on gpt-5.6-luna: default effort spent ~290 reasoning tokens for a
+// ~70-token sentence at a 10.0s median (worst 13.9s), while "none" spent zero
+// reasoning tokens at a 4.0s median (worst 4.6s) with identical accept rates.
+const NOTE_REASONING_EFFORT = "none" as const;
 
 export function isVerdictNoteEnabled() {
   const value = process.env.AI_VERDICT_NOTE?.trim().toLowerCase();

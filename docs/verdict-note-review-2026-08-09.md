@@ -34,9 +34,9 @@ Read every accepted note against its fact sheet. A single wrong fact fails the s
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** At $799.99, this is 10% under the $888.88 Near Mint market reference. The seller states Near Mint and provides 10 item-specific photos, including front, back, and close-ups; their record shows 99.6% positive feedback across 4120 ratings.
+**AI note:** This listing has 10 item-specific photos, including front, back, and close-ups, plus substantive condition notes. Its $799.99 item price is 10% under the $888.88 Near Mint market reference, though Near Mint remains the seller’s claim.
 
-Cited facts: 2, 4, 5, 6, 8
+Cited facts: 2, 4, 5, 6
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -63,9 +63,9 @@ Cited facts: 2, 4, 5, 6, 8
 - Deterministic verdict: **buy** — 可以考虑入手
 - Deterministic note (the fallback): 数据支持这笔。先确认商品页和这些信息对得上，品相仍是卖家自己说的。
 
-**AI note:** 卖家称卡片为Near Mint，标价$799.99，比$888.88的Near Mint市场参考低10%，含运费总价为$834.24。 listing有10张商品图，展示正反面和特写，并附有具体品相说明；但卖家不接受退货。
+**AI note:** 这张卡标为卖家自称的近美品，商品价$799.99，比$888.88的近美品市场参考低10%；同时有10张专属照片、正反面和细节图。虽不接受退货，但卖家有4120条反馈、99.6%好评。
 
-Cited facts: 2, 3, 4, 5, 6, 7
+Cited facts: 1, 2, 4, 5, 6, 7, 8
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -92,9 +92,9 @@ Cited facts: 2, 3, 4, 5, 6, 7
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** The seller claims Near Mint, supported by 10 item-specific photos, front and back views, close-ups, and substantive condition notes. At $834.24 pre-tax total, it is $58.21 above the cheapest rival but has stronger listing documentation.
+**AI note:** This listing gives you 10 item-specific photos, including front, back, and close-ups, plus substantive condition notes. The seller claims Near Mint, and seller trust is 78/100 from 4120 feedback ratings at 99.6% positive, though returns aren't accepted.
 
-Cited facts: 2, 3, 5, 6, 11
+Cited facts: 1, 2, 5, 6, 7, 8
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -121,9 +121,9 @@ Cited facts: 2, 3, 5, 6, 11
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** This listing has 10 item-specific photos, including front and back views, close-ups, and substantive condition notes. At $834.24 pre-tax total, it costs $58.21 more than the cheapest rival but offers stronger documentation for the Best Value comparison.
+**AI note:** This listing includes 10 item-specific photos, front and back views, close-ups, and condition notes. At $799.99, it is $58.21 more than the cheapest rival but has stronger documentation and a seller rated 99.6% positive from 4120 feedback ratings.
 
-Cited facts: 3, 5, 6, 11, 13
+Cited facts: 5, 6, 11, 8
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -150,9 +150,9 @@ Cited facts: 3, 5, 6, 11, 13
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** At $674.25 pre-tax total, this is the cheapest comparable listing; the next cheapest is $776.03. It includes 10 item-specific photos with front, back, close-ups, and condition notes, though Lightly Played remains the seller's claim and returns aren't accepted.
+**AI note:** This listing matches the requested Lightly Played condition, includes 10 item-specific photos with front, back, close-ups, and condition notes, and is the cheapest comparable at $674.25 pre-tax total. The seller has 99.6% positive feedback from 4120 ratings, though returns aren't accepted.
 
-Cited facts: 3, 11, 5, 6, 2, 7
+Cited facts: 1, 2, 3, 5, 6, 7, 8, 11
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -179,9 +179,9 @@ Cited facts: 3, 11, 5, 6, 2, 7
 - Deterministic verdict: **pass** — Consider passing
 - Deterministic note (the fallback): This seller's track record carries risk signals in this comparison — consider passing unless the listing page resolves them.
 
-**AI note:** For Best Value, this listing totals $834.24 pre-tax, while the cheapest rival is $776.03 and costs $58.21 less. The seller claims Near Mint, but offers no returns and has a 31/100 trust score from 21 feedback ratings at 88.4% positive.
+**AI note:** The $799.99 item price is below the $888.88 market reference, but the seller’s 31/100 trust score, no-returns policy, and $834.24 pre-tax total weaken the value case.
 
-Cited facts: 3, 11, 2, 7, 8
+Cited facts: 3, 4, 7, 8
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -209,9 +209,9 @@ Cited facts: 3, 11, 2, 7, 8
 - Deterministic verdict: **wait** — Consider waiting
 - Deterministic note (the fallback): There is very little to review here — ask the seller for item photos or more detail before committing.
 
-**AI note:** The seller claims Near Mint, but there is only 1 item-specific photo, with back photo and close-ups missing, and no returns are accepted. At $834.24 pre-tax, this listing costs $58.21 more than the cheapest rival.
+**AI note:** The $799.99 price is below the $888.88 reference, but the listing has only 1 photo, missing back and close-ups, and no returns. Another listing is $776.03 pre-tax total, making this weaker on value despite the seller’s 99.6% positive feedback.
 
-Cited facts: 2, 3, 5, 6, 7, 11
+Cited facts: 4, 5, 6, 7, 8, 11
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -238,9 +238,9 @@ Cited facts: 2, 3, 5, 6, 7, 11
 - Deterministic verdict: **wait** — 建议再等等
 - Deterministic note (the fallback): 能查的材料太少。下单前先找卖家要实物照片或更多细节。
 
-**AI note:** 卖家称近新，但仅有1张商品照片，缺少背面和细节图，且不接受退货；证据完整度仅12/100。商品价$799.99、含运费总计$834.24，价格优势不足以抵消信息缺口。
+**AI note:** 虽然标价比$888.88低10%，但只有1张商品照片，缺少背面和特写，且卖家不接受退货；$799.99加运费后总价为$834.24，证据完整度仅12/100。
 
-Cited facts: 2, 3, 5, 6, 7, 9
+Cited facts: 2, 3, 4, 5, 6, 7, 9
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -267,9 +267,9 @@ Cited facts: 2, 3, 5, 6, 7, 9
 - Deterministic verdict: **wait** — Consider waiting
 - Deterministic note (the fallback): This copy's item price runs about 20% over the $888.88 market reference — unless you need it now, waiting for closer-to-market supply is reasonable.
 
-**AI note:** This listing is $1066.66, 20% over the $888.88 Near Mint market reference, while Near Mint is only the seller’s claim. It also does not accept returns, making the premium harder to justify.
+**AI note:** The $1066.66 price is 20% over the $888.88 Near Mint market reference, while Near Mint remains the seller’s claim. With no returns, waiting makes sense despite 10 photos and detailed condition notes.
 
-Cited facts: 2, 4, 7
+Cited facts: 2, 3, 4, 5, 6, 7
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -296,9 +296,9 @@ Cited facts: 2, 4, 7
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint reference. It includes 10 item-specific photos, with front, back, close-ups, and substantive condition notes, while Near Mint remains the seller’s claim.
+**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint market reference, with 10 item-specific photos, front-and-back views, close-ups, and substantive condition notes. The seller claims Near Mint, but does not accept returns.
 
-Cited facts: 2, 4, 5, 6
+Cited facts: 2, 4, 5, 6, 7
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -326,9 +326,9 @@ Cited facts: 2, 4, 5, 6
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint market reference. It includes 10 item-specific photos with front, back, close-ups, and condition notes, though Near Mint remains the seller’s claim and returns aren’t accepted.
+**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint market reference, with 10 item-specific photos, front-and-back views, close-ups, and substantive condition notes. Near Mint remains the seller’s claim, and returns aren’t accepted.
 
-Cited facts: 4, 5, 6, 2, 7
+Cited facts: 2, 4, 5, 6, 7
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -353,9 +353,9 @@ Cited facts: 4, 5, 6, 2, 7
 - Deterministic verdict: **pass** — Consider passing
 - Deterministic note (the fallback): This seller's track record carries risk signals in this comparison — consider passing unless the listing page resolves them.
 
-**AI note:** Although $776.03 is the cheapest comparable price, Near Mint is only the seller's claim; the listing has 1 item-specific photo, no back photo, and no returns.
+**AI note:** The seller claims Near Mint, but the listing has only 1 item-specific photo, no back photo, and no returns. Seller trust is 41/100, despite the $776.03 total being the cheapest comparable.
 
-Cited facts: 3, 11, 2, 5, 6, 7
+Cited facts: 2, 5, 6, 7, 8, 11
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -382,9 +382,9 @@ Cited facts: 3, 11, 2, 5, 6, 7
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** For the Safest lens, this listing has 10 item-specific photos, front and back views, close-ups, and substantive condition notes; the seller reports Near Mint, though that remains uninspected. Its seller record shows 99.6% positive from 4120 feedback ratings, despite no returns.
+**AI note:** This listing is a safer fit for the Safest lens: it has 10 item-specific photos, front-and-back views, close-ups, and substantive condition notes. The seller has 4,120 feedback ratings at 99.6% positive, though returns are not accepted.
 
-Cited facts: 2, 5, 6, 7, 8, 13
+Cited facts: 5, 6, 8, 7
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -411,9 +411,9 @@ Cited facts: 2, 5, 6, 7, 8, 13
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** This listing stands out on documentation: 10 item-specific photos show the front, back, and close-ups, alongside substantive condition notes. The seller claims Near Mint, and the $799.99 item price is 10% under the $888.88 market reference; returns aren't accepted.
+**AI note:** This listing stands out for 10 item-specific photos, including front, back, and close-ups, plus substantive condition notes. The seller reports Near Mint, and the item price is $799.99, 10% under the $888.88 market reference.
 
-Cited facts: 2, 4, 5, 6, 7
+Cited facts: 1, 2, 4, 5, 6
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -440,9 +440,9 @@ Cited facts: 2, 4, 5, 6, 7
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint reference, and the listing includes 10 item-specific photos with front, back, and close-ups. The seller has 4120 feedback ratings at 99.6% positive; condition remains a seller claim and returns aren't accepted.
+**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint market reference, with 10 item-specific photos, front-and-back views, close-ups, and substantive condition notes. The seller reports Near Mint, but does not accept returns.
 
-Cited facts: 2, 4, 5, 6, 7, 8
+Cited facts: 2, 4, 5, 6, 7
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -469,9 +469,9 @@ Cited facts: 2, 4, 5, 6, 7, 8
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** For the Best Value lens, the $799.99 item price is 10% under the $888.88 Near Mint market reference. The seller provides 10 item-specific photos, including front, back, and close-ups; Near Mint remains a seller claim, alongside 78/100 trust from 812 feedback ratings at 99.1% positive.
+**AI note:** This listing shows 10 item-specific photos, including front, back, and close-ups, with substantive condition notes. Its $799.99 item price is 10% under the $888.88 Near Mint market reference, while the seller has 99.1% positive feedback from 812 ratings.
 
-Cited facts: 1, 2, 4, 5, 6, 8, 13
+Cited facts: 2, 4, 5, 6, 8
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -498,9 +498,9 @@ Cited facts: 1, 2, 4, 5, 6, 8, 13
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint market reference, though the complete cost is $834.24 pre-tax. The listing shows 10 item-specific photos, including front, back, close-ups, and substantive condition notes; Near Mint remains the seller’s claim.
+**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint reference, with 10 item-specific photos, front-and-back views, close-ups, and substantive condition notes. The seller’s Near Mint claim remains uninspected.
 
-Cited facts: 2, 3, 4, 5, 6
+Cited facts: 2, 4, 5, 6
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -528,9 +528,9 @@ Cited facts: 2, 3, 4, 5, 6
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint market reference. It includes 10 item-specific photos with front, back, and close-ups; the seller claims Near Mint and has 78/100 trust from 4120 ratings at 99.6% positive, but does not accept returns.
+**AI note:** The $799.99 item price is 10% under the $888.88 Near Mint market reference, with 10 item-specific photos plus front, back, close-ups, and condition notes. Seller trust is 78/100 from 4120 ratings at 99.6% positive.
 
-Cited facts: 2, 4, 5, 6, 7, 8
+Cited facts: 4, 5, 6, 8
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -558,9 +558,9 @@ Cited facts: 2, 4, 5, 6, 7, 8
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** This listing pairs a $690.00 item price with $0.00 shipping—22% under the $888.88 Near Mint market reference. It includes 10 item-specific photos and is the cheapest comparable; the next is $776.03 pre-tax total.
+**AI note:** This listing is $690.00 pre-tax and 22% under the Near Mint market reference, with 10 item-specific photos plus front, back, close-ups, and condition notes. It is also the cheapest comparable listing.
 
-Cited facts: 3, 4, 5, 11
+Cited facts: 3, 4, 5, 6, 11
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -587,9 +587,9 @@ Cited facts: 3, 4, 5, 11
 - Deterministic verdict: **buy** — Reasonable to buy
 - Deterministic note (the fallback): The numbers support this buy if the listing page matches these facts — condition is still the seller's claim.
 
-**AI note:** At $834.24 pre-tax total, this listing is $11.84 above the cheapest rival but provides 10 item-specific photos versus 2, plus front/back views and close-ups. Seller trust is 78/100 from 4120 ratings at 99.6% positive.
+**AI note:** This listing pairs 10 item-specific photos, front-and-back views, close-ups, and substantive condition notes with a $799.99 item price, 10% under the $888.88 Near Mint market reference. The seller claims Near Mint; returns aren’t accepted.
 
-Cited facts: 5, 6, 8, 11
+Cited facts: 2, 4, 5, 6, 7
 
 <details><summary>Fact sheet the model was given</summary>
 
@@ -616,9 +616,9 @@ Cited facts: 5, 6, 8, 11
 - Deterministic verdict: **buy** — 可以考虑入手
 - Deterministic note (the fallback): 数据支持这笔。先确认商品页和这些信息对得上，品相仍是卖家自己说的。
 
-**AI note:** 这张Roronoa Zoro OP-01 #OP01-025的标价$389.99，比$412.50的Near Mint市场参考低5%；另有8张商品照片，含正反面、细节和表面，且卖家有4120条反馈、99.6%好评。需留意Near Mint仅为卖家声明，且不接受退货。
+**AI note:** 这张OP-01 #OP01-025的标价为$389.99，比$412.50的Near Mint市场参考低5%；同时有8张针对性照片，包含正反面、细节和表面展示，条件信息较完整。
 
-Cited facts: 1, 2, 4, 5, 6, 7, 8
+Cited facts: 1, 2, 4, 5, 6
 
 <details><summary>Fact sheet the model was given</summary>
 
