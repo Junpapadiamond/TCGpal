@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-08-09
 canonical_branch: origin/main
-last_verified_product_commit: 47ec98b
+last_verified_product_commit: e82e4fc
 max_lines: 300
 ---
 
@@ -33,7 +33,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Catalog-outage fixture leak closed and verified | Monitor live timeout and recall evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | Founder self-test ready | Test receipts repeatedly, then recruit 10 target buyers |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Receipt experience verified at `47ec98b` | Observe trust, sharing, and empty outcomes |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing entrance and Chinese copy verified at `e82e4fc` | Observe trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP released; Firecrawl frontier tracer killed | Keep Firecrawl out of production; revisit only after tracer failure modes change |
 | WS-LOCAL | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts |
 <!-- progress:end -->
@@ -191,8 +191,8 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 
 ### Not finished or not verified
 
-- The no-trustworthy-listing state avoids false certainty but may still create a dopamine drop.
-- Next Moves offers actions, but no user study proves which action preserves momentum.
+- The no-trustworthy-listing state and Next Moves avoid false certainty, but no user study proves which action preserves momentum.
+- The landing rail's cold-start pool remains eight hardcoded Pokémon cards. Replace it with a verified, freshness-bounded catalog source before adding One Piece entries or making any "newest" or "chase right now" claim; the current UI makes neither claim.
 - The “exact buy list” aha moment, receipt trust surface, and shareability have not been tested with target buyers.
 
 ### Decision needed
@@ -268,11 +268,11 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Current verified product commit: `47ec98b` on 2026-08-09 (receipt-first implementation; pending fast-forward to `main` at this update).
+Current verified product commit: `e82e4fc` on 2026-08-09.
 
+- 2026-08-09 landing/Chinese release `e82e4fc`: lint and typecheck passed; 67 files / 896 tests passed; Next.js 16.2.6 production build passed. Built-in-browser QA covered EN and 中文 desktop plus 390px 中文 mobile with no horizontal overflow, a 720px centered form, 14 accessible rail cards plus 14 inert loop clones, no rarity/SIR tags, and no browser warnings. The 中文 method page and source scan had no legacy terminology hits.
 - 2026-08-09 receipt release: artifact-excluded lint passed; typecheck passed; 67 files / 886 tests passed; Next.js 16.2.6 production build passed with dynamic `/r/[id]` and OG routes. Built-in-browser QA covered EN/中文 desktop, 390px mobile with no horizontal overflow, stable URL copying, latest-receipt replay with no second provider POST, and five sequential live searches across Pokémon/One Piece using both Edit and New Search. Full unfiltered lint/test remain red only because preserved untracked `output/exact-print-eval` research contains four lint errors and 115 explicitly expected failures.
 - 2026-08-03 catalog-outage/market-read fix: lint, typecheck, 62 files / 858 src tests, and a Next.js production build passed. A live re-check while pokemontcg.io was ~60% 500ing returned 42 real `umbreon` prints on three consecutive runs with no warnings (browser: 42 matches across 25 sets). Built-in-browser QA covered EN/中文 desktop and 375px mobile — Lightly Played rendered the neutral "under NM reference" badge, Near Mint kept the condition-matched badge, console empty. Caveat: `npm run test` also runs 115 pre-existing failures and 4 lint errors under untracked `output/` research artifacts (`corpus-false-positives.test.ts` is titled "expected to fail today"), confirmed byte-identical on the base commit; `vitest.config.ts` now excludes `.claude/worktrees/**`, which was running other branches' copies of every test.
-- Earlier UI release `d613d66` passed lint, typecheck, 845 tests, build, and English/中文 desktop/mobile browser QA without overflow or browser errors.
 - The merged result retained the eBay seller-photo gallery, 44px listing actions, keyboard order, and reduced-motion behavior; browser error logs were empty.
 - Seller photos remain display-only evidence: no automated condition/authenticity inference and no ranking integration. Extra images mount only after the gallery opens.
 
