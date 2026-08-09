@@ -1,9 +1,9 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-08-03
+updated_at: 2026-08-09
 canonical_branch: origin/main
-last_verified_product_commit: 0e83f9c
+last_verified_product_commit: 47ec98b
 max_lines: 300
 ---
 
@@ -18,7 +18,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
 - Current live concrete source: eBay Browse. TCGCSV/TCGplayer is an aggregate catalog and market reference, never seller inventory.
-- Product state: suitable for a private moderated pilot after live verification; not proven for unrestricted self-serve launch, paid acquisition, subscriptions, or ads.
+- Product state: receipt-first founder testing is ready; recruit a small moderated pilot only after repeated trust testing, not for unrestricted launch, paid acquisition, subscriptions, or ads.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork.
 - Non-negotiable: research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -32,8 +32,8 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 |---|---|---:|---|---|
 | WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Catalog-outage fixture leak closed and verified | Monitor live timeout and recall evidence |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
-| WS-PILOT | Demand, usability, and trust validation | Large product stream | Not started | Recruit 10 target buyers and test 30 listings |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Design de-generic polish released and verified | Observe trust and empty outcomes with buyers |
+| WS-PILOT | Demand, usability, and trust validation | Large product stream | Founder self-test ready | Test receipts repeatedly, then recruit 10 target buyers |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Receipt experience verified at `47ec98b` | Observe trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP released; Firecrawl frontier tracer killed | Keep Firecrawl out of production; revisit only after tracer failure modes change |
 | WS-LOCAL | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts |
 <!-- progress:end -->
@@ -146,14 +146,14 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-PILOT" state="not-started" tags="demand,needs,taste,pricing,validation,buyer" -->
+<!-- progress:workstream id="WS-PILOT" state="founder-testing" tags="demand,needs,taste,pricing,validation,buyer" -->
 ## WS-PILOT - Demand and buyer validation
 
 ### Current evidence
 
 - Council conclusion: conditional GO for a private moderated pilot and NO-GO for paid acquisition or subscription work; no new buyer-session evidence was recorded from July 17 through July 23.
 - The likely pain is reducing noisy listings for condition-sensitive, higher-consideration raw purchases.
-- No completed buyer sessions, repeat-use evidence, willingness-to-pay result, or measured time savings exist.
+- No completed external buyer sessions, repeat-use evidence, willingness-to-pay result, or measured time savings exist; the founder will test receipts before recruiting.
 
 ### Not finished
 
@@ -186,14 +186,14 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - eBay results preserve up to 24 official seller-photo URLs and open them in a lazy-mounted in-page gallery with thumbnails, keyboard navigation, focus restoration, and zoom. Copy explicitly says TCGlens has not verified condition or authenticity from the photos.
 - Supporting listings now read as one hairline ledger; generic exact-print evidence collapses to a keyboard-focusable `✓ print` / `✓ 版本` tag while special-print reasons retain the full evidence block.
 - Single identity candidates are centered, the recommendation explainer is compressed, and the landing marquee excludes SAMPLE-watermarked One Piece hosts while filling from curated clean card art.
-- English and Chinese desktop/mobile states have automated and visual coverage, including the seller-photo gallery retained inside the polished listing rows.
+- Immutable public-by-link `/r/{id}` receipts preserve the exact card, one pick plus one second look, evidence/unknowns, timestamp, stable sharing, OG/Twitter metadata, and a fresh re-check. New result journey URLs restore the newest card/condition receipt without re-running providers; EN/中文 desktop and 390px mobile are verified.
 - Non-NM searches now show an item-price read again. `deriveMarketRead` in `ranking.ts` reports the delta plus a `conditionMatched` flag: NM↔NM keeps the existing badge, everything else renders neutral as "under/above NM reference" with the condition-blind caveat and stays out of `priceScore`. No condition multiplier is invented.
 
 ### Not finished or not verified
 
 - The no-trustworthy-listing state avoids false certainty but may still create a dopamine drop.
 - Next Moves offers actions, but no user study proves which action preserves momentum.
-- The “exact buy list” aha moment and result wording have not been tested with target buyers.
+- The “exact buy list” aha moment, receipt trust surface, and shareability have not been tested with target buyers.
 
 ### Decision needed
 
@@ -204,6 +204,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - src/features/comparison/ComparisonApp.tsx
 - src/features/comparison/i18n.tsx
 - src/features/comparison/ComparisonApp.test.tsx
+- Receipt flow: src/features/receipt/ReceiptPageClient.tsx, src/lib/comparison/report-snapshot.ts
 - src/lib/testing/standard-comparison-flow.ts
 <!-- progress:end -->
 
@@ -228,22 +229,21 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 
 The user must decide these; agents must not infer them:
 
-1. D-FOCUS: next primary focus - live accuracy corpus, metadata cohort review, pilot research, or a specific product bug.
-2. D-METADATA-COHORT: which special-print cohort receives human approval first.
-3. D-SPEND: which purchase band to target; the current “mostly above $50” belief needs research.
-4. D-NEXT-MOVES: which useful action should lead when no trustworthy buy exists.
-5. D-MONETIZATION: subscription, advertising, or neither; defer implementation until repeat demand is measured.
-6. D-NAMING: whether public copy and internal package/module naming should converge on TCGlens or TCGpal; do not change either without owner direction.
+1. D-METADATA-COHORT: which special-print cohort receives human approval first.
+2. D-SPEND: which purchase band to target; the current “mostly above $50” belief needs research.
+3. D-NEXT-MOVES: which useful action should lead when no trustworthy buy exists.
+4. D-MONETIZATION: subscription, advertising, or neither; defer implementation until repeat demand is measured.
+5. D-NAMING: whether public copy and internal package/module naming should converge on TCGlens or TCGpal; do not change either without owner direction.
 <!-- progress:end -->
 
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-Observed on 2026-08-03 in the primary checkout `/Users/chenjunhsu/Desktop/projects/TCGpal`:
+Observed on 2026-08-09 in the primary checkout `/Users/chenjunhsu/Desktop/projects/TCGpal`:
 
-- `graphify-out/` (~33k lines) and `package-lock.json` carry uncommitted changes predating the 2026-08-03 fix and were deliberately left out of `0e83f9c`. That commit adds one exported symbol (`deriveMarketRead`), so a `graphify update .` refresh is owed once those pending changes are resolved.
-- Eighteen worktrees exist under `.codex-worktrees/`, `.claude/worktrees/`, and sibling directories; several are prunable. `output/` and several `docs/` drafts remain untracked evidence, not release work.
-- Preserve the Graphify, research, screenshot, and readiness artifacts. They are local acceleration/evidence.
+- Receipt branch `codex/receipt-pages` is at verified product commit `47ec98b`, one commit ahead of local/remote `main` at `da56731`; fast-forward and push are pending.
+- Eight tracked files are modified: this handoff, six generated Graphify files, and `package-lock.json`. There are 218 untracked entries, dominated by generated Graphify and `output/` artifacts; their intent and verification are unknown except for `output/receipt-visual-qa/`, created for this receipt check and not staged.
+- Eighteen worktrees exist. Preserve all dirty Graphify, research, screenshot, review, and design artifacts as local work-in-progress; do not include, clean, or prune them without an explicit scoped task.
 
 Refresh this section with /progress; do not assume it remains current.
 <!-- progress:end -->
@@ -254,11 +254,11 @@ Refresh this section with /progress; do not assume it remains current.
 | Task | Read only these first |
 |---|---|
 | Any new thread | AGENTS.md, PROGRESS.md BOOTSTRAP + TASK-INDEX |
-| Exact card/listing bug | WS-IDENTITY, schemas.ts, listing-compare.ts, print-fidelity.ts, relevant test |
-| One Piece special metadata | WS-METADATA, audit summary, generator/audit code, curated runtime metadata |
-| Ranking/recommendation | schemas.ts, ranking.ts, platforms.ts, ranking/platform tests |
-| UI/product flow | WS-UX, ComparisonApp.tsx, i18n, standard flow |
-| Product/demand decision | WS-PILOT, validation plan, product spec, council chairman |
+| Exact card/listing bug | WS-IDENTITY, `src/lib/schemas.ts`, `src/lib/ai/listing-compare.ts`, `src/lib/comparison/print-fidelity.ts`, relevant colocated test |
+| One Piece special metadata | WS-METADATA, `output/one-piece-exact-print-audit.json` summary, generator/audit code, curated runtime metadata |
+| Ranking/recommendation | `src/lib/schemas.ts`, `src/lib/comparison/ranking.ts`, `src/lib/comparison/platforms.ts`, relevant tests |
+| UI/product flow | WS-UX, `src/features/comparison/ComparisonApp.tsx`, `src/features/receipt/ReceiptPageClient.tsx`, `src/lib/comparison/report-snapshot.ts`, `src/lib/testing/standard-comparison-flow.ts` |
+| Product/demand decision | WS-PILOT, `docs/validation-plan.md`, `docs/product-spec.md`; historical council artifacts are missing from `origin/main` |
 | Agent/MCP or marketplace expansion | AGENTS.md production/frontier boundaries, `src/app/mcp/route.ts`, `src/lib/mcp/tools.ts`, `docs/architecture-and-data-sources.md`, `docs/frontier-firecrawl-pilot.md`, and `src/lib/comparison/platforms.ts` |
 | Dirty local work | LOCAL-STATE, then git diff for only the named files |
 
@@ -268,15 +268,13 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Latest verified product commit: `0e83f9c` on 2026-08-03.
+Current verified product commit: `47ec98b` on 2026-08-09 (receipt-first implementation; pending fast-forward to `main` at this update).
 
+- 2026-08-09 receipt release: artifact-excluded lint passed; typecheck passed; 67 files / 886 tests passed; Next.js 16.2.6 production build passed with dynamic `/r/[id]` and OG routes. Built-in-browser QA covered EN/中文 desktop, 390px mobile with no horizontal overflow, stable URL copying, latest-receipt replay with no second provider POST, and five sequential live searches across Pokémon/One Piece using both Edit and New Search. Full unfiltered lint/test remain red only because preserved untracked `output/exact-print-eval` research contains four lint errors and 115 explicitly expected failures.
 - 2026-08-03 catalog-outage/market-read fix: lint, typecheck, 62 files / 858 src tests, and a Next.js production build passed. A live re-check while pokemontcg.io was ~60% 500ing returned 42 real `umbreon` prints on three consecutive runs with no warnings (browser: 42 matches across 25 sets). Built-in-browser QA covered EN/中文 desktop and 375px mobile — Lightly Played rendered the neutral "under NM reference" badge, Near Mint kept the condition-matched badge, console empty. Caveat: `npm run test` also runs 115 pre-existing failures and 4 lint errors under untracked `output/` research artifacts (`corpus-false-positives.test.ts` is titled "expected to fail today"), confirmed byte-identical on the base commit; `vitest.config.ts` now excludes `.claude/worktrees/**`, which was running other branches' copies of every test.
-- Earlier, on commit `d613d66` (2026-07-23): `npm run lint`, `npm run typecheck`, `npm test` (60 files / 845 tests), and `npm run build` passed on Next.js 16.2.6 after the final rebase and graph cleanup.
-- Built-in-browser live comparisons passed in English, 中文, desktop, and 390px mobile: compact accessible print tags on generic rows, full reasons on Nami special-print rows, centered single-candidate confirmation, source-safe marquee, no horizontal overflow.
+- Earlier UI release `d613d66` passed lint, typecheck, 845 tests, build, and English/中文 desktop/mobile browser QA without overflow or browser errors.
 - The merged result retained the eBay seller-photo gallery, 44px listing actions, keyboard order, and reduced-motion behavior; browser error logs were empty.
 - Seller photos remain display-only evidence: no automated condition/authenticity inference and no ranking integration. Extra images mount only after the gallery opens.
-- Production deployment `dpl_7mhj9Wqm4ZvYTKo3euBh8w3nPvYx` for `321db7c` reached Vercel `READY`; `https://tcgpal.vercel.app/` returned HTTP 200 on 2026-07-23.
-- Firecrawl frontier harness verification on 2026-07-31: report regeneration, lint, typecheck, 61 test files / 852 tests, Next.js 16.2.6 production build, Graphify update (1,861 nodes / 3,573 edges), and `git diff --check` passed. No UI or product-route behavior changed, so visual QA was not applicable.
 
 Still not verified:
 
