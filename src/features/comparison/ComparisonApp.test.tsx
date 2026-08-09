@@ -193,17 +193,25 @@ describe("landing rail helpers", () => {
   });
 
   it("seeds the landing rail with the requested iconic Pokémon and One Piece cards", () => {
-    expect(DEFAULT_MARQUEE_CARDS).toHaveLength(7);
+    expect(DEFAULT_MARQUEE_CARDS).toHaveLength(8);
     expect(DEFAULT_MARQUEE_CARDS.map((card) => card.name)).toEqual([
       "Umbreon VMAX",
       "Charizard",
       "Pikachu",
       "Giratina V",
+      "Mewtwo & Mew-GX",
       "Monkey.D.Luffy",
       "Roronoa Zoro",
       "Nami",
     ]);
-    expect(new Set(DEFAULT_MARQUEE_CARDS.map((card) => card.game))).toEqual(new Set(["pokemon", "onePiece"]));
+    expect(DEFAULT_MARQUEE_CARDS.filter((card) => card.game === "pokemon")).toHaveLength(5);
+    expect(DEFAULT_MARQUEE_CARDS.filter((card) => card.game === "onePiece")).toHaveLength(3);
+    expect(DEFAULT_MARQUEE_CARDS.filter((card) => card.game === "onePiece").map((card) => card.variant)).toEqual([
+      "Manga Art",
+      "Manga Art",
+      "Manga Art",
+    ]);
+    expect(DEFAULT_MARQUEE_CARDS.at(-1)).toMatchObject({ id: "OP01-016_p8", name: "Nami" });
   });
 
   it("drops cards with no usable image rather than rendering a hole", () => {
@@ -308,7 +316,7 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     const rail = screen.getByRole("region", { name: "Cards you can check" });
-    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(7));
+    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
     const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
     expect(accessibleCards.every((button) => button.getAttribute("data-rail-source") === "chase")).toBe(true);
 
@@ -320,8 +328,12 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     const rail = screen.getByRole("region", { name: "Cards you can check" });
-    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(7));
+    await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
     const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
+
+    const images = Array.from(rail.querySelectorAll("img"));
+    expect(images).toHaveLength(DEFAULT_MARQUEE_CARDS.length * 2);
+    expect(images.every((image) => image.getAttribute("loading") === "eager")).toBe(true);
 
     const clones = rail.querySelectorAll('button[data-clone="true"]');
     expect(clones).toHaveLength(accessibleCards.length);
@@ -393,7 +405,7 @@ describe("comparison condition controls", () => {
     });
 
     const cards = screen.getAllByRole("button", { name: /^Check / });
-    expect(cards).toHaveLength(7);
+    expect(cards).toHaveLength(8);
     expect(cards.some((card) => card.getAttribute("aria-label")?.includes("Recent without image"))).toBe(false);
   });
 

@@ -112,9 +112,10 @@ export const DEFAULT_MARQUEE_CARDS: RecentCarouselCard[] = [
   { id: "curated-base1-4", game: "pokemon", name: "Charizard", setName: "Base", setCode: "BS", cardNumber: "4/102", imageUrl: "https://images.pokemontcg.io/base1/4_hires.png", lastSeenAt: 0 },
   { id: "curated-base1-58", game: "pokemon", name: "Pikachu", setName: "Base", setCode: "BS", cardNumber: "58/102", imageUrl: "https://images.pokemontcg.io/base1/58_hires.png", lastSeenAt: 0 },
   { id: "curated-swsh11-186", game: "pokemon", name: "Giratina V", setName: "Lost Origin", setCode: "SWSH11", cardNumber: "186/196", imageUrl: "https://images.pokemontcg.io/swsh11/186_hires.png", lastSeenAt: 0 },
+  { id: "curated-sm11-222", game: "pokemon", name: "Mewtwo & Mew-GX", setName: "Unified Minds", setCode: "UNM", cardNumber: "222/236", imageUrl: "https://images.pokemontcg.io/sm11/222_hires.png", lastSeenAt: 0 },
   { id: "OP05-119_p2", game: "onePiece", name: "Monkey.D.Luffy", setName: "Awakening Of The New Era", setCode: "OP-05", cardNumber: "OP05-119", imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP05-119_p2.png", variant: "Manga Art", lastSeenAt: 0 },
   { id: "OP06-118_p2", game: "onePiece", name: "Roronoa Zoro", setName: "Wings Of The Captain", setCode: "OP-06", cardNumber: "OP06-118", imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP06-118_p2.png", variant: "Manga Art", lastSeenAt: 0 },
-  { id: "OP01-016_p4", game: "onePiece", name: "Nami", setName: "Awakening Of The New Era", setCode: "OP-01", cardNumber: "OP01-016", imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP01-016_p4.png", variant: "SP", lastSeenAt: 0 },
+  { id: "OP01-016_p8", game: "onePiece", name: "Nami", setName: "Awakening Of The New Era", setCode: "OP-01", cardNumber: "OP01-016", imageUrl: "https://en.onepiece-cardgame.com/images/cardlist/card/OP01-016_p8.png", variant: "Manga Art", lastSeenAt: 0 },
 ];
 
 export type RailItem = {
@@ -1575,6 +1576,7 @@ function CardMarqueeItem({
           fill
           sizes="132px"
           className="object-contain"
+          loading="eager"
           unoptimized={card.game === "pokemon"}
         />
         <span className="card-marquee-veil" />
