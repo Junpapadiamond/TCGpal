@@ -36,7 +36,8 @@ import {
 } from "./identity-filters";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
-import { PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
+import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
+import { useAiVerdictNote } from "./use-ai-verdict-note";
 import { cardImageSource } from "@/lib/external/card-image";
 import {
   defaultComparisonFormValues,
@@ -2260,7 +2261,16 @@ function ComparisonResult({
     setQaError(null);
     setQaTarget(null);
   }
-  const selectedVerdictCopy = selectedChoice && selectedListing
+  // Deterministic copy first, always. The AI note (flag-gated, verified
+  // server-side against a fact sheet) only replaces the sentence under the
+  // action label once it arrives; nothing else in the verdict changes.
+  const aiVerdictNote = useAiVerdictNote({
+    enabled: AI_VERDICT_NOTE_UI_ENABLED && outcome === "best_buy",
+    report,
+    role: selectedChoice ? selectedRole : null,
+    lang,
+  });
+  const deterministicVerdictCopy = selectedChoice && selectedListing
     ? buildVerdictCopy({
       listing: selectedListing,
       choice: selectedChoice,
@@ -2269,6 +2279,9 @@ function ComparisonResult({
       lang,
     })
     : null;
+  const selectedVerdictCopy = deterministicVerdictCopy && aiVerdictNote
+    ? { ...deterministicVerdictCopy, action: { ...deterministicVerdictCopy.action, note: aiVerdictNote } }
+    : deterministicVerdictCopy;
   const selectedChoiceReason = selectedVerdictCopy
     ? [selectedVerdictCopy.why, selectedVerdictCopy.catch, selectedVerdictCopy.whyNotCheapest ?? selectedVerdictCopy.alternative]
       .filter(Boolean)

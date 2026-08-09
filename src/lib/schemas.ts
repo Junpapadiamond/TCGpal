@@ -627,6 +627,31 @@ export const comparisonQuestionResponseSchema = z.object({
   webCitations: z.array(webCitationSchema).default([]),
 });
 
+// The AI-written Action note. Deterministic code still owns the buy/wait/pass
+// decision, its label, and every number; the model only writes the sentence
+// underneath from a numbered fact sheet it may not add to. `citedFactIds` is the
+// model's own claim about which facts it used and is verified, not trusted.
+export const verdictNoteDraftSchema = z.object({
+  note: z.string().trim().min(1).max(400),
+  citedFactIds: z.array(z.number().int().min(1).max(99)).min(1).max(8),
+});
+
+export const verdictNoteRequestSchema = z.object({
+  report: comparisonReportSchema,
+  role: rankedChoiceRoleSchema.default("best_value"),
+  lang: z.enum(["en", "zh"]).default("en"),
+});
+
+// `note: null` is the normal, silent outcome whenever the flag is off, the
+// provider is unavailable, or the checker rejected the draft. Clients must keep
+// showing the deterministic Action sentence in that case.
+export const verdictNoteResponseSchema = z.object({
+  note: z.string().nullable(),
+  citedFactIds: z.array(z.number().int()).default([]),
+  usedAi: z.boolean().default(false),
+  rejectedReason: z.string().nullable().default(null),
+});
+
 export const listingRiskInputSchema = z.object({
   title: z.string().trim().min(1),
   description: z.string().trim().default(""),
@@ -734,6 +759,9 @@ export type ComparisonPlatformResult = z.infer<typeof comparisonPlatformResultSc
 export type PlatformSourceMode = z.infer<typeof platformSourceModeSchema>;
 export type WebDiscovery = z.infer<typeof webDiscoverySchema>;
 export type WebDiscoveryProvider = z.infer<typeof webDiscoveryProviderSchema>;
+export type VerdictNoteDraft = z.infer<typeof verdictNoteDraftSchema>;
+export type VerdictNoteRequest = z.infer<typeof verdictNoteRequestSchema>;
+export type VerdictNoteResponse = z.infer<typeof verdictNoteResponseSchema>;
 export type ListingRiskInput = z.infer<typeof listingRiskInputSchema>;
 export type ListingRiskReport = z.infer<typeof listingRiskReportSchema>;
 export type RawVsSlabInput = z.infer<typeof rawVsSlabInputSchema>;

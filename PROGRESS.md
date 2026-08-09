@@ -1,7 +1,7 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-08-09
+updated_at: 2026-08-10
 canonical_branch: origin/main
 last_verified_product_commit: e82e4fc
 max_lines: 300
@@ -188,6 +188,10 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - Single identity candidates are centered, the recommendation explainer is compressed, and the landing marquee excludes SAMPLE-watermarked One Piece hosts while filling from curated clean card art.
 - Immutable public-by-link `/r/{id}` receipts preserve the exact card, one pick plus one second look, evidence/unknowns, timestamp, stable sharing, OG/Twitter metadata, and a fresh re-check. New result journey URLs restore the newest card/condition receipt without re-running providers; EN/中文 desktop and 390px mobile are verified.
 - Non-NM searches now show an item-price read again. `deriveMarketRead` in `ranking.ts` reports the delta plus a `conditionMatched` flag: NM↔NM keeps the existing badge, everything else renders neutral as "under/above NM reference" with the condition-blind caveat and stays out of `priceScore`. No condition multiplier is invented.
+- AI-written Action note is built but shipped off (`AI_VERDICT_NOTE=0` server, `AI_VERDICT_NOTE_UI_ENABLED=false` client). `verdict-copy.ts` still decides buy/wait/pass, the label, and every number; the model only rewrites the sentence under the label from a numbered fact sheet, and `checkVerdictNote` discards any note whose money/percent/count values are missing from that sheet, that trips the shared unsupported-claim lists, that runs past 3 sentences or 300 characters, that cites unknown fact ids, or that is in the wrong language. Every rejection falls back silently to today's copy. Evidence: 21-case corpus run live four times across `gpt-5.4` and `gpt-5.6-luna`; read-through of every accepted note found zero wrong facts, and the checker has never rejected a note — every observed fallback was provider latency. `docs/verdict-note-review-2026-08-09.md`, regenerate with `npm run verdict:review`. Flag-off behavior verified in the browser (EN + 中文 deterministic sentence, no call to `/api/agent/listing-compare/verdict-note`).
+- Fallback rate fixed by giving the note its own budget: `completeJson` now takes optional `timeoutMs`/`reasoningEffort`, and the note asks for 30s at `low` effort instead of inheriting `buildNarrative`'s 12s critical-path cap. Measured on the gateway: the model spends ~230 reasoning tokens on a ~70-token sentence, only ~50% of calls finish under 12s but 100% finish under 25s. Result: 21/21 accepted with zero fallbacks on both models, versus 15-16/21 before.
+- Known gap before enabling: notes reliably repeat price/photos/returns and omit the case-defining caveat (buyer-entered facts, Japanese-language listing, unverified seller, unstated condition). Nothing false is said and the deterministic "What to know" line still carries those, but the prompt should require the caveat fact when present.
+- The configured gateway dropped `gpt-5.6-luna` for ~10 minutes on 2026-08-10 (`model_not_found` on plain curl, `gpt-5.4` unaffected) and restored it. Model availability there is not guaranteed; the deterministic fallback is what makes that a non-event.
 
 ### Not finished or not verified
 

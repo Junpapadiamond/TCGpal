@@ -1,5 +1,6 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
+import { forbiddenAnswer } from "@/lib/ai/unsupported-claims";
 import { isTavilyConfigured, searchTavilyContext } from "@/lib/external/tavily";
 import {
   comparisonQuestionResponseSchema,
@@ -9,17 +10,6 @@ import {
   type RankedChoice,
   type WebCitation,
 } from "@/lib/schemas";
-
-const forbiddenAnswer = [
-  /\bguaranteed\b/i,
-  /\bscam\b/i,
-  /\bwill grade\b/i,
-  /\bpsa\s*10\b/i,
-  /\bsold comps? (show|prove|confirm)/i,
-  /\bsold[-\s]?comp/i,
-  /\bsold transaction/i,
-  /\b[a-z]+-v\d+\|/i,
-];
 
 export async function answerComparisonQuestion(
   report: ComparisonReport,
