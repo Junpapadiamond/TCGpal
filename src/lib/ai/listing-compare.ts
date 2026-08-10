@@ -846,12 +846,26 @@ async function identifyCards(
 // over a few hundred milliseconds. A single 400ms retry lands inside the same
 // bad window often enough to matter, so back off twice and spread the second
 // wait past a typical burst.
-const CATALOG_RETRY_DELAYS_MS = [300, 1200];
+export const CATALOG_RETRY_DELAYS_MS = [300, 1200];
+
+// Per-attempt timeout, escalating. A healthy catalog answers a 250-card page in
+// well under a second, so a short first attempt costs nothing and buys a second
+// try; the last attempt is long because that full page is the whole point of the
+// version picker and a degraded catalog averaged 7.3s for it on 2026-08-10.
+//
+// These are deliberately NOT one flat number. A flat timeout large enough for the
+// slow case silently disables retrying, because a single attempt then consumes
+// the entire budget below — which is exactly what happened when this was set to a
+// flat 15s. CATALOG_TIMING_INVARIANTS pins the relationship in a test.
+export const CATALOG_ATTEMPT_TIMEOUTS_MS = [4_000, 5_000, 9_000];
 
 // Ceiling on the whole retry sequence. The identity runtime aborts everything at
-// 18s and the route at 20s; stopping at 14s leaves room to still return a
+// 18s and the route at 20s; stopping short leaves room to still return a
 // warning-carrying response instead of being killed mid-flight.
-const CATALOG_RETRY_BUDGET_MS = 14_000;
+export const CATALOG_RETRY_BUDGET_MS = 16_000;
+
+// The deadline this sequence must finish inside (card-identity-runtime).
+export const CATALOG_RUNTIME_DEADLINE_MS = 18_000;
 
 async function searchPokemonWithRetry(
   options: Parameters<typeof searchPokemonCards>[0],
@@ -861,12 +875,23 @@ async function searchPokemonWithRetry(
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt <= CATALOG_RETRY_DELAYS_MS.length; attempt += 1) {
+    // Each attempt gets its own ceiling; the caller's timeoutMs is the upper bound
+    // so a deliberately short-lived caller is never overridden upward.
+    const attemptTimeout = CATALOG_ATTEMPT_TIMEOUTS_MS[attempt] ?? CATALOG_ATTEMPT_TIMEOUTS_MS.at(-1)!;
     if (attempt > 0) {
-      if (Date.now() - startedAt >= CATALOG_RETRY_BUDGET_MS) break;
-      await abortableDelay(CATALOG_RETRY_DELAYS_MS[attempt - 1], options.signal);
+      // Budget against what the NEXT attempt could still cost, not just what has
+      // been spent. Checking elapsed time alone lets a final attempt start just
+      // under the line and then run far past it — and it made the whole ladder
+      // dead the moment one attempt's timeout exceeded the budget on its own.
+      const delay = CATALOG_RETRY_DELAYS_MS[attempt - 1];
+      if (Date.now() - startedAt + delay + attemptTimeout > CATALOG_RETRY_BUDGET_MS) break;
+      await abortableDelay(delay, options.signal);
     }
     try {
-      return await searchPokemonCards(options);
+      return await searchPokemonCards({
+        ...options,
+        timeoutMs: Math.min(options.timeoutMs ?? attemptTimeout, attemptTimeout),
+      });
     } catch (error) {
       if (options.signal?.aborted) throw error;
       lastError = error;

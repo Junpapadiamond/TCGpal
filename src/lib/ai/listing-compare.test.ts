@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { applyQueryParser, applyQueryParserWithAi, runListingComparison } from "@/lib/ai/listing-compare";
+import {
+  applyQueryParser,
+  applyQueryParserWithAi,
+  CATALOG_ATTEMPT_TIMEOUTS_MS,
+  CATALOG_RETRY_BUDGET_MS,
+  CATALOG_RETRY_DELAYS_MS,
+  CATALOG_RUNTIME_DEADLINE_MS,
+  runListingComparison,
+} from "@/lib/ai/listing-compare";
 import { cardIdentityCandidateSchema, comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
 import { clearComparisonCache } from "@/lib/comparison/report-cache";
 import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
@@ -1301,3 +1309,35 @@ describe("name-only catalog search coverage", () => {
   });
 });
 
+// These four constants only work as a set, and nothing about any one of them
+// looks wrong on its own. Raising the per-attempt timeout to a flat 15s on
+// 2026-08-10 silently disabled retrying altogether — one attempt then consumed
+// the entire budget, the ladder broke after a single try, and every existing
+// retry test still passed because they reject instantly and never spend time.
+// This pins the relationship rather than the behaviour.
+describe("catalog retry timing invariants", () => {
+  const worstCase = (attempts: number) =>
+    CATALOG_ATTEMPT_TIMEOUTS_MS.slice(0, attempts).reduce((total, timeout) => total + timeout, 0)
+    + CATALOG_RETRY_DELAYS_MS.slice(0, attempts - 1).reduce((total, delay) => total + delay, 0);
+
+  it("leaves room for a retry after the first attempt times out", () => {
+    expect(worstCase(2)).toBeLessThanOrEqual(CATALOG_RETRY_BUDGET_MS);
+  });
+
+  it("never lets a fully spent sequence outlive the identity runtime deadline", () => {
+    expect(CATALOG_RETRY_BUDGET_MS).toBeLessThan(CATALOG_RUNTIME_DEADLINE_MS);
+    expect(worstCase(CATALOG_ATTEMPT_TIMEOUTS_MS.length)).toBeGreaterThan(CATALOG_RETRY_BUDGET_MS);
+  });
+
+  it("escalates each attempt so a slow catalog gets more room than a fast failure", () => {
+    for (let index = 1; index < CATALOG_ATTEMPT_TIMEOUTS_MS.length; index += 1) {
+      expect(CATALOG_ATTEMPT_TIMEOUTS_MS[index]).toBeGreaterThanOrEqual(CATALOG_ATTEMPT_TIMEOUTS_MS[index - 1]!);
+    }
+    // The final attempt must outlast a degraded full-page fetch (7.3s measured).
+    expect(CATALOG_ATTEMPT_TIMEOUTS_MS.at(-1)!).toBeGreaterThan(7_300);
+  });
+
+  it("keeps one retry per configured backoff", () => {
+    expect(CATALOG_ATTEMPT_TIMEOUTS_MS).toHaveLength(CATALOG_RETRY_DELAYS_MS.length + 1);
+  });
+});
