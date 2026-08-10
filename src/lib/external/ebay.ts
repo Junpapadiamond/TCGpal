@@ -182,6 +182,23 @@ export class EbayUnavailableError extends Error {
   }
 }
 
+// How many search rows get the second, per-item call that carries eBay's
+// structured Card Condition. Search summaries usually say only "Ungraded", which
+// normalizes to "Unknown" and is excluded against any stated condition request —
+// so this number is a direct cap on how much comparable supply a buyer can see.
+//
+// It is a cost dial, not a correctness one: every extra row is one more Browse
+// call against the daily quota. The default preserves the shipped behaviour;
+// EBAY_DETAIL_BUDGET exists so the trade can be measured before it is changed.
+const DEFAULT_DETAIL_BUDGET = 12;
+const MAX_DETAIL_BUDGET = 50;
+
+export function ebayDetailBudget(): number {
+  const raw = Number(process.env.EBAY_DETAIL_BUDGET);
+  if (!Number.isFinite(raw) || raw < 1) return DEFAULT_DETAIL_BUDGET;
+  return Math.min(Math.trunc(raw), MAX_DETAIL_BUDGET);
+}
+
 export function parseEbayUrl(value: string) {
   let url: URL;
   try {
@@ -238,6 +255,9 @@ export async function searchEbayAlternatives(
   // fallback, so a missing or empty override never weakens the search.
   queryOverride?: string,
   ebayProduct?: EbayProductResolution | null,
+  // Measurement seam: lets an A/B drive both arms through this exact code path
+  // instead of a reimplementation. Production leaves it unset.
+  detailBudget: number = ebayDetailBudget(),
 ): Promise<ListingSeed[]> {
   const token = await getEbayToken(fetcher);
   // Recall-first query: name + collector number. Set names are the token real
@@ -331,7 +351,7 @@ export async function searchEbayAlternatives(
       return match.confidence !== "low"
         && !isGradedListing(item.title);
     })
-    .slice(0, 12);
+    .slice(0, Math.max(0, Math.trunc(detailBudget)));
   const details = await Promise.all(detailTargets.map(async (item) => {
     try {
       return await getEbayItemDetail(item.itemId, token, buyer, fetcher);

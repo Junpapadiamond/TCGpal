@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   assessTitleMatch,
+  ebayDetailBudget,
   getEbayListingByUrl,
   parseEbayUrl,
   resetEbayTokenCacheForTests,
@@ -906,5 +907,134 @@ describe("assessTitleMatch (listing-title identity confidence)", () => {
     // Same guard for fraction-numbered games (Pokémon 215/203 vs 209/203).
     const umbreon = { name: "Umbreon VMAX", setName: "Evolving Skies", setCode: "SWSH7", cardNumber: "215/203" };
     expect(assessTitleMatch("Umbreon VMAX 209/203 Evolving Skies", umbreon).confidence).toBe("low");
+  });
+});
+
+// The Browse search summary for a trading card almost always reports only
+// "Ungraded", which normalizes to "Unknown" and is excluded against any stated
+// condition request. The real NM/LP/MP grade lives on the per-item endpoint, and
+// only a bounded shortlist of rows gets that second call — so the budget is a
+// direct cap on how much comparable supply a buyer can ever see.
+//
+// These tests pin the cap itself, because the number is a cost/coverage trade
+// that should only move on measurement, never by accident.
+describe("eBay item-detail budget", () => {
+  const card = {
+    id: "swsh7-215",
+    name: "Umbreon VMAX",
+    setName: "Evolving Skies",
+    setCode: "SWSH7",
+    cardNumber: "215/203",
+    language: "English",
+    imageUrl: null,
+    confidence: "high",
+    matchReasons: [],
+  } as CardIdentityCandidate;
+
+  const buyer = { country: "US" as const, postalCode: "10001", taxRate: null, desiredCondition: "Near Mint" as const };
+
+  beforeEach(() => {
+    process.env.EBAY_CLIENT_ID = "test-id";
+    process.env.EBAY_CLIENT_SECRET = "test-secret";
+    delete process.env.EBAY_DETAIL_BUDGET;
+    resetEbayTokenCacheForTests();
+  });
+
+  afterEach(() => {
+    delete process.env.EBAY_CLIENT_ID;
+    delete process.env.EBAY_CLIENT_SECRET;
+    delete process.env.EBAY_DETAIL_BUDGET;
+    resetEbayTokenCacheForTests();
+  });
+
+  // 30 identical, equally matchable rows. Every summary claims only "Ungraded";
+  // every item detail reports Near Mint. Any row that reads Near Mint therefore
+  // proves it received a detail call, and any row reading Unknown proves it did not.
+  function budgetFetcher(detailIds: string[], rows = 30) {
+    return (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 7200 }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: Array.from({ length: rows }, (_, index) => ({
+              itemId: String(index + 1),
+              title: "Umbreon VMAX 215/203 Evolving Skies",
+              condition: "Ungraded",
+              price: { value: "420.00", currency: "USD" },
+            })),
+          }),
+        } as Response;
+      }
+      const detailMatch = url.match(/\/buy\/browse\/v1\/item\/([^?]+)/);
+      if (detailMatch) {
+        const itemId = decodeURIComponent(detailMatch[1]);
+        detailIds.push(itemId);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemId,
+            title: "Umbreon VMAX 215/203 Evolving Skies",
+            condition: "Ungraded",
+            conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }],
+            price: { value: "420.00", currency: "USD" },
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+  }
+
+  it("enriches only the shipped default of 12 rows, leaving the rest condition-unknown", async () => {
+    const detailIds: string[] = [];
+    const seeds = await searchEbayAlternatives(card, buyer, budgetFetcher(detailIds));
+
+    expect(detailIds).toHaveLength(12);
+    expect(seeds.filter((seed) => seed.claimedCondition === "Near Mint")).toHaveLength(12);
+    expect(seeds.filter((seed) => seed.claimedCondition === "Unknown")).toHaveLength(18);
+  });
+
+  // The whole premise of raising the budget: the condition is knowable for those
+  // rows, and the only thing standing between them and eligibility is the call.
+  it("recovers a stated condition for rows that a smaller budget leaves unknown", async () => {
+    const narrow: string[] = [];
+    const wide: string[] = [];
+    const narrowSeeds = await searchEbayAlternatives(card, buyer, budgetFetcher(narrow), undefined, null, 12);
+    const wideSeeds = await searchEbayAlternatives(card, buyer, budgetFetcher(wide), undefined, null, 30);
+
+    const conditionById = (seeds: typeof narrowSeeds) =>
+      new Map(seeds.map((seed) => [seed.id, seed.claimedCondition]));
+    const before = conditionById(narrowSeeds);
+    const after = conditionById(wideSeeds);
+    const recovered = [...before]
+      .filter(([id, condition]) => condition === "Unknown" && after.get(id) === "Near Mint");
+
+    expect(recovered).toHaveLength(18);
+    expect(wide).toHaveLength(30);
+    // No row may lose a condition it already had: the budget only ever adds.
+    expect([...before].filter(([id, condition]) => condition !== "Unknown" && after.get(id) === "Unknown")).toEqual([]);
+  });
+
+  it("never spends more calls than there are matching rows", async () => {
+    const detailIds: string[] = [];
+    await searchEbayAlternatives(card, buyer, budgetFetcher(detailIds, 5), undefined, null, 40);
+    expect(detailIds).toHaveLength(5);
+  });
+
+  it("reads EBAY_DETAIL_BUDGET, clamps it to the page size, and ignores junk", () => {
+    expect(ebayDetailBudget()).toBe(12);
+    process.env.EBAY_DETAIL_BUDGET = "30";
+    expect(ebayDetailBudget()).toBe(30);
+    process.env.EBAY_DETAIL_BUDGET = "9999";
+    expect(ebayDetailBudget()).toBe(50);
+    for (const junk of ["0", "-5", "abc", ""]) {
+      process.env.EBAY_DETAIL_BUDGET = junk;
+      expect(ebayDetailBudget(), junk).toBe(12);
+    }
   });
 });
