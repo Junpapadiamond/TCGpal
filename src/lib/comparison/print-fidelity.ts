@@ -126,6 +126,26 @@ function classifyOnePiecePrintIdentity(
     evidenceSets.push(owners);
   }
 
+  // 61.8% of One Piece collector numbers carry exactly one catalogued print. For
+  // those the number plus the card name — both already checked above — is the
+  // whole proof, which is the standard the Pokemon path applies to a print-unique
+  // number. The sibling-marker rules below cannot express this: buildMarkerOwners
+  // keeps only markers owned by fewer than every sibling, which nothing satisfies
+  // when the witness set has one member, so every plain title fell through to
+  // "unknown" and was excluded as unverified. Measured on 2026-08-10, ST01-001
+  // returned 50 live listings and zero eligible for exactly this reason.
+  //
+  // This is not a relaxation of the guardrail: the artwork-class and treatment
+  // vetoes have already run, so a listing claiming an alternate art, manga rare,
+  // or gold treatment this number does not have is still a mismatch. Only the
+  // requirement to name a distinguishing marker is dropped, and only where there
+  // is nothing to distinguish from.
+  if (siblings.length === 1) {
+    return requiresCompetitionReleaseProof(card, text)
+      ? result("unknown", "low", "one_piece_competition_tier_requires_release_proof")
+      : result("compatible", "high", "one_piece_single_print_number_is_unambiguous");
+  }
+
   if (evidenceSets.length === 0) {
     return result("unknown", "low", "plain_family_listing_does_not_identify_print");
   }
@@ -151,13 +171,17 @@ function classifyOnePiecePrintIdentity(
     return result("unknown", "low", "one_piece_class_evidence_requires_corroboration");
   }
 
-  if (
-    (card.competitionTier === "winner" || card.competitionTier === "participation")
-    && !/\b\d+(?:st|nd|rd|th)\s+anniversary\b/i.test(text)
-  ) {
+  if (requiresCompetitionReleaseProof(card, text)) {
     return result("unknown", "low", "one_piece_competition_tier_requires_release_proof");
   }
   return result("compatible", "high", "listing_evidence_uniquely_identifies_confirmed_print");
+}
+
+// A tournament print shares its artwork with the release it commemorates, so the
+// listing has to name that release before the competition version can be claimed.
+function requiresCompetitionReleaseProof(card: CardIdentityCandidate, text: string) {
+  return (card.competitionTier === "winner" || card.competitionTier === "participation")
+    && !/\b\d+(?:st|nd|rd|th)\s+anniversary\b/i.test(text);
 }
 
 function buildWitnesses(cardNumber: string): PrintWitness[] {

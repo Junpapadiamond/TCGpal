@@ -354,4 +354,72 @@ describe("exact-print fidelity", () => {
       priceGuard: "none",
     });
   });
+
+  // 1,628 of 2,634 One Piece collector numbers (61.8%) carry exactly one print.
+  // For those there is no sibling to be mistaken for, so the number plus the card
+  // name is the whole proof — the same standard classifyPokemonPrintIdentity
+  // applies. Measured on 2026-08-10, ST01-001 returned 50 live listings and zero
+  // eligible: every plain title fell through to the sibling-marker rules, which
+  // cannot be satisfied when the witness set has one member.
+  describe("collector numbers with a single catalogued print", () => {
+    const singlePrint = (cardNumber: string) => {
+      const prints = findOnePieceCatalogVariants(cardNumber);
+      expect(prints, `${cardNumber} must have exactly one catalogued print`).toHaveLength(1);
+      return mapOnePieceCardToIdentity(prints[0], { confidence: "high", matchReasons: ["test"] });
+    };
+
+    it.each([
+      ["ST01-001", "One Piece Card Game Monkey.D.Luffy ST01-001 Leader Straw Hat Crew English NM"],
+      ["ST01-001", "Monkey D Luffy ST01-001 L Straw Hat Crew OP TCG"],
+      ["OP01-009", "One Piece TCG Carrot OP01-009 Romance Dawn Common English"],
+    ])("accepts a plain title for %s as proof of the only print", (cardNumber, matchText) => {
+      expect(assessPrintFidelity({
+        card: singlePrint(cardNumber),
+        matchText,
+        listingPrice: 4,
+        exactMarketAnchor: 4,
+      }), matchText).toMatchObject({
+        match: "compatible",
+        confidence: "high",
+        reasons: ["one_piece_single_print_number_is_unambiguous"],
+      });
+    });
+
+    it("still rejects a listing claiming artwork this number does not have", () => {
+      for (const matchText of [
+        "Monkey.D.Luffy ST01-001 Alternate Art Straw Hat Crew",
+        "Monkey.D.Luffy ST01-001 Manga Rare Straw Hat Crew",
+        "Monkey.D.Luffy ST01-001 Gold Straw Hat Crew",
+      ]) {
+        expect(assessPrintFidelity({
+          card: singlePrint("ST01-001"),
+          matchText,
+          listingPrice: 4,
+          exactMarketAnchor: 4,
+        }).match, matchText).toBe("mismatch");
+      }
+    });
+
+    it("still rejects a wrong collector number or a wrong card name", () => {
+      for (const matchText of ["Monkey.D.Luffy ST01-002 Straw Hat Crew", "Roronoa Zoro ST01-001 Straw Hat Crew"]) {
+        expect(assessPrintFidelity({
+          card: singlePrint("ST01-001"),
+          matchText,
+          listingPrice: 4,
+          exactMarketAnchor: 4,
+        }).match, matchText).not.toBe("compatible");
+      }
+    });
+
+    it("leaves multi-print numbers needing positive evidence", () => {
+      const nami = namiPrints.find((card) => card.id === "OP01-016")!;
+
+      expect(assessPrintFidelity({
+        card: nami,
+        matchText: "One Piece Card Game Nami OP01-016 English NM",
+        listingPrice: 4,
+        exactMarketAnchor: 4,
+      })).toMatchObject({ match: "unknown", reasons: ["plain_family_listing_does_not_identify_print"] });
+    });
+  });
 });
