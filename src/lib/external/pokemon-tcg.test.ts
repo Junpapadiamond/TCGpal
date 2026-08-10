@@ -361,4 +361,24 @@ describe("Pokemon TCG API adapter", () => {
     await expect(pending).rejects.toMatchObject({ name: "AbortError" });
     expect((upstreamSignal as AbortSignal | null)?.aborted).toBe(true);
   });
+
+  // A name-only search ("pikachu") asks for 100 candidates so the version picker
+  // can show every era of the card. Silently clamping that to 50 dropped the
+  // older half of the catalog before the UI ever saw it — and because the API is
+  // queried with orderBy=-set.releaseDate, the half that vanished was always the
+  // vintage one. The API's own ceiling is 250.
+  it("requests the page size the caller asked for, up to the API maximum", async () => {
+    const sizes: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      sizes.push(new URL(String(input)).searchParams.get("pageSize") ?? "");
+      return { ok: true, status: 200, json: async () => ({ data: [], totalCount: 0 }) } as Response;
+    }) as unknown as typeof fetch;
+
+    await searchPokemonCards({ query: "Pikachu", pageSize: 100, relaxed: false, fetcher });
+    expect(sizes[0]).toBe("100");
+
+    sizes.length = 0;
+    await searchPokemonCards({ query: "Pikachu", pageSize: 9999, relaxed: false, fetcher });
+    expect(sizes[0]).toBe("250");
+  });
 });

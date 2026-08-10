@@ -125,7 +125,11 @@ export async function searchPokemonCards({
         query: normalizedQuery,
         apiQuery,
         page: 1,
-        pageSize: Math.min(Math.max(pageSize, 1), 50),
+        // 250 is the Pokemon TCG API's own maximum. A lower ceiling here is not a
+        // safety net, it is silent data loss: the query is ordered
+        // -set.releaseDate, so clamping a name-only search to 50 removed exactly
+        // the oldest prints, and a "pikachu" picker could never show Base Set.
+        pageSize: Math.min(Math.max(pageSize, 1), 250),
         apiKey,
         fetcher,
         timeoutMs,
