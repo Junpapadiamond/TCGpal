@@ -1258,3 +1258,46 @@ describe("listing comparison agent", () => {
     expect(response.identityCandidates.every((card) => card.confidence !== "high")).toBe(true);
   });
 });
+
+// A name-only search is the "show me every version" case, and it is the one the
+// version picker exists for. Requesting fewer than the API's maximum silently
+// truncates by recency, because the query is ordered -set.releaseDate: measured
+// on 2026-08-10, "Pikachu" has 177 prints spanning 1999 to 2026, and a 100-card
+// request returned only 2017 onward — Base Set could not appear at any page size
+// the UI could ask for. 250 returns all 177.
+describe("name-only catalog search coverage", () => {
+  function captureSearch() {
+    const urls: string[] = [];
+    const capture = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("api.pokemontcg.io")) {
+        urls.push(url);
+        return { ok: true, status: 200, json: async () => ({ data: [], page: 1, pageSize: 0, count: 0, totalCount: 0 }) } as Response;
+      }
+      throw new Error("network disabled in test");
+    }) as unknown as typeof fetch;
+    return { urls, capture };
+  }
+
+  it("asks the catalog for every print when no collector number narrows the search", async () => {
+    const { urls, capture } = captureSearch();
+    await runListingComparison(
+      { ...request, query: "Pikachu", cardHint: { ...request.cardHint, name: "Pikachu", cardNumber: "", setCode: "" } },
+      { fetcher: capture },
+    );
+    const sizes = urls.map((url) => new URL(url).searchParams.get("pageSize"));
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(sizes.every((size) => size === "250"), `page sizes seen: ${sizes.join(",")}`).toBe(true);
+  });
+
+  // A known collector number resolves to one print, so it keeps the small page.
+  it("keeps a narrow page when a collector number is supplied", async () => {
+    const { urls, capture } = captureSearch();
+    await runListingComparison(
+      { ...request, query: "Pikachu 58/102", cardHint: { ...request.cardHint, name: "Pikachu", cardNumber: "58/102", setCode: "" } },
+      { fetcher: capture },
+    );
+    expect(new URL(urls[0]!).searchParams.get("pageSize")).toBe("12");
+  });
+});
+

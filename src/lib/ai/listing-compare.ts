@@ -756,11 +756,17 @@ async function identifyCards(
         relaxed: true,
         // A known collector number resolves to one specific print, so a small
         // page is enough; a name-only search (e.g. "pikachu") should return
-        // every print the catalog has, not a truncated top slice — pageSize
-        // 250 is the Pokémon TCG API's own maximum.
-        pageSize: request.cardHint.cardNumber ? 12 : 100,
+        // every print the catalog has, not a truncated top slice. Because the
+        // query is ordered -set.releaseDate, any smaller page truncates by
+        // recency: "Pikachu" has 177 prints back to 1999, and a 100-card page
+        // returned only 2017 onward. 250 is the API's own maximum.
+        pageSize: request.cardHint.cardNumber ? 12 : 250,
         fetcher,
-        timeoutMs: 8000,
+        // A 250-card page is a slower query, and the whole point of it is the
+        // long tail, so it needs the same headroom the One Piece path already
+        // uses. At 8s a degraded catalog returned nothing rather than late:
+        // measured 2026-08-10, a full "Pikachu" page averaged 7.3s.
+        timeoutMs: 15000,
         signal,
       },
       warnings,
@@ -771,7 +777,7 @@ async function identifyCards(
       const correctedName = corrected?.name.trim() ?? "";
       if (correctedName && normalizeWords(correctedName) !== normalizeWords(searchName)) {
         result = await searchPokemonWithRetry(
-          { query: correctedName, relaxed: false, pageSize: 100, fetcher, timeoutMs: 8000, signal },
+          { query: correctedName, relaxed: false, pageSize: 250, fetcher, timeoutMs: 15000, signal },
           warnings,
         );
         if (result?.cards.length) {
