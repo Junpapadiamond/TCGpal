@@ -596,7 +596,12 @@ describe("comparison condition controls", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
-  it("mounts cards in a collapsed identity group only after the group opens", async () => {
+  // Every set group is open on arrival: collapsing charged a click per set to
+  // reveal, most often, a single card, and a closed row shows only a set name,
+  // which is not how a buyer recognises a print. Cost is controlled by painting
+  // off-screen groups lazily, not by leaving them unmounted — so every card is in
+  // the DOM and findable by browser search from the moment the picker renders.
+  it("opens every identity group and mounts all of its cards for scrolling", async () => {
     const candidates = Array.from({ length: 8 }, (_, index): CardIdentityCandidate => ({
       id: `card-${index}`,
       name: `Pikachu print ${index + 1}`,
@@ -618,16 +623,20 @@ describe("comparison condition controls", () => {
     fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Browse card versions" }));
     expect(await screen.findByRole("heading", { name: /Choose your Pikachu print 1/i })).toBeTruthy();
 
-    expect(screen.getByText("Pikachu print 1")).toBeTruthy();
-    expect(screen.getByText("Pikachu print 4")).toBeTruthy();
-    expect(screen.queryByText("Pikachu print 5")).toBeNull();
+    for (let print = 1; print <= 8; print += 1) {
+      expect(screen.getByText(`Pikachu print ${print}`), `print ${print}`).toBeTruthy();
+    }
     expect(screen.getByText("Showing 8 catalog matches")).toBeTruthy();
 
-    fireEvent.click(screen.getByText("Set 3", { selector: "summary" }));
+    // Open, but still collapsible for anyone who wants to fold a long set away.
+    const groups = document.querySelectorAll("details:has(> summary[id^='identity-set-'])");
+    expect(groups.length).toBeGreaterThan(0);
+    for (const group of groups) expect((group as HTMLDetailsElement).open).toBe(true);
 
-    expect(await screen.findByText("Pikachu print 5")).toBeTruthy();
-    expect(screen.getByText("Pikachu print 6")).toBeTruthy();
-    expect(screen.queryByText("Pikachu print 7")).toBeNull();
+    // The grid defers paint to the browser as the buyer scrolls, which is what
+    // makes opening everything affordable.
+    const grid = groups[0]?.querySelector("div[style*='content-visibility']");
+    expect(grid, "each group's grid opts into lazy paint").toBeTruthy();
   });
 
   it("restores the filled search and confirmation steps through browser history", async () => {

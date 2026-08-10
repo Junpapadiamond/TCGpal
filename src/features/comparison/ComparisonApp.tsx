@@ -27,7 +27,7 @@ import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
-import { groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD } from "./identity-grouping";
+import { expandGroupsWithinBudget, groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD, setReleaseYear } from "./identity-grouping";
 import {
   applyIdentityFilterChange,
   clearIdentityFilters,
@@ -1921,7 +1921,7 @@ function IdentityConfirmation({
     const empty = computeIdentityFacets(identities, { setFilter: "", rarityFilter: "", printTypeFilter: "" }, t.identity.basePrint);
     return empty.setOptions.length > 1 || empty.rarityOptions.length > 1 || empty.printTypeOptions.length > 1;
   })();
-  const { setOptions, rarityOptions, printTypeOptions, filteredIdentities } = facets;
+  const { setOptions, setOptionDetails, rarityOptions, printTypeOptions, filteredIdentities } = facets;
   function updateFilter(key: keyof IdentityFilters, value: string) {
     setFilters((current) => applyIdentityFilterChange(current, key, value, identities, t.identity.basePrint));
   }
@@ -1938,6 +1938,7 @@ function IdentityConfirmation({
       .filter((group) => group.items.length > 0),
     [groups, likelyMatchIds],
   );
+  const expandedGroups = useMemo(() => expandGroupsWithinBudget(remainingGroups), [remainingGroups]);
   // A failed catalog lookup must not read as "no such card" — distinguish it so the
   // empty state says "temporarily unavailable, try again" instead of "no match".
   const lookupUnavailable = identities.length === 0 && warnings.some((warning) => /catalog lookup unavailable/i.test(warning));
@@ -1968,8 +1969,8 @@ function IdentityConfirmation({
               <span className="text-xs">{t.identity.filterSetLabel}</span>
               <select value={filters.setFilter} onChange={(event) => updateFilter("setFilter", event.target.value)}>
                 <option value="">{t.identity.filterAllSets}</option>
-                {setOptions.map((setName) => (
-                  <option key={setName} value={setName}>{setName}</option>
+                {setOptionDetails.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
             </label>
@@ -2046,7 +2047,7 @@ function IdentityConfirmation({
             <LazyIdentityGroup
               key={group.setName}
               group={group}
-              defaultOpen={index < 2}
+              defaultOpen={expandedGroups[index] ?? false}
               headingId={`identity-set-${index}`}
               onConfirm={onConfirm}
             />
@@ -2064,6 +2065,18 @@ function IdentityConfirmation({
   );
 }
 
+// Every set is open. Collapsing was costing a click per set to reveal, most
+// often, a single card — and a closed row shows only a set name, which is not how
+// a buyer recognises a card. They stay collapsible for anyone who wants to fold a
+// long set away.
+//
+// Opening everything at once is affordable because the grid is painted lazily by
+// the browser rather than by us: `content-visibility: auto` skips layout and paint
+// for off-screen groups and does the work as they scroll into view, and
+// `contain-intrinsic-size` reserves a plausible box so the scrollbar does not
+// jump while that happens. No observer, no virtualisation, no dependency — and if
+// a browser lacks support it simply renders everything, which is correct, just
+// less efficient. Card art is `loading="lazy"`, so images follow the same rule.
 function LazyIdentityGroup({
   group,
   defaultOpen,
@@ -2076,24 +2089,24 @@ function LazyIdentityGroup({
   onConfirm: (identity: CardIdentityCandidate) => void;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(defaultOpen);
+  const year = setReleaseYear(group.releaseDate);
+  // Roughly one card row per three items, at the card's own height.
+  const reservedHeight = `${Math.ceil(group.items.length / 3) * 320}px`;
   return (
-    <details
-      className="rounded-lg border border-[#d6ded5] bg-[#fffef9] p-3"
-      open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
+    <details className="rounded-lg border border-[#d6ded5] bg-[#fffef9] p-3" open={defaultOpen}>
       <summary id={headingId} className="cursor-pointer text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
         {group.setName}
+        {year && <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">({year})</span>}
         <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">{t.identity.versions(group.items.length)}</span>
       </summary>
-      {open && (
-        <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {group.items.map((identity) => (
-            <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" />
-          ))}
-        </div>
-      )}
+      <div
+        className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        style={{ contentVisibility: "auto", containIntrinsicSize: `auto ${reservedHeight}` }}
+      >
+        {group.items.map((identity) => (
+          <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" />
+        ))}
+      </div>
     </details>
   );
 }

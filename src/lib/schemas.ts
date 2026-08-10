@@ -243,6 +243,12 @@ export const cardIdentityCandidateSchema = z.object({
   exactMarkers: z.array(z.string()).optional(),
   metadataRevision: z.string().nullable().optional(),
   setSymbolUrl: z.string().url().nullable().optional(),
+  // Catalog release date for this print's set ("2021/08/27"). Used to order the
+  // version picker newest-first and to label the set filter with its year, which
+  // is how buyers actually place a card they half-remember. Nullable because the
+  // bundled One Piece catalog carries no dates — an absent date stays absent
+  // rather than being guessed from the set code.
+  setReleaseDate: z.string().nullable().optional(),
   confidence: confidenceSchema,
   matchReasons: z.array(z.string()),
   // Live TCGplayer market price for this exact version (USD), used as the

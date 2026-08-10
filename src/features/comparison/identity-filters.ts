@@ -1,3 +1,4 @@
+import { setReleaseYear } from "@/features/comparison/identity-grouping";
 import type { CardIdentityCandidate } from "@/lib/schemas";
 
 export type IdentityFilters = {
@@ -6,8 +7,19 @@ export type IdentityFilters = {
   printTypeFilter: string;
 };
 
+// A set option carries its release year so the dropdown can read "Evolving Skies
+// (2021)" — the year is often the only thing a buyer remembers with confidence.
+// `value` stays the bare set name because it is the filter key; only the visible
+// label gains the year.
+export type IdentitySetOption = {
+  value: string;
+  label: string;
+  year: string | null;
+};
+
 export type IdentityFacets = {
   setOptions: string[];
+  setOptionDetails: IdentitySetOption[];
   rarityOptions: string[];
   printTypeOptions: string[];
   filteredIdentities: CardIdentityCandidate[];
@@ -24,6 +36,36 @@ export function printTypeOf(identity: CardIdentityCandidate, basePrintLabel: str
 
 function uniqueSorted(values: Array<string | null | undefined>): string[] {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value)))).sort();
+}
+
+// Set options follow the same newest-first order as the groups they filter, so
+// the dropdown and the list below it never disagree about what "first" means.
+// Undated sets keep their incoming order and sort last; see groupIdentitiesBySet
+// for why no chronology is invented for them.
+function setOptionsFrom(identities: CardIdentityCandidate[]): IdentitySetOption[] {
+  const options = new Map<string, IdentitySetOption & { releaseDate: string | null }>();
+  for (const identity of identities) {
+    const value = identity.setName || identity.setCode;
+    if (!value) continue;
+    const existing = options.get(value);
+    if (existing) {
+      existing.releaseDate ??= identity.setReleaseDate ?? null;
+      continue;
+    }
+    options.set(value, { value, label: value, year: null, releaseDate: identity.setReleaseDate ?? null });
+  }
+
+  return Array.from(options.values())
+    .sort((a, b) => {
+      if (a.releaseDate && b.releaseDate) return b.releaseDate.localeCompare(a.releaseDate);
+      if (a.releaseDate) return -1;
+      if (b.releaseDate) return 1;
+      return 0;
+    })
+    .map(({ value, releaseDate }) => {
+      const year = setReleaseYear(releaseDate);
+      return { value, label: year ? `${value} (${year})` : value, year };
+    });
 }
 
 // A print's rarity code and its print-type bucket are not independent — SP CARD
@@ -46,10 +88,11 @@ export function computeIdentityFacets(
     return true;
   }
 
+  const setOptionDetails = setOptionsFrom(identities.filter((identity) => matches(identity, "setFilter")));
+
   return {
-    setOptions: uniqueSorted(
-      identities.filter((identity) => matches(identity, "setFilter")).map((identity) => identity.setName || identity.setCode),
-    ),
+    setOptions: setOptionDetails.map((option) => option.value),
+    setOptionDetails,
     rarityOptions: uniqueSorted(
       identities.filter((identity) => matches(identity, "rarityFilter")).map((identity) => identity.rarity),
     ),

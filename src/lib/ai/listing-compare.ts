@@ -1265,6 +1265,7 @@ function toIdentityCandidate(
     imageUrl: card.images?.large ?? card.images?.small ?? null,
     rarity: card.rarity ?? null,
     setSymbolUrl: card.set?.images?.symbol ?? null,
+    setReleaseDate: card.set?.releaseDate ?? null,
     confidence: match.confidence,
     matchReasons: match.reasons,
     ...extractTcgplayerPricing(card.tcgplayer),

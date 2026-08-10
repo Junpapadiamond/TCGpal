@@ -120,3 +120,50 @@ describe("applyIdentityFilterChange", () => {
     expect(twice).toEqual(once);
   });
 });
+
+// "Evolving Skies (2021)" is a far better affordance than "Evolving Skies" for a
+// buyer who remembers roughly when they pulled the card but not the set name.
+describe("set filter options carry the release year", () => {
+  it("labels a set with its release year and keeps the value as the raw set name", () => {
+    const facets = computeIdentityFacets(
+      [
+        make({ id: "1", setName: "Evolving Skies", setReleaseDate: "2021/08/27" }),
+        make({ id: "2", setName: "Base", setReleaseDate: "1999/01/09" }),
+      ],
+      { setFilter: "", rarityFilter: "", printTypeFilter: "" },
+      BASE_PRINT,
+    );
+    expect(facets.setOptionDetails).toEqual([
+      { value: "Evolving Skies", label: "Evolving Skies (2021)", year: "2021" },
+      { value: "Base", label: "Base (1999)", year: "1999" },
+    ]);
+  });
+
+  // Never invent a year. One Piece sets have no date in the bundled catalog, so
+  // those options stay unlabelled rather than guessing.
+  it("omits the year when the catalog has no release date", () => {
+    const facets = computeIdentityFacets(
+      [make({ id: "1", setName: "Romance Dawn", setReleaseDate: null })],
+      { setFilter: "", rarityFilter: "", printTypeFilter: "" },
+      BASE_PRINT,
+    );
+    expect(facets.setOptionDetails).toEqual([
+      { value: "Romance Dawn", label: "Romance Dawn", year: null },
+    ]);
+  });
+
+  it("orders set options newest first, undated last, matching the group order", () => {
+    const facets = computeIdentityFacets(
+      [
+        make({ id: "1", setName: "Base", setReleaseDate: "1999/01/09" }),
+        make({ id: "2", setName: "Undated", setReleaseDate: null }),
+        make({ id: "3", setName: "151", setReleaseDate: "2023/09/22" }),
+      ],
+      { setFilter: "", rarityFilter: "", printTypeFilter: "" },
+      BASE_PRINT,
+    );
+    expect(facets.setOptionDetails.map((option) => option.value)).toEqual(["151", "Base", "Undated"]);
+    // The plain string list stays in step so existing callers cannot drift.
+    expect(facets.setOptions).toEqual(["151", "Base", "Undated"]);
+  });
+});
