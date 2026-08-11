@@ -21,6 +21,9 @@
 //   OUT=docs/print-recall-2026-08-10.json npm run measure:print-recall
 import { writeFileSync } from "node:fs";
 import { PRINT_RECALL_CARDS } from "../src/lib/testing/print-recall-cards.ts";
+// The request shape and retry rules are shared with the D-OP-BASE-PROOF sample
+// so both instruments measure the same buyer context. See scripts/lib/compare-probe.mjs.
+import { resolve as resolveReport, sleep } from "./lib/compare-probe.mjs";
 
 const BASE = process.env.TARGET || "https://lenstcg.com";
 const OUT = process.env.OUT || "";
@@ -38,50 +41,8 @@ const CARDS = PRINT_RECALL_CARDS
 // Pacing just under that ceiling keeps a 30-card run from measuring the rate
 // limiter instead of retrieval. Override PACE_MS when pointing at localhost.
 const PACE_MS = Number(process.env.PACE_MS ?? 31_000);
-const MAX_ATTEMPTS = 3;
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function request(card, confirmedCardId) {
-  return {
-    query: card.query,
-    sourceListing: {
-      marketplace: "eBay", url: "", title: "", description: "", price: null, shipping: null,
-      claimedCondition: "Unknown", active: true,
-      seller: { feedbackPercentage: null, feedbackCount: null, returnsAccepted: null, topRated: null, buyerProtection: null, subRatings: null },
-      evidence: { photoCount: 0, frontBackExplicit: false, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: false, substantiveConditionNotes: false, missing: [] },
-    },
-    // Fixed buyer context so every card is measured on the same terms: Near Mint
-    // requested, one delivery destination, tax estimated from the ZIP.
-    buyer: { country: "US", postalCode: "10001", taxRate: null, desiredCondition: "Near Mint" },
-    cardHint: { game: card.game, name: card.name, setCode: card.setCode, cardNumber: card.cardNumber, language: "English", variant: "", gradingClaim: "" },
-    manualCandidates: [],
-    webDiscoveryMode: "off",
-    ...(confirmedCardId ? { confirmedCardId } : {}),
-  };
-}
-
-async function compare(body) {
-  for (let attempt = 1; ; attempt += 1) {
-    const response = await fetch(`${BASE}/api/agent/listing-compare`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (response.ok) return response.json();
-
-    const detail = (await response.text()).slice(0, 160);
-    // A 429 is the rate limiter, not a retrieval result. Waiting it out keeps the
-    // card in the measurement instead of scoring it as a failure.
-    if (response.status === 429 && attempt < MAX_ATTEMPTS) {
-      const retryAfter = Number(response.headers.get("Retry-After")) || 60;
-      console.log(`   rate limited; waiting ${retryAfter}s before retry ${attempt + 1}/${MAX_ATTEMPTS}`);
-      await sleep((retryAfter + 2) * 1000);
-      continue;
-    }
-    throw new Error(`${response.status}: ${detail}`);
-  }
-}
+const probe = { log: console.log };
 
 function tally(values) {
   const counts = new Map();
@@ -131,26 +92,9 @@ const summarize = (counts) =>
   Object.entries(counts).map(([key, value]) => `${key} ${value}`).join(", ") || "—";
 const duration = (ms) => `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
 
-async function resolve(card) {
-  let report = await compare(request(card, card.confirmedCardId));
-  let confirmationRequired = false;
-
-  // The buyer taps a version when the number alone is ambiguous. Mirror that
-  // one tap rather than scoring identity ambiguity as a retrieval failure.
-  if (report.status === "needs_confirmation" && report.identityCandidates?.length) {
-    confirmationRequired = true;
-    const pick = card.confirmedCardId
-      ? report.identityCandidates.find((candidate) => candidate.id.toUpperCase() === card.confirmedCardId.toUpperCase())
-      : null;
-    const chosen = pick ?? report.identityCandidates.find((candidate) => candidate.confidence === "high") ?? report.identityCandidates[0];
-    report = await compare({ ...report.request, confirmedCardId: chosen.id });
-  }
-  return { report, confirmationRequired };
-}
-
 async function measure(card) {
   const startedAt = Date.now();
-  let { report, confirmationRequired } = await resolve(card);
+  let { report, confirmationRequired } = await resolveReport(BASE, card, probe);
 
   // An unconfirmed card never reached the marketplace search, so scoring it as a
   // retrieval miss would measure the identity provider instead. The Pokemon TCG
@@ -160,7 +104,7 @@ async function measure(card) {
   // reported as unresolved and kept out of the recall denominator.
   if (report.status === "needs_confirmation") {
     await sleep(5_000);
-    ({ report, confirmationRequired } = await resolve(card));
+    ({ report, confirmationRequired } = await resolveReport(BASE, card, probe));
   }
 
   const candidates = report.candidates ?? [];

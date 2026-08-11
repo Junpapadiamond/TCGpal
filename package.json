@@ -20,7 +20,8 @@
     "verdict:review": "AI_VERDICT_NOTE=1 VERDICT_NOTE_REVIEW=1 vitest run src/lib/ai/verdict-note-review.test.ts",
     "measure:market-anchor": "node scripts/measure-market-anchor.mjs",
     "measure:print-recall": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/measure-print-recall.mjs",
-    "review:detail-budget": "EBAY_DETAIL_REVIEW=1 vitest run src/lib/external/ebay-detail-budget-review.test.ts"
+    "review:detail-budget": "EBAY_DETAIL_REVIEW=1 vitest run src/lib/external/ebay-detail-budget-review.test.ts",
+    "sample:base-proof": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/sample-base-print-precision.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
