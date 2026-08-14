@@ -231,6 +231,28 @@ export const PRINT_RECALL_CARDS: readonly PrintRecallCard[] = [
     split: "held_out",
     note: "Super rare whose siblings span a Special Art and a regional promo.",
   },
+  {
+    id: "op-ace-op07-053-p1",
+    label: "Portgas.D.Ace OP07-053 (Tournament Pack 2024)",
+    game: "onePiece",
+    query: "Portgas.D.Ace OP07-053 Tournament Pack",
+    name: "Portgas.D.Ace",
+    setCode: "OP-07",
+    cardNumber: "OP07-053",
+    confirmedCardId: "OP07-053_p1",
+    printClass: "alternate",
+    era: "modern",
+    split: "held_out",
+    // The competition slot. Deliberately a tournament *participation* print rather
+    // than a trophy one: OP03-123_p2 (Championship 2024 Katakuri) was probed on
+    // 2026-08-14 and returned 21 listings of which ~17 were PSA 10 slabs around
+    // $2,500 against a $1,750 anchor, with no raw English supply at all. Abstaining
+    // there is the correct answer, so scoring it would measure supply rather than
+    // retrieval. This number carries five siblings across the base set, a
+    // celebration pack, and two 3rd Anniversary prints, so naming the event is
+    // still the only thing that separates them.
+    note: "Competition print with real raw supply: Tournament Pack 2024 Oct.-Dec., one of five prints sharing OP07-053.",
+  },
 
   // ── Pokemon · vintage (Base Set) · tuning ───────────────────────────────────
   // Base Set titles are dominated by 1st Edition / Shadowless / graded language

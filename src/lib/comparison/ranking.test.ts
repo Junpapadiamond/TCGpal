@@ -511,6 +511,51 @@ describe("comparison ranking", () => {
     }));
   });
 
+  // Observed 2026-08-14 while adjudicating Roronoa Zoro OP06-118: a $10 listing
+  // titled "Roronoa Zoro FanArt SEC OP06-118", whose own Game aspect read "One
+  // Piece FanArt", was a Japanese fan-made card stamped NOT FOR SALE. The list
+  // already carried "fan made", "custom", and "proxy" — "fan art" fell straight
+  // through all three and reached the buyer as a candidate for the real SEC.
+  it("excludes fan art sold under a real card's name and number", () => {
+    for (const title of [
+      "Roronoa Zoro FanArt SEC OP06-118",
+      "Roronoa Zoro Fan Art SEC OP06-118",
+      "Roronoa Zoro fan-art SEC OP06-118",
+    ]) {
+      const fanArt = normalizeListing({ listing: { ...demoListingSeeds[0], id: "fan-art", title }, buyer });
+
+      expect(fanArt.eligible, title).toBe(false);
+      expect(fanArt.exclusionReasons, title).toContain("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
+    }
+  });
+
+  // Observed 2026-08-14: the Best Value recommendation for OP07-053 was
+  // "Portgas.D.Ace OP07-053 (Tournament Pack 2024 Oct-Dec) Playset (x4)" at $4.00
+  // — four cards, compared against a one-card market anchor, so it also looked
+  // like a bargain. "lot" and "N cards" were already filtered; the playset
+  // phrasings were not.
+  it("excludes multi-card playsets from raw-single ranking", () => {
+    for (const title of [
+      "Portgas.D.Ace OP07-053 (Tournament Pack 2024 Oct-Dec) Playset (x4)",
+      "Portgas.D.Ace OP07-053 Play Set x4",
+      "Portgas.D.Ace OP07-053 Tournament Pack (X2)",
+    ]) {
+      const playset = normalizeListing({ listing: { ...demoListingSeeds[0], id: "playset", title }, buyer });
+
+      expect(playset.eligible, title).toBe(false);
+      expect(playset.exclusionReasons, title).toContain("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
+    }
+  });
+
+  it("keeps a single card whose title merely contains a number next to an x", () => {
+    const single = normalizeListing({
+      listing: { ...demoListingSeeds[0], id: "single", title: "Portgas.D.Ace OP07-053 Tournament Pack 2024 NM" },
+      buyer,
+    });
+
+    expect(single.exclusionReasons).not.toContain("Title suggests a slab, lot, sealed item, proxy, or other excluded product.");
+  });
+
   it("excludes TAG slabs from raw-single ranking", () => {
     const graded = normalizeListing({
       listing: { ...demoListingSeeds[0], id: "tag-slab", title: "Mew ex 232/091 TAG 8.5" },

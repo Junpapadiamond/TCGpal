@@ -42,6 +42,20 @@ function reportStub(overrides: Partial<ComparisonReport> = {}): ComparisonReport
   });
 }
 
+function platformStub(overrides: Partial<ComparisonReport["platforms"][number]> = {}): ComparisonReport["platforms"][number] {
+  return {
+    id: "ebay",
+    marketplace: "eBay",
+    label: "eBay Browse adapter",
+    sourceMode: "official_api",
+    status: "complete",
+    configured: true,
+    count: 1,
+    detail: "1 live candidate.",
+    ...overrides,
+  } as ComparisonReport["platforms"][number];
+}
+
 describe("comparison report cache", () => {
   beforeEach(clearComparisonCache);
 
@@ -94,5 +108,30 @@ describe("comparison report cache", () => {
     await setCachedComparison("confirm", reportStub({ status: "needs_confirmation" }));
     expect(await getCachedComparison("demo")).toBeNull();
     expect(await getCachedComparison("confirm")).toBeNull();
+  });
+
+  // Observed 2026-08-14: one eBay search timed out at 10s while measuring One
+  // Piece buy accuracy. The empty "no live row" report it produced was written to
+  // the cache, so the next fifteen minutes of searches for Shanks OP09-001 were
+  // served a zero-listing result that a cold re-run answered with 50 listings.
+  // A configured source that tried and failed must be re-attempted, not frozen.
+  it("never caches a report whose configured live source failed", async () => {
+    await setCachedComparison("failed", reportStub({
+      platforms: [platformStub({ status: "fallback", configured: true, count: 0, detail: "eBay search timed out after 10s." })],
+    }));
+    expect(await getCachedComparison("failed")).toBeNull();
+  });
+
+  // The mirror case: a source that answered honestly with nothing is a real
+  // result, and an unconfigured adapter never tried at all. Neither is a reason
+  // to re-run the fan-out on every request.
+  it("caches a completed search even when it found nothing", async () => {
+    await setCachedComparison("empty", reportStub({
+      platforms: [
+        platformStub({ status: "complete", configured: true, count: 0, detail: "0 live candidates." }),
+        platformStub({ id: "mercari", marketplace: "Mercari", label: "Mercari adapter", status: "skipped", configured: false, count: 0, detail: "Not configured (needs MERCARI_PROVIDER_KEY)." }),
+      ],
+    }));
+    expect(await getCachedComparison("empty")).not.toBeNull();
   });
 });

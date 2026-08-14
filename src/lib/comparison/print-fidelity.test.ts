@@ -422,4 +422,183 @@ describe("exact-print fidelity", () => {
       })).toMatchObject({ match: "unknown", reasons: ["plain_family_listing_does_not_identify_print"] });
     });
   });
+
+  // From the D-OP-BASE-PROOF adjudication on 2026-08-14
+  // (docs/base-print-precision-sample-2026-08-14.md). Six of the nine sibling rows
+  // named their real release in plain text — "2nd Anniversary Set", "2025 PSA
+  // Magazine Promo", "Starter Deck 31" — and every one still scored `unknown`,
+  // because those promotional runs are not in the bundled catalog, so no sibling
+  // witness owned the marker and nothing vetoed it. A listing naming a release the
+  // confirmed print does not belong to is positive evidence of a different print,
+  // whether or not we happen to have catalogued that release.
+  describe("releases outside the catalogued sibling set", () => {
+    const shanks = findOnePieceCatalogVariants("OP09-001")
+      .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+      .find((card) => card.id === "OP09-001")!;
+
+    it("rejects a promotional release the confirmed base print does not belong to", () => {
+      const titles = [
+        "Shanks (English Version 2nd Anniversary Set) OP09-001 One Piece Promotion Cards",
+        "Shanks (2025 PSA Magazine Promo) OP09-001 One Piece Promotion Cards Foil",
+        "One Piece English OP09-001 Shanks PSA Magazine Promo Card",
+        "Namco One Piece CCG Shanks PSA Magazine Promo OP09-001 Leader Foil EN 5000 2025",
+      ];
+
+      for (const matchText of titles) {
+        expect(assessPrintFidelity({
+          card: shanks,
+          matchText,
+          listingPrice: 150,
+          exactMarketAnchor: 40,
+        }), matchText).toMatchObject({ match: "mismatch", confidence: "high" });
+      }
+    });
+
+    // A single-print number reaches the same veto: ST01-001 has one catalogued
+    // print, so the Revision Pack reprint has no sibling to be confused with and
+    // the number-plus-name shortcut would otherwise accept it outright.
+    it("rejects a Revision Pack reprint of a single-print number", () => {
+      const luffy = findOnePieceCatalogVariants("ST01-001")
+        .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+        .find((card) => card.id === "ST01-001")!;
+
+      expect(assessPrintFidelity({
+        card: luffy,
+        matchText: "Monkey.D.Luffy ST01-001 Leader Revision Pack Cards One Piece Near Mint",
+        listingPrice: 50,
+        exactMarketAnchor: 3,
+      })).toMatchObject({ match: "mismatch", confidence: "high" });
+
+      expect(assessPrintFidelity({
+        card: luffy,
+        matchText: "Monkey.D.Luffy ST01-001 Leader Straw Hat Crew One Piece Near Mint",
+        listingPrice: 3,
+        exactMarketAnchor: 3,
+      }).match).toBe("compatible");
+    });
+
+    it("rejects a numbered starter deck reprint of a booster-set print", () => {
+      const nami = namiPrints.find((card) => card.id === "OP01-016")!;
+
+      expect(assessPrintFidelity({
+        card: nami,
+        matchText: "NAMI OP01-016 R STARTER DECK 31: RED MONKEY.D.LUFFY ONE PIECE NM/M",
+        listingPrice: 2,
+        exactMarketAnchor: 4,
+      })).toMatchObject({ match: "mismatch", confidence: "high" });
+    });
+
+    // An ST card's own release IS a numbered starter deck, and sellers write the
+    // number both ways. Vetoing those would reject the ordinary supply for every
+    // starter-deck card in the catalog.
+    it("accepts a starter deck number that is the confirmed print's own deck", () => {
+      const luffy = findOnePieceCatalogVariants("ST01-001")
+        .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+        .find((card) => card.id === "ST01-001")!;
+
+      for (const matchText of [
+        "Monkey.D.Luffy ST01-001 Starter Deck 1 Straw Hat Crew One Piece NM",
+        "Monkey.D.Luffy ST01-001 STARTER DECK 01: STRAW HAT CREW",
+      ]) {
+        expect(assessPrintFidelity({
+          card: luffy,
+          matchText,
+          listingPrice: 3,
+          exactMarketAnchor: 3,
+        }).match, matchText).toBe("compatible");
+      }
+
+      // A different deck's number is still a different release.
+      expect(assessPrintFidelity({
+        card: luffy,
+        matchText: "Monkey.D.Luffy ST01-001 Starter Deck 31 RED One Piece NM",
+        listingPrice: 3,
+        exactMarketAnchor: 3,
+      }).match).toBe("mismatch");
+    });
+
+    it("leaves a listing that names the confirmed print's own set alone", () => {
+      const titles = [
+        "Shanks (001) OP09-001 One Piece Emperors in the New World Leader Near Mint",
+        "Shanks OP09-001 ONE PIECE Tcg Card Game NM RED Leader",
+        "Shanks (001) OP09-001 NM One Piece",
+      ];
+
+      for (const matchText of titles) {
+        expect(assessPrintFidelity({
+          card: shanks,
+          matchText,
+          listingPrice: 4,
+          exactMarketAnchor: 4,
+        }).match, matchText).not.toBe("mismatch");
+      }
+    });
+
+    // Also from the 2026-08-14 run. Two separate listings titled for OP02-013 and
+    // OP07-119 both pictured the OP16-118 Ace secret rare, and one of them was
+    // recommended as a $59 Best Value buy. eBay's own item specifics said so:
+    // "Cost: 5. Attack/Power: 6000" against a confirmed print that is cost 10 and
+    // 10000 power. The numbers were already in matchAspectText; nothing read them.
+    it("rejects a listing whose stated cost or power contradicts the confirmed print", () => {
+      const ace = findOnePieceCatalogVariants("OP07-119")
+        .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+        .find((card) => card.id === "OP07-119_p1")!;
+
+      expect(assessPrintFidelity({
+        card: ace,
+        matchText: "Bandai Portgas D Ace OP07-119 500 Years in the Future Special Foil Alt Art EN Set: 500 Years in the Future. Cost: 5. Attack/Power: 6000. Features: Alternate Art",
+        listingPrice: 15,
+        exactMarketAnchor: 40,
+      })).toMatchObject({ match: "mismatch", confidence: "high" });
+    });
+
+    it("accepts a listing whose stated cost and power agree with the confirmed print", () => {
+      const ace = findOnePieceCatalogVariants("OP07-119")
+        .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+        .find((card) => card.id === "OP07-119_p1")!;
+
+      expect(assessPrintFidelity({
+        card: ace,
+        matchText: "Bandai Portgas D Ace OP07-119 500 Years in the Future Special Foil Alt Art EN Set: 500 Years in the Future. Cost: 10. Attack/Power: 10000. Features: Alternate Art",
+        listingPrice: 40,
+        exactMarketAnchor: 40,
+      }).match).not.toBe("mismatch");
+    });
+
+    // A seller who states nothing states no contradiction. Silence must stay
+    // `unknown` — turning it into a mismatch would hide most of the real supply,
+    // since only rows that got the item-detail call carry specifics at all.
+    it("does not read a missing stat as a conflicting one", () => {
+      const ace = findOnePieceCatalogVariants("OP07-119")
+        .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+        .find((card) => card.id === "OP07-119_p1")!;
+
+      for (const matchText of [
+        "Portgas.D.Ace OP07-119 500 Years in the Future Alt Art",
+        "Portgas.D.Ace OP07-119 Alt Art Cost: -. Attack/Power: -",
+      ]) {
+        expect(assessPrintFidelity({
+          card: ace,
+          matchText,
+          listingPrice: 40,
+          exactMarketAnchor: 40,
+        }).match, matchText).not.toBe("mismatch");
+      }
+    });
+
+    // The mirror case: when the confirmed print *is* the commemorative release,
+    // naming it must support the match rather than veto it.
+    it("does not veto a tournament print for naming its own event", () => {
+      const katakuri = findOnePieceCatalogVariants("OP03-123")
+        .map((card) => mapOnePieceCardToIdentity(card, { confidence: "high", matchReasons: ["test"] }))
+        .find((card) => card.id === "OP03-123_p2")!;
+
+      expect(assessPrintFidelity({
+        card: katakuri,
+        matchText: "Charlotte Katakuri OP03-123 Championship 2024 Regional Alt Art SEC",
+        listingPrice: 300,
+        exactMarketAnchor: 300,
+      }).match).not.toBe("mismatch");
+    });
+  });
 });

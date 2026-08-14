@@ -43,6 +43,9 @@ const exclusionPatterns = [
   /\breplica\b/i,
   /\bacrylic\b/i,
   /\bfan[\s-]?made\b/i,
+  // Sellers list unofficial cards as "fan art" far more often than "fan made",
+  // and the phrase is never a real print class in either game.
+  /\bfan[\s-]?art\b/i,
   /\baltered\b/i,
   /\bmagnet\b/i,
   /\bkeychain\b/i,
@@ -65,6 +68,12 @@ const exclusionPatterns = [
   /\bdisplay\s+case\b/i,
   /\bcard\s+set\b/i,
   /\b\d+\s*(?:pcs|cards?)\b/i,
+  // A playset is four copies priced as one line, so it clears the market floor on
+  // price-per-card and then gets compared against a single-card anchor. Both
+  // spellings and both count orders appear on eBay.
+  /\bplay\s?sets?\b/i,
+  /\(\s*x\s*\d+\s*\)/i,
+  /\bx\s?\d+\s*$/i,
 ];
 
 // Which print the buyer confirmed: the plain base card, a generic alternate-art /

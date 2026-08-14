@@ -1038,3 +1038,65 @@ describe("eBay item-detail budget", () => {
     }
   });
 });
+
+// The application token renews on a timer: it is cached in module memory until 60
+// seconds before eBay's stated expiry. That covers the ordinary case and nothing
+// else, and both gaps below fail in the same direction — a whole server instance
+// stops being able to reach eBay while its cached token still looks valid.
+describe("eBay application token renewal", () => {
+  const card = { id: "swsh7-215", name: "Umbreon VMAX", setName: "Evolving Skies", setCode: "swsh7", cardNumber: "215/203", game: "pokemon" } as unknown as CardIdentityCandidate;
+  const buyer = { country: "US", postalCode: "10001", taxRate: null, desiredCondition: "Near Mint" } as const;
+
+  beforeEach(() => {
+    process.env.EBAY_CLIENT_ID = "test-id";
+    process.env.EBAY_CLIENT_SECRET = "test-secret";
+    resetEbayTokenCacheForTests();
+  });
+
+  function tokenFetcher(options: { tokens: string[]; rejectBefore?: string }) {
+    const calls = { token: 0, search: 0 };
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        calls.token += 1;
+        return { ok: true, status: 200, json: async () => ({ access_token: options.tokens[Math.min(calls.token - 1, options.tokens.length - 1)], expires_in: 7200 }) } as Response;
+      }
+      if (url.includes("/buy/browse/v1/item_summary/search")) {
+        calls.search += 1;
+        const bearer = String((init?.headers as Record<string, string>)?.Authorization ?? "");
+        // eBay can invalidate a token before its stated expiry — a credential
+        // rotation, a scope change, or a revoked application key.
+        if (options.rejectBefore && bearer === `Bearer ${options.rejectBefore}`) {
+          return { ok: false, status: 401, text: async () => "invalid access token" } as Response;
+        }
+        return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+    return { fetcher, calls };
+  }
+
+  // Without this the instance is stuck: every search 401s until the cached TTL
+  // runs out, which can be the full two hours eBay hands out.
+  it("re-authenticates once when a cached token is rejected mid-flight", async () => {
+    const { fetcher, calls } = tokenFetcher({ tokens: ["stale", "fresh"], rejectBefore: "stale" });
+
+    await expect(searchEbayAlternatives(card, buyer, fetcher)).resolves.toEqual([]);
+    expect(calls.token).toBe(2);
+  });
+
+  // A cold instance taking simultaneous traffic asked eBay for one token per
+  // request. The token endpoint is rate limited, so the burst that most needs a
+  // token is the one most likely to be refused one.
+  it("asks for one token when several requests race a cold cache", async () => {
+    const { fetcher, calls } = tokenFetcher({ tokens: ["fresh"] });
+
+    await Promise.all([
+      searchEbayAlternatives(card, buyer, fetcher),
+      searchEbayAlternatives(card, buyer, fetcher),
+      searchEbayAlternatives(card, buyer, fetcher),
+    ]);
+
+    expect(calls.token).toBe(1);
+  });
+});

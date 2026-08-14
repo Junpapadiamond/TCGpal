@@ -1,0 +1,416 @@
+{
+  "target": "http://localhost:3000",
+  "collectedAt": "2026-08-14T16:36:37.944Z",
+  "cards": [
+    {
+      "id": "op-nami-op01-016",
+      "label": "Nami OP01-016",
+      "requestedCardId": "OP01-016",
+      "resolvedCardId": "OP01-016",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|287519615964|0",
+      "winnerUrl": "https://www.ebay.com/itm/287519615964?amdata=enc%3AAQALAAAAoGfYFPkwiKCW4ZNSs2u11xBcFqka%2BjggCVmUV0O4edsU%2FoUIED%2F%2BT9P3gLacV%2B2suWs7Pe0S4XTU8KZ526SvX3B0lccCRrzkx%2FWQCwTKHOuz3ggPyvoFBQTWzcnEJE7p6A%2BQjIAaZPk5s42IN7BkwUbMP%2FSzDm64HFLJzmjDt14JnnjOWamZ%2BrIZIO9v2jz1%2BgN1HdEUm0Dh6V8a57Q9wWk%3D",
+      "winnerTitle": "One Piece TCG English OP01-016 Nami R",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 3.25,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 37,
+        "unknown": 13
+      },
+      "codes": {
+        "identity_sibling_mismatch": 37,
+        "excluded_product_type": 16,
+        "identity_unverified": 13,
+        "not_raw_single": 12,
+        "language_conflict": 12,
+        "condition_unstated": 11,
+        "condition_below_requested": 5,
+        "identity_low_confidence": 3,
+        "title_condition_below_requested": 2
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-zoro-op06-118",
+      "label": "Roronoa Zoro OP06-118",
+      "requestedCardId": "OP06-118",
+      "resolvedCardId": "OP06-118",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|358914570639|0",
+      "winnerUrl": "https://www.ebay.com/itm/358914570639",
+      "winnerTitle": "Roronoa Zoro OP06-118 Secret Rare Wings of the Captain One Piece Foil Near Mint",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 11.5,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 28,
+        "unknown": 22
+      },
+      "codes": {
+        "identity_sibling_mismatch": 28,
+        "excluded_product_type": 25,
+        "identity_unverified": 22,
+        "not_raw_single": 19,
+        "condition_unstated": 18,
+        "language_conflict": 17,
+        "condition_below_requested": 2
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-luffy-op05-119",
+      "label": "Monkey.D.Luffy OP05-119",
+      "requestedCardId": "OP05-119",
+      "resolvedCardId": "OP05-119",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|178404670637|0",
+      "winnerUrl": "https://www.ebay.com/itm/178404670637",
+      "winnerTitle": "One Piece CCG Monkey.D.Luffy Secret Rare Card OP05-119 OG English",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 18.47,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 32,
+        "unknown": 18
+      },
+      "codes": {
+        "identity_sibling_mismatch": 32,
+        "excluded_product_type": 25,
+        "condition_unstated": 25,
+        "not_raw_single": 23,
+        "identity_unverified": 18,
+        "language_conflict": 13,
+        "identity_low_confidence": 4,
+        "condition_below_requested": 1
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-luffy-st01-001",
+      "label": "Monkey.D.Luffy ST01-001",
+      "requestedCardId": "ST01-001",
+      "resolvedCardId": "ST01-001",
+      "outcome": "best_buy",
+      "lens": "best_value",
+      "winnerId": "ebay-v1|318572776492|0",
+      "winnerUrl": "https://www.ebay.com/itm/318572776492",
+      "winnerTitle": "2022 One Piece Monkey.D.Luffy ST01-001 EN Leader",
+      "winnerPrintMatch": "compatible",
+      "winnerTotal": 84.99,
+      "found": 50,
+      "eligible": 6,
+      "printMatch": {
+        "compatible": 26,
+        "mismatch": 24
+      },
+      "codes": {
+        "identity_sibling_mismatch": 24,
+        "excluded_product_type": 11,
+        "condition_unstated": 11,
+        "not_raw_single": 9,
+        "condition_below_requested": 7,
+        "language_conflict": 7,
+        "price_far_below_market": 6,
+        "title_condition_below_requested": 1,
+        "shipping_unknown": 1
+      },
+      "abstentionReason": null,
+      "autoVerdict": null
+    },
+    {
+      "id": "op-zoro-op01-001",
+      "label": "Roronoa Zoro OP01-001",
+      "requestedCardId": "OP01-001",
+      "resolvedCardId": "OP01-001",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|137602979749|0",
+      "winnerUrl": "https://www.ebay.com/itm/137602979749",
+      "winnerTitle": "Roronoa Zoro (001) - Romance Dawn Leader  OP01-001 One Piece Card English",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 21,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 34,
+        "unknown": 16
+      },
+      "codes": {
+        "identity_sibling_mismatch": 34,
+        "excluded_product_type": 24,
+        "not_raw_single": 22,
+        "condition_unstated": 21,
+        "language_conflict": 20,
+        "identity_unverified": 16,
+        "condition_below_requested": 9,
+        "title_condition_below_requested": 3
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-ace-op02-013-p1",
+      "label": "Portgas.D.Ace OP02-013 (Alt Art P1)",
+      "requestedCardId": "OP02-013_p1",
+      "resolvedCardId": "OP02-013_p1",
+      "outcome": "best_buy",
+      "lens": "best_value",
+      "winnerId": "ebay-v1|227465362031|0",
+      "winnerUrl": "https://www.ebay.com/itm/227465362031",
+      "winnerTitle": "Bandai One Piece Portgas.D.Ace Alt Art Foil SR Paramount War OP02-013 EN",
+      "winnerPrintMatch": "compatible",
+      "winnerTotal": 308.45,
+      "found": 30,
+      "eligible": 1,
+      "printMatch": {
+        "compatible": 21,
+        "mismatch": 5,
+        "unknown": 4
+      },
+      "codes": {
+        "language_conflict": 13,
+        "condition_unstated": 12,
+        "not_raw_single": 9,
+        "excluded_product_type": 9,
+        "identity_sibling_mismatch": 5,
+        "identity_unverified": 4,
+        "price_far_below_market": 3,
+        "condition_below_requested": 1,
+        "identity_low_confidence": 1
+      },
+      "abstentionReason": null,
+      "autoVerdict": null
+    },
+    {
+      "id": "op-law-op05-069",
+      "label": "Trafalgar Law OP05-069",
+      "requestedCardId": "OP05-069",
+      "resolvedCardId": "OP05-069",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|158026644804|0",
+      "winnerUrl": "https://www.ebay.com/itm/158026644804?amdata=enc%3AAQALAAAAoGfYFPkwiKCW4ZNSs2u11xCxofj4ir%2Bt8hAwgZJMJZPxOyeOwcgMNxC68FlHM8stAvYcCiO7LBPy7NoPBl2s79uveNQdPps1MNyH1EPPcE3yG31GHiF%2BSVJKGrjIcFzzy2PWDtDxn0W%2BurXLHD%2BWCZ6WVSByZqUzWSej8DBuhBI%2FFyt2M1Hfbs3512Ahzn8dib6Zg5CA0BihIW2t0d%2F0Ekc%3D",
+      "winnerTitle": "Trafalgar Law OP05-069 SR One Piece TCG Awakening The New Era English",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 3.35,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 29,
+        "unknown": 21
+      },
+      "codes": {
+        "identity_sibling_mismatch": 29,
+        "identity_unverified": 21,
+        "excluded_product_type": 15,
+        "condition_unstated": 15,
+        "not_raw_single": 13,
+        "language_conflict": 5,
+        "identity_low_confidence": 3,
+        "condition_below_requested": 1
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-shanks-op09-001",
+      "label": "Shanks OP09-001",
+      "requestedCardId": "OP09-001",
+      "resolvedCardId": "OP09-001",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|377374661087|0",
+      "winnerUrl": "https://www.ebay.com/itm/377374661087",
+      "winnerTitle": "Shanks (001) OP09-001 NM One Piece",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 1.77,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 36,
+        "unknown": 14
+      },
+      "codes": {
+        "identity_sibling_mismatch": 36,
+        "excluded_product_type": 22,
+        "condition_unstated": 16,
+        "not_raw_single": 14,
+        "identity_unverified": 14,
+        "language_conflict": 7,
+        "condition_below_requested": 3,
+        "title_condition_below_requested": 2
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-rosinante-op04-119",
+      "label": "Donquixote Rosinante OP04-119",
+      "requestedCardId": "OP04-119",
+      "resolvedCardId": "OP04-119",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|366387985845|0",
+      "winnerUrl": "https://www.ebay.com/itm/366387985845?amdata=enc%3AAQALAAAAoGfYFPkwiKCW4ZNSs2u11xBJMzg1W2qTBPLiZRBv%2BmQYFd8JZU6ctYnIpfoQm4aywPs%2Fzu3xZxVyKC5j7HrxwPWeuo32KJOy9j%2Fbm3LFSQi0e1bpEXEwm%2Bj8ul5h8gwvRtgAaaTTq%2B2Q7xEmhj%2F2Kta27WV%2FUmes6MwkckUA0lYmuRvOYsgCYxEgnnJ%2B%2F1bbCCpGGgWf0xcm2MBIGACw11w%3D",
+      "winnerTitle": "Donquixote Rosinante OP04-119 Kingdoms of Intrigue NM One Piece Card TCG",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 4.99,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 37,
+        "unknown": 13
+      },
+      "codes": {
+        "identity_sibling_mismatch": 37,
+        "language_conflict": 16,
+        "identity_unverified": 13,
+        "condition_unstated": 12,
+        "not_raw_single": 10,
+        "excluded_product_type": 10,
+        "condition_below_requested": 1
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-ace-op07-119-p1",
+      "label": "Portgas.D.Ace OP07-119 (Secret Rare Alt P1)",
+      "requestedCardId": "OP07-119_p1",
+      "resolvedCardId": "OP07-119_p1",
+      "outcome": "best_buy",
+      "lens": "best_value",
+      "winnerId": "ebay-v1|366264405086|0",
+      "winnerUrl": "https://www.ebay.com/itm/366264405086?amdata=enc%3AAQALAAAAoGfYFPkwiKCW4ZNSs2u11xDJTDHetazl2PBDEMB%2BjrYg7wNDdBzfFgTsldzT359Zb%2BxCNvvcesyH%2BBA%2FcxLngu2mCvfhcrFgoqFuJUXT7M3bidv6cgg5ZA5wy9xKh%2Bjk%2BKct6fce3mLuhshCHFCTQfNTlU0Ab4gDorKjUmhSkLgf1wHY%2Fyps1A9ClRU%2BAXlU94kTeBxDdHMUEZQEZ4EDGdc%3D",
+      "winnerTitle": "Portgas.D.Ace (Parallel) OP07-119 500 Years in the Future - Alt Art NM Foil",
+      "winnerPrintMatch": "compatible",
+      "winnerTotal": 24.98,
+      "found": 38,
+      "eligible": 6,
+      "printMatch": {
+        "compatible": 31,
+        "mismatch": 4,
+        "unknown": 3
+      },
+      "codes": {
+        "language_conflict": 25,
+        "condition_unstated": 5,
+        "identity_sibling_mismatch": 4,
+        "not_raw_single": 4,
+        "excluded_product_type": 4,
+        "identity_unverified": 3,
+        "condition_below_requested": 3,
+        "price_far_below_market": 1,
+        "identity_price_guard": 1,
+        "shipping_unknown": 1
+      },
+      "abstentionReason": null,
+      "autoVerdict": null
+    },
+    {
+      "id": "op-chopper-eb01-006",
+      "label": "Tony Tony.Chopper EB01-006",
+      "requestedCardId": "EB01-006",
+      "resolvedCardId": "EB01-006",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|377345744866|0",
+      "winnerUrl": "https://www.ebay.com/itm/377345744866",
+      "winnerTitle": "Tony Tony.Chopper EB01-006 Extra Booster: Memorial Collection One Piece Foil NM",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 47.99,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 31,
+        "unknown": 19
+      },
+      "codes": {
+        "identity_sibling_mismatch": 31,
+        "language_conflict": 30,
+        "identity_unverified": 19,
+        "condition_unstated": 8,
+        "excluded_product_type": 7,
+        "condition_below_requested": 6,
+        "not_raw_single": 6,
+        "identity_low_confidence": 3
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-linlin-op03-114",
+      "label": "Charlotte Linlin OP03-114",
+      "requestedCardId": "OP03-114",
+      "resolvedCardId": "OP03-114",
+      "outcome": "inspect_first",
+      "lens": "inspect_first",
+      "winnerId": "ebay-v1|336687185553|0",
+      "winnerUrl": "https://www.ebay.com/itm/336687185553?amdata=enc%3AAQALAAAAoGfYFPkwiKCW4ZNSs2u11xAC3XL8lHI1%2BeX9jN4PLkskokS60CJRIEQkCUR6Sok8Vp8RvSHU2Q3f1O%2Bf2V03DDhAHUqqx9CMUfkwXZ1MdlyyPPXrzBdi1644AHJIzgjHl9ecdsMM8y7OyutxJKYDobYDnzV5vYtSV8DdrvApLGjN7jtq%2B2%2F41YTZ%2FcrYjg9BH%2FbahPNaSiM%2FXG%2BAg1QM3B8%3D",
+      "winnerTitle": "Charlotte Linlin (114) OP03-114 Super Rare Pillars of Strength One Piece Foil NM",
+      "winnerPrintMatch": "unknown",
+      "winnerTotal": 2.99,
+      "found": 50,
+      "eligible": 0,
+      "printMatch": {
+        "mismatch": 35,
+        "unknown": 15
+      },
+      "codes": {
+        "identity_sibling_mismatch": 35,
+        "identity_unverified": 15,
+        "language_conflict": 12,
+        "condition_unstated": 10,
+        "excluded_product_type": 9,
+        "not_raw_single": 8,
+        "title_condition_below_requested": 2,
+        "identity_low_confidence": 1,
+        "condition_below_requested": 1
+      },
+      "abstentionReason": "Found 50 live listings, but none met the comparison gates (exact match, condition fit, and complete cost).",
+      "autoVerdict": null
+    },
+    {
+      "id": "op-ace-op07-053-p1",
+      "label": "Portgas.D.Ace OP07-053 (Tournament Pack 2024)",
+      "requestedCardId": "OP07-053_p1",
+      "resolvedCardId": "OP07-053_p1",
+      "outcome": "best_buy",
+      "lens": "best_value",
+      "winnerId": "ebay-v1|277966590916|0",
+      "winnerUrl": "https://www.ebay.com/itm/277966590916?amdata=enc%3AAQALAAAAoGfYFPkwiKCW4ZNSs2u11xD8w9p2Z4tg1qNRoyQ8ApUrVdRzAXm1o9CHumtg3QHnmUBwlR8%2BfrseUpE3aJcwcR0MI2piZbeteTF%2FMKn4arFe0NCudwqRNOkokCZDcXLLc3Q%2B%2B3ALL%2FQnlPIGgNfm%2FClP83EukFr51ogqbj5UxIvAmYI1voWalYue1R7U7xZBAt3EnR2VnCaUtFWTGkIszfA%3D",
+      "winnerTitle": "Portgas.D.Ace (Tournament Pack 2024 Oct.-Dec.) OP07-053 R NM ",
+      "winnerPrintMatch": "compatible",
+      "winnerTotal": 12.09,
+      "found": 23,
+      "eligible": 1,
+      "printMatch": {
+        "unknown": 15,
+        "mismatch": 6,
+        "compatible": 2
+      },
+      "codes": {
+        "identity_unverified": 15,
+        "excluded_product_type": 12,
+        "condition_unstated": 12,
+        "identity_low_confidence": 12,
+        "not_raw_single": 11,
+        "identity_sibling_mismatch": 6,
+        "condition_below_requested": 1,
+        "title_condition_below_requested": 1
+      },
+      "abstentionReason": null,
+      "autoVerdict": null
+    }
+  ]
+}

@@ -18,6 +18,7 @@
     "test": "npm run metadata:check && vitest run",
     "benchmark:print-fidelity": "vitest bench src/lib/comparison/print-fidelity.bench.ts --run",
     "verdict:review": "AI_VERDICT_NOTE=1 VERDICT_NOTE_REVIEW=1 vitest run src/lib/ai/verdict-note-review.test.ts",
+    "measure:buy-accuracy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/measure-one-piece-buy-accuracy.mjs",
     "measure:market-anchor": "node scripts/measure-market-anchor.mjs",
     "measure:print-recall": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/measure-print-recall.mjs",
     "review:detail-budget": "EBAY_DETAIL_REVIEW=1 vitest run src/lib/external/ebay-detail-budget-review.test.ts",

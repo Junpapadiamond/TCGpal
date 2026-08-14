@@ -236,13 +236,9 @@ export async function getEbayListingByUrl(
   const parsed = parseEbayUrl(url);
   if (!parsed.supported) throw new Error("Only allowlisted eBay URLs may be fetched automatically.");
   if (!parsed.itemId) throw new Error("The eBay item ID could not be read from this URL.");
-  const token = await getEbayToken(fetcher);
   const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item/get_item_by_legacy_id`);
   endpoint.searchParams.set("legacy_item_id", parsed.itemId);
-  const response = await fetchWithTimeout(endpoint, {
-    headers: ebayHeaders(token, buyer),
-    cache: "no-store",
-  }, fetcher);
+  const response = await fetchEbayAuthed(endpoint, buyer, fetcher);
   if (!response.ok) throw new Error(`eBay item lookup failed with ${response.status}.`);
   return toSourceListing(ebayItemSchema.parse(await response.json()), url);
 }
@@ -259,7 +255,6 @@ export async function searchEbayAlternatives(
   // instead of a reimplementation. Production leaves it unset.
   detailBudget: number = ebayDetailBudget(),
 ): Promise<ListingSeed[]> {
-  const token = await getEbayToken(fetcher);
   // Recall-first query: name + collector number. Set names are the token real
   // titles most often omit, and Best Match treats extra terms as AND-ish — so
   // including the set silently drops listings that are fine. Set/name/number
@@ -306,10 +301,7 @@ export async function searchEbayAlternatives(
   for (const [index, attempt] of attempts.entries()) {
     const finalAttempt = index === attempts.length - 1;
     const endpoint = buildEbaySearchEndpoint(attempt);
-    const response = await fetchWithTimeout(endpoint, {
-      headers: ebayHeaders(token, buyer),
-      cache: "no-store",
-    }, fetcher);
+    const response = await fetchEbayAuthed(endpoint, buyer, fetcher);
     if (!response.ok) {
       if (!finalAttempt) {
         searchNote = attempt.mode === "epid"
@@ -354,7 +346,7 @@ export async function searchEbayAlternatives(
     .slice(0, Math.max(0, Math.trunc(detailBudget)));
   const details = await Promise.all(detailTargets.map(async (item) => {
     try {
-      return await getEbayItemDetail(item.itemId, token, buyer, fetcher);
+      return await getEbayItemDetail(item.itemId, buyer, fetcher);
     } catch {
       return null;
     }
@@ -394,15 +386,11 @@ export async function resolveEbayProductForCard(
   buyer: BuyerContext,
   fetcher: typeof fetch = fetch,
 ): Promise<EbayProductResolution | null> {
-  const token = await getEbayToken(fetcher);
   const endpoint = new URL(`${EBAY_CATALOG_API}/product_summary/search`);
   endpoint.searchParams.set("q", [card.name, card.cardNumber || card.setName].filter(Boolean).join(" ").trim());
   endpoint.searchParams.set("limit", "10");
 
-  const response = await fetchWithTimeout(endpoint, {
-    headers: ebayHeaders(token, buyer),
-    cache: "no-store",
-  }, fetcher);
+  const response = await fetchEbayAuthed(endpoint, buyer, fetcher);
   if (!response.ok) {
     return null;
   }
@@ -523,15 +511,11 @@ function nonNegativeIntegerOrNull(value: number | undefined): number | null {
 
 async function getEbayItemDetail(
   itemId: string,
-  token: string,
   buyer: BuyerContext,
   fetcher: typeof fetch,
 ) {
   const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item/${encodeURIComponent(itemId)}`);
-  const response = await fetchWithTimeout(endpoint, {
-    headers: ebayHeaders(token, buyer),
-    cache: "no-store",
-  }, fetcher);
+  const response = await fetchEbayAuthed(endpoint, buyer, fetcher);
   if (!response.ok) throw new Error(`eBay item detail failed with ${response.status}.`);
   return ebayItemSchema.parse(await response.json());
 }
@@ -669,11 +653,59 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
   };
 }
 
+// A cold instance taking simultaneous traffic used to ask eBay for one token per
+// in-flight request. The token endpoint is rate limited, so the burst that most
+// needs a token was the one most likely to be refused one. Everyone racing a cold
+// cache now awaits the same request.
+let inFlightToken: Promise<string> | null = null;
+
 async function getEbayToken(fetcher: typeof fetch) {
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
     return cachedToken.token;
   }
+  if (inFlightToken) return inFlightToken;
 
+  inFlightToken = requestEbayToken(fetcher).finally(() => {
+    inFlightToken = null;
+  });
+  return inFlightToken;
+}
+
+/**
+ * Authenticated eBay call with one re-auth on rejection.
+ *
+ * The token cache renews on eBay's stated expiry, which assumes the token stays
+ * valid until then. It does not always: a credential rotation, scope change, or
+ * revoked application key invalidates it early, and every call from this instance
+ * then failed until the cached TTL ran out — up to the full two hours eBay hands
+ * out. A 401 is the authoritative signal that the cached token is dead, so drop it
+ * and try once with a fresh one.
+ */
+async function fetchEbayAuthed(
+  endpoint: URL,
+  buyer: BuyerContext,
+  fetcher: typeof fetch,
+  timeoutMs?: number,
+) {
+  const token = await getEbayToken(fetcher);
+  const response = await fetchWithTimeout(endpoint, {
+    headers: ebayHeaders(token, buyer),
+    cache: "no-store",
+  }, fetcher, timeoutMs);
+  if (response.status !== 401) return response;
+
+  // Only the token this call used is discarded: a concurrent request may already
+  // have replaced it, and clearing that one would start an avoidable stampede.
+  if (cachedToken?.token === token) cachedToken = null;
+  const refreshed = await getEbayToken(fetcher);
+  if (refreshed === token) return response;
+  return fetchWithTimeout(endpoint, {
+    headers: ebayHeaders(refreshed, buyer),
+    cache: "no-store",
+  }, fetcher, timeoutMs);
+}
+
+async function requestEbayToken(fetcher: typeof fetch) {
   const clientId = process.env.EBAY_CLIENT_ID;
   const clientSecret = process.env.EBAY_CLIENT_SECRET;
   if (!clientId || !clientSecret) {

@@ -6,17 +6,21 @@ import {
 } from "@/lib/testing/print-recall-cards";
 
 // The eval set is a measuring instrument: a baseline recall number only means
-// something if the later run scores the same 30 cards under the same split. These
+// something if the later run scores the same cards under the same split. These
 // tests are the guard against silently editing the ruler between measurements.
+//
+// Grew from 30 to 31 on 2026-08-14 with one competition print (OP07-053_p1), which
+// is an addition to the held-out half rather than an edit to any existing row — so
+// recall stays comparable card-by-card, and only the pooled held-out number moves.
 describe("print-recall eval card set", () => {
-  it("holds exactly 30 cards with unique ids", () => {
-    expect(PRINT_RECALL_CARDS).toHaveLength(30);
-    expect(new Set(PRINT_RECALL_CARDS.map((card) => card.id)).size).toBe(30);
+  it("holds exactly 31 cards with unique ids", () => {
+    expect(PRINT_RECALL_CARDS).toHaveLength(31);
+    expect(new Set(PRINT_RECALL_CARDS.map((card) => card.id)).size).toBe(31);
   });
 
-  it("splits into 20 tuning and 10 held-out cards that partition the set", () => {
+  it("splits into 20 tuning and 11 held-out cards that partition the set", () => {
     expect(PRINT_RECALL_TUNING_CARDS).toHaveLength(20);
-    expect(PRINT_RECALL_HELD_OUT_CARDS).toHaveLength(10);
+    expect(PRINT_RECALL_HELD_OUT_CARDS).toHaveLength(11);
     expect(PRINT_RECALL_TUNING_CARDS.length + PRINT_RECALL_HELD_OUT_CARDS.length).toBe(PRINT_RECALL_CARDS.length);
     const ids = new Set([...PRINT_RECALL_TUNING_CARDS, ...PRINT_RECALL_HELD_OUT_CARDS].map((card) => card.id));
     expect(ids.size).toBe(PRINT_RECALL_CARDS.length);
