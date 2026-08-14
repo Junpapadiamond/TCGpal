@@ -325,6 +325,7 @@ export async function searchEbayAlternatives(
       }
       summaries = nonMismatches;
     }
+    summaries = await addPaddedCollectorNumberRows(summaries, card, attempt, buyer, fetcher);
     searchNote = attempt.mode === "epid"
       ? `Searched eBay by product ID ePID ${attempt.epid}.`
       : attempt.fallbackReason || (variantToken && !finalAttempt
@@ -703,6 +704,68 @@ async function fetchEbayAuthed(
     headers: ebayHeaders(refreshed, buyer),
     cache: "no-store",
   }, fetcher, timeoutMs);
+}
+
+/**
+ * The same collector number with the set total zero-padded to three digits, or
+ * null when that changes nothing.
+ *
+ * Modern Pokemon sets print the total padded — a Paldean Fates card reads
+ * "232/091" — and sellers copy what is printed. The Pokemon TCG API reports
+ * `printedTotal` as the number 91, so our identity string is "232/91" and a
+ * keyword search asks eBay for a string almost no title contains: measured
+ * 2026-08-15, "Mew ex 232/91" returned 6 rows against 50 for "Mew ex 232/091".
+ *
+ * Padding cannot just replace the original. Vintage sets print the total
+ * unpadded, and no field says which convention a set follows — "Charizard 4/102"
+ * returned 50 rows where the padded "4/002" returned one. Only the total is
+ * padded, never the card's own number, and the caller unions the rows rather than
+ * choosing between them.
+ */
+export function paddedCollectorNumberQuery(cardNumber: string) {
+  const parts = cardNumber.trim().match(/^([A-Za-z]{0,4}\d{1,3})\s*\/\s*([A-Za-z]{0,4})(\d{1,3})$/);
+  if (!parts) return null;
+  const [, number, totalPrefix, total] = parts;
+  if (total.length >= 3) return null;
+  return `${number}/${totalPrefix}${total.padStart(3, "0")}`;
+}
+
+/**
+ * Runs one extra keyword search for the zero-padded form and merges it into the
+ * rows already found, de-duplicated by item id.
+ *
+ * Additive by construction: a set that does not pad simply contributes the few
+ * rows its padded string happens to match, and the deterministic collector-number
+ * gate discards them downstream. Skipped entirely when padding is a no-op, so
+ * vintage cards and every One Piece number cost no extra Browse call.
+ */
+async function addPaddedCollectorNumberRows(
+  summaries: z.infer<typeof ebayItemSchema>[],
+  card: CardIdentityCandidate,
+  attempt: { mode: "epid" | "keyword"; query: string },
+  buyer: BuyerContext,
+  fetcher: typeof fetch,
+) {
+  if (attempt.mode !== "keyword") return summaries;
+  const padded = paddedCollectorNumberQuery(card.cardNumber);
+  if (!padded || !attempt.query.includes(card.cardNumber)) return summaries;
+
+  const response = await fetchEbayAuthed(
+    buildEbaySearchEndpoint({ mode: "keyword", query: attempt.query.replace(card.cardNumber, padded) }),
+    buyer,
+    fetcher,
+  );
+  if (!response.ok) return summaries;
+
+  const parsed = ebaySearchSchema.safeParse(await response.json());
+  if (!parsed.success) return summaries;
+
+  const seen = new Set(summaries.map((item) => item.itemId));
+  return [
+    ...summaries,
+    ...parsed.data.itemSummaries.filter((item) =>
+      item.price.currency === "USD" && !seen.has(item.itemId)),
+  ];
 }
 
 async function requestEbayToken(fetcher: typeof fetch) {

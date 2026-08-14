@@ -1100,3 +1100,83 @@ describe("eBay application token renewal", () => {
     expect(calls.token).toBe(1);
   });
 });
+
+// Reported 2026-08-15: "Mew ex 232/91" abstained with six listings while the same
+// card searched as "232/091" returned fifty. Modern Pokemon sets print the set
+// total zero-padded to three digits — the physical card reads 232/091 — and
+// sellers copy what is printed. The Pokemon TCG API reports printedTotal as the
+// number 91, so the identity string is "232/91" and the eBay keyword search asks
+// for a string almost no title contains.
+//
+// Padding cannot simply replace the original: vintage sets print the total
+// unpadded ("4/102" is fine, "4/002" returned one row), and there is no field
+// that says which convention a set uses. So both forms are searched and the rows
+// unioned — a strictly additive change that cannot remove supply from either era.
+describe("zero-padded collector-number recall", () => {
+  const mewEx = {
+    id: "sv4pt5-232",
+    name: "Mew ex",
+    setName: "Paldean Fates",
+    setCode: "SV4PT5",
+    cardNumber: "232/91",
+    language: "English",
+    imageUrl: null,
+    confidence: "high",
+    matchReasons: [],
+  } as unknown as CardIdentityCandidate;
+
+  const buyer = { country: "US" as const, postalCode: "10001", taxRate: null, desiredCondition: "Near Mint" as const };
+
+  beforeEach(() => {
+    process.env.EBAY_CLIENT_ID = "test-id";
+    process.env.EBAY_CLIENT_SECRET = "test-secret";
+    resetEbayTokenCacheForTests();
+  });
+
+  function paddedAwareFetcher(queries: string[]) {
+    return (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 7200 }) } as Response;
+      }
+      if (!url.includes("/item_summary/search")) return { ok: false, status: 404, json: async () => ({}) } as Response;
+      const q = new URL(url).searchParams.get("q") ?? "";
+      queries.push(q);
+      // What live eBay actually returns for the two forms.
+      const items = q.includes("232/091")
+        ? [
+          { itemId: "padded-1", title: "Pokemon Paldean Fates Mew ex 232/091 SIR", price: { value: "900.00", currency: "USD" } },
+          { itemId: "padded-2", title: "Mew ex 232/091 Paldean Fates Bubble Mew", price: { value: "1000.00", currency: "USD" } },
+        ]
+        : [{ itemId: "plain-1", title: "Mew Ex 232/91 Paldean Fates", price: { value: "950.00", currency: "USD" } }];
+      return { ok: true, status: 200, json: async () => ({ itemSummaries: items }) } as Response;
+    }) as unknown as typeof fetch;
+  }
+
+  it("also searches the zero-padded collector number and keeps both sets of rows", async () => {
+    const queries: string[] = [];
+    const rows = await searchEbayAlternatives(mewEx, buyer, paddedAwareFetcher(queries), undefined, null, 0);
+
+    expect(queries.some((q) => q.includes("232/091"))).toBe(true);
+    expect(rows.map((row) => row.id).sort()).toEqual(["ebay-padded-1", "ebay-padded-2", "ebay-plain-1"]);
+  });
+
+  it("does not repeat the search when padding changes nothing", async () => {
+    const queries: string[] = [];
+    const baseSet = { ...mewEx, id: "base1-4", name: "Charizard", setName: "Base", cardNumber: "4/102" } as CardIdentityCandidate;
+
+    await searchEbayAlternatives(baseSet, buyer, paddedAwareFetcher(queries), undefined, null, 0);
+
+    expect(queries).toHaveLength(1);
+  });
+
+  // One Piece numbers carry no set total, so nothing here may touch them.
+  it("leaves collector numbers without a set total alone", async () => {
+    const queries: string[] = [];
+    const onePiece = { ...mewEx, id: "OP01-016", name: "Nami", setName: "Romance Dawn", cardNumber: "OP01-016", game: "onePiece" } as unknown as CardIdentityCandidate;
+
+    await searchEbayAlternatives(onePiece, buyer, paddedAwareFetcher(queries), undefined, null, 0);
+
+    expect(queries).toHaveLength(1);
+  });
+});
