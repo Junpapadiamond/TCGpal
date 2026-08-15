@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lens TCG — landing v2 (cards as entrance)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..900&family=IBM+Plex+Mono:wght@400..700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Lens TCG — landing v2
+   Cards are functional, not decorative: each one is a button
+   that runs the check. Copy is cut to the bone; the rail does
+   the explaining. Palette + type unchanged.
+   ============================================================ */
+:root{
+  --paper:#fcfbf6; --paper-hi:#fffef9; --bg:#f4f7f3; --wash:#f7f9f5;
+  --ink:#24312f; --ink-2:#52635c; --muted:#64736c; --muted-2:#7a8982;
+  --line:#d6ded5; --line-2:#c9d7ce; --line-3:#e4ebe3;
+  --teal:#2f6f73; --teal-d:#24585c; --teal-dd:#1f474a; --teal-wash:#e7efe8;
+  --gold:#d7a84e; --gold-ink:#6f5a22; --gold-wash:#fff8dc; --gold-line:#e2c879;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:radial-gradient(circle at 20% 0%, rgba(215,168,78,.07), transparent 28rem), var(--bg);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+}
+body::after{
+  position:fixed;inset:0;z-index:80;content:"";pointer-events:none;mix-blend-mode:multiply;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.serif{font-family:Fraunces,Georgia,"Songti SC","Times New Roman",serif;font-optical-sizing:auto;
+  font-variation-settings:"SOFT" 50,"WONK" 0;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+.chrome{position:sticky;top:0;z-index:90;display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:8px 16px;background:#24312f;color:#cfd9d4;font-size:11px;letter-spacing:.06em}
+.chrome b{color:#f4f7f3;font-weight:700}.chrome .sp{flex:1}
+.chrome button{border:1px solid #3f524d;background:transparent;color:#cfd9d4;border-radius:4px;
+  padding:5px 11px;font-size:11px;font-weight:700}
+.chrome button[aria-pressed="true"]{background:#f4f7f3;color:#24312f;border-color:#f4f7f3}
+
+/* ---------- header ---------- */
+.topbar{border-bottom:1px solid var(--line);background:rgba(247,249,245,.95)}
+.topbar .row{max-width:1180px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.topnav{display:flex;align-items:center;gap:18px;font-size:13px;font-weight:700;color:var(--muted)}
+.topnav a:hover{color:var(--teal)}
+.langtoggle{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--paper)}
+.langtoggle span{padding:5px 10px;font-size:12px;font-weight:800;color:var(--muted)}
+.langtoggle span.on{background:var(--teal);color:var(--paper)}
+
+/* ---------- hero: headline + search, nothing else ---------- */
+.hero{max-width:720px;margin:0 auto;padding:60px 24px 0;text-align:center}
+.h1{margin:0;font-size:clamp(28px,4.2vw,42px);line-height:1.08;font-weight:800;letter-spacing:-.025em;color:var(--ink)}
+.h1 em{font-style:normal;color:var(--teal)}
+.searchrow{margin-top:26px;display:flex;align-items:stretch;border:2px solid var(--teal);border-radius:11px;
+  background:var(--paper-hi);box-shadow:0 0 0 4px rgba(47,111,115,.09),0 14px 40px rgba(36,49,47,.07);overflow:hidden}
+.searchrow .ico{display:flex;align-items:center;padding-left:16px;color:var(--teal)}
+.searchrow input{flex:1;min-width:0;border:0;outline:none;background:transparent;color:var(--ink);
+  padding:19px 14px;font-size:20px;font-weight:600;letter-spacing:-.01em}
+.searchrow input::placeholder{color:#93a29b;font-weight:500}
+.searchrow button{border:0;background:var(--teal);color:#f4f7f3;padding:0 24px;font-size:15px;font-weight:800;
+  display:flex;align-items:center;gap:8px;white-space:nowrap}
+.searchrow button:hover{background:var(--teal-d)}
+/* one quiet control strip, centred under the field */
+.controls{margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper)}
+.seg button{border:0;background:transparent;padding:8px 14px;font-size:13px;font-weight:800;color:var(--muted);
+  display:flex;align-items:center;gap:7px}
+.seg button[aria-pressed="true"]{background:var(--teal-wash);color:var(--teal-d);box-shadow:inset 0 -2px 0 var(--teal)}
+.seg .dot{width:9px;height:9px;border-radius:3px}
+.zip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:0 11px;height:37px}
+.zip span{font-size:12px;font-weight:700;color:var(--muted)}
+.zip input{width:60px;border:0;outline:none;background:transparent;font-size:13px;font-weight:700;color:var(--ink)}
+.linkbtn{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font-size:13px;font-weight:800;color:var(--teal)}
+.linkbtn:hover{color:var(--teal-d)}
+.linkbtn .caret{transition:transform .18s ease}
+.linkbtn[aria-expanded="true"] .caret{transform:rotate(180deg)}
+.panel{display:none;max-width:720px;margin:14px auto 0;border:1px dashed var(--line-2);background:var(--wash);
+  border-radius:9px;padding:16px;text-align:left}
+.panel.open{display:block}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld > span{font-size:12px;font-weight:700;color:var(--muted)}
+.fld input,.fld select{width:100%;border:1px solid var(--line);border-radius:5px;background:var(--paper-hi);
+  color:var(--ink);padding:10px 11px;outline:none;font-size:14px}
+.fld input:focus,.fld select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(47,111,115,.11)}
+
+/* ---------- the rail: cards ARE the entrance ---------- */
+/* No heading, no tabs, no pause button. The rail explains itself by
+   being clickable. Pause is covered by hover, focus, and
+   prefers-reduced-motion — see the media queries at the bottom. */
+.rail-wrap{margin-top:40px;padding-bottom:20px}
+
+.rail{position:relative;overflow:hidden;padding:26px 0 30px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.track{display:flex;width:max-content;align-items:flex-start;gap:16px;padding-inline:24px;
+  animation:roll 46s linear infinite;will-change:transform}
+.rail[data-paused="true"] .track{animation-play-state:paused}
+@keyframes roll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+.cardbtn{position:relative;flex:0 0 auto;width:132px;border:0;background:none;padding:0;
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  transition:transform .22s cubic-bezier(.2,.75,.2,1)}
+.cardbtn .art{position:relative;width:132px;height:184px;border-radius:9px;overflow:hidden;
+  border:1px solid rgba(36,49,47,.14);background:linear-gradient(150deg,#e9eeea,#d5e0d9);
+  box-shadow:0 1px 0 rgba(255,255,255,.76) inset,0 10px 24px rgba(36,49,47,.17);
+  transition:box-shadow .22s ease,border-color .22s ease}
+.cardbtn .art img{width:100%;height:100%;object-fit:contain;display:block;padding:2px;
+  filter:saturate(.96) contrast(1.02)}
+.cardbtn .gloss{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.2) 45%,transparent 60%)}
+/* ---- rarity: a finish sample, not a badge ----
+   No pill, no border, not over the artwork. The swatch carries the actual
+   print treatment so it can be read pre-attentively; the word is caption.
+   Simple geometry only — never a traced official rarity symbol. */
+.fin{display:inline-flex;align-items:center;justify-content:center;gap:5px;margin-top:3px}
+.fin .sw{flex:0 0 auto;width:10px;height:10px;border-radius:3px;display:block}
+.fin .fl{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:0;line-height:1.3}
+.sw-holo{background:linear-gradient(20deg,#2f6f73,#cfdad6 50%,#2f6f73)}
+.sw-reverse{background-image:radial-gradient(circle,rgba(255,255,255,.6) .5px,transparent .6px),
+  linear-gradient(20deg,#2f6f73,#cfdad6 50%,#2f6f73);background-size:3px 3px,100% 100%}
+.sw-rainbow{background:linear-gradient(20deg,#d98d8d,#e0c98a 28%,#a8cf9e 52%,#8fc4d4 74%,#b0a3d6)}
+.sw-gold{background:linear-gradient(20deg,#b88a35,#f0d99a 50%,#d7a84e)}
+.sw-fullart{background:#24312f;clip-path:polygon(0 0,100% 0,100% 68%,68% 100%,0 100%)}
+.sw-promo{display:grid;place-items:center;background:none;border-radius:0}
+/* the check affordance, revealed on hover/focus */
+.cardbtn .go{position:absolute;left:50%;bottom:10px;transform:translate(-50%,8px);z-index:3;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  border-radius:999px;background:var(--teal);color:#f4f7f3;padding:7px 13px;
+  font-size:12px;font-weight:800;box-shadow:0 4px 12px rgba(31,71,74,.35);
+  opacity:0;transition:opacity .2s ease,transform .2s ease}
+.cardbtn .veil{position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to top,rgba(31,71,74,.5),rgba(31,71,74,.06) 46%,transparent 70%);
+  opacity:0;transition:opacity .2s ease}
+.cardbtn .cap{text-align:center;min-height:54px;display:flex;flex-direction:column;align-items:center}
+.cardbtn .cap b{display:block;font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3}
+.cardbtn .cap .num{display:block;margin-top:2px;font-size:10.5px;font-weight:600;color:var(--muted-2)}
+.cardbtn:hover,.cardbtn:focus-visible{transform:translateY(-6px);outline:none}
+.cardbtn:hover .art,.cardbtn:focus-visible .art{border-color:var(--teal);
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 18px 32px rgba(36,49,47,.24),0 0 0 3px rgba(47,111,115,.22)}
+.cardbtn:hover .go,.cardbtn:focus-visible .go{opacity:1;transform:translate(-50%,0)}
+.cardbtn:hover .veil,.cardbtn:focus-visible .veil{opacity:1}
+.cardbtn:hover .cap b,.cardbtn:focus-visible .cap b{color:var(--teal-d)}
+/* duplicated half of the loop is inert for AT and keyboard */
+.track [data-clone="true"]{pointer-events:none}
+
+.railfoot{max-width:1180px;margin:0 auto;padding:4px 24px 0;display:flex;flex-wrap:wrap;
+  align-items:center;justify-content:center;gap:8px 16px;font-size:12.5px;color:var(--muted-2)}
+.railfoot .scope{font-weight:600}
+.railfoot a{color:var(--teal);font-weight:700}
+
+/* fake result peek so a click goes somewhere */
+.peek{position:fixed;inset:0;z-index:95;display:none;place-items:center;background:rgba(36,49,47,.42);padding:24px}
+.peek[data-open="true"]{display:grid}
+.peekcard{max-width:460px;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  padding:22px;box-shadow:0 30px 70px rgba(36,49,47,.3)}
+.peekcard h3{margin:0;font-size:17px;font-weight:700}
+.peekcard p{margin:9px 0 0;font-size:13.5px;line-height:1.6;color:var(--ink-2)}
+.peekcard .k{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--teal)}
+.peekcard .btns{margin-top:18px;display:flex;justify-content:flex-end;gap:9px}
+.btn{display:inline-flex;min-height:40px;align-items:center;gap:8px;border-radius:5px;padding:10px 15px;
+  font-size:13px;font-weight:800}
+.btn-primary{border:1px solid var(--teal-d);background:var(--teal);color:#f4f7f3;box-shadow:0 2px 0 var(--teal-dd)}
+.btn-ghost{border:1px solid var(--line);background:var(--paper-hi);color:var(--ink)}
+
+.foot{max-width:1180px;margin:34px auto 0;padding:22px 24px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:6px 22px;font-size:12px;font-weight:700;color:var(--muted-2)}
+.foot a:hover{color:var(--teal)}
+
+/* ---------- touch: swipe rail, no auto-motion, no moving targets ---------- */
+@media (hover:none),(pointer:coarse){
+  .rail{mask-image:none;-webkit-mask-image:none;overflow-x:auto;scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;padding:20px 0 24px}
+  .track{animation:none;width:max-content;gap:12px}
+  .cardbtn{scroll-snap-align:center;width:118px}
+  .cardbtn .art{width:118px;height:164px}
+  .cardbtn .go{opacity:1;transform:translate(-50%,0);font-size:11px;padding:6px 11px}
+  .cardbtn .veil{opacity:1}
+}
+@media (max-width:700px){
+  .searchrow{flex-wrap:wrap}
+  .searchrow input{flex-basis:100%;padding:15px 14px;font-size:17px}
+  .searchrow button{flex:1;padding:14px;justify-content:center}
+  .grid3,.grid2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  .track{animation:none}
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <b>STATIC MOCKUP</b><span>Lens TCG · landing v2 · <span id="mixNote">no history → all chase</span></span>
+  <span class="sp"></span>
+  <span style="opacity:.6">fake search history:</span>
+  <button aria-pressed="true" onclick="setHistory(0,this)">0</button>
+  <button aria-pressed="false" onclick="setHistory(1,this)">1</button>
+  <button aria-pressed="false" onclick="setHistory(3,this)">3</button>
+  <button aria-pressed="false" onclick="setHistory(12,this)">12+</button>
+</div>
+
+<header class="topbar">
+  <div class="row">
+    <svg width="146" height="42" viewBox="0 0 392 112" role="img" aria-label="Lens TCG">
+      <defs><clipPath id="g1"><circle cx="52" cy="66" r="26"/></clipPath>
+        <g id="c1">
+          <g transform="translate(48,46) rotate(-13)"><rect x="-17" y="-26" width="34" height="52" rx="6" fill="#d7a84e" stroke="#b88a35" stroke-width="2"/></g>
+          <g transform="translate(52,48) rotate(5)">
+            <rect x="-17" y="-26" width="34" height="52" rx="6" fill="#2f6f73" stroke="#1f474a" stroke-width="2"/>
+            <rect x="-12" y="-21" width="24" height="17" rx="3.5" fill="#fcfbf6"/>
+            <rect x="-12" y="10" width="24" height="4" rx="2" fill="#fcfbf6"/>
+            <rect x="-12" y="17" width="14" height="4" rx="2" fill="#fcfbf6" opacity=".6"/>
+          </g>
+        </g></defs>
+      <use href="#c1"/>
+      <g clip-path="url(#g1)"><circle cx="52" cy="66" r="26" fill="#fcfbf6"/>
+        <g transform="translate(52,66) scale(1.38) translate(-52,-66)"><use href="#c1"/></g></g>
+      <circle cx="52" cy="66" r="26" fill="none" stroke="#d7a84e" stroke-width="3.6"/>
+      <circle cx="52" cy="66" r="23.5" fill="none" stroke="#1f474a" stroke-width="1" opacity=".22"/>
+      <text x="102" y="62" font-family="Fraunces,Georgia,serif" font-size="46" font-weight="700" letter-spacing="-0.5">
+        <tspan fill="#1f474a">Lens</tspan><tspan dx="10" font-size="30" font-weight="500" letter-spacing="3" fill="#2f6f73">TCG</tspan></text>
+      <text x="104" y="88" font-family="Fraunces,Georgia,serif" font-size="12.5" letter-spacing="2.4" fill="#64736c">think before you buy</text>
+    </svg>
+    <div class="topnav">
+      <a href="#">Method</a>
+      <span class="langtoggle"><span class="on">EN</span><span>中文</span></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1 class="h1 serif">Which listing is <em>actually</em> worth buying?</h1>
+
+    <div class="searchrow">
+      <span class="ico" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+      </span>
+      <input placeholder="Charizard 4/102 · Luffy OP01-003 · SWSH144" aria-label="Search for a card" />
+      <button type="button" onclick="openPeek('Charizard','Base Set · 4/102')">
+        Check
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Card game">
+        <button type="button" aria-pressed="true"><span class="dot" style="background:#d7a84e"></span>Pokémon</button>
+        <button type="button" aria-pressed="false"><span class="dot" style="background:#9a4a2c"></span>One Piece</button>
+      </div>
+      <label class="zip"><span>Ship to</span><input value="10003" inputmode="numeric" aria-label="Delivery ZIP" /></label>
+      <button class="linkbtn" type="button" aria-expanded="false" onclick="togglePanel('p1',this)">
+        Near Mint
+        <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="panel" id="p1">
+      <div class="grid3">
+        <label class="fld"><span>Card name</span><input placeholder="Charizard" /></label>
+        <label class="fld"><span>Set</span><input placeholder="Base Set" /></label>
+        <label class="fld"><span>Number</span><input placeholder="4/102" /></label>
+      </div>
+      <div class="grid2">
+        <label class="fld"><span>Condition you want</span>
+          <select><option>Near Mint</option><option>Lightly Played</option><option>Moderately Played</option><option>Heavily Played</option><option>Damaged</option></select></label>
+        <label class="fld"><span>Tax rate</span><input placeholder="Estimated from ZIP" /></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= THE RAIL =================
+       Cards are buttons. Auto-scroll on pointer devices (pauses on
+       hover/focus, stoppable), native swipe on touch.
+       DATA NOTE: this list must come from real set data, not the
+       hardcoded CURATED_MARQUEE_CARDS constant, or "chase right now"
+       is a claim the app can't back.
+  ============================================== -->
+  <section class="rail-wrap" aria-label="Cards you can check">
+    <div class="rail" id="rail" data-paused="false">
+      <div class="track" id="track"><!-- built by JS --></div>
+    </div>
+
+    <p class="railfoot">
+      <span class="scope">Pokémon &amp; One Piece · raw singles · U.S. listings</span>
+      <span>·</span>
+      <a href="#">How the ranking works</a>
+      <span>·</span>
+      <a href="#" onclick="togglePanel('p1',document.querySelector('.linkbtn'));return false;">Check a specific listing</a>
+    </p>
+  </section>
+</main>
+
+<div class="peek" id="peek" role="dialog" aria-modal="true" aria-labelledby="peekTitle">
+  <div class="peekcard">
+    <span class="k">Checking</span>
+    <h3 id="peekTitle" class="serif">Card name</h3>
+    <p id="peekMeta"></p>
+    <p style="color:var(--muted-2);font-size:12.5px">In the real app this goes straight to version
+      confirmation, then the ranked listings — the same flow as typing the card.</p>
+    <div class="btns">
+      <button class="btn btn-ghost" type="button" onclick="closePeek()">Back</button>
+      <button class="btn btn-primary" type="button" onclick="closePeek()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<footer class="foot">
+  <span>© 2026 Lens TCG</span>
+  <a href="#">Method &amp; data sources</a>
+  <a href="#">What we don't do</a>
+  <a href="#">Feedback</a>
+</footer>
+
+<script>
+/* Cards currently shipped in CURATED_MARQUEE_CARDS, plus One Piece
+   placeholders. Replace with a data-driven "newest chase" query. */
+/* fin = print finish class (drives the swatch), fl = label.
+   Labels here are illustrative; in the app they come from catalog rarity
+   via rarityFinish(). fin:null renders no tag at all. */
+const CHASE = [
+  {n:"Umbreon VMAX", s:"Evolving Skies", num:"215/203", fin:"fullart", fl:"Alt art", img:"https://images.pokemontcg.io/swsh7/215_hires.png"},
+  {n:"Mew ex",       s:"151",            num:"151/165", fin:"fullart", fl:"Special illustration", img:"https://images.pokemontcg.io/sv3pt5/151_hires.png"},
+  {n:"Greninja ex",  s:"Twilight Masquerade", num:"214/167", fin:"fullart", fl:"Special illustration", img:"https://images.pokemontcg.io/sv6/214_hires.png"},
+  {n:"Mewtwo VSTAR", s:"Crown Zenith GG", num:"GG44/GG70", fin:"holo", fl:"Gallery holo", img:"https://images.pokemontcg.io/swsh12pt5gg/GG44_hires.png"},
+  {n:"Iron Valiant ex", s:"Paradox Rift", num:"245/182", fin:"gold", fl:"Gold secret", img:"https://images.pokemontcg.io/sv4/245_hires.png"},
+  {n:"Greninja Gold Star", s:"SWSH Promos", num:"SWSH144", fin:"promo", fl:"Promo", img:"https://images.pokemontcg.io/swshp/SWSH144_hires.png"},
+  {n:"Venusaur & Snivy GX", s:"Cosmic Eclipse", num:"251/236", fin:"rainbow", fl:"Rainbow rare", img:"https://images.pokemontcg.io/sm12/251_hires.png"},
+  {n:"Charizard",    s:"Base Set",       num:"4/102",   fin:"holo", fl:"Holo rare", img:"https://images.pokemontcg.io/base1/4_hires.png"},
+];
+/* The user's own history. Same shape, same rarity flag — nothing
+   marks these as "recent", because the user already recognises the
+   cards they searched. */
+const HISTORY = [
+  {n:"Charizard",   s:"Base Set",       num:"4/102",   fin:"holo", fl:"Holo rare", img:"https://images.pokemontcg.io/base1/4_hires.png"},
+  {n:"Lugia V",     s:"Silver Tempest", num:"186/195", fin:"fullart", fl:"Alt art", img:"https://images.pokemontcg.io/swsh12/186_hires.png"},
+  {n:"Rayquaza VMAX", s:"Evolving Skies", num:"218/203", fin:"fullart", fl:"Alt art", img:"https://images.pokemontcg.io/swsh7/218_hires.png"},
+  /* rarity unknown in the catalog → no tag, rather than an invented one */
+  {n:"Giratina V",  s:"Lost Origin",    num:"186/196", fin:null, fl:null, img:"https://images.pokemontcg.io/swsh11/186_hires.png"},
+  {n:"Pikachu VMAX",s:"Vivid Voltage",  num:"188/185", fin:"rainbow", fl:"Rainbow rare", img:"https://images.pokemontcg.io/swsh4/188_hires.png"},
+  {n:"Gengar VMAX", s:"Fusion Strike",  num:"271/264", fin:"reverse", fl:"Reverse holo", img:"https://images.pokemontcg.io/swsh8/271_hires.png"},
+];
+
+const RAIL_SLOTS = 14;
+
+/* Recent share ramps with how much the user has actually searched, and
+   tops out at 70%. Zero history is a pure chase rail; there is no
+   switch and no label — the blend just shifts underneath them. */
+function recentShare(historyCount){
+  if (historyCount <= 0) return 0;
+  return Math.min(0.7, 0.18 + 0.13 * historyCount);
+}
+
+/* Bresenham-style interleave: spreads the recents evenly through the
+   loop instead of clumping them at one end, so the rail never reads as
+   "your stuff, then our stuff". */
+function blendRail(history, chase, historyCount){
+  const share = recentShare(historyCount);
+  const out = [];
+  let acc = 0, h = 0, c = 0;
+  for (let i = 0; i < RAIL_SLOTS; i++){
+    acc += share;
+    const wantRecent = acc >= 1 && history.length > 0;
+    if (wantRecent){ acc -= 1; out.push(history[h++ % history.length]); }
+    else { out.push(chase[c++ % chase.length]); }
+  }
+  return out;
+}
+
+/* Unknown rarity renders NO tag — never fall back to "Rare".
+   An invented rarity is a fabricated card fact (guardrail 4). */
+function finishHTML(c){
+  if(!c.fin) return '';
+  const sw = c.fin === 'promo'
+    ? `<span class="sw sw-promo"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#24312f" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l2.4 6.1L21 10.4l-4.6 4.2L17.7 21 12 17.7 6.3 21l1.3-6.4L3 10.4l6.6-1.3z"/></svg></span>`
+    : `<span class="sw sw-${c.fin}"></span>`;
+  return `<span class="fin">${sw}<span class="fl">${c.fl}</span></span>`;
+}
+
+function cardHTML(c, clone){
+  const inert = clone ? 'data-clone="true" tabindex="-1" aria-hidden="true"' : '';
+  const rarity = c.fl ? `, ${c.fl}` : '';
+  return `<button class="cardbtn" type="button" ${inert}
+      onclick="openPeek('${c.n.replace(/'/g,"")}','${c.s} · ${c.num}')"
+      aria-label="Check ${c.n}, ${c.s} ${c.num}${rarity}">
+    <span class="art">
+      <img src="${c.img}" alt="" loading="lazy" onerror="this.style.display='none'" />
+      <span class="veil"></span>
+      <span class="go">Check this card
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+      </span>
+      <span class="gloss"></span>
+    </span>
+    <span class="cap">
+      <b>${c.n}</b>
+      ${finishHTML(c)}
+      <span class="num">${c.num}</span>
+    </span>
+  </button>`;
+}
+
+function renderRail(historyCount){
+  const list = blendRail(HISTORY, CHASE, historyCount);
+  const track = document.getElementById('track');
+  // second copy makes the -50% loop seamless; it is inert for AT + keyboard
+  track.innerHTML = list.map(c => cardHTML(c,false)).join('')
+                  + list.map(c => cardHTML(c,true)).join('');
+}
+
+/* mockup-only: fake different amounts of search history */
+function setHistory(n, btn){
+  document.querySelectorAll('.chrome button').forEach(b=>b.setAttribute('aria-pressed','false'));
+  if(btn) btn.setAttribute('aria-pressed','true');
+  renderRail(n);
+  document.getElementById('mixNote').textContent =
+    n === 0 ? 'no history → all chase'
+            : Math.round(recentShare(n)*100) + '% of the rail is their own cards';
+}
+
+/* Pause on hover and on keyboard focus. No visible control:
+   prefers-reduced-motion kills the animation outright, and touch
+   devices get a static swipe rail, so every input mode has a way out. */
+const rail = document.getElementById('rail');
+['mouseenter','focusin'].forEach(e=>rail.addEventListener(e,()=>{ rail.dataset.paused='true'; }));
+['mouseleave','focusout'].forEach(e=>rail.addEventListener(e,()=>{ rail.dataset.paused='false'; }));
+function togglePanel(id, btn){
+  const el = document.getElementById(id);
+  const open = el.classList.toggle('open');
+  if(btn) btn.setAttribute('aria-expanded', open);
+}
+function openPeek(name, meta){
+  document.getElementById('peekTitle').textContent = name;
+  document.getElementById('peekMeta').textContent = meta;
+  document.getElementById('peek').dataset.open = 'true';
+}
+function closePeek(){ document.getElementById('peek').dataset.open = 'false'; }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePeek(); });
+document.querySelectorAll('.seg').forEach(g=>g.querySelectorAll('button').forEach(b=>{
+  b.addEventListener('click',()=>{ g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); });
+}));
+renderRail(0);
+</script>
+</body>
+</html>

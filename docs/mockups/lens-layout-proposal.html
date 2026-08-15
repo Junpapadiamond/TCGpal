@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lens TCG — layout proposal (static mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..900&family=IBM+Plex+Mono:wght@400..700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Lens TCG — static layout proposal
+   Palette, type stack and logo are lifted verbatim from the app.
+   Nothing here changes the theme; only layout, hierarchy and
+   how much of the teal gets spent.
+   ============================================================ */
+:root{
+  --paper:#fcfbf6; --paper-hi:#fffef9; --bg:#f4f7f3; --wash:#f7f9f5;
+  --ink:#24312f; --ink-2:#52635c; --muted:#64736c; --muted-2:#7a8982;
+  --line:#d6ded5; --line-2:#c9d7ce; --line-3:#e4ebe3;
+  --teal:#2f6f73; --teal-d:#24585c; --teal-dd:#1f474a; --teal-wash:#e7efe8;
+  --gold:#d7a84e; --gold-ink:#6f5a22; --gold-wash:#fff8dc; --gold-line:#e2c879;
+  --clay:#9a4a2c; --clay-wash:#f9efe7; --clay-line:#dcb9a4;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:radial-gradient(circle at 20% 0%, rgba(215,168,78,.07), transparent 28rem), var(--bg);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+/* paper grain, same as globals.css */
+body::after{
+  position:fixed;inset:0;z-index:80;content:"";pointer-events:none;
+  mix-blend-mode:multiply;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.serif{font-family:Fraunces,Georgia,"Songti SC","Times New Roman",serif;font-optical-sizing:auto;font-variation-settings:"SOFT" 50,"WONK" 0;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ---------- mockup chrome (not part of the design) ---------- */
+.chrome{position:sticky;top:0;z-index:90;display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:8px 16px;background:#24312f;color:#cfd9d4;font-size:11px;letter-spacing:.06em}
+.chrome b{color:#f4f7f3;font-weight:700}
+.chrome .sp{flex:1}
+.chrome button{border:1px solid #3f524d;background:transparent;color:#cfd9d4;border-radius:4px;
+  padding:5px 11px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.chrome button[aria-pressed="true"]{background:#f4f7f3;color:#24312f;border-color:#f4f7f3}
+
+/* ---------- shared ---------- */
+.shell{max-width:1180px;margin:0 auto;padding:0 24px}
+.topbar{border-bottom:1px solid var(--line);background:rgba(247,249,245,.95)}
+.topbar .row{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.topnav{display:flex;align-items:center;gap:20px;font-size:13px;font-weight:700;color:var(--muted)}
+.topnav a:hover{color:var(--teal)}
+.langtoggle{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--paper)}
+.langtoggle span{padding:5px 10px;font-size:12px;font-weight:800;color:var(--muted)}
+.langtoggle span.on{background:var(--teal);color:var(--paper)}
+
+.btn{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:8px;
+  border-radius:4px;padding:12px 16px;font-size:.86rem;font-weight:800;transition:all .16s ease}
+.btn-primary{border:1px solid var(--teal-d);background:var(--teal);color:#f4f7f3;box-shadow:0 2px 0 var(--teal-dd)}
+.btn-primary:hover{background:var(--teal-d);transform:translateY(-1px)}
+.btn-ghost{border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.btn-ghost:hover{border-color:#9fb3a8;background:var(--teal-wash)}
+.btn-sm{min-height:38px;padding:8px 12px;font-size:12px}
+.label{font-size:12px;font-weight:700;color:var(--muted)}
+.hint{font-size:12.5px;line-height:1.55;color:var(--muted-2)}
+.note{border-left:3px solid var(--gold);background:var(--gold-wash);color:var(--gold-ink);
+  padding:10px 14px;border-radius:0 6px 6px 0;font-size:12.5px;line-height:1.6}
+.foot{max-width:1180px;margin:0 auto;padding:24px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:6px 24px;font-size:12px;font-weight:700;color:var(--muted-2)}
+.foot a:hover{color:var(--teal)}
+.screen[hidden]{display:none}
+
+/* =========================================================
+   SCREEN 1 — SEARCH
+   Single column. One card owns every search control.
+   ========================================================= */
+.search-wrap{max-width:760px;margin:0 auto;padding:56px 24px 96px}
+.h1{font-size:clamp(30px,4.4vw,44px);line-height:1.06;font-weight:800;color:var(--ink);margin:0;letter-spacing:-.025em}
+.h1 em{font-style:normal;color:var(--teal)}
+.sub{margin:14px 0 0;font-size:16px;line-height:1.6;color:var(--ink-2);max-width:52ch}
+
+/* the one search card — a single border, no nesting */
+.searchcard{margin-top:30px;background:var(--paper-hi);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 18px 60px rgba(36,49,47,.06)}
+.searchcard .pad{padding:18px 18px 0}
+.searchrow{display:flex;align-items:stretch;gap:0;border:2px solid var(--teal);border-radius:10px;
+  background:var(--paper-hi);box-shadow:0 0 0 4px rgba(47,111,115,.09);overflow:hidden}
+.searchrow .ico{display:flex;align-items:center;padding-left:16px;color:var(--teal)}
+.searchrow input{flex:1;min-width:0;border:0;outline:none;background:transparent;color:var(--ink);
+  padding:20px 14px;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.searchrow input::placeholder{color:#93a29b;font-weight:500}
+.searchrow button{border:0;border-left:2px solid var(--teal);background:var(--teal);color:#f4f7f3;
+  padding:0 26px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.searchrow button:hover{background:var(--teal-d)}
+
+/* persistent parse strip — never appears/disappears while typing */
+.parse{margin-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  border:1px dashed var(--line-2);background:var(--wash);border-radius:8px;padding:9px 12px;min-height:44px}
+.parse .lead{font-size:12px;font-weight:700;color:var(--muted)}
+.chip{border-radius:6px;padding:4px 9px;font-size:12px;font-weight:800;line-height:1.3}
+.chip.blue{background:#e2eef0;color:var(--teal-d);border:1px solid #bcd6d8}
+.chip.green{background:var(--teal-wash);color:var(--teal-d);border:1px solid var(--line-2)}
+.chip.gold{background:var(--gold-wash);color:var(--gold-ink);border:1px solid var(--gold-line)}
+.chip.grey{background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+
+/* compact game switch — was two 64px logo tiles */
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:14px 18px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper)}
+.seg button{border:0;background:transparent;padding:9px 15px;font-size:13px;font-weight:800;color:var(--muted);
+  display:flex;align-items:center;gap:7px}
+.seg button[aria-pressed="true"]{background:var(--teal-wash);color:var(--teal-d);box-shadow:inset 0 -2px 0 var(--teal)}
+.seg .dot{width:9px;height:9px;border-radius:3px;background:currentColor;opacity:.75}
+.zip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;
+  background:var(--paper);padding:0 12px;height:38px}
+.zip span{font-size:12px;font-weight:700;color:var(--muted)}
+.zip input{width:66px;border:0;outline:none;background:transparent;font-size:13px;font-weight:700;color:var(--ink)}
+.linkbtn{display:inline-flex;align-items:center;gap:7px;background:none;border:0;padding:0;
+  font-size:13px;font-weight:800;color:var(--teal)}
+.linkbtn:hover{color:var(--teal-d)}
+.linkbtn .caret{transition:transform .18s ease}
+.linkbtn[aria-expanded="true"] .caret{transform:rotate(180deg)}
+.cardfoot{margin-top:16px;border-top:1px solid var(--line-3);background:var(--wash);
+  border-radius:0 0 12px 12px;padding:12px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.cardfoot .scope{font-size:12px;font-weight:600;color:var(--muted-2)}
+
+/* collapsible panels live inside the card, at the card's width */
+.panel{display:none;margin:14px 18px 0;border:1px dashed var(--line-2);background:var(--wash);
+  border-radius:8px;padding:16px}
+.panel.open{display:block}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld > span{font-size:12px;font-weight:700;color:var(--muted)}
+.fld input,.fld select{width:100%;border:1px solid var(--line);border-radius:5px;background:var(--paper-hi);
+  color:var(--ink);padding:10px 11px;outline:none;font-size:14px}
+.fld input:focus,.fld select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(47,111,115,.11)}
+
+/* example queries replace the decorative marquee */
+.examples{margin-top:22px}
+.examples .lead{font-size:13px;font-weight:700;color:var(--muted);margin:0 0 10px}
+.exrow{display:flex;flex-wrap:wrap;gap:8px}
+.ex{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--paper);
+  border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--ink-2)}
+.ex:hover{border-color:var(--teal);color:var(--teal-d);background:var(--paper-hi)}
+.ex small{font-weight:600;color:var(--muted-2)}
+
+/* honest "what you get" preview */
+.preview{margin-top:40px;border-top:1px solid var(--line);padding-top:26px}
+.preview .cap{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.preview .cap h2{margin:0;font-size:17px;font-weight:700;color:var(--ink)}
+.tagx{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:3px 8px;
+  font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted-2);text-transform:uppercase}
+.minirow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:14px;align-items:center;
+  border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:12px 14px}
+.minirow + .minirow{margin-top:8px}
+.minirow.lead{border:2px solid var(--teal);background:var(--paper-hi)}
+.thumb{width:44px;height:60px;border-radius:5px;border:1px solid var(--line-2);
+  background:linear-gradient(150deg,#e9eeea,#d8e2dc);display:grid;place-items:center;color:#9fb3a8}
+.minirow h3{margin:0;font-size:14px;font-weight:700;color:var(--ink);line-height:1.35}
+.minirow p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.price{text-align:right}
+.price b{display:block;font-size:19px;font-weight:700;color:var(--ink)}
+.price span{display:block;font-size:10.5px;font-weight:700;color:var(--muted-2);margin-top:2px}
+
+/* =========================================================
+   SCREEN 2 — RESULT
+   ========================================================= */
+.rhead{position:sticky;top:33px;z-index:50;border-bottom:1px solid var(--line);
+  background:rgba(252,251,246,.96);backdrop-filter:blur(6px);box-shadow:0 1px 10px rgba(36,49,47,.04)}
+.rhead .row{max-width:1180px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:14px}
+.qpill{flex:1;min-width:0;max-width:610px;display:flex;align-items:center;gap:10px;text-align:left;
+  border:1px solid var(--line);background:#f4f3ec;border-radius:9px;padding:9px 12px}
+.qpill:hover{border-color:var(--teal)}
+.qpill .t{font-size:13.5px;font-weight:800;color:var(--ink);display:block;line-height:1.3}
+.qpill .c{font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-top:2px}
+.qpill .e{font-size:11.5px;font-weight:800;color:var(--teal);margin-left:auto}
+.rnav{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:12px;font-weight:800;color:var(--muted)}
+
+.results{max-width:1180px;margin:0 auto;padding:22px 24px 72px}
+.confirmed{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border:1px solid var(--line);
+  background:var(--paper);border-radius:10px;padding:12px 14px}
+.confirmed .thumb{width:38px;height:52px}
+.confirmed h1{margin:0;font-size:16px;font-weight:700;color:var(--ink)}
+.confirmed p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+.ok{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);background:var(--wash);
+  border-radius:5px;padding:4px 9px;font-size:11.5px;font-weight:800;color:var(--teal-d)}
+
+.lens{margin-top:20px;display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.lens .lead{font-size:13px;font-weight:700;color:var(--muted);margin-right:2px}
+.lens button{min-height:38px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
+  border-radius:999px;padding:7px 15px;font-size:13.5px;font-weight:800}
+.lens button:hover{border-color:#9fb3a8;background:var(--teal-wash);color:var(--teal-d)}
+.lens button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal);color:var(--paper)}
+
+.pick{margin-top:14px;border:2px solid var(--teal);background:var(--paper);border-radius:12px;
+  padding:20px;box-shadow:0 4px 8px rgba(36,49,47,.08)}
+.pick .top{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:18px;align-items:start}
+.pick .thumb{width:84px;height:116px}
+.badges{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bdg{border-radius:5px;padding:4px 9px;font-size:11px;font-weight:800;letter-spacing:.02em}
+.bdg.solid{background:var(--teal);color:var(--paper)}
+.bdg.soft{background:var(--teal-wash);color:var(--teal-d);border:1px solid var(--line-2)}
+.bdg.plain{color:var(--muted-2);font-weight:700}
+.pick h2{margin:11px 0 0;font-size:22px;font-weight:700;line-height:1.25;color:var(--ink)}
+.pick .meta{margin:9px 0 0;font-size:13px;font-weight:600;color:var(--ink-2)}
+.pick .money{text-align:right;min-width:172px}
+.pick .money b{display:block;font-size:32px;font-weight:700;line-height:1;color:var(--ink)}
+.pick .money .cap{display:block;margin-top:6px;font-size:11px;font-weight:800;color:var(--muted-2)}
+.delta{display:inline-flex;align-items:center;gap:6px;margin-top:10px;border-radius:6px;padding:5px 10px;
+  font-size:12px;font-weight:800;border:1px solid var(--gold-line);background:var(--gold-wash);color:var(--gold-ink)}
+.printbox{margin-top:12px;border:1px solid var(--line);background:var(--wash);border-radius:7px;
+  padding:10px 12px;font-size:12.5px;line-height:1.6;color:var(--ink-2)}
+.printbox b{color:var(--ink)}
+.printbox ul{margin:6px 0 0;padding-left:18px}
+
+.action{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-3)}
+.actionline{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;border:1px solid var(--line-2);
+  background:var(--teal-wash);color:var(--teal-d);border-radius:8px;padding:11px 14px;font-size:14px;line-height:1.6}
+.actionline .k{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;opacity:.8}
+.actionline strong{font-weight:800}
+.reasons{margin-top:14px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.65;color:var(--ink-2)}
+.reasons .k{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-right:8px}
+.reasons .why .k{color:var(--teal)}
+.reasons .know{border-left:3px solid var(--gold);padding-left:13px}
+.reasons .know .k{color:#8d6032}
+.reasons .alt{border-top:1px solid var(--line-3);padding-top:11px;font-size:12.5px;color:var(--muted)}
+.pickcta{margin-top:16px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
+
+.alts{margin-top:26px}
+.alts h2{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--ink)}
+.alts .hint{margin:0 0 12px}
+.row{display:grid;grid-template-columns:46px minmax(0,1fr) auto auto;gap:16px;align-items:center;
+  border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:13px 15px}
+.row + .row{margin-top:8px}
+.row .thumb{width:46px;height:63px}
+.row h3{margin:0;font-size:14px;font-weight:700;color:var(--ink);line-height:1.35}
+.row .sig{margin:6px 0 0;display:flex;flex-wrap:wrap;gap:6px}
+.sig .s{border:1px solid var(--line);background:var(--wash);border-radius:5px;padding:3px 8px;
+  font-size:11px;font-weight:700;color:var(--muted)}
+.sig .s.warn{border-color:var(--gold-line);background:var(--gold-wash);color:var(--gold-ink)}
+.row .price b{font-size:17px}
+.skipped{margin-top:10px;border:1px dashed var(--line-2);background:var(--wash);border-radius:8px;
+  padding:11px 14px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+
+.sources{margin-top:28px;display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.card{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:16px 18px}
+.card h2{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
+.srow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-3);font-size:13px}
+.srow:last-child{border-bottom:0}
+.srow .nm{font-weight:700;color:var(--ink)}
+.srow .rt{margin-left:auto;font-size:12px;color:var(--muted)}
+.pill{border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800}
+.pill.used{background:var(--teal-wash);color:var(--teal-d);border:1px solid var(--line-2)}
+.pill.out{background:var(--clay-wash);color:var(--clay);border:1px solid var(--clay-line)}
+.pill.off{background:var(--paper);color:var(--muted-2);border:1px solid var(--line)}
+.rcpt{list-style:none;margin:8px 0 0;padding:0;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+.rcpt li{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line-3)}
+.rcpt li:last-child{border-bottom:0}
+.rcpt .k{flex:0 0 116px;font-weight:700;color:var(--muted)}
+.rcpt .v{min-width:0}
+.unk{color:var(--muted-2);font-style:italic}
+
+@media (max-width:860px){
+  .sources{grid-template-columns:1fr}
+  .pick .top{grid-template-columns:64px minmax(0,1fr)}
+  .pick .thumb{width:64px;height:88px}
+  .pick .money{grid-column:1/-1;text-align:left;min-width:0}
+  .row{grid-template-columns:46px minmax(0,1fr);row-gap:12px}
+  .row .price{text-align:left}
+  .searchrow{flex-wrap:wrap}
+  .searchrow input{flex-basis:100%;padding:16px 14px;font-size:18px}
+  .searchrow button{flex:1;border-left:0;border-top:2px solid var(--teal);padding:14px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- mockup control bar — not part of the design -->
+<div class="chrome">
+  <b>STATIC MOCKUP</b>
+  <span>Lens TCG · layout proposal · palette + type unchanged</span>
+  <span class="sp"></span>
+  <button id="tab-search" aria-pressed="true" onclick="showScreen('search')">1 · Search</button>
+  <button id="tab-result" aria-pressed="false" onclick="showScreen('result')">2 · Result</button>
+</div>
+
+<!-- ==========================================================
+     SCREEN 1 — SEARCH
+     ========================================================== -->
+<div class="screen" id="screen-search">
+
+  <header class="topbar">
+    <div class="row">
+      <svg width="150" height="43" viewBox="0 0 392 112" role="img" aria-label="Lens TCG logo">
+        <defs>
+          <clipPath id="hGlass"><circle cx="52" cy="66" r="26"/></clipPath>
+          <g id="hCards">
+            <g transform="translate(48,46) rotate(-13)"><rect x="-17" y="-26" width="34" height="52" rx="6" fill="#d7a84e" stroke="#b88a35" stroke-width="2"/></g>
+            <g transform="translate(52,48) rotate(5)">
+              <rect x="-17" y="-26" width="34" height="52" rx="6" fill="#2f6f73" stroke="#1f474a" stroke-width="2"/>
+              <rect x="-12" y="-21" width="24" height="17" rx="3.5" fill="#fcfbf6"/>
+              <rect x="-12" y="10" width="24" height="4" rx="2" fill="#fcfbf6"/>
+              <rect x="-12" y="17" width="14" height="4" rx="2" fill="#fcfbf6" opacity="0.6"/>
+            </g>
+          </g>
+        </defs>
+        <use href="#hCards"/>
+        <g clip-path="url(#hGlass)">
+          <circle cx="52" cy="66" r="26" fill="#fcfbf6"/>
+          <g transform="translate(52,66) scale(1.38) translate(-52,-66)"><use href="#hCards"/></g>
+        </g>
+        <circle cx="52" cy="66" r="26" fill="none" stroke="#d7a84e" stroke-width="3.6"/>
+        <circle cx="52" cy="66" r="23.5" fill="none" stroke="#1f474a" stroke-width="1" opacity="0.22"/>
+        <text x="102" y="62" font-family="Fraunces,Georgia,serif" font-size="46" font-weight="700" letter-spacing="-0.5">
+          <tspan fill="#1f474a">Lens</tspan><tspan dx="10" font-size="30" font-weight="500" letter-spacing="3" fill="#2f6f73">TCG</tspan>
+        </text>
+        <text x="104" y="88" font-family="Fraunces,Georgia,serif" font-size="12.5" letter-spacing="2.4" fill="#64736c">think before you buy</text>
+      </svg>
+      <div class="topnav">
+        <a href="#">How it works</a>
+        <a href="#">Method</a>
+        <span class="langtoggle"><span class="on">EN</span><span>中文</span></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="search-wrap">
+    <h1 class="h1 serif">Which listing of <em>this exact card</em> is actually worth buying?</h1>
+    <p class="sub">Search the card once. Lens compares live listings on complete cost, condition fit, seller
+      record and reviewable evidence — then names one pick, or tells you to pass.</p>
+
+    <!-- ONE card. Input, game, filters, ZIP, paste-listing all live inside it. -->
+    <section class="searchcard" aria-label="Search for a card">
+      <div class="pad">
+        <div class="searchrow">
+          <span class="ico" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>
+            </svg>
+          </span>
+          <input id="q" value="Charizard 4/102 holo" placeholder="e.g. Greninja Gold Star SWSH144" aria-label="Search for a card" />
+          <button type="button" onclick="showScreen('result')">
+            Find listings
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- persistent: reserves its own height so the layout never jumps -->
+        <div class="parse" aria-live="polite">
+          <span class="lead">Reading this as</span>
+          <span class="chip blue">Pokémon</span>
+          <span class="chip green">Charizard</span>
+          <span class="chip gold">#4/102</span>
+          <span class="chip grey">Holo</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Card game">
+          <button type="button" aria-pressed="true"><span class="dot" style="background:#d7a84e"></span>Pokémon</button>
+          <button type="button" aria-pressed="false"><span class="dot" style="background:#9a4a2c"></span>One Piece</button>
+        </div>
+        <label class="zip"><span>Ship to</span><input value="10003" inputmode="numeric" aria-label="Delivery ZIP code" /></label>
+        <button class="linkbtn" type="button" aria-expanded="false" onclick="togglePanel('p-filters',this)">
+          Condition &amp; card details · <strong>Near Mint</strong>
+          <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="panel" id="p-filters">
+        <div class="grid3">
+          <label class="fld"><span>Card name</span><input placeholder="Charizard" /></label>
+          <label class="fld"><span>Set</span><input placeholder="Base Set" /></label>
+          <label class="fld"><span>Collector number</span><input placeholder="4/102" /></label>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <label class="fld"><span>Condition you want</span>
+            <select><option>Near Mint</option><option>Lightly Played</option><option>Moderately Played</option><option>Heavily Played</option><option>Damaged</option></select>
+          </label>
+          <label class="fld"><span>Sales tax rate (optional)</span><input placeholder="Estimated from ZIP" /></label>
+        </div>
+        <p class="hint" style="margin:12px 0 0">Leave these blank unless the search above is ambiguous — you'll get to
+          confirm the exact version before any listing is ranked.</p>
+      </div>
+
+      <div class="panel" id="p-paste">
+        <div class="grid2">
+          <label class="fld"><span>Listing URL</span><input placeholder="https://www.ebay.com/itm/…" /></label>
+          <label class="fld"><span>Marketplace</span><select><option>Detected from the link</option></select></label>
+        </div>
+        <p class="hint" style="margin:12px 0 0">We fetch this page once and check it against the confirmed card. Pasted
+          listings are never published in a shared receipt.</p>
+      </div>
+
+      <div class="cardfoot">
+        <button class="linkbtn" type="button" aria-expanded="false" onclick="togglePanel('p-paste',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+          Check one specific listing instead
+        </button>
+        <span class="sp" style="flex:1"></span>
+        <span class="scope">Pokémon &amp; One Piece · raw singles · U.S. listings · prices in USD</span>
+      </div>
+    </section>
+
+    <!-- functional replacement for the decorative marquee -->
+    <div class="examples">
+      <p class="lead">Try one — the search box reads name, number, language and variant together:</p>
+      <div class="exrow">
+        <button class="ex" type="button">Charizard 4/102 <small>Base Set holo</small></button>
+        <button class="ex" type="button">Luffy OP01-003 <small>parallel</small></button>
+        <button class="ex" type="button">Greninja Gold Star SWSH144</button>
+        <button class="ex" type="button">P-096 Japanese promo</button>
+      </div>
+    </div>
+
+    <!-- what you actually get: shown, not claimed -->
+    <section class="preview">
+      <div class="cap">
+        <h2>What comes back</h2><span class="tagx">Example</span>
+      </div>
+      <div class="minirow lead">
+        <div class="thumb" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>
+        </div>
+        <div>
+          <h3>One recommended buy, with the catch stated</h3>
+          <p>Complete cost · condition fit · seller record · reviewable evidence</p>
+        </div>
+        <div class="price"><b>$412.00</b><span>EST. LANDED</span></div>
+      </div>
+      <div class="minirow">
+        <div class="thumb" aria-hidden="true"></div>
+        <div>
+          <h3>Three other lenses on the same set of listings</h3>
+          <p>Cheapest · Safest · Best-documented — they may all land on one listing</p>
+        </div>
+        <div class="price"><b>4</b><span>LENSES</span></div>
+      </div>
+      <div class="minirow">
+        <div class="thumb" aria-hidden="true"></div>
+        <div>
+          <h3>Every source, including the ones that failed</h3>
+          <p>Timestamps, assumptions, what's missing, and how confident we are</p>
+        </div>
+        <div class="price"><b>0</b><span>HIDDEN GAPS</span></div>
+      </div>
+      <p class="hint" style="margin-top:12px">If nothing is comparable, Lens says so and hands you the next checks
+        instead of picking a listing anyway.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>© 2026 Lens TCG</span>
+    <a href="#">Method &amp; data sources</a>
+    <a href="#">What we don't do</a>
+    <a href="#">Feedback</a>
+  </footer>
+</div>
+
+<!-- ==========================================================
+     SCREEN 2 — RESULT
+     ========================================================== -->
+<div class="screen" id="screen-result" hidden>
+
+  <header class="rhead">
+    <div class="row">
+      <svg width="104" height="30" viewBox="0 0 392 112" role="img" aria-label="Lens TCG" style="flex:0 0 auto">
+        <g transform="translate(48,46) rotate(-13)"><rect x="-17" y="-26" width="34" height="52" rx="6" fill="#d7a84e" stroke="#b88a35" stroke-width="2"/></g>
+        <g transform="translate(52,48) rotate(5)">
+          <rect x="-17" y="-26" width="34" height="52" rx="6" fill="#2f6f73" stroke="#1f474a" stroke-width="2"/>
+          <rect x="-12" y="-21" width="24" height="17" rx="3.5" fill="#fcfbf6"/>
+          <rect x="-12" y="10" width="24" height="4" rx="2" fill="#fcfbf6"/>
+        </g>
+        <circle cx="52" cy="66" r="26" fill="#fcfbf6" fill-opacity="0.55"/>
+        <circle cx="52" cy="66" r="26" fill="none" stroke="#d7a84e" stroke-width="3.6"/>
+        <text x="102" y="62" font-family="Fraunces,Georgia,serif" font-size="46" font-weight="700" letter-spacing="-0.5">
+          <tspan fill="#1f474a">Lens</tspan><tspan dx="10" font-size="30" font-weight="500" letter-spacing="3" fill="#2f6f73">TCG</tspan>
+        </text>
+      </svg>
+      <button class="qpill" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2f6f73" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+        <span style="min-width:0">
+          <span class="t">Charizard 4/102 holo</span>
+          <span class="c">Pokémon · Near Mint wanted · ZIP 10003</span>
+        </span>
+        <span class="e">Edit</span>
+      </button>
+      <nav class="rnav">
+        <button class="linkbtn" style="color:var(--muted)" onclick="showScreen('search')">New search</button>
+        <a href="#">Method</a>
+        <span class="langtoggle"><span class="on">EN</span><span>中文</span></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="results">
+
+    <div class="confirmed">
+      <div class="thumb" aria-hidden="true"></div>
+      <div style="min-width:0">
+        <h1>Charizard — Base Set, 4/102</h1>
+        <p>Holo Rare · Unlimited print · English</p>
+      </div>
+      <span class="ok" style="margin-left:auto">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 12.5l5.5 5.5L20 7"/></svg>
+        Version confirmed
+      </span>
+      <button class="btn btn-ghost btn-sm" type="button">Change version</button>
+    </div>
+
+    <div class="lens" role="group" aria-label="Optimize instead for">
+      <span class="lead">Optimize for</span>
+      <button type="button" aria-pressed="true">Best value</button>
+      <button type="button" aria-pressed="false">Cheapest</button>
+      <button type="button" aria-pressed="false">Safest</button>
+      <button type="button" aria-pressed="false">Best-documented</button>
+    </div>
+
+    <article class="pick" aria-label="Best-supported buy">
+      <div class="top">
+        <div class="thumb" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div style="min-width:0">
+          <div class="badges">
+            <span class="bdg solid">Our pick</span>
+            <span class="bdg soft">Best value</span>
+            <span class="bdg plain">1 of 6 comparable listings</span>
+          </div>
+          <h2 class="serif">Pokemon Base Set Charizard 4/102 Holo Rare Unlimited — Near Mint</h2>
+          <p class="meta">eBay · seller claims Near Mint · 9 photos · returns accepted · ships from OH</p>
+          <div class="printbox">
+            <p style="margin:0"><b>Confirmed print:</b> Base Set · 4/102 · Holo Rare · Unlimited</p>
+            <ul>
+              <li>The full collector number and card name identify the selected print.</li>
+              <li>The listing does not state a different foil or color treatment.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="money">
+          <b class="mono">$412.00</b>
+          <span class="cap">EST. LANDED · ZIP 10003</span>
+          <span class="delta">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 19V6M6 12l6-6 6 6"/></svg>
+            6% over market · item only
+          </span>
+        </div>
+      </div>
+
+      <div class="action">
+        <p class="actionline">
+          <span class="k">Action</span>
+          <strong>Open and verify</strong>
+          <span>The photos should show the back and both bottom corners before you commit at this price.</span>
+        </p>
+
+        <div class="reasons">
+          <p class="why"><span class="k">Why it stands out</span>Only listing here where a Near Mint claim is
+            backed by front, back and corner photos, from a seller with 1,240 sales at 99.8%. Its $412 landed cost
+            is $18 above the cheapest comparable listing, which has no back photo at all.</p>
+          <p class="know"><span class="k">What to know</span>Item price sits 6% above the TCGplayer market reference,
+            which is condition-blind and reads as Near Mint. Shipping is stated; tax is estimated at 8.875% from your
+            ZIP, not quoted by the seller.</p>
+          <p class="alt"><span class="k">Why not the cheapest</span>The $394 listing shows one front-facing photo and
+            no condition notes, so its Near Mint claim has nothing to review.</p>
+        </div>
+
+        <div class="pickcta">
+          <button class="btn btn-ghost btn-sm" type="button">Why this one?</button>
+          <button class="btn btn-ghost btn-sm" type="button">Save receipt</button>
+          <a class="btn btn-primary btn-sm" href="#">Review listing on eBay ↗</a>
+        </div>
+      </div>
+    </article>
+
+    <section class="alts">
+      <h2>Other comparable listings</h2>
+      <p class="hint">Ranked by the same lens. Missing seller data is shown as unverified, not as risk.</p>
+
+      <div class="row">
+        <div class="thumb" aria-hidden="true"></div>
+        <div style="min-width:0">
+          <h3>Charizard 4/102 Base Set Holo Unlimited NM</h3>
+          <div class="sig">
+            <span class="s">Claims Near Mint</span>
+            <span class="s">1 photo</span>
+            <span class="s warn">No back photo</span>
+            <span class="s">99.1% · 340 sales</span>
+          </div>
+        </div>
+        <div class="price"><b class="mono">$394.00</b><span>EST. LANDED</span></div>
+        <button class="btn btn-ghost btn-sm" type="button">Open</button>
+      </div>
+
+      <div class="row">
+        <div class="thumb" aria-hidden="true"></div>
+        <div style="min-width:0">
+          <h3>Base Set Charizard Holo 4/102 — Near Mint, fresh from binder</h3>
+          <div class="sig">
+            <span class="s">Claims Near Mint</span>
+            <span class="s">6 photos</span>
+            <span class="s">Returns accepted</span>
+            <span class="s">Seller history unverified</span>
+          </div>
+        </div>
+        <div class="price"><b class="mono">$421.50</b><span>EST. LANDED</span></div>
+        <button class="btn btn-ghost btn-sm" type="button">Open</button>
+      </div>
+
+      <p class="skipped"><strong style="color:var(--ink)">3 listings were left out.</strong> Two state a condition
+        below Near Mint, and one has no stated shipping cost, so no complete comparable total could be built.
+        <a href="#" style="color:var(--teal);font-weight:700">Show them anyway</a></p>
+    </section>
+
+    <section class="sources">
+      <div class="card">
+        <h2>Sources checked</h2>
+        <p class="hint">Only concrete active listings rank. TCGplayer appears separately as an aggregate market reference.</p>
+        <div class="srow"><span class="nm">eBay Browse</span><span class="pill used">Queried</span><span class="rt">11 listings · 14:32 UTC</span></div>
+        <div class="srow"><span class="nm">TCGplayer market reference</span><span class="pill used">Used</span><span class="rt">item-only · as of Aug 8</span></div>
+        <div class="srow"><span class="nm">PriceCharting</span><span class="pill out">Unavailable</span><span class="rt">request timed out</span></div>
+        <div class="srow"><span class="nm">TCGplayer direct inventory</span><span class="pill off">Not connected</span><span class="rt">—</span></div>
+        <p class="note" style="margin-top:12px">One source sat out. The ranking above uses only what was actually
+          returned; nothing was estimated to fill the gap.</p>
+      </div>
+
+      <div class="card">
+        <h2>Decision receipt</h2>
+        <p class="hint">Everything the ranking assumed.</p>
+        <ul class="rcpt">
+          <li><span class="k">Generated</span><span class="v">Aug 9, 2026 · 14:32 UTC</span></li>
+          <li><span class="k">Condition asked</span><span class="v">Near Mint — like-for-like against the reference</span></li>
+          <li><span class="k">Cost basis</span><span class="v">Item + stated shipping + tax estimated from ZIP 10003</span></li>
+          <li><span class="k">Market anchor</span><span class="v">Item-only, condition-blind, reads as Near Mint</span></li>
+          <li><span class="k">Not known</span><span class="v unk">Seller's grading standard · card's exact centering · whether tax is charged at checkout</span></li>
+          <li><span class="k">Confidence</span><span class="v">Moderate — one source unavailable</span></li>
+        </ul>
+        <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" type="button">Share receipt</button>
+          <button class="btn btn-ghost btn-sm" type="button">Retry sources</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>© 2026 Lens TCG</span>
+    <a href="#">Method &amp; data sources</a>
+    <a href="#">What we don't do</a>
+    <a href="#">Feedback</a>
+  </footer>
+</div>
+
+<script>
+function showScreen(which){
+  document.getElementById('screen-search').hidden = which !== 'search';
+  document.getElementById('screen-result').hidden = which !== 'result';
+  document.getElementById('tab-search').setAttribute('aria-pressed', which === 'search');
+  document.getElementById('tab-result').setAttribute('aria-pressed', which === 'result');
+  window.scrollTo(0,0);
+}
+function togglePanel(id, btn){
+  var el = document.getElementById(id);
+  var open = el.classList.toggle('open');
+  btn.setAttribute('aria-expanded', open);
+}
+// lens + game switches behave like real toggles so the mockup is clickable
+document.querySelectorAll('.lens, .seg').forEach(function(group){
+  group.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click', function(){
+      group.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
+      b.setAttribute('aria-pressed','true');
+    });
+  });
+});
+</script>
+</body>
+</html>
