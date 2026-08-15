@@ -1,0 +1,9 @@
+# Local artifacts that must never be uploaded by a CLI deploy. Git-integration
+# builds only ever see tracked files, so this exists for `vercel --prod`, which
+# ships the whole working directory — `output/` alone is ~356MB of QA
+# screenshots and made the upload time out.
+output
+graphify-out
+.next
+.claude
+.workbuddy-ai
