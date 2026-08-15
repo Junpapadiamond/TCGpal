@@ -64,10 +64,13 @@ bad" from "my product is bad", and PostHog cannot tell you it alone.
 | # | Metric | Numerator | Denominator | Diagnoses |
 |---|---|---|---|---|
 | 1 | Search rate | sessions w/ `card_search_started` | sessions w/ `app_opened` | hero clarity |
-| 2 | Confirm rate | `card_identity_confirmed` | `card_search_started` | identity UX + catalog coverage |
+| 2 | Confirm rate † | `card_identity_confirmed` | `card_search_started` | how often the query was ambiguous |
 | 3 | Completion rate | `comparison_completed` | `comparison_started` | reliability |
 | 4 | Answer rate | `comparison_completed` w/ `result_state ∈ {best_buy, inspect_first}` | all `comparison_completed` | abstention / supply coverage |
 | 5 | **Activation ★** | sessions w/ `choice_opened` | sessions w/ `app_opened` | **North Star** |
+
+† Confirm rate is a side metric, not a funnel step — auto-confirmed searches skip
+`card_identity_confirmed` entirely. See Insight 1.
 
 ### Level 2 — Trust and comprehension
 
@@ -117,10 +120,28 @@ Fixtures and founder testing otherwise inflate the entire funnel.
 ### Insight 1 — Launch funnel (Funnel, ordered, 7-day window)
 
 ```
-app_opened → card_search_started → card_identity_confirmed
-           → comparison_completed → choice_opened
+app_opened → card_search_started → comparison_completed → choice_opened
 ```
-Breakdown by `channel`. This single insight yields metrics 1, 2, 5.
+Breakdown by `channel`. This single insight yields metrics 1, 3, 5.
+
+**Do not put `card_identity_confirmed` in this funnel.** It only fires when the
+buyer taps a confirmation. A rail-card click or an explicit name + number search
+is auto-confirmed and skips the gallery entirely, so including the step reads as
+a large drop-off that never happened. Confirmed empirically on 2026-08-16: a
+rail-card search produced `comparison_completed` with no `card_identity_confirmed`.
+
+Track confirmation separately instead (Insight 8).
+
+### Insight 8 — Confirmation load (Trends, formula)
+
+```
+A = card_identity_confirmed
+B = card_search_started
+formula: A / B
+```
+This is the share of searches ambiguous enough to need a human tap — a measure of
+catalog and query-parsing quality, not a funnel step. Rising means buyers are
+being asked to disambiguate more often.
 
 ### Insight 2 — Answer rate (Trends, formula)
 
