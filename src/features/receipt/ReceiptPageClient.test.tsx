@@ -15,7 +15,12 @@ import {
 } from "./ReceiptPageClient";
 
 const trackEvent = vi.fn();
-vi.mock("@/lib/analytics", () => ({ trackEvent: (...args: unknown[]) => trackEvent(...args) }));
+// Spy on emission only; the referrer classifier stays real so this file keeps
+// testing the actual channel mapping rather than a stub of it.
+vi.mock("@/lib/analytics", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/analytics")>(),
+  trackEvent: (...args: unknown[]) => trackEvent(...args),
+}));
 
 function snapshot(): ComparisonSnapshot {
   return {
@@ -97,6 +102,8 @@ describe("receipt page interactions", () => {
     expect(classifyReceiptReferrer("https://www.reddit.com/r/PokemonTCG", "https://lenstcg.com")).toBe("reddit");
     expect(classifyReceiptReferrer("https://discord.com/channels/1/2", "https://lenstcg.com")).toBe("discord");
     expect(classifyReceiptReferrer("https://example.com/post", "https://lenstcg.com")).toBe("other");
+    // A shared receipt is the one artifact that travels to RedNote on its own.
+    expect(classifyReceiptReferrer("https://www.xiaohongshu.com/explore/abc", "https://lenstcg.com")).toBe("rednote");
   });
 
   it("localizes condition labels and hides machine-only identity reason codes", () => {

@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { sanitizeAnalyticsProperties } from "@/lib/analytics";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  classifyChannelTag,
+  classifyReferrerChannel,
+  clearResultShown,
+  markResultShown,
+  resolveChannelFrom,
+  sanitizeAnalyticsProperties,
+  timeToOpenBucket,
+} from "@/lib/analytics";
 
 describe("analytics privacy boundary", () => {
   it("drops listing text, URLs, seller identifiers, and images", () => {
@@ -44,5 +52,85 @@ describe("analytics privacy boundary", () => {
       share_method: "clipboard-with-card-name",
       result_state: "secret-state",
     })).toEqual({});
+  });
+
+  it("keeps the raw campaign tag out of the payload and allows only channel enums", () => {
+    expect(sanitizeAnalyticsProperties({ channel: "rednote" })).toEqual({ channel: "rednote" });
+    expect(sanitizeAnalyticsProperties({ channel: "reddit_pokemontcg_launch_post_2" })).toEqual({});
+  });
+
+  it("allows only bucketed decision latency, never a raw duration", () => {
+    expect(sanitizeAnalyticsProperties({ time_to_open_bucket: "under_10s" })).toEqual({ time_to_open_bucket: "under_10s" });
+    expect(sanitizeAnalyticsProperties({ time_to_open_bucket: 8123 })).toEqual({});
+  });
+});
+
+describe("channel attribution", () => {
+  it("maps campaign tags to a coarse channel, never to the raw tag", () => {
+    expect(classifyChannelTag("reddit")).toBe("reddit");
+    expect(classifyChannelTag("reddit_pokemontcg_01")).toBe("reddit");
+    expect(classifyChannelTag("rednote_bio")).toBe("rednote");
+    expect(classifyChannelTag("xhs")).toBe("rednote");
+    expect(classifyChannelTag("xiaohongshu-note-4")).toBe("rednote");
+    expect(classifyChannelTag("discord_cardcollectors")).toBe("discord");
+    expect(classifyChannelTag("internal")).toBe("internal");
+    expect(classifyChannelTag("some-partner-newsletter")).toBe("other");
+  });
+
+  it("treats a missing or empty tag as no signal", () => {
+    expect(classifyChannelTag(null)).toBeNull();
+    expect(classifyChannelTag("")).toBeNull();
+    expect(classifyChannelTag("   ")).toBeNull();
+  });
+
+  it("classifies referrer hosts, including RedNote and same-origin navigation", () => {
+    expect(classifyReferrerChannel("", "https://lenstcg.com")).toBe("direct");
+    expect(classifyReferrerChannel("https://lenstcg.com/method", "https://lenstcg.com")).toBe("direct");
+    expect(classifyReferrerChannel("https://www.reddit.com/r/PokemonTCG", "https://lenstcg.com")).toBe("reddit");
+    expect(classifyReferrerChannel("https://redd.it/abc123", "https://lenstcg.com")).toBe("reddit");
+    expect(classifyReferrerChannel("https://www.xiaohongshu.com/explore/x", "https://lenstcg.com")).toBe("rednote");
+    expect(classifyReferrerChannel("https://xhslink.com/a/abc", "https://lenstcg.com")).toBe("rednote");
+    expect(classifyReferrerChannel("https://discord.com/channels/1/2", "https://lenstcg.com")).toBe("discord");
+    expect(classifyReferrerChannel("https://example.com/post", "https://lenstcg.com")).toBe("other");
+    expect(classifyReferrerChannel("not-a-url", "https://lenstcg.com")).toBe("other");
+  });
+
+  it("prefers an explicit tag, then the stored channel, then the referrer", () => {
+    const origin = "https://lenstcg.com";
+
+    // RedNote strips the referrer inside its in-app browser, so the tag has to win.
+    expect(resolveChannelFrom({ search: "?s=rednote_bio", referrer: "", stored: null, origin })).toBe("rednote");
+    // A fresh campaign click overrides what an earlier visit stored this session.
+    expect(resolveChannelFrom({ search: "?s=reddit_op", referrer: "", stored: "rednote", origin })).toBe("reddit");
+    // Internal navigation drops the param but must not relabel the visit "direct".
+    expect(resolveChannelFrom({ search: "", referrer: `${origin}/method`, stored: "reddit", origin })).toBe("reddit");
+    expect(resolveChannelFrom({ search: "", referrer: "https://www.reddit.com/r/OnePieceTCG", stored: null, origin })).toBe("reddit");
+    expect(resolveChannelFrom({ search: "", referrer: "", stored: null, origin })).toBe("direct");
+    // A tampered or stale storage value must not smuggle a free-text label through.
+    expect(resolveChannelFrom({ search: "", referrer: "", stored: "reddit_launch_post", origin })).toBe("direct");
+  });
+});
+
+describe("decision latency", () => {
+  beforeEach(() => {
+    clearResultShown();
+  });
+
+  it("reports no bucket until a result has actually been shown", () => {
+    expect(timeToOpenBucket(1_000)).toBeUndefined();
+  });
+
+  it("buckets the gap between seeing the verdict and opening a listing", () => {
+    markResultShown(100_000);
+    expect(timeToOpenBucket(100_000)).toBe("under_10s");
+    expect(timeToOpenBucket(109_999)).toBe("under_10s");
+    expect(timeToOpenBucket(110_000)).toBe("10_to_60s");
+    expect(timeToOpenBucket(159_999)).toBe("10_to_60s");
+    expect(timeToOpenBucket(160_000)).toBe("over_60s");
+  });
+
+  it("ignores a clock that ran backwards rather than reporting a wrong bucket", () => {
+    markResultShown(100_000);
+    expect(timeToOpenBucket(99_000)).toBeUndefined();
   });
 });

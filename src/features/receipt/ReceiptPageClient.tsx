@@ -19,7 +19,7 @@ import { LanguageProvider, setLanguage, useLang } from "@/features/comparison/i1
 import { buildVerdictCopy } from "@/features/comparison/verdict-copy";
 import type { ComparisonSnapshot } from "@/lib/comparison/report-snapshot";
 import type { ConditionClaim, NormalizedListing, RankedChoice } from "@/lib/schemas";
-import { trackEvent } from "@/lib/analytics";
+import { classifyReferrerChannel, trackEvent } from "@/lib/analytics";
 import {
   buildReceiptModel,
   buildReceiptRecheckPath,
@@ -194,17 +194,10 @@ const copy = {
   },
 };
 
+// One classifier for both surfaces: a receipt referrer and a landing channel
+// have to agree, or the same visitor is counted under two different labels.
 export function classifyReceiptReferrer(referrer: string, origin: string) {
-  if (!referrer) return "direct";
-  try {
-    const url = new URL(referrer);
-    if (url.origin === origin) return "direct";
-    if (url.hostname.includes("reddit.com")) return "reddit";
-    if (url.hostname.includes("discord.com") || url.hostname.includes("discordapp.com")) return "discord";
-  } catch {
-    return "other";
-  }
-  return "other";
+  return classifyReferrerChannel(referrer, origin);
 }
 
 export function formatReceiptCondition(condition: ConditionClaim, lang: ReceiptLang) {

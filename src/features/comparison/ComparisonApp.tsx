@@ -19,7 +19,7 @@ import {
   IconSpinner,
   IconX,
 } from "./icons";
-import { initializeAnalytics, trackEvent } from "@/lib/analytics";
+import { initializeAnalytics, markResultShown, timeToOpenBucket, trackEvent } from "@/lib/analytics";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
@@ -441,9 +441,22 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     if (detectedGame) form.setValue("game", detectedGame);
   }, [detectedGame, form]);
 
+  // The landing event is the denominator for every rate below it, so it must
+  // fire exactly once per visit — the ref survives StrictMode's double effect.
+  const appOpenedRef = useRef(false);
   useEffect(() => {
     initializeAnalytics();
+    if (appOpenedRef.current) return;
+    appOpenedRef.current = true;
+    trackEvent("app_opened");
   }, []);
+
+  // Start the decision clock whenever a verdict actually becomes visible. Keyed
+  // on the report too, so a repeat comparison and a restored result both reset
+  // it rather than inheriting the previous card's elapsed time.
+  useEffect(() => {
+    if (journeyState === "result" && report) markResultShown();
+  }, [journeyState, report]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -718,6 +731,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     trackEvent("comparison_completed", {
       marketplace: request.sourceListing.marketplace,
       status: parsed.status,
+      result_state: parsed.outcome,
       demo_mode: parsed.demoMode,
       candidate_count: parsed.candidates.length,
     });
@@ -746,6 +760,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     trackEvent("comparison_completed", {
       marketplace: request.sourceListing.marketplace,
       status: parsed.status,
+      result_state: parsed.outcome,
       demo_mode: parsed.demoMode,
       candidate_count: parsed.candidates.length,
       duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
@@ -3302,7 +3317,7 @@ function RecommendedBuyHero({
                 href={listing.url}
                 target="_blank"
                 rel="noreferrer"
-                onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode })}
+                onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode, time_to_open_bucket: timeToOpenBucket() })}
               >
                 {t.result.reviewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
               </a>
@@ -3586,7 +3601,7 @@ function CompactCandidateRow({
             href={listing.url}
             target="_blank"
             rel="noreferrer"
-            onClick={() => trackEvent("choice_opened", { choice_role: "candidate", marketplace: listing.marketplace, demo_mode: demoMode })}
+            onClick={() => trackEvent("choice_opened", { choice_role: "candidate", marketplace: listing.marketplace, demo_mode: demoMode, time_to_open_bucket: timeToOpenBucket() })}
           >
             {t.card.viewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
           </a>

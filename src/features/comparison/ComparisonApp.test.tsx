@@ -20,11 +20,15 @@ import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
 import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
-import { trackEvent } from "@/lib/analytics";
+import { markResultShown, trackEvent } from "@/lib/analytics";
 
 vi.mock("@/lib/analytics", () => ({
   initializeAnalytics: vi.fn(),
   trackEvent: vi.fn(),
+  markResultShown: vi.fn(),
+  // Bucketing itself is unit-tested in analytics.test.ts; here we only prove the
+  // result timestamp is marked and the bucket reaches the click event.
+  timeToOpenBucket: vi.fn(() => "under_10s"),
 }));
 
 function reportFor(request: ComparisonRequest): ComparisonReport {
@@ -227,6 +231,7 @@ describe("comparison condition controls", () => {
   beforeEach(() => {
     requests = [];
     vi.mocked(trackEvent).mockClear();
+    vi.mocked(markResultShown).mockClear();
     window.history.replaceState(null, "", "/");
     Object.defineProperty(window, "localStorage", {
       configurable: true,
@@ -938,6 +943,70 @@ describe("comparison condition controls", () => {
     expect(String(clipboard.writeText.mock.calls[0]?.[0])).not.toContain("postalCode");
     expect(trackEvent).toHaveBeenCalledWith("result_shared", { share_method: "url", result_state: "best_buy" });
     expect(screen.getByText("Link copied. This receipt expires in 30 days.")).toBeTruthy();
+  });
+
+  it("records one landing event per visit so every funnel rate has a denominator", async () => {
+    render(<ComparisonApp />);
+    await screen.findByRole("textbox", { name: "Search for a card" });
+    const landings = vi.mocked(trackEvent).mock.calls.filter(([event]) => event === "app_opened");
+    expect(landings).toHaveLength(1);
+    // Nothing about the visit beyond the channel trackEvent attaches for itself.
+    expect(landings[0]?.[1]).toBeUndefined();
+  });
+
+  it("reports the verdict and the decision latency, not just that a comparison finished", async () => {
+    const exactCard = {
+      ...identityForQuery("Umbreon VMAX 215/203"),
+      marketMid: 2000,
+      marketSource: "tcgcsv" as const,
+      marketAsOf: "2026-07-30T00:00:00.000Z",
+      tcgplayerProductId: 777,
+      marketUrl: "https://www.tcgplayer.com/product/777",
+    };
+    const listing = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        id: "shareable",
+        demo: false,
+        claimedCondition: "Near Mint",
+        observedAt: "2026-07-31T09:45:00.000Z",
+      },
+      buyer: { country: "US", postalCode: "", taxRate: null, desiredCondition: "Near Mint" },
+      marketPrice: 2000,
+    });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/card-identity")) {
+        return new Response(JSON.stringify(identityResponse([exactCard])), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (String(input).endsWith("/api/agent/listing-compare")) {
+        const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+        return new Response(JSON.stringify({
+          ...reportFor(request),
+          confirmedCard: exactCard,
+          candidates: [listing],
+          rankedChoices: rankListings([listing], { marketPrice: 2000 }),
+          outcome: "best_buy",
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ receiptId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", savedAt: "2026-07-31T10:00:00.000Z", expiresAt: "2026-08-30T10:00:00.000Z", durable: false }), { status: 201, headers: { "Content-Type": "application/json" } });
+    }));
+
+    render(<ComparisonApp />);
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Umbreon VMAX 215/203" } });
+    fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Compare exact listings" }));
+
+    const hero = await screen.findByRole("article", { name: "Best-supported buy" });
+    // Without the verdict on completion, an abstention and a recommendation are
+    // indistinguishable in the funnel, so the abstention rate is unmeasurable.
+    expect(trackEvent).toHaveBeenCalledWith("comparison_completed", expect.objectContaining({ result_state: "best_buy" }));
+    expect(markResultShown).toHaveBeenCalled();
+
+    fireEvent.click(within(hero).getByRole("link", { name: /Review listing/ }));
+    expect(trackEvent).toHaveBeenCalledWith("choice_opened", expect.objectContaining({
+      choice_role: "best_value",
+      time_to_open_bucket: "under_10s",
+    }));
   });
 
   it("copies a text summary when durable receipt storage is unavailable", async () => {

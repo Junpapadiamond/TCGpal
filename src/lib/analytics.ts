@@ -3,6 +3,11 @@
 import posthog from "posthog-js";
 
 export type TcgpalAnalyticsEvent =
+  // The funnel denominator. Without a landing event the first thing we see is a
+  // search, which leaves every downstream rate without a denominator: we could
+  // not tell "nobody understood the pitch" from "everybody searched and nothing
+  // was worth clicking". Those have opposite fixes.
+  | "app_opened"
   | "card_search_started"
   | "rail_card_clicked"
   | "identity_gallery_viewed"
@@ -42,12 +47,25 @@ const allowedProperties = new Set([
   "duration_bucket",
   "changed_decision",
   "referrer_class",
+  "channel",
+  "time_to_open_bucket",
   "game",
   "source",
   "share_method",
   "result_state",
 ]);
-const allowedReferrerClasses = new Set(["direct", "reddit", "discord", "other"]);
+
+/**
+ * Coarse acquisition channels. This is the complete vocabulary: a campaign tag
+ * or referrer is mapped into one of these before it can reach an event, so a
+ * raw tag like `reddit_pokemontcg_launch_post_2` never leaves the browser.
+ * `internal` exists so founder testing can be filtered out of launch metrics.
+ */
+export type TcglensChannel = "direct" | "reddit" | "rednote" | "discord" | "internal" | "other";
+
+const allowedChannels = new Set<string>(["direct", "reddit", "rednote", "discord", "internal", "other"]);
+const allowedReferrerClasses = allowedChannels;
+const allowedTimeToOpenBuckets = new Set(["under_10s", "10_to_60s", "over_60s"]);
 const allowedMarketplaces = new Set([
   "eBay",
   "TCGplayer",
@@ -69,6 +87,109 @@ const allowedShareMethods = new Set(["url", "text"]);
 const allowedResultStates = new Set(["best_buy", "inspect_first", "next_moves"]);
 
 let initialized = false;
+
+const CHANNEL_STORAGE_KEY = "tcglens_channel";
+let resolvedChannel: TcglensChannel | null = null;
+
+/**
+ * Map a `?s=` campaign tag onto a channel. Tags are per-post (`reddit_op_01`)
+ * so one Reddit thread can be told from another in the spreadsheet, but only
+ * the coarse prefix is ever transmitted. Returns null when there is no tag.
+ */
+export function classifyChannelTag(raw: string | null): TcglensChannel | null {
+  const tag = raw?.trim().toLowerCase();
+  if (!tag) return null;
+  if (tag.startsWith("reddit")) return "reddit";
+  if (tag.startsWith("rednote") || tag.startsWith("xhs") || tag.startsWith("xiaohongshu")) return "rednote";
+  if (tag.startsWith("discord")) return "discord";
+  if (tag.startsWith("internal")) return "internal";
+  return "other";
+}
+
+export function classifyReferrerChannel(referrer: string, origin: string): TcglensChannel {
+  if (!referrer) return "direct";
+  try {
+    const url = new URL(referrer);
+    if (url.origin === origin) return "direct";
+    const host = url.hostname;
+    if (host.includes("reddit.com") || host === "redd.it" || host.endsWith(".redd.it")) return "reddit";
+    if (host.includes("xiaohongshu.com") || host.includes("xhslink.com")) return "rednote";
+    if (host.includes("discord.com") || host.includes("discordapp.com") || host.includes("discord.gg")) return "discord";
+  } catch {
+    return "other";
+  }
+  return "other";
+}
+
+/**
+ * Precedence: explicit tag → what this tab already resolved → referrer.
+ *
+ * The stored value matters because internal navigation (result → /method →
+ * back) drops the query param, and RedNote's in-app browser often sends no
+ * referrer at all — without persistence those visits would silently relabel
+ * themselves "direct" halfway through the funnel.
+ */
+export function resolveChannelFrom({ search, referrer, stored, origin }: {
+  search: string;
+  referrer: string;
+  stored: string | null;
+  origin: string;
+}): TcglensChannel {
+  const tagged = classifyChannelTag(new URLSearchParams(search).get("s"));
+  if (tagged) return tagged;
+  if (stored && allowedChannels.has(stored)) return stored as TcglensChannel;
+  return classifyReferrerChannel(referrer, origin);
+}
+
+export function resolveChannel(): TcglensChannel {
+  if (resolvedChannel) return resolvedChannel;
+  if (typeof window === "undefined") return "direct";
+  let stored: string | null = null;
+  try {
+    stored = window.sessionStorage.getItem(CHANNEL_STORAGE_KEY);
+  } catch {
+    // Private mode or blocked storage: fall back to this page load's signals.
+  }
+  const channel = resolveChannelFrom({
+    search: window.location.search,
+    referrer: document.referrer,
+    stored,
+    origin: window.location.origin,
+  });
+  resolvedChannel = channel;
+  try {
+    // Only the enum is persisted — never the raw campaign tag.
+    window.sessionStorage.setItem(CHANNEL_STORAGE_KEY, channel);
+  } catch {
+    /* storage unavailable; the channel still holds for this page load */
+  }
+  return channel;
+}
+
+let resultShownAt: number | null = null;
+
+export function markResultShown(at: number = Date.now()) {
+  resultShownAt = at;
+}
+
+export function clearResultShown() {
+  resultShownAt = null;
+}
+
+/**
+ * How long the buyer sat with the verdict before opening a listing. Bucketed,
+ * never a raw duration: an instant open means the recommendation was trusted,
+ * while a long gap means they re-did the comparison by hand. That is the same
+ * question dwell-time tracking would answer, without watching the session.
+ */
+export function timeToOpenBucket(at: number = Date.now()) {
+  if (resultShownAt == null) return undefined;
+  const elapsed = at - resultShownAt;
+  if (elapsed < 0) return undefined;
+  if (elapsed < 10_000) return "under_10s";
+  if (elapsed < 60_000) return "10_to_60s";
+  return "over_60s";
+}
 
 export function initializeAnalytics() {
   if (initialized || typeof window === "undefined") return;
@@ -98,7 +219,9 @@ export function trackEvent(event: TcgpalAnalyticsEvent, properties: Record<strin
   try {
     initializeAnalytics();
     if (!initialized) return;
-    posthog.capture(event, sanitizeAnalyticsProperties(properties));
+    // Every event carries the acquisition channel so any step of the funnel can
+    // be split by source without a person profile or a stitched identity.
+    posthog.capture(event, sanitizeAnalyticsProperties({ channel: resolveChannel(), ...properties }));
   } catch {
     /* ignore analytics errors */
   }
@@ -109,6 +232,8 @@ export function sanitizeAnalyticsProperties(properties: Record<string, unknown>)
     Object.entries(properties).filter(([key, value]) => (
       allowedProperties.has(key)
       && (key !== "referrer_class" || (typeof value === "string" && allowedReferrerClasses.has(value)))
+      && (key !== "channel" || (typeof value === "string" && allowedChannels.has(value)))
+      && (key !== "time_to_open_bucket" || (typeof value === "string" && allowedTimeToOpenBuckets.has(value)))
       && (key !== "marketplace" || (typeof value === "string" && allowedMarketplaces.has(value)))
       && (key !== "game" || (typeof value === "string" && allowedGames.has(value)))
       && (key !== "share_method" || (typeof value === "string" && allowedShareMethods.has(value)))
