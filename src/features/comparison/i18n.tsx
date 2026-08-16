@@ -51,6 +51,17 @@ const en = {
     subtitle: "Live raw singles—or a clear pass.",
     scope: "Pokémon & One Piece · raw singles · U.S. listings",
   },
+  demo: {
+    // Illustrative figures, never live inventory — the visible "Example" tag is
+    // required so this can't be read as a real listing.
+    label: "Example",
+    caption: "The cheapest sticker price isn't the cheapest card.",
+    item: "Item",
+    shipping: "Shipping",
+    total: "Total",
+    pick: "Better buy",
+    summary: "Example: a listing at $12.25 with $14.99 shipping totals $27.24, while one at $18.50 with $3.99 shipping totals $22.49 — so the higher sticker price is the cheaper card. TCGlens ranks on total cost.",
+  },
   rail: {
     ariaLabel: "Cards you can check",
     checkThisCard: "Check this card",
@@ -59,6 +70,9 @@ const en = {
   form: {
     heroSearchLabel: "Search for a card",
     heroSearchPlaceholder: "Charizard 4/102 · Luffy OP01-003 · SWSH144",
+    // Typed one at a time into the empty search box. Card names are the same in
+    // both locales; the point is teaching the name + number shape.
+    heroSearchExamples: ["Charizard 4/102", "Luffy OP01-003", "Umbreon VMAX 215/203"],
     heroSearchRequired: "Type a card to search, or fill in the details below.",
     pasteListingInstead: "Paste listing",
     refineToggle: "Filters",
@@ -520,6 +534,15 @@ const zh: Dict = {
     subtitle: "只比在售裸卡；没有好单就直说。",
     scope: "宝可梦与海贼王 · 裸卡 · 美国在售商品",
   },
+  demo: {
+    label: "示例",
+    caption: "标价最低，不等于最便宜。",
+    item: "商品价",
+    shipping: "运费",
+    total: "总成本",
+    pick: "更划算",
+    summary: "示例：商品价 $12.25、运费 $14.99，总成本 $27.24；商品价 $18.50、运费 $3.99，总成本 $22.49——标价高的那件反而更便宜。TCGlens 按总成本排序。",
+  },
   rail: {
     ariaLabel: "可以直接比价的卡片",
     checkThisCard: "查这张卡",
@@ -528,6 +551,7 @@ const zh: Dict = {
   form: {
     heroSearchLabel: "搜索卡片",
     heroSearchPlaceholder: "Charizard 4/102 · Luffy OP01-003 · SWSH144",
+    heroSearchExamples: ["Charizard 4/102", "Luffy OP01-003", "Umbreon VMAX 215/203"],
     heroSearchRequired: "输入卡名就能搜，也可以在下面补充细节。",
     pasteListingInstead: "粘贴链接",
     refineToggle: "筛选",

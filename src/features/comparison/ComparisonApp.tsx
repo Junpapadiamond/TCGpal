@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
@@ -20,6 +20,7 @@ import {
   IconX,
 } from "./icons";
 import { initializeAnalytics, markResultShown, timeToOpenBucket, trackEvent } from "@/lib/analytics";
+import { TOTAL_COST_DEMO_ROWS, demoRowTotal, demoWinnerIndex, typewriterFrame } from "./onboarding";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
@@ -416,6 +417,8 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const loading = journeyState === "identifying" || journeyState === "comparing";
 
   const heroQuery = useWatch({ control: form.control, name: "heroQuery" });
+  // Only while the box is untouched — the moment the buyer types, the hint stops.
+  const typedPlaceholder = useTypedPlaceholder(t.form.heroSearchExamples, !heroQuery?.trim());
   const marketplace = useWatch({ control: form.control, name: "marketplace" });
   const sourceUrl = useWatch({ control: form.control, name: "url" });
   const postalCode = useWatch({ control: form.control, name: "postalCode" });
@@ -1064,7 +1067,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                 <input
                   {...form.register("heroQuery")}
                   aria-label={t.form.heroSearchLabel}
-                  placeholder={t.form.heroSearchPlaceholder}
+                  placeholder={typedPlaceholder ?? t.form.heroSearchPlaceholder}
                   autoFocus
                 />
                 <button type="submit" disabled={loading}>
@@ -1347,6 +1350,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
           </form>
         </section>
 
+        <TotalCostDemo t={t} />
         <CardMarquee items={railItems} onCheck={checkCardFromRail} />
         <p className="mt-1 text-center text-[12.5px] font-semibold text-[#7a8982]">
           {t.hero.scope}
@@ -1520,6 +1524,114 @@ function buildMarqueeItems(items: RailItem[]): MarqueeItem[] {
     ...items.map((item) => ({ ...item, clone: false })),
     ...items.map((item) => ({ ...item, clone: true })),
   ];
+}
+
+// Long enough for the total-cost demo to finish its reveal (~1.6s) before the
+// search box starts typing, so attention moves value -> action, not both at once.
+const TYPED_PLACEHOLDER_START_MS = 2200;
+
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+// Motion is an external store, so useSyncExternalStore is the right primitive —
+// it also keeps the subscription out of an effect, which the lint rules forbid.
+function subscribeToReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    subscribeToReducedMotion,
+    () => window.matchMedia(REDUCED_MOTION_QUERY).matches,
+    () => false,
+  );
+}
+
+/**
+ * Types the example queries into the empty search box so a first-time buyer can
+ * see the "name + number" shape without reading instructions. Returns null when
+ * it should not run, and the caller falls back to the static placeholder — the
+ * input keeps its own aria-label, so the accessible name never animates.
+ */
+function useTypedPlaceholder(examples: string[], active: boolean) {
+  const reducedMotion = usePrefersReducedMotion();
+  const [tick, setTick] = useState<number | null>(null);
+  const enabled = active && !reducedMotion;
+
+  useEffect(() => {
+    if (!enabled) return;
+    // Hold the static placeholder first: it lists every example at once and is
+    // the more useful first impression. Typing starts only after the total-cost
+    // demo has settled, so the landing never has two things moving at once.
+    const start = window.setTimeout(() => setTick(0), TYPED_PLACEHOLDER_START_MS);
+    const id = window.setInterval(
+      () => setTick((current) => (current == null ? null : current + 1)),
+      90,
+    );
+    return () => {
+      window.clearTimeout(start);
+      window.clearInterval(id);
+    };
+  }, [enabled]);
+
+  if (!enabled || tick == null) return null;
+  return typewriterFrame(examples, tick);
+}
+
+/**
+ * Shows why ranking on total cost changes the answer: the cheaper sticker price
+ * loses once shipping lands. Illustrative figures behind a visible Example tag,
+ * never live inventory. Held until scrolled into view so it does not compete
+ * with the typed placeholder or the card marquee for attention.
+ */
+function TotalCostDemo({ t }: { t: Dict }) {
+  const reducedMotion = usePrefersReducedMotion();
+  const [seen, setSeen] = useState(false);
+  const ref = useRef<HTMLElement | null>(null);
+  // Reduced motion goes straight to the settled state rather than relying on an
+  // animation the global reduce reset disables.
+  const played = reducedMotion || seen;
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const node = ref.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      const id = window.setTimeout(() => setSeen(true), 0);
+      return () => window.clearTimeout(id);
+    }
+    // Hold until it is actually on screen: on mobile the demo sits below the
+    // fold, and playing it unseen would waste the one moment that explains why
+    // total cost changes the answer.
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setSeen(true);
+      observer.disconnect();
+    }, { threshold: 0.6 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [reducedMotion]);
+
+  const winner = demoWinnerIndex(TOTAL_COST_DEMO_ROWS);
+
+  return (
+    <figure ref={ref} className={`cost-demo${played ? " is-played" : ""}`}>
+      <div className="cost-demo-rows" aria-hidden="true">
+        <span className="cost-demo-tag">{t.demo.label}</span>
+        {TOTAL_COST_DEMO_ROWS.map((row, index) => (
+          <div key={row.item} className={`cost-demo-row${index === winner ? " is-pick" : ""}`}>
+            <span className="cost-demo-item">{formatMoney(row.item)}</span>
+            <span className="cost-demo-ship">+ {formatMoney(row.shipping)} {t.demo.shipping}</span>
+            <span className="cost-demo-total">{formatMoney(demoRowTotal(row))}</span>
+            <span className="cost-demo-pick">{index === winner ? t.demo.pick : ""}</span>
+          </div>
+        ))}
+      </div>
+      <figcaption className="cost-demo-caption">{t.demo.caption}</figcaption>
+      {/* The rows animate, so screen readers get one settled sentence instead. */}
+      <span className="sr-only">{t.demo.summary}</span>
+    </figure>
+  );
 }
 
 function CardMarquee({
