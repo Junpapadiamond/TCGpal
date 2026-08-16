@@ -696,7 +696,9 @@ a {
   display: flex;
   width: max-content;
   align-items: flex-start;
-  padding-inline: 1.5rem;
+  /* No inline padding: it counts as track width, so -50% overshoots the clone by
+     half the padding and the rail hitches once per lap. The edge mask already
+     fades cards in and out, which is what the inset was buying. */
   animation: card-marquee var(--card-marquee-duration, 46s) linear infinite;
   will-change: transform;
 }
@@ -704,9 +706,12 @@ a {
 /* Pause in CSS, not React state: the style recalculation that stops the track
    is the same one that applies :hover to the card under the pointer, so the
    check button appears in the frame the rail freezes. A state round-trip let
-   the card slide away first, freezing the rail with nothing hovered. */
+   the card slide away first, freezing the rail with nothing hovered.
+   `:active` is the touch equivalent — a finger down pauses the rail and reveals
+   the same affordance a cursor would. */
 .card-marquee:hover .card-marquee-track,
-.card-marquee:focus-within .card-marquee-track {
+.card-marquee:focus-within .card-marquee-track,
+.card-marquee:active .card-marquee-track {
   animation-play-state: paused;
 }
 
@@ -813,14 +818,18 @@ a {
   font-weight: 600;
 }
 
+/* Hover, keyboard focus, and press are the same intent expressed by three input
+   devices, so they reveal the same thing. Touch only ever gets the third one. */
 .card-marquee-card:hover,
-.card-marquee-card:focus-visible {
+.card-marquee-card:focus-visible,
+.card-marquee-card:active {
   outline: none;
   transform: translateY(-0.375rem);
 }
 
 .card-marquee-card:hover .card-marquee-art,
-.card-marquee-card:focus-visible .card-marquee-art {
+.card-marquee-card:focus-visible .card-marquee-art,
+.card-marquee-card:active .card-marquee-art {
   border-color: #2f6f73;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
@@ -830,18 +839,22 @@ a {
 
 .card-marquee-card:hover .card-marquee-go,
 .card-marquee-card:focus-visible .card-marquee-go,
+.card-marquee-card:active .card-marquee-go,
 .card-marquee-card:hover .card-marquee-veil,
-.card-marquee-card:focus-visible .card-marquee-veil {
+.card-marquee-card:focus-visible .card-marquee-veil,
+.card-marquee-card:active .card-marquee-veil {
   opacity: 1;
 }
 
 .card-marquee-card:hover .card-marquee-go,
-.card-marquee-card:focus-visible .card-marquee-go {
+.card-marquee-card:focus-visible .card-marquee-go,
+.card-marquee-card:active .card-marquee-go {
   transform: translate(-50%, 0);
 }
 
 .card-marquee-card:hover .card-marquee-caption > strong,
-.card-marquee-card:focus-visible .card-marquee-caption > strong {
+.card-marquee-card:focus-visible .card-marquee-caption > strong,
+.card-marquee-card:active .card-marquee-caption > strong {
   color: #24585c;
 }
 
@@ -875,27 +888,24 @@ a {
   }
 }
 
+/* Touch keeps the same moving rail as the pointer build. It used to become a
+   hand-scrolled strip instead, which read as broken: nothing moved, so nothing
+   said the rail was a carousel, and a horizontal scrollbar sat under it.
+   Two things this must NOT reintroduce:
+   - `overflow-x: auto` fights the track transform. Scroll offset and animated
+     translation compose into a position neither one asked for.
+   - a track `gap` breaks the seamless loop. 2n cards carry 2n-1 gutters, so the
+     halves are not equal width and -50% lands half a gutter off, jumping every
+     lap. Spacing stays in the card padding, as it does on desktop. */
 @media (hover: none), (pointer: coarse) {
   .card-marquee {
-    overflow-x: auto;
     padding: 1.25rem 0 1.5rem;
-    scroll-snap-type: x mandatory;
-    -webkit-mask-image: none;
-    mask-image: none;
-    -webkit-overflow-scrolling: touch;
   }
 
-  .card-marquee-track {
-    gap: 0.75rem;
-    animation: none;
-  }
-
-  /* Touch scrolls the rail by hand and shows the check affordance always, so
-     it keeps the track `gap` and needs no gutter hover target. */
+  /* Narrower cards fit ~3 across at 375px; the art keeps its 1:1.39 card
+     proportion so the print still reads at a glance. */
   .card-marquee-card {
     width: 7.375rem;
-    padding: 0;
-    scroll-snap-align: center;
   }
 
   .card-marquee-art {
@@ -903,15 +913,13 @@ a {
     height: 10.25rem;
   }
 
+  /* The check pill and its darkening veil used to be pinned on: with no hover
+     to hide behind, every card wore a green bar across its face. Press reveals
+     them now, so the card art is what a buyer actually sees. */
   .card-marquee-go {
-    opacity: 1;
     padding: 0.38rem 0.68rem;
     font-size: 0.69rem;
-    transform: translate(-50%, 0);
   }
-
-  .card-marquee-veil { opacity: 1; }
-  .card-marquee-track [data-clone="true"] { display: none; }
 }
 
 /* Step 2 slides in once step 1 has something to act on. */
@@ -951,5 +959,24 @@ a {
   .card-marquee-track {
     animation: none;
     will-change: auto;
+  }
+
+  /* A stopped track inside `overflow: hidden` strands every card past the first
+     screenful. Hand scrolling is the fallback, and the clone would just be the
+     same cards a second time once nothing is looping. */
+  .card-marquee {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-mask-image: none;
+    mask-image: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .card-marquee-card {
+    scroll-snap-align: center;
+  }
+
+  .card-marquee-track [data-clone="true"] {
+    display: none;
   }
 }
