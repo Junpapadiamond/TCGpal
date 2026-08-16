@@ -6,6 +6,7 @@ import {
   markResultShown,
   resolveChannelFrom,
   sanitizeAnalyticsProperties,
+  stripUrlProperties,
   timeToOpenBucket,
 } from "@/lib/analytics";
 
@@ -62,6 +63,43 @@ describe("analytics privacy boundary", () => {
   it("allows only bucketed decision latency, never a raw duration", () => {
     expect(sanitizeAnalyticsProperties({ time_to_open_bucket: "under_10s" })).toEqual({ time_to_open_bucket: "under_10s" });
     expect(sanitizeAnalyticsProperties({ time_to_open_bucket: 8123 })).toEqual({});
+  });
+});
+
+describe("posthog default properties", () => {
+  it("strips the URL properties posthog attaches on its own", () => {
+    // The journey writes the buyer's search into the address bar, so
+    // $current_url carries the card they looked up. sanitizeAnalyticsProperties
+    // cannot reach this — it only filters the object we pass to capture().
+    expect(stripUrlProperties({
+      $current_url: "https://lenstcg.com/?query=Umbreon+VMAX+215%2F203&step=result&card=swsh7-215",
+      $pathname: "/r/0123456789abcdef0123456789abcdef",
+      $referrer: "https://www.reddit.com/r/PokemonTCG/comments/abc123",
+      $referring_domain: "www.reddit.com",
+      $host: "lenstcg.com",
+      $lib: "web",
+      channel: "reddit",
+    })).toEqual({
+      // $host is the only location signal kept: it is our own domain, carries no
+      // buyer data, and separates lenstcg.com from tcgpal.vercel.app.
+      $host: "lenstcg.com",
+      $lib: "web",
+      channel: "reddit",
+    });
+  });
+
+  it("strips the initial-* variants that carry the landing URL", () => {
+    expect(stripUrlProperties({
+      $initial_current_url: "https://lenstcg.com/?query=Charizard+4%2F102",
+      $initial_pathname: "/",
+      $initial_referrer: "https://www.xiaohongshu.com/explore/abc",
+      $initial_referring_domain: "www.xiaohongshu.com",
+      $device_type: "Desktop",
+    })).toEqual({ $device_type: "Desktop" });
+  });
+
+  it("survives posthog passing no properties at all", () => {
+    expect(stripUrlProperties(null)).toEqual({});
   });
 });
 

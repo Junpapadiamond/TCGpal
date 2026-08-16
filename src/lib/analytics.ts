@@ -86,6 +86,35 @@ const allowedGames = new Set(["pokemon", "onePiece"]);
 const allowedShareMethods = new Set(["url", "text"]);
 const allowedResultStates = new Set(["best_buy", "inspect_first", "next_moves"]);
 
+/**
+ * posthog-js attaches its own default properties to every capture, and
+ * `sanitizeAnalyticsProperties` cannot reach them — that only filters the object
+ * we pass to `capture()`. `$current_url` is the problem: the comparison journey
+ * writes the buyer's search into the address bar (`?query=Umbreon+VMAX+215/203`),
+ * so the card someone looked up would leave the browser on every event, against
+ * the Analytics Privacy rule in AGENTS.md.
+ *
+ * `$host` is deliberately kept. It is our own domain, carries no buyer data, and
+ * is the only thing that separates lenstcg.com traffic from tcgpal.vercel.app.
+ */
+const posthogUrlProperties = [
+  "$current_url",
+  "$pathname",
+  "$referrer",
+  "$referring_domain",
+  "$initial_current_url",
+  "$initial_pathname",
+  "$initial_referrer",
+  "$initial_referring_domain",
+];
+
+export function stripUrlProperties(properties: Record<string, unknown> | null) {
+  if (!properties) return {};
+  const cleaned = { ...properties };
+  for (const key of posthogUrlProperties) delete cleaned[key];
+  return cleaned;
+}
+
 let initialized = false;
 
 const CHANNEL_STORAGE_KEY = "tcglens_channel";
@@ -204,6 +233,10 @@ export function initializeAnalytics() {
       disable_session_recording: true,
       person_profiles: "never",
       persistence: "localStorage",
+      // Two layers on purpose: the denylist is what PostHog documents, and
+      // sanitize_properties is the one we can unit-test.
+      property_denylist: posthogUrlProperties,
+      sanitize_properties: stripUrlProperties,
     });
     initialized = true;
   } catch {
