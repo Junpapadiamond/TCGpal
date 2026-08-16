@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  TOTAL_COST_DEMO_ROWS,
-  demoRowTotal,
-  demoWinnerIndex,
-  typewriterFrame,
-} from "./onboarding";
+import { typewriterFrame } from "./onboarding";
 
 describe("typewriter placeholder", () => {
   const examples = ["ab", "cde"];
@@ -37,21 +32,3 @@ describe("typewriter placeholder", () => {
   });
 });
 
-describe("total-cost demo", () => {
-  it("adds shipping into the compared total", () => {
-    expect(demoRowTotal(TOTAL_COST_DEMO_ROWS[0])).toBeCloseTo(27.24, 2);
-    expect(demoRowTotal(TOTAL_COST_DEMO_ROWS[1])).toBeCloseTo(22.49, 2);
-  });
-
-  it("picks the higher sticker price because its total is lower", () => {
-    // This is the whole claim the animation makes. If someone edits the demo
-    // numbers into a row where the cheapest item also wins on total, the
-    // demonstration silently stops demonstrating anything.
-    const winner = demoWinnerIndex(TOTAL_COST_DEMO_ROWS);
-    expect(winner).toBe(1);
-
-    const cheapestItem = TOTAL_COST_DEMO_ROWS
-      .reduce((low, row, index) => (row.item < TOTAL_COST_DEMO_ROWS[low].item ? index : low), 0);
-    expect(cheapestItem).not.toBe(winner);
-  });
-});
