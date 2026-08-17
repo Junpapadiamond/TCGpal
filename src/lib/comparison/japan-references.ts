@@ -24,7 +24,9 @@ export function buildJapanReferenceLinks(
     },
     {
       label: "SNKRDUNK Japan price check",
-      url: searchUrl("https://snkrdunk.com/search", "keyword", query),
+      // `keywords`, not `keyword`: the singular form is ignored and the site
+      // renders its generic ranking page while keeping the query in the URL.
+      url: searchUrl("https://snkrdunk.com/search", "keywords", query),
       note: manualNote("SNKRDUNK"),
     },
   ];

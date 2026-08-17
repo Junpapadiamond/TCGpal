@@ -44,6 +44,23 @@ describe("Japan reference links", () => {
     expect(links.find((link) => link.label === "Card Rush OP price check")?.url).toContain("OP01-024");
   });
 
+  // Verified against the live site on 2026-08-18: snkrdunk.com/search reads
+  // `keywords`, and silently ignores a singular `keyword` — it keeps the query
+  // string in the address bar and renders the generic ranking page, so the link
+  // looked fine and searched nothing. Each of these params is the one its own
+  // site actually reads; they are not interchangeable.
+  it("uses each site's own search parameter name", () => {
+    const links = buildJapanReferenceLinks(onePieceCard, "2026-07-04T00:00:00.000Z");
+    const urlFor = (label: string) => new URL(links.find((link) => link.label === label)!.url!);
+
+    expect(urlFor("SNKRDUNK Japan price check").searchParams.get("keywords")).toContain("OP01-024");
+    expect(urlFor("SNKRDUNK Japan price check").searchParams.has("keyword")).toBe(false);
+    expect(urlFor("Yahoo Auctions JP price check").searchParams.get("p")).toContain("OP01-024");
+    expect(urlFor("Mercari JP price check").searchParams.get("keyword")).toContain("OP01-024");
+    expect(urlFor("Yuyutei OP price check").searchParams.get("search_word")).toBe("OP01-024");
+    expect(urlFor("Card Rush OP price check").searchParams.get("keyword")).toBe("OP01-024");
+  });
+
   it("routes Pokemon cards to the Pokemon Yuyutei search instead of OP shops", () => {
     const links = buildJapanReferenceLinks(pokemonCard, "2026-07-04T00:00:00.000Z");
 

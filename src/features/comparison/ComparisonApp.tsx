@@ -3084,7 +3084,9 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       label: t.result.japanManualCheck,
       detail: t.result.notChecked,
       note: t.result.snkrdunkManualNote,
-      url: `https://snkrdunk.com/search?keyword=${encodeURIComponent(query)}`,
+      // `keywords` is the parameter SNKRDUNK reads; the singular form lands on
+      // the generic ranking page with the query still in the address bar.
+      url: `https://snkrdunk.com/search?keywords=${encodeURIComponent(query)}`,
     },
   ];
 
