@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, IBM_Plex_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 
@@ -42,6 +42,19 @@ export const metadata: Metadata = {
       { url: "/icon-180.png", sizes: "180x180", type: "image/png" },
     ],
   },
+  // Installed to the home screen, iOS runs the site without Safari chrome and
+  // uses this title under the icon. "default" keeps the status bar legible on
+  // the cream background; "black-translucent" would slide the page under it.
+  appleWebApp: {
+    capable: true,
+    title: "Lens TCG",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  // Tints the browser and installed-app chrome to the teal in the logo.
+  themeColor: "#2f6f73",
 };
 
 export default function RootLayout({

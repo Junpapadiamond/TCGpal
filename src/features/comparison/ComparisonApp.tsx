@@ -1467,8 +1467,8 @@ function ResultsHeader({
           <span className="shrink-0 text-xs font-black text-[#2f6f73]">{editOpen ? t.header.closeSearch : t.header.editSearch}</span>
         </button>
         <nav className="ml-auto flex items-center gap-2 text-xs font-black text-[#64736c] sm:gap-4">
-          <button className="hover:text-[#2f6f73]" type="button" onClick={onNewSearch}>{t.header.newSearch}</button>
-          <a className="hidden hover:text-[#2f6f73] sm:inline" href="/method">{t.header.method}</a>
+          <button className="inline-flex min-h-11 items-center hover:text-[#2f6f73]" type="button" onClick={onNewSearch}>{t.header.newSearch}</button>
+          <a className="hidden min-h-11 items-center hover:text-[#2f6f73] sm:inline-flex" href="/method">{t.header.method}</a>
           <LanguageToggle lang={lang} setLang={setLang} t={t} />
         </nav>
       </div>
@@ -1492,7 +1492,7 @@ function LanguageToggle({ lang, setLang, t }: { lang: Lang; setLang: (lang: Lang
             type="button"
             onClick={() => setLang(value)}
             aria-pressed={active}
-            className={`rounded px-2.5 py-1 transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
+            className={`inline-flex min-h-10 min-w-11 items-center justify-center rounded px-2.5 transition ${active ? "bg-[#2f6f73] text-[#fcfbf6]" : "text-[#52635c] hover:text-[#2f6f73]"}`}
           >
             {t.langName[value]}
           </button>
@@ -1504,13 +1504,15 @@ function LanguageToggle({ lang, setLang, t }: { lang: Lang; setLang: (lang: Lang
 
 function Footer() {
   const t = useT();
+  // Each link carries its own 44px touch height, so the block padding only
+  // needs to separate the footer from the content above it on mobile.
   return (
-    <footer className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-6 gap-y-2 border-t border-[#d6ded5] px-4 py-6 text-xs font-bold text-[#7a8982] sm:px-6 lg:px-8">
-      <span>{t.footer.copyright}</span>
-      <a className="hover:text-[#2f6f73]" href="/method">{t.header.method}</a>
-      <a className="hover:text-[#2f6f73]" href="/method">{t.footer.dataSources}</a>
-      <a className="hover:text-[#2f6f73]" href="/method">{t.footer.boundaries}</a>
-      <a className="hover:text-[#2f6f73]" href="#feedback">{t.footer.feedback}</a>
+    <footer className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-6 gap-y-1 border-t border-[#d6ded5] px-4 py-2 text-xs font-bold text-[#7a8982] sm:px-6 sm:py-6 lg:px-8">
+      <span className="inline-flex min-h-11 items-center">{t.footer.copyright}</span>
+      <a className="inline-flex min-h-11 items-center hover:text-[#2f6f73]" href="/method">{t.header.method}</a>
+      <a className="inline-flex min-h-11 items-center hover:text-[#2f6f73]" href="/method">{t.footer.dataSources}</a>
+      <a className="inline-flex min-h-11 items-center hover:text-[#2f6f73]" href="/method">{t.footer.boundaries}</a>
+      <a className="inline-flex min-h-11 items-center hover:text-[#2f6f73]" href="#feedback">{t.footer.feedback}</a>
     </footer>
   );
 }
@@ -2464,7 +2466,7 @@ function ComparisonResult({
           <p className="mt-2 text-sm leading-6">{t.result.nextMovesBody}</p>
           {report.abstention?.suggestedCardId && (
             <button
-              className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md bg-[#2f6f73] px-4 text-sm font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+              className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-[#2f6f73] px-4 text-sm font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
               type="button"
               onClick={() => onCompareSuggestedPrint(report.abstention!.suggestedCardId!)}
             >
@@ -3102,7 +3104,7 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
             </div>
             {row.url ? (
               <a
-                className="secondary-button min-h-10 justify-center px-3 py-2 text-xs"
+                className="secondary-button min-h-11 justify-center px-3 py-2 text-xs"
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -3217,7 +3219,7 @@ function LensControls({
             onClick={() => onSelect(choice.role)}
             aria-pressed={active}
             title={roleToggleHint(choice.role, t)}
-            className={`min-h-10 rounded-full border px-3.5 py-1.5 text-sm font-black transition focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${
+            className={`min-h-11 rounded-full border px-3.5 py-1.5 text-sm font-black transition focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25 ${
               active
                 ? "border-[#2f6f73] bg-[#2f6f73] text-[#fcfbf6]"
                 : "border-[#d6ded5] bg-[#fcfbf6] text-[#52635c] hover:border-[#9fb3a8] hover:bg-[#e7efe8] hover:text-[#2f6f73]"
@@ -3356,17 +3358,17 @@ function RecommendedBuyHero({
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
-            <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={onShare}>
+            <button className="secondary-button min-h-11 px-3 py-2 text-xs" type="button" onClick={onShare}>
               <IconReceipt className="h-4 w-4" />
               {t.result.shareResult}
             </button>
-            <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={() => onAsk(listing)}>
+            <button className="secondary-button min-h-11 px-3 py-2 text-xs" type="button" onClick={() => onAsk(listing)}>
               <IconInfo className="h-4 w-4" />
               {t.result.askWhyThis}
             </button>
             {listing.url ? (
               <a
-                className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#2f6f73] px-4 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#2f6f73] px-4 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
                 href={listing.url}
                 target="_blank"
                 rel="noreferrer"
@@ -3375,7 +3377,7 @@ function RecommendedBuyHero({
                 {t.result.reviewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
               </a>
             ) : (
-              <span className="inline-flex min-h-10 items-center text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
+              <span className="inline-flex min-h-11 items-center text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
             )}
           </div>
         </div>
@@ -3695,7 +3697,7 @@ function DevelopmentInspector({
           <p className="text-xs font-black uppercase tracking-[0.1em] text-[#8d6032]">Development only</p>
           <h3 className="mt-1 font-serif text-xl font-black text-[#24312f]">Result inspector</h3>
         </div>
-        <button className="secondary-button min-h-10 px-3 py-2 text-xs" type="button" onClick={downloadDiagnostic}>
+        <button className="secondary-button min-h-11 px-3 py-2 text-xs" type="button" onClick={downloadDiagnostic}>
           <IconReceipt className="h-4 w-4" />
           Download diagnostic JSON
         </button>

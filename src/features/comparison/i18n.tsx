@@ -36,7 +36,7 @@ export function localizeVariantLabel(lang: Lang, variant: string) {
 
 // English is the source dictionary; `Dict = typeof en` forces the Chinese
 // dictionary to cover every key (and matching function signatures) at compile time.
-const en = {
+export const en = {
   langName: { en: "EN", zh: "中文" },
   toggleAria: "Switch language",
   header: {
@@ -428,7 +428,9 @@ const en = {
     estLanded: "est. landed",
     estBeforeShipping: "before shipping",
     preTaxTotal: "pre-tax total",
-    freeShipping: "free shipping",
+    // Slotted after the "Shipping" label in `priceFacts`; repeating the noun
+    // here read as "Shipping free shipping".
+    freeShipping: "free",
     shippingUnknown: "shipping unknown",
     shippingCost: (shipping: string) => `${shipping} shipping`,
     priceBreakdown: (item: string, shipping: string, tax: string | null) =>
@@ -510,7 +512,7 @@ const en = {
 
 export type Dict = typeof en;
 
-const zh: Dict = {
+export const zh: Dict = {
   langName: { en: "EN", zh: "中文" },
   toggleAria: "切换语言",
   header: {
@@ -893,7 +895,7 @@ const zh: Dict = {
     estLanded: "预估到手",
     estBeforeShipping: "未含运费",
     preTaxTotal: "税前总价",
-    freeShipping: "免运费",
+    freeShipping: "免费",
     shippingUnknown: "运费未知",
     shippingCost: (shipping: string) => `运费 ${shipping}`,
     priceBreakdown: (item: string, shipping: string, tax: string | null) =>
