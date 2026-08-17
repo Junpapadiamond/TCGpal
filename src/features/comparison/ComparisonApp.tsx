@@ -3009,18 +3009,24 @@ function formatObservedAt(value: string, lang: Lang) {
   });
 }
 
+/**
+ * Brand marks, sized to a shared 24px cap. `wordmark` says the asset already
+ * spells the name, so the text label goes to screen readers only — a lockup
+ * printed next to the same word set in our own type reads as a mistake.
+ */
+const marketplaceAssets: Partial<Record<Marketplace, { src: string; width: number; height: number; wordmark: boolean }>> = {
+  eBay: { src: "/marketplace-ebay.png", width: 55, height: 23, wordmark: true },
+  TCGplayer: { src: "/marketplace-tcgplayer.svg", width: 92, height: 28, wordmark: true },
+  SNKRDUNK: { src: "/marketplace-snkrdunk.png", width: 116, height: 18, wordmark: true },
+  Whatnot: { src: "/marketplace-whatnot.png", width: 116, height: 18, wordmark: true },
+  // Mercari's mark is the badge alone, so the name still has to be printed.
+  Mercari: { src: "/marketplace-mercari.png", width: 28, height: 28, wordmark: false },
+};
+
 function MarketplaceBrand({ marketplace }: { marketplace: Marketplace }) {
   const t = useT();
-  const assetIncludesName = marketplace === "eBay" || marketplace === "TCGplayer" || marketplace === "SNKRDUNK";
-  const asset = marketplace === "eBay"
-    ? { src: "/marketplace-ebay.png", width: 55, height: 23 }
-    : marketplace === "TCGplayer"
-      ? { src: "/marketplace-tcgplayer.svg", width: 92, height: 28 }
-      : marketplace === "Mercari"
-        ? { src: "/marketplace-mercari.png", width: 28, height: 28 }
-        : marketplace === "SNKRDUNK"
-          ? { src: "/marketplace-snkrdunk.png", width: 116, height: 18 }
-          : null;
+  const asset = marketplaceAssets[marketplace] ?? null;
+  const assetIncludesName = asset?.wordmark ?? false;
 
   return (
     <span className="inline-flex min-h-6 items-center gap-2 font-black text-[#24312f]">
