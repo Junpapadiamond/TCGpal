@@ -1,9 +1,9 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-08-11
+updated_at: 2026-08-18
 canonical_branch: origin/main
-last_verified_product_commit: 289d334
+last_verified_product_commit: 4388774
 max_lines: 300
 ---
 
@@ -18,7 +18,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
 - Current live concrete source: eBay Browse. TCGCSV/TCGplayer is an aggregate catalog and market reference, never seller inventory.
-- Product state: receipt-first founder testing is ready; recruit a small moderated pilot only after repeated trust testing, not for unrestricted launch, paid acquisition, subscriptions, or ads.
+- Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork.
 - Non-negotiable: research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -30,10 +30,11 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | D-OP-BASE-PROOF run and KILLED at 52.6%; four deterministic gates added; One Piece buy accuracy measured at 9/13 (69.2%) | Decide D-OP-IMAGE-PROOF: all four remaining misses need the photo, not the text |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | D-OP-BASE-PROOF KILLED at 52.6%; five gates shipped `05d3ca5`; One Piece buy accuracy 9/13 (69.2%) vs an 80% target | Decide D-OP-IMAGE-PROOF: all four remaining misses need the photo, not the text |
+| WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
-| WS-PILOT | Demand, usability, and trust validation | Large product stream | Founder self-test ready | Test receipts repeatedly, then recruit 10 target buyers |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Version picker opened + release-ordered at `22ccb64` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
+| WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Decide whether 69.2% One Piece accuracy is postable before recruiting |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and additional marketplaces | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | LOCAL-STATE | Dirty local artifacts and tools | Mixed | Photo/UI cleanup decided; advisor skill installed | Preserve Graphify, research, and screenshot artifacts (no separate WS section; see LOCAL-STATE) |
 <!-- progress:end -->
@@ -60,25 +61,22 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - At least three voluntarily share a comparison receipt.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-IDENTITY" state="v5-released-needs-observation" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history" -->
+<!-- progress:workstream id="WS-IDENTITY" state="text-gates-exhausted-image-proof-open" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
 
 ### Done
 
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.
-- Nami SP and the eight bundled OP01-016 prints have regression coverage; selected P4 remains OP01-016_p4. One Piece manga, SP, wanted poster, gold/silver, super alternate, anniversary, tournament, promo, and reprint distinctions have curated/runtime support where explicitly reviewed.
-- eBay ePID and TCGplayer product resolution abstain when exact identity cannot be proven; signed/serialized aliases normalize to strict facets and unsupported textured/stamped searches abstain rather than show siblings.
-- Vintage Base Set crosswalks rank the most specific TCGCSV group and reject loose collector-number collisions. Shared collector-number parsing owns zero-padding equivalence, boundary-safe matching, and conflicts across eBay, print fidelity, pasted/manual candidates, identity selection, crosswalk, and TCGCSV: Bubble Mew `232/91` accepts seller `232/091`, wrong numbers are high-confidence mismatches.
-- One Piece positive proof now intersects evidence across every same-number sibling. Shared release/class wording and internal `_pN/_rN` IDs cannot prove a print; sibling/language/treatment conflicts veto acceptance.
-- Shared raw/slab detection covers PSA/BGS/CGC/SGC/ACE/TAG forms. Comparison contract v5 and plugin 1.0.2 add typed product/condition/cost/price/language/identity/availability issues, separating canonical print proof from purchase review; graded, language, condition, and shipping exclusions no longer masquerade as artwork mismatches.
-- Pokémon search now keeps Mew/Mewtwo, combination cards, and Trainer products in strict name tiers, requests a bounded identity-only payload, and reloads full data only after stable-ID confirmation.
-- Identity search carries cancellation from browser to route, resolver, and Pokémon fetch under an 18-second server budget inside the 20-second route cap. Identical requests coalesce per server instance, successful identities use hashed 15-minute cache entries with a six-hour stale fallback, and provider deadlines return an explicit temporary-unavailable result. The stale fallback only helps a warm key: a card never searched has nothing to fall back to, so warming the demo set before a session is the cheapest outage mitigation.
-- A 2026-07-17 five-card live check measured One Piece resolution at 16–50 ms, uncached Pokémon at 7.427 s, cached repeat at 20 ms. (Deferred group mounting was replaced on 2026-08-11 by deferred painting; see WS-UX.) Client request generations abort stale identity/comparison work. Native Next.js 16 history entries restore search, confirmation, and result snapshots without placing buyer or listing facts in the URL.
-- A catalog-outage lookup returns an explicit empty/unavailable result instead of the bundled demo identities: while pokemontcg.io was 500ing, `umbreon` resolved to the two Umbreon VMAX fixtures rather than the catalog's 42 prints. Single-word names walk the relaxed wildcard ladder.
-- A 2026-07-30 production check reproduced `Suicune` unavailable after 13.76 s: the catalog's first attempt can consume its full 8 s timeout, and the former 10 s shared deadline cancelled the retry. Regression coverage preserves a 10.5 s recovery; after deployment `Suicune` returned 27 candidates in 5.65 s.
+- Sibling-substitution coverage: Nami SP and the eight bundled OP01-016 prints (selected P4 stays OP01-016_p4); One Piece manga, SP, wanted poster, gold/silver, super alternate, anniversary, tournament, promo, and reprint distinctions where explicitly reviewed. One Piece positive proof intersects evidence across every same-number sibling — shared release/class wording and internal `_pN/_rN` IDs cannot prove a print, and sibling/language/treatment conflicts veto acceptance. eBay ePID and TCGplayer product resolution abstain when identity cannot be proven; signed/serialized aliases normalize to strict facets, and textured/stamped searches abstain rather than show siblings.
+- Shared collector-number parsing owns zero-padding equivalence, boundary-safe matching, and conflicts across eBay, print fidelity, pasted/manual candidates, identity selection, crosswalk, and TCGCSV (Bubble Mew `232/91` accepts seller `232/091`; wrong numbers are high-confidence mismatches). Vintage Base Set crosswalks rank the most specific TCGCSV group and reject loose collisions.
+- Shared raw/slab detection covers PSA/BGS/CGC/SGC/ACE/TAG. Contract v5 and plugin 1.0.2 add typed product/condition/cost/price/language/identity/availability issues, separating canonical print proof from purchase review, so graded, language, condition, and shipping exclusions no longer masquerade as artwork mismatches. Pokémon search keeps Mew/Mewtwo, combination cards, and Trainer products in strict name tiers on a bounded identity-only payload.
+- Identity search carries cancellation from browser to route, resolver, and Pokémon fetch under an 18s server budget inside the 20s route cap; identical requests coalesce per instance, successes cache hashed for 15 minutes with a six-hour stale fallback, and provider deadlines return an explicit temporary-unavailable result. The stale fallback only helps a warm key, so warming the demo set before a session is the cheapest outage mitigation. Client request generations abort stale work, and Next.js 16 history entries restore search/confirmation/result without putting buyer or listing facts in the URL. Measured 2026-07-17: One Piece 16-50 ms, uncached Pokémon 7.427 s, cached repeat 20 ms.
+- A catalog outage returns an explicit empty/unavailable result instead of bundled demo identities (while pokemontcg.io was 500ing, `umbreon` resolved to two fixtures rather than 42 real prints); single-word names walk the relaxed wildcard ladder. A 2026-07-30 production check reproduced `Suicune` unavailable after 13.76 s because the catalog's first attempt consumed its full 8 s timeout and the 10 s shared deadline cancelled the retry; coverage now preserves a 10.5 s recovery and `Suicune` returned 27 candidates in 5.65 s after deploy.
 - `484483a`: a One Piece number with exactly one catalogued print is now proven by number + card name, matching the Pokémon standard for a print-unique number. 1,628 of 2,634 numbers (61.8%) were unprovable by construction — `buildMarkerOwners` keeps only markers owned by fewer than every sibling, unsatisfiable with one witness — so every plain title fell to `unknown`. `ST01-001` went 50 found / 0 eligible to 40 proven / 7 eligible / Buy. Artwork-class and treatment vetoes still run first; multi-print numbers still need positive evidence.
 - `612701d` + `c797e96`: name-only coverage was truncated twice — `searchPokemonCards` clamped to 50, then the call site asked for only 100 — and since the query is ordered `-set.releaseDate` both losses were the oldest prints. "Pikachu" (177 prints) returned 97 candidates / 37 sets / nothing before 2017; Base Set was unselectable because it was never fetched. At the API maximum of 250: 172 candidates / 87 sets / 1999-2026. `289d334`: raising that timeout to a flat 15s silently killed the retry ladder — the budget compared *elapsed* time against 14s, so one attempt exhausted it, and every existing retry test still passed because they reject instantly and never spend time. Attempt timeouts now escalate (4s/5s/9s) and the budget is checked against what the next attempt could still cost. Instant 5xx bursts still get all three attempts; simulated against the measured failure profile, "try again" falls 45% to 29%. The four constants now have invariant tests, since none looks wrong alone.
 - `17c0085`: the eBay item-detail budget is now `EBAY_DETAIL_BUDGET`, default unchanged at 12 of 50.
+- `05d3ca5` (2026-08-15) measured **buy accuracy** for the first time — not "did the report reach `best_buy`" but "is the link we put in front of a buyer the confirmed print", scored across 13 One Piece cards with every winner adjudicated against the official art. Baseline was 3 best_buy of 12 with at least two demonstrably wrong winners; it now sits at **9/13 (69.2%)** against a pre-registered 80% gate. Five gates shipped, each a failing test first and none a relaxation: a report whose configured live source failed is no longer cached (one 10s eBay timeout had frozen an empty Shanks OP09-001 result for fifteen minutes); a listing naming a release the confirmed print does not belong to is a mismatch even when the bundled catalog does not know that release; eBay item specifics carry printed cost and power, and contradicting the catalogued values is a mismatch (two listings titled OP02-013/OP07-119 both pictured OP16-118, one of them a $59 Best Value pick); "fan art" joined the exclusions; playsets ("(x4)", "Playset") stop being ranked against a one-card anchor. Same commit: a 401 now drops the cached eBay application token and retries once, and concurrent cold-start requests share one token request instead of one each (`docs/renewal-audit-2026-08-14.md`).
+- `8902924` (2026-08-15): modern Pokémon sets print the set total zero-padded — the physical card reads `232/091` — but the Pokémon TCG API reports `printedTotal` as `91`, so the eBay keyword search asked for a string almost no title contains. "Mew ex 232/91" returned six listings and abstained on a correctly identified $1,013 card. Padding cannot simply replace the original: live eBay returns 50 rows for "Charizard 4/102" and one for "4/002". Both forms are now searched and unioned, and the extra call is skipped when padding changes nothing (three-digit vintage totals, every One Piece number). Mew ex now reaches `best_buy` with 56 rows / 16 eligible; Charizard 4/102, Pikachu 58/102, Umbreon VMAX 215/203, Mew ex 205/165, Nami OP01-016 and Ace OP07-053 spot-checked unchanged.
 
 ### What went wrong
 
@@ -86,6 +84,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - TCGplayer group/product fallback could select an arbitrary parallel. Special suffixes such as _p2 are not universally manga; suffix semantics cannot be guessed.
 - Live diagnostics on 2026-07-12 reproduced cross-facet false positives for Nami `OP01-016_p4`, Nami `EB03-053_p2`, Robin `EB03-055_p2`, and Zoro siblings. Later market-floor hardening rejects implausibly cheap rows but does not repair the underlying artwork-facet proof gap.
 - The demo-fixture identity fallback survived because every outage test used a name no fixture matched, so the leak only ever fired for Umbreon; outage tests now assert an empty candidate list for a name the fixtures *do* match. Separately, `exclusionPatterns` required the literal `extended art case`, so a bare `... 215/203 Extended Art` ranked as an eligible raw single — neither game has that print class, and the phrase only names aftermarket product.
+- The 15-minute report cache stored failures as results, so a single eBay timeout served an empty answer for the next fifteen minutes and made a supply problem look like an identity problem during the 2026-08-14 accuracy run. Recall (`best_buy` reached) and accuracy (the link is the confirmed print) diverge: the old instrument scored a wrong-artwork winner as a hit.
 - Three defects on 2026-08-11 shared one shape: a bound that looked locally reasonable and silently discarded data. A 50-row clamp, a 100-card page, and a 14s retry budget each capped what the layer above had already asked for, without erroring. Two were found only by measuring production; the third was introduced while fixing the second. `printMatch === "exact"` is never returned by `print-fidelity.ts`; the strongest positive is `compatible`. The value exists in the type and schema but is unreachable, so any metric written against it scores zero.
 
 ### Current evidence and remaining gate
@@ -95,18 +94,12 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Remaining: complete a human-adjudicated 30-listing production sample before claiming population accuracy; monitor live recall and the 12-item enrichment window. Gold/silver and broader market families retain automated coverage but still need periodic live sampling.
 - Review the seven-day production identity timeout and "try again" rate after the 2026-08-11 retry repair. If more than 5% of uncached Pokémon searches still hit the 18-second deadline, promote the lightweight local Pokémon identity index from a parked option to a separately evaluated workstream. pokemontcg.io was measurably unhealthy on 2026-08-11 (0/5 then 3/6 on `/v2/sets?pageSize=1`; successful full-page fetches averaged 6-10s), so the sample must span a healthy window before the rate means anything.
 - Exact-print recall baseline is 21/30 (70.0%) — Pokémon 18/18, One Piece 3/12. Reproduce with `npm run measure:print-recall`; card set in `src/lib/testing/print-recall-cards.ts`, evidence in `docs/print-recall-baseline-2026-08-10.md`. The remaining 9 misses are all One Piece multi-print base prints blocked by print proof, not retrieval.
-- The D-OP-BASE-PROOF sampler exists and is unrun against live eBay: `npm run sample:base-proof` writes a Markdown adjudication sheet plus JSON sidecar, `-- --score <sheet>` reads the filled verdicts back and applies the decision's own >=90% ship / <80% kill rule per card and pooled. It only reads reports; running it adopts nothing. `scripts/lib/compare-probe.mjs` now owns the request shape and retry rules shared with `measure-print-recall.mjs`, so a sample cannot describe rows a different buyer context produced.
+- The D-OP-BASE-PROOF sampler has now run against live eBay at `EBAY_DETAIL_BUDGET=50` and returned 52.6% (10 base / 9 sibling / 0 unclear), killing the rule. `npm run sample:base-proof` collects, `-- --score <sheet>` applies the pre-registered >=90% ship / <80% kill rule. `scripts/lib/compare-probe.mjs` owns the request shape shared with `measure-print-recall.mjs` and `measure-one-piece-buy-accuracy.mjs`, so no two samples can describe rows a different buyer context produced.
+- Buy accuracy is reproducible with `npm run measure:buy-accuracy`; card set, verdicts, and per-row adjudication notes are in `docs/one-piece-buy-accuracy-2026-08-14.md` (+ `-baseline`). The four remaining misses are the argument for D-OP-IMAGE-PROOF and share one property — the text is correct or actively lying: an OP01-016_p3 whose title and eBay Set aspect say only "Romance Dawn"; a $79.99 Nor Con foil parallel of ST01-001 whose set, power, and number all read correct; an SP OP02-013_p3 sold under the P1 alt-art title with matching cost/power because every print of a number shares them; and a Japanese OP04-119 whose seller declares "Language: English, Country of Origin: USA". Nine of the thirteen winners were `inspect_first`, not `best_buy`, so accuracy here is scored over links the product asks the buyer to check, not only over recommendations.
 
 ### Read first
 
-- src/lib/schemas.ts
-- src/lib/ai/listing-compare.ts
-- src/lib/ai/card-identity-runtime.ts
-- src/lib/comparison/print-fidelity.ts
-- src/lib/comparison/ranking.ts
-- src/lib/external/ebay.ts
-- src/lib/external/tcgcsv.ts
-- src/lib/comparison/variant-fidelity.test.ts
+`src/lib/schemas.ts`, `src/lib/ai/listing-compare.ts`, `src/lib/ai/card-identity-runtime.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`, `src/lib/external/ebay.ts`, `src/lib/external/tcgcsv.ts`, `src/lib/comparison/variant-fidelity.test.ts`
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-METADATA" state="review-gated" tags="one-piece,research,audit,manga,promo,tournament,automation" -->
@@ -120,35 +113,46 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 ### Not finished
 
-- All 2,040 rows still require an explicit human review decision before broad publication.
-- Heuristic image RMSE and release-token matching remain research evidence, not proof.
-- Many special prints still have unknown artwork/release semantics or shared external product mappings.
-- No automatic safe promotion pipeline exists by design; promotion must update curated runtime metadata with tests and review.
-
-### Decision needed
-
-- D-METADATA-COHORT: choose the first cohort to review and publish, for example manga-only, high-value gold/silver, or tournament/promos. Do not publish all 784 candidates at once.
+- All 2,040 rows still require an explicit human review decision before broad publication, and many special prints still have unknown artwork/release semantics or shared external product mappings. Heuristic image RMSE and release-token matching remain research evidence, not proof.
+- No automatic safe promotion pipeline exists by design; promotion must update curated runtime metadata with tests and review. The first cohort to publish is D-METADATA-COHORT in DECISIONS.
 
 ### Read first
 
-- output/one-piece-exact-print-audit.json summary and blockers only
-- scripts/research-one-piece-exact-prints.mjs
-- scripts/lib/one-piece-metadata-audit.mjs
-- src/lib/external/one-piece-print-metadata.ts
-- docs/card-identity-research-policy.md
-- .github/workflows/refresh-one-piece-metadata.yml
-
-Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
+`output/one-piece-exact-print-audit.json` (summary and blockers only), `scripts/research-one-piece-exact-prints.mjs`, `scripts/lib/one-piece-metadata-audit.mjs`, `src/lib/external/one-piece-print-metadata.ts`, `docs/card-identity-research-policy.md`, `.github/workflows/refresh-one-piece-metadata.yml`. Avoid loading the 5+ MB ledger; query a specific canonicalPrintId when needed.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-PILOT" state="founder-testing" tags="demand,needs,taste,pricing,validation,buyer" -->
+<!-- progress:workstream id="WS-LAUNCH" state="instrumented-not-posted" tags="analytics,posthog,funnel,privacy,reddit,rednote,attribution" -->
+## WS-LAUNCH - Launch instrumentation and attribution
+
+### Done
+
+- `75a2b4c`: the funnel now starts at the landing, not at the first search. `app_opened` fires once per visit (ref-guarded against StrictMode's double effect) and is the denominator for search rate and activation — before it, a quiet day could equally mean nobody understood the pitch or everybody searched and nothing was worth clicking, and those have opposite fixes. `comparison_completed` carries `result_state`, so an abstention and a recommendation are finally distinguishable and the abstention rate is measurable. `choice_opened` carries a bucketed gap between seeing the verdict and opening the listing — the dwell question answered without recording the session, since autocapture and replay stay off.
+- Channel attribution resolves from a `?s=` campaign tag with referrer fallback; only the coarse enum (`reddit | rednote | discord | internal | other`) is transmitted or stored, and the raw tag never leaves the browser. RedNote is in the enum because its in-app browser usually sends no referrer and would otherwise relabel that traffic `direct` halfway through the funnel. The receipt referrer classifier delegates to the shared one, so a receipt view and a landing cannot label the same visitor two different ways.
+- `f939db2` closed a live privacy leak: posthog-js attaches its own default properties, and `sanitizeAnalyticsProperties` only ever saw the object passed to `capture()`. Because the comparison journey writes the query into the address bar, `$current_url` carried the card someone looked up on every post-search event, and receipt views carried the receipt id in `$pathname` — contradicting the AGENTS.md analytics rule and the claim `/method` makes to buyers, with a live production key. `$current_url`, `$pathname`, `$referrer`, `$referring_domain` and their `$initial_*` variants are stripped through both `property_denylist` and `sanitize_properties`; `$host` is deliberately kept as the only thing separating `lenstcg.com` from `tcgpal.vercel.app`.
+- `ad6807c`: `card_identity_confirmed` was removed from the funnel. It only fires on an explicit tap, and a rail-card click or a name + number search is auto-confirmed — verified against production events on 2026-08-16, where a rail-card search produced `comparison_completed` with no confirmation event. It is now its own insight measuring how often a query was ambiguous.
+- `docs/launch-metrics.md` defines numerators, denominators, PAU, and the PostHog insights; `docs/launch-links.md` holds the per-post tagged links. `130f170` added `.vercelignore` because `vercel --prod` ships the working directory and `output/` alone is ~356MB, which aborted the upload; that deploy also rebuilt so `NEXT_PUBLIC_POSTHOG_KEY` is inlined into the client bundle.
+
+### Not finished or not verified
+
+- No launch post is confirmed sent, and whether `lenstcg.com` is actually pointed at the deployment is not recorded anywhere in the repo — `docs/launch-links.md` still spells the links as `tcgpal.vercel.app`. Confirm both before reading any funnel number.
+- The PostHog insights in `docs/launch-metrics.md` are specified, not built. Every one of them needs the global `demo_mode is not true` / `channel is not internal` filters or founder testing inflates the whole funnel.
+- Two denominators exist on purpose (`/ app_opened` for channels, `/ comparison_completed` for product quality); mixing them makes a bad Reddit post read as a bad product. Nothing enforces that in the tool.
+- RedNote retention is structurally understated by its in-app webview storage and must not be reported. For month one the honest unit is the session, not the user.
+
+### Read first
+
+`src/lib/analytics.ts`, `src/lib/analytics.test.ts`, `docs/launch-metrics.md`, `docs/launch-links.md`
+<!-- progress:end -->
+
+<!-- progress:workstream id="WS-PILOT" state="blocked-on-accuracy" tags="demand,needs,taste,pricing,validation,buyer" -->
 ## WS-PILOT - Demand and buyer validation
 
 ### Current evidence
 
 - Council conclusion: conditional GO for a private moderated pilot and NO-GO for paid acquisition or subscription work; no new buyer-session evidence was recorded from July 17 through July 23.
 - The likely pain is reducing noisy listings for condition-sensitive, higher-consideration raw purchases.
-- No completed external buyer sessions, repeat-use evidence, willingness-to-pay result, or measured time savings exist; the founder will test receipts before recruiting.
+- No completed external buyer sessions, repeat-use evidence, willingness-to-pay result, or measured time savings exist.
+- The measured constraint is accuracy, not retention: One Piece buy accuracy is 69.2% against its own 80% gate (WS-IDENTITY). A returning user is a user who returns to a wrong answer, so recruiting or posting before that moves is spending goodwill on an untrustworthy core.
 
 ### Not finished
 
@@ -159,10 +163,7 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 
 ### Read first
 
-- docs/validation-plan.md
-- docs/product-spec.md
-- docs/product-principles.md
-- Historical council artifacts (`output/product-readiness-audit-2026-07-10/council/chairman.md`, `docs/councils/tcgpal_feature_scorecard.md`) are absent from origin/main and retained only in the original checkout.
+`docs/validation-plan.md`, `docs/product-spec.md`, `docs/product-principles.md`. Historical council artifacts (`output/product-readiness-audit-2026-07-10/council/chairman.md`, `docs/councils/tcgpal_feature_scorecard.md`) are absent from origin/main and retained only in the original checkout.
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
@@ -172,14 +173,13 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 
 - Card search now has explicit identity and comparison phases: name-only searches show the identity gallery, exact catalog matches proceed with a fixed confirmed-card anchor, and same-number sibling prints remain confirmation-gated. The comparison loader keeps one fixed confirmed-card anchor (reduced-motion users get it static); exact version image selection immediately submits the canonical print; results distinguish best_buy / inspect_first / next_moves and never use demo or low-confidence inventory as real recommendations.
 - `POST /api/agent/card-identity` resolves catalog identity without marketplace fan-out, ranking, or market-anchor work; the comparison route remains backward-compatible. The result-page Edit button follows the newly typed query: set-only One Piece searches such as `luffy op01` say Browse card versions and return to identity confirmation instead of implying listing comparison.
-- Result listings show only the seller/listing image; the selected print remains explicit in the separate text identity block, avoiding an unsupported implication that TCGlens visually compared it with the catalog reference. Minimum condition remains editable. Supporting listings now read as one hairline ledger; generic exact-print evidence collapses to a keyboard-focusable `✓ print` / `✓ 版本` tag while special-print reasons retain the full evidence block.
-- eBay results preserve up to 24 official seller-photo URLs and open them in a lazy-mounted in-page gallery with thumbnails, keyboard navigation, focus restoration, and zoom. Copy explicitly says TCGlens has not verified condition or authenticity from the photos. Single identity candidates are centered, the recommendation explainer is compressed, and the landing marquee excludes SAMPLE-watermarked One Piece hosts while filling from curated clean card art.
-- Immutable public-by-link `/r/{id}` receipts preserve the exact card, one pick plus one second look, evidence/unknowns, timestamp, stable sharing, OG/Twitter metadata, and a fresh re-check. New result journey URLs restore the newest card/condition receipt without re-running providers; EN/中文 desktop and 390px mobile are verified.
-- Non-NM searches now show an item-price read again. `deriveMarketRead` in `ranking.ts` reports the delta plus a `conditionMatched` flag: NM↔NM keeps the existing badge, everything else renders neutral as "under/above NM reference" with the condition-blind caveat and stays out of `priceScore`. No condition multiplier is invented.
+- Result listings show only the seller/listing image, with the selected print explicit in a separate text block so nothing implies TCGlens visually compared it with the catalog reference. Supporting listings read as one hairline ledger; generic exact-print evidence collapses to a keyboard-focusable `✓ print` / `✓ 版本` tag while special-print reasons keep the full block. eBay results preserve up to 24 official seller-photo URLs in a lazy-mounted gallery with thumbnails, keyboard navigation, focus restoration, and zoom, and the copy says outright that condition and authenticity are not verified from them.
+- Immutable public-by-link `/r/{id}` receipts preserve the exact card, one pick plus one second look, evidence/unknowns, timestamp, stable sharing, OG/Twitter metadata, and a fresh re-check; result journey URLs restore the newest card/condition receipt without re-running providers. Non-NM searches show an item-price read via `deriveMarketRead` — NM↔NM keeps the badge, everything else renders neutral as "under/above NM reference" with the condition-blind caveat and stays out of `priceScore`. No condition multiplier is invented.
 - Decision block de-genericised (`2ac0c6c`, live). Every buy result used to carry one constant sentence; the action note is now the next step and varies with the listing ("Open the 11 photos and confirm the print before you commit"). `pricePosition` ranks the pick among the copies found ("2nd cheapest of 5 comparable copies") and needs no market anchor, covering the cards TCGCSV misses. "Why not the cheapest" stopped arguing against a listing the Cheapest lens recommends and became a neutral ladder. Risk verdicts now name the seller numbers that set the label instead of saying "risk signals". No action note in either language may imply future supply — a test enforces it.
 - AI-written Action note is built but shipped off (`AI_VERDICT_NOTE=0` server, `AI_VERDICT_NOTE_UI_ENABLED=false` client). `verdict-copy.ts` keeps buy/wait/pass, the label, and every number; the model only rewrites the sentence under the label from a numbered fact sheet, and `checkVerdictNote` discards notes with unsupported money/percent/count values, unsupported-claim wording, over 3 sentences or 300 characters, unknown fact ids, or the wrong language — every rejection falls back silently. With its own budget (30s at `low` effort, not `buildNarrative`'s 12s cap) it scored 21/21 accepted with zero fallbacks across `gpt-5.4` and `gpt-5.6-luna`, versus 15-16/21 before; a read-through found zero wrong facts and the checker has never rejected a note. Evidence `docs/verdict-note-review-2026-08-09.md`, regenerate with `npm run verdict:review`; flag-off behaviour verified in EN + 中文.
-- Known gap before enabling: notes reliably repeat price/photos/returns and omit the case-defining caveat (buyer-entered facts, Japanese-language listing, unverified seller, unstated condition). Nothing false is said and the deterministic "What to know" line still carries those, but the prompt should require the caveat fact when present.
-- The configured gateway dropped `gpt-5.6-luna` for ~10 minutes on 2026-08-10 (`model_not_found` on plain curl, `gpt-5.4` unaffected) and restored it. Model availability there is not guaranteed; the deterministic fallback is what makes that a non-event.
+- Known gap before enabling: notes reliably repeat price/photos/returns and omit the case-defining caveat (buyer-entered facts, Japanese-language listing, unverified seller, unstated condition). Nothing false is said and the deterministic "What to know" line still carries those, but the prompt should require the caveat fact when present. Separately, the configured gateway dropped `gpt-5.6-luna` for ~10 minutes on 2026-08-10 (`model_not_found` on plain curl, `gpt-5.4` unaffected); model availability there is not guaranteed, and the deterministic fallback is what makes that a non-event.
+- Landing onboarding for cold arrivals (`d4a2659`, softened by `8ee2351`): a typed placeholder writes example queries into the empty search box so the query shape is visible without instructions, holds the static placeholder first because that one lists every example at once, and stops permanently once the buyer types. The examples now mix bare names with name + number (Charizard, Pikachu 58/102, Mew, Luffy OP01-003, Umbreon VMAX) — leading with a collector number every time made the search look like it demanded one. A total-cost demo shipped alongside it and was removed a commit later: it made cheapest-total the headline, contradicting the Best Value default sitting directly below it. Reduced motion goes straight to the settled state rather than relying on the global reduce reset, and the input keeps its `aria-label` so the accessible name never animates.
+- Card rail fixed for touch (`4388774`). The touch build had the track animation off, so nothing moved and nothing signalled the rail was a carousel, and it pinned the check pill plus its darkening veil to full opacity — no hover exists to reveal them, so every card wore a green bar across the art the rail exists to show. Touch now runs the same moving rail, and `:active` joins `:hover`/`:focus-visible`. Two traps recorded for the way back: `overflow-x: auto` fights the track transform (scroll offset and animated translation compose into a position neither asked for), and a track `gap` breaks the loop because 2n cards carry 2n-1 gutters. Also fixed two pre-existing desktop bugs — `padding-inline` counted as track width so `-50%` overshot the clone by 24px and hitched once per lap (halves now measure 944/944), and reduced motion stopped the track inside `overflow: hidden`, stranding every card past the first screenful; that path is now a scroll-snap strip.
 - Version picker reworked on 2026-08-11 (`22ccb64`). Set groups arrive open instead of collapsed — a click per set revealed, most often, a single card, identified only by a set name. Groups sort newest-set-first from catalog release dates, and the set filter reads "Evolving Skies (2021)"; the filter value stays the bare set name so faceting is unchanged. Release order is used because score order cannot be: on a name-only query every exact-name match earns the identical score, so the tie-break fell through to the catalog API's own ordering. Affordable because paint is deferred to the browser (`content-visibility: auto` plus a reserved intrinsic size) rather than by leaving cards unmounted: no observer, no virtualisation, no dependency, every card findable by browser search, and only 7 of 187 images loaded on a 186-card picker. Expansion is capped by a 60-card budget (`IDENTITY_EXPANDED_CARD_BUDGET`) — "Vinsmoke Reiju" (20 cards/8 sets), "Shanks" (54/28) and "Nami" (89/53) open in full, while "Monkey.D.Luffy" (186/74) would otherwise render 49,024px (~68 screens) and is now 16,834px with 13 groups open. One Piece set options stay unlabelled: the bundled catalog has no dates and set codes would mis-order the promo, anniversary, and reprint lines.
 
 ### Not finished or not verified
@@ -189,17 +189,9 @@ Avoid loading the 5+ MB ledger. Query a specific canonicalPrintId when needed.
 - The landing rail's cold-start pool remains eight hardcoded Pokémon cards. Replace it with a verified, freshness-bounded catalog source before adding One Piece entries or making any "newest" or "chase right now" claim; the current UI makes neither claim.
 - The “exact buy list” aha moment, receipt trust surface, and shareability have not been tested with target buyers.
 
-### Decision needed
-
-- D-NEXT-MOVES: choose whether the empty state should prioritize refine search, paste a listing, marketplace reference links, alerts/retry, or educational identity help. Validate rather than filling space with weak listings.
-
 ### Read first
 
-- src/features/comparison/ComparisonApp.tsx
-- src/features/comparison/i18n.tsx
-- src/features/comparison/ComparisonApp.test.tsx
-- Receipt flow: src/features/receipt/ReceiptPageClient.tsx, src/lib/comparison/report-snapshot.ts
-- src/lib/testing/standard-comparison-flow.ts
+`src/features/comparison/ComparisonApp.tsx`, `src/features/comparison/i18n.tsx`, `src/features/comparison/ComparisonApp.test.tsx`, `src/lib/testing/standard-comparison-flow.ts`; receipt flow in `src/features/receipt/ReceiptPageClient.tsx` and `src/lib/comparison/report-snapshot.ts`.
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-released-firecrawl-frontier-killed" tags="mcp,plugin,agents,marketplaces,distribution,business,firecrawl,frontier" -->
@@ -227,19 +219,22 @@ The user must decide these; agents must not infer them:
 4. D-MONETIZATION: subscription, advertising, or neither; defer implementation until repeat demand is measured.
 5. D-NAMING: whether public copy and internal package/module naming should converge on TCGlens or TCGpal; do not change either without owner direction.
 6. D-DETAIL-BUDGET: how many eBay rows get the item-detail call. Default is still 12 of 50. Measured over 483 paired listings (each its own control, three arms at budget 0/12/50 seconds apart, inner-joined on item id): 57.3% of rows state no condition on the search summary, the detail call resolves 69.0% of those, and 67.5% of the flips are Near Mint — 109 eligible listings at 12 versus 158 at 50, +45% comparable supply, growing on 6 of 10 cards and shrinking on none. Cost is ~3.9x the Browse calls (13 to 51 per comparison), so the answer depends on the daily Browse quota, which is unknown here. A flat 50 also overspends: cards that already had 20-38 eligible gained the most. An adaptive rule (enrich 12, spend more only when eligible is below ~10) is inferable from the per-card table but untested. Evidence: `docs/ebay-detail-budget-review-2026-08-10.md`, `npm run review:detail-budget`.
-7. ~~D-OP-BASE-PROOF~~ **RESOLVED 2026-08-14: KILL at 52.6%.** The sample was collected against live eBay with `EBAY_DETAIL_BUDGET=50` (so the condition-budget confound named below could not hide it) and adjudicated by opening all 19 rows: 10 base, 9 sibling, 0 unclear. Per card: Nami OP01-016 60%, Zoro OP06-118 80%, Shanks OP09-001 33%. The absence of a sibling marker does not prove the base print, and the failures were not marginal — six of the nine siblings were promotional runs absent from the bundled catalog ($124-$175 PSA Magazine Promo and 2nd Anniversary Shanks against a ~$2 base), and one was a $37 listing whose title AND eBay Set aspect both read "Emperors in the New World Regular" while the photo was the manga alt art. Evidence: `docs/base-print-precision-sample-2026-08-14.md`. Do not reopen without new evidence; the guardrail stays.
-8. D-OP-IMAGE-PROOF (new, open): whether print identity should compare the listing photo against the official card image. Raised by the 2026-08-14 buy-accuracy run, which ended at 9/13 correct (69.2%) with **all four** remaining misses invisible to text: an OP01-016_p3 artwork whose title and Set aspect say only "Romance Dawn"; a $79.99 Nor Con foil parallel of ST01-001 whose set, power, and number all read correct; an SP OP02-013_p3 sold as the P1 alt art; and a Japanese OP04-119 whose seller declares "Language: English, Country of Origin: USA". Every text-side gate that could be added has now been added, so this is the next real lever — and also the first one that would fetch images server-side, which is a source-boundary question for AGENTS.md, not just an engineering one. Needs its own falsifiable test before any build.
+7. ~~D-OP-BASE-PROOF~~ **RESOLVED 2026-08-14: KILL at 52.6%** (10 base / 9 sibling / 0 unclear, live eBay at `EBAY_DETAIL_BUDGET=50`; per card Nami 60%, Zoro 80%, Shanks 33%). The absence of a sibling marker does not prove the base print, and the failures were not marginal: six of nine siblings were promotional runs absent from the bundled catalog ($124-$175 against a ~$2 base), and one $37 row had title and eBay Set aspect both reading "Emperors in the New World Regular" over a photo of the manga alt art. Evidence `docs/base-print-precision-sample-2026-08-14.md`. Do not reopen without new evidence; the guardrail stays.
+8. D-OP-IMAGE-PROOF (open): whether print identity should compare the listing photo against the official card image. Raised by the 9/13 buy-accuracy run, where all four remaining misses are invisible to text (see WS-IDENTITY). Every text-side gate that could be added has now been added, so this is the next real lever — and the first one that would fetch images server-side, which is a source-boundary question for AGENTS.md, not just an engineering one. Needs its own falsifiable test before any build.
+9. D-LAUNCH-GO (open, blocking): whether to post the tagged Reddit/RedNote links now at 69.2% One Piece buy accuracy, or hold until the image-proof lever moves it. The instrumentation is ready either way; this is the founder's call and nothing in the repo records it. Pokémon accuracy at the same standard has never been measured — only recall (18/18), which does not score the artwork — so the number being weighed covers one of the two live games.
+10. D-LOGIN (answered 2026-08-14, awaiting founder acceptance): recommendation is **do not build login now** — the premise was false (Vercel route handlers already are the backend; the real questions are a durable store and who verifies the password), auth is an explicit AGENTS.md non-goal until the pilot gates pass, and the measured constraint is accuracy, not retention. Cheap version of the same test: anonymous return-visitor measurement through the existing allowlist plus the shareable receipt, run through the 10-person pilot. Success ≥4/10 return with a second card in 14 days and ≥2 ask unprompted to save a comparison; kill <2/10. Nothing in the snapshot schema forecloses a later user id, so waiting accrues no migration debt. Evidence `docs/decision-login-backend-2026-08-14.md`.
 <!-- progress:end -->
 
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-Observed on 2026-08-11 in the primary checkout `/Users/chenjunhsu/Desktop/projects/TCGpal`:
+Observed on 2026-08-18 in the primary checkout `/Users/chenjunhsu/Desktop/projects/TCGpal`:
 
-- `main` is at `289d334` and exactly level with `origin/main` (0 ahead, 0 behind). Everything this session shipped is pushed; Vercel deploys from `main`.
-- The D-OP-BASE-PROOF sampler is committed and pushed: `scripts/sample-base-print-precision.mjs`, `scripts/lib/base-print-sample.mjs`, `scripts/lib/compare-probe.mjs`, their two `.test.mjs` files, one added `package.json` script, and the `measure-print-recall.mjs` refactor that adopts the shared probe.
-- Still dirty afterwards: six generated Graphify files and `package-lock.json`. `package-lock.json` was already dirty before the 2026-08-11 identity/picker session and no install was run, so it is not ours; neither was staged.
-- Untracked and deliberately not committed: `.workbuddy-ai/`, `REVIEW-2026-07-31.md`, six `docs/` briefs and mockups, and every `output/` artifact directory. None were authored this session.
+- `main` is at `4388774` and exactly level with `origin/main` (0 ahead, 0 behind). Everything through the 2026-08-16 launch-instrumentation session is pushed; Vercel deploys from `main`.
+- Dirty tracked files: six generated Graphify files and `package-lock.json` (117 lines of peer-annotation churn, still not ours — it predates the 2026-08-11 session and no install has been run since).
+- `REVIEW-2026-07-31.md` and the `docs/` briefs and mockups were committed in `401c2d6`; they are no longer untracked.
+- Untracked and deliberately not committed: `.workbuddy-ai/`, `union-arena-market-brief-2026-08.md`, `vintage-costume-cards.html`, and every `output/` artifact directory (~356MB, now also excluded from CLI deploys by `.vercelignore`). `output/browser-after/`, `output/playwright/`, and `output/visual-checks/` are new since the last refresh.
+- `.vercelignore` is tracked as of `130f170`; do not delete it — `vercel --prod` uploads the working directory and times out without it.
 - Graphify regenerates via a commit hook, so `graphify-out/` churns on every commit. Do not stage it opportunistically.
 - Preserve all dirty Graphify, research, screenshot, review, and design artifacts as local work-in-progress; do not clean or prune them without an explicit scoped task.
 
@@ -257,6 +252,7 @@ Refresh this section with /progress; do not assume it remains current.
 | Ranking/recommendation | `src/lib/schemas.ts`, `src/lib/comparison/ranking.ts`, `src/lib/comparison/platforms.ts`, relevant tests |
 | UI/product flow | WS-UX, `src/features/comparison/ComparisonApp.tsx`, `src/features/receipt/ReceiptPageClient.tsx`, `src/lib/comparison/report-snapshot.ts`, `src/lib/testing/standard-comparison-flow.ts` |
 | Product/demand decision | WS-PILOT, `docs/validation-plan.md`, `docs/product-spec.md`; historical council artifacts are missing from `origin/main` |
+| Analytics, funnel, or launch | WS-LAUNCH, `src/lib/analytics.ts`, `docs/launch-metrics.md`, `docs/launch-links.md` |
 | Agent/MCP or marketplace expansion | AGENTS.md production/frontier boundaries, `src/app/mcp/route.ts`, `src/lib/mcp/tools.ts`, `docs/architecture-and-data-sources.md`, `docs/frontier-firecrawl-pilot.md`, and `src/lib/comparison/platforms.ts` |
 | Dirty local work | LOCAL-STATE, then git diff for only the named files |
 
@@ -266,24 +262,24 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Current verified product commit: `289d334` on 2026-08-11.
+Current verified product commit: `4388774` on 2026-08-18.
 
-- 2026-08-11 D-OP-BASE-PROOF sampler (no product code touched): lint, typecheck, `npm run test` green at 77 files / 1178 tests (up from 75 / 1138 — 40 new), and a production build passed. The collect → sheet → adjudicate → score loop was exercised end to end against a local stub report, including per-card attribution, reviewer notes round-tripping, the detail-budget caveat firing, and a mixed base/sibling/unclear verdict set producing 50.0% strict / KILL with the weakest card named. The refactored `measure-print-recall.mjs` was replayed against the same stub and produced its original output format and aggregation.
-- 2026-08-11 identity/picker release `240b5c2..289d334` (7 commits, all pushed to `main`): lint, typecheck, 75 files / 1138 tests, and a Next.js 16.2.6 production build passed before each push. Built-in-browser QA on the version picker covered EN and 中文 desktop plus 375px mobile with no horizontal overflow, and the One Piece single-print Buy result was verified end to end in all three. Live production check after deploy: "Pikachu" returns 172 candidates across 87 sets spanning 1999-2026 with groups ordered newest-first and years in the set filter. Two build failures during that session were `fonts.gstatic.com` connection errors during `next/font` subsetting, not code — the same tree built green on retry. `npm run build` is not deterministic offline; retry once before investigating.
-- 2026-08-09 landing/Chinese release `e82e4fc`: lint, typecheck, 67 files / 896 tests, and a production build passed; EN/中文 desktop and 390px mobile QA clean, no legacy terminology hits. 2026-08-03 catalog-outage/market-read fix: lint, typecheck, 62 files / 858 tests, and a production build passed; a live re-check during a ~60% pokemontcg.io outage returned 42 real `umbreon` prints across 25 sets on three consecutive runs. `vitest.config.ts` excludes `.claude/worktrees/**`, which had been running other branches' copies of every test.
-- 2026-08-09 receipt release: artifact-excluded lint passed; typecheck passed; 67 files / 886 tests passed; Next.js 16.2.6 production build passed with dynamic `/r/[id]` and OG routes. Built-in-browser QA covered EN/中文 desktop, 390px mobile with no horizontal overflow, stable URL copying, latest-receipt replay with no second provider POST, and five sequential live searches across Pokémon/One Piece using both Edit and New Search. It retained the seller-photo gallery, 44px listing actions, keyboard order, and reduced-motion behavior with empty browser error logs; seller photos stay display-only (no condition/authenticity inference, no ranking integration, extra images mount only after the gallery opens). Full unfiltered lint/test remain red only because preserved untracked `output/exact-print-eval` research contains four lint errors and 115 explicitly expected failures.
+- 2026-08-18 refresh at `4388774`, clean of source changes: `npm run lint` clean **unfiltered** (the `output/exact-print-eval` lint errors that used to force a filtered run no longer surface), `npm run typecheck` clean, `npm run test` green at 78 files passed / 2 skipped (80) and 1216 tests passed / 2 skipped (1218) in 8.15s, including the `metadata:check` audit gate. `npm run build` was not re-run; the last recorded build was `289d334`.
+- 2026-08-15/16 accuracy + launch sessions `289d334..4388774` (13 commits, all pushed): the five identity gates, the zero-padded set-total search, and the analytics changes each landed test-first. `d4a2659` was browser-verified at 1280x900 in both languages and at 375x812 — the mobile pass caught the Chinese labels wrapping, so the demo row became content-sized. `8ee2351` re-verified the landing at 1280x900 with the demo removed and no horizontal overflow. `f939db2` was browser-verified to confirm posthog still initializes with the new options, since a rejected option throws into the existing try/catch and silently disables analytics entirely. `ad6807c` was confirmed against live production events.
+- 2026-08-11 D-OP-BASE-PROOF sampler: lint, typecheck, 77 files / 1178 tests, and a production build passed; the collect → sheet → adjudicate → score loop was exercised end to end against a local stub report. 2026-08-11 identity/picker release `240b5c2..289d334`: lint, typecheck, 75 files / 1138 tests, and a Next.js 16.2.6 build passed before each push; browser QA covered EN/中文 desktop plus 375px mobile, and live production returned 172 "Pikachu" candidates across 87 sets spanning 1999-2026. Two build failures that session were `fonts.gstatic.com` errors during `next/font` subsetting, not code — `npm run build` is not deterministic offline, so retry once before investigating.
+- Earlier releases (2026-08-03 catalog-outage/market-read, 2026-08-09 landing/Chinese `e82e4fc`, 2026-08-09 receipts) each passed lint, typecheck, their full suite, and a production build, with EN/中文 desktop and 390px mobile QA, five sequential live searches across both games using Edit and New Search, stable receipt URL copying, and latest-receipt replay with no second provider POST. Seller photos stay display-only. `vitest.config.ts` excludes `.claude/worktrees/**`, which had been running other branches' copies of every test.
 
 Still not verified:
 
-- Population-level live eBay recall and precision remain unproven until the 30-listing human-adjudicated sample; the known cross-facet sibling reproductions are fixed in v4 and covered by zero-substitution regressions.
-- Human-adjudicated 30-listing quality gate.
-- Ten-buyer demand/usability pilot.
-- Monetization, distribution economics, and public-launch legal/provider readiness.
-- Dirty local experiments in LOCAL-STATE.
+- Population-level live eBay recall and precision remain unproven until the human-adjudicated 30-listing quality gate runs; the known cross-facet sibling reproductions are fixed in v4 and covered by zero-substitution regressions.
+- Ten-buyer demand/usability pilot; monetization, distribution economics, and public-launch legal/provider readiness; dirty local experiments in LOCAL-STATE.
 - The set-filter year label is unit-tested but never seen in a browser: only Pokémon carries release dates and pokemontcg.io was unhealthy during the QA window.
 - The eBay detail budget is measured but unshipped (default still 12); D-DETAIL-BUDGET needs the Browse daily quota.
 - The 2026-08-11 retry improvement (45% to 29% "try again") is a simulation over the measured failure profile, not an observed production rate.
-- The D-OP-BASE-PROOF sampler has only ever seen a stub report. It has not touched live eBay, so the adjudicable denominator, the sheet's behaviour on real titles, and the precision itself are all unmeasured.
+- Pokémon buy accuracy has never been measured at the One Piece standard. Pokémon scores 18/18 on recall, which does not adjudicate the artwork, so the 69.2% figure describes one of the two live games.
+- No production build has run since `289d334`; the 13 commits after it are verified by lint, typecheck, tests, and browser QA only.
+- Whether `lenstcg.com` resolves to the deployment, and whether any tagged launch link has been posted, is not recorded in the repo. Every funnel number is meaningless until both are known.
+- The PostHog insights in `docs/launch-metrics.md` are written but not built in the tool, and the `channel is not internal` / `demo_mode is not true` global filters are not applied anywhere automatically.
 <!-- progress:end -->
 
 <!-- progress:section id="UPDATE-PROTOCOL" -->
