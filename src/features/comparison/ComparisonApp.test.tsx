@@ -1615,7 +1615,12 @@ describe("comparison condition controls", () => {
     // Mercari and Whatnot are both plain manual checks and share the label.
     expect(within(followUps).getAllByText("Manual check")).toHaveLength(2);
     expect(within(followUps).getByText("Japan manual check")).toBeTruthy();
-    expect(within(followUps).getAllByText("Not checked by TCGlens")).toHaveLength(3);
+    // The MANUAL CHECK label is the disclaimer; a "not checked" line repeating it
+    // in the fact slot was removed, and that slot now stays empty on rows that
+    // carry no fact of their own.
+    expect(within(followUps).queryByText("Not checked by TCGlens")).toBeNull();
+    expect(within(followUps).getByText(/Prices are bid-driven/)).toBeTruthy();
+    expect(within(followUps).getByText(/prices in JPY/)).toBeTruthy();
     expect(within(followUps).getByRole("link", { name: /TCGplayer/ }).getAttribute("href")).toBe("https://www.tcgplayer.com/product/123456");
     const mercariLink = within(followUps).getByRole("link", { name: /Mercari/ });
     expect(mercariLink.getAttribute("href")).toContain("mercari.com/search");

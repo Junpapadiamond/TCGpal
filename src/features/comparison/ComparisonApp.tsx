@@ -3064,6 +3064,15 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
   if (!card) return null;
   const query = [card.name, card.cardNumber, card.variant, card.setName].filter(Boolean).join(" ");
   const tcgplayerUrl = card.tcgplayerProductId && card.marketUrl ? card.marketUrl : null;
+  // `detail` is reserved for a fact this row actually carries. The manual rows
+  // have none, and the "not checked" line that used to sit there said the same
+  // thing as the MANUAL CHECK label directly above it and the note directly
+  // below — three restatements of one disclaimer, which reads as legal boilerplate
+  // and gets skimmed. The label keeps the disclaimer; the note now tells the
+  // buyer what the platform is and what it cannot give them, which is the part
+  // that changes a decision. Descriptions state what a platform *is*; none of
+  // them may claim it is cheaper, faster, or safer — TCGlens has no evidence for
+  // that and the unsupported-claim rule applies to our own copy too.
   const rows = [
     {
       marketplace: "TCGplayer" as const,
@@ -3071,32 +3080,32 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       detail: typeof card.marketMid === "number"
         ? `${formatMoney(card.marketMid)} · ${marketFreshnessText(card, report.generatedAt, t)}`
         : t.result.marketReferenceUnavailable,
-      // When the crosswalk resolved a product we link to it and the row is an
-      // aggregate reference. When it did not, the row used to show "unavailable"
-      // with nothing to click, which is where a US buyer most wants to look
-      // themselves — so it degrades to a scoped search and says so.
-      note: tcgplayerUrl ? t.result.aggregateReferenceOnly : t.result.tcgplayerSearchNote,
+      note: t.result.tcgplayerAbout,
+      // When the crosswalk resolved a product we link to it. When it did not,
+      // the row showed "unavailable" with nothing to click, which is exactly
+      // where a US buyer most wants to look themselves, so it degrades to a
+      // game-scoped search.
       url: tcgplayerUrl ?? tcgplayerSearchUrl(report.request.cardHint.game, query),
     },
     {
       marketplace: "Mercari" as const,
       label: t.result.manualCheck,
-      detail: t.result.notChecked,
-      note: t.result.mercariManualNote,
+      detail: null,
+      note: t.result.mercariAbout,
       url: `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`,
     },
     {
       marketplace: "Whatnot" as const,
       label: t.result.manualCheck,
-      detail: t.result.notChecked,
-      note: t.result.whatnotManualNote,
+      detail: null,
+      note: t.result.whatnotAbout,
       url: whatnotSearchUrl(query),
     },
     {
       marketplace: "SNKRDUNK" as const,
       label: t.result.japanManualCheck,
-      detail: t.result.notChecked,
-      note: t.result.snkrdunkManualNote,
+      detail: null,
+      note: t.result.snkrdunkAbout,
       // `keywords` is the parameter SNKRDUNK reads; the singular form lands on
       // the generic ranking page with the query still in the address bar. The
       // query itself is the Japanese-market shape, not the one the US rows use:
@@ -3117,7 +3126,7 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
             <MarketplaceBrand marketplace={row.marketplace} />
             <div>
               <p className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">{row.label}</p>
-              <p className="mt-0.5 text-sm font-bold text-[#24312f]">{row.detail}</p>
+              {row.detail && <p className="mt-0.5 text-sm font-bold text-[#24312f]">{row.detail}</p>}
               <p className="mt-0.5 text-xs leading-5 text-[#7a8982]">{row.note}</p>
             </div>
             {row.url ? (
