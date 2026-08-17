@@ -84,7 +84,16 @@ All over `comparison_completed`:
   or undiscovered toggle. Disambiguate against activation.
 - **Verdict-flip rate** — `decision_feedback_submitted{changed_decision=true}` /
   all feedback. The only direct claim of value delivered.
-- **Leak rate** — `other_marketplace_clicked` / completed.
+- **Outbound reference rate** — `other_marketplace_clicked` / completed. Was
+  called "leak rate", which decided the analysis before any data arrived: a leak
+  is something you lose, and we lose nothing — there is no affiliate deal, no
+  checkout, no cut of an eBay sale. The product promises to find the best listing
+  for a card, so a buyer who opens Whatnot because that is where the card is has
+  been served, not lost. **This number is not directional on its own.** Read it
+  only against whether the buyer came back: an outbound click followed by
+  `second_comparison_started` is the product working; one with no return is the
+  case worth worrying about. Today's event cannot tell those apart, so treat the
+  rate as a prompt to go look, never as a score to push down.
 - **Decision latency** — `choice_opened` split by `time_to_open_bucket`.
   `under_10s` = trusted on sight. `over_60s` = re-verified by hand, which means
   the evidence presentation is not carrying its weight.
