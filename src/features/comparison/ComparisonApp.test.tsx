@@ -1612,13 +1612,18 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("One Piece coverage is in beta and may be less stable.")).toBeTruthy();
     const followUps = screen.getByRole("region", { name: "Check other marketplaces" });
     expect(within(followUps).getByText("Market reference")).toBeTruthy();
-    expect(within(followUps).getByText("Manual check")).toBeTruthy();
+    // Mercari and Whatnot are both plain manual checks and share the label.
+    expect(within(followUps).getAllByText("Manual check")).toHaveLength(2);
     expect(within(followUps).getByText("Japan manual check")).toBeTruthy();
-    expect(within(followUps).getAllByText("Not checked by TCGlens")).toHaveLength(2);
+    expect(within(followUps).getAllByText("Not checked by TCGlens")).toHaveLength(3);
     expect(within(followUps).getByRole("link", { name: /TCGplayer/ }).getAttribute("href")).toBe("https://www.tcgplayer.com/product/123456");
     const mercariLink = within(followUps).getByRole("link", { name: /Mercari/ });
     expect(mercariLink.getAttribute("href")).toContain("mercari.com/search");
     expect(within(followUps).getByRole("link", { name: /SNKRDUNK/ }).getAttribute("href")).toContain("snkrdunk.com/search");
+    // Live-auction supply the buyer may want, on a row that never claims a cost.
+    const whatnotLink = within(followUps).getByRole("link", { name: /Whatnot/ });
+    expect(whatnotLink.getAttribute("href")).toContain("whatnot.com/search?query=");
+    expect(whatnotLink.getAttribute("href")).toContain("OP01-016");
     fireEvent.click(mercariLink);
     expect(trackEvent).toHaveBeenCalledWith("other_marketplace_clicked", { marketplace: "Mercari", game: "onePiece" });
     fireEvent.click(screen.getByRole("button", { name: "中文" }));

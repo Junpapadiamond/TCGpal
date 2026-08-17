@@ -26,6 +26,7 @@ import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
+import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
 import { expandGroupsWithinBudget, groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD, setReleaseYear } from "./identity-grouping";
@@ -3069,8 +3070,12 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       detail: typeof card.marketMid === "number"
         ? `${formatMoney(card.marketMid)} · ${marketFreshnessText(card, report.generatedAt, t)}`
         : t.result.marketReferenceUnavailable,
-      note: t.result.aggregateReferenceOnly,
-      url: tcgplayerUrl,
+      // When the crosswalk resolved a product we link to it and the row is an
+      // aggregate reference. When it did not, the row used to show "unavailable"
+      // with nothing to click, which is where a US buyer most wants to look
+      // themselves — so it degrades to a scoped search and says so.
+      note: tcgplayerUrl ? t.result.aggregateReferenceOnly : t.result.tcgplayerSearchNote,
+      url: tcgplayerUrl ?? tcgplayerSearchUrl(report.request.cardHint.game, query),
     },
     {
       marketplace: "Mercari" as const,
@@ -3078,6 +3083,13 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       detail: t.result.notChecked,
       note: t.result.mercariManualNote,
       url: `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`,
+    },
+    {
+      marketplace: "Whatnot" as const,
+      label: t.result.manualCheck,
+      detail: t.result.notChecked,
+      note: t.result.whatnotManualNote,
+      url: whatnotSearchUrl(query),
     },
     {
       marketplace: "SNKRDUNK" as const,
