@@ -150,6 +150,33 @@ function codeCandidates(text: string, expected: ParsedCollectorNumber): string[]
   return [...separated, ...compact];
 }
 
+/**
+ * The same collector number with the set total zero-padded to three digits, or
+ * null when that changes nothing.
+ *
+ * Modern Pokemon sets print the total padded — a Paldean Fates card reads
+ * "232/091" — and both sellers and catalogues copy what is printed. The Pokemon
+ * TCG API reports `printedTotal` as the number 91, so our identity string is
+ * "232/91" and any keyword search built from it asks for a string almost nobody
+ * wrote. Measured 2026-08-15 on eBay: "Mew ex 232/91" returned 6 rows against 50
+ * for "Mew ex 232/091". Measured 2026-08-18 on SNKRDUNK: "Mega Charizard X ex
+ * 130/94" returned nothing, "130/094" returned the exact print.
+ *
+ * Padding cannot simply replace the original everywhere. Vintage sets print the
+ * total unpadded and no field says which convention a set follows — "Charizard
+ * 4/102" returned 50 eBay rows where "4/002" returned one — so a caller that can
+ * afford two searches unions them, and a caller that gets one link picks the
+ * form its target actually indexes. Only the total is padded, never the card's
+ * own number, and codes without a total (every One Piece number) return null.
+ */
+export function paddedCollectorNumber(cardNumber: string): string | null {
+  const parts = cardNumber.trim().match(/^([A-Za-z]{0,4}\d{1,3})\s*\/\s*([A-Za-z]{0,4})(\d{1,3})$/);
+  if (!parts) return null;
+  const [, number, totalPrefix, total] = parts;
+  if (total.length >= 3) return null;
+  return `${number}/${totalPrefix}${total.padStart(3, "0")}`;
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

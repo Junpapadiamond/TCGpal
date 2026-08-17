@@ -1,3 +1,4 @@
+import { paddedCollectorNumber } from "@/lib/comparison/collector-number";
 import type { CardIdentityCandidate, ComparisonReference } from "@/lib/schemas";
 
 type JapanReferenceLink = {
@@ -62,9 +63,17 @@ export function buildJapanReferenceLinks(
   }));
 }
 
+/**
+ * The Japanese market indexes an English card by its printed, zero-padded number
+ * and its own localised set name. So the number is padded, and the English set
+ * name is left out entirely rather than sent as noise the catalogue cannot match
+ * — measured on SNKRDUNK, adding "Phantasmal Flames" took an exact hit to zero
+ * results. The card name stays in English: SNKRDUNK and Mercari JP both map
+ * "Mega Charizard X ex" to メガリザードンXex on their own.
+ */
 export function buildJapanSearchQuery(card: CardIdentityCandidate) {
   return [
-    card.cardNumber,
+    paddedCollectorNumber(card.cardNumber) ?? card.cardNumber,
     card.name,
     isOnePiece(card) ? "ワンピースカード" : "ポケカ",
   ].filter(Boolean).join(" ").trim();

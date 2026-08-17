@@ -5,6 +5,7 @@ import {
   collectorNumberConflict,
   collectorNumberNumerator,
   collectorNumberPattern,
+  paddedCollectorNumber,
 } from "@/lib/comparison/collector-number";
 import { isGradedListing } from "@/lib/comparison/graded-listing";
 import type {
@@ -707,28 +708,12 @@ async function fetchEbayAuthed(
 }
 
 /**
- * The same collector number with the set total zero-padded to three digits, or
- * null when that changes nothing.
- *
- * Modern Pokemon sets print the total padded — a Paldean Fates card reads
- * "232/091" — and sellers copy what is printed. The Pokemon TCG API reports
- * `printedTotal` as the number 91, so our identity string is "232/91" and a
- * keyword search asks eBay for a string almost no title contains: measured
- * 2026-08-15, "Mew ex 232/91" returned 6 rows against 50 for "Mew ex 232/091".
- *
- * Padding cannot just replace the original. Vintage sets print the total
- * unpadded, and no field says which convention a set follows — "Charizard 4/102"
- * returned 50 rows where the padded "4/002" returned one. Only the total is
- * padded, never the card's own number, and the caller unions the rows rather than
- * choosing between them.
+ * Set-total zero-padding now lives with the rest of the shared collector-number
+ * parsing, because the Japanese reference links need the same rule and must not
+ * pull this adapter into a client bundle to get it. Re-exported under the name
+ * eBay callers already use.
  */
-export function paddedCollectorNumberQuery(cardNumber: string) {
-  const parts = cardNumber.trim().match(/^([A-Za-z]{0,4}\d{1,3})\s*\/\s*([A-Za-z]{0,4})(\d{1,3})$/);
-  if (!parts) return null;
-  const [, number, totalPrefix, total] = parts;
-  if (total.length >= 3) return null;
-  return `${number}/${totalPrefix}${total.padStart(3, "0")}`;
-}
+export const paddedCollectorNumberQuery = paddedCollectorNumber;
 
 /**
  * Runs one extra keyword search for the zero-padded form and merges it into the

@@ -49,6 +49,24 @@ describe("Japan reference links", () => {
   // string in the address bar and renders the generic ranking page, so the link
   // looked fine and searched nothing. Each of these params is the one its own
   // site actually reads; they are not interchangeable.
+  // Measured against SNKRDUNK on 2026-08-18 with "Mega Charizard X ex 130/94
+  // Phantasmal Flames", the shape the result page used to send:
+  //   full string incl. set name  -> 商品が見つかりませんでした (nothing)
+  //   name + unpadded "130/94"    -> nothing
+  //   number alone "130/94"       -> Chanel earrings and a Duel Masters card
+  //   name + padded "130/094"     -> メガリザードンXex MHR [PFL EN 130/094]【英語版】
+  // The JP catalogue keys English cards on the printed, zero-padded total and
+  // localises the set name, so the English set name can only ever subtract.
+  it("pads the set total and drops the English set name for Japanese sites", () => {
+    expect(buildJapanSearchQuery({ ...pokemonCard, name: "Mega Charizard X ex", cardNumber: "130/94", setName: "Phantasmal Flames" }))
+      .toBe("130/094 Mega Charizard X ex ポケカ");
+    expect(buildJapanSearchQuery({ ...pokemonCard, name: "Pikachu", cardNumber: "58/102" }))
+      .toBe("58/102 Pikachu ポケカ");
+    // One Piece numbers carry no total to pad and must survive untouched.
+    expect(buildJapanSearchQuery({ ...onePieceCard, name: "Nami", cardNumber: "OP01-016" }))
+      .toBe("OP01-016 Nami ワンピースカード");
+  });
+
   it("uses each site's own search parameter name", () => {
     const links = buildJapanReferenceLinks(onePieceCard, "2026-07-04T00:00:00.000Z");
     const urlFor = (label: string) => new URL(links.find((link) => link.label === label)!.url!);

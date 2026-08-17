@@ -27,6 +27,7 @@ import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/compariso
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
+import { buildJapanSearchQuery } from "@/lib/comparison/japan-references";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
 import { expandGroupsWithinBudget, groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD, setReleaseYear } from "./identity-grouping";
@@ -3097,8 +3098,11 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       detail: t.result.notChecked,
       note: t.result.snkrdunkManualNote,
       // `keywords` is the parameter SNKRDUNK reads; the singular form lands on
-      // the generic ranking page with the query still in the address bar.
-      url: `https://snkrdunk.com/search?keywords=${encodeURIComponent(query)}`,
+      // the generic ranking page with the query still in the address bar. The
+      // query itself is the Japanese-market shape, not the one the US rows use:
+      // an English set name matches nothing in a JP catalogue and the printed
+      // total has to be zero-padded.
+      url: `https://snkrdunk.com/search?keywords=${encodeURIComponent(buildJapanSearchQuery(card))}`,
     },
   ];
 
