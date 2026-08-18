@@ -3,7 +3,6 @@ import {
   type EbayProductResolution,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
-import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
 import type {
@@ -57,11 +56,6 @@ export type PlatformAgent = {
   // Env vars this agent needs. Surfaced for diagnostics only — never the values.
   requiredEnv: string[];
   isConfigured: () => boolean;
-  // Optional per-agent search budget. Agents backed by a provider that runs a
-  // container per call cannot answer inside the default budget, and silently
-  // timing them out every time would look like an empty marketplace rather than
-  // a slow one. Omitted means the shared default applies.
-  searchTimeoutMs?: number;
   search: (input: PlatformSearchInput) => Promise<PlatformSeed[]>;
 };
 
@@ -99,31 +93,11 @@ function stubPlatformAgent(config: {
   };
 }
 
-// Whatnot has no buyer-side marketplace API of its own, so this agent is off
-// until WHATNOT_APIFY_TOKEN is set — no token, no fan-out entry, no calls.
-//
-// Whatnot rows never carry a shipping cost, because Whatnot does not publish one
-// before checkout. They therefore stay ineligible for landed-cost ranking by the
-// existing `shipping_unknown` gate and can never win a lens; they appear as
-// visible, clearly ineligible reference rows. That is deliberate: the buyer sees
-// the same item price Whatnot shows them, and nothing is invented to fill the gap.
-export const whatnotPlatformAgent: PlatformAgent = {
-  id: "whatnot",
-  marketplace: "Whatnot",
-  label: "Whatnot provider actor",
-  sourceMode: "licensed_provider",
-  requiredEnv: ["WHATNOT_APIFY_TOKEN"],
-  isConfigured: hasWhatnotCredentials,
-  // Measured 9-19s per call across live runs; the default 10s budget would time
-  // this agent out most of the time.
-  searchTimeoutMs: 25000,
-  search: ({ card, fetcher, plan }) => searchWhatnotListings(card, fetcher, plan?.query),
-};
-
 const ROADMAP_AGENTS: PlatformAgent[] = [
   stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket adapter", sourceMode: "licensed_provider", requiredEnv: ["CARDMARKET_API_KEY"] }),
   stubPlatformAgent({ id: "snkrdunk", marketplace: "SNKRDUNK", label: "SNKRDUNK adapter", sourceMode: "licensed_provider", requiredEnv: ["SNKRDUNK_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "mercari", marketplace: "Mercari", label: "Mercari adapter", sourceMode: "licensed_provider", requiredEnv: ["MERCARI_PROVIDER_KEY"] }),
+  stubPlatformAgent({ id: "whatnot", marketplace: "Whatnot", label: "Whatnot adapter", sourceMode: "licensed_provider", requiredEnv: ["WHATNOT_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "xianyu", marketplace: "Xianyu", label: "Xianyu adapter", sourceMode: "licensed_provider", requiredEnv: ["XIANYU_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "jihuanshe", marketplace: "集换社", label: "集换社 adapter", sourceMode: "licensed_provider", requiredEnv: ["JIHUANSHE_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "yahoo-auctions-jp", marketplace: "Yahoo Auctions JP", label: "Yahoo Auctions JP adapter", sourceMode: "partner_feed", requiredEnv: ["YAHOO_AUCTIONS_JP_PARTNER_KEY"] }),
@@ -132,7 +106,7 @@ const ROADMAP_AGENTS: PlatformAgent[] = [
 
 // TCGCSV is intentionally absent: it is an aggregate market reference, not
 // seller-specific inventory. Only concrete active listings belong in this registry.
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, ...ROADMAP_AGENTS];
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
@@ -182,7 +156,7 @@ const PLATFORM_SEARCH_TIMEOUT_MS = 10000;
 export async function searchPlatformWithTimeout(
   agent: PlatformAgent,
   input: PlatformSearchInput,
-  timeoutMs = agent.searchTimeoutMs ?? PLATFORM_SEARCH_TIMEOUT_MS,
+  timeoutMs = PLATFORM_SEARCH_TIMEOUT_MS,
 ): Promise<PlatformSeed[]> {
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
