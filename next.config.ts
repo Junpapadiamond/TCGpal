@@ -32,6 +32,18 @@ const nextConfig: NextConfig = {
         hostname: "i.ebayimg.com",
         pathname: "/**",
       },
+      // Whatnot and Mercari listing photos, for the item-price-only reference
+      // sections. Both serve seller-uploaded images from a single CDN host.
+      {
+        protocol: "https",
+        hostname: "images.whatnot.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "u-mercari-images.mercdn.net",
+        pathname: "/**",
+      },
       // One Piece card art. en.onepiece-cardgame.com serves the official
       // watermarked "SAMPLE" images used by the bundled catalog; the optcgapi
       // hosts cover images returned by the live OPTCG augmentation.

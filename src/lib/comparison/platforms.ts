@@ -3,6 +3,7 @@ import {
   type EbayProductResolution,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
+import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
 import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
@@ -120,10 +121,25 @@ export const whatnotPlatformAgent: PlatformAgent = {
   search: ({ card, fetcher, plan }) => searchWhatnotListings(card, fetcher, plan?.query),
 };
 
+// Mercari US, same shape as Whatnot and off until MERCARI_APIFY_TOKEN is set.
+// Mercari publishes no shipping in the listing payload either, so these rows are
+// item-price-only reference too. Its condition vocabulary is general-goods
+// ("like_new"), never a card grade — see parseMercariTitleCondition.
+export const mercariPlatformAgent: PlatformAgent = {
+  id: "mercari",
+  marketplace: "Mercari",
+  label: "Mercari provider actor",
+  sourceMode: "licensed_provider",
+  requiredEnv: ["MERCARI_APIFY_TOKEN"],
+  isConfigured: hasMercariCredentials,
+  // Measured ~45s live — the slowest source by a wide margin.
+  searchTimeoutMs: 60000,
+  search: ({ card, fetcher, plan }) => searchMercariListings(card, fetcher, plan?.query),
+};
+
 const ROADMAP_AGENTS: PlatformAgent[] = [
   stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket adapter", sourceMode: "licensed_provider", requiredEnv: ["CARDMARKET_API_KEY"] }),
   stubPlatformAgent({ id: "snkrdunk", marketplace: "SNKRDUNK", label: "SNKRDUNK adapter", sourceMode: "licensed_provider", requiredEnv: ["SNKRDUNK_PROVIDER_KEY"] }),
-  stubPlatformAgent({ id: "mercari", marketplace: "Mercari", label: "Mercari adapter", sourceMode: "licensed_provider", requiredEnv: ["MERCARI_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "xianyu", marketplace: "Xianyu", label: "Xianyu adapter", sourceMode: "licensed_provider", requiredEnv: ["XIANYU_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "jihuanshe", marketplace: "集换社", label: "集换社 adapter", sourceMode: "licensed_provider", requiredEnv: ["JIHUANSHE_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "yahoo-auctions-jp", marketplace: "Yahoo Auctions JP", label: "Yahoo Auctions JP adapter", sourceMode: "partner_feed", requiredEnv: ["YAHOO_AUCTIONS_JP_PARTNER_KEY"] }),
@@ -132,7 +148,7 @@ const ROADMAP_AGENTS: PlatformAgent[] = [
 
 // TCGCSV is intentionally absent: it is an aggregate market reference, not
 // seller-specific inventory. Only concrete active listings belong in this registry.
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, ...ROADMAP_AGENTS];
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, mercariPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {

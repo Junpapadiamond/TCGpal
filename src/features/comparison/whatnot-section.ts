@@ -1,5 +1,10 @@
 import { VALUE_WEIGHTS } from "@/lib/comparison/ranking";
-import type { NormalizedListing } from "@/lib/schemas";
+import type { Marketplace, NormalizedListing } from "@/lib/schemas";
+
+// Marketplaces that publish no shipping cost before checkout. Their rows can
+// never join the landed-cost ranking, so they surface as item-price-only
+// reference instead. Adding a marketplace here is the whole opt-in.
+export const ITEM_PRICE_ONLY_MARKETPLACES: Marketplace[] = ["Whatnot", "Mercari"];
 
 // Unknown shipping is the one exclusion this section is designed to survive:
 // Whatnot publishes no shipping or tax before checkout, so every Whatnot row
@@ -16,9 +21,12 @@ const SHIPPING_UNKNOWN = "shipping_unknown";
  * them "because they came from Whatnot" would put junk the ranked comparison
  * deliberately rejected back in front of the buyer under a friendlier heading.
  */
-export function selectWhatnotReferenceListings(candidates: NormalizedListing[]): NormalizedListing[] {
+export function selectWhatnotReferenceListings(
+  candidates: NormalizedListing[],
+  marketplace: Marketplace = "Whatnot",
+): NormalizedListing[] {
   return candidates
-    .filter((candidate) => candidate.marketplace === "Whatnot" && candidate.active && candidate.raw)
+    .filter((candidate) => candidate.marketplace === marketplace && candidate.active && candidate.raw)
     .filter((candidate) => {
       const blocking = candidate.eligibilityIssues.filter((issue) => issue.disposition === "exclude");
       return blocking.length > 0 && blocking.every((issue) => issue.code === SHIPPING_UNKNOWN);
@@ -61,8 +69,21 @@ export function scoreWhatnotListing(listing: NormalizedListing): number {
  * eBay's landed cost, so this never produces a cross-marketplace claim. Ties
  * fall to the cheaper item price so the order is deterministic.
  */
-export function rankWhatnotReferenceListings(candidates: NormalizedListing[]): WhatnotRankedListing[] {
-  return selectWhatnotReferenceListings(candidates)
+export function rankWhatnotReferenceListings(
+  candidates: NormalizedListing[],
+  marketplace: Marketplace = "Whatnot",
+): WhatnotRankedListing[] {
+  return selectWhatnotReferenceListings(candidates, marketplace)
     .map((listing) => ({ ...listing, whatnotScore: scoreWhatnotListing(listing) }))
     .sort((a, b) => b.whatnotScore - a.whatnotScore || a.price - b.price);
+}
+
+
+/** Every item-price-only marketplace that returned usable rows, ranked within each. */
+export function groupItemPriceOnlyListings(
+  candidates: NormalizedListing[],
+): Array<{ marketplace: Marketplace; listings: WhatnotRankedListing[] }> {
+  return ITEM_PRICE_ONLY_MARKETPLACES
+    .map((marketplace) => ({ marketplace, listings: rankWhatnotReferenceListings(candidates, marketplace) }))
+    .filter((group) => group.listings.length > 0);
 }

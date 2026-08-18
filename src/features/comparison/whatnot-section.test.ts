@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   WHATNOT_VALUE_WEIGHTS,
+  groupItemPriceOnlyListings,
   rankWhatnotReferenceListings,
   selectWhatnotReferenceListings,
 } from "@/features/comparison/whatnot-section";
@@ -101,5 +102,22 @@ describe("Whatnot in-section ranking", () => {
 
   it("only ranks rows the section would show", () => {
     expect(rankWhatnotReferenceListings([listing({ raw: false })])).toHaveLength(0);
+  });
+});
+
+describe("item-price-only marketplace grouping", () => {
+  it("ranks each marketplace separately and never mixes them", () => {
+    const groups = groupItemPriceOnlyListings([
+      listing({ id: "w1", marketplace: "Whatnot", price: 400 }),
+      listing({ id: "m1", marketplace: "Mercari", price: 100 }),
+      listing({ id: "e1", marketplace: "eBay", price: 50 }),
+    ]);
+    expect(groups.map((group) => group.marketplace)).toEqual(["Whatnot", "Mercari"]);
+    expect(groups.every((group) => group.listings.every((row) => row.marketplace === group.marketplace))).toBe(true);
+  });
+
+  it("omits a marketplace that returned nothing usable", () => {
+    const groups = groupItemPriceOnlyListings([listing({ marketplace: "Whatnot" })]);
+    expect(groups.map((group) => group.marketplace)).toEqual(["Whatnot"]);
   });
 });

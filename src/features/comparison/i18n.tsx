@@ -364,6 +364,11 @@ export const en = {
     whatnotBestPickNote: "Ranked among Whatnot listings on condition, seller record, and photo evidence. Item price is shown but not scored — Whatnot has no comparable total to rank on.",
     whatnotScoreLabel: "Whatnot score",
     whatnotOtherListings: (count: number) => `${count} other listing${count === 1 ? "" : "s"}`,
+    itemPriceOnlyTitle: (marketplace: string) => `Also on ${marketplace}`,
+    itemPriceOnlyNote: (marketplace: string) =>
+      `Item price only — ${marketplace} shows shipping and tax at checkout, so these are not ranked against the comparable copies above.`,
+    itemPriceOnlyBestPick: (marketplace: string) => `Best on ${marketplace}`,
+    itemPriceOnlyOpen: (marketplace: string) => `View on ${marketplace}`,
     whatnotSectionTitle: "Also on Whatnot",
     whatnotSectionNote: "Item price only — Whatnot shows shipping and tax at checkout, so these are not ranked against the comparable copies above.",
     whatnotItemPrice: "item price",
@@ -849,6 +854,11 @@ export const zh: Dict = {
     whatnotBestPickNote: "在 Whatnot 内部按品相、卖家记录和照片证据排序。商品价格只展示、不计分 —— Whatnot 没有可比的总价可排。",
     whatnotScoreLabel: "Whatnot 评分",
     whatnotOtherListings: (count: number) => `另外 ${count} 个商品`,
+    itemPriceOnlyTitle: (marketplace: string) => `${marketplace} 上也有`,
+    itemPriceOnlyNote: (marketplace: string) =>
+      `只有商品价格 —— ${marketplace} 的运费和税在结账时才显示，所以不参与上面的总价排名。`,
+    itemPriceOnlyBestPick: (marketplace: string) => `${marketplace} 上最优`,
+    itemPriceOnlyOpen: (marketplace: string) => `去 ${marketplace} 查看`,
     whatnotSectionTitle: "Whatnot 上也有",
     whatnotSectionNote: "只有商品价格 —— Whatnot 的运费和税在结账时才显示，所以不参与上面的总价排名。",
     whatnotItemPrice: "商品价格",
