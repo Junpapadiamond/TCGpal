@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   ebayPlatformAgent,
+  getConfiguredPlatformAgents,
   getPlatformAgents,
   runPlatformFanout,
   searchPlatformWithTimeout,
   summarizePlatformOutcome,
+  whatnotPlatformAgent,
   type PlatformAgent,
   type PlatformSeed,
 } from "@/lib/comparison/platforms";
@@ -126,6 +128,16 @@ describe("platform fan-out", () => {
     await expect(searchPlatformWithTimeout(agent, { card, buyer, fetcher }, 10)).rejects.toThrow(/timed out/);
   });
 
+  it("honours an agent's own search budget over the shared default", async () => {
+    const slow = mockAgent({
+      id: "slow",
+      marketplace: "Whatnot",
+      searchTimeoutMs: 30,
+      search: () => new Promise<PlatformSeed[]>((resolve) => setTimeout(() => resolve([seed("slow-1", "Whatnot")]), 20)),
+    });
+    await expect(searchPlatformWithTimeout(slow, { card, buyer, fetcher })).resolves.toHaveLength(1);
+  });
+
   it("builds the same result/trace shape for success and failure (shared builder)", () => {
     const agent = mockAgent({ id: "ebay", marketplace: "eBay" });
     const ok = summarizePlatformOutcome({ agent, seeds: [seed("a", "eBay")] });
@@ -170,5 +182,24 @@ describe("default registry (roadmap adapters)", () => {
   it("keeps TCGCSV out of the listing-agent registry because it is aggregate reference data", () => {
     const tcgplayer = getPlatformAgents().find((agent) => agent.id === "tcgplayer");
     expect(tcgplayer).toBeUndefined();
+  });
+});
+
+describe("Whatnot platform agent", () => {
+  const original = process.env.WHATNOT_APIFY_TOKEN;
+  afterEach(() => {
+    if (original === undefined) delete process.env.WHATNOT_APIFY_TOKEN;
+    else process.env.WHATNOT_APIFY_TOKEN = original;
+  });
+
+  it("stays out of the fan-out until its token is set", () => {
+    delete process.env.WHATNOT_APIFY_TOKEN;
+    expect(getConfiguredPlatformAgents().some((agent) => agent.id === "whatnot")).toBe(false);
+    process.env.WHATNOT_APIFY_TOKEN = "apify_api_test";
+    expect(getConfiguredPlatformAgents().some((agent) => agent.id === "whatnot")).toBe(true);
+  });
+
+  it("gets a longer budget than the shared default, because its provider is slow", () => {
+    expect(whatnotPlatformAgent.searchTimeoutMs).toBeGreaterThan(10000);
   });
 });
