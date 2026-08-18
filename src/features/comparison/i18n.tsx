@@ -325,7 +325,7 @@ export const en = {
     reviewListing: "Review listing",
     marketReferenceShort: "Market reference",
     sourceCalmSummary: (sources: string, hasMarketReference: boolean, time: string) =>
-      `Checked ${sources}${hasMarketReference ? " + TCGplayer market reference" : ""} · ${time}.`,
+      `Live listings: ${sources}${hasMarketReference ? " · Market reference: TCGplayer only" : ""} · ${time}.`,
     sourceNoLiveSummary: (hasMarketReference: boolean, time: string) =>
       `${hasMarketReference ? "Checked the TCGplayer market reference" : "No connected live source returned a comparable listing"} · ${time}.`,
     ebayUnavailable: "eBay could not be checked right now.",
@@ -798,7 +798,7 @@ export const zh: Dict = {
     reviewListing: "查看商品",
     marketReferenceShort: "市场参考价",
     sourceCalmSummary: (sources: string, hasMarketReference: boolean, time: string) =>
-      `查了 ${sources}${hasMarketReference ? " + TCGplayer 市价参考" : ""} · ${time}。`,
+      `在售来源：${sources}${hasMarketReference ? " · 市价参考：仅 TCGplayer" : ""} · ${time}。`,
     sourceNoLiveSummary: (hasMarketReference: boolean, time: string) =>
       `${hasMarketReference ? "只查到 TCGplayer 市价参考" : "已接入的实时来源没给出可比商品"} · ${time}。`,
     ebayUnavailable: "这次没能查询 eBay。",

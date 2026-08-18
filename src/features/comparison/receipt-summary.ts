@@ -42,10 +42,13 @@ export function buildReceiptSummaryLine({
   if (marketMid !== null) {
     const asOf = marketAsOf ? formatAsOf(marketAsOf, lang) : null;
     parts.push(zh
-      ? `市场参考价 ${formatMoney(marketMid)}${asOf ? `（截至 ${asOf}）` : ""}`
-      : `market ${formatMoney(marketMid)}${asOf ? ` (as of ${asOf})` : ""}`);
+      // Named explicitly: beside a live-sources segment, a bare "market $X"
+      // reads as if the marketplaces produced the anchor. Only the
+      // TCGplayer/TCGCSV reference ever does.
+      ? `TCGplayer 市价 ${formatMoney(marketMid)}${asOf ? `（截至 ${asOf}）` : ""}`
+      : `TCGplayer market ${formatMoney(marketMid)}${asOf ? ` (as of ${asOf})` : ""}`);
   } else {
-    parts.push(zh ? "没有市场参考价" : "no market reference");
+    parts.push(zh ? "没有 TCGplayer 市价参考" : "no TCGplayer market reference");
   }
 
   parts.push(observedTime);
