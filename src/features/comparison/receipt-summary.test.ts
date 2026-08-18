@@ -29,7 +29,9 @@ describe("buildReceiptSummaryLine", () => {
 
     expect(line).toContain("eBay");
     expect(line).toContain("$1,303.00");
-    expect(line).toContain("市场参考价");
+    // The anchor names its source: beside "eBay 实时" a bare 市价 reads as if
+    // the marketplace produced it.
+    expect(line).toContain("TCGplayer 市价");
     expect(line).toContain("23:20");
     expect(line).not.toMatch(/已排除 \d+ 条/);
   });
@@ -46,7 +48,7 @@ describe("buildReceiptSummaryLine", () => {
     });
 
     expect(line.toLowerCase()).toContain("no live source");
-    expect(line.toLowerCase()).toContain("no market reference");
+    expect(line.toLowerCase()).toContain("no tcgplayer market reference");
     expect(line).toContain("11:20 PM");
     expect(line).not.toContain("excluded");
   });

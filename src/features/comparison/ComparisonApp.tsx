@@ -49,6 +49,7 @@ import {
   type ComparisonForm,
   type LensRole,
 } from "./comparison-form-state";
+import { rankWhatnotReferenceListings, selectWhatnotReferenceListings } from "@/features/comparison/whatnot-section";
 import {
   cardIdentitySearchResponseSchema,
   comparisonReportSchema,
@@ -2575,6 +2576,8 @@ function ComparisonResult({
 
           <BuyerSourceNotice report={report} hasComparableListings={eligibleCount > 0} />
 
+          <WhatnotListings report={report} />
+
           <OtherMarketplaces report={report} />
 
           <DecisionReceipt
@@ -3064,12 +3067,143 @@ function BuyerSourceNotice({ report, hasComparableListings }: { report: Comparis
   );
 }
 
+// Live Whatnot inventory, kept deliberately outside the ranked comparison.
+// Whatnot publishes no shipping or tax before checkout — its own listing page
+// reads "$X + shipping + taxes" — so these rows have no comparable landed cost
+// and the deterministic cost gate excludes them from ranking. Hiding them
+// entirely would waste real inventory the buyer can act on, so they get their
+// own clearly-labelled item-price-only section instead of being mixed into
+// totals they cannot honestly join.
+function WhatnotListings({ report }: { report: ComparisonReport }) {
+  const t = useT();
+  const ranked = rankWhatnotReferenceListings(report.candidates);
+  if (ranked.length === 0) return null;
+  // The winner is scored; the remainder reads cheapest-first, which is how a
+  // buyer scans a list once the pick is already made.
+  const [pick, ...rest] = ranked;
+  const others = [...rest].sort((a, b) => a.price - b.price);
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-[#d6ded5] bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e4ebe3] bg-[#fbfaf5] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <MarketplaceBrand marketplace="Whatnot" />
+          <h3 className="font-serif text-lg font-black text-[#24312f]">{t.result.whatnotSectionTitle}</h3>
+        </div>
+        <p className="text-xs font-black uppercase tracking-[0.08em] text-[#64736c]">
+          {t.result.whatnotCount(ranked.length)}
+        </p>
+      </div>
+      <p className="border-b border-[#e4ebe3] bg-[#fbfaf5] px-4 pb-3 text-xs leading-5 text-[#7a8982]">
+        {t.result.whatnotSectionNote}
+      </p>
+      <div className="border-b border-[#e4ebe3] bg-[#f7faf6] px-4 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-[#2f6f73] px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white">
+            {t.result.whatnotBestPick}
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">
+            {t.result.whatnotScoreLabel} {pick.whatnotScore}/100
+          </span>
+        </div>
+        <div className="mt-2 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="min-w-0">
+            <p className="text-sm font-black text-[#24312f]">{pick.title}</p>
+            <p className="mt-0.5 text-xs leading-5 text-[#7a8982]">
+              {t.conditions[pick.claimedCondition] ?? pick.claimedCondition}
+              {" · "}
+              {typeof pick.seller.feedbackCount === "number"
+                ? t.result.whatnotReviews(pick.seller.feedbackCount)
+                : t.result.whatnotNoReviews}
+              {" · "}
+              {t.result.whatnotPhotos(pick.evidence.photoCount)}
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-3 sm:justify-end">
+            <div className="text-right">
+              <p className="font-mono text-xl font-black text-[#24312f]">{formatMoney(pick.price)}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">
+                {t.result.whatnotShippingAtCheckout}
+              </p>
+            </div>
+            {pick.url && (
+              <a
+                className="primary-button min-h-11 justify-center px-3 py-2 text-xs"
+                href={pick.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent("other_marketplace_clicked", {
+                  marketplace: "Whatnot",
+                  game: report.request.cardHint.game,
+                })}
+              >
+                {t.result.whatnotOpen}
+                <IconExternal className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </div>
+        </div>
+        <p className="mt-2 text-xs leading-5 text-[#7a8982]">{t.result.whatnotBestPickNote}</p>
+      </div>
+
+      {others.length > 0 && (
+        <p className="border-b border-[#e4ebe3] px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#64736c]">
+          {t.result.whatnotOtherListings(others.length)}
+        </p>
+      )}
+
+      <div className="divide-y divide-[#e4ebe3]">
+        {others.map((listing) => (
+          <div key={listing.id} className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-[#24312f]">{listing.title}</p>
+              <p className="mt-0.5 text-xs leading-5 text-[#7a8982]">
+                {t.conditions[listing.claimedCondition] ?? listing.claimedCondition}
+                {" · "}
+                {typeof listing.seller.feedbackCount === "number"
+                  ? t.result.whatnotReviews(listing.seller.feedbackCount)
+                  : t.result.whatnotNoReviews}
+                {" · "}
+                {t.result.whatnotPhotos(listing.evidence.photoCount)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <div className="text-right">
+                <p className="font-mono text-lg font-black text-[#24312f]">{formatMoney(listing.price)}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">
+                  {t.result.whatnotShippingAtCheckout}
+                </p>
+              </div>
+              {listing.url && (
+                <a
+                  className="secondary-button min-h-11 justify-center px-3 py-2 text-xs"
+                  href={listing.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackEvent("other_marketplace_clicked", {
+                    marketplace: "Whatnot",
+                    game: report.request.cardHint.game,
+                  })}
+                >
+                  {t.result.whatnotOpen}
+                  <IconExternal className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function OtherMarketplaces({ report }: { report: ComparisonReport }) {
   const t = useT();
   const card = report.confirmedCard;
   if (!card) return null;
   const query = [card.name, card.cardNumber, card.variant, card.setName].filter(Boolean).join(" ");
   const tcgplayerUrl = card.tcgplayerProductId && card.marketUrl ? card.marketUrl : null;
+  const hasLiveWhatnot = selectWhatnotReferenceListings(report.candidates).length > 0;
   // `detail` is reserved for a fact this row actually carries. The manual rows
   // have none, and the "not checked" line that used to sit there said the same
   // thing as the MANUAL CHECK label directly above it and the note directly
@@ -3100,13 +3234,16 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       note: t.result.mercariAbout,
       url: `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`,
     },
-    {
+    // Suppressed when the live adapter returned rows: a "manual check" link-out
+    // directly under a list of real Whatnot listings tells the buyer we did not
+    // look at a platform we just showed them inventory from.
+    ...(hasLiveWhatnot ? [] : [{
       marketplace: "Whatnot" as const,
       label: t.result.manualCheck,
       detail: null,
       note: t.result.whatnotAbout,
       url: whatnotSearchUrl(query),
-    },
+    }]),
     {
       marketplace: "SNKRDUNK" as const,
       label: t.result.japanManualCheck,
