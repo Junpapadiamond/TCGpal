@@ -182,7 +182,10 @@ describe("Pokemon TCG API adapter", () => {
       fetcher,
     });
 
+    // The exact tier is re-asked once before the ladder gives up its precision;
+    // only a second failure loosens the query.
     expect(seenQueries).toEqual([
+      "number:232 set.printedTotal:91",
       "number:232 set.printedTotal:91",
       'name:"Mew ex"',
     ]);
@@ -242,7 +245,8 @@ describe("Pokemon TCG API adapter", () => {
       cardNumber: "232/091",
       fetcher,
     })).rejects.toThrow("500");
-    expect(fetcher).toHaveBeenCalledTimes(4);
+    // Four ladder tiers, and the failing exact tier is asked twice.
+    expect(fetcher).toHaveBeenCalledTimes(5);
   });
 
   it("treats non-numeric collector placeholders as blank and searches card themes", async () => {
@@ -380,5 +384,144 @@ describe("Pokemon TCG API adapter", () => {
     sizes.length = 0;
     await searchPokemonCards({ query: "Pikachu", pageSize: 9999, relaxed: false, fetcher });
     expect(sizes[0]).toBe("250");
+  });
+
+  // The number printed on a Scarlet & Violet promo is zero-padded ("SVP EN 052")
+  // while the catalog stores it bare ("52"), and the legacy promos are the other
+  // way round ("SWSH050" in the catalog, often typed "SWSH50"). Lucene matches
+  // the term exactly, so a single spelling silently returned nothing and the
+  // search fell through to a loose name tier that confirms the wrong print.
+  it("asks for every zero-padding spelling of a collector number", async () => {
+    const queries: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      queries.push(url.searchParams.get("q") ?? "");
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    await searchPokemonCards({ query: "Mewtwo", cardNumber: "052", setHint: "SVP", relaxed: false, fetcher });
+
+    expect(queries[0]).toContain("number:52");
+    expect(queries[0]).toContain("number:052");
+    expect(queries[0]).toContain("set.id:svp");
+  });
+
+  it("keeps a prefixed promo number matchable in both padding conventions", async () => {
+    const queries: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      queries.push(url.searchParams.get("q") ?? "");
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    await searchPokemonCards({ query: "Charizard V", cardNumber: "SWSH50", relaxed: false, fetcher });
+
+    expect(queries[0]).toContain("number:SWSH50");
+    expect(queries[0]).toContain("number:SWSH050");
+  });
+
+  // Measured 2026-08-19, pokemontcg.io answered 14 of 24 identical requests with
+  // a 500/502 — and a 5xx comes back in about a second. Treating that as "this
+  // Lucene query is too expensive" and loosening to the next tier answered a
+  // precise "Charizard 4/102" with whatever the newest-first name tier happened
+  // to return. A server fault is worth one cheap retry on the same tier first.
+  it("retries the precise tier after a fast server error instead of loosening it", async () => {
+    const queries: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      const apiQuery = url.searchParams.get("q") ?? "";
+      queries.push(apiQuery);
+      if (queries.length === 1) return new Response("upstream", { status: 500 });
+      return new Response(JSON.stringify({
+        data: [{
+          id: "base1-4",
+          name: "Charizard",
+          number: "4",
+          set: { id: "base1", name: "Base", printedTotal: 102 },
+          images: { small: "https://images.pokemontcg.io/base1/4.png" },
+        }],
+        count: 1,
+        totalCount: 1,
+      }));
+    }) as unknown as typeof fetch;
+
+    const result = await searchPokemonCards({ query: "Charizard", cardNumber: "4/102", fetcher });
+
+    expect(result.cards[0]?.id).toBe("base1-4");
+    expect(queries).toHaveLength(2);
+    expect(queries[0]).toBe(queries[1]);
+    expect(queries[1]).toContain("set.printedTotal:102");
+  });
+
+  // A timeout means the query itself is too slow, which is exactly what the
+  // looser tiers exist for — retrying it would just spend the budget twice.
+  it("loosens the tier on a timeout rather than retrying the slow query", async () => {
+    const queries: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      const apiQuery = url.searchParams.get("q") ?? "";
+      queries.push(apiQuery);
+      if (queries.length === 1) {
+        throw Object.assign(new Error("timed out"), { name: "TimeoutError" });
+      }
+      return new Response(JSON.stringify({
+        data: [{
+          id: "base1-4",
+          name: "Charizard",
+          number: "4",
+          set: { id: "base1", name: "Base", printedTotal: 102 },
+          images: { small: "https://images.pokemontcg.io/base1/4.png" },
+        }],
+        count: 1,
+        totalCount: 1,
+      }));
+    }) as unknown as typeof fetch;
+
+    await searchPokemonCards({ query: "Charizard", cardNumber: "4/102", fetcher });
+
+    expect(queries).toHaveLength(2);
+    expect(queries[0]).not.toBe(queries[1]);
+  });
+
+  // A prefixed promo code is globally unique in the catalog, so ANDing the
+  // buyer's spelling of the name onto it can only lose the card: "Charizard EX
+  // XY121" asked for `number:XY121 name:"Charizard EX"` and got nothing, because
+  // the catalog writes that card "Charizard-EX". The ladder then loosened to a
+  // name-only tier and offered modern Charizards instead of the promo.
+  it("falls back to the prefixed collector code alone before loosening to the name", async () => {
+    const queries: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      const apiQuery = url.searchParams.get("q") ?? "";
+      queries.push(apiQuery);
+      if (apiQuery !== "number:XY121") {
+        return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+      }
+      return new Response(JSON.stringify({
+        data: [{
+          id: "xyp-XY121",
+          name: "Charizard-EX",
+          number: "XY121",
+          set: { id: "xyp", name: "XY Black Star Promos", printedTotal: 211, ptcgoCode: "PR-XY" },
+        }],
+        count: 1,
+        totalCount: 1,
+      }));
+    }) as unknown as typeof fetch;
+
+    const result = await searchPokemonCards({ query: "Charizard EX", cardNumber: "XY121", fetcher });
+
+    expect(result.cards[0]?.id).toBe("xyp-XY121");
+    expect(queries[0]).toBe('number:XY121 name:"Charizard EX"');
+    expect(queries[1]).toBe("number:XY121");
+  });
+
+  // A bare number is not unique — "4" exists in almost every set — so it only
+  // ever runs alongside the set total that pins it to one release.
+  it("does not search a bare collector number on its own", async () => {
+    const queries: string[] = [];
+    const fetcher = vi.fn(async (url: URL) => {
+      queries.push(url.searchParams.get("q") ?? "");
+      return new Response(JSON.stringify({ data: [], count: 0, totalCount: 0 }));
+    }) as unknown as typeof fetch;
+
+    await searchPokemonCards({ query: "Charizard", cardNumber: "4/102", relaxed: false, fetcher });
+
+    expect(queries).not.toContain("(number:4 OR number:04 OR number:004)");
   });
 });

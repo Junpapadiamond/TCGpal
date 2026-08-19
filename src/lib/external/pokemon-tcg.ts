@@ -120,30 +120,42 @@ export async function searchPokemonCards({
   let lastError: unknown = null;
 
   for (const apiQuery of apiQueries) {
-    try {
-      const result = await fetchPokemonCards({
-        query: normalizedQuery,
-        apiQuery,
-        page: 1,
-        // 250 is the Pokemon TCG API's own maximum. A lower ceiling here is not a
-        // safety net, it is silent data loss: the query is ordered
-        // -set.releaseDate, so clamping a name-only search to 50 removed exactly
-        // the oldest prints, and a "pikachu" picker could never show Base Set.
-        pageSize: Math.min(Math.max(pageSize, 1), 250),
-        apiKey,
-        fetcher,
-        timeoutMs,
-        signal,
-      });
-      lastResult = result;
-      if (result.cards.length > 0) return result;
-    } catch (error) {
-      if (signal?.aborted || !canTrySaferPokemonQuery(error)) throw error;
-      // The API occasionally times out or returns 500 for one expensive or
-      // overly-specific Lucene query while a simpler name query succeeds. A
-      // failed tier must not discard the rest of the deterministic search
-      // ladder and make the buyer submit the same card again.
-      lastError = error;
+    // Each tier gets one immediate second chance before the ladder gives up its
+    // precision. Measured 2026-08-19, pokemontcg.io answered 14 of 24 identical
+    // requests with a 500/502 while the query itself was fine, and loosening on
+    // that resolved a precise "Charizard 4/102" to whatever the newest-first
+    // name tier happened to return.
+    for (let tierAttempt = 0; tierAttempt < 2; tierAttempt += 1) {
+      let retryThisTier = false;
+      try {
+        const result = await fetchPokemonCards({
+          query: normalizedQuery,
+          apiQuery,
+          page: 1,
+          // 250 is the Pokemon TCG API's own maximum. A lower ceiling here is not a
+          // safety net, it is silent data loss: the query is ordered
+          // -set.releaseDate, so clamping a name-only search to 50 removed exactly
+          // the oldest prints, and a "pikachu" picker could never show Base Set.
+          pageSize: Math.min(Math.max(pageSize, 1), 250),
+          apiKey,
+          fetcher,
+          timeoutMs,
+          signal,
+        });
+        lastResult = result;
+        if (result.cards.length > 0) return result;
+      } catch (error) {
+        if (signal?.aborted || !canTrySaferPokemonQuery(error)) throw error;
+        // The API occasionally times out or returns 500 for one expensive or
+        // overly-specific Lucene query while a simpler name query succeeds. A
+        // failed tier must not discard the rest of the deterministic search
+        // ladder and make the buyer submit the same card again.
+        lastError = error;
+        // Only fast server faults are worth re-asking: a timeout means this
+        // query is too slow, which is the case the looser tiers exist for.
+        retryThisTier = tierAttempt === 0 && isRetryablePokemonServerFault(error);
+      }
+      if (!retryThisTier) break;
     }
   }
 
@@ -156,6 +168,14 @@ class PokemonTcgRequestError extends Error {
     super(`Pokemon TCG API request failed with ${status}.`);
     this.name = "PokemonTcgRequestError";
   }
+}
+
+// A server-side fault the API returns quickly — about a second, measured
+// 2026-08-19 — so re-asking the same question costs almost nothing. Timeouts are
+// excluded deliberately: those spend the whole attempt budget and mean the query
+// is too slow, not that the server hiccuped.
+function isRetryablePokemonServerFault(error: unknown) {
+  return error instanceof PokemonTcgRequestError && error.status >= 500;
 }
 
 function canTrySaferPokemonQuery(error: unknown) {
@@ -320,7 +340,7 @@ function buildPokemonCardQueries({
 
   if (number.number) {
     const numberFilters = [
-      `number:${number.number}`,
+      collectorNumberFilter(number.number),
       number.printedTotal ? `set.printedTotal:${number.printedTotal}` : "",
     ].filter(Boolean);
 
@@ -329,6 +349,18 @@ function buildPokemonCardQueries({
       ...numberFilters,
       !number.printedTotal && !setFilter ? nameFilter : "",
     ].filter(Boolean).join(" "));
+    // A prefixed collector code ("XY121", "SWSH050", "SM211") names exactly one
+    // card in the whole catalog, so ANDing the buyer's spelling of the name onto
+    // it can only lose that card and never sharpen the result: "Charizard EX
+    // XY121" asked for `number:XY121 name:"Charizard EX"` and matched nothing,
+    // because the catalog writes it "Charizard-EX". Dropping the name here — and
+    // only here — recovers the exact print before the ladder loosens to a
+    // name-only tier that answers with whatever released most recently. A bare
+    // number is not unique ("4" exists in nearly every set), so it keeps the set
+    // total that pins it to one release.
+    if (!number.printedTotal && /^[A-Za-z]/.test(number.number)) {
+      queries.push(numberFilters.join(" "));
+    }
     queries.push(nameFilter);
   } else {
     if (setFilter) queries.push(`${nameFilter} ${setFilter}`);
@@ -369,6 +401,37 @@ function buildSetFilter(setHint: string) {
 
   const phrase = escapeLucenePhrase(parts[0] ?? normalized);
   return `(set.name:"${phrase}" OR set.series:"${phrase}" OR subtypes:"${phrase}")`;
+}
+
+/**
+ * A `number:` filter that matches the card whichever zero-padding convention the
+ * catalog happened to store.
+ *
+ * Lucene matches the term exactly and the conventions genuinely disagree: a
+ * Scarlet & Violet promo is printed "SVP EN 052" and published by TCGplayer as
+ * "052", but pokemontcg.io stores it as "52" — measured 2026-08-19,
+ * `number:052 set.id:svp` returned nothing while `number:52 set.id:svp` returned
+ * the card. The legacy promos invert it ("SWSH050" in the catalog, "SWSH50" as
+ * sellers write it). A single spelling therefore returned zero rows and the
+ * ladder fell through to a loose name tier, which confirms an unrelated print
+ * instead of reporting that the number was not found.
+ *
+ * Only the trailing digit run is re-padded, so a fraction's denominator and any
+ * letter prefix are left exactly as the caller supplied them.
+ */
+function collectorNumberFilter(value: string) {
+  const parts = value.match(/^(.*?)(\d+)$/);
+  if (!parts) return `number:${value}`;
+  const [, prefix, digits] = parts;
+  const stripped = digits.replace(/^0+(?=\d)/, "");
+  const spellings = new Set([
+    value,
+    `${prefix}${stripped}`,
+    `${prefix}${stripped.padStart(2, "0")}`,
+    `${prefix}${stripped.padStart(3, "0")}`,
+  ]);
+  const filters = [...spellings].map((spelling) => `number:${spelling}`);
+  return filters.length === 1 ? filters[0] : `(${filters.join(" OR ")})`;
 }
 
 function parseCollectorNumber(value: string) {

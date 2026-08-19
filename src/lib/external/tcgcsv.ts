@@ -261,13 +261,31 @@ async function findTcgplayerGroup(
   return bestTokens && bestTokens.overlap >= 0.8 ? bestTokens.group : null;
 }
 
-function setNameMatchTerms(setName: string) {
+// pokemontcg.io names every promo release "<era> Black Star Promos"; TCGplayer
+// publishes each one under its own, different name. Only the SM alias existed,
+// so every other promo release resolved to no group at all and lost its market
+// anchor — which is also the input the market-floor gate uses to reject
+// replicas and mispriced rows. Each alias is the exact TCGplayer group name (or
+// the suffix of it that `containmentTier` needs), kept explicit so a broad promo
+// search cannot silently cross into a different era's group.
+const PROMO_GROUP_ALIASES: Record<string, string> = {
+  scarletvioletblackstarpromos: "scarletvioletpromocards",
+  // pokemontcg.io serves this same set id under two names while it migrates.
+  scarletvioletpromos: "scarletvioletpromocards",
+  swshblackstarpromos: "swordshieldpromocards",
+  smblackstarpromos: "smpromos",
+  xyblackstarpromos: "xypromos",
+  bwblackstarpromos: "blackandwhitepromos",
+  dpblackstarpromos: "diamondandpearlpromos",
+  hgssblackstarpromos: "hgsspromos",
+  nintendoblackstarpromos: "nintendopromos",
+  wizardsblackstarpromos: "wotcpromo",
+};
+
+export function setNameMatchTerms(setName: string) {
   const wanted = normalize(setName);
-  // pokemontcg.io calls this release "SM Black Star Promos" while TCGplayer
-  // publishes the same group as "SM Promos". Keep the alias narrow so a broad
-  // promo search cannot silently cross into a different era's group.
-  if (wanted === "smblackstarpromos") return [wanted, "smpromos"];
-  return [wanted];
+  const alias = PROMO_GROUP_ALIASES[wanted];
+  return alias ? [wanted, alias] : [wanted];
 }
 
 export function inferTcgplayerCategoryId(card: Pick<CardIdentityCandidate, "cardNumber"> & Partial<Pick<CardIdentityCandidate, "id" | "setCode">>) {

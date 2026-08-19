@@ -1,4 +1,4 @@
-import { resolveTcgplayerProductVariants, type TcgplayerProductMatch } from "@/lib/external/tcgcsv";
+import { resolveTcgplayerProductVariants, setNameMatchTerms, type TcgplayerProductMatch } from "@/lib/external/tcgcsv";
 import { resolveEbayProductForCard, type EbayProductResolution } from "@/lib/external/ebay";
 import type { BuyerContext, CardIdentityCandidate } from "@/lib/schemas";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
@@ -128,10 +128,16 @@ function normalizeIdentityText(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
+// Shares the promo-group alias table with the TCGCSV group lookup so a release
+// the group search can find cannot then be rejected here: TCGplayer publishes
+// "SV: Scarlet & Violet Promo Cards" for the set pokemontcg.io calls "Scarlet &
+// Violet Black Star Promos", and the two names have no common suffix.
 function releaseMatches(groupName: string, setName: string) {
   const group = normalizeRelease(groupName);
-  const wanted = normalizeRelease(setName);
-  return Boolean(wanted && (group === wanted || group.endsWith(wanted)));
+  return setNameMatchTerms(setName).some((term) => {
+    const wanted = normalizeRelease(term);
+    return Boolean(wanted && (group === wanted || group.endsWith(wanted)));
+  });
 }
 
 function normalizeRelease(value: string) {

@@ -44,7 +44,10 @@ const GAME_TOKENS: Array<{ pattern: RegExp; game: TcgGame }> = [
 // promo-style codes and fraction collector numbers (215/203) exist only in
 // Pokémon. Ambiguous shapes (P-096 appears in both games) stay null.
 const ONE_PIECE_CODE_PATTERN = /\b(?:OP|ST|EB|PRB)\d{1,2}(?:-\d{1,3})?\b/i;
-const POKEMON_CODE_PATTERN = /\b(?:SWSH|SVP?|SM|XY|BW|TG|GG|DP|HGSS)\d{1,4}\b/i;
+// The separator is optional because Black Star Promos are printed with one:
+// a Scarlet & Violet promo reads "SVP EN 052", and sellers write both "SVP 052"
+// and "SVP052". Only the glued form used to count as a Pokemon signal.
+const POKEMON_CODE_PATTERN = /\b(?:SWSH|SVP?|SM|XY|BW|TG|GG|DP|HGSS)[\s-]?\d{1,4}\b/i;
 const ONE_PIECE_CHARACTER_HINT_PATTERN = /\b(?:nami|luffy|zoro|sanji|shanks|ace|sabo|yamato|robin|chopper|hancock|law)\b/i;
 
 // Full words only (no 2-3 letter abbreviations like "JP"/"EN") — a wrong game/
@@ -136,6 +139,22 @@ const ONE_PIECE_RELEASE_PHRASES: Array<{ pattern: RegExp; variant: string }> = [
 // results to that set instead of being half-parsed as a broken card number and
 // then silently ignored.
 const ONE_PIECE_SET_ONLY_PATTERN = /\b(OP|ST|EB|PRB)(\d{1,2})\b(?!-\d)/i;
+
+// Black Star Promos print their collector number next to the release code —
+// "SVP EN 052", "SWSH050", "SM229" — and the generic patterns below only ever
+// matched the glued spelling. A buyer typing the spaced form they can read off
+// the card left "SVP 052" sitting inside the card NAME, so the catalog searched
+// for a Pokemon literally called "Mewtwo SVP 052" and confirmed whatever else
+// the relaxed name ladder happened to reach.
+//
+// The two promo families store that number differently, so they parse
+// differently. Scarlet & Violet promos live in their own set with a bare,
+// zero-padded number ("052"), which is also how TCGplayer publishes them. Every
+// earlier release glues the prefix onto the number itself ("SWSH050", "SM229"),
+// which is the catalog's own key, so a spaced query is re-glued rather than
+// split.
+const SV_PROMO_CODE_PATTERN = /\bSVP[\s-]*(\d{1,4})\b/i;
+const LEGACY_PROMO_CODE_PATTERN = /\b(SWSH|SM|XY|BW|DP|HGSS)[\s-]+(\d{1,4})\b/i;
 
 const COMMON_ALIAS_HINTS: Array<{
   pattern: RegExp;
@@ -243,11 +262,28 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     remaining = removeMatch(remaining, setOnlyMatch);
   }
 
+  // Promo codes are claimed before the generic patterns below, which would
+  // otherwise take "SVP" for a card number's letter prefix and leave the digits
+  // stranded in the name.
+  let promoNumber = "";
+  const svPromoMatch = remaining.match(SV_PROMO_CODE_PATTERN);
+  const legacyPromoMatch = svPromoMatch ? null : remaining.match(LEGACY_PROMO_CODE_PATTERN);
+  if (svPromoMatch) {
+    setCode = "SVP";
+    promoNumber = svPromoMatch[1].padStart(3, "0");
+    remaining = removeMatch(remaining, svPromoMatch);
+  } else if (legacyPromoMatch) {
+    promoNumber = `${legacyPromoMatch[1].toUpperCase()}${legacyPromoMatch[2]}`;
+    remaining = removeMatch(remaining, legacyPromoMatch);
+  }
+
   // A real card has one collector-number format; only try the letter-prefix
   // pattern (which could otherwise collide with a language/variant word that
   // happens to end in digits) once the fraction style has had first refusal.
-  const codeMatch = remaining.match(FRACTION_CODE_PATTERN) ?? remaining.match(PREFIX_CODE_PATTERN);
-  const cardNumber = codeMatch ? normalizeWhitespace(codeMatch[0]) : alias?.cardNumber ?? "";
+  const codeMatch = promoNumber
+    ? null
+    : remaining.match(FRACTION_CODE_PATTERN) ?? remaining.match(PREFIX_CODE_PATTERN);
+  const cardNumber = promoNumber || (codeMatch ? normalizeWhitespace(codeMatch[0]) : alias?.cardNumber ?? "");
   if (codeMatch) {
     remaining = removeMatch(remaining, codeMatch);
   }

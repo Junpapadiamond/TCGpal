@@ -143,4 +143,46 @@ describe("parseCardQuery", () => {
     const result = parseCardQuery("Sriracha the Pikachu");
     expect(result.variant).toBe("");
   });
+
+  // A Scarlet & Violet Black Star Promo is printed "SVP EN 052" and sellers write
+  // "SVP 052" — the spaced form, not the glued "SVP052" the code pattern used to
+  // require. Left unparsed, "SVP 052" stayed inside the card NAME, so the catalog
+  // searched for a Pokemon literally called "Mewtwo SVP 052" and confirmed an
+  // unrelated print.
+  it("parses a spaced Scarlet & Violet promo code into its set and printed number", () => {
+    expect(parseCardQuery("Mewtwo SVP 052")).toMatchObject({
+      game: "pokemon",
+      name: "Mewtwo",
+      setCode: "SVP",
+      cardNumber: "052",
+    });
+  });
+
+  it("keeps a multi-word promo card name intact when the promo code is spaced", () => {
+    expect(parseCardQuery("Pikachu with Grey Felt Hat SVP 085")).toMatchObject({
+      game: "pokemon",
+      name: "Pikachu with Grey Felt Hat",
+      setCode: "SVP",
+      cardNumber: "085",
+    });
+  });
+
+  // Every other Black Star Promos release numbers its cards with the prefix glued
+  // on ("SWSH050", "SM211"), which is also what the catalog stores, so a spaced
+  // query has to be re-glued rather than split into set + number.
+  it("re-glues a spaced legacy promo code to the catalog's own number", () => {
+    expect(parseCardQuery("Charizard V SWSH 050")).toMatchObject({
+      game: "pokemon",
+      name: "Charizard V",
+      cardNumber: "SWSH050",
+    });
+  });
+
+  it("still parses the glued promo form unchanged", () => {
+    expect(parseCardQuery("Charizard V SWSH050")).toMatchObject({
+      game: "pokemon",
+      name: "Charizard V",
+      cardNumber: "SWSH050",
+    });
+  });
 });

@@ -1291,7 +1291,7 @@ function toIdentityCandidate(
     name: card.name,
     setName: card.set?.name ?? "Unknown set",
     setCode: card.set?.id?.toUpperCase() ?? "",
-    cardNumber: formatCollectorNumber(card.number ?? "", card.set?.printedTotal),
+    cardNumber: formatCollectorNumber(card.number ?? "", card.set),
     language: request.cardHint.language || "English",
     imageUrl: card.images?.large ?? card.images?.small ?? null,
     rarity: card.rarity ?? null,
@@ -1310,7 +1310,7 @@ function evaluateIdentity(
 ) {
   return evaluateIdentityFields({
     name: card.name,
-    cardNumber: formatCollectorNumber(card.number ?? "", card.set?.printedTotal),
+    cardNumber: formatCollectorNumber(card.number ?? "", card.set),
     setName: card.set?.name ?? "",
     setId: card.set?.id ?? "",
     setSeries: card.set?.series ?? "",
@@ -1407,9 +1407,57 @@ function rankLocalIdentities(request: ComparisonRequest, source: SourceListing) 
     }));
 }
 
-function formatCollectorNumber(number: string, printedTotal?: number) {
+// Promo releases that print a bare number with no denominator. pokemontcg.io
+// still reports a `printedTotal` for them — 215 for the Scarlet & Violet promos,
+// 40 for the Nintendo ones — but it is a running count of the release, not a
+// number printed on any card. Composing "52/215" invented a collector number
+// nobody wrote: measured 2026-08-19, eBay returned 0 rows for "Mewtwo 52/215"
+// against 2,069 for "Mewtwo 052", so every Scarlet & Violet promo comparison
+// abstained having seen no listings at all, and TCGplayer's own "052" no longer
+// matched the crosswalk.
+//
+// Keyed on the set id, which is the one field the catalog reports consistently.
+// pokemontcg.io is mid-migration on the Scarlet & Violet promos and serves two
+// different set payloads under the same id `svp`: svp-52 arrives as "Scarlet &
+// Violet Black Star Promos" with ptcgoCode PR-SV and printedTotal 215, while
+// svp-179 arrives as "Scarlet & Violet Promos" with no ptcgoCode at all and
+// printedTotal 150. Detecting the release by code alone left half the set
+// fabricating numbers again.
+//
+// The release code and set name still act as the fallback so a promo set we have
+// not seen yet inherits the right behaviour. The McDonald's releases are not
+// caught by either: the catalog names them "McDonald's Collection <year>" and
+// they are genuinely numbered as a fraction.
+const BARE_NUMBER_PROMO_SET_IDS = new Set(["svp", "swshp", "smp", "xyp", "bwp", "dpp", "hsp", "np"]);
+// The WotC-era promos are the deliberate exception — those really are printed as
+// a fraction, and TCGplayer publishes them the same way ("06/53").
+const PROMO_FRACTION_SET_IDS = new Set(["basep"]);
+const PROMO_RELEASE_CODE_PATTERN = /^PR(?:-|$)/i;
+const PROMO_RELEASE_NAME_PATTERN = /\bpromos?\b/i;
+
+function isBarePromoRelease(set: PokemonTcgCard["set"]) {
+  const setId = (set?.id ?? "").toLowerCase();
+  if (PROMO_FRACTION_SET_IDS.has(setId)) return false;
+  if (BARE_NUMBER_PROMO_SET_IDS.has(setId)) return true;
+  return Boolean(
+    (set?.ptcgoCode && PROMO_RELEASE_CODE_PATTERN.test(set.ptcgoCode))
+    || (set?.name && PROMO_RELEASE_NAME_PATTERN.test(set.name)),
+  );
+}
+
+function formatCollectorNumber(number: string, set?: PokemonTcgCard["set"]) {
   const normalized = number.trim();
-  if (!normalized || normalized.includes("/") || !printedTotal) return normalized;
+  if (!normalized || normalized.includes("/")) return normalized;
+
+  // A promo whose number already carries its release prefix ("SWSH050",
+  // "SM229") is stored that way by both catalogues; only the bare-digit
+  // releases need the printed zero padding restored.
+  if (isBarePromoRelease(set)) {
+    return /^\d+$/.test(normalized) ? normalized.padStart(3, "0") : normalized;
+  }
+
+  const printedTotal = set?.printedTotal;
+  if (!printedTotal) return normalized;
 
   const prefix = normalized.match(/^[A-Za-z]+/)?.[0]?.toUpperCase() ?? "";
   if (!prefix) return `${normalized}/${printedTotal}`;

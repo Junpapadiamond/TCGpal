@@ -153,4 +153,34 @@ describe("exact TCGplayer print crosswalk", () => {
       expect(selectExactTcgplayerProduct(card, [exact])?.productId).toBe(productId);
     },
   );
+
+  // The crosswalk gates the market anchor on the product's release matching the
+  // confirmed card's set, and TCGplayer names its promo groups nothing like
+  // pokemontcg.io does. Without the shared alias the Scarlet & Violet promos
+  // resolved to no product, so the anchor and the market-floor gate went dark.
+  it("accepts TCGplayer's promo group name for a Scarlet & Violet promo", () => {
+    const mewtwo = {
+      id: "svp-52",
+      name: "Mewtwo",
+      setName: "Scarlet & Violet Black Star Promos",
+      setCode: "SVP",
+      cardNumber: "052",
+      language: "English",
+      imageUrl: null,
+      confidence: "high" as const,
+      matchReasons: [],
+    };
+    const svPromoProduct: TcgplayerProductMatch = {
+      categoryId: 3,
+      productId: 518872,
+      groupId: 22872,
+      groupName: "SV: Scarlet & Violet Promo Cards",
+      productName: "Mewtwo - 052",
+      productUrl: "https://www.tcgplayer.com/product/518872/pokemon-sv-scarlet-and-violet-promo-cards-mewtwo-052",
+      collectorNumber: "052",
+      imageUrl: null,
+    };
+
+    expect(selectExactTcgplayerProduct(mewtwo, [svPromoProduct])?.productId).toBe(518872);
+  });
 });

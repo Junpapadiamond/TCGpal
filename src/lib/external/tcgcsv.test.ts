@@ -236,6 +236,44 @@ function smPromoFetcher() {
   }) as unknown as typeof fetch;
 }
 
+const svPromoCard: CardIdentityCandidate = {
+  id: "svp-52",
+  name: "Mewtwo",
+  setName: "Scarlet & Violet Black Star Promos",
+  setCode: "SVP",
+  cardNumber: "052",
+  language: "English",
+  imageUrl: "https://images.pokemontcg.io/svp/52_hires.png",
+  confidence: "high",
+  matchReasons: [],
+};
+
+const svPromoGroupsPayload = {
+  results: [
+    { groupId: 22872, name: "SV: Scarlet & Violet Promo Cards", abbreviation: "SVP" },
+    { groupId: 23228, name: "SV: Scarlet & Violet 151", abbreviation: "MEW" },
+  ],
+};
+
+const svPromoProductsPayload = {
+  results: [{
+    productId: 518872,
+    name: "Mewtwo - 052",
+    cleanName: "Mewtwo 052",
+    url: "https://www.tcgplayer.com/product/518872/pokemon-sv-scarlet-and-violet-promo-cards-mewtwo-052",
+    extendedData: [{ name: "Number", value: "052" }],
+  }],
+};
+
+function svPromoFetcher() {
+  return vi.fn(async (url: URL | RequestInfo) => {
+    const href = String(url);
+    if (href.endsWith("/3/groups")) return new Response(JSON.stringify(svPromoGroupsPayload));
+    if (href.endsWith("/3/22872/products")) return new Response(JSON.stringify(svPromoProductsPayload));
+    throw new Error(`unexpected fetch ${href}`);
+  }) as unknown as typeof fetch;
+}
+
 describe("TCGCSV TCGplayer connector", () => {
   it("resolves the crosswalk product by set name and collector number", async () => {
     const product = await resolveTcgplayerProduct(card, tcgcsvFetcher());
@@ -392,5 +430,29 @@ describe("TCGCSV TCGplayer connector", () => {
     expect(isTcgcsvStale(asOf, new Date("2026-07-03T12:00:00Z"))).toBe(false);
     expect(isTcgcsvStale(asOf, new Date("2026-07-05T12:00:00Z"))).toBe(true);
     expect(isTcgcsvStale(null)).toBe(false);
+  });
+
+  // Every Black Star Promos release is published by TCGplayer under a different
+  // name than pokemontcg.io uses, and only the SM alias existed — so a Scarlet &
+  // Violet promo silently lost its market anchor, which is also the input the
+  // market-floor gate needs to reject replicas.
+  it("resolves Scarlet & Violet Black Star Promos through TCGplayer's promo group", async () => {
+    const product = await resolveTcgplayerProduct(svPromoCard, svPromoFetcher());
+
+    expect(product).toMatchObject({
+      groupId: 22872,
+      productId: 518872,
+      collectorNumber: "052",
+    });
+  });
+
+  // Same release, second spelling: pokemontcg.io also serves this set as
+  // "Scarlet & Violet Promos" with no release code, and the anchor must survive
+  // either name.
+  it("resolves the renamed Scarlet & Violet promo set name to the same group", async () => {
+    const renamed = { ...svPromoCard, setName: "Scarlet & Violet Promos" };
+    const product = await resolveTcgplayerProduct(renamed, svPromoFetcher());
+
+    expect(product?.groupId).toBe(22872);
   });
 });
