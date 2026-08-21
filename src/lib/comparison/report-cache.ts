@@ -9,7 +9,8 @@ import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-prin
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
-const COMPARISON_CACHE_REVISION = "ranking-v3";
+const COMPARISON_CACHE_REVISION = "ranking-v4";
+const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
   return [
@@ -61,6 +62,24 @@ export async function setCachedComparison(key: string, report: ComparisonReport,
   await setJsonCache(CACHE_SCOPE, key, report, { ttlSeconds: CACHE_TTL_SECONDS, now });
 }
 
+// Collapse simultaneous cold requests within one server process. The durable
+// Redis cache remains the cross-instance layer; this prevents one cold function
+// from issuing several independent marketplace fan-outs before its first write.
+export function runComparisonFlight(
+  key: string,
+  producer: () => Promise<ComparisonReport>,
+): Promise<ComparisonReport> {
+  const existing = comparisonFlights.get(key);
+  if (existing) return existing;
+
+  const flight = Promise.resolve()
+    .then(producer)
+    .finally(() => comparisonFlights.delete(key));
+  comparisonFlights.set(key, flight);
+  return flight;
+}
+
 export function clearComparisonCache() {
+  comparisonFlights.clear();
   clearLocalCache();
 }

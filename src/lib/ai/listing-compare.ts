@@ -52,6 +52,11 @@ import { parsedCardQuerySchema, parseCardQuery, type ParsedCardQuery } from "@/l
 import { PriceChartingUnavailableError, searchPriceChartingProducts } from "@/lib/external/price-charting";
 import { buildJapanReferenceLinks } from "@/lib/comparison/japan-references";
 import { getPokemonCard, searchPokemonCards, type PokemonTcgCard } from "@/lib/external/pokemon-tcg";
+import {
+  getPokemonCardFromSnapshot,
+  POKEMON_CATALOG_SNAPSHOT_UPDATED_AT,
+  searchPokemonCatalogSnapshot,
+} from "@/lib/external/pokemon-catalog-snapshot";
 import { classifyPokemonName } from "@/lib/external/pokemon-name-match";
 import {
   getOnePieceCard,
@@ -322,7 +327,9 @@ export async function runListingComparison(
       && listing.shipping !== null
       && listing.matchConfidence !== "low"
       && listing.exclusionReasons.every((reason) => reason.includes("exact confirmed artwork")))
-    .sort((a, b) => b.valueScore - a.valueScore || a.preTaxTotal - b.preTaxTotal)[0] ?? null;
+    .sort((a, b) => b.valueScore - a.valueScore
+      || a.preTaxTotal - b.preTaxTotal
+      || a.id.localeCompare(b.id))[0] ?? null;
   const outcome = rankedChoices.length > 0
     ? "best_buy" as const
     : inspectLead
@@ -713,6 +720,7 @@ async function identifyCards(
   }
 
   const localMatches = rankLocalIdentities(request, source);
+  let confirmedSnapshotCard: PokemonTcgCard | null = null;
 
   if (request.confirmedCardId) {
     try {
@@ -732,6 +740,7 @@ async function identifyCards(
       return [toIdentityCandidate(card, request, match)];
     } catch (error) {
       warnings.push(`Confirmed Pokémon card lookup unavailable: ${errorMessage(error)}`);
+      confirmedSnapshotCard = getPokemonCardFromSnapshot(request.confirmedCardId);
     }
   }
 
@@ -772,7 +781,29 @@ async function identifyCards(
       warnings,
     );
 
-    if ((!result || result.cards.length === 0) && !request.cardHint.cardNumber && !request.cardHint.setCode) {
+    if (!result) {
+      result = confirmedSnapshotCard
+        ? {
+          source: "pokemon-catalog-snapshot",
+          query: searchName,
+          apiQuery: "local-snapshot-id",
+          cards: [confirmedSnapshotCard],
+          count: 1,
+          totalCount: 1,
+        }
+        : searchPokemonCatalogSnapshot({
+          query: searchName,
+          cardNumber: request.cardHint.cardNumber,
+          setHint: request.cardHint.setCode,
+          pageSize: request.cardHint.cardNumber ? 12 : 250,
+        });
+      if (result.cards.length > 0) warnings.push(snapshotFallbackWarning());
+    }
+
+    if (result.source !== "pokemon-catalog-snapshot"
+      && result.cards.length === 0
+      && !request.cardHint.cardNumber
+      && !request.cardHint.setCode) {
       const corrected = await parseCardQueryWithAi(searchName, trace);
       const correctedName = corrected?.name.trim() ?? "";
       if (correctedName && normalizeWords(correctedName) !== normalizeWords(searchName)) {
@@ -798,9 +829,11 @@ async function identifyCards(
         .map(({ card, match }) => toIdentityCandidate(card, request, match));
       trace.push({
         step: "card_identification",
-        actor: "Pokémon catalog adapter",
-        summary: `Found ${apiMatches.length} possible identities and ranked exact number, set, and name matches first.`,
-        status: "complete",
+        actor: result.source === "pokemon-catalog-snapshot" ? "Bundled Pokémon catalog snapshot" : "Pokémon catalog adapter",
+        summary: result.source === "pokemon-catalog-snapshot"
+          ? `Recovered ${apiMatches.length} possible identities from the bundled English snapshot and ranked exact number, set, and name matches first.`
+          : `Found ${apiMatches.length} possible identities and ranked exact number, set, and name matches first.`,
+        status: result.source === "pokemon-catalog-snapshot" ? "fallback" : "complete",
       });
       const narrowed = filterByRequestedVariant(dedupeIdentities(apiMatches), request.cardHint.variant, trace);
       return narrowed.slice(0, MAX_IDENTITY_CANDIDATES);
@@ -833,6 +866,11 @@ async function identifyCards(
     status: "fallback",
   });
   return fallback;
+}
+
+function snapshotFallbackWarning() {
+  const date = new Date(POKEMON_CATALOG_SNAPSHOT_UPDATED_AT).toISOString().slice(0, 10);
+  return `Live Pokémon catalog unavailable; used the bundled English local catalog snapshot (source updated ${date}).`;
 }
 
 // Retries on a transient Pokémon catalog failure. Returns null (and records a

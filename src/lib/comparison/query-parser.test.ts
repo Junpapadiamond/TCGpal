@@ -134,6 +134,16 @@ describe("parseCardQuery", () => {
     expect(result.variant).toBe("Special Illustration Rare");
   });
 
+  it("canonicalizes the pasted Bubble Mew seller title", () => {
+    expect(parseCardQuery("Mew ex 232/091 Pokemon TCG Paldean Fates Special Illustration Rare Bubble Mew NM")).toMatchObject({
+      game: "pokemon",
+      name: "Mew ex",
+      cardNumber: "232/091",
+      variant: "Special Illustration Rare",
+      gradingClaim: "",
+    });
+  });
+
   it("prefers a full variant phrase over a short rarity code when both could apply", () => {
     const result = parseCardQuery("Charizard Alternate Art");
     expect(result.variant).toBe("Alternate Art");

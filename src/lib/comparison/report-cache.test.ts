@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearComparisonCache,
   comparisonCacheKey,
   getCachedComparison,
   isCacheableRequest,
+  runComparisonFlight,
   setCachedComparison,
 } from "@/lib/comparison/report-cache";
 import { getJsonCache } from "@/lib/ops/cache";
@@ -77,7 +78,7 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe(`identity-v4|ranking-v3|${ONE_PIECE_PRINT_METADATA_REVISION}|swsh7-215|Near Mint|10001|0.08`);
+    expect(key).toBe(`identity-v4|ranking-v4|${ONE_PIECE_PRINT_METADATA_REVISION}|swsh7-215|Near Mint|10001|0.08`);
   });
 
   it("refuses reports created before the exact-print identity contract", async () => {
@@ -91,6 +92,20 @@ describe("comparison report cache", () => {
     await setCachedComparison("key", reportStub(), at);
     expect(await getCachedComparison("key", new Date("2026-07-03T10:14:00Z"))).not.toBeNull();
     expect(await getCachedComparison("key", new Date("2026-07-03T10:16:00Z"))).toBeNull();
+  });
+
+  it("coalesces concurrent cold requests for the same report key", async () => {
+    let finish!: (report: ComparisonReport) => void;
+    const producer = vi.fn(() => new Promise<ComparisonReport>((resolve) => { finish = resolve; }));
+
+    const first = runComparisonFlight("same-key", producer);
+    const second = runComparisonFlight("same-key", producer);
+    await vi.waitFor(() => expect(producer).toHaveBeenCalledTimes(1));
+    finish(reportStub());
+
+    await expect(first).resolves.toEqual(reportStub());
+    await expect(second).resolves.toEqual(reportStub());
+    expect(producer).toHaveBeenCalledTimes(1);
   });
 
   it("writes reports through the shared hashed cache adapter", async () => {

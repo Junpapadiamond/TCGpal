@@ -1083,7 +1083,7 @@ describe("listing comparison agent", () => {
     expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(true);
   });
 
-  it("does not substitute demo fixture identities when the catalog is unavailable", async () => {
+  it("uses the reviewed local catalog snapshot instead of demo fixtures when the provider is unavailable", async () => {
     // Regression: pokemontcg.io 500s intermittently. The failure path used to
     // return the bundled demo identities whenever the query happened to match
     // one by name, so "umbreon" silently resolved to the two Umbreon VMAX
@@ -1108,9 +1108,10 @@ describe("listing comparison agent", () => {
     );
 
     expect(pokemonCalls).toBeGreaterThan(0);
-    expect(response.identityCandidates).toEqual([]);
+    expect(response.identityCandidates.length).toBeGreaterThan(2);
+    expect(response.identityCandidates.every((card) => card.name.includes("Umbreon"))).toBe(true);
     expect(response.confirmedCard).toBeNull();
-    expect(response.warnings.some((w) => /Pok[eé]mon catalog lookup unavailable/i.test(w))).toBe(true);
+    expect(response.warnings.some((w) => /local catalog snapshot/i.test(w))).toBe(true);
   });
 
   it("walks the relaxed query ladder for a single-word name so one bad tier is survivable", async () => {

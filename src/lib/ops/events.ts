@@ -40,7 +40,7 @@ export type OperationalEvent = {
   count?: number;
   durationMs?: number;
   httpStatus?: number;
-  cacheBackend?: "redis" | "memory";
+  cacheBackend?: "redis" | "vercel-runtime" | "memory";
   rateLimitBackend?: "redis" | "memory";
   limit?: number;
   remaining?: number;

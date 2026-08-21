@@ -556,7 +556,9 @@ export function rankListings(
   // Best Value leads: the flagship recommendation — a deterministic composite of
   // price-vs-market, seller trust, and evidence, not just "cheapest." This is the
   // product's default answer to "which one do I buy."
-  const bestValue = [...eligible].sort((a, b) => b.valueScore - a.valueScore || comparableCost(a) - comparableCost(b))[0];
+  const bestValue = [...eligible].sort((a, b) => b.valueScore - a.valueScore
+    || comparableCost(a) - comparableCost(b)
+    || a.id.localeCompare(b.id))[0];
   choices.push(makeChoice(
     "best_value",
     bestValue,
@@ -566,7 +568,9 @@ export function rankListings(
   ));
 
   const cheapest = [...eligible].sort((a, b) =>
-    comparableCost(a) - comparableCost(b) || b.safetyScore - a.safetyScore
+    comparableCost(a) - comparableCost(b)
+    || b.safetyScore - a.safetyScore
+    || a.id.localeCompare(b.id)
   )[0];
   if (cheapest) {
     choices.push(makeChoice(
@@ -581,7 +585,9 @@ export function rankListings(
   }
 
   const safest = [...eligible].sort((a, b) =>
-    b.safetyScore - a.safetyScore || comparableCost(a) - comparableCost(b)
+    b.safetyScore - a.safetyScore
+    || comparableCost(a) - comparableCost(b)
+    || a.id.localeCompare(b.id)
   )[0];
   if (safest) {
     choices.push(makeChoice(
@@ -597,6 +603,7 @@ export function rankListings(
     b.evidenceCompletenessScore - a.evidenceCompletenessScore
     || b.sellerTrustScore - a.sellerTrustScore
     || comparableCost(a) - comparableCost(b)
+    || a.id.localeCompare(b.id)
   )[0];
   if (bestEvidence) {
     choices.push(makeChoice(

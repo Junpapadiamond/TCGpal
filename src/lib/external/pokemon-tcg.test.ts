@@ -164,7 +164,7 @@ describe("Pokemon TCG API adapter", () => {
       const query = url.searchParams.get("q") ?? "";
       seenQueries.push(query);
       if (query === "number:232 set.printedTotal:91") {
-        return new Response("upstream query failed", { status: 500 });
+        return new Response("upstream query failed", { status: 502 });
       }
       expect(query).toBe('name:"Mew ex"');
       return new Response(JSON.stringify({
@@ -469,12 +469,15 @@ describe("Pokemon TCG API adapter", () => {
   // Lucene query is too expensive" and loosening to the next tier answered a
   // precise "Charizard 4/102" with whatever the newest-first name tier happened
   // to return. A server fault is worth one cheap retry on the same tier first.
-  it("retries the precise tier after a fast server error instead of loosening it", async () => {
+  it("retries the precise tier after any fast 5xx server error instead of loosening it", async () => {
     const queries: string[] = [];
     const fetcher = vi.fn(async (url: URL) => {
       const apiQuery = url.searchParams.get("q") ?? "";
       queries.push(apiQuery);
-      if (queries.length === 1) return new Response("upstream", { status: 500 });
+      // The live provider alternates between 500 and 502. Treating only 500 as
+      // recoverable made the identical query succeed or fail depending on which
+      // gateway status happened to arrive.
+      if (queries.length === 1) return new Response("upstream", { status: 502 });
       return new Response(JSON.stringify({
         data: [{
           id: "base1-4",
@@ -494,6 +497,29 @@ describe("Pokemon TCG API adapter", () => {
     expect(queries).toHaveLength(2);
     expect(queries[0]).toBe(queries[1]);
     expect(queries[1]).toContain("set.printedTotal:102");
+  });
+
+  it("applies timeoutMs to the whole query ladder instead of once per tier", async () => {
+    vi.useFakeTimers();
+    try {
+      let calls = 0;
+      const fetcher = vi.fn((_url: URL, init?: RequestInit) => {
+        calls += 1;
+        return new Promise<Response>((_resolve, reject) => {
+          const signal = init?.signal as AbortSignal;
+          signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+        });
+      }) as unknown as typeof fetch;
+
+      const pending = searchPokemonCards({ query: "Pikachu", timeoutMs: 25, fetcher });
+      const assertion = expect(pending).rejects.toMatchObject({ name: "TimeoutError" });
+      await vi.advanceTimersByTimeAsync(25);
+
+      await assertion;
+      expect(calls).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   // A timeout means the query itself is too slow, which is exactly what the

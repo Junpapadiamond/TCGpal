@@ -65,6 +65,9 @@ const GRADING_COMPANY_PATTERN = /\b(psa|bgs|cgc|sgc|ace|tag)\s*(\d{1,2}(?:\.\d)?
 // Longest/most-specific phrases first so "Trainer Gallery" matches whole rather
 // than leaving a dangling "Gallery".
 const VARIANT_KEYWORDS = [
+  "Special Illustration Rare",
+  "Illustration Rare",
+  "Special Art Rare",
   "Serial Numbered",
   "Serialized",
   "Premium Collection",
@@ -163,6 +166,17 @@ const COMMON_ALIAS_HINTS: Array<{
   cardNumber: string;
   variant: string;
 }> = [
+  {
+    // Community nickname for Paldean Fates Mew ex. Seller titles commonly put
+    // the nickname, set, rarity, TCG category, and condition after the printed
+    // number; treating that whole suffix as a Pokemon name produced alternating
+    // not-found/provider-error results for an otherwise exact card query.
+    pattern: /\bbubble\s*mew\b/i,
+    game: "pokemon",
+    name: "Mew ex",
+    cardNumber: "232/091",
+    variant: "Special Illustration Rare",
+  },
   {
     pattern: /\bmoon\s*breon\b/i,
     game: "pokemon",

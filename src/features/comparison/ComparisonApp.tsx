@@ -424,7 +424,6 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const marketplace = useWatch({ control: form.control, name: "marketplace" });
   const sourceUrl = useWatch({ control: form.control, name: "url" });
   const postalCode = useWatch({ control: form.control, name: "postalCode" });
-  const taxRatePercent = useWatch({ control: form.control, name: "taxRatePercent" });
   const cardName = useWatch({ control: form.control, name: "cardName" });
   const setCode = useWatch({ control: form.control, name: "setCode" });
   const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
@@ -553,9 +552,6 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       if (typeof saved.postalCode === "string" && saved.postalCode) {
         form.setValue("postalCode", saved.postalCode);
       }
-      if (typeof saved.taxRatePercent === "string" && saved.taxRatePercent) {
-        form.setValue("taxRatePercent", saved.taxRatePercent);
-      }
     } catch {
       /* ignore unavailable or malformed storage */
     }
@@ -565,15 +561,12 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     try {
       localStorage.setItem(
         "tcgpal:buyer",
-        JSON.stringify({
-          postalCode: postalCode ?? "",
-          taxRatePercent: taxRatePercent ?? "",
-        }),
+        JSON.stringify({ postalCode: postalCode ?? "" }),
       );
     } catch {
       /* ignore unavailable storage */
     }
-  }, [postalCode, taxRatePercent]);
+  }, [postalCode]);
 
   function rememberConfirmedCard(identity: CardIdentityCandidate, resolvedGame: TcgGame) {
     const card = toRecentCarouselCard(identity, resolvedGame);
