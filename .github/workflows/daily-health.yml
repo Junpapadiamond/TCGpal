@@ -1,0 +1,142 @@
+# Daily health sweep for TCGlens.
+#
+# Why this exists: the market-anchor crosswalk silently dropped 2,002 cards for
+# months and the only thing that eventually noticed was a buyer reporting one
+# card by hand. Every check here measures a property that a green unit-test suite
+# cannot see, and each one is cheap and deterministic — no model tokens are spent
+# unless something is already failing.
+#
+# Cost discipline is the design constraint, not an afterthought:
+#   * Every check is plain Node or vitest. Zero LLM cost on a green day.
+#   * A failure opens or updates ONE issue via gh. Still zero LLM cost.
+#   * Agent triage is opt-in (ANTHROPIC_API_KEY) and runs only on a red check.
+#
+# Exit codes are load-bearing: 0 pass, 1 fail (real regression), 2 inconclusive
+# (upstream outage — never pages anyone). A check that cannot tell those apart
+# gets muted, and a muted check is how the original bug survived.
+name: daily-health
+
+on:
+  schedule:
+    # 13:00 UTC — after the TCGCSV daily dump has published and before US buying hours.
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Run a single check (deploy-drift | provider-health | market-anchor | production)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  TARGET: https://lenstcg.com
+  HEALTH_JSON: "1"
+
+jobs:
+  deploy-drift:
+    # The check that would have caught the reported bug: a fix committed on a
+    # branch that production never received. Repo-only, no secrets, seconds.
+    if: ${{ github.event.inputs.only == '' || github.event.inputs.only == 'deploy-drift' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the check compares every remote branch against main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/health/deploy-drift.mjs
+
+  provider-health:
+    if: ${{ github.event.inputs.only == '' || github.event.inputs.only == 'provider-health' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/health/provider-health.mjs
+        env:
+          POKEMON_TCG_API_KEY: ${{ secrets.POKEMON_TCG_API_KEY }}
+
+  market-anchor:
+    # The slow one (~10 min): replays the real crosswalk over a card from every
+    # catalogued set. Runs daily because new sets are exactly when it breaks.
+    if: ${{ github.event.inputs.only == '' || github.event.inputs.only == 'market-anchor' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run review:market-anchor
+        env:
+          POKEMON_TCG_API_KEY: ${{ secrets.POKEMON_TCG_API_KEY }}
+
+  production:
+    # Everything that can only be seen from outside: what a real basket of cards
+    # ends up as, how long a page takes to answer, and whether five buyers at
+    # once all get served. Sequential steps, continue-on-error so one red check
+    # does not hide the other two.
+    if: ${{ github.event.inputs.only == '' || github.event.inputs.only == 'production' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: abstention
+        continue-on-error: true
+        run: node scripts/health/abstention-rate.mjs
+      - id: timing
+        continue-on-error: true
+        run: node scripts/health/page-timing.mjs
+      - id: concurrency
+        continue-on-error: true
+        run: node scripts/health/concurrency-smoke.mjs
+      - name: Fail the job if any production check failed
+        if: >-
+          steps.abstention.outcome == 'failure' ||
+          steps.timing.outcome == 'failure' ||
+          steps.concurrency.outcome == 'failure'
+        run: |
+          echo "One or more production checks failed; see the job summary above."
+          exit 1
+
+  report:
+    # One issue per red day, reopened and updated rather than duplicated, so a
+    # recurring failure does not bury the inbox. No model tokens are spent here.
+    needs: [deploy-drift, provider-health, market-anchor, production]
+    if: always() && contains(needs.*.result, 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Open or update the health issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          FAILED: >-
+            drift=${{ needs.deploy-drift.result }}
+            providers=${{ needs.provider-health.result }}
+            anchor=${{ needs.market-anchor.result }}
+            production=${{ needs.production.result }}
+        run: |
+          set -euo pipefail
+          TITLE="Daily health: one or more checks are failing"
+          BODY=$(printf '%s\n\n%s\n\n%s\n' \
+            "Automated daily sweep found a failing check." \
+            "Results: $FAILED" \
+            "Full logs and per-check summaries: $RUN_URL")
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label health
+          fi
