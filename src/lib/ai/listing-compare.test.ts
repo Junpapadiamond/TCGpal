@@ -165,6 +165,32 @@ describe("listing comparison agent", () => {
     expect(response.candidates.filter((candidate) => candidate.userSupplied).every((candidate) => candidate.imageUrl === null)).toBe(true);
   });
 
+  // The Suicune HGSS21 regression, in miniature. pokemontcg.io answered 64% of
+  // single-card reloads with a 5xx on 2026-08-21; when the reload failed, the
+  // search ladder it falls back to could not carry a price, so the buyer lost
+  // the market reference on a card the catalog prices fine — and with it the
+  // price dimension of the ranking and the below-market replica gate. The
+  // warning must still be raised: the point is not to hide the source failure,
+  // it is to stop the source failure from taking the price with it.
+  it("keeps the market anchor when the confirmed-card reload hits a server fault", async () => {
+    const faultingFetcher = (async (input: RequestInfo | URL) => {
+      if (String(input).includes("api.pokemontcg.io") && new URL(String(input)).pathname === "/v2/cards/swsh7-215") {
+        return { ok: false, status: 500, json: async () => ({}) } as Response;
+      }
+      return fetcher(input);
+    }) as unknown as typeof fetch;
+
+    const response = await runListingComparison(
+      { ...request, confirmedCardId: "swsh7-215" },
+      { fetcher: faultingFetcher },
+    );
+
+    expect(response.confirmedCard?.id).toBe("swsh7-215");
+    expect(response.confirmedCard?.marketMid).toBe(420);
+    expect(response.confirmedCard?.marketSource).toBe("pokemontcg");
+    expect(response.warnings.some((warning) => warning.includes("Confirmed Pokémon card lookup unavailable"))).toBe(true);
+  });
+
   it("preserves official eBay seller photos through source ingestion into comparison candidates", async () => {
     vi.stubEnv("EBAY_CLIENT_ID", "id");
     vi.stubEnv("EBAY_CLIENT_SECRET", "secret");

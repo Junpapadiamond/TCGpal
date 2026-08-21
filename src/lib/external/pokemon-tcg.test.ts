@@ -6,7 +6,10 @@ describe("Pokemon TCG API adapter", () => {
     const fetcher = vi.fn(async (url: URL) => {
       expect(url.searchParams.get("q")).toBe('name:"Charizard VSTAR"');
       expect(url.searchParams.get("pageSize")).toBe("4");
-      expect(url.searchParams.get("select")).toBe("id,name,subtypes,number,rarity,set,images");
+      // `tcgplayer` is load-bearing, not a nice-to-have: it is the only market
+      // anchor a search-ladder result can carry, and budget discovery filters
+      // candidates by `marketMid`. Trimming it back out must fail here.
+      expect(url.searchParams.get("select")).toBe("id,name,subtypes,number,rarity,set,images,tcgplayer");
 
       return new Response(
         JSON.stringify({
@@ -338,6 +341,49 @@ describe("Pokemon TCG API adapter", () => {
     const card = await getPokemonCard({ id: "swsh7-215", fetcher });
 
     expect(card.name).toBe("Umbreon VMAX");
+  });
+
+  // The confirmed-card reload is the only path that carries pokemontcg.io's
+  // inline TCGplayer price, so losing it to one transient 500 costs the buyer
+  // their market reference — the search ladder it falls back to requests a
+  // `select` list without `tcgplayer`. searchPokemonCards already re-asks once
+  // on a fast 5xx; this endpoint must too.
+  it("re-asks once when the confirmed-card lookup hits a transient server fault", async () => {
+    const fetcher = vi.fn(async () => {
+      if (fetcher.mock.calls.length === 1) return new Response("upstream", { status: 500 });
+      return new Response(JSON.stringify({
+        data: {
+          id: "hsp-HGSS21",
+          name: "Suicune",
+          number: "HGSS21",
+          set: { id: "hsp", name: "HGSS Black Star Promos", printedTotal: 25 },
+          tcgplayer: { url: "https://prices.pokemontcg.io/tcgplayer/hsp-HGSS21", prices: { holofoil: { market: 60.44 } } },
+        },
+      }));
+    }) as unknown as typeof fetch & { mock: { calls: unknown[] } };
+
+    const card = await getPokemonCard({ id: "hsp-HGSS21", fetcher: fetcher as unknown as typeof fetch });
+
+    expect(card.name).toBe("Suicune");
+    expect(card.tcgplayer?.prices?.holofoil).toBeTruthy();
+    expect((fetcher as unknown as { mock: { calls: unknown[] } }).mock.calls).toHaveLength(2);
+  });
+
+  // Bounded, not persistent: a catalog that is genuinely down must surface as a
+  // source failure rather than spending the comparison route's whole time budget.
+  it("gives up after one retry when the confirmed-card lookup keeps failing", async () => {
+    const fetcher = vi.fn(async () => new Response("upstream", { status: 500 })) as unknown as typeof fetch;
+
+    await expect(getPokemonCard({ id: "hsp-HGSS21", fetcher })).rejects.toThrow(/500/);
+    expect((fetcher as unknown as { mock: { calls: unknown[] } }).mock.calls).toHaveLength(2);
+  });
+
+  // A 404 is an answer, not a hiccup. Re-asking cannot change it.
+  it("does not retry a confirmed-card lookup the catalog answered with 404", async () => {
+    const fetcher = vi.fn(async () => new Response("missing", { status: 404 })) as unknown as typeof fetch;
+
+    await expect(getPokemonCard({ id: "nope-1", fetcher })).rejects.toThrow(/404/);
+    expect((fetcher as unknown as { mock: { calls: unknown[] } }).mock.calls).toHaveLength(1);
   });
 
   it("propagates a caller cancellation into the active Pokemon API fetch", async () => {

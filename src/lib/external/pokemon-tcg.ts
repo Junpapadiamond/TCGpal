@@ -195,21 +195,30 @@ export async function getPokemonCard({
   const normalizedId = id.trim();
   if (!normalizedId) throw new Error("Pokemon card id is required.");
 
-  const linked = createLinkedAbortSignal(signal, timeoutMs);
-  const response = await fetcher(
-    new URL(`${POKEMON_TCG_API_BASE_URL}/cards/${encodeURIComponent(normalizedId)}`),
-    {
+  // This lookup is the only path that carries pokemontcg.io's inline TCGplayer
+  // price, and `identifyCards` falls back to the search ladder when it throws —
+  // a ladder whose `select` list omits `tcgplayer`. So one transient 500 here
+  // does not just cost a round trip, it costs the buyer their market reference
+  // on a card the catalog prices fine. Same bounded shape searchPokemonCards
+  // already uses: one immediate second chance on a fast server fault, nothing
+  // more. A 404 is an answer and is never re-asked.
+  const url = new URL(`${POKEMON_TCG_API_BASE_URL}/cards/${encodeURIComponent(normalizedId)}`);
+  let lastStatus = 0;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const linked = createLinkedAbortSignal(signal, timeoutMs);
+    const response = await fetcher(url, {
       headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
       next: { revalidate: 3600 },
       signal: linked.signal,
-    } as RequestInit & { next: { revalidate: number } },
-  ).finally(linked.cleanup);
+    } as RequestInit & { next: { revalidate: number } }).finally(linked.cleanup);
 
-  if (!response.ok) {
-    throw new Error(`Pokemon TCG API card lookup failed with ${response.status}.`);
+    if (response.ok) return pokemonTcgCardResponseSchema.parse(await response.json()).data;
+
+    lastStatus = response.status;
+    if (response.status < 500 || signal?.aborted) break;
   }
 
-  return pokemonTcgCardResponseSchema.parse(await response.json()).data;
+  throw new Error(`Pokemon TCG API card lookup failed with ${lastStatus}.`);
 }
 
 export async function browsePokemonCards({
@@ -259,7 +268,16 @@ async function fetchPokemonCards({
   url.searchParams.set("page", String(Math.max(page, 1)));
   url.searchParams.set("pageSize", String(Math.min(Math.max(pageSize, 1), 250)));
   url.searchParams.set("orderBy", "-set.releaseDate,name");
-  url.searchParams.set("select", "id,name,subtypes,number,rarity,set,images");
+  // `tcgplayer` carries pokemontcg.io's inline TCGplayer price, and this ladder
+  // is where `identifyCards` lands whenever the confirmed-card reload fails —
+  // an endpoint measured at a 64% 5xx rate on 2026-08-21. Without the field the
+  // fallback was structurally unable to carry a market anchor, so a transient
+  // catalog fault cost the buyer their price reference, flattened the ranking's
+  // price dimension, and disabled the below-market replica gate. It also left
+  // budget discovery, which filters candidates on `marketMid`, unable to return
+  // a single Pokemon card. Measured cost on the widest page we send (250 rows):
+  // 100,521 -> 135,767 bytes, no measurable latency change.
+  url.searchParams.set("select", "id,name,subtypes,number,rarity,set,images,tcgplayer");
 
   const linked = createLinkedAbortSignal(signal, timeoutMs);
 
