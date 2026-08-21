@@ -1483,7 +1483,10 @@ function isBarePromoRelease(set: PokemonTcgCard["set"]) {
   );
 }
 
-function formatCollectorNumber(number: string, set?: PokemonTcgCard["set"]) {
+// Exported for the market-anchor coverage audit: the crosswalk is fed the
+// *formatted* number, so an audit that re-derived it from the catalog's raw
+// `number` would measure a card the product never sees.
+export function formatCollectorNumber(number: string, set?: PokemonTcgCard["set"]) {
   const normalized = number.trim();
   if (!normalized || normalized.includes("/")) return normalized;
 
