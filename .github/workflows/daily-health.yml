@@ -129,6 +129,10 @@ jobs:
             production=${{ needs.production.result }}
         run: |
           set -euo pipefail
+          # The label may not exist yet on a fresh repo, and a missing label
+          # makes `gh issue create` fail — which would lose the very report this
+          # job exists to deliver.
+          gh label create health --color BFD4F2 --description "Daily health sweep" 2>/dev/null || true
           TITLE="Daily health: one or more checks are failing"
           BODY=$(printf '%s\n\n%s\n\n%s\n' \
             "Automated daily sweep found a failing check." \
