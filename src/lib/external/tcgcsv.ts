@@ -223,10 +223,14 @@ export async function searchTcgplayerListings(
   return { seeds: [], anchor, product, asOf };
 }
 
-async function findTcgplayerGroup(
+// Exported for the market-anchor coverage audit, which has to name the stage
+// that dropped a card: "the set never found a TCGplayer group" and "the group
+// was right but no product carried that collector number" are different bugs
+// with different fixes, and an empty product list cannot tell them apart.
+export async function findTcgplayerGroup(
   categoryId: number,
   setName: string,
-  fetcher: typeof fetch,
+  fetcher: typeof fetch = fetch,
   preferredGroupId: number | null = null,
 ) {
   const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/groups`), fetcher, 86400);
@@ -240,25 +244,48 @@ async function findTcgplayerGroup(
   const wantedTerms = setNameMatchTerms(setName);
   if (!wantedTerms[0]) return null;
 
-  // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies").
-  // Rank every containment candidate so a short name such as "Base" cannot
-  // select "Scarlet & Violet Base Set" merely because it appears first.
+  // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies"), so a
+  // base set's name is a substring of every later release in its era and the
+  // containment search returns a dozen candidates. Rank them, because the
+  // tie-break is what decides where the market anchor comes from.
+  //
+  // Shortest-name was the wrong tie-break: it sent "Scarlet & Violet" to "SV:
+  // Scarlet & Violet 151" and "XY" to "XY Promos", and `releaseMatches` in
+  // crosswalk.ts then discarded both, so four base sets — 722 cards — showed no
+  // market reference at all. Rank by the words the group adds instead. "151",
+  // "Promos" and "Trainer Gallery" name a different release; "SV01:" and "Base
+  // Set" only spell out the same one.
   const contained = groups
     .map((group) => ({
       group,
       tier: Math.max(...wantedTerms.map((wanted) => containmentTier(normalize(group.name), wanted))),
     }))
     .filter((entry) => entry.tier > 0)
-    .sort((a, b) => b.tier - a.tier || normalize(a.group.name).length - normalize(b.group.name).length);
-  if (contained[0]) return contained[0].group;
+    .sort((a, b) => b.tier - a.tier
+      || extraReleaseTokens(a.group.name, setName) - extraReleaseTokens(b.group.name, setName)
+      || normalize(a.group.name).length - normalize(b.group.name).length);
+  return contained[0]?.group ?? null;
+}
 
-  const bestTokens = groups
-    .map((group) => ({
-      group,
-      overlap: Math.max(...wantedTerms.map((wanted) => nameOverlap(group.name, wanted))),
-    }))
-    .sort((a, b) => b.overlap - a.overlap)[0];
-  return bestTokens && bestTokens.overlap >= 0.8 ? bestTokens.group : null;
+// Structural words spell out an edition the set name already implies: a release
+// code ("SV01", "SWSH", "HGSS", "WoTC") or the words "base"/"set". Everything
+// else names a different product — which is exactly what disqualifies a group.
+const STRUCTURAL_GROUP_TOKEN = /^(?:base|set|[a-z]{2,4}\d{0,2})$/;
+
+export function extraReleaseTokens(groupName: string, setName: string) {
+  const wanted = new Set(tokenize(setName));
+  return tokenize(groupName)
+    .filter((token) => !wanted.has(token) && !STRUCTURAL_GROUP_TOKEN.test(token))
+    .length;
+}
+
+// Shared with `releaseMatches` in crosswalk.ts: a group the search accepts and
+// the crosswalk then rejects is the failure mode this whole rule exists to fix,
+// so both sides must ask the same question.
+export function releaseTokensCovered(groupName: string, setName: string) {
+  const groupTokens = new Set(tokenize(groupName));
+  const wanted = tokenize(setName);
+  return wanted.length > 0 && wanted.every((token) => groupTokens.has(token));
 }
 
 // pokemontcg.io names every promo release "<era> Black Star Promos"; TCGplayer
@@ -280,6 +307,50 @@ const PROMO_GROUP_ALIASES: Record<string, string> = {
   hgssblackstarpromos: "hgsspromos",
   nintendoblackstarpromos: "nintendopromos",
   wizardsblackstarpromos: "wotcpromo",
+
+  // Main releases the two catalogues simply name differently. Each target is the
+  // exact TCGplayer group name, verified 2026-08-21 card-by-card against that
+  // group's product feed — a name that merely looks right is not evidence.
+  // Without these, 1,263 catalogued cards had no market anchor and therefore no
+  // market-floor gate either.
+  //
+  // pokemontcg.io spells the conjunction "&" and drops TCGplayer's era prefix,
+  // or keeps an era prefix TCGplayer drops.
+  sunmoon: "smbaseset",
+  blackwhite: "blackandwhite",
+  diamondpearl: "diamondandpearl",
+  rubysapphire: "exrubyandsapphire",
+  expeditionbaseset: "expedition",
+  hsunleashed: "unleashed",
+  hsundaunted: "undaunted",
+  hstriumphant: "triumphant",
+  pokemonrumble: "rumble",
+
+  // TCGplayer files these as "Promos"; pokemontcg.io as "Collection". 2021 is
+  // the one year TCGplayer names for the anniversary rather than the year, and
+  // 2013 and 2020 exist in neither catalogue.
+  mcdonaldscollection2011: "mcdonaldspromos2011",
+  mcdonaldscollection2012: "mcdonaldspromos2012",
+  mcdonaldscollection2014: "mcdonaldspromos2014",
+  mcdonaldscollection2015: "mcdonaldspromos2015",
+  mcdonaldscollection2016: "mcdonaldspromos2016",
+  mcdonaldscollection2017: "mcdonaldspromos2017",
+  mcdonaldscollection2018: "mcdonaldspromos2018",
+  mcdonaldscollection2019: "mcdonaldspromos2019",
+  mcdonaldscollection2021: "mcdonalds25thanniversarypromos",
+  mcdonaldscollection2022: "mcdonaldspromos2022",
+
+  // pokemontcg.io splits each EX Trainer Kit into one set per mascot deck;
+  // TCGplayer publishes the kit as a single group, so two set names share a
+  // target. The full group name is the target on purpose: aliasing to
+  // "latiaslatios" would lose the tie-break to "XY Trainer Kit: Latias & Latios".
+  extrainerkitlatias: "extrainerkit1latiaslatios",
+  extrainerkitlatios: "extrainerkit1latiaslatios",
+  extrainerkit2plusle: "extrainerkit2plusleminun",
+  extrainerkit2minun: "extrainerkit2plusleminun",
+
+  // Same nine cards, two names. Verified by number and card name, not by shape.
+  bestofgame: "bestofpromos",
 };
 
 export function setNameMatchTerms(setName: string) {
@@ -338,8 +409,18 @@ function collectorPrefixKey(value: string) {
   return collectorNumberParts(value).number;
 }
 
+// pokemontcg.io writes "Pokémon GO" and "Pokédex"; TCGplayer writes "Pokemon".
+// Stripping non-ASCII without folding first turned the accented letter into
+// nothing at all — "pokmon" — so the two catalogues could never agree on a name
+// that contains one. This is a card-name matcher as much as a set-name matcher:
+// `nameOverlap` scored "Pokémon Catcher" at 0.33 against TCGplayer's "Pokemon
+// Catcher" and the crosswalk lost the card.
+function foldAccents(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 function normalize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return foldAccents(value).toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 function containmentTier(groupName: string, wanted: string) {
@@ -380,5 +461,5 @@ function productVariantRank(product: { name: string; cleanName?: string | null }
 }
 
 function tokenize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter(Boolean);
+  return foldAccents(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter(Boolean);
 }

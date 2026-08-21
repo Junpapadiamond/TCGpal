@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  findTcgplayerGroup,
   getTcgcsvLastUpdated,
   inferTcgplayerCategoryId,
   isTcgcsvStale,
@@ -454,5 +455,119 @@ describe("TCGCSV TCGplayer connector", () => {
     const product = await resolveTcgplayerProduct(renamed, svPromoFetcher());
 
     expect(product?.groupId).toBe(22872);
+  });
+});
+
+// Every promo release TCGplayer publishes under a name pokemontcg.io does not
+// use, plus the neighbours a loose match could stray into. Names and ids are the
+// real ones from tcgcsv.com/tcgplayer/3/groups, read 2026-08-21.
+const REAL_POKEMON_GROUPS = [
+  { groupId: 604, name: "Base Set" },
+  { groupId: 1387, name: "XY Base Set" },
+  { groupId: 1400, name: "Black and White" },
+  { groupId: 1402, name: "HeartGold SoulSilver" },
+  { groupId: 1407, name: "Black and White Promos" },
+  { groupId: 1418, name: "WoTC Promo" },
+  { groupId: 1421, name: "Diamond and Pearl Promos" },
+  { groupId: 1423, name: "Nintendo Promos" },
+  { groupId: 1451, name: "XY Promos" },
+  { groupId: 1453, name: "HGSS Promos" },
+  { groupId: 1455, name: "Best of Promos" },
+  { groupId: 1540, name: "HGSS Trainer Kit: Gyarados & Raichu" },
+  { groupId: 1861, name: "SM Promos" },
+  { groupId: 1863, name: "SM Base Set" },
+  { groupId: 2545, name: "SWSH: Sword & Shield Promo Cards" },
+  { groupId: 2585, name: "SWSH01: Sword & Shield Base Set" },
+  { groupId: 22872, name: "SV: Scarlet & Violet Promo Cards" },
+  { groupId: 22873, name: "SV01: Scarlet & Violet Base Set" },
+  { groupId: 23237, name: "SV: Scarlet & Violet 151" },
+  { groupId: 23821, name: "SV: Prismatic Evolutions" },
+  { groupId: 24382, name: "SVE: Scarlet & Violet Energies" },
+  { groupId: 1663, name: "Base Set (Shadowless)" },
+  { groupId: 1842, name: "XY - Evolutions" },
+  { groupId: 2948, name: "SWSH09: Brilliant Stars" },
+  { groupId: 3020, name: "SWSH09: Brilliant Stars Trainer Gallery" },
+];
+
+function realGroupFetcher() {
+  return vi.fn(async (url: URL) => {
+    expect(url.pathname).toBe("/tcgplayer/3/groups");
+    return new Response(JSON.stringify({ results: REAL_POKEMON_GROUPS }));
+  }) as unknown as typeof fetch;
+}
+
+// The alias table is a list of claims about names TCGplayer actually publishes.
+// A claim nobody checks rots: only the SM entry existed for months, so every
+// other promo release silently lost its market anchor — and its market-floor
+// gate — until a buyer reported a specific card. One case per alias, so a
+// renamed group fails here instead of on the result screen.
+describe("promo release group aliases", () => {
+  const promoReleases: [string, number][] = [
+    ["Wizards Black Star Promos", 1418],
+    ["Nintendo Black Star Promos", 1423],
+    ["DP Black Star Promos", 1421],
+    ["HGSS Black Star Promos", 1453],
+    ["BW Black Star Promos", 1407],
+    ["XY Black Star Promos", 1451],
+    ["SM Black Star Promos", 1861],
+    ["SWSH Black Star Promos", 2545],
+    ["Scarlet & Violet Black Star Promos", 22872],
+    ["Scarlet & Violet Promos", 22872],
+  ];
+
+  it.each(promoReleases)("maps %s to TCGplayer group %i", async (setName, groupId) => {
+    const group = await findTcgplayerGroup(3, setName, realGroupFetcher());
+
+    expect(group?.groupId).toBe(groupId);
+  });
+
+  // The HGSS alias is the one a buyer reported: Suicune HGSS21 showed "Exact
+  // TCGplayer mapping unavailable" against a TCGplayer market of $60.44. The
+  // release also owns a trainer kit and a main set whose names share its prefix,
+  // so the alias has to land on the promo group specifically.
+  it("keeps the HGSS promo alias off the trainer kit and the main set", async () => {
+    const group = await findTcgplayerGroup(3, "HGSS Black Star Promos", realGroupFetcher());
+
+    expect(group?.name).toBe("HGSS Promos");
+  });
+});
+
+// A base set's name is a prefix of every later release in its era, so the group
+// search finds many containment matches and the tie-break decides which one the
+// buyer's market anchor comes from. Ranking those ties by shortest name picked
+// "SV: Scarlet & Violet 151" for the Scarlet & Violet base set and "XY Promos"
+// for XY — and `releaseMatches` then discarded the result, so 722 cards across
+// four base sets showed no market reference at all. Verified 2026-08-21 against
+// the live product feeds: SV-151 carries 1 of sv1's 250 sampled cards, the base
+// set carries 247.
+describe("base release group matching", () => {
+  const baseReleases: [string, number][] = [
+    ["Scarlet & Violet", 22873],
+    ["XY", 1387],
+    ["Base", 604],
+    ["Sword & Shield", 2585],
+  ];
+
+  it.each(baseReleases)("matches %s to its own base-set group", async (setName, groupId) => {
+    const group = await findTcgplayerGroup(3, setName, realGroupFetcher());
+
+    expect(group?.groupId).toBe(groupId);
+  });
+
+  // The other half of the same rule: a release whose name genuinely contains the
+  // extra words must still win its own group. "151" is a Scarlet & Violet set
+  // whose TCGplayer group carries "Scarlet" and "Violet" as real tokens, and a
+  // rule that only punished extra words would send it to the base set.
+  const namedReleases: [string, number][] = [
+    ["151", 23237],
+    ["Evolutions", 1842],
+    ["Brilliant Stars", 2948],
+    ["Brilliant Stars Trainer Gallery", 3020],
+  ];
+
+  it.each(namedReleases)("keeps %s on its own release group", async (setName, groupId) => {
+    const group = await findTcgplayerGroup(3, setName, realGroupFetcher());
+
+    expect(group?.groupId).toBe(groupId);
   });
 });

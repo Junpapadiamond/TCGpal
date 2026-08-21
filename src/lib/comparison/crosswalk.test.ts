@@ -63,6 +63,60 @@ function product(overrides: Partial<TcgplayerProductMatch>): TcgplayerProductMat
 }
 
 describe("exact TCGplayer print crosswalk", () => {
+  // `releaseMatches` used to demand the group name equal or END WITH the set
+  // name, which no base set satisfies: TCGplayer writes "SV01: Scarlet & Violet
+  // Base Set" and pokemontcg.io writes "Scarlet & Violet". So the group search
+  // found the right group and the crosswalk threw it away, and 722 cards across
+  // four base sets showed no market reference. The extra words are what decide:
+  // "Base Set" restates the release, "151" and "Promos" name a different one.
+  it("accepts a base-set group whose extra words only restate the release", () => {
+    const scarletViolet = {
+      ...p4,
+      id: "sv1-245",
+      name: "Miriam",
+      setName: "Scarlet & Violet",
+      setCode: "SV1",
+      cardNumber: "245/198",
+      artworkClass: undefined,
+      treatments: undefined,
+    };
+    const baseSet = product({
+      categoryId: 3,
+      groupId: 22873,
+      groupName: "SV01: Scarlet & Violet Base Set",
+      productId: 476544,
+      productName: "Miriam (Full Art)",
+      collectorNumber: "245/198",
+      productUrl: "https://www.tcgplayer.com/product/476544/miriam",
+    });
+
+    expect(selectExactTcgplayerProduct(scarletViolet, [baseSet])?.productId).toBe(476544);
+  });
+
+  it("still rejects a sibling release that merely contains the set name", () => {
+    const scarletViolet = {
+      ...p4,
+      id: "sv1-245",
+      name: "Miriam",
+      setName: "Scarlet & Violet",
+      setCode: "SV1",
+      cardNumber: "245/198",
+      artworkClass: undefined,
+      treatments: undefined,
+    };
+    const otherRelease = product({
+      categoryId: 3,
+      groupId: 23237,
+      groupName: "SV: Scarlet & Violet 151",
+      productId: 517000,
+      productName: "Miriam",
+      collectorNumber: "245/198",
+      productUrl: "https://www.tcgplayer.com/product/517000/miriam",
+    });
+
+    expect(selectExactTcgplayerProduct(scarletViolet, [otherRelease])).toBeNull();
+  });
+
   it("accepts an authoritative Pokémon product whose fraction is zero padded", () => {
     const bubbleMew = {
       ...p4,

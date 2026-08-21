@@ -1,4 +1,10 @@
-import { resolveTcgplayerProductVariants, setNameMatchTerms, type TcgplayerProductMatch } from "@/lib/external/tcgcsv";
+import {
+  extraReleaseTokens,
+  releaseTokensCovered,
+  resolveTcgplayerProductVariants,
+  setNameMatchTerms,
+  type TcgplayerProductMatch,
+} from "@/lib/external/tcgcsv";
 import { resolveEbayProductForCard, type EbayProductResolution } from "@/lib/external/ebay";
 import type { BuyerContext, CardIdentityCandidate } from "@/lib/schemas";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
@@ -134,10 +140,20 @@ function normalizeIdentityText(value: string) {
 // Violet Black Star Promos", and the two names have no common suffix.
 function releaseMatches(groupName: string, setName: string) {
   const group = normalizeRelease(groupName);
-  return setNameMatchTerms(setName).some((term) => {
+  const suffixMatch = setNameMatchTerms(setName).some((term) => {
     const wanted = normalizeRelease(term);
     return Boolean(wanted && (group === wanted || group.endsWith(wanted)));
   });
+  if (suffixMatch) return true;
+
+  // No base set can satisfy the suffix test: TCGplayer writes "SV01: Scarlet &
+  // Violet Base Set" and pokemontcg.io writes "Scarlet & Violet", so the words
+  // land in the middle. Accept the group when it carries every word of the set
+  // name and adds nothing that names a different release — the same question
+  // `findTcgplayerGroup` asks when it ranks candidates, so a group the search
+  // chooses cannot be discarded here. "SV: Scarlet & Violet 151" still fails:
+  // "151" is a release, not a restatement.
+  return releaseTokensCovered(groupName, setName) && extraReleaseTokens(groupName, setName) === 0;
 }
 
 function normalizeRelease(value: string) {
