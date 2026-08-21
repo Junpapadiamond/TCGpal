@@ -6,6 +6,7 @@ import {
   parseEbayUrl,
   resetEbayTokenCacheForTests,
   resolveEbayProductForCard,
+  selectEbayDetailTargets,
   searchEbayAlternatives,
 } from "@/lib/external/ebay";
 import type { CardIdentityCandidate } from "@/lib/schemas";
@@ -184,6 +185,20 @@ describe("eBay active-listing search", () => {
     confidence: "high",
     matchReasons: [],
   } as CardIdentityCandidate;
+
+  it("selects the same detail window when eBay Best Match returns the same rows in another order", () => {
+    const summaries = Array.from({ length: 13 }, (_, index) => ({
+      itemId: String(900_000_000_000 + index),
+      title: `Umbreon VMAX 215/203 Evolving Skies NM copy ${index}`,
+      price: { value: String(400 + index), currency: "USD" },
+    }));
+
+    const forward = selectEbayDetailTargets(summaries, card, 12).map((item) => item.itemId);
+    const reverse = selectEbayDetailTargets([...summaries].reverse(), card, 12).map((item) => item.itemId);
+
+    expect(forward).toEqual(reverse);
+    expect(forward).toHaveLength(12);
+  });
 
   const buyer = { country: "US" as const, postalCode: "10001", taxRate: 0.08, desiredCondition: "Unknown" as const };
 

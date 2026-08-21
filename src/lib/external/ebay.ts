@@ -229,6 +229,26 @@ export function resetEbayTokenCacheForTests() {
   cachedToken = null;
 }
 
+export function selectEbayDetailTargets(
+  summaries: Array<z.infer<typeof ebayItemSchema>>,
+  card: Pick<CardIdentityCandidate, "name" | "setName" | "setCode" | "cardNumber">,
+  detailBudget: number,
+) {
+  const confidenceRank = { high: 0, medium: 1, low: 2 } as const;
+  return [...summaries]
+    .filter((item) => {
+      const match = assessTitleMatch(item.title, card);
+      return match.confidence !== "low" && !isGradedListing(item.title);
+    })
+    .sort((left, right) => {
+      const leftConfidence = assessTitleMatch(left.title, card).confidence;
+      const rightConfidence = assessTitleMatch(right.title, card).confidence;
+      return confidenceRank[leftConfidence] - confidenceRank[rightConfidence]
+        || left.itemId.localeCompare(right.itemId);
+    })
+    .slice(0, Math.max(0, Math.trunc(detailBudget)));
+}
+
 export async function getEbayListingByUrl(
   url: string,
   buyer: BuyerContext,
@@ -339,16 +359,10 @@ export async function searchEbayAlternatives(
   // carries eBay's structured Card Condition descriptor (NM/LP/MP/HP/Damaged).
   // Enrich a bounded exact-match shortlist in parallel so condition is a real
   // deterministic input without turning the search into an unbounded crawl.
-  const detailTargets = summaries
-    .filter((item) => {
-      const match = assessTitleMatch(item.title, card);
-      return match.confidence !== "low"
-        && !isGradedListing(item.title);
-    })
-    .slice(0, Math.max(0, Math.trunc(detailBudget)));
+  const detailTargets = selectEbayDetailTargets(summaries, card, detailBudget);
   const details = await Promise.all(detailTargets.map(async (item) => {
     try {
-      return await getEbayItemDetail(item.itemId, buyer, fetcher);
+      return await getEbayItemDetailWithRetry(item.itemId, buyer, fetcher);
     } catch {
       return null;
     }
@@ -520,6 +534,21 @@ async function getEbayItemDetail(
   const response = await fetchEbayAuthed(endpoint, buyer, fetcher);
   if (!response.ok) throw new Error(`eBay item detail failed with ${response.status}.`);
   return ebayItemSchema.parse(await response.json());
+}
+
+async function getEbayItemDetailWithRetry(
+  itemId: string,
+  buyer: BuyerContext,
+  fetcher: typeof fetch,
+) {
+  try {
+    return await getEbayItemDetail(itemId, buyer, fetcher);
+  } catch {
+    // A missing detail changes condition, seller evidence, and ultimately the
+    // winning lens. One bounded retry makes a transient item-endpoint fault less
+    // likely to freeze a different report without extending the whole fan-out.
+    return getEbayItemDetail(itemId, buyer, fetcher);
+  }
 }
 
 // How confidently a live listing title identifies the confirmed card. Sellers

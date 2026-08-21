@@ -70,7 +70,7 @@ describe("Bubble Mew production-shaped regression", () => {
     process.env.EBAY_CLIENT_SECRET = "test-secret";
     const detailCalls: string[] = [];
     const summaries = Array.from({ length: 13 }, (_, index) => ({
-      itemId: `bubble-${index + 1}`,
+      itemId: `bubble-${String(index + 1).padStart(2, "0")}`,
       title: index === 12
         ? "Mew ex 232/091 Paldean Fates English NM RAW outside enrichment window"
         : `Mew ex 232/091 Paldean Fates NM RAW copy ${index + 1}`,
@@ -115,9 +115,9 @@ describe("Bubble Mew production-shaped regression", () => {
             ...summary,
             conditionDescriptors: [{
               name: "Card Condition",
-              values: [{ content: itemId === "bubble-2" ? "Lightly played (Excellent)" : "Near Mint" }],
+              values: [{ content: itemId === "bubble-02" ? "Lightly played (Excellent)" : "Near Mint" }],
             }],
-            localizedAspects: itemId === "bubble-4" ? [] : [
+            localizedAspects: itemId === "bubble-04" ? [] : [
               { name: "Card Number", value: "232/091" },
               { name: "Card Name", value: "Mew Ex" },
               { name: "Set", value: "SV: Paldean Fates" },
@@ -131,11 +131,11 @@ describe("Bubble Mew production-shaped regression", () => {
     }) as unknown as typeof fetch;
 
     const report = await runListingComparison(request, { fetcher });
-    const first = report.candidates.find((candidate) => candidate.id === "ebay-bubble-1");
-    const withoutSpecifics = report.candidates.find((candidate) => candidate.id === "ebay-bubble-4");
+    const first = report.candidates.find((candidate) => candidate.id === "ebay-bubble-01");
+    const withoutSpecifics = report.candidates.find((candidate) => candidate.id === "ebay-bubble-04");
     const outsideWindow = report.candidates.find((candidate) => candidate.id === "ebay-bubble-13");
-    const wrongCondition = report.candidates.find((candidate) => candidate.id === "ebay-bubble-2");
-    const unknownShipping = report.candidates.find((candidate) => candidate.id === "ebay-bubble-3");
+    const wrongCondition = report.candidates.find((candidate) => candidate.id === "ebay-bubble-02");
+    const unknownShipping = report.candidates.find((candidate) => candidate.id === "ebay-bubble-03");
     const wrongNumber = report.candidates.find((candidate) => candidate.id === "ebay-wrong-number");
 
     expect(detailCalls).toHaveLength(12);

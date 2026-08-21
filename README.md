@@ -44,6 +44,11 @@ EBAY_MARKETPLACE_ID=EBAY_US
 POKEMON_TCG_API_KEY=
 PRICECHARTING_API_TOKEN=
 
+# Optional durable cross-region cache. Vercel Runtime Cache is used
+# automatically as the shared per-region fallback when these are absent.
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
 AI_PROVIDER=openai
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.5
@@ -53,6 +58,8 @@ NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 All marketplace and AI keys stay server-side. The PostHog project key is public by design, but analytics payloads are restricted by an explicit property allowlist.
+
+Pokémon identity search falls back to the bundled English catalog snapshot when the live API is unavailable. Refresh it from a local clone of [`PokemonTCG/pokemon-tcg-data`](https://github.com/PokemonTCG/pokemon-tcg-data) with `node scripts/build-pokemon-catalog-index.mjs /path/to/pokemon-tcg-data`; the generated file records the upstream revision and date.
 
 ## Agent interfaces
 

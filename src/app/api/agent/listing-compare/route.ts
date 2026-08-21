@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { runListingComparison } from "@/lib/ai/listing-compare";
+import { comparisonCacheKey, isCacheableRequest, runComparisonFlight } from "@/lib/comparison/report-cache";
 import { createRequestId, getOperationalErrorCode, logOpsEvent } from "@/lib/ops/events";
 import { rateLimitHeaders, rateLimitRequest } from "@/lib/ops/rate-limit";
 import { captureOperationalException } from "@/lib/ops/sentry";
@@ -57,10 +58,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = comparisonRequestSchema.parse(body);
     requestValidated = true;
-    const report = await runListingComparison(parsed, {
+    const produceReport = () => runListingComparison(parsed, {
       opsContext: { requestId, route },
       signal: request.signal,
     });
+    const report = isCacheableRequest(parsed) && parsed.confirmedCardId
+      ? await runComparisonFlight(comparisonCacheKey(parsed, parsed.confirmedCardId), produceReport)
+      : await produceReport();
     logOpsEvent({
       event: "api_request_completed",
       requestId,

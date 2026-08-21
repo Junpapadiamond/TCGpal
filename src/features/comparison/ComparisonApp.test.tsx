@@ -450,6 +450,24 @@ describe("comparison condition controls", () => {
     expect(requests[0]?.buyer.taxRate).toBe(0.0852);
   });
 
+  it("does not silently restore a stale manual tax override for the same ZIP", async () => {
+    localStorage.setItem("tcgpal:buyer", JSON.stringify({
+      postalCode: "10001",
+      taxRatePercent: "10",
+    }));
+    render(<ComparisonApp />);
+
+    await waitFor(() => expect((screen.getByRole("textbox", { name: "Delivery ZIP" }) as HTMLInputElement).value).toBe("10001"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Search for a card" }), {
+      target: { value: "Mew ex 232/091" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Compare exact listings" }));
+
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]?.buyer.taxRate).toBe(0.0852);
+    expect(JSON.parse(localStorage.getItem("tcgpal:buyer") ?? "{}")).toEqual({ postalCode: "10001" });
+  });
+
   it("opens a gallery-shaped identity state without comparison language for a name-only search", async () => {
     let resolveIdentity!: (response: Response) => void;
     const identityResponse = new Promise<Response>((resolve) => { resolveIdentity = resolve; });
@@ -942,7 +960,7 @@ describe("comparison condition controls", () => {
     await waitFor(() => expect(clipboard.writeText).toHaveBeenCalledWith(`http://localhost/r/${receiptId}`));
     expect(String(clipboard.writeText.mock.calls[0]?.[0])).not.toContain("postalCode");
     expect(trackEvent).toHaveBeenCalledWith("result_shared", { share_method: "url", result_state: "best_buy" });
-    expect(screen.getByText("Link copied. This receipt expires in 30 days.")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Link copied. This receipt expires in 30 days.")).toBeTruthy());
   });
 
   it("records one landing event per visit so every funnel rate has a denominator", async () => {

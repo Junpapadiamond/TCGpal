@@ -56,7 +56,7 @@ const pokemonTcgCardResponseSchema = z.object({
 export type PokemonTcgCard = z.infer<typeof pokemonTcgCardSchema>;
 
 export type PokemonTcgSearchResult = {
-  source: "pokemon-tcg-api";
+  source: "pokemon-tcg-api" | "pokemon-catalog-snapshot";
   query: string;
   apiQuery: string;
   cards: PokemonTcgCard[];
@@ -110,6 +110,12 @@ export async function searchPokemonCards({
   const normalizedQuery = query.trim();
   if (normalizedQuery.length < 2) throw new Error("Pokemon card search query must be at least 2 characters.");
 
+  // `timeoutMs` is the ceiling for one search attempt, not for every Lucene
+  // tier inside it. Giving each tier a fresh 4s/5s/9s timer let a nominal 4s
+  // attempt run for 12-20s, which consumed the outer retry budget and collided
+  // with the route's 18s deadline. One linked signal owns the whole ladder.
+  const attempt = createLinkedAbortSignal(signal, timeoutMs);
+
   const apiQueries = buildPokemonCardQueries({
     name: normalizedQuery,
     cardNumber,
@@ -119,48 +125,53 @@ export async function searchPokemonCards({
   let lastResult: PokemonTcgSearchResult | null = null;
   let lastError: unknown = null;
 
-  for (const apiQuery of apiQueries) {
-    // Each tier gets one immediate second chance before the ladder gives up its
-    // precision. Measured 2026-08-19, pokemontcg.io answered 14 of 24 identical
-    // requests with a 500/502 while the query itself was fine, and loosening on
-    // that resolved a precise "Charizard 4/102" to whatever the newest-first
-    // name tier happened to return.
-    for (let tierAttempt = 0; tierAttempt < 2; tierAttempt += 1) {
-      let retryThisTier = false;
-      try {
-        const result = await fetchPokemonCards({
-          query: normalizedQuery,
-          apiQuery,
-          page: 1,
-          // 250 is the Pokemon TCG API's own maximum. A lower ceiling here is not a
-          // safety net, it is silent data loss: the query is ordered
-          // -set.releaseDate, so clamping a name-only search to 50 removed exactly
-          // the oldest prints, and a "pikachu" picker could never show Base Set.
-          pageSize: Math.min(Math.max(pageSize, 1), 250),
-          apiKey,
-          fetcher,
-          timeoutMs,
-          signal,
-        });
-        lastResult = result;
-        if (result.cards.length > 0) return result;
-      } catch (error) {
-        if (signal?.aborted || !canTrySaferPokemonQuery(error)) throw error;
-        // The API occasionally times out or returns 500 for one expensive or
-        // overly-specific Lucene query while a simpler name query succeeds. A
-        // failed tier must not discard the rest of the deterministic search
-        // ladder and make the buyer submit the same card again.
-        lastError = error;
-        // Only fast server faults are worth re-asking: a timeout means this
-        // query is too slow, which is the case the looser tiers exist for.
-        retryThisTier = tierAttempt === 0 && isRetryablePokemonServerFault(error);
+  try {
+    for (const apiQuery of apiQueries) {
+      // Each tier gets one immediate second chance before the ladder gives up its
+      // precision. Measured 2026-08-19, pokemontcg.io answered 14 of 24 identical
+      // requests with a 500/502 while the query itself was fine, and loosening on
+      // that resolved a precise "Charizard 4/102" to whatever the newest-first
+      // name tier happened to return.
+      for (let tierAttempt = 0; tierAttempt < 2; tierAttempt += 1) {
+        let retryThisTier = false;
+        try {
+          const result = await fetchPokemonCards({
+            query: normalizedQuery,
+            apiQuery,
+            page: 1,
+            // 250 is the Pokemon TCG API's own maximum. A lower ceiling here is not a
+            // safety net, it is silent data loss: the query is ordered
+            // -set.releaseDate, so clamping a name-only search to 50 removed exactly
+            // the oldest prints, and a "pikachu" picker could never show Base Set.
+            pageSize: Math.min(Math.max(pageSize, 1), 250),
+            apiKey,
+            fetcher,
+            timeoutMs,
+            signal: attempt.signal,
+          });
+          lastResult = result;
+          if (result.cards.length > 0) return result;
+        } catch (error) {
+          if (attempt.signal.aborted) throw attempt.signal.reason ?? error;
+          if (!canTrySaferPokemonQuery(error)) throw error;
+          // The API occasionally times out or returns 500 for one expensive or
+          // overly-specific Lucene query while a simpler name query succeeds. A
+          // failed tier must not discard the rest of the deterministic search
+          // ladder and make the buyer submit the same card again.
+          lastError = error;
+          // Only fast server faults are worth re-asking: a timeout means this
+          // query is too slow, which is the case the looser tiers exist for.
+          retryThisTier = tierAttempt === 0 && isRetryablePokemonServerFault(error);
+        }
+        if (!retryThisTier) break;
       }
-      if (!retryThisTier) break;
     }
-  }
 
-  if (lastError) throw lastError;
-  return lastResult as PokemonTcgSearchResult;
+    if (lastError) throw lastError;
+    return lastResult as PokemonTcgSearchResult;
+  } finally {
+    attempt.cleanup();
+  }
 }
 
 class PokemonTcgRequestError extends Error {
@@ -175,12 +186,12 @@ class PokemonTcgRequestError extends Error {
 // excluded deliberately: those spend the whole attempt budget and mean the query
 // is too slow, not that the server hiccuped.
 function isRetryablePokemonServerFault(error: unknown) {
-  return error instanceof PokemonTcgRequestError && error.status >= 500;
+  return error instanceof PokemonTcgRequestError && (error.status === 500 || error.status === 502);
 }
 
 function canTrySaferPokemonQuery(error: unknown) {
   if (error instanceof PokemonTcgRequestError) {
-    return error.status === 400 || error.status === 404 || error.status === 500;
+    return error.status === 400 || error.status === 404 || error.status === 500 || error.status === 502;
   }
   return Boolean(error && typeof error === "object" && "name" in error && error.name === "TimeoutError");
 }

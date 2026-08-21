@@ -118,9 +118,12 @@ function createFlight({
   const deadline = waitForDeadline(linked.signal, now);
 
   flight.promise = Promise.race([provider, deadline])
-    .then((response) => {
+    .then(async (response) => {
       if (response.status !== "unavailable") {
-        void setJsonCache(CACHE_SCOPE, key, {
+        // A fire-and-forget Redis write can be frozen as soon as a serverless
+        // invocation returns. Await it so the next tab/instance can actually
+        // reuse the successful lookup instead of starting another cold flight.
+        await setJsonCache(CACHE_SCOPE, key, {
           cachedAt: now().toISOString(),
           response,
         } satisfies CachedIdentity, {

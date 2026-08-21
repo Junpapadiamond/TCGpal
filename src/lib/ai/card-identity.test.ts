@@ -70,19 +70,30 @@ describe("resolveCardIdentity", () => {
     expect(new Set(result.candidates.map((card) => card.cardNumber))).toEqual(new Set(["OP01-016"]));
   });
 
-  it("distinguishes an empty catalog result from an unavailable catalog", async () => {
+  it("distinguishes an empty catalog result from an outage recovered by the local snapshot", async () => {
     const noMatch = await resolveCardIdentity(
       { query: "Missingmon", cardHint: { game: "pokemon" } },
       { fetcher: pokemonFetcher([]) },
     );
-    const unavailable = await resolveCardIdentity(
+    const recovered = await resolveCardIdentity(
       { query: "Pikachu", cardHint: { game: "pokemon" } },
       { fetcher: vi.fn(async () => { throw new Error("catalog offline"); }) as unknown as typeof fetch },
     );
 
     expect(noMatch.status).toBe("not_found");
-    expect(unavailable.status).toBe("unavailable");
-    expect(unavailable.warnings.join(" ")).toMatch(/unavailable|offline/i);
+    expect(recovered.status).toBe("needs_confirmation");
+    expect(recovered.candidates.some((card) => card.id === "base1-58")).toBe(true);
+    expect(recovered.warnings.join(" ")).toMatch(/local catalog snapshot/i);
+  });
+
+  it("still reports unavailable when neither the provider nor snapshot knows the card", async () => {
+    const result = await resolveCardIdentity(
+      { query: "Missingmon", cardHint: { game: "pokemon" } },
+      { fetcher: vi.fn(async () => { throw new Error("catalog offline"); }) as unknown as typeof fetch },
+    );
+
+    expect(result.status).toBe("unavailable");
+    expect(result.candidates).toEqual([]);
   });
 
   it("does not retry a Pokemon lookup after its parent request is cancelled", async () => {

@@ -28,6 +28,23 @@ describe("comparison ranking", () => {
     expect(listing.estimatedLandedCost).toBe(1323);
   });
 
+  it("uses listing id as the final tie-break so provider order cannot change lens winners", () => {
+    const first = normalizeListing({
+      listing: { ...demoListingSeeds[0], id: "listing-a" },
+      buyer,
+    });
+    const second = normalizeListing({
+      listing: { ...demoListingSeeds[0], id: "listing-b" },
+      buyer,
+    });
+
+    const forward = rankListings([first, second]).map((choice) => choice.listingId);
+    const reverse = rankListings([second, first]).map((choice) => choice.listingId);
+
+    expect(forward).toEqual(reverse);
+    expect(forward.every((id) => id === "listing-a")).toBe(true);
+  });
+
   it("taxes item + shipping so pre-tax, tax, and total reconcile", () => {
     const listing = normalizeListing({
       listing: { ...demoListingSeeds[0], price: 100, shipping: 10 },

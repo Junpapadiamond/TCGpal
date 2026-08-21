@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
+import { getCache } from "@vercel/functions";
 import { getOperationalErrorCode, logOpsEvent } from "@/lib/ops/events";
 import { getRedisClient } from "@/lib/ops/redis";
 
-type CacheBackend = "redis" | "memory";
+type CacheBackend = "redis" | "vercel-runtime" | "memory";
 
 type LocalEntry = {
   value: unknown;
@@ -44,6 +45,15 @@ export async function getJsonCache<T = unknown>(
     }
   }
 
+  if (isVercelRuntimeCacheAvailable()) {
+    try {
+      const value = await getCache().get(key);
+      return parseCachedValue(value, options.validate);
+    } catch (error) {
+      recordCacheBackendFailure("vercel-runtime", error);
+    }
+  }
+
   return getLocalValue(key, options);
 }
 
@@ -61,6 +71,19 @@ export async function setJsonCache(
       return "redis";
     } catch (error) {
       recordCacheBackendFailure("redis", error);
+    }
+  }
+
+  if (isVercelRuntimeCacheAvailable()) {
+    try {
+      await getCache().set(key, value, {
+        ttl: options.ttlSeconds,
+        tags: [`tcgpal-${safeCacheTag(scope)}`],
+        name: `tcgpal-${safeCacheTag(scope)}`,
+      });
+      return "vercel-runtime";
+    } catch (error) {
+      recordCacheBackendFailure("vercel-runtime", error);
     }
   }
 
@@ -119,4 +142,12 @@ function recordCacheBackendFailure(backend: CacheBackend, error: unknown) {
     cacheBackend: backend,
     errorCode: getOperationalErrorCode(error),
   });
+}
+
+function isVercelRuntimeCacheAvailable() {
+  return process.env.VERCEL === "1";
+}
+
+function safeCacheTag(scope: string) {
+  return scope.trim().replace(/[^a-zA-Z0-9-]/g, "-").slice(0, 48) || "default";
 }
