@@ -498,6 +498,14 @@ describe("comparison ranking", () => {
       buyer,
       cardLanguage: "English",
     });
+    const brazilian = normalizeListing({
+      listing: {
+        ...demoListingSeeds[0],
+        title: "Mew EX 232/091 Bubble Card Pokemon TCG Brazilian Sv Paldean Fates Pack Fresh NM+",
+      },
+      buyer,
+      cardLanguage: "English",
+    });
 
     expect(unstated.eligibilityIssues).toContainEqual(expect.objectContaining({
       category: "language",
@@ -505,6 +513,11 @@ describe("comparison ranking", () => {
       code: "language_unverified",
     }));
     expect(japanese.eligibilityIssues).toContainEqual(expect.objectContaining({
+      category: "language",
+      disposition: "exclude",
+      code: "language_conflict",
+    }));
+    expect(brazilian.eligibilityIssues).toContainEqual(expect.objectContaining({
       category: "language",
       disposition: "exclude",
       code: "language_conflict",

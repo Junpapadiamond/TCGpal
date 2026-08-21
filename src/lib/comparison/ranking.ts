@@ -735,8 +735,12 @@ function languageAssessment(matchText: string, targetLanguage: string | null, li
     || /\b(?:japanese|jpn|jp)\b|日本語|日版/i.test(languageText);
   const explicitEnglish = /^(?:english|eng|en)$/i.test(structured)
     || /\b(?:english|eng)\s+(?:card|version|language|edition)\b|\benglish\b/i.test(matchText);
-  const explicitOther = /^(?:korean|chinese|french|german|spanish|italian|portuguese)$/i.test(structured)
-    || /\b(?:korean|chinese|french|german|spanish|italian|portuguese)(?:\s+(?:card|version|language|edition))?\b/i.test(matchText);
+  // Country wording is only treated as language evidence when it unambiguously
+  // names a localized TCG release. In particular, eBay commonly labels Portuguese
+  // cards as "Brazilian" without ever writing "Portuguese". Keep marker-less titles
+  // reviewable; do not infer language from seller location or marketplace.
+  const explicitOther = /^(?:korean|chinese|french|german|spanish|italian|portuguese|brazilian|brazilian portuguese|pt[\s-]?br)$/i.test(structured)
+    || /\b(?:korean|chinese|french|german|spanish|italian|portuguese|português|brazilian(?:\s+portuguese)?|pt[\s-]?br)(?:\s+(?:card|version|language|edition|print))?\b/i.test(matchText);
 
   if (englishTarget && (explicitJapanese || explicitOther)) {
     return "conflict";
