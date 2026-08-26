@@ -5,6 +5,7 @@ import {
   clearResultShown,
   markResultShown,
   resolveChannelFrom,
+  resolveInternalDeviceFlag,
   sanitizeAnalyticsProperties,
   stripUrlProperties,
   timeToOpenBucket,
@@ -121,6 +122,13 @@ describe("channel attribution", () => {
     expect(classifyChannelTag("   ")).toBeNull();
   });
 
+  it("treats the internal-off tag as no signal so the visit is attributed normally", () => {
+    // Must be matched before the `internal` prefix, or the act of turning the
+    // flag off would itself be recorded as an internal visit.
+    expect(classifyChannelTag("internal-off")).toBeNull();
+    expect(classifyChannelTag("internal_off")).toBeNull();
+  });
+
   it("classifies referrer hosts, including RedNote and same-origin navigation", () => {
     expect(classifyReferrerChannel("", "https://lenstcg.com")).toBe("direct");
     expect(classifyReferrerChannel("https://lenstcg.com/method", "https://lenstcg.com")).toBe("direct");
@@ -146,6 +154,39 @@ describe("channel attribution", () => {
     expect(resolveChannelFrom({ search: "", referrer: "", stored: null, origin })).toBe("direct");
     // A tampered or stale storage value must not smuggle a free-text label through.
     expect(resolveChannelFrom({ search: "", referrer: "", stored: "reddit_launch_post", origin })).toBe("direct");
+  });
+});
+
+describe("internal device marking", () => {
+  const origin = "https://lenstcg.com";
+
+  it("marks the device from an internal tag and clears it from the off tag", () => {
+    expect(resolveInternalDeviceFlag("internal", false)).toBe(true);
+    expect(resolveInternalDeviceFlag("internal_macbook", false)).toBe(true);
+    expect(resolveInternalDeviceFlag("internal-off", true)).toBe(false);
+    expect(resolveInternalDeviceFlag("internal_off", true)).toBe(false);
+  });
+
+  it("keeps whatever the device already decided when a visit carries no internal tag", () => {
+    // The point of the flag is that a browser is marked once and the founder
+    // never has to remember the query param again.
+    expect(resolveInternalDeviceFlag(null, true)).toBe(true);
+    expect(resolveInternalDeviceFlag("reddit_op", true)).toBe(true);
+    expect(resolveInternalDeviceFlag(null, false)).toBe(false);
+    expect(resolveInternalDeviceFlag("reddit_op", false)).toBe(false);
+  });
+
+  it("keeps a marked device internal however the visit arrives", () => {
+    // The founder opening their own Reddit post is still the founder, so a
+    // marked device outranks both the tag and the referrer.
+    expect(resolveChannelFrom({ search: "?s=reddit_op", referrer: "", stored: null, origin, internalDevice: true })).toBe("internal");
+    expect(resolveChannelFrom({ search: "", referrer: "https://www.reddit.com/r/OnePieceTCG", stored: null, origin, internalDevice: true })).toBe("internal");
+    expect(resolveChannelFrom({ search: "", referrer: "", stored: "reddit", origin, internalDevice: true })).toBe("internal");
+  });
+
+  it("leaves unmarked devices attributed exactly as before", () => {
+    expect(resolveChannelFrom({ search: "?s=reddit_op", referrer: "", stored: null, origin, internalDevice: false })).toBe("reddit");
+    expect(resolveChannelFrom({ search: "", referrer: "", stored: null, origin })).toBe("direct");
   });
 });
 

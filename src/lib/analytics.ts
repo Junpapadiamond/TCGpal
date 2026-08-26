@@ -118,6 +118,16 @@ export function stripUrlProperties(properties: Record<string, unknown> | null) {
 let initialized = false;
 
 const CHANNEL_STORAGE_KEY = "tcglens_channel";
+
+/**
+ * Marks this browser as a founder test device. Unlike the channel above this
+ * lives in localStorage, because the alternative — remembering `?s=internal`
+ * on every test visit — is why founder sessions kept landing in the launch
+ * numbers as `direct`. Neither IP nor geo can replace it: a VPN moves the exit
+ * address between sessions, and shared exits put real buyers in the same city.
+ */
+const INTERNAL_DEVICE_KEY = "tcglens_internal_device";
+const INTERNAL_OFF_TAGS = new Set(["internal-off", "internal_off"]);
 let resolvedChannel: TcglensChannel | null = null;
 
 /**
@@ -131,8 +141,24 @@ export function classifyChannelTag(raw: string | null): TcglensChannel | null {
   if (tag.startsWith("reddit")) return "reddit";
   if (tag.startsWith("rednote") || tag.startsWith("xhs") || tag.startsWith("xiaohongshu")) return "rednote";
   if (tag.startsWith("discord")) return "discord";
+  // Checked first: `internal-off` also starts with "internal", and recording
+  // the un-marking visit as internal would defeat the point of un-marking.
+  if (INTERNAL_OFF_TAGS.has(tag)) return null;
   if (tag.startsWith("internal")) return "internal";
   return "other";
+}
+
+/**
+ * What this device's internal flag should become after a visit carrying `raw`.
+ * A visit with no internal tag leaves the flag exactly as it was, which is what
+ * makes the marking stick across sessions, campaigns, and VPN changes.
+ */
+export function resolveInternalDeviceFlag(raw: string | null, stored: boolean): boolean {
+  const tag = raw?.trim().toLowerCase();
+  if (!tag) return stored;
+  if (INTERNAL_OFF_TAGS.has(tag)) return false;
+  if (tag.startsWith("internal")) return true;
+  return stored;
 }
 
 export function classifyReferrerChannel(referrer: string, origin: string): TcglensChannel {
@@ -158,21 +184,48 @@ export function classifyReferrerChannel(referrer: string, origin: string): Tcgle
  * referrer at all — without persistence those visits would silently relabel
  * themselves "direct" halfway through the funnel.
  */
-export function resolveChannelFrom({ search, referrer, stored, origin }: {
+export function resolveChannelFrom({ search, referrer, stored, origin, internalDevice = false }: {
   search: string;
   referrer: string;
   stored: string | null;
   origin: string;
+  internalDevice?: boolean;
 }): TcglensChannel {
+  // Outranks everything else on purpose: the founder clicking their own Reddit
+  // post is still the founder, and mislabelling that as `reddit` would put test
+  // traffic straight back into the launch numbers.
+  if (internalDevice) return "internal";
   const tagged = classifyChannelTag(new URLSearchParams(search).get("s"));
   if (tagged) return tagged;
   if (stored && allowedChannels.has(stored)) return stored as TcglensChannel;
   return classifyReferrerChannel(referrer, origin);
 }
 
+/**
+ * Read this device's internal flag, apply any `?s=internal` / `?s=internal-off`
+ * carried by the visit, and persist the result. Blocked storage degrades to
+ * this page load's tag rather than dropping the marking altogether.
+ */
+function syncInternalDeviceFlag(tag: string | null): boolean {
+  try {
+    const stored = window.localStorage.getItem(INTERNAL_DEVICE_KEY) === "1";
+    const next = resolveInternalDeviceFlag(tag, stored);
+    if (next !== stored) {
+      if (next) window.localStorage.setItem(INTERNAL_DEVICE_KEY, "1");
+      else window.localStorage.removeItem(INTERNAL_DEVICE_KEY);
+    }
+    return next;
+  } catch {
+    return resolveInternalDeviceFlag(tag, false);
+  }
+}
+
 export function resolveChannel(): TcglensChannel {
   if (resolvedChannel) return resolvedChannel;
   if (typeof window === "undefined") return "direct";
+  const internalDevice = syncInternalDeviceFlag(
+    new URLSearchParams(window.location.search).get("s"),
+  );
   let stored: string | null = null;
   try {
     stored = window.sessionStorage.getItem(CHANNEL_STORAGE_KEY);
@@ -184,6 +237,7 @@ export function resolveChannel(): TcglensChannel {
     referrer: document.referrer,
     stored,
     origin: window.location.origin,
+    internalDevice,
   });
   resolvedChannel = channel;
   try {
