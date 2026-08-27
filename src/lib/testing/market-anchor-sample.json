@@ -1,0 +1,6218 @@
+{
+  "base1": [
+    {
+      "id": "base1-1",
+      "name": "Alakazam",
+      "setName": "Base",
+      "setCode": "BASE1",
+      "cardNumber": "1/102"
+    },
+    {
+      "id": "base1-2",
+      "name": "Blastoise",
+      "setName": "Base",
+      "setCode": "BASE1",
+      "cardNumber": "2/102"
+    },
+    {
+      "id": "base1-3",
+      "name": "Chansey",
+      "setName": "Base",
+      "setCode": "BASE1",
+      "cardNumber": "3/102"
+    },
+    {
+      "id": "base1-4",
+      "name": "Charizard",
+      "setName": "Base",
+      "setCode": "BASE1",
+      "cardNumber": "4/102"
+    },
+    {
+      "id": "base1-5",
+      "name": "Clefairy",
+      "setName": "Base",
+      "setCode": "BASE1",
+      "cardNumber": "5/102"
+    }
+  ],
+  "base2": [
+    {
+      "id": "base2-1",
+      "name": "Clefable",
+      "setName": "Jungle",
+      "setCode": "BASE2",
+      "cardNumber": "1/64"
+    },
+    {
+      "id": "base2-2",
+      "name": "Electrode",
+      "setName": "Jungle",
+      "setCode": "BASE2",
+      "cardNumber": "2/64"
+    },
+    {
+      "id": "base2-3",
+      "name": "Flareon",
+      "setName": "Jungle",
+      "setCode": "BASE2",
+      "cardNumber": "3/64"
+    },
+    {
+      "id": "base2-4",
+      "name": "Jolteon",
+      "setName": "Jungle",
+      "setCode": "BASE2",
+      "cardNumber": "4/64"
+    },
+    {
+      "id": "base2-5",
+      "name": "Kangaskhan",
+      "setName": "Jungle",
+      "setCode": "BASE2",
+      "cardNumber": "5/64"
+    }
+  ],
+  "base3": [
+    {
+      "id": "base3-1",
+      "name": "Aerodactyl",
+      "setName": "Fossil",
+      "setCode": "BASE3",
+      "cardNumber": "1/62"
+    },
+    {
+      "id": "base3-2",
+      "name": "Articuno",
+      "setName": "Fossil",
+      "setCode": "BASE3",
+      "cardNumber": "2/62"
+    },
+    {
+      "id": "base3-3",
+      "name": "Ditto",
+      "setName": "Fossil",
+      "setCode": "BASE3",
+      "cardNumber": "3/62"
+    },
+    {
+      "id": "base3-4",
+      "name": "Dragonite",
+      "setName": "Fossil",
+      "setCode": "BASE3",
+      "cardNumber": "4/62"
+    },
+    {
+      "id": "base3-5",
+      "name": "Gengar",
+      "setName": "Fossil",
+      "setCode": "BASE3",
+      "cardNumber": "5/62"
+    }
+  ],
+  "base4": [
+    {
+      "id": "base4-1",
+      "name": "Alakazam",
+      "setName": "Base Set 2",
+      "setCode": "BASE4",
+      "cardNumber": "1/130"
+    },
+    {
+      "id": "base4-2",
+      "name": "Blastoise",
+      "setName": "Base Set 2",
+      "setCode": "BASE4",
+      "cardNumber": "2/130"
+    },
+    {
+      "id": "base4-3",
+      "name": "Chansey",
+      "setName": "Base Set 2",
+      "setCode": "BASE4",
+      "cardNumber": "3/130"
+    },
+    {
+      "id": "base4-4",
+      "name": "Charizard",
+      "setName": "Base Set 2",
+      "setCode": "BASE4",
+      "cardNumber": "4/130"
+    },
+    {
+      "id": "base4-5",
+      "name": "Clefable",
+      "setName": "Base Set 2",
+      "setCode": "BASE4",
+      "cardNumber": "5/130"
+    }
+  ],
+  "base5": [
+    {
+      "id": "base5-1",
+      "name": "Dark Alakazam",
+      "setName": "Team Rocket",
+      "setCode": "BASE5",
+      "cardNumber": "1/82"
+    },
+    {
+      "id": "base5-2",
+      "name": "Dark Arbok",
+      "setName": "Team Rocket",
+      "setCode": "BASE5",
+      "cardNumber": "2/82"
+    },
+    {
+      "id": "base5-3",
+      "name": "Dark Blastoise",
+      "setName": "Team Rocket",
+      "setCode": "BASE5",
+      "cardNumber": "3/82"
+    },
+    {
+      "id": "base5-4",
+      "name": "Dark Charizard",
+      "setName": "Team Rocket",
+      "setCode": "BASE5",
+      "cardNumber": "4/82"
+    },
+    {
+      "id": "base5-5",
+      "name": "Dark Dragonite",
+      "setName": "Team Rocket",
+      "setCode": "BASE5",
+      "cardNumber": "5/82"
+    }
+  ],
+  "base6": [
+    {
+      "id": "base6-1",
+      "name": "Alakazam",
+      "setName": "Legendary Collection",
+      "setCode": "BASE6",
+      "cardNumber": "1/110"
+    },
+    {
+      "id": "base6-2",
+      "name": "Articuno",
+      "setName": "Legendary Collection",
+      "setCode": "BASE6",
+      "cardNumber": "2/110"
+    },
+    {
+      "id": "base6-3",
+      "name": "Charizard",
+      "setName": "Legendary Collection",
+      "setCode": "BASE6",
+      "cardNumber": "3/110"
+    },
+    {
+      "id": "base6-4",
+      "name": "Dark Blastoise",
+      "setName": "Legendary Collection",
+      "setCode": "BASE6",
+      "cardNumber": "4/110"
+    },
+    {
+      "id": "base6-5",
+      "name": "Dark Dragonite",
+      "setName": "Legendary Collection",
+      "setCode": "BASE6",
+      "cardNumber": "5/110"
+    }
+  ],
+  "basep": [
+    {
+      "id": "basep-1",
+      "name": "Pikachu",
+      "setName": "Wizards Black Star Promos",
+      "setCode": "BASEP",
+      "cardNumber": "1/53"
+    },
+    {
+      "id": "basep-2",
+      "name": "Electabuzz",
+      "setName": "Wizards Black Star Promos",
+      "setCode": "BASEP",
+      "cardNumber": "2/53"
+    },
+    {
+      "id": "basep-3",
+      "name": "Mewtwo",
+      "setName": "Wizards Black Star Promos",
+      "setCode": "BASEP",
+      "cardNumber": "3/53"
+    },
+    {
+      "id": "basep-4",
+      "name": "Pikachu",
+      "setName": "Wizards Black Star Promos",
+      "setCode": "BASEP",
+      "cardNumber": "4/53"
+    },
+    {
+      "id": "basep-5",
+      "name": "Dragonite",
+      "setName": "Wizards Black Star Promos",
+      "setCode": "BASEP",
+      "cardNumber": "5/53"
+    }
+  ],
+  "bp": [
+    {
+      "id": "bp-1",
+      "name": "Electabuzz",
+      "setName": "Best of Game",
+      "setCode": "BP",
+      "cardNumber": "1/9"
+    },
+    {
+      "id": "bp-2",
+      "name": "Hitmonchan",
+      "setName": "Best of Game",
+      "setCode": "BP",
+      "cardNumber": "2/9"
+    },
+    {
+      "id": "bp-4",
+      "name": "Rocket's Scizor",
+      "setName": "Best of Game",
+      "setCode": "BP",
+      "cardNumber": "4/9"
+    },
+    {
+      "id": "bp-3",
+      "name": "Professor Elm",
+      "setName": "Best of Game",
+      "setCode": "BP",
+      "cardNumber": "3/9"
+    },
+    {
+      "id": "bp-6",
+      "name": "Dark Ivysaur",
+      "setName": "Best of Game",
+      "setCode": "BP",
+      "cardNumber": "6/9"
+    }
+  ],
+  "bw1": [
+    {
+      "id": "bw1-1",
+      "name": "Snivy",
+      "setName": "Black & White",
+      "setCode": "BW1",
+      "cardNumber": "1/114"
+    },
+    {
+      "id": "bw1-2",
+      "name": "Snivy",
+      "setName": "Black & White",
+      "setCode": "BW1",
+      "cardNumber": "2/114"
+    },
+    {
+      "id": "bw1-3",
+      "name": "Servine",
+      "setName": "Black & White",
+      "setCode": "BW1",
+      "cardNumber": "3/114"
+    },
+    {
+      "id": "bw1-4",
+      "name": "Servine",
+      "setName": "Black & White",
+      "setCode": "BW1",
+      "cardNumber": "4/114"
+    },
+    {
+      "id": "bw1-5",
+      "name": "Serperior",
+      "setName": "Black & White",
+      "setCode": "BW1",
+      "cardNumber": "5/114"
+    }
+  ],
+  "bw10": [
+    {
+      "id": "bw10-1",
+      "name": "Surskit",
+      "setName": "Plasma Blast",
+      "setCode": "BW10",
+      "cardNumber": "1/101"
+    },
+    {
+      "id": "bw10-2",
+      "name": "Masquerain",
+      "setName": "Plasma Blast",
+      "setCode": "BW10",
+      "cardNumber": "2/101"
+    },
+    {
+      "id": "bw10-3",
+      "name": "Lileep",
+      "setName": "Plasma Blast",
+      "setCode": "BW10",
+      "cardNumber": "3/101"
+    },
+    {
+      "id": "bw10-4",
+      "name": "Cradily",
+      "setName": "Plasma Blast",
+      "setCode": "BW10",
+      "cardNumber": "4/101"
+    },
+    {
+      "id": "bw10-5",
+      "name": "Tropius",
+      "setName": "Plasma Blast",
+      "setCode": "BW10",
+      "cardNumber": "5/101"
+    }
+  ],
+  "bw11": [
+    {
+      "id": "bw11-1",
+      "name": "Tangela",
+      "setName": "Legendary Treasures",
+      "setCode": "BW11",
+      "cardNumber": "1/113"
+    },
+    {
+      "id": "bw11-2",
+      "name": "Tangrowth",
+      "setName": "Legendary Treasures",
+      "setCode": "BW11",
+      "cardNumber": "2/113"
+    },
+    {
+      "id": "bw11-3",
+      "name": "Shuckle",
+      "setName": "Legendary Treasures",
+      "setCode": "BW11",
+      "cardNumber": "3/113"
+    },
+    {
+      "id": "bw11-4",
+      "name": "Cherubi",
+      "setName": "Legendary Treasures",
+      "setCode": "BW11",
+      "cardNumber": "4/113"
+    },
+    {
+      "id": "bw11-5",
+      "name": "Carnivine",
+      "setName": "Legendary Treasures",
+      "setCode": "BW11",
+      "cardNumber": "5/113"
+    }
+  ],
+  "bw2": [
+    {
+      "id": "bw2-1",
+      "name": "Pansage",
+      "setName": "Emerging Powers",
+      "setCode": "BW2",
+      "cardNumber": "1/98"
+    },
+    {
+      "id": "bw2-2",
+      "name": "Simisage",
+      "setName": "Emerging Powers",
+      "setCode": "BW2",
+      "cardNumber": "2/98"
+    },
+    {
+      "id": "bw2-3",
+      "name": "Sewaddle",
+      "setName": "Emerging Powers",
+      "setCode": "BW2",
+      "cardNumber": "3/98"
+    },
+    {
+      "id": "bw2-4",
+      "name": "Sewaddle",
+      "setName": "Emerging Powers",
+      "setCode": "BW2",
+      "cardNumber": "4/98"
+    },
+    {
+      "id": "bw2-5",
+      "name": "Swadloon",
+      "setName": "Emerging Powers",
+      "setCode": "BW2",
+      "cardNumber": "5/98"
+    }
+  ],
+  "bw3": [
+    {
+      "id": "bw3-1",
+      "name": "Sewaddle",
+      "setName": "Noble Victories",
+      "setCode": "BW3",
+      "cardNumber": "1/101"
+    },
+    {
+      "id": "bw3-2",
+      "name": "Swadloon",
+      "setName": "Noble Victories",
+      "setCode": "BW3",
+      "cardNumber": "2/101"
+    },
+    {
+      "id": "bw3-3",
+      "name": "Leavanny",
+      "setName": "Noble Victories",
+      "setCode": "BW3",
+      "cardNumber": "3/101"
+    },
+    {
+      "id": "bw3-4",
+      "name": "Petilil",
+      "setName": "Noble Victories",
+      "setCode": "BW3",
+      "cardNumber": "4/101"
+    },
+    {
+      "id": "bw3-5",
+      "name": "Lilligant",
+      "setName": "Noble Victories",
+      "setCode": "BW3",
+      "cardNumber": "5/101"
+    }
+  ],
+  "bw4": [
+    {
+      "id": "bw4-1",
+      "name": "Pinsir",
+      "setName": "Next Destinies",
+      "setCode": "BW4",
+      "cardNumber": "1/99"
+    },
+    {
+      "id": "bw4-2",
+      "name": "Seedot",
+      "setName": "Next Destinies",
+      "setCode": "BW4",
+      "cardNumber": "2/99"
+    },
+    {
+      "id": "bw4-3",
+      "name": "Kricketot",
+      "setName": "Next Destinies",
+      "setCode": "BW4",
+      "cardNumber": "3/99"
+    },
+    {
+      "id": "bw4-4",
+      "name": "Kricketune",
+      "setName": "Next Destinies",
+      "setCode": "BW4",
+      "cardNumber": "4/99"
+    },
+    {
+      "id": "bw4-5",
+      "name": "Shaymin-EX",
+      "setName": "Next Destinies",
+      "setCode": "BW4",
+      "cardNumber": "5/99"
+    }
+  ],
+  "bw5": [
+    {
+      "id": "bw5-1",
+      "name": "Bulbasaur",
+      "setName": "Dark Explorers",
+      "setCode": "BW5",
+      "cardNumber": "1/108"
+    },
+    {
+      "id": "bw5-2",
+      "name": "Ivysaur",
+      "setName": "Dark Explorers",
+      "setCode": "BW5",
+      "cardNumber": "2/108"
+    },
+    {
+      "id": "bw5-3",
+      "name": "Venusaur",
+      "setName": "Dark Explorers",
+      "setCode": "BW5",
+      "cardNumber": "3/108"
+    },
+    {
+      "id": "bw5-4",
+      "name": "Scyther",
+      "setName": "Dark Explorers",
+      "setCode": "BW5",
+      "cardNumber": "4/108"
+    },
+    {
+      "id": "bw5-5",
+      "name": "Carnivine",
+      "setName": "Dark Explorers",
+      "setCode": "BW5",
+      "cardNumber": "5/108"
+    }
+  ],
+  "bw6": [
+    {
+      "id": "bw6-1",
+      "name": "Hoppip",
+      "setName": "Dragons Exalted",
+      "setCode": "BW6",
+      "cardNumber": "1/124"
+    },
+    {
+      "id": "bw6-2",
+      "name": "Skiploom",
+      "setName": "Dragons Exalted",
+      "setCode": "BW6",
+      "cardNumber": "2/124"
+    },
+    {
+      "id": "bw6-3",
+      "name": "Jumpluff",
+      "setName": "Dragons Exalted",
+      "setCode": "BW6",
+      "cardNumber": "3/124"
+    },
+    {
+      "id": "bw6-4",
+      "name": "Yanma",
+      "setName": "Dragons Exalted",
+      "setCode": "BW6",
+      "cardNumber": "4/124"
+    },
+    {
+      "id": "bw6-5",
+      "name": "Yanmega",
+      "setName": "Dragons Exalted",
+      "setCode": "BW6",
+      "cardNumber": "5/124"
+    }
+  ],
+  "bw7": [
+    {
+      "id": "bw7-1",
+      "name": "Oddish",
+      "setName": "Boundaries Crossed",
+      "setCode": "BW7",
+      "cardNumber": "1/149"
+    },
+    {
+      "id": "bw7-2",
+      "name": "Gloom",
+      "setName": "Boundaries Crossed",
+      "setCode": "BW7",
+      "cardNumber": "2/149"
+    },
+    {
+      "id": "bw7-3",
+      "name": "Vileplume",
+      "setName": "Boundaries Crossed",
+      "setCode": "BW7",
+      "cardNumber": "3/149"
+    },
+    {
+      "id": "bw7-4",
+      "name": "Bellossom",
+      "setName": "Boundaries Crossed",
+      "setCode": "BW7",
+      "cardNumber": "4/149"
+    },
+    {
+      "id": "bw7-5",
+      "name": "Tangela",
+      "setName": "Boundaries Crossed",
+      "setCode": "BW7",
+      "cardNumber": "5/149"
+    }
+  ],
+  "bw8": [
+    {
+      "id": "bw8-1",
+      "name": "Turtwig",
+      "setName": "Plasma Storm",
+      "setCode": "BW8",
+      "cardNumber": "1/135"
+    },
+    {
+      "id": "bw8-2",
+      "name": "Grotle",
+      "setName": "Plasma Storm",
+      "setCode": "BW8",
+      "cardNumber": "2/135"
+    },
+    {
+      "id": "bw8-3",
+      "name": "Torterra",
+      "setName": "Plasma Storm",
+      "setCode": "BW8",
+      "cardNumber": "3/135"
+    },
+    {
+      "id": "bw8-4",
+      "name": "Combee",
+      "setName": "Plasma Storm",
+      "setCode": "BW8",
+      "cardNumber": "4/135"
+    },
+    {
+      "id": "bw8-5",
+      "name": "Vespiquen",
+      "setName": "Plasma Storm",
+      "setCode": "BW8",
+      "cardNumber": "5/135"
+    }
+  ],
+  "bw9": [
+    {
+      "id": "bw9-1",
+      "name": "Weedle",
+      "setName": "Plasma Freeze",
+      "setCode": "BW9",
+      "cardNumber": "1/116"
+    },
+    {
+      "id": "bw9-2",
+      "name": "Kakuna",
+      "setName": "Plasma Freeze",
+      "setCode": "BW9",
+      "cardNumber": "2/116"
+    },
+    {
+      "id": "bw9-3",
+      "name": "Beedrill",
+      "setName": "Plasma Freeze",
+      "setCode": "BW9",
+      "cardNumber": "3/116"
+    },
+    {
+      "id": "bw9-4",
+      "name": "Exeggcute",
+      "setName": "Plasma Freeze",
+      "setCode": "BW9",
+      "cardNumber": "4/116"
+    },
+    {
+      "id": "bw9-5",
+      "name": "Exeggutor",
+      "setName": "Plasma Freeze",
+      "setCode": "BW9",
+      "cardNumber": "5/116"
+    }
+  ],
+  "bwp": [
+    {
+      "id": "bwp-BW01",
+      "name": "Snivy",
+      "setName": "BW Black Star Promos",
+      "setCode": "BWP",
+      "cardNumber": "BW01"
+    },
+    {
+      "id": "bwp-BW02",
+      "name": "Tepig",
+      "setName": "BW Black Star Promos",
+      "setCode": "BWP",
+      "cardNumber": "BW02"
+    },
+    {
+      "id": "bwp-BW03",
+      "name": "Oshawott",
+      "setName": "BW Black Star Promos",
+      "setCode": "BWP",
+      "cardNumber": "BW03"
+    },
+    {
+      "id": "bwp-BW004",
+      "name": "Reshiram",
+      "setName": "BW Black Star Promos",
+      "setCode": "BWP",
+      "cardNumber": "BW004"
+    },
+    {
+      "id": "bwp-BW005",
+      "name": "Zekrom",
+      "setName": "BW Black Star Promos",
+      "setCode": "BWP",
+      "cardNumber": "BW005"
+    }
+  ],
+  "cel25": [
+    {
+      "id": "cel25-1",
+      "name": "Ho-Oh",
+      "setName": "Celebrations",
+      "setCode": "CEL25",
+      "cardNumber": "1/25"
+    },
+    {
+      "id": "cel25-4",
+      "name": "Palkia",
+      "setName": "Celebrations",
+      "setCode": "CEL25",
+      "cardNumber": "4/25"
+    },
+    {
+      "id": "cel25-2",
+      "name": "Reshiram",
+      "setName": "Celebrations",
+      "setCode": "CEL25",
+      "cardNumber": "2/25"
+    },
+    {
+      "id": "cel25-7",
+      "name": "Flying Pikachu VMAX",
+      "setName": "Celebrations",
+      "setCode": "CEL25",
+      "cardNumber": "7/25"
+    },
+    {
+      "id": "cel25-3",
+      "name": "Kyogre",
+      "setName": "Celebrations",
+      "setCode": "CEL25",
+      "cardNumber": "3/25"
+    }
+  ],
+  "cel25c": [
+    {
+      "id": "cel25c-4_A",
+      "name": "Charizard",
+      "setName": "Celebrations: Classic Collection",
+      "setCode": "CEL25C",
+      "cardNumber": "4/25"
+    },
+    {
+      "id": "cel25c-2_A",
+      "name": "Blastoise",
+      "setName": "Celebrations: Classic Collection",
+      "setCode": "CEL25C",
+      "cardNumber": "2/25"
+    },
+    {
+      "id": "cel25c-15_A1",
+      "name": "Venusaur",
+      "setName": "Celebrations: Classic Collection",
+      "setCode": "CEL25C",
+      "cardNumber": "15/25"
+    },
+    {
+      "id": "cel25c-15_A2",
+      "name": "Here Comes Team Rocket!",
+      "setName": "Celebrations: Classic Collection",
+      "setCode": "CEL25C",
+      "cardNumber": "15/25"
+    },
+    {
+      "id": "cel25c-15_A4",
+      "name": "Claydol",
+      "setName": "Celebrations: Classic Collection",
+      "setCode": "CEL25C",
+      "cardNumber": "15/25"
+    }
+  ],
+  "col1": [
+    {
+      "id": "col1-1",
+      "name": "Clefable",
+      "setName": "Call of Legends",
+      "setCode": "COL1",
+      "cardNumber": "1/95"
+    },
+    {
+      "id": "col1-2",
+      "name": "Deoxys",
+      "setName": "Call of Legends",
+      "setCode": "COL1",
+      "cardNumber": "2/95"
+    },
+    {
+      "id": "col1-3",
+      "name": "Dialga",
+      "setName": "Call of Legends",
+      "setCode": "COL1",
+      "cardNumber": "3/95"
+    },
+    {
+      "id": "col1-4",
+      "name": "Espeon",
+      "setName": "Call of Legends",
+      "setCode": "COL1",
+      "cardNumber": "4/95"
+    },
+    {
+      "id": "col1-5",
+      "name": "Forretress",
+      "setName": "Call of Legends",
+      "setCode": "COL1",
+      "cardNumber": "5/95"
+    }
+  ],
+  "dc1": [
+    {
+      "id": "dc1-1",
+      "name": "Team Magma's Numel",
+      "setName": "Double Crisis",
+      "setCode": "DC1",
+      "cardNumber": "1/34"
+    },
+    {
+      "id": "dc1-2",
+      "name": "Team Magma's Camerupt",
+      "setName": "Double Crisis",
+      "setCode": "DC1",
+      "cardNumber": "2/34"
+    },
+    {
+      "id": "dc1-3",
+      "name": "Team Aqua's Spheal",
+      "setName": "Double Crisis",
+      "setCode": "DC1",
+      "cardNumber": "3/34"
+    },
+    {
+      "id": "dc1-4",
+      "name": "Team Aqua's Sealeo",
+      "setName": "Double Crisis",
+      "setCode": "DC1",
+      "cardNumber": "4/34"
+    },
+    {
+      "id": "dc1-5",
+      "name": "Team Aqua's Walrein",
+      "setName": "Double Crisis",
+      "setCode": "DC1",
+      "cardNumber": "5/34"
+    }
+  ],
+  "det1": [
+    {
+      "id": "det1-1",
+      "name": "Bulbasaur",
+      "setName": "Detective Pikachu",
+      "setCode": "DET1",
+      "cardNumber": "1/18"
+    },
+    {
+      "id": "det1-2",
+      "name": "Ludicolo",
+      "setName": "Detective Pikachu",
+      "setCode": "DET1",
+      "cardNumber": "2/18"
+    },
+    {
+      "id": "det1-3",
+      "name": "Morelull",
+      "setName": "Detective Pikachu",
+      "setCode": "DET1",
+      "cardNumber": "3/18"
+    },
+    {
+      "id": "det1-4",
+      "name": "Charmander",
+      "setName": "Detective Pikachu",
+      "setCode": "DET1",
+      "cardNumber": "4/18"
+    },
+    {
+      "id": "det1-5",
+      "name": "Charizard",
+      "setName": "Detective Pikachu",
+      "setCode": "DET1",
+      "cardNumber": "5/18"
+    }
+  ],
+  "dp1": [
+    {
+      "id": "dp1-1",
+      "name": "Dialga",
+      "setName": "Diamond & Pearl",
+      "setCode": "DP1",
+      "cardNumber": "1/130"
+    },
+    {
+      "id": "dp1-2",
+      "name": "Dusknoir",
+      "setName": "Diamond & Pearl",
+      "setCode": "DP1",
+      "cardNumber": "2/130"
+    },
+    {
+      "id": "dp1-3",
+      "name": "Electivire",
+      "setName": "Diamond & Pearl",
+      "setCode": "DP1",
+      "cardNumber": "3/130"
+    },
+    {
+      "id": "dp1-4",
+      "name": "Empoleon",
+      "setName": "Diamond & Pearl",
+      "setCode": "DP1",
+      "cardNumber": "4/130"
+    },
+    {
+      "id": "dp1-5",
+      "name": "Infernape",
+      "setName": "Diamond & Pearl",
+      "setCode": "DP1",
+      "cardNumber": "5/130"
+    }
+  ],
+  "dp2": [
+    {
+      "id": "dp2-1",
+      "name": "Aggron",
+      "setName": "Mysterious Treasures",
+      "setCode": "DP2",
+      "cardNumber": "1/123"
+    },
+    {
+      "id": "dp2-2",
+      "name": "Alakazam",
+      "setName": "Mysterious Treasures",
+      "setCode": "DP2",
+      "cardNumber": "2/123"
+    },
+    {
+      "id": "dp2-3",
+      "name": "Ambipom",
+      "setName": "Mysterious Treasures",
+      "setCode": "DP2",
+      "cardNumber": "3/123"
+    },
+    {
+      "id": "dp2-4",
+      "name": "Azelf",
+      "setName": "Mysterious Treasures",
+      "setCode": "DP2",
+      "cardNumber": "4/123"
+    },
+    {
+      "id": "dp2-5",
+      "name": "Blissey",
+      "setName": "Mysterious Treasures",
+      "setCode": "DP2",
+      "cardNumber": "5/123"
+    }
+  ],
+  "dp3": [
+    {
+      "id": "dp3-1",
+      "name": "Ampharos",
+      "setName": "Secret Wonders",
+      "setCode": "DP3",
+      "cardNumber": "1/132"
+    },
+    {
+      "id": "dp3-2",
+      "name": "Blastoise",
+      "setName": "Secret Wonders",
+      "setCode": "DP3",
+      "cardNumber": "2/132"
+    },
+    {
+      "id": "dp3-3",
+      "name": "Charizard",
+      "setName": "Secret Wonders",
+      "setCode": "DP3",
+      "cardNumber": "3/132"
+    },
+    {
+      "id": "dp3-4",
+      "name": "Entei",
+      "setName": "Secret Wonders",
+      "setCode": "DP3",
+      "cardNumber": "4/132"
+    },
+    {
+      "id": "dp3-5",
+      "name": "Flygon",
+      "setName": "Secret Wonders",
+      "setCode": "DP3",
+      "cardNumber": "5/132"
+    }
+  ],
+  "dp4": [
+    {
+      "id": "dp4-1",
+      "name": "Blaziken",
+      "setName": "Great Encounters",
+      "setCode": "DP4",
+      "cardNumber": "1/106"
+    },
+    {
+      "id": "dp4-2",
+      "name": "Cresselia",
+      "setName": "Great Encounters",
+      "setCode": "DP4",
+      "cardNumber": "2/106"
+    },
+    {
+      "id": "dp4-3",
+      "name": "Darkrai",
+      "setName": "Great Encounters",
+      "setCode": "DP4",
+      "cardNumber": "3/106"
+    },
+    {
+      "id": "dp4-4",
+      "name": "Darkrai",
+      "setName": "Great Encounters",
+      "setCode": "DP4",
+      "cardNumber": "4/106"
+    },
+    {
+      "id": "dp4-5",
+      "name": "Pachirisu",
+      "setName": "Great Encounters",
+      "setCode": "DP4",
+      "cardNumber": "5/106"
+    }
+  ],
+  "dp5": [
+    {
+      "id": "dp5-1",
+      "name": "Articuno",
+      "setName": "Majestic Dawn",
+      "setCode": "DP5",
+      "cardNumber": "1/100"
+    },
+    {
+      "id": "dp5-2",
+      "name": "Cresselia",
+      "setName": "Majestic Dawn",
+      "setCode": "DP5",
+      "cardNumber": "2/100"
+    },
+    {
+      "id": "dp5-3",
+      "name": "Darkrai",
+      "setName": "Majestic Dawn",
+      "setCode": "DP5",
+      "cardNumber": "3/100"
+    },
+    {
+      "id": "dp5-4",
+      "name": "Dialga",
+      "setName": "Majestic Dawn",
+      "setCode": "DP5",
+      "cardNumber": "4/100"
+    },
+    {
+      "id": "dp5-5",
+      "name": "Glaceon",
+      "setName": "Majestic Dawn",
+      "setCode": "DP5",
+      "cardNumber": "5/100"
+    }
+  ],
+  "dp6": [
+    {
+      "id": "dp6-1",
+      "name": "Deoxys Normal Forme",
+      "setName": "Legends Awakened",
+      "setCode": "DP6",
+      "cardNumber": "1/146"
+    },
+    {
+      "id": "dp6-2",
+      "name": "Dragonite",
+      "setName": "Legends Awakened",
+      "setCode": "DP6",
+      "cardNumber": "2/146"
+    },
+    {
+      "id": "dp6-3",
+      "name": "Froslass",
+      "setName": "Legends Awakened",
+      "setCode": "DP6",
+      "cardNumber": "3/146"
+    },
+    {
+      "id": "dp6-4",
+      "name": "Giratina",
+      "setName": "Legends Awakened",
+      "setCode": "DP6",
+      "cardNumber": "4/146"
+    },
+    {
+      "id": "dp6-5",
+      "name": "Gliscor",
+      "setName": "Legends Awakened",
+      "setCode": "DP6",
+      "cardNumber": "5/146"
+    }
+  ],
+  "dp7": [
+    {
+      "id": "dp7-1",
+      "name": "Dusknoir",
+      "setName": "Stormfront",
+      "setCode": "DP7",
+      "cardNumber": "1/100"
+    },
+    {
+      "id": "dp7-2",
+      "name": "Empoleon",
+      "setName": "Stormfront",
+      "setCode": "DP7",
+      "cardNumber": "2/100"
+    },
+    {
+      "id": "dp7-3",
+      "name": "Infernape",
+      "setName": "Stormfront",
+      "setCode": "DP7",
+      "cardNumber": "3/100"
+    },
+    {
+      "id": "dp7-4",
+      "name": "Lumineon",
+      "setName": "Stormfront",
+      "setCode": "DP7",
+      "cardNumber": "4/100"
+    },
+    {
+      "id": "dp7-5",
+      "name": "Magnezone",
+      "setName": "Stormfront",
+      "setCode": "DP7",
+      "cardNumber": "5/100"
+    }
+  ],
+  "dpp": [
+    {
+      "id": "dpp-DP01",
+      "name": "Turtwig",
+      "setName": "DP Black Star Promos",
+      "setCode": "DPP",
+      "cardNumber": "DP01"
+    },
+    {
+      "id": "dpp-DP02",
+      "name": "Chimchar",
+      "setName": "DP Black Star Promos",
+      "setCode": "DPP",
+      "cardNumber": "DP02"
+    },
+    {
+      "id": "dpp-DP03",
+      "name": "Piplup",
+      "setName": "DP Black Star Promos",
+      "setCode": "DPP",
+      "cardNumber": "DP03"
+    },
+    {
+      "id": "dpp-DP04",
+      "name": "Pachirisu",
+      "setName": "DP Black Star Promos",
+      "setCode": "DPP",
+      "cardNumber": "DP04"
+    },
+    {
+      "id": "dpp-DP05",
+      "name": "Tropical Wind",
+      "setName": "DP Black Star Promos",
+      "setCode": "DPP",
+      "cardNumber": "DP05"
+    }
+  ],
+  "dv1": [
+    {
+      "id": "dv1-1",
+      "name": "Dratini",
+      "setName": "Dragon Vault",
+      "setCode": "DV1",
+      "cardNumber": "1/20"
+    },
+    {
+      "id": "dv1-2",
+      "name": "Dratini",
+      "setName": "Dragon Vault",
+      "setCode": "DV1",
+      "cardNumber": "2/20"
+    },
+    {
+      "id": "dv1-3",
+      "name": "Dragonair",
+      "setName": "Dragon Vault",
+      "setCode": "DV1",
+      "cardNumber": "3/20"
+    },
+    {
+      "id": "dv1-4",
+      "name": "Dragonair",
+      "setName": "Dragon Vault",
+      "setCode": "DV1",
+      "cardNumber": "4/20"
+    },
+    {
+      "id": "dv1-5",
+      "name": "Dragonite",
+      "setName": "Dragon Vault",
+      "setCode": "DV1",
+      "cardNumber": "5/20"
+    }
+  ],
+  "ecard1": [
+    {
+      "id": "ecard1-1",
+      "name": "Alakazam",
+      "setName": "Expedition Base Set",
+      "setCode": "ECARD1",
+      "cardNumber": "1/165"
+    },
+    {
+      "id": "ecard1-2",
+      "name": "Ampharos",
+      "setName": "Expedition Base Set",
+      "setCode": "ECARD1",
+      "cardNumber": "2/165"
+    },
+    {
+      "id": "ecard1-3",
+      "name": "Arbok",
+      "setName": "Expedition Base Set",
+      "setCode": "ECARD1",
+      "cardNumber": "3/165"
+    },
+    {
+      "id": "ecard1-4",
+      "name": "Blastoise",
+      "setName": "Expedition Base Set",
+      "setCode": "ECARD1",
+      "cardNumber": "4/165"
+    },
+    {
+      "id": "ecard1-5",
+      "name": "Butterfree",
+      "setName": "Expedition Base Set",
+      "setCode": "ECARD1",
+      "cardNumber": "5/165"
+    }
+  ],
+  "ecard2": [
+    {
+      "id": "ecard2-H1",
+      "name": "Ampharos",
+      "setName": "Aquapolis",
+      "setCode": "ECARD2",
+      "cardNumber": "H1"
+    },
+    {
+      "id": "ecard2-H2",
+      "name": "Arcanine",
+      "setName": "Aquapolis",
+      "setCode": "ECARD2",
+      "cardNumber": "H2"
+    },
+    {
+      "id": "ecard2-H3",
+      "name": "Ariados",
+      "setName": "Aquapolis",
+      "setCode": "ECARD2",
+      "cardNumber": "H3"
+    },
+    {
+      "id": "ecard2-H4",
+      "name": "Azumarill",
+      "setName": "Aquapolis",
+      "setCode": "ECARD2",
+      "cardNumber": "H4"
+    },
+    {
+      "id": "ecard2-H5",
+      "name": "Bellossom",
+      "setName": "Aquapolis",
+      "setCode": "ECARD2",
+      "cardNumber": "H5"
+    }
+  ],
+  "ecard3": [
+    {
+      "id": "ecard3-H1",
+      "name": "Alakazam",
+      "setName": "Skyridge",
+      "setCode": "ECARD3",
+      "cardNumber": "H1"
+    },
+    {
+      "id": "ecard3-H2",
+      "name": "Arcanine",
+      "setName": "Skyridge",
+      "setCode": "ECARD3",
+      "cardNumber": "H2"
+    },
+    {
+      "id": "ecard3-H3",
+      "name": "Articuno",
+      "setName": "Skyridge",
+      "setCode": "ECARD3",
+      "cardNumber": "H3"
+    },
+    {
+      "id": "ecard3-H4",
+      "name": "Beedrill",
+      "setName": "Skyridge",
+      "setCode": "ECARD3",
+      "cardNumber": "H4"
+    },
+    {
+      "id": "ecard3-H5",
+      "name": "Crobat",
+      "setName": "Skyridge",
+      "setCode": "ECARD3",
+      "cardNumber": "H5"
+    }
+  ],
+  "ex10": [
+    {
+      "id": "ex10-1",
+      "name": "Ampharos",
+      "setName": "Unseen Forces",
+      "setCode": "EX10",
+      "cardNumber": "1/115"
+    },
+    {
+      "id": "ex10-2",
+      "name": "Ariados",
+      "setName": "Unseen Forces",
+      "setCode": "EX10",
+      "cardNumber": "2/115"
+    },
+    {
+      "id": "ex10-3",
+      "name": "Bellossom",
+      "setName": "Unseen Forces",
+      "setCode": "EX10",
+      "cardNumber": "3/115"
+    },
+    {
+      "id": "ex10-4",
+      "name": "Feraligatr",
+      "setName": "Unseen Forces",
+      "setCode": "EX10",
+      "cardNumber": "4/115"
+    },
+    {
+      "id": "ex10-5",
+      "name": "Flareon",
+      "setName": "Unseen Forces",
+      "setCode": "EX10",
+      "cardNumber": "5/115"
+    }
+  ],
+  "ex11": [
+    {
+      "id": "ex11-1",
+      "name": "Beedrill δ",
+      "setName": "Delta Species",
+      "setCode": "EX11",
+      "cardNumber": "1/113"
+    },
+    {
+      "id": "ex11-2",
+      "name": "Crobat δ",
+      "setName": "Delta Species",
+      "setCode": "EX11",
+      "cardNumber": "2/113"
+    },
+    {
+      "id": "ex11-3",
+      "name": "Dragonite δ",
+      "setName": "Delta Species",
+      "setCode": "EX11",
+      "cardNumber": "3/113"
+    },
+    {
+      "id": "ex11-4",
+      "name": "Espeon δ",
+      "setName": "Delta Species",
+      "setCode": "EX11",
+      "cardNumber": "4/113"
+    },
+    {
+      "id": "ex11-5",
+      "name": "Flareon δ",
+      "setName": "Delta Species",
+      "setCode": "EX11",
+      "cardNumber": "5/113"
+    }
+  ],
+  "ex12": [
+    {
+      "id": "ex12-1",
+      "name": "Aerodactyl",
+      "setName": "Legend Maker",
+      "setCode": "EX12",
+      "cardNumber": "1/92"
+    },
+    {
+      "id": "ex12-2",
+      "name": "Aggron",
+      "setName": "Legend Maker",
+      "setCode": "EX12",
+      "cardNumber": "2/92"
+    },
+    {
+      "id": "ex12-3",
+      "name": "Cradily",
+      "setName": "Legend Maker",
+      "setCode": "EX12",
+      "cardNumber": "3/92"
+    },
+    {
+      "id": "ex12-4",
+      "name": "Delcatty",
+      "setName": "Legend Maker",
+      "setCode": "EX12",
+      "cardNumber": "4/92"
+    },
+    {
+      "id": "ex12-5",
+      "name": "Gengar",
+      "setName": "Legend Maker",
+      "setCode": "EX12",
+      "cardNumber": "5/92"
+    }
+  ],
+  "ex13": [
+    {
+      "id": "ex13-1",
+      "name": "Armaldo δ",
+      "setName": "Holon Phantoms",
+      "setCode": "EX13",
+      "cardNumber": "1/110"
+    },
+    {
+      "id": "ex13-2",
+      "name": "Cradily δ",
+      "setName": "Holon Phantoms",
+      "setCode": "EX13",
+      "cardNumber": "2/110"
+    },
+    {
+      "id": "ex13-3",
+      "name": "Deoxys δ",
+      "setName": "Holon Phantoms",
+      "setCode": "EX13",
+      "cardNumber": "3/110"
+    },
+    {
+      "id": "ex13-4",
+      "name": "Deoxys δ",
+      "setName": "Holon Phantoms",
+      "setCode": "EX13",
+      "cardNumber": "4/110"
+    },
+    {
+      "id": "ex13-5",
+      "name": "Deoxys δ",
+      "setName": "Holon Phantoms",
+      "setCode": "EX13",
+      "cardNumber": "5/110"
+    }
+  ],
+  "ex14": [
+    {
+      "id": "ex14-1",
+      "name": "Banette",
+      "setName": "Crystal Guardians",
+      "setCode": "EX14",
+      "cardNumber": "1/100"
+    },
+    {
+      "id": "ex14-2",
+      "name": "Blastoise δ",
+      "setName": "Crystal Guardians",
+      "setCode": "EX14",
+      "cardNumber": "2/100"
+    },
+    {
+      "id": "ex14-3",
+      "name": "Camerupt",
+      "setName": "Crystal Guardians",
+      "setCode": "EX14",
+      "cardNumber": "3/100"
+    },
+    {
+      "id": "ex14-4",
+      "name": "Charizard δ",
+      "setName": "Crystal Guardians",
+      "setCode": "EX14",
+      "cardNumber": "4/100"
+    },
+    {
+      "id": "ex14-5",
+      "name": "Dugtrio",
+      "setName": "Crystal Guardians",
+      "setCode": "EX14",
+      "cardNumber": "5/100"
+    }
+  ],
+  "ex15": [
+    {
+      "id": "ex15-1",
+      "name": "Ampharos δ",
+      "setName": "Dragon Frontiers",
+      "setCode": "EX15",
+      "cardNumber": "1/101"
+    },
+    {
+      "id": "ex15-2",
+      "name": "Feraligatr δ",
+      "setName": "Dragon Frontiers",
+      "setCode": "EX15",
+      "cardNumber": "2/101"
+    },
+    {
+      "id": "ex15-3",
+      "name": "Heracross δ",
+      "setName": "Dragon Frontiers",
+      "setCode": "EX15",
+      "cardNumber": "3/101"
+    },
+    {
+      "id": "ex15-4",
+      "name": "Meganium δ",
+      "setName": "Dragon Frontiers",
+      "setCode": "EX15",
+      "cardNumber": "4/101"
+    },
+    {
+      "id": "ex15-5",
+      "name": "Milotic δ",
+      "setName": "Dragon Frontiers",
+      "setCode": "EX15",
+      "cardNumber": "5/101"
+    }
+  ],
+  "ex16": [
+    {
+      "id": "ex16-1",
+      "name": "Aggron",
+      "setName": "Power Keepers",
+      "setCode": "EX16",
+      "cardNumber": "1/108"
+    },
+    {
+      "id": "ex16-2",
+      "name": "Altaria",
+      "setName": "Power Keepers",
+      "setCode": "EX16",
+      "cardNumber": "2/108"
+    },
+    {
+      "id": "ex16-3",
+      "name": "Armaldo",
+      "setName": "Power Keepers",
+      "setCode": "EX16",
+      "cardNumber": "3/108"
+    },
+    {
+      "id": "ex16-4",
+      "name": "Banette",
+      "setName": "Power Keepers",
+      "setCode": "EX16",
+      "cardNumber": "4/108"
+    },
+    {
+      "id": "ex16-5",
+      "name": "Blaziken",
+      "setName": "Power Keepers",
+      "setCode": "EX16",
+      "cardNumber": "5/108"
+    }
+  ],
+  "ex2": [
+    {
+      "id": "ex2-1",
+      "name": "Armaldo",
+      "setName": "Sandstorm",
+      "setCode": "EX2",
+      "cardNumber": "1/100"
+    },
+    {
+      "id": "ex2-2",
+      "name": "Cacturne",
+      "setName": "Sandstorm",
+      "setCode": "EX2",
+      "cardNumber": "2/100"
+    },
+    {
+      "id": "ex2-3",
+      "name": "Cradily",
+      "setName": "Sandstorm",
+      "setCode": "EX2",
+      "cardNumber": "3/100"
+    },
+    {
+      "id": "ex2-4",
+      "name": "Dusclops",
+      "setName": "Sandstorm",
+      "setCode": "EX2",
+      "cardNumber": "4/100"
+    },
+    {
+      "id": "ex2-5",
+      "name": "Flareon",
+      "setName": "Sandstorm",
+      "setCode": "EX2",
+      "cardNumber": "5/100"
+    }
+  ],
+  "ex3": [
+    {
+      "id": "ex3-1",
+      "name": "Absol",
+      "setName": "Dragon",
+      "setCode": "EX3",
+      "cardNumber": "1/97"
+    },
+    {
+      "id": "ex3-2",
+      "name": "Altaria",
+      "setName": "Dragon",
+      "setCode": "EX3",
+      "cardNumber": "2/97"
+    },
+    {
+      "id": "ex3-3",
+      "name": "Crawdaunt",
+      "setName": "Dragon",
+      "setCode": "EX3",
+      "cardNumber": "3/97"
+    },
+    {
+      "id": "ex3-4",
+      "name": "Flygon",
+      "setName": "Dragon",
+      "setCode": "EX3",
+      "cardNumber": "4/97"
+    },
+    {
+      "id": "ex3-5",
+      "name": "Golem",
+      "setName": "Dragon",
+      "setCode": "EX3",
+      "cardNumber": "5/97"
+    }
+  ],
+  "ex4": [
+    {
+      "id": "ex4-1",
+      "name": "Team Aqua's Cacturne",
+      "setName": "Team Magma vs Team Aqua",
+      "setCode": "EX4",
+      "cardNumber": "1/95"
+    },
+    {
+      "id": "ex4-2",
+      "name": "Team Aqua's Crawdaunt",
+      "setName": "Team Magma vs Team Aqua",
+      "setCode": "EX4",
+      "cardNumber": "2/95"
+    },
+    {
+      "id": "ex4-3",
+      "name": "Team Aqua's Kyogre",
+      "setName": "Team Magma vs Team Aqua",
+      "setCode": "EX4",
+      "cardNumber": "3/95"
+    },
+    {
+      "id": "ex4-4",
+      "name": "Team Aqua's Manectric",
+      "setName": "Team Magma vs Team Aqua",
+      "setCode": "EX4",
+      "cardNumber": "4/95"
+    },
+    {
+      "id": "ex4-5",
+      "name": "Team Aqua's Sharpedo",
+      "setName": "Team Magma vs Team Aqua",
+      "setCode": "EX4",
+      "cardNumber": "5/95"
+    }
+  ],
+  "ex5": [
+    {
+      "id": "ex5-1",
+      "name": "Banette",
+      "setName": "Hidden Legends",
+      "setCode": "EX5",
+      "cardNumber": "1/101"
+    },
+    {
+      "id": "ex5-2",
+      "name": "Claydol",
+      "setName": "Hidden Legends",
+      "setCode": "EX5",
+      "cardNumber": "2/101"
+    },
+    {
+      "id": "ex5-3",
+      "name": "Crobat",
+      "setName": "Hidden Legends",
+      "setCode": "EX5",
+      "cardNumber": "3/101"
+    },
+    {
+      "id": "ex5-4",
+      "name": "Dark Celebi",
+      "setName": "Hidden Legends",
+      "setCode": "EX5",
+      "cardNumber": "4/101"
+    },
+    {
+      "id": "ex5-5",
+      "name": "Electrode",
+      "setName": "Hidden Legends",
+      "setCode": "EX5",
+      "cardNumber": "5/101"
+    }
+  ],
+  "ex6": [
+    {
+      "id": "ex6-1",
+      "name": "Beedrill",
+      "setName": "FireRed & LeafGreen",
+      "setCode": "EX6",
+      "cardNumber": "1/112"
+    },
+    {
+      "id": "ex6-2",
+      "name": "Butterfree",
+      "setName": "FireRed & LeafGreen",
+      "setCode": "EX6",
+      "cardNumber": "2/112"
+    },
+    {
+      "id": "ex6-3",
+      "name": "Dewgong",
+      "setName": "FireRed & LeafGreen",
+      "setCode": "EX6",
+      "cardNumber": "3/112"
+    },
+    {
+      "id": "ex6-4",
+      "name": "Ditto",
+      "setName": "FireRed & LeafGreen",
+      "setCode": "EX6",
+      "cardNumber": "4/112"
+    },
+    {
+      "id": "ex6-5",
+      "name": "Exeggutor",
+      "setName": "FireRed & LeafGreen",
+      "setCode": "EX6",
+      "cardNumber": "5/112"
+    }
+  ],
+  "ex7": [
+    {
+      "id": "ex7-1",
+      "name": "Azumarill",
+      "setName": "Team Rocket Returns",
+      "setCode": "EX7",
+      "cardNumber": "1/109"
+    },
+    {
+      "id": "ex7-2",
+      "name": "Dark Ampharos",
+      "setName": "Team Rocket Returns",
+      "setCode": "EX7",
+      "cardNumber": "2/109"
+    },
+    {
+      "id": "ex7-3",
+      "name": "Dark Crobat",
+      "setName": "Team Rocket Returns",
+      "setCode": "EX7",
+      "cardNumber": "3/109"
+    },
+    {
+      "id": "ex7-4",
+      "name": "Dark Electrode",
+      "setName": "Team Rocket Returns",
+      "setCode": "EX7",
+      "cardNumber": "4/109"
+    },
+    {
+      "id": "ex7-5",
+      "name": "Dark Houndoom",
+      "setName": "Team Rocket Returns",
+      "setCode": "EX7",
+      "cardNumber": "5/109"
+    }
+  ],
+  "ex8": [
+    {
+      "id": "ex8-1",
+      "name": "Altaria",
+      "setName": "Deoxys",
+      "setCode": "EX8",
+      "cardNumber": "1/107"
+    },
+    {
+      "id": "ex8-2",
+      "name": "Beautifly",
+      "setName": "Deoxys",
+      "setCode": "EX8",
+      "cardNumber": "2/107"
+    },
+    {
+      "id": "ex8-3",
+      "name": "Breloom",
+      "setName": "Deoxys",
+      "setCode": "EX8",
+      "cardNumber": "3/107"
+    },
+    {
+      "id": "ex8-4",
+      "name": "Camerupt",
+      "setName": "Deoxys",
+      "setCode": "EX8",
+      "cardNumber": "4/107"
+    },
+    {
+      "id": "ex8-5",
+      "name": "Claydol",
+      "setName": "Deoxys",
+      "setCode": "EX8",
+      "cardNumber": "5/107"
+    }
+  ],
+  "ex9": [
+    {
+      "id": "ex9-1",
+      "name": "Blaziken",
+      "setName": "Emerald",
+      "setCode": "EX9",
+      "cardNumber": "1/106"
+    },
+    {
+      "id": "ex9-2",
+      "name": "Deoxys",
+      "setName": "Emerald",
+      "setCode": "EX9",
+      "cardNumber": "2/106"
+    },
+    {
+      "id": "ex9-3",
+      "name": "Exploud",
+      "setName": "Emerald",
+      "setCode": "EX9",
+      "cardNumber": "3/106"
+    },
+    {
+      "id": "ex9-4",
+      "name": "Gardevoir",
+      "setName": "Emerald",
+      "setCode": "EX9",
+      "cardNumber": "4/106"
+    },
+    {
+      "id": "ex9-5",
+      "name": "Groudon",
+      "setName": "Emerald",
+      "setCode": "EX9",
+      "cardNumber": "5/106"
+    }
+  ],
+  "fut20": [
+    {
+      "id": "fut20-1",
+      "name": "Pikachu on the Ball",
+      "setName": "Pokémon Futsal Collection",
+      "setCode": "FUT20",
+      "cardNumber": "1/5"
+    },
+    {
+      "id": "fut20-2",
+      "name": "Eevee on the Ball",
+      "setName": "Pokémon Futsal Collection",
+      "setCode": "FUT20",
+      "cardNumber": "2/5"
+    },
+    {
+      "id": "fut20-3",
+      "name": "Grookey on the Ball",
+      "setName": "Pokémon Futsal Collection",
+      "setCode": "FUT20",
+      "cardNumber": "3/5"
+    },
+    {
+      "id": "fut20-4",
+      "name": "Scorbunny on the Ball",
+      "setName": "Pokémon Futsal Collection",
+      "setCode": "FUT20",
+      "cardNumber": "4/5"
+    },
+    {
+      "id": "fut20-5",
+      "name": "Sobble on the Ball",
+      "setName": "Pokémon Futsal Collection",
+      "setCode": "FUT20",
+      "cardNumber": "5/5"
+    }
+  ],
+  "g1": [
+    {
+      "id": "g1-1",
+      "name": "Venusaur-EX",
+      "setName": "Generations",
+      "setCode": "G1",
+      "cardNumber": "1/83"
+    },
+    {
+      "id": "g1-2",
+      "name": "M Venusaur-EX",
+      "setName": "Generations",
+      "setCode": "G1",
+      "cardNumber": "2/83"
+    },
+    {
+      "id": "g1-3",
+      "name": "Caterpie",
+      "setName": "Generations",
+      "setCode": "G1",
+      "cardNumber": "3/83"
+    },
+    {
+      "id": "g1-4",
+      "name": "Metapod",
+      "setName": "Generations",
+      "setCode": "G1",
+      "cardNumber": "4/83"
+    },
+    {
+      "id": "g1-5",
+      "name": "Butterfree",
+      "setName": "Generations",
+      "setCode": "G1",
+      "cardNumber": "5/83"
+    }
+  ],
+  "gym1": [
+    {
+      "id": "gym1-1",
+      "name": "Blaine's Moltres",
+      "setName": "Gym Heroes",
+      "setCode": "GYM1",
+      "cardNumber": "1/132"
+    },
+    {
+      "id": "gym1-2",
+      "name": "Brock's Rhydon",
+      "setName": "Gym Heroes",
+      "setCode": "GYM1",
+      "cardNumber": "2/132"
+    },
+    {
+      "id": "gym1-3",
+      "name": "Erika's Clefable",
+      "setName": "Gym Heroes",
+      "setCode": "GYM1",
+      "cardNumber": "3/132"
+    },
+    {
+      "id": "gym1-4",
+      "name": "Erika's Dragonair",
+      "setName": "Gym Heroes",
+      "setCode": "GYM1",
+      "cardNumber": "4/132"
+    },
+    {
+      "id": "gym1-5",
+      "name": "Erika's Vileplume",
+      "setName": "Gym Heroes",
+      "setCode": "GYM1",
+      "cardNumber": "5/132"
+    }
+  ],
+  "gym2": [
+    {
+      "id": "gym2-1",
+      "name": "Blaine's Arcanine",
+      "setName": "Gym Challenge",
+      "setCode": "GYM2",
+      "cardNumber": "1/132"
+    },
+    {
+      "id": "gym2-2",
+      "name": "Blaine's Charizard",
+      "setName": "Gym Challenge",
+      "setCode": "GYM2",
+      "cardNumber": "2/132"
+    },
+    {
+      "id": "gym2-3",
+      "name": "Brock's Ninetales",
+      "setName": "Gym Challenge",
+      "setCode": "GYM2",
+      "cardNumber": "3/132"
+    },
+    {
+      "id": "gym2-4",
+      "name": "Erika's Venusaur",
+      "setName": "Gym Challenge",
+      "setCode": "GYM2",
+      "cardNumber": "4/132"
+    },
+    {
+      "id": "gym2-5",
+      "name": "Giovanni's Gyarados",
+      "setName": "Gym Challenge",
+      "setCode": "GYM2",
+      "cardNumber": "5/132"
+    }
+  ],
+  "hgss1": [
+    {
+      "id": "hgss1-1",
+      "name": "Arcanine",
+      "setName": "HeartGold & SoulSilver",
+      "setCode": "HGSS1",
+      "cardNumber": "1/123"
+    },
+    {
+      "id": "hgss1-2",
+      "name": "Azumarill",
+      "setName": "HeartGold & SoulSilver",
+      "setCode": "HGSS1",
+      "cardNumber": "2/123"
+    },
+    {
+      "id": "hgss1-3",
+      "name": "Clefable",
+      "setName": "HeartGold & SoulSilver",
+      "setCode": "HGSS1",
+      "cardNumber": "3/123"
+    },
+    {
+      "id": "hgss1-4",
+      "name": "Gyarados",
+      "setName": "HeartGold & SoulSilver",
+      "setCode": "HGSS1",
+      "cardNumber": "4/123"
+    },
+    {
+      "id": "hgss1-5",
+      "name": "Hitmontop",
+      "setName": "HeartGold & SoulSilver",
+      "setCode": "HGSS1",
+      "cardNumber": "5/123"
+    }
+  ],
+  "hgss2": [
+    {
+      "id": "hgss2-1",
+      "name": "Jirachi",
+      "setName": "HS—Unleashed",
+      "setCode": "HGSS2",
+      "cardNumber": "1/95"
+    },
+    {
+      "id": "hgss2-2",
+      "name": "Magmortar",
+      "setName": "HS—Unleashed",
+      "setCode": "HGSS2",
+      "cardNumber": "2/95"
+    },
+    {
+      "id": "hgss2-3",
+      "name": "Manaphy",
+      "setName": "HS—Unleashed",
+      "setCode": "HGSS2",
+      "cardNumber": "3/95"
+    },
+    {
+      "id": "hgss2-4",
+      "name": "Metagross",
+      "setName": "HS—Unleashed",
+      "setCode": "HGSS2",
+      "cardNumber": "4/95"
+    },
+    {
+      "id": "hgss2-5",
+      "name": "Mismagius",
+      "setName": "HS—Unleashed",
+      "setCode": "HGSS2",
+      "cardNumber": "5/95"
+    }
+  ],
+  "hgss3": [
+    {
+      "id": "hgss3-1",
+      "name": "Bellossom",
+      "setName": "HS—Undaunted",
+      "setCode": "HGSS3",
+      "cardNumber": "1/90"
+    },
+    {
+      "id": "hgss3-2",
+      "name": "Espeon",
+      "setName": "HS—Undaunted",
+      "setCode": "HGSS3",
+      "cardNumber": "2/90"
+    },
+    {
+      "id": "hgss3-3",
+      "name": "Forretress",
+      "setName": "HS—Undaunted",
+      "setCode": "HGSS3",
+      "cardNumber": "3/90"
+    },
+    {
+      "id": "hgss3-4",
+      "name": "Gliscor",
+      "setName": "HS—Undaunted",
+      "setCode": "HGSS3",
+      "cardNumber": "4/90"
+    },
+    {
+      "id": "hgss3-5",
+      "name": "Houndoom",
+      "setName": "HS—Undaunted",
+      "setCode": "HGSS3",
+      "cardNumber": "5/90"
+    }
+  ],
+  "hgss4": [
+    {
+      "id": "hgss4-1",
+      "name": "Aggron",
+      "setName": "HS—Triumphant",
+      "setCode": "HGSS4",
+      "cardNumber": "1/102"
+    },
+    {
+      "id": "hgss4-2",
+      "name": "Altaria",
+      "setName": "HS—Triumphant",
+      "setCode": "HGSS4",
+      "cardNumber": "2/102"
+    },
+    {
+      "id": "hgss4-3",
+      "name": "Celebi",
+      "setName": "HS—Triumphant",
+      "setCode": "HGSS4",
+      "cardNumber": "3/102"
+    },
+    {
+      "id": "hgss4-4",
+      "name": "Drapion",
+      "setName": "HS—Triumphant",
+      "setCode": "HGSS4",
+      "cardNumber": "4/102"
+    },
+    {
+      "id": "hgss4-5",
+      "name": "Mamoswine",
+      "setName": "HS—Triumphant",
+      "setCode": "HGSS4",
+      "cardNumber": "5/102"
+    }
+  ],
+  "hsp": [
+    {
+      "id": "hsp-HGSS01",
+      "name": "Ho-Oh",
+      "setName": "HGSS Black Star Promos",
+      "setCode": "HSP",
+      "cardNumber": "HGSS01"
+    },
+    {
+      "id": "hsp-HGSS02",
+      "name": "Lugia",
+      "setName": "HGSS Black Star Promos",
+      "setCode": "HSP",
+      "cardNumber": "HGSS02"
+    },
+    {
+      "id": "hsp-HGSS03",
+      "name": "Pikachu",
+      "setName": "HGSS Black Star Promos",
+      "setCode": "HSP",
+      "cardNumber": "HGSS03"
+    },
+    {
+      "id": "hsp-HGSS04",
+      "name": "Wobbuffet",
+      "setName": "HGSS Black Star Promos",
+      "setCode": "HSP",
+      "cardNumber": "HGSS04"
+    },
+    {
+      "id": "hsp-HGSS05",
+      "name": "Hoothoot",
+      "setName": "HGSS Black Star Promos",
+      "setCode": "HSP",
+      "cardNumber": "HGSS05"
+    }
+  ],
+  "mcd11": [
+    {
+      "id": "mcd11-1",
+      "name": "Snivy",
+      "setName": "McDonald's Collection 2011",
+      "setCode": "MCD11",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "mcd11-2",
+      "name": "Maractus",
+      "setName": "McDonald's Collection 2011",
+      "setCode": "MCD11",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd11-3",
+      "name": "Tepig",
+      "setName": "McDonald's Collection 2011",
+      "setCode": "MCD11",
+      "cardNumber": "3/12"
+    },
+    {
+      "id": "mcd11-4",
+      "name": "Oshawott",
+      "setName": "McDonald's Collection 2011",
+      "setCode": "MCD11",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "mcd11-5",
+      "name": "Alomomola",
+      "setName": "McDonald's Collection 2011",
+      "setCode": "MCD11",
+      "cardNumber": "5/12"
+    }
+  ],
+  "mcd12": [
+    {
+      "id": "mcd12-1",
+      "name": "Servine",
+      "setName": "McDonald's Collection 2012",
+      "setCode": "MCD12",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "mcd12-2",
+      "name": "Pansage",
+      "setName": "McDonald's Collection 2012",
+      "setCode": "MCD12",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd12-3",
+      "name": "Dwebble",
+      "setName": "McDonald's Collection 2012",
+      "setCode": "MCD12",
+      "cardNumber": "3/12"
+    },
+    {
+      "id": "mcd12-4",
+      "name": "Pignite",
+      "setName": "McDonald's Collection 2012",
+      "setCode": "MCD12",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "mcd12-5",
+      "name": "Dewott",
+      "setName": "McDonald's Collection 2012",
+      "setCode": "MCD12",
+      "cardNumber": "5/12"
+    }
+  ],
+  "mcd14": [
+    {
+      "id": "mcd14-2",
+      "name": "Chespin",
+      "setName": "McDonald's Collection 2014",
+      "setCode": "MCD14",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd14-5",
+      "name": "Pikachu",
+      "setName": "McDonald's Collection 2014",
+      "setCode": "MCD14",
+      "cardNumber": "5/12"
+    },
+    {
+      "id": "mcd14-6",
+      "name": "Inkay",
+      "setName": "McDonald's Collection 2014",
+      "setCode": "MCD14",
+      "cardNumber": "6/12"
+    },
+    {
+      "id": "mcd14-12",
+      "name": "Furfrou",
+      "setName": "McDonald's Collection 2014",
+      "setCode": "MCD14",
+      "cardNumber": "12/12"
+    },
+    {
+      "id": "mcd14-1",
+      "name": "Weedle",
+      "setName": "McDonald's Collection 2014",
+      "setCode": "MCD14",
+      "cardNumber": "1/12"
+    }
+  ],
+  "mcd15": [
+    {
+      "id": "mcd15-1",
+      "name": "Treecko",
+      "setName": "McDonald's Collection 2015",
+      "setCode": "MCD15",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "mcd15-2",
+      "name": "Lotad",
+      "setName": "McDonald's Collection 2015",
+      "setCode": "MCD15",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd15-6",
+      "name": "Pikachu",
+      "setName": "McDonald's Collection 2015",
+      "setCode": "MCD15",
+      "cardNumber": "6/12"
+    },
+    {
+      "id": "mcd15-11",
+      "name": "Zigzagoon",
+      "setName": "McDonald's Collection 2015",
+      "setCode": "MCD15",
+      "cardNumber": "11/12"
+    },
+    {
+      "id": "mcd15-3",
+      "name": "Torchic",
+      "setName": "McDonald's Collection 2015",
+      "setCode": "MCD15",
+      "cardNumber": "3/12"
+    }
+  ],
+  "mcd16": [
+    {
+      "id": "mcd16-1",
+      "name": "Vulpix",
+      "setName": "McDonald's Collection 2016",
+      "setCode": "MCD16",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "mcd16-2",
+      "name": "Torchic",
+      "setName": "McDonald's Collection 2016",
+      "setCode": "MCD16",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd16-3",
+      "name": "Fennekin",
+      "setName": "McDonald's Collection 2016",
+      "setCode": "MCD16",
+      "cardNumber": "3/12"
+    },
+    {
+      "id": "mcd16-4",
+      "name": "Magikarp",
+      "setName": "McDonald's Collection 2016",
+      "setCode": "MCD16",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "mcd16-5",
+      "name": "Totodile",
+      "setName": "McDonald's Collection 2016",
+      "setCode": "MCD16",
+      "cardNumber": "5/12"
+    }
+  ],
+  "mcd17": [
+    {
+      "id": "mcd17-7",
+      "name": "Crabrawler",
+      "setName": "McDonald's Collection 2017",
+      "setCode": "MCD17",
+      "cardNumber": "7/12"
+    },
+    {
+      "id": "mcd17-2",
+      "name": "Grubbin",
+      "setName": "McDonald's Collection 2017",
+      "setCode": "MCD17",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd17-4",
+      "name": "Popplio",
+      "setName": "McDonald's Collection 2017",
+      "setCode": "MCD17",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "mcd17-8",
+      "name": "Alolan Meowth",
+      "setName": "McDonald's Collection 2017",
+      "setCode": "MCD17",
+      "cardNumber": "8/12"
+    },
+    {
+      "id": "mcd17-1",
+      "name": "Rowlet",
+      "setName": "McDonald's Collection 2017",
+      "setCode": "MCD17",
+      "cardNumber": "1/12"
+    }
+  ],
+  "mcd19": [
+    {
+      "id": "mcd19-1",
+      "name": "Caterpie",
+      "setName": "McDonald's Collection 2019",
+      "setCode": "MCD19",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "mcd19-2",
+      "name": "Alolan Exeggutor",
+      "setName": "McDonald's Collection 2019",
+      "setCode": "MCD19",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd19-3",
+      "name": "Magmar",
+      "setName": "McDonald's Collection 2019",
+      "setCode": "MCD19",
+      "cardNumber": "3/12"
+    },
+    {
+      "id": "mcd19-4",
+      "name": "Alolan Sandshrew",
+      "setName": "McDonald's Collection 2019",
+      "setCode": "MCD19",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "mcd19-5",
+      "name": "Lapras",
+      "setName": "McDonald's Collection 2019",
+      "setCode": "MCD19",
+      "cardNumber": "5/12"
+    }
+  ],
+  "mcd21": [
+    {
+      "id": "mcd21-4",
+      "name": "Turtwig",
+      "setName": "McDonald's Collection 2021",
+      "setCode": "MCD21",
+      "cardNumber": "4/25"
+    },
+    {
+      "id": "mcd21-3",
+      "name": "Treecko",
+      "setName": "McDonald's Collection 2021",
+      "setCode": "MCD21",
+      "cardNumber": "3/25"
+    },
+    {
+      "id": "mcd21-13",
+      "name": "Tepig",
+      "setName": "McDonald's Collection 2021",
+      "setCode": "MCD21",
+      "cardNumber": "13/25"
+    },
+    {
+      "id": "mcd21-18",
+      "name": "Totodile",
+      "setName": "McDonald's Collection 2021",
+      "setCode": "MCD21",
+      "cardNumber": "18/25"
+    },
+    {
+      "id": "mcd21-21",
+      "name": "Oshawott",
+      "setName": "McDonald's Collection 2021",
+      "setCode": "MCD21",
+      "cardNumber": "21/25"
+    }
+  ],
+  "mcd22": [
+    {
+      "id": "mcd22-1",
+      "name": "Ledyba",
+      "setName": "McDonald's Collection 2022",
+      "setCode": "MCD22",
+      "cardNumber": "1/15"
+    },
+    {
+      "id": "mcd22-2",
+      "name": "Rowlet",
+      "setName": "McDonald's Collection 2022",
+      "setCode": "MCD22",
+      "cardNumber": "2/15"
+    },
+    {
+      "id": "mcd22-3",
+      "name": "Gossifleur",
+      "setName": "McDonald's Collection 2022",
+      "setCode": "MCD22",
+      "cardNumber": "3/15"
+    },
+    {
+      "id": "mcd22-4",
+      "name": "Growlithe",
+      "setName": "McDonald's Collection 2022",
+      "setCode": "MCD22",
+      "cardNumber": "4/15"
+    },
+    {
+      "id": "mcd22-5",
+      "name": "Victini",
+      "setName": "McDonald's Collection 2022",
+      "setCode": "MCD22",
+      "cardNumber": "5/15"
+    }
+  ],
+  "me1": [
+    {
+      "id": "me1-1",
+      "name": "Bulbasaur",
+      "setName": "Mega Evolution",
+      "setCode": "ME1",
+      "cardNumber": "1/132"
+    },
+    {
+      "id": "me1-2",
+      "name": "Ivysaur",
+      "setName": "Mega Evolution",
+      "setCode": "ME1",
+      "cardNumber": "2/132"
+    },
+    {
+      "id": "me1-3",
+      "name": "Mega Venusaur ex",
+      "setName": "Mega Evolution",
+      "setCode": "ME1",
+      "cardNumber": "3/132"
+    },
+    {
+      "id": "me1-5",
+      "name": "Exeggutor",
+      "setName": "Mega Evolution",
+      "setCode": "ME1",
+      "cardNumber": "5/132"
+    },
+    {
+      "id": "me1-4",
+      "name": "Exeggcute",
+      "setName": "Mega Evolution",
+      "setCode": "ME1",
+      "cardNumber": "4/132"
+    }
+  ],
+  "me2": [
+    {
+      "id": "me2-1",
+      "name": "Oddish",
+      "setName": "Phantasmal Flames",
+      "setCode": "ME2",
+      "cardNumber": "1/94"
+    },
+    {
+      "id": "me2-2",
+      "name": "Gloom",
+      "setName": "Phantasmal Flames",
+      "setCode": "ME2",
+      "cardNumber": "2/94"
+    },
+    {
+      "id": "me2-3",
+      "name": "Vileplume",
+      "setName": "Phantasmal Flames",
+      "setCode": "ME2",
+      "cardNumber": "3/94"
+    },
+    {
+      "id": "me2-4",
+      "name": "Mega Heracross ex",
+      "setName": "Phantasmal Flames",
+      "setCode": "ME2",
+      "cardNumber": "4/94"
+    },
+    {
+      "id": "me2-5",
+      "name": "Lotad",
+      "setName": "Phantasmal Flames",
+      "setCode": "ME2",
+      "cardNumber": "5/94"
+    }
+  ],
+  "me2pt5": [
+    {
+      "id": "me2pt5-1",
+      "name": "Erika's Oddish",
+      "setName": "Ascended Heroes",
+      "setCode": "ME2PT5",
+      "cardNumber": "1/217"
+    },
+    {
+      "id": "me2pt5-2",
+      "name": "Erika's Gloom",
+      "setName": "Ascended Heroes",
+      "setCode": "ME2PT5",
+      "cardNumber": "2/217"
+    },
+    {
+      "id": "me2pt5-3",
+      "name": "Erika's Vileplume ex",
+      "setName": "Ascended Heroes",
+      "setCode": "ME2PT5",
+      "cardNumber": "3/217"
+    },
+    {
+      "id": "me2pt5-4",
+      "name": "Erika's Bellsprout",
+      "setName": "Ascended Heroes",
+      "setCode": "ME2PT5",
+      "cardNumber": "4/217"
+    },
+    {
+      "id": "me2pt5-5",
+      "name": "Erika's Weepinbell",
+      "setName": "Ascended Heroes",
+      "setCode": "ME2PT5",
+      "cardNumber": "5/217"
+    }
+  ],
+  "me3": [
+    {
+      "id": "me3-1",
+      "name": "Spinarak",
+      "setName": "Perfect Order",
+      "setCode": "ME3",
+      "cardNumber": "1/88"
+    },
+    {
+      "id": "me3-7",
+      "name": "Scatterbug",
+      "setName": "Perfect Order",
+      "setCode": "ME3",
+      "cardNumber": "7/88"
+    },
+    {
+      "id": "me3-8",
+      "name": "Spewpa",
+      "setName": "Perfect Order",
+      "setCode": "ME3",
+      "cardNumber": "8/88"
+    },
+    {
+      "id": "me3-15",
+      "name": "Salandit",
+      "setName": "Perfect Order",
+      "setCode": "ME3",
+      "cardNumber": "15/88"
+    },
+    {
+      "id": "me3-16",
+      "name": "Salazzle ex",
+      "setName": "Perfect Order",
+      "setCode": "ME3",
+      "cardNumber": "16/88"
+    }
+  ],
+  "me4": [
+    {
+      "id": "me4-2",
+      "name": "Kakuna",
+      "setName": "Chaos Rising",
+      "setCode": "ME4",
+      "cardNumber": "2/86"
+    },
+    {
+      "id": "me4-3",
+      "name": "Beedrill ex",
+      "setName": "Chaos Rising",
+      "setCode": "ME4",
+      "cardNumber": "3/86"
+    },
+    {
+      "id": "me4-1",
+      "name": "Weedle",
+      "setName": "Chaos Rising",
+      "setCode": "ME4",
+      "cardNumber": "1/86"
+    },
+    {
+      "id": "me4-12",
+      "name": "Braixen",
+      "setName": "Chaos Rising",
+      "setCode": "ME4",
+      "cardNumber": "12/86"
+    },
+    {
+      "id": "me4-14",
+      "name": "Litleo",
+      "setName": "Chaos Rising",
+      "setCode": "ME4",
+      "cardNumber": "14/86"
+    }
+  ],
+  "me5": [
+    {
+      "id": "me5-1",
+      "name": "Tropius",
+      "setName": "Pitch Black",
+      "setCode": "ME5",
+      "cardNumber": "1/84"
+    },
+    {
+      "id": "me5-2",
+      "name": "Grubbin",
+      "setName": "Pitch Black",
+      "setCode": "ME5",
+      "cardNumber": "2/84"
+    },
+    {
+      "id": "me5-3",
+      "name": "Fomantis",
+      "setName": "Pitch Black",
+      "setCode": "ME5",
+      "cardNumber": "3/84"
+    },
+    {
+      "id": "me5-4",
+      "name": "Lurantis ex",
+      "setName": "Pitch Black",
+      "setCode": "ME5",
+      "cardNumber": "4/84"
+    },
+    {
+      "id": "me5-5",
+      "name": "Poltchageist",
+      "setName": "Pitch Black",
+      "setCode": "ME5",
+      "cardNumber": "5/84"
+    }
+  ],
+  "neo1": [
+    {
+      "id": "neo1-1",
+      "name": "Ampharos",
+      "setName": "Neo Genesis",
+      "setCode": "NEO1",
+      "cardNumber": "1/111"
+    },
+    {
+      "id": "neo1-2",
+      "name": "Azumarill",
+      "setName": "Neo Genesis",
+      "setCode": "NEO1",
+      "cardNumber": "2/111"
+    },
+    {
+      "id": "neo1-3",
+      "name": "Bellossom",
+      "setName": "Neo Genesis",
+      "setCode": "NEO1",
+      "cardNumber": "3/111"
+    },
+    {
+      "id": "neo1-4",
+      "name": "Feraligatr",
+      "setName": "Neo Genesis",
+      "setCode": "NEO1",
+      "cardNumber": "4/111"
+    },
+    {
+      "id": "neo1-5",
+      "name": "Feraligatr",
+      "setName": "Neo Genesis",
+      "setCode": "NEO1",
+      "cardNumber": "5/111"
+    }
+  ],
+  "neo2": [
+    {
+      "id": "neo2-1",
+      "name": "Espeon",
+      "setName": "Neo Discovery",
+      "setCode": "NEO2",
+      "cardNumber": "1/75"
+    },
+    {
+      "id": "neo2-2",
+      "name": "Forretress",
+      "setName": "Neo Discovery",
+      "setCode": "NEO2",
+      "cardNumber": "2/75"
+    },
+    {
+      "id": "neo2-3",
+      "name": "Hitmontop",
+      "setName": "Neo Discovery",
+      "setCode": "NEO2",
+      "cardNumber": "3/75"
+    },
+    {
+      "id": "neo2-4",
+      "name": "Houndoom",
+      "setName": "Neo Discovery",
+      "setCode": "NEO2",
+      "cardNumber": "4/75"
+    },
+    {
+      "id": "neo2-5",
+      "name": "Houndour",
+      "setName": "Neo Discovery",
+      "setCode": "NEO2",
+      "cardNumber": "5/75"
+    }
+  ],
+  "neo3": [
+    {
+      "id": "neo3-1",
+      "name": "Ampharos",
+      "setName": "Neo Revelation",
+      "setCode": "NEO3",
+      "cardNumber": "1/64"
+    },
+    {
+      "id": "neo3-2",
+      "name": "Blissey",
+      "setName": "Neo Revelation",
+      "setCode": "NEO3",
+      "cardNumber": "2/64"
+    },
+    {
+      "id": "neo3-3",
+      "name": "Celebi",
+      "setName": "Neo Revelation",
+      "setCode": "NEO3",
+      "cardNumber": "3/64"
+    },
+    {
+      "id": "neo3-4",
+      "name": "Crobat",
+      "setName": "Neo Revelation",
+      "setCode": "NEO3",
+      "cardNumber": "4/64"
+    },
+    {
+      "id": "neo3-5",
+      "name": "Delibird",
+      "setName": "Neo Revelation",
+      "setCode": "NEO3",
+      "cardNumber": "5/64"
+    }
+  ],
+  "neo4": [
+    {
+      "id": "neo4-1",
+      "name": "Dark Ampharos",
+      "setName": "Neo Destiny",
+      "setCode": "NEO4",
+      "cardNumber": "1/105"
+    },
+    {
+      "id": "neo4-2",
+      "name": "Dark Crobat",
+      "setName": "Neo Destiny",
+      "setCode": "NEO4",
+      "cardNumber": "2/105"
+    },
+    {
+      "id": "neo4-3",
+      "name": "Dark Donphan",
+      "setName": "Neo Destiny",
+      "setCode": "NEO4",
+      "cardNumber": "3/105"
+    },
+    {
+      "id": "neo4-4",
+      "name": "Dark Espeon",
+      "setName": "Neo Destiny",
+      "setCode": "NEO4",
+      "cardNumber": "4/105"
+    },
+    {
+      "id": "neo4-5",
+      "name": "Dark Feraligatr",
+      "setName": "Neo Destiny",
+      "setCode": "NEO4",
+      "cardNumber": "5/105"
+    }
+  ],
+  "np": [
+    {
+      "id": "np-1",
+      "name": "Kyogre ex",
+      "setName": "Nintendo Black Star Promos",
+      "setCode": "NP",
+      "cardNumber": "001"
+    },
+    {
+      "id": "np-2",
+      "name": "Groudon ex",
+      "setName": "Nintendo Black Star Promos",
+      "setCode": "NP",
+      "cardNumber": "002"
+    },
+    {
+      "id": "np-3",
+      "name": "Treecko",
+      "setName": "Nintendo Black Star Promos",
+      "setCode": "NP",
+      "cardNumber": "003"
+    },
+    {
+      "id": "np-4",
+      "name": "Grovyle",
+      "setName": "Nintendo Black Star Promos",
+      "setCode": "NP",
+      "cardNumber": "004"
+    },
+    {
+      "id": "np-5",
+      "name": "Mudkip",
+      "setName": "Nintendo Black Star Promos",
+      "setCode": "NP",
+      "cardNumber": "005"
+    }
+  ],
+  "pgo": [
+    {
+      "id": "pgo-1",
+      "name": "Bulbasaur",
+      "setName": "Pokémon GO",
+      "setCode": "PGO",
+      "cardNumber": "1/78"
+    },
+    {
+      "id": "pgo-2",
+      "name": "Ivysaur",
+      "setName": "Pokémon GO",
+      "setCode": "PGO",
+      "cardNumber": "2/78"
+    },
+    {
+      "id": "pgo-3",
+      "name": "Venusaur",
+      "setName": "Pokémon GO",
+      "setCode": "PGO",
+      "cardNumber": "3/78"
+    },
+    {
+      "id": "pgo-4",
+      "name": "Radiant Venusaur",
+      "setName": "Pokémon GO",
+      "setCode": "PGO",
+      "cardNumber": "4/78"
+    },
+    {
+      "id": "pgo-5",
+      "name": "Alolan Exeggutor V",
+      "setName": "Pokémon GO",
+      "setCode": "PGO",
+      "cardNumber": "5/78"
+    }
+  ],
+  "pl1": [
+    {
+      "id": "pl1-1",
+      "name": "Ampharos",
+      "setName": "Platinum",
+      "setCode": "PL1",
+      "cardNumber": "1/127"
+    },
+    {
+      "id": "pl1-2",
+      "name": "Blastoise",
+      "setName": "Platinum",
+      "setCode": "PL1",
+      "cardNumber": "2/127"
+    },
+    {
+      "id": "pl1-3",
+      "name": "Blaziken",
+      "setName": "Platinum",
+      "setCode": "PL1",
+      "cardNumber": "3/127"
+    },
+    {
+      "id": "pl1-4",
+      "name": "Delcatty",
+      "setName": "Platinum",
+      "setCode": "PL1",
+      "cardNumber": "4/127"
+    },
+    {
+      "id": "pl1-5",
+      "name": "Dialga",
+      "setName": "Platinum",
+      "setCode": "PL1",
+      "cardNumber": "5/127"
+    }
+  ],
+  "pl2": [
+    {
+      "id": "pl2-1",
+      "name": "Arcanine",
+      "setName": "Rising Rivals",
+      "setCode": "PL2",
+      "cardNumber": "1/111"
+    },
+    {
+      "id": "pl2-2",
+      "name": "Bastiodon GL",
+      "setName": "Rising Rivals",
+      "setCode": "PL2",
+      "cardNumber": "2/111"
+    },
+    {
+      "id": "pl2-3",
+      "name": "Darkrai G",
+      "setName": "Rising Rivals",
+      "setCode": "PL2",
+      "cardNumber": "3/111"
+    },
+    {
+      "id": "pl2-4",
+      "name": "Floatzel GL",
+      "setName": "Rising Rivals",
+      "setCode": "PL2",
+      "cardNumber": "4/111"
+    },
+    {
+      "id": "pl2-5",
+      "name": "Flygon",
+      "setName": "Rising Rivals",
+      "setCode": "PL2",
+      "cardNumber": "5/111"
+    }
+  ],
+  "pl3": [
+    {
+      "id": "pl3-1",
+      "name": "Absol G",
+      "setName": "Supreme Victors",
+      "setCode": "PL3",
+      "cardNumber": "1/147"
+    },
+    {
+      "id": "pl3-2",
+      "name": "Blaziken FB",
+      "setName": "Supreme Victors",
+      "setCode": "PL3",
+      "cardNumber": "2/147"
+    },
+    {
+      "id": "pl3-3",
+      "name": "Drifblim FB",
+      "setName": "Supreme Victors",
+      "setCode": "PL3",
+      "cardNumber": "3/147"
+    },
+    {
+      "id": "pl3-4",
+      "name": "Electivire FB",
+      "setName": "Supreme Victors",
+      "setCode": "PL3",
+      "cardNumber": "4/147"
+    },
+    {
+      "id": "pl3-5",
+      "name": "Garchomp",
+      "setName": "Supreme Victors",
+      "setCode": "PL3",
+      "cardNumber": "5/147"
+    }
+  ],
+  "pl4": [
+    {
+      "id": "pl4-1",
+      "name": "Charizard",
+      "setName": "Arceus",
+      "setCode": "PL4",
+      "cardNumber": "1/99"
+    },
+    {
+      "id": "pl4-2",
+      "name": "Froslass",
+      "setName": "Arceus",
+      "setCode": "PL4",
+      "cardNumber": "2/99"
+    },
+    {
+      "id": "pl4-3",
+      "name": "Heatran",
+      "setName": "Arceus",
+      "setCode": "PL4",
+      "cardNumber": "3/99"
+    },
+    {
+      "id": "pl4-4",
+      "name": "Kabutops",
+      "setName": "Arceus",
+      "setCode": "PL4",
+      "cardNumber": "4/99"
+    },
+    {
+      "id": "pl4-5",
+      "name": "Luxray",
+      "setName": "Arceus",
+      "setCode": "PL4",
+      "cardNumber": "5/99"
+    }
+  ],
+  "pop1": [
+    {
+      "id": "pop1-1",
+      "name": "Blaziken",
+      "setName": "POP Series 1",
+      "setCode": "POP1",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop1-2",
+      "name": "Metagross",
+      "setName": "POP Series 1",
+      "setCode": "POP1",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop1-3",
+      "name": "Rayquaza",
+      "setName": "POP Series 1",
+      "setCode": "POP1",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop1-4",
+      "name": "Sceptile",
+      "setName": "POP Series 1",
+      "setCode": "POP1",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop1-5",
+      "name": "Swampert",
+      "setName": "POP Series 1",
+      "setCode": "POP1",
+      "cardNumber": "5/17"
+    }
+  ],
+  "pop3": [
+    {
+      "id": "pop3-1",
+      "name": "Blastoise",
+      "setName": "POP Series 3",
+      "setCode": "POP3",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop3-2",
+      "name": "Flareon",
+      "setName": "POP Series 3",
+      "setCode": "POP3",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop3-3",
+      "name": "Jolteon",
+      "setName": "POP Series 3",
+      "setCode": "POP3",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop3-4",
+      "name": "Minun",
+      "setName": "POP Series 3",
+      "setCode": "POP3",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop3-5",
+      "name": "Plusle",
+      "setName": "POP Series 3",
+      "setCode": "POP3",
+      "cardNumber": "5/17"
+    }
+  ],
+  "pop4": [
+    {
+      "id": "pop4-1",
+      "name": "Chimecho δ",
+      "setName": "POP Series 4",
+      "setCode": "POP4",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop4-2",
+      "name": "Deoxys δ",
+      "setName": "POP Series 4",
+      "setCode": "POP4",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop4-3",
+      "name": "Flygon",
+      "setName": "POP Series 4",
+      "setCode": "POP4",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop4-4",
+      "name": "Mew",
+      "setName": "POP Series 4",
+      "setCode": "POP4",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop4-5",
+      "name": "Sceptile",
+      "setName": "POP Series 4",
+      "setCode": "POP4",
+      "cardNumber": "5/17"
+    }
+  ],
+  "pop5": [
+    {
+      "id": "pop5-1",
+      "name": "Ho-Oh",
+      "setName": "POP Series 5",
+      "setCode": "POP5",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop5-2",
+      "name": "Lugia",
+      "setName": "POP Series 5",
+      "setCode": "POP5",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop5-3",
+      "name": "Mew δ",
+      "setName": "POP Series 5",
+      "setCode": "POP5",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop5-4",
+      "name": "Double Rainbow Energy",
+      "setName": "POP Series 5",
+      "setCode": "POP5",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop5-5",
+      "name": "Charmeleon δ",
+      "setName": "POP Series 5",
+      "setCode": "POP5",
+      "cardNumber": "5/17"
+    }
+  ],
+  "pop6": [
+    {
+      "id": "pop6-1",
+      "name": "Bastiodon",
+      "setName": "POP Series 6",
+      "setCode": "POP6",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop6-2",
+      "name": "Lucario",
+      "setName": "POP Series 6",
+      "setCode": "POP6",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop6-3",
+      "name": "Manaphy",
+      "setName": "POP Series 6",
+      "setCode": "POP6",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop6-4",
+      "name": "Pachirisu",
+      "setName": "POP Series 6",
+      "setCode": "POP6",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop6-5",
+      "name": "Rampardos",
+      "setName": "POP Series 6",
+      "setCode": "POP6",
+      "cardNumber": "5/17"
+    }
+  ],
+  "pop7": [
+    {
+      "id": "pop7-1",
+      "name": "Ampharos",
+      "setName": "POP Series 7",
+      "setCode": "POP7",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop7-2",
+      "name": "Gallade",
+      "setName": "POP Series 7",
+      "setCode": "POP7",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop7-3",
+      "name": "Latias",
+      "setName": "POP Series 7",
+      "setCode": "POP7",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop7-4",
+      "name": "Latios",
+      "setName": "POP Series 7",
+      "setCode": "POP7",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop7-5",
+      "name": "Mothim",
+      "setName": "POP Series 7",
+      "setCode": "POP7",
+      "cardNumber": "5/17"
+    }
+  ],
+  "pop9": [
+    {
+      "id": "pop9-1",
+      "name": "Garchomp",
+      "setName": "POP Series 9",
+      "setCode": "POP9",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop9-2",
+      "name": "Manaphy",
+      "setName": "POP Series 9",
+      "setCode": "POP9",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop9-3",
+      "name": "Raichu",
+      "setName": "POP Series 9",
+      "setCode": "POP9",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop9-4",
+      "name": "Regigigas",
+      "setName": "POP Series 9",
+      "setCode": "POP9",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop9-5",
+      "name": "Rotom",
+      "setName": "POP Series 9",
+      "setCode": "POP9",
+      "cardNumber": "5/17"
+    }
+  ],
+  "rsv10pt5": [
+    {
+      "id": "rsv10pt5-1",
+      "name": "Sewaddle",
+      "setName": "White Flare",
+      "setCode": "RSV10PT5",
+      "cardNumber": "1/86"
+    },
+    {
+      "id": "rsv10pt5-2",
+      "name": "Swadloon",
+      "setName": "White Flare",
+      "setCode": "RSV10PT5",
+      "cardNumber": "2/86"
+    },
+    {
+      "id": "rsv10pt5-3",
+      "name": "Leavanny",
+      "setName": "White Flare",
+      "setCode": "RSV10PT5",
+      "cardNumber": "3/86"
+    },
+    {
+      "id": "rsv10pt5-4",
+      "name": "Cottonee",
+      "setName": "White Flare",
+      "setCode": "RSV10PT5",
+      "cardNumber": "4/86"
+    },
+    {
+      "id": "rsv10pt5-5",
+      "name": "Whimsicott ex",
+      "setName": "White Flare",
+      "setCode": "RSV10PT5",
+      "cardNumber": "5/86"
+    }
+  ],
+  "ru1": [
+    {
+      "id": "ru1-1",
+      "name": "Venusaur",
+      "setName": "Pokémon Rumble",
+      "setCode": "RU1",
+      "cardNumber": "1/16"
+    },
+    {
+      "id": "ru1-2",
+      "name": "Cherrim",
+      "setName": "Pokémon Rumble",
+      "setCode": "RU1",
+      "cardNumber": "2/16"
+    },
+    {
+      "id": "ru1-3",
+      "name": "Ninetales",
+      "setName": "Pokémon Rumble",
+      "setCode": "RU1",
+      "cardNumber": "3/16"
+    },
+    {
+      "id": "ru1-4",
+      "name": "Heatran",
+      "setName": "Pokémon Rumble",
+      "setCode": "RU1",
+      "cardNumber": "4/16"
+    },
+    {
+      "id": "ru1-5",
+      "name": "Starmie",
+      "setName": "Pokémon Rumble",
+      "setCode": "RU1",
+      "cardNumber": "5/16"
+    }
+  ],
+  "si1": [
+    {
+      "id": "si1-1",
+      "name": "Mew",
+      "setName": "Southern Islands",
+      "setCode": "SI1",
+      "cardNumber": "1/18"
+    },
+    {
+      "id": "si1-2",
+      "name": "Pidgeot",
+      "setName": "Southern Islands",
+      "setCode": "SI1",
+      "cardNumber": "2/18"
+    },
+    {
+      "id": "si1-3",
+      "name": "Onix",
+      "setName": "Southern Islands",
+      "setCode": "SI1",
+      "cardNumber": "3/18"
+    },
+    {
+      "id": "si1-4",
+      "name": "Togepi",
+      "setName": "Southern Islands",
+      "setCode": "SI1",
+      "cardNumber": "4/18"
+    },
+    {
+      "id": "si1-5",
+      "name": "Ivysaur",
+      "setName": "Southern Islands",
+      "setCode": "SI1",
+      "cardNumber": "5/18"
+    }
+  ],
+  "sm1": [
+    {
+      "id": "sm1-1",
+      "name": "Caterpie",
+      "setName": "Sun & Moon",
+      "setCode": "SM1",
+      "cardNumber": "1/149"
+    },
+    {
+      "id": "sm1-2",
+      "name": "Metapod",
+      "setName": "Sun & Moon",
+      "setCode": "SM1",
+      "cardNumber": "2/149"
+    },
+    {
+      "id": "sm1-3",
+      "name": "Butterfree",
+      "setName": "Sun & Moon",
+      "setCode": "SM1",
+      "cardNumber": "3/149"
+    },
+    {
+      "id": "sm1-4",
+      "name": "Paras",
+      "setName": "Sun & Moon",
+      "setCode": "SM1",
+      "cardNumber": "4/149"
+    },
+    {
+      "id": "sm1-5",
+      "name": "Parasect",
+      "setName": "Sun & Moon",
+      "setCode": "SM1",
+      "cardNumber": "5/149"
+    }
+  ],
+  "sm10": [
+    {
+      "id": "sm10-1",
+      "name": "Pheromosa & Buzzwole-GX",
+      "setName": "Unbroken Bonds",
+      "setCode": "SM10",
+      "cardNumber": "1/214"
+    },
+    {
+      "id": "sm10-2",
+      "name": "Caterpie",
+      "setName": "Unbroken Bonds",
+      "setCode": "SM10",
+      "cardNumber": "2/214"
+    },
+    {
+      "id": "sm10-3",
+      "name": "Metapod",
+      "setName": "Unbroken Bonds",
+      "setCode": "SM10",
+      "cardNumber": "3/214"
+    },
+    {
+      "id": "sm10-4",
+      "name": "Butterfree",
+      "setName": "Unbroken Bonds",
+      "setCode": "SM10",
+      "cardNumber": "4/214"
+    },
+    {
+      "id": "sm10-5",
+      "name": "Oddish",
+      "setName": "Unbroken Bonds",
+      "setCode": "SM10",
+      "cardNumber": "5/214"
+    }
+  ],
+  "sm11": [
+    {
+      "id": "sm11-1",
+      "name": "Rowlet & Alolan Exeggutor-GX",
+      "setName": "Unified Minds",
+      "setCode": "SM11",
+      "cardNumber": "1/236"
+    },
+    {
+      "id": "sm11-2",
+      "name": "Yanma",
+      "setName": "Unified Minds",
+      "setCode": "SM11",
+      "cardNumber": "2/236"
+    },
+    {
+      "id": "sm11-3",
+      "name": "Yanmega",
+      "setName": "Unified Minds",
+      "setCode": "SM11",
+      "cardNumber": "3/236"
+    },
+    {
+      "id": "sm11-4",
+      "name": "Celebi",
+      "setName": "Unified Minds",
+      "setCode": "SM11",
+      "cardNumber": "4/236"
+    },
+    {
+      "id": "sm11-5",
+      "name": "Shroomish",
+      "setName": "Unified Minds",
+      "setCode": "SM11",
+      "cardNumber": "5/236"
+    }
+  ],
+  "sm115": [
+    {
+      "id": "sm115-1",
+      "name": "Caterpie",
+      "setName": "Hidden Fates",
+      "setCode": "SM115",
+      "cardNumber": "1/68"
+    },
+    {
+      "id": "sm115-2",
+      "name": "Metapod",
+      "setName": "Hidden Fates",
+      "setCode": "SM115",
+      "cardNumber": "2/68"
+    },
+    {
+      "id": "sm115-3",
+      "name": "Butterfree",
+      "setName": "Hidden Fates",
+      "setCode": "SM115",
+      "cardNumber": "3/68"
+    },
+    {
+      "id": "sm115-4",
+      "name": "Paras",
+      "setName": "Hidden Fates",
+      "setCode": "SM115",
+      "cardNumber": "4/68"
+    },
+    {
+      "id": "sm115-5",
+      "name": "Scyther",
+      "setName": "Hidden Fates",
+      "setCode": "SM115",
+      "cardNumber": "5/68"
+    }
+  ],
+  "sm12": [
+    {
+      "id": "sm12-1",
+      "name": "Venusaur & Snivy-GX",
+      "setName": "Cosmic Eclipse",
+      "setCode": "SM12",
+      "cardNumber": "1/236"
+    },
+    {
+      "id": "sm12-2",
+      "name": "Oddish",
+      "setName": "Cosmic Eclipse",
+      "setCode": "SM12",
+      "cardNumber": "2/236"
+    },
+    {
+      "id": "sm12-3",
+      "name": "Gloom",
+      "setName": "Cosmic Eclipse",
+      "setCode": "SM12",
+      "cardNumber": "3/236"
+    },
+    {
+      "id": "sm12-4",
+      "name": "Vileplume-GX",
+      "setName": "Cosmic Eclipse",
+      "setCode": "SM12",
+      "cardNumber": "4/236"
+    },
+    {
+      "id": "sm12-5",
+      "name": "Tangela",
+      "setName": "Cosmic Eclipse",
+      "setCode": "SM12",
+      "cardNumber": "5/236"
+    }
+  ],
+  "sm2": [
+    {
+      "id": "sm2-1",
+      "name": "Bellsprout",
+      "setName": "Guardians Rising",
+      "setCode": "SM2",
+      "cardNumber": "1/145"
+    },
+    {
+      "id": "sm2-2",
+      "name": "Weepinbell",
+      "setName": "Guardians Rising",
+      "setCode": "SM2",
+      "cardNumber": "2/145"
+    },
+    {
+      "id": "sm2-3",
+      "name": "Victreebel",
+      "setName": "Guardians Rising",
+      "setCode": "SM2",
+      "cardNumber": "3/145"
+    },
+    {
+      "id": "sm2-4",
+      "name": "Petilil",
+      "setName": "Guardians Rising",
+      "setCode": "SM2",
+      "cardNumber": "4/145"
+    },
+    {
+      "id": "sm2-5",
+      "name": "Lilligant",
+      "setName": "Guardians Rising",
+      "setCode": "SM2",
+      "cardNumber": "5/145"
+    }
+  ],
+  "sm3": [
+    {
+      "id": "sm3-1",
+      "name": "Caterpie",
+      "setName": "Burning Shadows",
+      "setCode": "SM3",
+      "cardNumber": "1/147"
+    },
+    {
+      "id": "sm3-2",
+      "name": "Metapod",
+      "setName": "Burning Shadows",
+      "setCode": "SM3",
+      "cardNumber": "2/147"
+    },
+    {
+      "id": "sm3-3",
+      "name": "Butterfree",
+      "setName": "Burning Shadows",
+      "setCode": "SM3",
+      "cardNumber": "3/147"
+    },
+    {
+      "id": "sm3-4",
+      "name": "Oddish",
+      "setName": "Burning Shadows",
+      "setCode": "SM3",
+      "cardNumber": "4/147"
+    },
+    {
+      "id": "sm3-5",
+      "name": "Gloom",
+      "setName": "Burning Shadows",
+      "setCode": "SM3",
+      "cardNumber": "5/147"
+    }
+  ],
+  "sm35": [
+    {
+      "id": "sm35-1",
+      "name": "Bulbasaur",
+      "setName": "Shining Legends",
+      "setCode": "SM35",
+      "cardNumber": "1/73"
+    },
+    {
+      "id": "sm35-2",
+      "name": "Ivysaur",
+      "setName": "Shining Legends",
+      "setCode": "SM35",
+      "cardNumber": "2/73"
+    },
+    {
+      "id": "sm35-3",
+      "name": "Venusaur",
+      "setName": "Shining Legends",
+      "setCode": "SM35",
+      "cardNumber": "3/73"
+    },
+    {
+      "id": "sm35-4",
+      "name": "Shroomish",
+      "setName": "Shining Legends",
+      "setCode": "SM35",
+      "cardNumber": "4/73"
+    },
+    {
+      "id": "sm35-5",
+      "name": "Breloom",
+      "setName": "Shining Legends",
+      "setCode": "SM35",
+      "cardNumber": "5/73"
+    }
+  ],
+  "sm4": [
+    {
+      "id": "sm4-1",
+      "name": "Weedle",
+      "setName": "Crimson Invasion",
+      "setCode": "SM4",
+      "cardNumber": "1/111"
+    },
+    {
+      "id": "sm4-2",
+      "name": "Kakuna",
+      "setName": "Crimson Invasion",
+      "setCode": "SM4",
+      "cardNumber": "2/111"
+    },
+    {
+      "id": "sm4-3",
+      "name": "Beedrill",
+      "setName": "Crimson Invasion",
+      "setCode": "SM4",
+      "cardNumber": "3/111"
+    },
+    {
+      "id": "sm4-4",
+      "name": "Exeggcute",
+      "setName": "Crimson Invasion",
+      "setCode": "SM4",
+      "cardNumber": "4/111"
+    },
+    {
+      "id": "sm4-5",
+      "name": "Cacnea",
+      "setName": "Crimson Invasion",
+      "setCode": "SM4",
+      "cardNumber": "5/111"
+    }
+  ],
+  "sm5": [
+    {
+      "id": "sm5-1",
+      "name": "Exeggcute",
+      "setName": "Ultra Prism",
+      "setCode": "SM5",
+      "cardNumber": "1/156"
+    },
+    {
+      "id": "sm5-2",
+      "name": "Yanma",
+      "setName": "Ultra Prism",
+      "setCode": "SM5",
+      "cardNumber": "2/156"
+    },
+    {
+      "id": "sm5-3",
+      "name": "Yanmega",
+      "setName": "Ultra Prism",
+      "setCode": "SM5",
+      "cardNumber": "3/156"
+    },
+    {
+      "id": "sm5-4",
+      "name": "Roselia",
+      "setName": "Ultra Prism",
+      "setCode": "SM5",
+      "cardNumber": "4/156"
+    },
+    {
+      "id": "sm5-5",
+      "name": "Roserade",
+      "setName": "Ultra Prism",
+      "setCode": "SM5",
+      "cardNumber": "5/156"
+    }
+  ],
+  "sm6": [
+    {
+      "id": "sm6-1",
+      "name": "Exeggcute",
+      "setName": "Forbidden Light",
+      "setCode": "SM6",
+      "cardNumber": "1/131"
+    },
+    {
+      "id": "sm6-2",
+      "name": "Alolan Exeggutor",
+      "setName": "Forbidden Light",
+      "setCode": "SM6",
+      "cardNumber": "2/131"
+    },
+    {
+      "id": "sm6-2a",
+      "name": "Alolan Exeggutor",
+      "setName": "Forbidden Light",
+      "setCode": "SM6",
+      "cardNumber": "2a/131"
+    },
+    {
+      "id": "sm6-3",
+      "name": "Snover",
+      "setName": "Forbidden Light",
+      "setCode": "SM6",
+      "cardNumber": "3/131"
+    },
+    {
+      "id": "sm6-4",
+      "name": "Abomasnow",
+      "setName": "Forbidden Light",
+      "setCode": "SM6",
+      "cardNumber": "4/131"
+    }
+  ],
+  "sm7": [
+    {
+      "id": "sm7-1",
+      "name": "Bellsprout",
+      "setName": "Celestial Storm",
+      "setCode": "SM7",
+      "cardNumber": "1/168"
+    },
+    {
+      "id": "sm7-2",
+      "name": "Weepinbell",
+      "setName": "Celestial Storm",
+      "setCode": "SM7",
+      "cardNumber": "2/168"
+    },
+    {
+      "id": "sm7-3",
+      "name": "Victreebel",
+      "setName": "Celestial Storm",
+      "setCode": "SM7",
+      "cardNumber": "3/168"
+    },
+    {
+      "id": "sm7-4",
+      "name": "Scyther",
+      "setName": "Celestial Storm",
+      "setCode": "SM7",
+      "cardNumber": "4/168"
+    },
+    {
+      "id": "sm7-5",
+      "name": "Spinarak",
+      "setName": "Celestial Storm",
+      "setCode": "SM7",
+      "cardNumber": "5/168"
+    }
+  ],
+  "sm75": [
+    {
+      "id": "sm75-1",
+      "name": "Charmander",
+      "setName": "Dragon Majesty",
+      "setCode": "SM75",
+      "cardNumber": "1/70"
+    },
+    {
+      "id": "sm75-2",
+      "name": "Charmeleon",
+      "setName": "Dragon Majesty",
+      "setCode": "SM75",
+      "cardNumber": "2/70"
+    },
+    {
+      "id": "sm75-3",
+      "name": "Charizard",
+      "setName": "Dragon Majesty",
+      "setCode": "SM75",
+      "cardNumber": "3/70"
+    },
+    {
+      "id": "sm75-4",
+      "name": "Torchic",
+      "setName": "Dragon Majesty",
+      "setCode": "SM75",
+      "cardNumber": "4/70"
+    },
+    {
+      "id": "sm75-5",
+      "name": "Combusken",
+      "setName": "Dragon Majesty",
+      "setCode": "SM75",
+      "cardNumber": "5/70"
+    }
+  ],
+  "sm8": [
+    {
+      "id": "sm8-1",
+      "name": "Tangela",
+      "setName": "Lost Thunder",
+      "setCode": "SM8",
+      "cardNumber": "1/214"
+    },
+    {
+      "id": "sm8-2",
+      "name": "Tangrowth",
+      "setName": "Lost Thunder",
+      "setCode": "SM8",
+      "cardNumber": "2/214"
+    },
+    {
+      "id": "sm8-3",
+      "name": "Scyther",
+      "setName": "Lost Thunder",
+      "setCode": "SM8",
+      "cardNumber": "3/214"
+    },
+    {
+      "id": "sm8-4",
+      "name": "Pinsir",
+      "setName": "Lost Thunder",
+      "setCode": "SM8",
+      "cardNumber": "4/214"
+    },
+    {
+      "id": "sm8-5",
+      "name": "Chikorita",
+      "setName": "Lost Thunder",
+      "setCode": "SM8",
+      "cardNumber": "5/214"
+    }
+  ],
+  "sm9": [
+    {
+      "id": "sm9-1",
+      "name": "Celebi & Venusaur-GX",
+      "setName": "Team Up",
+      "setCode": "SM9",
+      "cardNumber": "1/181"
+    },
+    {
+      "id": "sm9-2",
+      "name": "Weedle",
+      "setName": "Team Up",
+      "setCode": "SM9",
+      "cardNumber": "2/181"
+    },
+    {
+      "id": "sm9-3",
+      "name": "Weedle",
+      "setName": "Team Up",
+      "setCode": "SM9",
+      "cardNumber": "3/181"
+    },
+    {
+      "id": "sm9-4",
+      "name": "Kakuna",
+      "setName": "Team Up",
+      "setCode": "SM9",
+      "cardNumber": "4/181"
+    },
+    {
+      "id": "sm9-5",
+      "name": "Beedrill",
+      "setName": "Team Up",
+      "setCode": "SM9",
+      "cardNumber": "5/181"
+    }
+  ],
+  "sma": [
+    {
+      "id": "sma-SV1",
+      "name": "Scyther",
+      "setName": "Hidden Fates Shiny Vault",
+      "setCode": "SMA",
+      "cardNumber": "SV1/SV94"
+    },
+    {
+      "id": "sma-SV2",
+      "name": "Rowlet",
+      "setName": "Hidden Fates Shiny Vault",
+      "setCode": "SMA",
+      "cardNumber": "SV2/SV94"
+    },
+    {
+      "id": "sma-SV3",
+      "name": "Dartrix",
+      "setName": "Hidden Fates Shiny Vault",
+      "setCode": "SMA",
+      "cardNumber": "SV3/SV94"
+    },
+    {
+      "id": "sma-SV4",
+      "name": "Wimpod",
+      "setName": "Hidden Fates Shiny Vault",
+      "setCode": "SMA",
+      "cardNumber": "SV4/SV94"
+    },
+    {
+      "id": "sma-SV5",
+      "name": "Pheromosa",
+      "setName": "Hidden Fates Shiny Vault",
+      "setCode": "SMA",
+      "cardNumber": "SV5/SV94"
+    }
+  ],
+  "smp": [
+    {
+      "id": "smp-SM01",
+      "name": "Rowlet",
+      "setName": "SM Black Star Promos",
+      "setCode": "SMP",
+      "cardNumber": "SM01"
+    },
+    {
+      "id": "smp-SM02",
+      "name": "Litten",
+      "setName": "SM Black Star Promos",
+      "setCode": "SMP",
+      "cardNumber": "SM02"
+    },
+    {
+      "id": "smp-SM03",
+      "name": "Popplio",
+      "setName": "SM Black Star Promos",
+      "setCode": "SMP",
+      "cardNumber": "SM03"
+    },
+    {
+      "id": "smp-SM04",
+      "name": "Pikachu",
+      "setName": "SM Black Star Promos",
+      "setCode": "SMP",
+      "cardNumber": "SM04"
+    },
+    {
+      "id": "smp-SM05",
+      "name": "Snorlax-GX",
+      "setName": "SM Black Star Promos",
+      "setCode": "SMP",
+      "cardNumber": "SM05"
+    }
+  ],
+  "sv1": [
+    {
+      "id": "sv1-8",
+      "name": "Scatterbug",
+      "setName": "Scarlet & Violet",
+      "setCode": "SV1",
+      "cardNumber": "8/198"
+    },
+    {
+      "id": "sv1-1",
+      "name": "Pineco",
+      "setName": "Scarlet & Violet",
+      "setCode": "SV1",
+      "cardNumber": "1/198"
+    },
+    {
+      "id": "sv1-6",
+      "name": "Cacturne",
+      "setName": "Scarlet & Violet",
+      "setCode": "SV1",
+      "cardNumber": "6/198"
+    },
+    {
+      "id": "sv1-12",
+      "name": "Gogoat",
+      "setName": "Scarlet & Violet",
+      "setCode": "SV1",
+      "cardNumber": "12/198"
+    },
+    {
+      "id": "sv1-13",
+      "name": "Sprigatito",
+      "setName": "Scarlet & Violet",
+      "setCode": "SV1",
+      "cardNumber": "13/198"
+    }
+  ],
+  "sv10": [
+    {
+      "id": "sv10-1",
+      "name": "Ethan's Pinsir",
+      "setName": "Destined Rivals",
+      "setCode": "SV10",
+      "cardNumber": "1/182"
+    },
+    {
+      "id": "sv10-2",
+      "name": "Yanma",
+      "setName": "Destined Rivals",
+      "setCode": "SV10",
+      "cardNumber": "2/182"
+    },
+    {
+      "id": "sv10-3",
+      "name": "Yanmega ex",
+      "setName": "Destined Rivals",
+      "setCode": "SV10",
+      "cardNumber": "3/182"
+    },
+    {
+      "id": "sv10-4",
+      "name": "Pineco",
+      "setName": "Destined Rivals",
+      "setCode": "SV10",
+      "cardNumber": "4/182"
+    },
+    {
+      "id": "sv10-5",
+      "name": "Shroomish",
+      "setName": "Destined Rivals",
+      "setCode": "SV10",
+      "cardNumber": "5/182"
+    }
+  ],
+  "sv2": [
+    {
+      "id": "sv2-1",
+      "name": "Hoppip",
+      "setName": "Paldea Evolved",
+      "setCode": "SV2",
+      "cardNumber": "1/193"
+    },
+    {
+      "id": "sv2-2",
+      "name": "Skiploom",
+      "setName": "Paldea Evolved",
+      "setCode": "SV2",
+      "cardNumber": "2/193"
+    },
+    {
+      "id": "sv2-4",
+      "name": "Pineco",
+      "setName": "Paldea Evolved",
+      "setCode": "SV2",
+      "cardNumber": "4/193"
+    },
+    {
+      "id": "sv2-3",
+      "name": "Jumpluff",
+      "setName": "Paldea Evolved",
+      "setCode": "SV2",
+      "cardNumber": "3/193"
+    },
+    {
+      "id": "sv2-7",
+      "name": "Tropius",
+      "setName": "Paldea Evolved",
+      "setCode": "SV2",
+      "cardNumber": "7/193"
+    }
+  ],
+  "sv3": [
+    {
+      "id": "sv3-6",
+      "name": "Surskit",
+      "setName": "Obsidian Flames",
+      "setCode": "SV3",
+      "cardNumber": "6/197"
+    },
+    {
+      "id": "sv3-2",
+      "name": "Gloom",
+      "setName": "Obsidian Flames",
+      "setCode": "SV3",
+      "cardNumber": "2/197"
+    },
+    {
+      "id": "sv3-1",
+      "name": "Oddish",
+      "setName": "Obsidian Flames",
+      "setCode": "SV3",
+      "cardNumber": "1/197"
+    },
+    {
+      "id": "sv3-11",
+      "name": "Phantump",
+      "setName": "Obsidian Flames",
+      "setCode": "SV3",
+      "cardNumber": "11/197"
+    },
+    {
+      "id": "sv3-17",
+      "name": "Steenee",
+      "setName": "Obsidian Flames",
+      "setCode": "SV3",
+      "cardNumber": "17/197"
+    }
+  ],
+  "sv3pt5": [
+    {
+      "id": "sv3pt5-2",
+      "name": "Ivysaur",
+      "setName": "151",
+      "setCode": "SV3PT5",
+      "cardNumber": "2/165"
+    },
+    {
+      "id": "sv3pt5-1",
+      "name": "Bulbasaur",
+      "setName": "151",
+      "setCode": "SV3PT5",
+      "cardNumber": "1/165"
+    },
+    {
+      "id": "sv3pt5-3",
+      "name": "Venusaur ex",
+      "setName": "151",
+      "setCode": "SV3PT5",
+      "cardNumber": "3/165"
+    },
+    {
+      "id": "sv3pt5-7",
+      "name": "Squirtle",
+      "setName": "151",
+      "setCode": "SV3PT5",
+      "cardNumber": "7/165"
+    },
+    {
+      "id": "sv3pt5-19",
+      "name": "Rattata",
+      "setName": "151",
+      "setCode": "SV3PT5",
+      "cardNumber": "19/165"
+    }
+  ],
+  "sv4": [
+    {
+      "id": "sv4-1",
+      "name": "Surskit",
+      "setName": "Paradox Rift",
+      "setCode": "SV4",
+      "cardNumber": "1/182"
+    },
+    {
+      "id": "sv4-2",
+      "name": "Masquerain",
+      "setName": "Paradox Rift",
+      "setCode": "SV4",
+      "cardNumber": "2/182"
+    },
+    {
+      "id": "sv4-3",
+      "name": "Froslass ex",
+      "setName": "Paradox Rift",
+      "setCode": "SV4",
+      "cardNumber": "3/182"
+    },
+    {
+      "id": "sv4-4",
+      "name": "Pansage",
+      "setName": "Paradox Rift",
+      "setCode": "SV4",
+      "cardNumber": "4/182"
+    },
+    {
+      "id": "sv4-5",
+      "name": "Simisage",
+      "setName": "Paradox Rift",
+      "setCode": "SV4",
+      "cardNumber": "5/182"
+    }
+  ],
+  "sv4pt5": [
+    {
+      "id": "sv4pt5-1",
+      "name": "Pineco",
+      "setName": "Paldean Fates",
+      "setCode": "SV4PT5",
+      "cardNumber": "1/91"
+    },
+    {
+      "id": "sv4pt5-2",
+      "name": "Forretress ex",
+      "setName": "Paldean Fates",
+      "setCode": "SV4PT5",
+      "cardNumber": "2/91"
+    },
+    {
+      "id": "sv4pt5-9",
+      "name": "Magmar",
+      "setName": "Paldean Fates",
+      "setCode": "SV4PT5",
+      "cardNumber": "9/91"
+    },
+    {
+      "id": "sv4pt5-3",
+      "name": "Maractus",
+      "setName": "Paldean Fates",
+      "setCode": "SV4PT5",
+      "cardNumber": "3/91"
+    },
+    {
+      "id": "sv4pt5-10",
+      "name": "Magmortar",
+      "setName": "Paldean Fates",
+      "setCode": "SV4PT5",
+      "cardNumber": "10/91"
+    }
+  ],
+  "sv5": [
+    {
+      "id": "sv5-1",
+      "name": "Scyther",
+      "setName": "Temporal Forces",
+      "setCode": "SV5",
+      "cardNumber": "1/162"
+    },
+    {
+      "id": "sv5-2",
+      "name": "Pineco",
+      "setName": "Temporal Forces",
+      "setCode": "SV5",
+      "cardNumber": "2/162"
+    },
+    {
+      "id": "sv5-3",
+      "name": "Seedot",
+      "setName": "Temporal Forces",
+      "setCode": "SV5",
+      "cardNumber": "3/162"
+    },
+    {
+      "id": "sv5-4",
+      "name": "Nuzleaf",
+      "setName": "Temporal Forces",
+      "setCode": "SV5",
+      "cardNumber": "4/162"
+    },
+    {
+      "id": "sv5-5",
+      "name": "Shiftry",
+      "setName": "Temporal Forces",
+      "setCode": "SV5",
+      "cardNumber": "5/162"
+    }
+  ],
+  "sv6": [
+    {
+      "id": "sv6-1",
+      "name": "Tangela",
+      "setName": "Twilight Masquerade",
+      "setCode": "SV6",
+      "cardNumber": "1/167"
+    },
+    {
+      "id": "sv6-2",
+      "name": "Tangrowth",
+      "setName": "Twilight Masquerade",
+      "setCode": "SV6",
+      "cardNumber": "2/167"
+    },
+    {
+      "id": "sv6-3",
+      "name": "Pinsir",
+      "setName": "Twilight Masquerade",
+      "setCode": "SV6",
+      "cardNumber": "3/167"
+    },
+    {
+      "id": "sv6-4",
+      "name": "Spinarak",
+      "setName": "Twilight Masquerade",
+      "setCode": "SV6",
+      "cardNumber": "4/167"
+    },
+    {
+      "id": "sv6-7",
+      "name": "Sunflora",
+      "setName": "Twilight Masquerade",
+      "setCode": "SV6",
+      "cardNumber": "7/167"
+    }
+  ],
+  "sv6pt5": [
+    {
+      "id": "sv6pt5-1",
+      "name": "Joltik",
+      "setName": "Shrouded Fable",
+      "setCode": "SV6PT5",
+      "cardNumber": "1/64"
+    },
+    {
+      "id": "sv6pt5-2",
+      "name": "Galvantula",
+      "setName": "Shrouded Fable",
+      "setCode": "SV6PT5",
+      "cardNumber": "2/64"
+    },
+    {
+      "id": "sv6pt5-3",
+      "name": "Rowlet",
+      "setName": "Shrouded Fable",
+      "setCode": "SV6PT5",
+      "cardNumber": "3/64"
+    },
+    {
+      "id": "sv6pt5-4",
+      "name": "Dartrix",
+      "setName": "Shrouded Fable",
+      "setCode": "SV6PT5",
+      "cardNumber": "4/64"
+    },
+    {
+      "id": "sv6pt5-5",
+      "name": "Decidueye",
+      "setName": "Shrouded Fable",
+      "setCode": "SV6PT5",
+      "cardNumber": "5/64"
+    }
+  ],
+  "sv7": [
+    {
+      "id": "sv7-1",
+      "name": "Venusaur ex",
+      "setName": "Stellar Crown",
+      "setCode": "SV7",
+      "cardNumber": "1/142"
+    },
+    {
+      "id": "sv7-2",
+      "name": "Ledyba",
+      "setName": "Stellar Crown",
+      "setCode": "SV7",
+      "cardNumber": "2/142"
+    },
+    {
+      "id": "sv7-3",
+      "name": "Ledian",
+      "setName": "Stellar Crown",
+      "setCode": "SV7",
+      "cardNumber": "3/142"
+    },
+    {
+      "id": "sv7-5",
+      "name": "Lileep",
+      "setName": "Stellar Crown",
+      "setCode": "SV7",
+      "cardNumber": "5/142"
+    },
+    {
+      "id": "sv7-4",
+      "name": "Celebi",
+      "setName": "Stellar Crown",
+      "setCode": "SV7",
+      "cardNumber": "4/142"
+    }
+  ],
+  "sv8": [
+    {
+      "id": "sv8-1",
+      "name": "Exeggcute",
+      "setName": "Surging Sparks",
+      "setCode": "SV8",
+      "cardNumber": "1/191"
+    },
+    {
+      "id": "sv8-2",
+      "name": "Exeggcute",
+      "setName": "Surging Sparks",
+      "setCode": "SV8",
+      "cardNumber": "2/191"
+    },
+    {
+      "id": "sv8-3",
+      "name": "Exeggutor",
+      "setName": "Surging Sparks",
+      "setCode": "SV8",
+      "cardNumber": "3/191"
+    },
+    {
+      "id": "sv8-4",
+      "name": "Durant ex",
+      "setName": "Surging Sparks",
+      "setCode": "SV8",
+      "cardNumber": "4/191"
+    },
+    {
+      "id": "sv8-5",
+      "name": "Scatterbug",
+      "setName": "Surging Sparks",
+      "setCode": "SV8",
+      "cardNumber": "5/191"
+    }
+  ],
+  "sv8pt5": [
+    {
+      "id": "sv8pt5-3",
+      "name": "Pinsir",
+      "setName": "Prismatic Evolutions",
+      "setCode": "SV8PT5",
+      "cardNumber": "3/131"
+    },
+    {
+      "id": "sv8pt5-2",
+      "name": "Exeggutor",
+      "setName": "Prismatic Evolutions",
+      "setCode": "SV8PT5",
+      "cardNumber": "2/131"
+    },
+    {
+      "id": "sv8pt5-1",
+      "name": "Exeggcute",
+      "setName": "Prismatic Evolutions",
+      "setCode": "SV8PT5",
+      "cardNumber": "1/131"
+    },
+    {
+      "id": "sv8pt5-6",
+      "name": "Leafeon ex",
+      "setName": "Prismatic Evolutions",
+      "setCode": "SV8PT5",
+      "cardNumber": "6/131"
+    },
+    {
+      "id": "sv8pt5-8",
+      "name": "Whimsicott",
+      "setName": "Prismatic Evolutions",
+      "setCode": "SV8PT5",
+      "cardNumber": "8/131"
+    }
+  ],
+  "sv9": [
+    {
+      "id": "sv9-1",
+      "name": "Caterpie",
+      "setName": "Journey Together",
+      "setCode": "SV9",
+      "cardNumber": "1/159"
+    },
+    {
+      "id": "sv9-2",
+      "name": "Metapod",
+      "setName": "Journey Together",
+      "setCode": "SV9",
+      "cardNumber": "2/159"
+    },
+    {
+      "id": "sv9-3",
+      "name": "Butterfree",
+      "setName": "Journey Together",
+      "setCode": "SV9",
+      "cardNumber": "3/159"
+    },
+    {
+      "id": "sv9-4",
+      "name": "Paras",
+      "setName": "Journey Together",
+      "setCode": "SV9",
+      "cardNumber": "4/159"
+    },
+    {
+      "id": "sv9-5",
+      "name": "Parasect",
+      "setName": "Journey Together",
+      "setCode": "SV9",
+      "cardNumber": "5/159"
+    }
+  ],
+  "sve": [
+    {
+      "id": "sve-3",
+      "name": "Basic Water Energy",
+      "setName": "Scarlet & Violet Energies",
+      "setCode": "SVE",
+      "cardNumber": "3/16"
+    },
+    {
+      "id": "sve-1",
+      "name": "Basic Grass Energy",
+      "setName": "Scarlet & Violet Energies",
+      "setCode": "SVE",
+      "cardNumber": "1/16"
+    },
+    {
+      "id": "sve-7",
+      "name": "Basic Darkness Energy",
+      "setName": "Scarlet & Violet Energies",
+      "setCode": "SVE",
+      "cardNumber": "7/16"
+    },
+    {
+      "id": "sve-4",
+      "name": "Basic Lightning Energy",
+      "setName": "Scarlet & Violet Energies",
+      "setCode": "SVE",
+      "cardNumber": "4/16"
+    },
+    {
+      "id": "sve-8",
+      "name": "Basic Metal Energy",
+      "setName": "Scarlet & Violet Energies",
+      "setCode": "SVE",
+      "cardNumber": "8/16"
+    }
+  ],
+  "svp": [
+    {
+      "id": "svp-1",
+      "name": "Sprigatito",
+      "setName": "Scarlet & Violet Black Star Promos",
+      "setCode": "SVP",
+      "cardNumber": "001"
+    },
+    {
+      "id": "svp-2",
+      "name": "Fuecoco",
+      "setName": "Scarlet & Violet Black Star Promos",
+      "setCode": "SVP",
+      "cardNumber": "002"
+    },
+    {
+      "id": "svp-6",
+      "name": "Pawmot",
+      "setName": "Scarlet & Violet Black Star Promos",
+      "setCode": "SVP",
+      "cardNumber": "006"
+    },
+    {
+      "id": "svp-10",
+      "name": "Espathra",
+      "setName": "Scarlet & Violet Black Star Promos",
+      "setCode": "SVP",
+      "cardNumber": "010"
+    },
+    {
+      "id": "svp-7",
+      "name": "Hawlucha",
+      "setName": "Scarlet & Violet Black Star Promos",
+      "setCode": "SVP",
+      "cardNumber": "007"
+    }
+  ],
+  "swsh1": [
+    {
+      "id": "swsh1-1",
+      "name": "Celebi V",
+      "setName": "Sword & Shield",
+      "setCode": "SWSH1",
+      "cardNumber": "1/202"
+    },
+    {
+      "id": "swsh1-2",
+      "name": "Roselia",
+      "setName": "Sword & Shield",
+      "setCode": "SWSH1",
+      "cardNumber": "2/202"
+    },
+    {
+      "id": "swsh1-3",
+      "name": "Roselia",
+      "setName": "Sword & Shield",
+      "setCode": "SWSH1",
+      "cardNumber": "3/202"
+    },
+    {
+      "id": "swsh1-4",
+      "name": "Roserade",
+      "setName": "Sword & Shield",
+      "setCode": "SWSH1",
+      "cardNumber": "4/202"
+    },
+    {
+      "id": "swsh1-5",
+      "name": "Cottonee",
+      "setName": "Sword & Shield",
+      "setCode": "SWSH1",
+      "cardNumber": "5/202"
+    }
+  ],
+  "swsh10": [
+    {
+      "id": "swsh10-1",
+      "name": "Beedrill V",
+      "setName": "Astral Radiance",
+      "setCode": "SWSH10",
+      "cardNumber": "1/189"
+    },
+    {
+      "id": "swsh10-2",
+      "name": "Hisuian Voltorb",
+      "setName": "Astral Radiance",
+      "setCode": "SWSH10",
+      "cardNumber": "2/189"
+    },
+    {
+      "id": "swsh10-3",
+      "name": "Hisuian Electrode",
+      "setName": "Astral Radiance",
+      "setCode": "SWSH10",
+      "cardNumber": "3/189"
+    },
+    {
+      "id": "swsh10-4",
+      "name": "Scyther",
+      "setName": "Astral Radiance",
+      "setCode": "SWSH10",
+      "cardNumber": "4/189"
+    },
+    {
+      "id": "swsh10-5",
+      "name": "Scyther",
+      "setName": "Astral Radiance",
+      "setCode": "SWSH10",
+      "cardNumber": "5/189"
+    }
+  ],
+  "swsh10tg": [
+    {
+      "id": "swsh10tg-TG01",
+      "name": "Abomasnow",
+      "setName": "Astral Radiance Trainer Gallery",
+      "setCode": "SWSH10TG",
+      "cardNumber": "TG01/TG30"
+    },
+    {
+      "id": "swsh10tg-TG02",
+      "name": "Flapple",
+      "setName": "Astral Radiance Trainer Gallery",
+      "setCode": "SWSH10TG",
+      "cardNumber": "TG02/TG30"
+    },
+    {
+      "id": "swsh10tg-TG03",
+      "name": "Kingdra",
+      "setName": "Astral Radiance Trainer Gallery",
+      "setCode": "SWSH10TG",
+      "cardNumber": "TG03/TG30"
+    },
+    {
+      "id": "swsh10tg-TG04",
+      "name": "Frosmoth",
+      "setName": "Astral Radiance Trainer Gallery",
+      "setCode": "SWSH10TG",
+      "cardNumber": "TG04/TG30"
+    },
+    {
+      "id": "swsh10tg-TG05",
+      "name": "Gardevoir",
+      "setName": "Astral Radiance Trainer Gallery",
+      "setCode": "SWSH10TG",
+      "cardNumber": "TG05/TG30"
+    }
+  ],
+  "swsh11": [
+    {
+      "id": "swsh11-1",
+      "name": "Oddish",
+      "setName": "Lost Origin",
+      "setCode": "SWSH11",
+      "cardNumber": "1/196"
+    },
+    {
+      "id": "swsh11-2",
+      "name": "Gloom",
+      "setName": "Lost Origin",
+      "setCode": "SWSH11",
+      "cardNumber": "2/196"
+    },
+    {
+      "id": "swsh11-3",
+      "name": "Vileplume",
+      "setName": "Lost Origin",
+      "setCode": "SWSH11",
+      "cardNumber": "3/196"
+    },
+    {
+      "id": "swsh11-4",
+      "name": "Paras",
+      "setName": "Lost Origin",
+      "setCode": "SWSH11",
+      "cardNumber": "4/196"
+    },
+    {
+      "id": "swsh11-5",
+      "name": "Parasect",
+      "setName": "Lost Origin",
+      "setCode": "SWSH11",
+      "cardNumber": "5/196"
+    }
+  ],
+  "swsh11tg": [
+    {
+      "id": "swsh11tg-TG01",
+      "name": "Parasect",
+      "setName": "Lost Origin Trainer Gallery",
+      "setCode": "SWSH11TG",
+      "cardNumber": "TG01/TG30"
+    },
+    {
+      "id": "swsh11tg-TG02",
+      "name": "Roserade",
+      "setName": "Lost Origin Trainer Gallery",
+      "setCode": "SWSH11TG",
+      "cardNumber": "TG02/TG30"
+    },
+    {
+      "id": "swsh11tg-TG03",
+      "name": "Charizard",
+      "setName": "Lost Origin Trainer Gallery",
+      "setCode": "SWSH11TG",
+      "cardNumber": "TG03/TG30"
+    },
+    {
+      "id": "swsh11tg-TG04",
+      "name": "Chandelure",
+      "setName": "Lost Origin Trainer Gallery",
+      "setCode": "SWSH11TG",
+      "cardNumber": "TG04/TG30"
+    },
+    {
+      "id": "swsh11tg-TG05",
+      "name": "Pikachu",
+      "setName": "Lost Origin Trainer Gallery",
+      "setCode": "SWSH11TG",
+      "cardNumber": "TG05/TG30"
+    }
+  ],
+  "swsh12": [
+    {
+      "id": "swsh12-1",
+      "name": "Venonat",
+      "setName": "Silver Tempest",
+      "setCode": "SWSH12",
+      "cardNumber": "1/195"
+    },
+    {
+      "id": "swsh12-2",
+      "name": "Venomoth",
+      "setName": "Silver Tempest",
+      "setCode": "SWSH12",
+      "cardNumber": "2/195"
+    },
+    {
+      "id": "swsh12-3",
+      "name": "Spinarak",
+      "setName": "Silver Tempest",
+      "setCode": "SWSH12",
+      "cardNumber": "3/195"
+    },
+    {
+      "id": "swsh12-4",
+      "name": "Ariados",
+      "setName": "Silver Tempest",
+      "setCode": "SWSH12",
+      "cardNumber": "4/195"
+    },
+    {
+      "id": "swsh12-5",
+      "name": "Sunkern",
+      "setName": "Silver Tempest",
+      "setCode": "SWSH12",
+      "cardNumber": "5/195"
+    }
+  ],
+  "swsh12pt5": [
+    {
+      "id": "swsh12pt5-1",
+      "name": "Oddish",
+      "setName": "Crown Zenith",
+      "setCode": "SWSH12PT5",
+      "cardNumber": "1/159"
+    },
+    {
+      "id": "swsh12pt5-2",
+      "name": "Gloom",
+      "setName": "Crown Zenith",
+      "setCode": "SWSH12PT5",
+      "cardNumber": "2/159"
+    },
+    {
+      "id": "swsh12pt5-3",
+      "name": "Bellossom",
+      "setName": "Crown Zenith",
+      "setCode": "SWSH12PT5",
+      "cardNumber": "3/159"
+    },
+    {
+      "id": "swsh12pt5-4",
+      "name": "Tangela",
+      "setName": "Crown Zenith",
+      "setCode": "SWSH12PT5",
+      "cardNumber": "4/159"
+    },
+    {
+      "id": "swsh12pt5-5",
+      "name": "Tangrowth",
+      "setName": "Crown Zenith",
+      "setCode": "SWSH12PT5",
+      "cardNumber": "5/159"
+    }
+  ],
+  "swsh12pt5gg": [
+    {
+      "id": "swsh12pt5gg-GG01",
+      "name": "Hisuian Voltorb",
+      "setName": "Crown Zenith Galarian Gallery",
+      "setCode": "SWSH12PT5GG",
+      "cardNumber": "GG01/GG70"
+    },
+    {
+      "id": "swsh12pt5gg-GG02",
+      "name": "Kricketune",
+      "setName": "Crown Zenith Galarian Gallery",
+      "setCode": "SWSH12PT5GG",
+      "cardNumber": "GG02/GG70"
+    },
+    {
+      "id": "swsh12pt5gg-GG03",
+      "name": "Magmortar",
+      "setName": "Crown Zenith Galarian Gallery",
+      "setCode": "SWSH12PT5GG",
+      "cardNumber": "GG03/GG70"
+    },
+    {
+      "id": "swsh12pt5gg-GG04",
+      "name": "Oricorio",
+      "setName": "Crown Zenith Galarian Gallery",
+      "setCode": "SWSH12PT5GG",
+      "cardNumber": "GG04/GG70"
+    },
+    {
+      "id": "swsh12pt5gg-GG05",
+      "name": "Lapras",
+      "setName": "Crown Zenith Galarian Gallery",
+      "setCode": "SWSH12PT5GG",
+      "cardNumber": "GG05/GG70"
+    }
+  ],
+  "swsh12tg": [
+    {
+      "id": "swsh12tg-TG01",
+      "name": "Braixen",
+      "setName": "Silver Tempest Trainer Gallery",
+      "setCode": "SWSH12TG",
+      "cardNumber": "TG01/TG30"
+    },
+    {
+      "id": "swsh12tg-TG02",
+      "name": "Milotic",
+      "setName": "Silver Tempest Trainer Gallery",
+      "setCode": "SWSH12TG",
+      "cardNumber": "TG02/TG30"
+    },
+    {
+      "id": "swsh12tg-TG03",
+      "name": "Flaaffy",
+      "setName": "Silver Tempest Trainer Gallery",
+      "setCode": "SWSH12TG",
+      "cardNumber": "TG03/TG30"
+    },
+    {
+      "id": "swsh12tg-TG04",
+      "name": "Jynx",
+      "setName": "Silver Tempest Trainer Gallery",
+      "setCode": "SWSH12TG",
+      "cardNumber": "TG04/TG30"
+    },
+    {
+      "id": "swsh12tg-TG05",
+      "name": "Gardevoir",
+      "setName": "Silver Tempest Trainer Gallery",
+      "setCode": "SWSH12TG",
+      "cardNumber": "TG05/TG30"
+    }
+  ],
+  "swsh2": [
+    {
+      "id": "swsh2-1",
+      "name": "Caterpie",
+      "setName": "Rebel Clash",
+      "setCode": "SWSH2",
+      "cardNumber": "1/192"
+    },
+    {
+      "id": "swsh2-2",
+      "name": "Metapod",
+      "setName": "Rebel Clash",
+      "setCode": "SWSH2",
+      "cardNumber": "2/192"
+    },
+    {
+      "id": "swsh2-3",
+      "name": "Butterfree",
+      "setName": "Rebel Clash",
+      "setCode": "SWSH2",
+      "cardNumber": "3/192"
+    },
+    {
+      "id": "swsh2-4",
+      "name": "Scyther",
+      "setName": "Rebel Clash",
+      "setCode": "SWSH2",
+      "cardNumber": "4/192"
+    },
+    {
+      "id": "swsh2-5",
+      "name": "Shuckle",
+      "setName": "Rebel Clash",
+      "setCode": "SWSH2",
+      "cardNumber": "5/192"
+    }
+  ],
+  "swsh3": [
+    {
+      "id": "swsh3-1",
+      "name": "Butterfree V",
+      "setName": "Darkness Ablaze",
+      "setCode": "SWSH3",
+      "cardNumber": "1/189"
+    },
+    {
+      "id": "swsh3-2",
+      "name": "Butterfree VMAX",
+      "setName": "Darkness Ablaze",
+      "setCode": "SWSH3",
+      "cardNumber": "2/189"
+    },
+    {
+      "id": "swsh3-3",
+      "name": "Paras",
+      "setName": "Darkness Ablaze",
+      "setCode": "SWSH3",
+      "cardNumber": "3/189"
+    },
+    {
+      "id": "swsh3-4",
+      "name": "Parasect",
+      "setName": "Darkness Ablaze",
+      "setCode": "SWSH3",
+      "cardNumber": "4/189"
+    },
+    {
+      "id": "swsh3-5",
+      "name": "Carnivine",
+      "setName": "Darkness Ablaze",
+      "setCode": "SWSH3",
+      "cardNumber": "5/189"
+    }
+  ],
+  "swsh35": [
+    {
+      "id": "swsh35-1",
+      "name": "Venusaur V",
+      "setName": "Champion's Path",
+      "setCode": "SWSH35",
+      "cardNumber": "1/73"
+    },
+    {
+      "id": "swsh35-2",
+      "name": "Weedle",
+      "setName": "Champion's Path",
+      "setCode": "SWSH35",
+      "cardNumber": "2/73"
+    },
+    {
+      "id": "swsh35-3",
+      "name": "Kakuna",
+      "setName": "Champion's Path",
+      "setCode": "SWSH35",
+      "cardNumber": "3/73"
+    },
+    {
+      "id": "swsh35-4",
+      "name": "Beedrill",
+      "setName": "Champion's Path",
+      "setCode": "SWSH35",
+      "cardNumber": "4/73"
+    },
+    {
+      "id": "swsh35-5",
+      "name": "Eldegoss V",
+      "setName": "Champion's Path",
+      "setCode": "SWSH35",
+      "cardNumber": "5/73"
+    }
+  ],
+  "swsh4": [
+    {
+      "id": "swsh4-1",
+      "name": "Weedle",
+      "setName": "Vivid Voltage",
+      "setCode": "SWSH4",
+      "cardNumber": "1/185"
+    },
+    {
+      "id": "swsh4-2",
+      "name": "Kakuna",
+      "setName": "Vivid Voltage",
+      "setCode": "SWSH4",
+      "cardNumber": "2/185"
+    },
+    {
+      "id": "swsh4-3",
+      "name": "Beedrill",
+      "setName": "Vivid Voltage",
+      "setCode": "SWSH4",
+      "cardNumber": "3/185"
+    },
+    {
+      "id": "swsh4-4",
+      "name": "Exeggcute",
+      "setName": "Vivid Voltage",
+      "setCode": "SWSH4",
+      "cardNumber": "4/185"
+    },
+    {
+      "id": "swsh4-5",
+      "name": "Exeggutor",
+      "setName": "Vivid Voltage",
+      "setCode": "SWSH4",
+      "cardNumber": "5/185"
+    }
+  ],
+  "swsh45sv": [
+    {
+      "id": "swsh45sv-SV001",
+      "name": "Rowlet",
+      "setName": "Shining Fates Shiny Vault",
+      "setCode": "SWSH45SV",
+      "cardNumber": "SV001/SV122"
+    },
+    {
+      "id": "swsh45sv-SV002",
+      "name": "Dartrix",
+      "setName": "Shining Fates Shiny Vault",
+      "setCode": "SWSH45SV",
+      "cardNumber": "SV002/SV122"
+    },
+    {
+      "id": "swsh45sv-SV003",
+      "name": "Decidueye",
+      "setName": "Shining Fates Shiny Vault",
+      "setCode": "SWSH45SV",
+      "cardNumber": "SV003/SV122"
+    },
+    {
+      "id": "swsh45sv-SV004",
+      "name": "Grookey",
+      "setName": "Shining Fates Shiny Vault",
+      "setCode": "SWSH45SV",
+      "cardNumber": "SV004/SV122"
+    },
+    {
+      "id": "swsh45sv-SV005",
+      "name": "Thwackey",
+      "setName": "Shining Fates Shiny Vault",
+      "setCode": "SWSH45SV",
+      "cardNumber": "SV005/SV122"
+    }
+  ],
+  "swsh5": [
+    {
+      "id": "swsh5-1",
+      "name": "Bellsprout",
+      "setName": "Battle Styles",
+      "setCode": "SWSH5",
+      "cardNumber": "1/163"
+    },
+    {
+      "id": "swsh5-2",
+      "name": "Weepinbell",
+      "setName": "Battle Styles",
+      "setCode": "SWSH5",
+      "cardNumber": "2/163"
+    },
+    {
+      "id": "swsh5-3",
+      "name": "Victreebel",
+      "setName": "Battle Styles",
+      "setCode": "SWSH5",
+      "cardNumber": "3/163"
+    },
+    {
+      "id": "swsh5-4",
+      "name": "Cacnea",
+      "setName": "Battle Styles",
+      "setCode": "SWSH5",
+      "cardNumber": "4/163"
+    },
+    {
+      "id": "swsh5-5",
+      "name": "Cacturne",
+      "setName": "Battle Styles",
+      "setCode": "SWSH5",
+      "cardNumber": "5/163"
+    }
+  ],
+  "swsh6": [
+    {
+      "id": "swsh6-1",
+      "name": "Weedle",
+      "setName": "Chilling Reign",
+      "setCode": "SWSH6",
+      "cardNumber": "1/198"
+    },
+    {
+      "id": "swsh6-2",
+      "name": "Kakuna",
+      "setName": "Chilling Reign",
+      "setCode": "SWSH6",
+      "cardNumber": "2/198"
+    },
+    {
+      "id": "swsh6-3",
+      "name": "Beedrill",
+      "setName": "Chilling Reign",
+      "setCode": "SWSH6",
+      "cardNumber": "3/198"
+    },
+    {
+      "id": "swsh6-4",
+      "name": "Ledyba",
+      "setName": "Chilling Reign",
+      "setCode": "SWSH6",
+      "cardNumber": "4/198"
+    },
+    {
+      "id": "swsh6-5",
+      "name": "Ledian",
+      "setName": "Chilling Reign",
+      "setCode": "SWSH6",
+      "cardNumber": "5/198"
+    }
+  ],
+  "swsh8": [
+    {
+      "id": "swsh8-1",
+      "name": "Caterpie",
+      "setName": "Fusion Strike",
+      "setCode": "SWSH8",
+      "cardNumber": "1/264"
+    },
+    {
+      "id": "swsh8-2",
+      "name": "Metapod",
+      "setName": "Fusion Strike",
+      "setCode": "SWSH8",
+      "cardNumber": "2/264"
+    },
+    {
+      "id": "swsh8-3",
+      "name": "Butterfree",
+      "setName": "Fusion Strike",
+      "setCode": "SWSH8",
+      "cardNumber": "3/264"
+    },
+    {
+      "id": "swsh8-4",
+      "name": "Shroomish",
+      "setName": "Fusion Strike",
+      "setCode": "SWSH8",
+      "cardNumber": "4/264"
+    },
+    {
+      "id": "swsh8-6",
+      "name": "Breloom V",
+      "setName": "Fusion Strike",
+      "setCode": "SWSH8",
+      "cardNumber": "6/264"
+    }
+  ],
+  "swsh9": [
+    {
+      "id": "swsh9-1",
+      "name": "Exeggcute",
+      "setName": "Brilliant Stars",
+      "setCode": "SWSH9",
+      "cardNumber": "1/172"
+    },
+    {
+      "id": "swsh9-2",
+      "name": "Exeggutor",
+      "setName": "Brilliant Stars",
+      "setCode": "SWSH9",
+      "cardNumber": "2/172"
+    },
+    {
+      "id": "swsh9-3",
+      "name": "Shroomish",
+      "setName": "Brilliant Stars",
+      "setCode": "SWSH9",
+      "cardNumber": "3/172"
+    },
+    {
+      "id": "swsh9-4",
+      "name": "Breloom",
+      "setName": "Brilliant Stars",
+      "setCode": "SWSH9",
+      "cardNumber": "4/172"
+    },
+    {
+      "id": "swsh9-5",
+      "name": "Tropius",
+      "setName": "Brilliant Stars",
+      "setCode": "SWSH9",
+      "cardNumber": "5/172"
+    }
+  ],
+  "swsh9tg": [
+    {
+      "id": "swsh9tg-TG01",
+      "name": "Flareon",
+      "setName": "Brilliant Stars Trainer Gallery",
+      "setCode": "SWSH9TG",
+      "cardNumber": "TG01/TG30"
+    },
+    {
+      "id": "swsh9tg-TG02",
+      "name": "Vaporeon",
+      "setName": "Brilliant Stars Trainer Gallery",
+      "setCode": "SWSH9TG",
+      "cardNumber": "TG02/TG30"
+    },
+    {
+      "id": "swsh9tg-TG03",
+      "name": "Octillery",
+      "setName": "Brilliant Stars Trainer Gallery",
+      "setCode": "SWSH9TG",
+      "cardNumber": "TG03/TG30"
+    },
+    {
+      "id": "swsh9tg-TG04",
+      "name": "Jolteon",
+      "setName": "Brilliant Stars Trainer Gallery",
+      "setCode": "SWSH9TG",
+      "cardNumber": "TG04/TG30"
+    },
+    {
+      "id": "swsh9tg-TG05",
+      "name": "Zekrom",
+      "setName": "Brilliant Stars Trainer Gallery",
+      "setCode": "SWSH9TG",
+      "cardNumber": "TG05/TG30"
+    }
+  ],
+  "swshp": [
+    {
+      "id": "swshp-SWSH001",
+      "name": "Grookey",
+      "setName": "SWSH Black Star Promos",
+      "setCode": "SWSHP",
+      "cardNumber": "SWSH001"
+    },
+    {
+      "id": "swshp-SWSH002",
+      "name": "Scorbunny",
+      "setName": "SWSH Black Star Promos",
+      "setCode": "SWSHP",
+      "cardNumber": "SWSH002"
+    },
+    {
+      "id": "swshp-SWSH003",
+      "name": "Sobble",
+      "setName": "SWSH Black Star Promos",
+      "setCode": "SWSHP",
+      "cardNumber": "SWSH003"
+    },
+    {
+      "id": "swshp-SWSH004",
+      "name": "Meowth V",
+      "setName": "SWSH Black Star Promos",
+      "setCode": "SWSHP",
+      "cardNumber": "SWSH004"
+    },
+    {
+      "id": "swshp-SWSH005",
+      "name": "Meowth VMAX",
+      "setName": "SWSH Black Star Promos",
+      "setCode": "SWSHP",
+      "cardNumber": "SWSH005"
+    }
+  ],
+  "tk1a": [
+    {
+      "id": "tk1a-1",
+      "name": "Bagon",
+      "setName": "EX Trainer Kit Latias",
+      "setCode": "TK1A",
+      "cardNumber": "1/10"
+    },
+    {
+      "id": "tk1a-2",
+      "name": "Combusken",
+      "setName": "EX Trainer Kit Latias",
+      "setCode": "TK1A",
+      "cardNumber": "2/10"
+    },
+    {
+      "id": "tk1a-3",
+      "name": "Delcatty",
+      "setName": "EX Trainer Kit Latias",
+      "setCode": "TK1A",
+      "cardNumber": "3/10"
+    },
+    {
+      "id": "tk1a-4",
+      "name": "Latias",
+      "setName": "EX Trainer Kit Latias",
+      "setCode": "TK1A",
+      "cardNumber": "4/10"
+    },
+    {
+      "id": "tk1a-5",
+      "name": "Numel",
+      "setName": "EX Trainer Kit Latias",
+      "setCode": "TK1A",
+      "cardNumber": "5/10"
+    }
+  ],
+  "tk1b": [
+    {
+      "id": "tk1b-1",
+      "name": "Electrike",
+      "setName": "EX Trainer Kit Latios",
+      "setCode": "TK1B",
+      "cardNumber": "1/10"
+    },
+    {
+      "id": "tk1b-2",
+      "name": "Latios",
+      "setName": "EX Trainer Kit Latios",
+      "setCode": "TK1B",
+      "cardNumber": "2/10"
+    },
+    {
+      "id": "tk1b-3",
+      "name": "Linoone",
+      "setName": "EX Trainer Kit Latios",
+      "setCode": "TK1B",
+      "cardNumber": "3/10"
+    },
+    {
+      "id": "tk1b-4",
+      "name": "Magnemite",
+      "setName": "EX Trainer Kit Latios",
+      "setCode": "TK1B",
+      "cardNumber": "4/10"
+    },
+    {
+      "id": "tk1b-5",
+      "name": "Magneton",
+      "setName": "EX Trainer Kit Latios",
+      "setCode": "TK1B",
+      "cardNumber": "5/10"
+    }
+  ],
+  "tk2a": [
+    {
+      "id": "tk2a-1",
+      "name": "Beldum",
+      "setName": "EX Trainer Kit 2 Plusle",
+      "setCode": "TK2A",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "tk2a-2",
+      "name": "Electrike",
+      "setName": "EX Trainer Kit 2 Plusle",
+      "setCode": "TK2A",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "tk2a-3",
+      "name": "Grumpig",
+      "setName": "EX Trainer Kit 2 Plusle",
+      "setCode": "TK2A",
+      "cardNumber": "3/12"
+    },
+    {
+      "id": "tk2a-4",
+      "name": "Meowth",
+      "setName": "EX Trainer Kit 2 Plusle",
+      "setCode": "TK2A",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "tk2a-5",
+      "name": "Metang",
+      "setName": "EX Trainer Kit 2 Plusle",
+      "setCode": "TK2A",
+      "cardNumber": "5/12"
+    }
+  ],
+  "tk2b": [
+    {
+      "id": "tk2b-1",
+      "name": "Arcanine",
+      "setName": "EX Trainer Kit 2 Minun",
+      "setCode": "TK2B",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "tk2b-2",
+      "name": "Charmander",
+      "setName": "EX Trainer Kit 2 Minun",
+      "setCode": "TK2B",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "tk2b-3",
+      "name": "Charmeleon",
+      "setName": "EX Trainer Kit 2 Minun",
+      "setCode": "TK2B",
+      "cardNumber": "3/12"
+    },
+    {
+      "id": "tk2b-4",
+      "name": "Growlithe",
+      "setName": "EX Trainer Kit 2 Minun",
+      "setCode": "TK2B",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "tk2b-5",
+      "name": "Mareep",
+      "setName": "EX Trainer Kit 2 Minun",
+      "setCode": "TK2B",
+      "cardNumber": "5/12"
+    }
+  ],
+  "xy0": [
+    {
+      "id": "xy0-1",
+      "name": "Weedle",
+      "setName": "Kalos Starter Set",
+      "setCode": "XY0",
+      "cardNumber": "1/39"
+    },
+    {
+      "id": "xy0-2",
+      "name": "Pansage",
+      "setName": "Kalos Starter Set",
+      "setCode": "XY0",
+      "cardNumber": "2/39"
+    },
+    {
+      "id": "xy0-3",
+      "name": "Chespin",
+      "setName": "Kalos Starter Set",
+      "setCode": "XY0",
+      "cardNumber": "3/39"
+    },
+    {
+      "id": "xy0-4",
+      "name": "Quilladin",
+      "setName": "Kalos Starter Set",
+      "setCode": "XY0",
+      "cardNumber": "4/39"
+    },
+    {
+      "id": "xy0-5",
+      "name": "Chesnaught",
+      "setName": "Kalos Starter Set",
+      "setCode": "XY0",
+      "cardNumber": "5/39"
+    }
+  ],
+  "xy1": [
+    {
+      "id": "xy1-1",
+      "name": "Venusaur-EX",
+      "setName": "XY",
+      "setCode": "XY1",
+      "cardNumber": "1/146"
+    },
+    {
+      "id": "xy1-2",
+      "name": "M Venusaur-EX",
+      "setName": "XY",
+      "setCode": "XY1",
+      "cardNumber": "2/146"
+    },
+    {
+      "id": "xy1-3",
+      "name": "Weedle",
+      "setName": "XY",
+      "setCode": "XY1",
+      "cardNumber": "3/146"
+    },
+    {
+      "id": "xy1-4",
+      "name": "Kakuna",
+      "setName": "XY",
+      "setCode": "XY1",
+      "cardNumber": "4/146"
+    },
+    {
+      "id": "xy1-5",
+      "name": "Beedrill",
+      "setName": "XY",
+      "setCode": "XY1",
+      "cardNumber": "5/146"
+    }
+  ],
+  "xy10": [
+    {
+      "id": "xy10-1",
+      "name": "Shuckle",
+      "setName": "Fates Collide",
+      "setCode": "XY10",
+      "cardNumber": "1/124"
+    },
+    {
+      "id": "xy10-2",
+      "name": "Burmy",
+      "setName": "Fates Collide",
+      "setCode": "XY10",
+      "cardNumber": "2/124"
+    },
+    {
+      "id": "xy10-3",
+      "name": "Wormadam",
+      "setName": "Fates Collide",
+      "setCode": "XY10",
+      "cardNumber": "3/124"
+    },
+    {
+      "id": "xy10-4",
+      "name": "Mothim",
+      "setName": "Fates Collide",
+      "setCode": "XY10",
+      "cardNumber": "4/124"
+    },
+    {
+      "id": "xy10-5",
+      "name": "Snivy",
+      "setName": "Fates Collide",
+      "setCode": "XY10",
+      "cardNumber": "5/124"
+    }
+  ],
+  "xy11": [
+    {
+      "id": "xy11-1",
+      "name": "Tangela",
+      "setName": "Steam Siege",
+      "setCode": "XY11",
+      "cardNumber": "1/114"
+    },
+    {
+      "id": "xy11-2",
+      "name": "Tangrowth",
+      "setName": "Steam Siege",
+      "setCode": "XY11",
+      "cardNumber": "2/114"
+    },
+    {
+      "id": "xy11-3",
+      "name": "Hoppip",
+      "setName": "Steam Siege",
+      "setCode": "XY11",
+      "cardNumber": "3/114"
+    },
+    {
+      "id": "xy11-4",
+      "name": "Skiploom",
+      "setName": "Steam Siege",
+      "setCode": "XY11",
+      "cardNumber": "4/114"
+    },
+    {
+      "id": "xy11-5",
+      "name": "Jumpluff",
+      "setName": "Steam Siege",
+      "setCode": "XY11",
+      "cardNumber": "5/114"
+    }
+  ],
+  "xy12": [
+    {
+      "id": "xy12-1",
+      "name": "Venusaur-EX",
+      "setName": "Evolutions",
+      "setCode": "XY12",
+      "cardNumber": "1/108"
+    },
+    {
+      "id": "xy12-2",
+      "name": "M Venusaur-EX",
+      "setName": "Evolutions",
+      "setCode": "XY12",
+      "cardNumber": "2/108"
+    },
+    {
+      "id": "xy12-3",
+      "name": "Caterpie",
+      "setName": "Evolutions",
+      "setCode": "XY12",
+      "cardNumber": "3/108"
+    },
+    {
+      "id": "xy12-4",
+      "name": "Metapod",
+      "setName": "Evolutions",
+      "setCode": "XY12",
+      "cardNumber": "4/108"
+    },
+    {
+      "id": "xy12-5",
+      "name": "Weedle",
+      "setName": "Evolutions",
+      "setCode": "XY12",
+      "cardNumber": "5/108"
+    }
+  ],
+  "xy2": [
+    {
+      "id": "xy2-1",
+      "name": "Caterpie",
+      "setName": "Flashfire",
+      "setCode": "XY2",
+      "cardNumber": "1/106"
+    },
+    {
+      "id": "xy2-2",
+      "name": "Metapod",
+      "setName": "Flashfire",
+      "setCode": "XY2",
+      "cardNumber": "2/106"
+    },
+    {
+      "id": "xy2-3",
+      "name": "Butterfree",
+      "setName": "Flashfire",
+      "setCode": "XY2",
+      "cardNumber": "3/106"
+    },
+    {
+      "id": "xy2-4",
+      "name": "Pineco",
+      "setName": "Flashfire",
+      "setCode": "XY2",
+      "cardNumber": "4/106"
+    },
+    {
+      "id": "xy2-5",
+      "name": "Seedot",
+      "setName": "Flashfire",
+      "setCode": "XY2",
+      "cardNumber": "5/106"
+    }
+  ],
+  "xy3": [
+    {
+      "id": "xy3-1",
+      "name": "Bellsprout",
+      "setName": "Furious Fists",
+      "setCode": "XY3",
+      "cardNumber": "1/111"
+    },
+    {
+      "id": "xy3-2",
+      "name": "Weepinbell",
+      "setName": "Furious Fists",
+      "setCode": "XY3",
+      "cardNumber": "2/111"
+    },
+    {
+      "id": "xy3-3",
+      "name": "Victreebel",
+      "setName": "Furious Fists",
+      "setCode": "XY3",
+      "cardNumber": "3/111"
+    },
+    {
+      "id": "xy3-4",
+      "name": "Heracross-EX",
+      "setName": "Furious Fists",
+      "setCode": "XY3",
+      "cardNumber": "4/111"
+    },
+    {
+      "id": "xy3-5",
+      "name": "M Heracross-EX",
+      "setName": "Furious Fists",
+      "setCode": "XY3",
+      "cardNumber": "5/111"
+    }
+  ],
+  "xy4": [
+    {
+      "id": "xy4-1",
+      "name": "Venonat",
+      "setName": "Phantom Forces",
+      "setCode": "XY4",
+      "cardNumber": "1/119"
+    },
+    {
+      "id": "xy4-2",
+      "name": "Venomoth",
+      "setName": "Phantom Forces",
+      "setCode": "XY4",
+      "cardNumber": "2/119"
+    },
+    {
+      "id": "xy4-3",
+      "name": "Yanma",
+      "setName": "Phantom Forces",
+      "setCode": "XY4",
+      "cardNumber": "3/119"
+    },
+    {
+      "id": "xy4-4",
+      "name": "Yanmega",
+      "setName": "Phantom Forces",
+      "setCode": "XY4",
+      "cardNumber": "4/119"
+    },
+    {
+      "id": "xy4-5",
+      "name": "Sewaddle",
+      "setName": "Phantom Forces",
+      "setCode": "XY4",
+      "cardNumber": "5/119"
+    }
+  ],
+  "xy5": [
+    {
+      "id": "xy5-1",
+      "name": "Weedle",
+      "setName": "Primal Clash",
+      "setCode": "XY5",
+      "cardNumber": "1/160"
+    },
+    {
+      "id": "xy5-2",
+      "name": "Kakuna",
+      "setName": "Primal Clash",
+      "setCode": "XY5",
+      "cardNumber": "2/160"
+    },
+    {
+      "id": "xy5-3",
+      "name": "Beedrill",
+      "setName": "Primal Clash",
+      "setCode": "XY5",
+      "cardNumber": "3/160"
+    },
+    {
+      "id": "xy5-4",
+      "name": "Tangela",
+      "setName": "Primal Clash",
+      "setCode": "XY5",
+      "cardNumber": "4/160"
+    },
+    {
+      "id": "xy5-5",
+      "name": "Tangrowth",
+      "setName": "Primal Clash",
+      "setCode": "XY5",
+      "cardNumber": "5/160"
+    }
+  ],
+  "xy6": [
+    {
+      "id": "xy6-1",
+      "name": "Exeggcute",
+      "setName": "Roaring Skies",
+      "setCode": "XY6",
+      "cardNumber": "1/108"
+    },
+    {
+      "id": "xy6-2",
+      "name": "Exeggutor",
+      "setName": "Roaring Skies",
+      "setCode": "XY6",
+      "cardNumber": "2/108"
+    },
+    {
+      "id": "xy6-3",
+      "name": "Wurmple",
+      "setName": "Roaring Skies",
+      "setCode": "XY6",
+      "cardNumber": "3/108"
+    },
+    {
+      "id": "xy6-4",
+      "name": "Silcoon",
+      "setName": "Roaring Skies",
+      "setCode": "XY6",
+      "cardNumber": "4/108"
+    },
+    {
+      "id": "xy6-5",
+      "name": "Beautifly",
+      "setName": "Roaring Skies",
+      "setCode": "XY6",
+      "cardNumber": "5/108"
+    }
+  ],
+  "xy7": [
+    {
+      "id": "xy7-1",
+      "name": "Oddish",
+      "setName": "Ancient Origins",
+      "setCode": "XY7",
+      "cardNumber": "1/98"
+    },
+    {
+      "id": "xy7-2",
+      "name": "Gloom",
+      "setName": "Ancient Origins",
+      "setCode": "XY7",
+      "cardNumber": "2/98"
+    },
+    {
+      "id": "xy7-3",
+      "name": "Vileplume",
+      "setName": "Ancient Origins",
+      "setCode": "XY7",
+      "cardNumber": "3/98"
+    },
+    {
+      "id": "xy7-4",
+      "name": "Bellossom",
+      "setName": "Ancient Origins",
+      "setCode": "XY7",
+      "cardNumber": "4/98"
+    },
+    {
+      "id": "xy7-5",
+      "name": "Spinarak",
+      "setName": "Ancient Origins",
+      "setCode": "XY7",
+      "cardNumber": "5/98"
+    }
+  ],
+  "xy8": [
+    {
+      "id": "xy8-1",
+      "name": "Paras",
+      "setName": "BREAKthrough",
+      "setCode": "XY8",
+      "cardNumber": "1/162"
+    },
+    {
+      "id": "xy8-2",
+      "name": "Parasect",
+      "setName": "BREAKthrough",
+      "setCode": "XY8",
+      "cardNumber": "2/162"
+    },
+    {
+      "id": "xy8-3",
+      "name": "Pinsir",
+      "setName": "BREAKthrough",
+      "setCode": "XY8",
+      "cardNumber": "3/162"
+    },
+    {
+      "id": "xy8-4",
+      "name": "Cacnea",
+      "setName": "BREAKthrough",
+      "setCode": "XY8",
+      "cardNumber": "4/162"
+    },
+    {
+      "id": "xy8-5",
+      "name": "Pansage",
+      "setName": "BREAKthrough",
+      "setCode": "XY8",
+      "cardNumber": "5/162"
+    }
+  ],
+  "xy9": [
+    {
+      "id": "xy9-1",
+      "name": "Chikorita",
+      "setName": "BREAKpoint",
+      "setCode": "XY9",
+      "cardNumber": "1/122"
+    },
+    {
+      "id": "xy9-2",
+      "name": "Bayleef",
+      "setName": "BREAKpoint",
+      "setCode": "XY9",
+      "cardNumber": "2/122"
+    },
+    {
+      "id": "xy9-3",
+      "name": "Meganium",
+      "setName": "BREAKpoint",
+      "setCode": "XY9",
+      "cardNumber": "3/122"
+    },
+    {
+      "id": "xy9-4",
+      "name": "Seedot",
+      "setName": "BREAKpoint",
+      "setCode": "XY9",
+      "cardNumber": "4/122"
+    },
+    {
+      "id": "xy9-5",
+      "name": "Kricketot",
+      "setName": "BREAKpoint",
+      "setCode": "XY9",
+      "cardNumber": "5/122"
+    }
+  ],
+  "xyp": [
+    {
+      "id": "xyp-XY01",
+      "name": "Chespin",
+      "setName": "XY Black Star Promos",
+      "setCode": "XYP",
+      "cardNumber": "XY01"
+    },
+    {
+      "id": "xyp-XY02",
+      "name": "Fennekin",
+      "setName": "XY Black Star Promos",
+      "setCode": "XYP",
+      "cardNumber": "XY02"
+    },
+    {
+      "id": "xyp-XY03",
+      "name": "Froakie",
+      "setName": "XY Black Star Promos",
+      "setCode": "XYP",
+      "cardNumber": "XY03"
+    },
+    {
+      "id": "xyp-XY04",
+      "name": "Sylveon",
+      "setName": "XY Black Star Promos",
+      "setCode": "XYP",
+      "cardNumber": "XY04"
+    },
+    {
+      "id": "xyp-XY05",
+      "name": "Xerneas",
+      "setName": "XY Black Star Promos",
+      "setCode": "XYP",
+      "cardNumber": "XY05"
+    }
+  ],
+  "zsv10pt5": [
+    {
+      "id": "zsv10pt5-172",
+      "name": "Zekrom ex",
+      "setName": "Black Bolt",
+      "setCode": "ZSV10PT5",
+      "cardNumber": "172/86"
+    },
+    {
+      "id": "zsv10pt5-1",
+      "name": "Snivy",
+      "setName": "Black Bolt",
+      "setCode": "ZSV10PT5",
+      "cardNumber": "1/86"
+    },
+    {
+      "id": "zsv10pt5-2",
+      "name": "Servine",
+      "setName": "Black Bolt",
+      "setCode": "ZSV10PT5",
+      "cardNumber": "2/86"
+    },
+    {
+      "id": "zsv10pt5-3",
+      "name": "Serperior ex",
+      "setName": "Black Bolt",
+      "setCode": "ZSV10PT5",
+      "cardNumber": "3/86"
+    },
+    {
+      "id": "zsv10pt5-4",
+      "name": "Pansage",
+      "setName": "Black Bolt",
+      "setCode": "ZSV10PT5",
+      "cardNumber": "4/86"
+    }
+  ]
+}

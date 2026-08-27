@@ -50,4 +50,17 @@ describe("market-anchor verdict", () => {
     const stdout = line({ ...complete, verdict: "regression", setCoverage: 0.5 }) + line(complete);
     expect(interpretAnchorRun({ stdout, exitCode: 0 }).status).toBe(PASS);
   });
+
+  it("prefers the verdict file over stdout, because a reporter can drop stdout", () => {
+    const result = interpretAnchorRun({
+      stdout: line({ ...complete, verdict: "regression", setCoverage: 0.1 }),
+      payloadJson: JSON.stringify(complete),
+      exitCode: 0,
+    });
+    expect(result.status).toBe(PASS);
+  });
+
+  it("falls back to stdout when the verdict file was never written", () => {
+    expect(interpretAnchorRun({ stdout: line(complete), payloadJson: null, exitCode: 0 }).status).toBe(PASS);
+  });
 });

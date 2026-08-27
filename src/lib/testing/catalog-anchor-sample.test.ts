@@ -62,3 +62,37 @@ describe("catalog anchor sample", () => {
     expect(sample.truncated).toBe(false);
   });
 });
+
+describe("catalog anchor sample cache", () => {
+  it("skips the fetch for sets it already has enough cards for", async () => {
+    let requests = 0;
+    const fetcher = catalogFetcher(3, () => {
+      requests += 1;
+    });
+    const cache = {
+      set0: [{ id: "set0-1", name: "Pikachu", setName: "Set 0", setCode: "SET0", cardNumber: "58/102" }],
+      set1: [{ id: "set1-1", name: "Mew", setName: "Set 1", setCode: "SET1", cardNumber: "8/102" }],
+    };
+    const sample = await fetchCatalogAnchorSample({ fetcher, cache });
+    expect(sample.cards).toHaveLength(3);
+    // Only the uncached set costs a request; the set list itself is not counted.
+    expect(requests).toBe(1);
+    expect(sample.cacheMisses).toEqual(["set2"]);
+  });
+
+  it("refetches a set whose cached card no longer matches the catalogue", async () => {
+    const fetcher = catalogFetcher(1);
+    const sample = await fetchCatalogAnchorSample({
+      fetcher,
+      cache: { set0: [{ id: "", name: "", setName: "", setCode: "", cardNumber: "" }] },
+    });
+    expect(sample.cards[0].name).toBe("Pikachu");
+    expect(sample.cacheMisses).toEqual(["set0"]);
+  });
+
+  it("reports a fresh sample for every set so the cache can be rewritten", async () => {
+    const sample = await fetchCatalogAnchorSample({ fetcher: catalogFetcher(2) });
+    expect(Object.keys(sample.cacheable)).toEqual(["set0", "set1"]);
+    expect(sample.cacheable.set0[0].name).toBe("Pikachu");
+  });
+});

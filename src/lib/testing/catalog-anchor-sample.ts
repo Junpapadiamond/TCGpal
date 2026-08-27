@@ -85,6 +85,18 @@ export async function fetchCatalogAnchorSample(options: {
   // Without a deadline the run is eventually killed by whatever is above it, and
   // a killed run cannot say whether coverage regressed or the provider was down.
   deadline?: () => boolean;
+  // Set id → the cards previously drawn for it.
+  //
+  // Which card represents a set is identity, not the thing being measured: the
+  // audit asks whether the crosswalk can price that card, and the answer does
+  // not depend on the card having been fetched seconds ago. Measured 2026-08-27,
+  // this API answers in 10.3s per set, so walking all 174 costs about half an
+  // hour — against 78ms per card for the audit that is the actual point. The
+  // whole check was 99% spent deciding which cards to ask about.
+  //
+  // A set missing from the cache is always fetched, so a NEW set — precisely the
+  // failure this check exists to catch — is never served from memory.
+  cache?: Record<string, AnchorSampleCard[]>;
 } = {}) {
   const apiKey = options.apiKey ?? process.env.POKEMON_TCG_API_KEY;
   const perSet = options.perSet ?? 1;
@@ -93,20 +105,34 @@ export async function fetchCatalogAnchorSample(options: {
   const setsResponse = await getJson(`${POKEMON_TCG_API}/sets?pageSize=250`, apiKey, fetcher);
   const sets = z.object({ data: z.array(setSchema) }).parse(setsResponse).data;
 
+  const cache = options.cache ?? {};
   const cards: AnchorSampleCard[] = [];
   const unreadableSets: string[] = [];
   // Sets the deadline arrived before we reached. Deliberately distinct from
   // `unreadableSets`: one is a measurement, the other is a missing measurement.
   const unvisitedSets: string[] = [];
+  const cacheMisses: string[] = [];
+  // Every set we hold usable cards for, cached or freshly fetched, so the caller
+  // can write the file back and the next run pays for even less.
+  const cacheable: Record<string, AnchorSampleCard[]> = {};
   let truncated = false;
   // Sequential on purpose: parallel requests measurably raise this API's 5xx
   // rate, which would show up as a coverage regression that isn't one.
   for (const set of sets) {
+    const cached = (cache[set.id] ?? []).filter((card) => card.id.trim() !== "" && card.cardNumber.trim() !== "");
+    // A blank id or number is a cache entry that cannot be audited, so the set
+    // counts as a miss rather than quietly scoring as unresolvable.
+    if (cached.length >= perSet) {
+      cards.push(...cached.slice(0, perSet));
+      cacheable[set.id] = cached.slice(0, perSet);
+      continue;
+    }
     if (truncated || outOfTime()) {
       truncated = true;
       unvisitedSets.push(set.id);
       continue;
     }
+    cacheMisses.push(set.id);
     try {
       const response = await getJson(
         `${POKEMON_TCG_API}/cards?q=set.id:${encodeURIComponent(set.id)}&pageSize=${perSet}&select=id,name,number,set`,
@@ -114,18 +140,20 @@ export async function fetchCatalogAnchorSample(options: {
         fetcher,
       );
       for (const card of z.object({ data: z.array(cardSchema) }).parse(response).data) {
-        cards.push({
+        const sampled = {
           id: card.id,
           name: card.name,
           setName: card.set?.name ?? set.name,
           setCode: (card.set?.id ?? set.id).toUpperCase(),
           cardNumber: formatCollectorNumber(card.number ?? "", card.set ?? set),
-        });
+        };
+        cards.push(sampled);
+        cacheable[set.id] = [...(cacheable[set.id] ?? []), sampled];
       }
     } catch {
       unreadableSets.push(set.id);
     }
   }
 
-  return { sets, cards, unreadableSets, unvisitedSets, truncated };
+  return { sets, cards, unreadableSets, unvisitedSets, cacheMisses, cacheable, truncated };
 }

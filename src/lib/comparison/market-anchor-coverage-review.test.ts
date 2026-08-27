@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { auditCardAnchor, summarizeAudits, toAuditCard } from "@/lib/testing/market-anchor-coverage";
 import { fetchCatalogAnchorSample } from "@/lib/testing/catalog-anchor-sample";
@@ -16,13 +18,19 @@ import { fetchCatalogAnchorSample } from "@/lib/testing/catalog-anchor-sample";
 // suite never depends on live pokemontcg.io or tcgcsv.com.
 const enabled = process.env.MARKET_ANCHOR_REVIEW === "1";
 
-// Both floors are measurements, not aspirations: 173 of 174 catalogued Pokemon
-// sets resolve as of 2026-08-21, and the one that does not (Pokemon Futsal
-// Collection, 5 cards) exists on TCGplayer only inside a 1,500-product catch-all
-// group whose contents drift. Raise these when coverage genuinely improves;
-// never lower one to make a red run green.
+// The gated claim is the one the check's name makes: can the crosswalk price at
+// least one card from every catalogued set? Raise this when coverage genuinely
+// improves; never lower it to make a red run green.
 const MIN_SET_COVERAGE = 0.98;
-const MIN_CARD_COVERAGE = 0.97;
+
+// Cards per set. It used to be 1, and that quietly measured something else: the
+// API returns cards in collector order, so a single card is always card #1 —
+// which in a promo or energy set is the most ambiguous card there is. Measured
+// 2026-08-27, that reported 11 sets with no anchor when 5 of the 11 resolve on
+// a different card (HGSS Black Star Promos resolves 7 of 8; the sample drew the
+// one that does not). Several cards cost the same request, since pageSize is
+// free, and 78ms each to audit.
+const PER_SET = Number(process.env.MARKET_ANCHOR_PER_SET ?? 5);
 
 // The walk is sequential against a provider measured at 6/12 healthy, so its
 // duration is set by that provider's mood rather than by the catalog's size.
@@ -33,12 +41,41 @@ const MIN_CARD_COVERAGE = 0.97;
 const DEADLINE_MS = Number(process.env.MARKET_ANCHOR_DEADLINE_MS ?? 900_000);
 const TEST_TIMEOUT_MS = DEADLINE_MS + 300_000;
 
+// Which card represents each set. Checked in because it is identity, not
+// measurement: the audit asks whether the crosswalk can price a card, and that
+// answer does not depend on the card having been fetched seconds ago. Drawing it
+// live cost 10.3s per set — half an hour for the 174 sets — against 78ms per
+// card for the audit that is the actual point. Sets missing from the file are
+// still fetched, so a new set is never served from memory.
+// Refresh with `MARKET_ANCHOR_WRITE_SAMPLE=1 npm run review:market-anchor`.
+const SAMPLE_FILE = path.join(process.cwd(), "src/lib/testing/market-anchor-sample.json");
+
+function loadSample() {
+  try {
+    return existsSync(SAMPLE_FILE) ? JSON.parse(readFileSync(SAMPLE_FILE, "utf8")) : {};
+  } catch {
+    return {};
+  }
+}
+
+// Emitted with process.stdout.write, not console.log: vitest intercepts console
+// output and drops it entirely for a passing test on a non-TTY, which is how the
+// original coverage numbers were invisible in every CI log this check produced.
+function emit(line: string) {
+  process.stdout.write(`${line}\n`);
+}
+
 describe.skipIf(!enabled)("market anchor coverage", () => {
   it("resolves a TCGplayer anchor for a card from nearly every catalogued set", async () => {
     const startedAt = Date.now();
     const outOfTime = () => Date.now() - startedAt > DEADLINE_MS;
 
-    const sample = await fetchCatalogAnchorSample({ deadline: outOfTime });
+    const sample = await fetchCatalogAnchorSample({ deadline: outOfTime, cache: loadSample(), perSet: PER_SET });
+    if (process.env.MARKET_ANCHOR_WRITE_SAMPLE === "1") {
+      mkdirSync(path.dirname(SAMPLE_FILE), { recursive: true });
+      const ordered = Object.fromEntries(Object.entries(sample.cacheable).sort(([a], [b]) => a.localeCompare(b)));
+      writeFileSync(SAMPLE_FILE, `${JSON.stringify(ordered, null, 2)}\n`);
+    }
     expect(sample.sets.length, "no catalog sets were sampled").toBeGreaterThan(100);
 
     const audits = [];
@@ -52,34 +89,39 @@ describe.skipIf(!enabled)("market anchor coverage", () => {
     }
 
     const summary = summarizeAudits(audits);
+
+    // A set is covered when ANY of its sampled cards reaches an anchor. That is
+    // the claim being tested — the set has a crosswalk — and it is why one card
+    // per set was the wrong instrument rather than merely a small one.
+    const resolvedSets = new Set(audits.filter((a) => a.stage === "resolved").map((a) => a.setName));
     const failedSets = new Map<string, string>();
     for (const audit of audits) {
-      if (audit.stage === "resolved") failedSets.delete(audit.setName);
-      else if (!failedSets.has(audit.setName)) failedSets.set(audit.setName, `${audit.stage}: ${audit.detail.slice(0, 140)}`);
+      if (resolvedSets.has(audit.setName)) continue;
+      if (!failedSets.has(audit.setName)) failedSets.set(audit.setName, `${audit.stage}: ${audit.detail.slice(0, 140)}`);
     }
-    const resolvedSets = new Set(audits.filter((a) => a.stage === "resolved").map((a) => a.setName));
-    for (const name of resolvedSets) failedSets.delete(name);
 
-    // Only sets we actually reached can be scored. Counting an unvisited set as
-    // a miss would turn "we ran out of time" into "coverage regressed", which is
-    // the exact confusion this check must never make.
-    const visitedSets = sample.sets.length - sample.unvisitedSets.length;
+    // Only sets we actually audited can be scored. A set the deadline never
+    // reached, or whose cards the catalogue would not hand over, is a missing
+    // measurement — counting it as a miss would turn "we could not look" into
+    // "coverage regressed", the exact confusion this check must never make.
+    const auditedSets = new Set(audits.map((a) => a.setName));
+    const visitedSets = auditedSets.size;
     const setCoverage = visitedSets === 0 ? 0 : (visitedSets - failedSets.size) / visitedSets;
     const feedErrors = summary.byStage.feed_error ?? 0;
     const truncated = sample.truncated || unauditedCards > 0;
 
-    console.log(`\n  cards ${summary.resolved}/${summary.total} (${(summary.coverage * 100).toFixed(1)}%)`);
-    console.log(`  stages ${JSON.stringify(summary.byStage)}`);
-    console.log(`  sets visited ${visitedSets}/${sample.sets.length}, without any resolvable card: ${failedSets.size}`);
-    for (const [setName, reason] of failedSets) console.log(`   - ${setName} — ${reason}`);
+    emit(`\n  cards ${summary.resolved}/${summary.total} (${(summary.coverage * 100).toFixed(1)}%)`);
+    emit(`  stages ${JSON.stringify(summary.byStage)}`);
+    emit(`  sets audited ${visitedSets}/${sample.sets.length} at ${PER_SET} card(s) each, ${sample.cacheMisses.length} fetched fresh, without any resolvable card: ${failedSets.size}`);
+    for (const [setName, reason] of failedSets) emit(`   - ${setName} — ${reason}`);
 
-    const withinBudget = setCoverage >= MIN_SET_COVERAGE && summary.coverage >= MIN_CARD_COVERAGE;
+    const withinBudget = setCoverage >= MIN_SET_COVERAGE;
     const verdict = truncated || feedErrors > 0 ? "inconclusive" : withinBudget ? "ok" : "regression";
 
     // Read by scripts/health/market-anchor.mjs, which owns the exit code. The
     // measurement reports what it saw; the judgment lives one layer up, the same
     // separation every other health check has.
-    console.log(`::anchor::${JSON.stringify({
+    const payload = JSON.stringify({
       verdict,
       cardCoverage: summary.coverage,
       setCoverage,
@@ -92,9 +134,21 @@ describe.skipIf(!enabled)("market anchor coverage", () => {
       unauditedCards,
       feedErrors,
       elapsedMs: Date.now() - startedAt,
+      setsFetchedFresh: sample.cacheMisses.length,
+      perSet: PER_SET,
       minSetCoverage: MIN_SET_COVERAGE,
-      minCardCoverage: MIN_CARD_COVERAGE,
-    })}`);
+      // Card coverage is reported, not gated: with several cards per set it
+      // measures how often an arbitrary card resolves, which is a different
+      // question from whether the set has a crosswalk at all.
+      minCardCoverage: null,
+    });
+    emit(`::anchor::${payload}`);
+    // Also written to a file the wrapper reads first. stdout works today, but a
+    // reporter change would silently take the verdict away again, and a verdict
+    // that can go missing is one the wrapper has to read as "could not measure".
+    if (process.env.MARKET_ANCHOR_VERDICT_FILE) {
+      writeFileSync(process.env.MARKET_ANCHOR_VERDICT_FILE, payload);
+    }
 
     // An incomplete measurement is not evidence of anything, so it asserts
     // nothing. The wrapper reports it as INCONCLUSIVE, which by design never
@@ -103,6 +157,5 @@ describe.skipIf(!enabled)("market anchor coverage", () => {
     if (verdict === "inconclusive") return;
 
     expect(setCoverage, `sets without a market anchor: ${[...failedSets.keys()].join(", ")}`).toBeGreaterThanOrEqual(MIN_SET_COVERAGE);
-    expect(summary.coverage).toBeGreaterThanOrEqual(MIN_CARD_COVERAGE);
   }, TEST_TIMEOUT_MS);
 });

@@ -14,6 +14,9 @@
 //
 // Usage: node scripts/health/market-anchor.mjs
 import { spawn } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { FAIL, INCONCLUSIVE, PASS, report } from "./lib/check.mjs";
 
 const MARKER = "::anchor::";
@@ -26,9 +29,14 @@ const MARKER = "::anchor::";
  * emitted payload can tell those apart, so its absence means "we did not
  * measure", never "the product regressed".
  */
-export function interpretAnchorRun({ stdout = "", exitCode = 0 } = {}) {
+export function interpretAnchorRun({ stdout = "", exitCode = 0, payloadJson = null } = {}) {
+  // The file wins when it exists. stdout works today, but vitest already drops
+  // console output from a passing test on a non-TTY — which is exactly how this
+  // check's coverage numbers were invisible in every CI log it ever produced —
+  // and a verdict that can silently go missing has to be read as "we did not
+  // measure", which is the one answer that must be reserved for the truth.
   const lines = stdout.split("\n").filter((line) => line.includes(MARKER));
-  const last = lines.at(-1);
+  const last = payloadJson ?? lines.at(-1);
   if (!last) {
     return {
       status: INCONCLUSIVE,
@@ -40,7 +48,8 @@ export function interpretAnchorRun({ stdout = "", exitCode = 0 } = {}) {
 
   let payload;
   try {
-    payload = JSON.parse(last.slice(last.indexOf(MARKER) + MARKER.length));
+    const index = last.indexOf(MARKER);
+    payload = JSON.parse(index === -1 ? last : last.slice(index + MARKER.length));
   } catch (error) {
     return {
       status: INCONCLUSIVE,
@@ -52,8 +61,8 @@ export function interpretAnchorRun({ stdout = "", exitCode = 0 } = {}) {
 
   const pct = (value) => `${(value * 100).toFixed(1)}%`;
   const rows = [
-    `cards  ${payload.cardsResolved}/${payload.cardsAudited} anchored (${pct(payload.cardCoverage)}, floor ${pct(payload.minCardCoverage)})`,
-    `sets   ${payload.setsVisited}/${payload.setsTotal} visited, coverage ${pct(payload.setCoverage)} (floor ${pct(payload.minSetCoverage)})`,
+    `sets   ${payload.setsVisited}/${payload.setsTotal} audited, coverage ${pct(payload.setCoverage)} (floor ${pct(payload.minSetCoverage)})`,
+    `cards  ${payload.cardsResolved}/${payload.cardsAudited} anchored (${pct(payload.cardCoverage)}, reported not gated)`,
     `took   ${(payload.elapsedMs / 1000).toFixed(0)}s, ${payload.unreadableSets} unreadable set(s), ${payload.feedErrors} feed error(s)`,
   ];
   for (const name of payload.setsWithoutAnchor ?? []) rows.push(`  no anchor: ${name}`);
@@ -89,8 +98,10 @@ function main() {
   // Streamed rather than buffered: this check can run for a quarter of an hour,
   // and a CI step that prints nothing for fifteen minutes is one somebody
   // eventually cancels on the assumption that it hung.
+  const scratch = mkdtempSync(path.join(tmpdir(), "market-anchor-"));
+  const verdictFile = path.join(scratch, "verdict.json");
   const child = spawn("npx", ["vitest", "run", "src/lib/comparison/market-anchor-coverage-review.test.ts"], {
-    env: { ...process.env, MARKET_ANCHOR_REVIEW: "1" },
+    env: { ...process.env, MARKET_ANCHOR_REVIEW: "1", MARKET_ANCHOR_VERDICT_FILE: verdictFile },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
@@ -110,7 +121,14 @@ function main() {
     process.exit(report({ name: "market-anchor", ...interpretAnchorRun({ stdout: String(error), exitCode: 1 }) }));
   });
   child.on("close", (code) => {
-    const verdict = interpretAnchorRun({ stdout: captured, exitCode: code ?? 1 });
+    let payloadJson = null;
+    try {
+      payloadJson = readFileSync(verdictFile, "utf8");
+    } catch {
+      // No verdict file; fall back to stdout, and to "could not measure".
+    }
+    rmSync(scratch, { recursive: true, force: true });
+    const verdict = interpretAnchorRun({ stdout: captured, exitCode: code ?? 1, payloadJson });
     process.exit(report({ name: "market-anchor", ...verdict }));
   });
 }
