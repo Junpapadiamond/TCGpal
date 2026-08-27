@@ -60,12 +60,15 @@ export function interpretAnchorRun({ stdout = "", exitCode = 0, payloadJson = nu
   }
 
   const pct = (value) => `${(value * 100).toFixed(1)}%`;
+  const known = (payload.knownGaps ?? []).length;
   const rows = [
-    `sets   ${payload.setsVisited}/${payload.setsTotal} audited, coverage ${pct(payload.setCoverage)} (floor ${pct(payload.minSetCoverage)})`,
+    `sets   ${payload.setsVisited}/${payload.setsTotal} audited, ${pct(payload.setCoverage)} anchored, ${pct(payload.scoredCoverage ?? payload.setCoverage)} once ${known} recorded gap(s) are set aside (floor ${pct(payload.minSetCoverage)})`,
     `cards  ${payload.cardsResolved}/${payload.cardsAudited} anchored (${pct(payload.cardCoverage)}, reported not gated)`,
     `took   ${(payload.elapsedMs / 1000).toFixed(0)}s, ${payload.unreadableSets} unreadable set(s), ${payload.feedErrors} feed error(s)`,
   ];
-  for (const name of payload.setsWithoutAnchor ?? []) rows.push(`  no anchor: ${name}`);
+  for (const name of payload.unexplainedGaps ?? []) rows.push(`  NEW, no anchor and no recorded reason: ${name}`);
+  for (const name of payload.knownGaps ?? []) rows.push(`  known gap: ${name}`);
+  for (const name of payload.recoveredGaps ?? []) rows.push(`  recovered, delete its entry: ${name}`);
 
   if (payload.verdict === "inconclusive") {
     const why = payload.feedErrors > 0
@@ -79,16 +82,21 @@ export function interpretAnchorRun({ stdout = "", exitCode = 0, payloadJson = nu
     };
   }
   if (payload.verdict === "regression") {
+    const lost = (payload.unexplainedGaps ?? []).join(", ");
     return {
       status: FAIL,
-      headline: `market anchor coverage fell below its floor (${pct(payload.setCoverage)} of sets, ${pct(payload.cardCoverage)} of cards)`,
+      headline: lost
+        ? `set(s) lost their market anchor with no recorded reason: ${lost}`
+        : `market anchor coverage fell below its floor (${pct(payload.setCoverage)} of sets)`,
       rows,
       detail: payload,
     };
   }
   return {
     status: PASS,
-    headline: `every measured set reached a market anchor (${pct(payload.cardCoverage)} of cards)`,
+    headline: known > 0
+      ? `no set lost its anchor unexpectedly; ${known} recorded gap(s) remain`
+      : "every measured set reached a market anchor",
     rows,
     detail: payload,
   };

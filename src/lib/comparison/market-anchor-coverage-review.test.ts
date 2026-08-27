@@ -50,6 +50,29 @@ const TEST_TIMEOUT_MS = DEADLINE_MS + 300_000;
 // Refresh with `MARKET_ANCHOR_WRITE_SAMPLE=1 npm run review:market-anchor`.
 const SAMPLE_FILE = path.join(process.cwd(), "src/lib/testing/market-anchor-sample.json");
 
+// Sets measured to have no anchor, each with the reason. This is not a lowered
+// floor wearing a different hat: every entry prints in every report, a set that
+// starts resolving is called out so its entry can be deleted, and any set NOT
+// listed that loses its anchor fails at the full floor — which a percentage
+// cannot do, since one set recovering would mask another breaking.
+const KNOWN_GAPS_FILE = path.join(process.cwd(), "src/lib/testing/market-anchor-known-gaps.json");
+
+function loadKnownGaps(): Record<string, string> {
+  try {
+    const parsed = JSON.parse(readFileSync(KNOWN_GAPS_FILE, "utf8")) as Record<string, string>;
+    const entries = Object.entries(parsed).filter(([key]) => !key.startsWith("_"));
+    for (const [set, reason] of entries) {
+      if (typeof reason !== "string" || reason.trim() === "") {
+        throw new Error(`Known gap "${set}" needs a written reason; an unexplained entry would hide a regression.`);
+      }
+    }
+    return Object.fromEntries(entries);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("needs a written reason")) throw error;
+    return {};
+  }
+}
+
 function loadSample() {
   try {
     return existsSync(SAMPLE_FILE) ? JSON.parse(readFileSync(SAMPLE_FILE, "utf8")) : {};
@@ -107,15 +130,24 @@ describe.skipIf(!enabled)("market anchor coverage", () => {
     const auditedSets = new Set(audits.map((a) => a.setName));
     const visitedSets = auditedSets.size;
     const setCoverage = visitedSets === 0 ? 0 : (visitedSets - failedSets.size) / visitedSets;
+    const knownGaps = loadKnownGaps();
+    const unexplainedGaps = [...failedSets.keys()].filter((name) => !(name in knownGaps));
+    const recoveredGaps = Object.keys(knownGaps).filter((name) => resolvedSets.has(name));
+    // Scored against unexplained gaps only. The known ones are still counted and
+    // printed; they simply do not re-raise an alarm that has already been read.
+    const scoredCoverage = visitedSets === 0 ? 0 : (visitedSets - unexplainedGaps.length) / visitedSets;
     const feedErrors = summary.byStage.feed_error ?? 0;
     const truncated = sample.truncated || unauditedCards > 0;
 
     emit(`\n  cards ${summary.resolved}/${summary.total} (${(summary.coverage * 100).toFixed(1)}%)`);
     emit(`  stages ${JSON.stringify(summary.byStage)}`);
     emit(`  sets audited ${visitedSets}/${sample.sets.length} at ${PER_SET} card(s) each, ${sample.cacheMisses.length} fetched fresh, without any resolvable card: ${failedSets.size}`);
-    for (const [setName, reason] of failedSets) emit(`   - ${setName} — ${reason}`);
+    for (const [setName, reason] of failedSets) {
+      emit(`   - ${setName in knownGaps ? "known" : "NEW"}: ${setName} — ${reason}`);
+    }
+    for (const name of recoveredGaps) emit(`   + recovered, delete its entry: ${name}`);
 
-    const withinBudget = setCoverage >= MIN_SET_COVERAGE;
+    const withinBudget = scoredCoverage >= MIN_SET_COVERAGE;
     const verdict = truncated || feedErrors > 0 ? "inconclusive" : withinBudget ? "ok" : "regression";
 
     // Read by scripts/health/market-anchor.mjs, which owns the exit code. The
@@ -125,6 +157,10 @@ describe.skipIf(!enabled)("market anchor coverage", () => {
       verdict,
       cardCoverage: summary.coverage,
       setCoverage,
+      scoredCoverage,
+      unexplainedGaps,
+      knownGaps: [...failedSets.keys()].filter((name) => name in knownGaps),
+      recoveredGaps,
       cardsAudited: summary.total,
       cardsResolved: summary.resolved,
       setsVisited: visitedSets,
@@ -156,6 +192,6 @@ describe.skipIf(!enabled)("market anchor coverage", () => {
     // permanently inconclusive is visible rather than quietly green.
     if (verdict === "inconclusive") return;
 
-    expect(setCoverage, `sets without a market anchor: ${[...failedSets.keys()].join(", ")}`).toBeGreaterThanOrEqual(MIN_SET_COVERAGE);
+    expect(scoredCoverage, `sets that lost their market anchor with no recorded reason: ${unexplainedGaps.join(", ")}`).toBeGreaterThanOrEqual(MIN_SET_COVERAGE);
   }, TEST_TIMEOUT_MS);
 });

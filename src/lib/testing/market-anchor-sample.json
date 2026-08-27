@@ -1368,6 +1368,43 @@
       "cardNumber": "H5"
     }
   ],
+  "ex1": [
+    {
+      "id": "ex1-1",
+      "name": "Aggron",
+      "setName": "Ruby & Sapphire",
+      "setCode": "EX1",
+      "cardNumber": "1/109"
+    },
+    {
+      "id": "ex1-2",
+      "name": "Beautifly",
+      "setName": "Ruby & Sapphire",
+      "setCode": "EX1",
+      "cardNumber": "2/109"
+    },
+    {
+      "id": "ex1-3",
+      "name": "Blaziken",
+      "setName": "Ruby & Sapphire",
+      "setCode": "EX1",
+      "cardNumber": "3/109"
+    },
+    {
+      "id": "ex1-4",
+      "name": "Camerupt",
+      "setName": "Ruby & Sapphire",
+      "setCode": "EX1",
+      "cardNumber": "4/109"
+    },
+    {
+      "id": "ex1-5",
+      "name": "Delcatty",
+      "setName": "Ruby & Sapphire",
+      "setCode": "EX1",
+      "cardNumber": "5/109"
+    }
+  ],
   "ex10": [
     {
       "id": "ex10-1",
@@ -2478,6 +2515,43 @@
       "cardNumber": "1/12"
     }
   ],
+  "mcd18": [
+    {
+      "id": "mcd18-3",
+      "name": "Horsea",
+      "setName": "McDonald's Collection 2018",
+      "setCode": "MCD18",
+      "cardNumber": "3/12"
+    },
+    {
+      "id": "mcd18-2",
+      "name": "Psyduck",
+      "setName": "McDonald's Collection 2018",
+      "setCode": "MCD18",
+      "cardNumber": "2/12"
+    },
+    {
+      "id": "mcd18-1",
+      "name": "Growlithe",
+      "setName": "McDonald's Collection 2018",
+      "setCode": "MCD18",
+      "cardNumber": "1/12"
+    },
+    {
+      "id": "mcd18-4",
+      "name": "Pikachu",
+      "setName": "McDonald's Collection 2018",
+      "setCode": "MCD18",
+      "cardNumber": "4/12"
+    },
+    {
+      "id": "mcd18-5",
+      "name": "Slowpoke",
+      "setName": "McDonald's Collection 2018",
+      "setCode": "MCD18",
+      "cardNumber": "5/12"
+    }
+  ],
   "mcd19": [
     {
       "id": "mcd19-1",
@@ -3218,6 +3292,43 @@
       "cardNumber": "5/17"
     }
   ],
+  "pop2": [
+    {
+      "id": "pop2-1",
+      "name": "Entei",
+      "setName": "POP Series 2",
+      "setCode": "POP2",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop2-2",
+      "name": "Pidgeot",
+      "setName": "POP Series 2",
+      "setCode": "POP2",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop2-3",
+      "name": "Raikou",
+      "setName": "POP Series 2",
+      "setCode": "POP2",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop2-4",
+      "name": "Suicune",
+      "setName": "POP Series 2",
+      "setCode": "POP2",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop2-5",
+      "name": "Tauros",
+      "setName": "POP Series 2",
+      "setCode": "POP2",
+      "cardNumber": "5/17"
+    }
+  ],
   "pop3": [
     {
       "id": "pop3-1",
@@ -3400,6 +3511,43 @@
       "name": "Mothim",
       "setName": "POP Series 7",
       "setCode": "POP7",
+      "cardNumber": "5/17"
+    }
+  ],
+  "pop8": [
+    {
+      "id": "pop8-1",
+      "name": "Heatran",
+      "setName": "POP Series 8",
+      "setCode": "POP8",
+      "cardNumber": "1/17"
+    },
+    {
+      "id": "pop8-2",
+      "name": "Lucario",
+      "setName": "POP Series 8",
+      "setCode": "POP8",
+      "cardNumber": "2/17"
+    },
+    {
+      "id": "pop8-3",
+      "name": "Luxray",
+      "setName": "POP Series 8",
+      "setCode": "POP8",
+      "cardNumber": "3/17"
+    },
+    {
+      "id": "pop8-4",
+      "name": "Probopass",
+      "setName": "POP Series 8",
+      "setCode": "POP8",
+      "cardNumber": "4/17"
+    },
+    {
+      "id": "pop8-5",
+      "name": "Yanmega",
+      "setName": "POP Series 8",
+      "setCode": "POP8",
       "cardNumber": "5/17"
     }
   ],
@@ -5253,6 +5401,43 @@
       "cardNumber": "5/185"
     }
   ],
+  "swsh45": [
+    {
+      "id": "swsh45-1",
+      "name": "Yanma",
+      "setName": "Shining Fates",
+      "setCode": "SWSH45",
+      "cardNumber": "1/72"
+    },
+    {
+      "id": "swsh45-2",
+      "name": "Yanmega",
+      "setName": "Shining Fates",
+      "setCode": "SWSH45",
+      "cardNumber": "2/72"
+    },
+    {
+      "id": "swsh45-3",
+      "name": "Celebi",
+      "setName": "Shining Fates",
+      "setCode": "SWSH45",
+      "cardNumber": "3/72"
+    },
+    {
+      "id": "swsh45-4",
+      "name": "Cacnea",
+      "setName": "Shining Fates",
+      "setCode": "SWSH45",
+      "cardNumber": "4/72"
+    },
+    {
+      "id": "swsh45-5",
+      "name": "Tropius",
+      "setName": "Shining Fates",
+      "setCode": "SWSH45",
+      "cardNumber": "5/72"
+    }
+  ],
   "swsh45sv": [
     {
       "id": "swsh45sv-SV001",
@@ -5362,6 +5547,43 @@
       "setName": "Chilling Reign",
       "setCode": "SWSH6",
       "cardNumber": "5/198"
+    }
+  ],
+  "swsh7": [
+    {
+      "id": "swsh7-2",
+      "name": "Hoppip",
+      "setName": "Evolving Skies",
+      "setCode": "SWSH7",
+      "cardNumber": "2/203"
+    },
+    {
+      "id": "swsh7-4",
+      "name": "Jumpluff",
+      "setName": "Evolving Skies",
+      "setCode": "SWSH7",
+      "cardNumber": "4/203"
+    },
+    {
+      "id": "swsh7-6",
+      "name": "Tropius",
+      "setName": "Evolving Skies",
+      "setCode": "SWSH7",
+      "cardNumber": "6/203"
+    },
+    {
+      "id": "swsh7-1",
+      "name": "Pinsir",
+      "setName": "Evolving Skies",
+      "setCode": "SWSH7",
+      "cardNumber": "1/203"
+    },
+    {
+      "id": "swsh7-3",
+      "name": "Skiploom",
+      "setName": "Evolving Skies",
+      "setCode": "SWSH7",
+      "cardNumber": "3/203"
     }
   ],
   "swsh8": [

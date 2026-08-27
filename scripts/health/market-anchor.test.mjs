@@ -22,15 +22,45 @@ const complete = {
 };
 
 describe("market-anchor verdict", () => {
-  it("passes a complete run that stayed inside both floors", () => {
-    expect(interpretAnchorRun({ stdout: line(complete), exitCode: 0 }).status).toBe(PASS);
+  it("passes a complete run that stayed inside its floor", () => {
+    const result = interpretAnchorRun({ stdout: line(complete), exitCode: 0 });
+    expect(result.status).toBe(PASS);
+    expect(result.headline).toBe("every measured set reached a market anchor");
   });
 
-  it("fails a complete run that lost a set's anchor", () => {
-    const regressed = { ...complete, verdict: "regression", setCoverage: 0.9, setsWithoutAnchor: ["Journey Together"] };
+  it("does not claim every set anchored when some gaps are merely recorded", () => {
+    const withGaps = { ...complete, knownGaps: ["Pokémon Futsal Collection", "Supreme Victors"] };
+    const result = interpretAnchorRun({ stdout: line(withGaps), exitCode: 0 });
+    expect(result.status).toBe(PASS);
+    expect(result.headline).toBe("no set lost its anchor unexpectedly; 2 recorded gap(s) remain");
+  });
+
+  it("names the set that lost its anchor without a recorded reason", () => {
+    const regressed = {
+      ...complete,
+      verdict: "regression",
+      setCoverage: 0.9,
+      unexplainedGaps: ["Journey Together"],
+      knownGaps: ["Pokémon Futsal Collection"],
+    };
     const result = interpretAnchorRun({ stdout: line(regressed), exitCode: 1 });
     expect(result.status).toBe(FAIL);
-    expect(result.rows.join(" ")).toContain("Journey Together");
+    expect(result.headline).toContain("Journey Together");
+    // A gap that is already recorded is still printed, never silently dropped.
+    expect(result.rows.join(" ")).toContain("Pokémon Futsal Collection");
+  });
+
+  it("passes when every remaining gap is one already recorded", () => {
+    const known = { ...complete, verdict: "ok", knownGaps: ["Pokémon Futsal Collection"], unexplainedGaps: [] };
+    const result = interpretAnchorRun({ stdout: line(known), exitCode: 0 });
+    expect(result.status).toBe(PASS);
+    expect(result.rows.join(" ")).toContain("known gap: Pokémon Futsal Collection");
+  });
+
+  it("says when a recorded gap started resolving so its entry can go", () => {
+    const recovered = { ...complete, verdict: "ok", recoveredGaps: ["Supreme Victors"] };
+    const result = interpretAnchorRun({ stdout: line(recovered), exitCode: 0 });
+    expect(result.rows.join(" ")).toMatch(/recovered.*Supreme Victors/);
   });
 
   it("is inconclusive when the run ran out of time instead of measuring", () => {

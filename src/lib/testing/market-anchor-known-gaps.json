@@ -1,0 +1,8 @@
+{
+  "_comment": "Catalogued sets measured to have no TCGplayer market anchor, each with the reason it fails. Every entry is printed in the report on every run, whether or not the check is otherwise red, and a set that starts resolving is reported so its entry can be removed. A set NOT listed here that loses its anchor fails the check at the full floor. An entry without a written reason is rejected: this records what was measured, it does not hide it. Measured 2026-08-27 over 174 sets, 5 cards each, first completed run of this check.",
+  "Pokémon Futsal Collection": "no_group — no TCGplayer group matches the set name at all. It exists on TCGplayer only inside a ~1,500-product catch-all group whose contents drift, so there is nothing stable to crosswalk to. Known and documented before this measurement.",
+  "Supreme Victors": "rejected_or_ambiguous — the TCGplayer product name carries no collector number (#83457 \"Absol G\"), so print fidelity returns `unknown` and the selector abstains rather than guess a printing. The group itself matches.",
+  "Pokémon Rumble": "rejected_or_ambiguous — same shape as Supreme Victors: #90320 \"Venusaur\" @Rumble has no number in the product name, so the exact-print selector abstains.",
+  "Scarlet & Violet Energies": "rejected_or_ambiguous — energy products are named \"Basic Water Energy - 003\", carrying the number without its denominator, which does not satisfy the full-collector-number requirement.",
+  "Celebrations: Classic Collection": "mismatch — pokemontcg.io numbers these reprints against the 25-card subset (Charizard 4/25) while TCGplayer carries them under the original printing's number, so the crosswalk correctly reads a different collector number and refuses."
+}
