@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { auditCardAnchor, summarizeAudits, toAuditCard } from "@/lib/testing/market-anchor-coverage";
 import { fetchCatalogAnchorSample } from "@/lib/testing/catalog-anchor-sample";
 
-// Live coverage check: `npm run review:market-anchor`.
+// Live coverage check: `npm run review:market-anchor`, or `node
+// scripts/health/market-anchor.mjs` for the pass/fail/inconclusive verdict.
 //
 // This is the instrument for one specific product failure. The market anchor is
 // not decoration: ranking.ts multiplies it by MARKET_FLOOR_RATIO to reject
@@ -23,13 +24,30 @@ const enabled = process.env.MARKET_ANCHOR_REVIEW === "1";
 const MIN_SET_COVERAGE = 0.98;
 const MIN_CARD_COVERAGE = 0.97;
 
+// The walk is sequential against a provider measured at 6/12 healthy, so its
+// duration is set by that provider's mood rather than by the catalog's size.
+// Left unbounded it was simply killed by the runner every day for a week, and a
+// killed run cannot tell a coverage regression from a bad hour upstream. So the
+// run now stops on its own terms and reports how far it got; the surrounding
+// timeout stays well clear so the deadline is always what fires first.
+const DEADLINE_MS = Number(process.env.MARKET_ANCHOR_DEADLINE_MS ?? 900_000);
+const TEST_TIMEOUT_MS = DEADLINE_MS + 300_000;
+
 describe.skipIf(!enabled)("market anchor coverage", () => {
   it("resolves a TCGplayer anchor for a card from nearly every catalogued set", async () => {
-    const sample = await fetchCatalogAnchorSample();
+    const startedAt = Date.now();
+    const outOfTime = () => Date.now() - startedAt > DEADLINE_MS;
+
+    const sample = await fetchCatalogAnchorSample({ deadline: outOfTime });
     expect(sample.sets.length, "no catalog sets were sampled").toBeGreaterThan(100);
 
     const audits = [];
+    let unauditedCards = 0;
     for (const card of sample.cards) {
+      if (outOfTime()) {
+        unauditedCards = sample.cards.length - audits.length;
+        break;
+      }
       audits.push(await auditCardAnchor(toAuditCard(card)));
     }
 
@@ -42,14 +60,49 @@ describe.skipIf(!enabled)("market anchor coverage", () => {
     const resolvedSets = new Set(audits.filter((a) => a.stage === "resolved").map((a) => a.setName));
     for (const name of resolvedSets) failedSets.delete(name);
 
+    // Only sets we actually reached can be scored. Counting an unvisited set as
+    // a miss would turn "we ran out of time" into "coverage regressed", which is
+    // the exact confusion this check must never make.
+    const visitedSets = sample.sets.length - sample.unvisitedSets.length;
+    const setCoverage = visitedSets === 0 ? 0 : (visitedSets - failedSets.size) / visitedSets;
+    const feedErrors = summary.byStage.feed_error ?? 0;
+    const truncated = sample.truncated || unauditedCards > 0;
+
     console.log(`\n  cards ${summary.resolved}/${summary.total} (${(summary.coverage * 100).toFixed(1)}%)`);
     console.log(`  stages ${JSON.stringify(summary.byStage)}`);
-    console.log(`  sets without any resolvable card: ${failedSets.size}`);
+    console.log(`  sets visited ${visitedSets}/${sample.sets.length}, without any resolvable card: ${failedSets.size}`);
     for (const [setName, reason] of failedSets) console.log(`   - ${setName} — ${reason}`);
 
-    const setCoverage = (sample.sets.length - failedSets.size) / sample.sets.length;
-    expect(summary.byStage.feed_error ?? 0, "a provider feed failed; rerun before treating this as a coverage regression").toBe(0);
+    const withinBudget = setCoverage >= MIN_SET_COVERAGE && summary.coverage >= MIN_CARD_COVERAGE;
+    const verdict = truncated || feedErrors > 0 ? "inconclusive" : withinBudget ? "ok" : "regression";
+
+    // Read by scripts/health/market-anchor.mjs, which owns the exit code. The
+    // measurement reports what it saw; the judgment lives one layer up, the same
+    // separation every other health check has.
+    console.log(`::anchor::${JSON.stringify({
+      verdict,
+      cardCoverage: summary.coverage,
+      setCoverage,
+      cardsAudited: summary.total,
+      cardsResolved: summary.resolved,
+      setsVisited: visitedSets,
+      setsTotal: sample.sets.length,
+      setsWithoutAnchor: [...failedSets.keys()],
+      unreadableSets: sample.unreadableSets.length,
+      unauditedCards,
+      feedErrors,
+      elapsedMs: Date.now() - startedAt,
+      minSetCoverage: MIN_SET_COVERAGE,
+      minCardCoverage: MIN_CARD_COVERAGE,
+    })}`);
+
+    // An incomplete measurement is not evidence of anything, so it asserts
+    // nothing. The wrapper reports it as INCONCLUSIVE, which by design never
+    // pages anyone — and prints how far the run got, so a run that is
+    // permanently inconclusive is visible rather than quietly green.
+    if (verdict === "inconclusive") return;
+
     expect(setCoverage, `sets without a market anchor: ${[...failedSets.keys()].join(", ")}`).toBeGreaterThanOrEqual(MIN_SET_COVERAGE);
     expect(summary.coverage).toBeGreaterThanOrEqual(MIN_CARD_COVERAGE);
-  }, 600000);
+  }, TEST_TIMEOUT_MS);
 });

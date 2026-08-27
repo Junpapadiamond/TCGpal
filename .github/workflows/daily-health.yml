@@ -48,7 +48,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/health/deploy-drift.mjs
+      - run: scripts/health/run.sh node scripts/health/deploy-drift.mjs
 
   provider-health:
     if: ${{ github.event.inputs.only == '' || github.event.inputs.only == 'provider-health' }}
@@ -58,16 +58,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/health/provider-health.mjs
+      - run: scripts/health/run.sh node scripts/health/provider-health.mjs
         env:
           POKEMON_TCG_API_KEY: ${{ secrets.POKEMON_TCG_API_KEY }}
 
   market-anchor:
-    # The slow one (~10 min): replays the real crosswalk over a card from every
-    # catalogued set. Runs daily because new sets are exactly when it breaks.
+    # The slow one: replays the real crosswalk over a card from every catalogued
+    # set. Runs daily because new sets are exactly when it breaks. The walk is
+    # sequential against a provider measured at 6/12 healthy, so it carries its
+    # own deadline and reports INCONCLUSIVE rather than being killed by the
+    # runner — being killed is what made this check red for seven days straight
+    # without once describing the product.
     if: ${{ github.event.inputs.only == '' || github.event.inputs.only == 'market-anchor' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -75,9 +79,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run review:market-anchor
+      - run: scripts/health/run.sh node scripts/health/market-anchor.mjs
         env:
           POKEMON_TCG_API_KEY: ${{ secrets.POKEMON_TCG_API_KEY }}
+          # 15 min deadline, 20 min test timeout, ~2 min for npm ci: comfortably
+          # inside the job's 30 minutes, so the check's own deadline is always
+          # what stops it and the run can always describe what it measured.
+          MARKET_ANCHOR_DEADLINE_MS: "900000"
 
   production:
     # Everything that can only be seen from outside: what a real basket of cards
@@ -94,13 +102,13 @@ jobs:
           node-version: 22
       - id: abstention
         continue-on-error: true
-        run: node scripts/health/abstention-rate.mjs
+        run: scripts/health/run.sh node scripts/health/abstention-rate.mjs
       - id: timing
         continue-on-error: true
-        run: node scripts/health/page-timing.mjs
+        run: scripts/health/run.sh node scripts/health/page-timing.mjs
       - id: concurrency
         continue-on-error: true
-        run: node scripts/health/concurrency-smoke.mjs
+        run: scripts/health/run.sh node scripts/health/concurrency-smoke.mjs
       - name: Fail the job if any production check failed
         if: >-
           steps.abstention.outcome == 'failure' ||
