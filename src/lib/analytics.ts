@@ -34,6 +34,9 @@ export type TcgpalAnalyticsEvent =
   // re-doing the research by hand — the kill criterion the folds would
   // otherwise hide. Payload stays within the allowlist (demo_mode only).
   | "alternatives_expanded"
+  // Opened when a buyer wants to know what the gates rejected. A high rate here
+  // says the recommendation alone is not carrying the trust.
+  | "exclusions_expanded"
   | "method_opened"
   | "qa_opened";
 

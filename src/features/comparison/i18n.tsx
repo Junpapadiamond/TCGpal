@@ -221,6 +221,23 @@ export const en = {
     nextMovesTitle: "No trustworthy buy yet",
     nextMovesBody: "TCGlens did not find a listing it can safely recommend. You can still refine the card details, retry a source, or open the manual market checks below.",
     nextMovesMethod: "See next checks",
+    // An empty result that does not say what it saw is indistinguishable from a
+    // broken one. These render the deterministic exclusion counts the report
+    // already carries, so "nothing to recommend" stays checkable.
+    sawTitle: "What this search saw",
+    sawNothing: "No live listing came back for this card from the sources checked.",
+    sawSummary: (found: number, excluded: number) =>
+      `${found} live ${found === 1 ? "listing" : "listings"} found · ${excluded} excluded`,
+    exclusionGroups: {
+      product: (count: number) => `${count} graded, sealed, lot, or replica ${count === 1 ? "listing" : "listings"}`,
+      identity: (count: number) => `${count} that did not prove the exact print you confirmed`,
+      price_floor: (count: number) => `${count} priced below the exact-print floor`,
+      condition: (count: number) => `${count} below the condition you asked for`,
+      cost: (count: number) => `${count} without a complete comparable cost`,
+      language: (count: number) => `${count} in a conflicting language`,
+      availability: (count: number) => `${count} no longer active`,
+      other: (count: number) => `${count} excluded for other reasons`,
+    } as Record<string, (count: number) => string>,
     refineSearch: "Refine search",
     retrySources: "Retry sources",
     pasteListing: "Paste a listing",
@@ -303,6 +320,10 @@ export const en = {
     shareResult: "Share result",
     shareUrlCopied: "Link copied. This receipt expires in 30 days.",
     shareTextCopied: "Result summary copied.",
+    // A browser that refuses clipboard access used to leave the button looking
+    // dead. Show the link instead so the share still works by hand.
+    shareCopyFailed: "Couldn't reach your clipboard. Copy this link:",
+    shareCopyFailedText: "Couldn't reach your clipboard. Copy this summary:",
     compareSuggestedPrint: (label: string) => `Compare the ${label} instead`,
     compareSuggestedFallbackLabel: "other print of this number",
     compareOthers: (n: number) => `Compare ${n} other eligible listing${n === 1 ? "" : "s"}`,
@@ -694,6 +715,19 @@ export const zh: Dict = {
     nextMovesTitle: "暂时没有能放心买的",
     nextMovesBody: "这次没找到能放心推荐的商品。你可以补卡片信息、重试来源，或者用下面的手动市场查询。",
     nextMovesMethod: "看下一步怎么查",
+    sawTitle: "这次搜到了什么",
+    sawNothing: "查过的来源都没有返回这张卡的在售商品。",
+    sawSummary: (found: number, excluded: number) => `找到 ${found} 条在售商品，排除 ${excluded} 条`,
+    exclusionGroups: {
+      product: (count: number) => `${count} 条是评级卡、未拆封、整套或复刻品`,
+      identity: (count: number) => `${count} 条证明不了就是你确认的那个版本`,
+      price_floor: (count: number) => `${count} 条价格低于该版本的合理下限`,
+      condition: (count: number) => `${count} 条品相低于你的要求`,
+      cost: (count: number) => `${count} 条算不出完整的到手价`,
+      language: (count: number) => `${count} 条语言版本对不上`,
+      availability: (count: number) => `${count} 条已经下架`,
+      other: (count: number) => `${count} 条因其他原因被排除`,
+    } as Record<string, (count: number) => string>,
     refineSearch: "调整搜索",
     retrySources: "重试来源",
     pasteListing: "贴一条链接",
@@ -776,6 +810,8 @@ export const zh: Dict = {
     shareResult: "分享结果",
     shareUrlCopied: "链接已复制。这份凭证将在 30 天后到期。",
     shareTextCopied: "结果摘要已复制。",
+    shareCopyFailed: "读不到剪贴板，请手动复制这个链接：",
+    shareCopyFailedText: "读不到剪贴板，请手动复制这段摘要：",
     compareSuggestedPrint: (label: string) => `改比「${label}」`,
     compareSuggestedFallbackLabel: "同卡号的其他版本",
     compareOthers: (n: number) => `再比另外 ${n} 条`,

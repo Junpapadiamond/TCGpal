@@ -202,6 +202,10 @@ describe("eBay active-listing search", () => {
 
   const buyer = { country: "US" as const, postalCode: "10001", taxRate: 0.08, desiredCondition: "Unknown" as const };
 
+  // `searchUrl` is the FIRST search this fetcher served. The rows it returns name a
+  // different card than any One Piece fixture asks for, so the search ladder is
+  // entitled to broaden past them; the queries under test here are the ones the
+  // ladder leads with, not the ones it settles for.
   function searchFetcher(captured: { searchUrl?: string }) {
     return (async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -211,7 +215,7 @@ describe("eBay active-listing search", () => {
       if (!url.includes("/item_summary/search")) {
         return { ok: false, status: 404, json: async () => ({}) } as Response;
       }
-      captured.searchUrl = url;
+      captured.searchUrl ??= url;
       return {
         ok: true,
         status: 200,
@@ -409,6 +413,84 @@ describe("eBay active-listing search", () => {
     const results = await searchEbayAlternatives(winner, buyer, fetcher);
     expect(searchQueries).toContain("Monkey.D.Luffy ST01-012 tournament winner");
     expect(results.map((listing) => listing.id)).toContain("ebay-winner");
+  });
+
+  it("broadens past an attempt whose rows can never rank, and keeps the best set it saw", async () => {
+    // The gate that decides whether to stop on a non-final attempt used to accept
+    // any row that was not a proven mismatch. A base-print title is not a
+    // mismatch for a sibling print, it is `unknown` — and `unknown` rows are
+    // excluded by the ranking gates, so stopping there returns a full page of
+    // listings and zero comparable ones. That is the Nami OP01-016 empty result:
+    // eBay had inventory, every row we kept was unrankable, and the broader
+    // attempt that would have found the confirmed print never ran.
+    const searchQueries: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        const q = new URL(url).searchParams.get("q") ?? "";
+        searchQueries.push(q);
+        if (q.includes("SP Awakening Of The New Era")) {
+          // Rows for the number, none of which prove the SP print.
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              itemSummaries: [
+                { itemId: "base-1", title: "Nami OP01-016 One Piece Card Game English NM", price: { value: "2.00", currency: "USD" } },
+              ],
+            }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            itemSummaries: [
+              { itemId: "sp-1", title: "Nami OP01-016 SP Special Art Awakening Of The New Era", price: { value: "300.00", currency: "USD" } },
+            ],
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(spCard, buyer, fetcher);
+    expect(searchQueries).toEqual(["Nami OP01-016 SP Awakening Of The New Era", "Nami OP01-016"]);
+    expect(results.map((listing) => listing.id)).toEqual(["ebay-sp-1"]);
+  });
+
+  it("keeps the earlier rows when broadening finds nothing better, so recall never drops", async () => {
+    // Broadening must not be able to lose listings: if the wider query comes back
+    // empty, the unrankable rows we already had are still the honest answer and
+    // still populate the excluded ledger the empty state reports.
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        const q = new URL(url).searchParams.get("q") ?? "";
+        if (q.includes("SP Awakening Of The New Era")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              itemSummaries: [
+                { itemId: "base-1", title: "Nami OP01-016 One Piece Card Game English NM", price: { value: "2.00", currency: "USD" } },
+              ],
+            }),
+          } as Response;
+        }
+        return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    const results = await searchEbayAlternatives(spCard, buyer, fetcher);
+    expect(results.map((listing) => listing.id)).toEqual(["ebay-base-1"]);
   });
 
   it("broadens to the plain card query when the variant-token search finds no USD listings", async () => {

@@ -40,6 +40,10 @@ import {
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
+import { submitsOnEnter } from "@/features/comparison/search-submit";
+import { summarizeExclusions } from "@/features/comparison/exclusion-summary";
+import { useCondensedHeader } from "@/features/comparison/header-condense";
+import { NATIVE_FORM_FIELDS, parseNativeFormSubmit } from "@/lib/native-form-recovery";
 import { useAiVerdictNote } from "./use-ai-verdict-note";
 import { cardImageSource } from "@/lib/external/card-image";
 import {
@@ -813,12 +817,31 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     }
     const handoff = parseAgentSearchParams(searchParams);
     const journey = handoff ? null : parseJourneySearchParams(searchParams);
+    // Last: the browser submitting the landing form itself, before React was
+    // listening. Re-run that search rather than leaving the buyer on a blank box
+    // wondering why Enter did nothing, and take the fields back out of the URL —
+    // the delivery ZIP has no business sitting in the address bar or in history.
+    const nativeSubmit = handoff || journey ? null : parseNativeFormSubmit(searchParams);
+    if (nativeSubmit) {
+      const url = new URL(window.location.href);
+      for (const field of NATIVE_FORM_FIELDS) url.searchParams.delete(field);
+      const search = url.searchParams.toString();
+      window.history.replaceState(window.history.state, "", `${url.pathname}${search ? `?${search}` : ""}${url.hash}`);
+      if (nativeSubmit.game) form.setValue("game", nativeSubmit.game);
+      if (nativeSubmit.postalCode) form.setValue("postalCode", nativeSubmit.postalCode);
+    }
     const restored = handoff ?? (journey ? {
       query: journey.query,
       game: journey.game,
       confirmedCardId: journey.confirmedCardId,
       autoSubmit: journey.step !== "search",
       desiredCondition: journey.desiredCondition,
+    } : nativeSubmit ? {
+      query: nativeSubmit.query,
+      game: nativeSubmit.game ?? "pokemon" as const,
+      confirmedCardId: undefined,
+      autoSubmit: true,
+      desiredCondition: undefined,
     } : null);
     if (!restored) return;
 
@@ -1021,7 +1044,15 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                 <span>{t.form.heroSearchLabel}</span>
                 <div className="input-with-icon">
                   <IconCardSearch className="h-4 w-4" />
-                  <input {...form.register("heroQuery")} autoFocus />
+                  <input
+                    {...form.register("heroQuery")}
+                    onKeyDown={(event) => {
+                      if (!submitsOnEnter(event.nativeEvent)) return;
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }}
+                    autoFocus
+                  />
                 </div>
               </label>
               <label className="field">
@@ -1063,6 +1094,11 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                   {...form.register("heroQuery")}
                   aria-label={t.form.heroSearchLabel}
                   placeholder={typedPlaceholder ?? t.form.heroSearchPlaceholder}
+                  onKeyDown={(event) => {
+                    if (!submitsOnEnter(event.nativeEvent)) return;
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }}
                   autoFocus
                 />
                 <button type="submit" disabled={loading}>
@@ -1423,6 +1459,49 @@ function Header({ onLogoClick }: { onLogoClick: () => void }) {
   );
 }
 
+type ShareFeedback =
+  | { kind: "url" | "text" }
+  | { kind: "failed"; method: "url" | "text"; payload: string }
+  | null;
+
+/**
+ * The buyer-facing account of what the search actually saw.
+ *
+ * "No trustworthy buy yet" on its own reads as a broken product: the buyer
+ * cannot tell whether eBay had no inventory or whether we found twenty copies
+ * and rejected every one. The report already carries the typed reason each
+ * candidate was dropped, so showing the counts costs nothing and turns a dead
+ * end into a checkable one — the difference between an empty state and an
+ * explanation.
+ */
+function SearchAccounting({ candidates }: { candidates: NormalizedListing[] }) {
+  const t = useT();
+  const summary = summarizeExclusions(candidates);
+
+  return (
+    <div className="mt-4 border-t border-current/15 pt-3 text-sm">
+      <p className="font-black">{t.result.sawTitle}</p>
+      {summary.found === 0 ? (
+        <p className="mt-1 leading-6">{t.result.sawNothing}</p>
+      ) : (
+        <>
+          <p className="mt-1 leading-6">{t.result.sawSummary(summary.found, summary.excluded)}</p>
+          {summary.groups.length > 0 && (
+            <ul className="mt-2 space-y-1 leading-6">
+              {summary.groups.map((group) => (
+                <li key={group.code} className="flex gap-2">
+                  <span aria-hidden="true">·</span>
+                  <span>{(t.result.exclusionGroups[group.code] ?? t.result.exclusionGroups.other)(group.count)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function ResultsHeader({
   query,
   context,
@@ -1440,15 +1519,24 @@ function ResultsHeader({
 }) {
   const t = useT();
   const { lang, setLang } = useLang();
+  // Mobile only: once the buyer is reading the recommendation, the header drops
+  // to one row so the pick is not read four lines at a time. The edit panel
+  // being open always wins — the buyer is using the header, not the result.
+  const condensed = useCondensedHeader() && !editOpen;
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fcfbf6]/95 shadow-[0_1px_10px_rgba(36,49,47,0.04)] backdrop-blur">
-      <div className="relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-2 px-4 py-2.5 sm:gap-3 sm:px-6 lg:flex-nowrap lg:px-8">
-        <button className="shrink-0" type="button" onClick={onNewSearch} aria-label={t.header.home}>
+      <div className={`relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-2 px-4 sm:gap-3 sm:px-6 sm:py-2.5 lg:flex-nowrap lg:px-8 ${condensed ? "py-1.5" : "py-2.5"}`}>
+        <button
+          className={`shrink-0 sm:block ${condensed ? "hidden" : "block"}`}
+          type="button"
+          onClick={onNewSearch}
+          aria-label={t.header.home}
+        >
           <Image src="/lens-logo-horizontal.svg" alt="Lens TCG" width={105} height={30} priority />
         </button>
         <button
-          className="order-3 flex min-w-0 basis-full items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 py-2 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 lg:max-w-[610px]"
+          className={`flex min-w-0 items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 sm:py-2 lg:max-w-[610px] ${condensed ? "order-none flex-1 basis-0 py-1" : "order-3 basis-full py-2"}`}
           type="button"
           aria-expanded={editOpen}
           aria-controls="results-edit-panel"
@@ -1457,14 +1545,23 @@ function ResultsHeader({
           <IconCardSearch className="h-4 w-4 shrink-0 text-[#2f6f73]" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-black leading-5 text-[#24312f]">{query}</span>
-            {context && <span className="mt-0.5 block truncate text-xs font-bold leading-4 text-[#64736c]">{context}</span>}
+            {context && (
+              <span className={`mt-0.5 truncate text-xs font-bold leading-4 text-[#64736c] sm:block ${condensed ? "hidden" : "block"}`}>
+                {context}
+              </span>
+            )}
           </span>
           <span className="shrink-0 text-xs font-black text-[#2f6f73]">{editOpen ? t.header.closeSearch : t.header.editSearch}</span>
         </button>
         <nav className="ml-auto flex items-center gap-2 text-xs font-black text-[#64736c] sm:gap-4">
           <button className="inline-flex min-h-11 items-center hover:text-[#2f6f73]" type="button" onClick={onNewSearch}>{t.header.newSearch}</button>
           <a className="hidden min-h-11 items-center hover:text-[#2f6f73] sm:inline-flex" href="/method">{t.header.method}</a>
-          <LanguageToggle lang={lang} setLang={setLang} t={t} />
+          {/* The collector number is the identity-critical half of the summary, so
+              on a condensed mobile row it outranks the language switch — a
+              set-once control that comes back the moment the buyer scrolls up. */}
+          <div className={`sm:block ${condensed ? "hidden" : "block"}`}>
+            <LanguageToggle lang={lang} setLang={setLang} t={t} />
+          </div>
         </nav>
       </div>
       {editPanel}
@@ -2305,12 +2402,16 @@ function ComparisonResult({
   // buyer asks — via the hero's "Why is this the top pick?", a row's Ask link,
   // or the standalone opener under the alternatives fold.
   const [qaOpen, setQaOpen] = useState(false);
-  const [shareFeedback, setShareFeedback] = useState<"url" | "text" | null>(null);
+  // `failed` carries the text the clipboard refused, so the buyer can still copy
+  // it by hand. A share button that does nothing visible is worse than one that
+  // admits it could not copy: a sandboxed or permission-blocked clipboard is
+  // common, and silence there reads as a broken feature.
+  const [shareFeedback, setShareFeedback] = useState<ShareFeedback>(null);
 
   // Fold-rate signals, once per report: a buyer opening Layer-2/3 folds is
   // measurable re-research behavior (see the analytics event union).
   const foldEventsFired = useRef({ reportKey: "", fired: new Set<string>() });
-  function trackFoldOpened(event: "alternatives_expanded" | "qa_opened") {
+  function trackFoldOpened(event: "alternatives_expanded" | "exclusions_expanded" | "qa_opened") {
     if (foldEventsFired.current.reportKey !== report.generatedAt) {
       foldEventsFired.current = { reportKey: report.generatedAt, fired: new Set() };
     }
@@ -2390,13 +2491,22 @@ function ComparisonResult({
             return url.toString();
           })()
         : null;
-      await navigator.clipboard.writeText(shareUrl ?? receipt);
+      const payload = shareUrl ?? receipt;
       const shareMethod = shareUrl ? "url" : "text";
-      setShareFeedback(shareMethod);
+      await navigator.clipboard.writeText(payload);
+      setShareFeedback({ kind: shareMethod });
       trackEvent("result_shared", { share_method: shareMethod, result_state: outcome });
       window.setTimeout(() => setShareFeedback(null), 4000);
     } catch {
-      setShareFeedback(null);
+      // The clipboard can be blocked outright (permissions, an embedded or
+      // sandboxed view). Show the payload rather than swallowing the click.
+      setShareFeedback({
+        kind: "failed",
+        method: snapshot?.id && snapshot.durable ? "url" : "text",
+        payload: snapshot?.id && snapshot.durable
+          ? new URL(`/r/${snapshot.id}`, window.location.origin).toString()
+          : receipt,
+      });
     }
   }
 
@@ -2459,6 +2569,7 @@ function ComparisonResult({
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.nextMovesTitle}</h3>
           <p className="mt-2 text-sm leading-6">{t.result.nextMovesBody}</p>
+          <SearchAccounting candidates={report.candidates} />
           {report.abstention?.suggestedCardId && (
             <button
               className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-[#2f6f73] px-4 text-sm font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
@@ -2478,7 +2589,12 @@ function ComparisonResult({
       )}
 
       {outcome === "inspect_first" && inspectListing && (
-        <InspectFirstHero listing={inspectListing} confirmedCard={report.confirmedCard} />
+        <>
+          <InspectFirstHero listing={inspectListing} confirmedCard={report.confirmedCard} />
+          <div className="mx-auto max-w-[860px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4 text-[#4a5a54]">
+            <SearchAccounting candidates={report.candidates} />
+          </div>
+        </>
       )}
 
       <div className="mx-auto max-w-[860px] space-y-3">
@@ -2538,6 +2654,23 @@ function ComparisonResult({
                     onAsk={askAboutListing}
                   />
                 ))}
+              </div>
+            </details>
+          )}
+
+          {outcome === "best_buy" && excluded.length > 0 && (
+            <details
+              className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]"
+              onToggle={(event) => {
+                if ((event.target as HTMLDetailsElement).open) trackFoldOpened("exclusions_expanded");
+              }}
+            >
+              <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-black text-[#2f6f73] transition hover:text-[#24585c]">
+                {t.result.sawSummary(report.candidates.length, excluded.length)}
+                <IconChevronDown className="h-4 w-4 shrink-0" />
+              </summary>
+              <div className="border-t border-[#d6ded5] px-4 pb-4 text-[#4a5a54]">
+                <SearchAccounting candidates={report.candidates} />
               </div>
             </details>
           )}
@@ -3278,7 +3411,7 @@ function RecommendedBuyHero({
   marketPrice: number | null;
   demoMode: boolean;
   onAsk: (listing: NormalizedListing) => void;
-  shareFeedback: "url" | "text" | null;
+  shareFeedback: ShareFeedback;
   shareReady: boolean;
   onShare: () => void;
 }) {
@@ -3408,9 +3541,24 @@ function RecommendedBuyHero({
           </div>
         </div>
         {shareFeedback && (
-          <p aria-live="polite" className="mt-2 text-right text-xs font-bold text-[#2f6f73]">
-            {shareFeedback === "url" && shareReady ? t.result.shareUrlCopied : t.result.shareTextCopied}
-          </p>
+          <div aria-live="polite" className="mt-2 text-right text-xs font-bold text-[#2f6f73]">
+            {shareFeedback.kind === "failed" ? (
+              <>
+                <p className="text-[#9a4a2c]">
+                  {shareFeedback.method === "url" ? t.result.shareCopyFailed : t.result.shareCopyFailedText}
+                </p>
+                <textarea
+                  className="mt-1 w-full resize-none rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-2 text-left font-mono text-[11px] font-normal text-[#24312f]"
+                  readOnly
+                  rows={shareFeedback.method === "url" ? 1 : 4}
+                  value={shareFeedback.payload}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+              </>
+            ) : (
+              <p>{shareFeedback.kind === "url" && shareReady ? t.result.shareUrlCopied : t.result.shareTextCopied}</p>
+            )}
+          </div>
         )}
       </div>
     </article>

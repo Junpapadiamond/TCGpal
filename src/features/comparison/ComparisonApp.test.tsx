@@ -434,6 +434,60 @@ describe("comparison condition controls", () => {
     });
   });
 
+  it("runs the search when the buyer presses Enter in the card box", async () => {
+    // Typing a query and hitting Enter is how most visitors use a search box. It
+    // was reported doing nothing at all on the live site — twice — while the
+    // button worked, so this asserts the keystroke itself, not the button.
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Umbreon ex 161/131" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]?.query).toBe("Umbreon ex 161/131");
+  });
+
+  it("runs the search on Enter from the results edit panel too", async () => {
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Charizard 4/102" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    const editToggle = await waitFor(() => {
+      const button = document.querySelector<HTMLButtonElement>('button[aria-controls="results-edit-panel"]');
+      if (!button) throw new Error("results header not shown yet");
+      return button;
+    });
+    fireEvent.click(editToggle);
+
+    const editQuery = await waitFor(() => {
+      const input = document.querySelector<HTMLInputElement>('#results-edit-panel input[name="heroQuery"]');
+      if (!input) throw new Error("edit panel not open yet");
+      return input;
+    });
+    fireEvent.change(editQuery, { target: { value: "Nami OP01-016" } });
+    fireEvent.keyDown(editQuery, { key: "Enter" });
+
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[1]?.query).toBe("Nami OP01-016");
+  });
+
+  it("lets an IME finish composing instead of searching for a half-typed query", async () => {
+    // Enter confirms the candidate characters in every CJK input method; the
+    // 中文 flow is a supported path, so that keystroke is not ours to take.
+    render(<ComparisonApp />);
+
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "皮卡丘" } });
+    fireEvent.keyDown(query, { key: "Enter", isComposing: true });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(requests).toHaveLength(0);
+  });
+
   it("includes the landing ZIP in the first comparison request", async () => {
     render(<ComparisonApp />);
 

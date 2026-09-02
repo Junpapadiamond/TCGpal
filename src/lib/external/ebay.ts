@@ -317,8 +317,18 @@ export async function searchEbayAlternatives(
     },
   ];
 
+  // Stopping on the first attempt that returned anything is not the same as
+  // stopping on the first attempt that returned something a buyer can act on.
+  // A base-print title is not a *mismatch* for a sibling print, it is `unknown`,
+  // and the ranking gates exclude `unknown` — so an attempt that comes back full
+  // of plain family listings used to end the ladder and produce a report with
+  // inventory and zero comparable rows. Keep broadening while nothing rankable
+  // has been seen, and never discard the best set already in hand: a wider query
+  // that returns nothing must not turn a thin result into an empty one.
   let summaries: z.infer<typeof ebayItemSchema>[] = [];
   let searchNote = "";
+  let fallback: { rows: z.infer<typeof ebayItemSchema>[]; attempt: (typeof attempts)[number] } | null = null;
+  let broadenedFromUnrankable = "";
   for (const [index, attempt] of attempts.entries()) {
     const finalAttempt = index === attempts.length - 1;
     const endpoint = buildEbaySearchEndpoint(attempt);
@@ -333,26 +343,51 @@ export async function searchEbayAlternatives(
       throw new Error(`eBay active-listing search failed with ${response.status}.`);
     }
     const result = ebaySearchSchema.parse(await response.json());
-    summaries = result.itemSummaries.filter((item) => item.price.currency === "USD");
-    if (!finalAttempt && summaries.length > 0) {
-      const nonMismatches = summaries.filter((item) => assessPrintFidelity({
-        card,
-        matchText: item.title,
-        listingPrice: Number(item.price.value),
-        exactMarketAnchor: null,
-      }).match !== "mismatch");
-      if (nonMismatches.length === 0) {
+    let rows = result.itemSummaries.filter((item) => item.price.currency === "USD");
+    if (!finalAttempt && rows.length > 0) {
+      const assessed = rows.map((item) => ({
+        item,
+        match: assessPrintFidelity({
+          card,
+          matchText: item.title,
+          listingPrice: Number(item.price.value),
+          exactMarketAnchor: null,
+        }).match,
+      }));
+      rows = assessed.filter((row) => row.match !== "mismatch").map((row) => row.item);
+      const rankable = assessed.some((row) => row.match === "exact" || row.match === "compatible");
+      if (!rankable) {
+        // Hold the rows as a floor and try the next, broader attempt. The first
+        // non-empty set wins the tie: earlier attempts are the more specific ones.
+        if (rows.length > 0 && !fallback) {
+          fallback = { rows, attempt };
+          broadenedFromUnrankable = attempt.mode === "epid"
+            ? `eBay product-ID search for ePID ${attempt.epid} returned no listing that proves the confirmed print; broadened to the keyword query.`
+            : `eBay search for "${attempt.query}" returned no listing that proves the confirmed print; broadened to the plain card query.`;
+        }
         continue;
       }
-      summaries = nonMismatches;
     }
-    summaries = await addPaddedCollectorNumberRows(summaries, card, attempt, buyer, fetcher);
+    if (rows.length === 0 && fallback) {
+      // The broader query found nothing; the narrower rows are still the honest
+      // answer, and they still populate the excluded ledger the empty state reads.
+      summaries = await addPaddedCollectorNumberRows(fallback.rows, card, fallback.attempt, buyer, fetcher);
+      searchNote = broadenedFromUnrankable
+        ? `${broadenedFromUnrankable} That query returned no USD candidates, so the narrower result stands.`
+        : searchNote;
+      break;
+    }
+    summaries = await addPaddedCollectorNumberRows(rows, card, attempt, buyer, fetcher);
     searchNote = attempt.mode === "epid"
       ? `Searched eBay by product ID ePID ${attempt.epid}.`
-      : attempt.fallbackReason || (variantToken && !finalAttempt
+      : broadenedFromUnrankable || attempt.fallbackReason || (variantToken && !finalAttempt
         ? `Searched eBay with the variant-marked query "${attempt.query}".`
         : "Searched eBay by keyword fallback.");
     if (summaries.length > 0 || finalAttempt) break;
+  }
+  if (summaries.length === 0 && fallback) {
+    summaries = await addPaddedCollectorNumberRows(fallback.rows, card, fallback.attempt, buyer, fetcher);
+    searchNote = broadenedFromUnrankable || searchNote;
   }
 
   // Browse search summaries usually say only "Ungraded". The item endpoint
