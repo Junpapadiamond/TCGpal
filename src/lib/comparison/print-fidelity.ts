@@ -18,7 +18,12 @@ export type PrintFidelityAssessment = {
 
 type PrintClass = "base" | "alt" | "sp" | "manga" | "treasure";
 
-const genericAltPattern = /\b(alt(?:ernate)?[\s.]*art|parallel|full[\s-]*art|art\s*rare)\b/i;
+// Every way a seller says "not the base art" without naming which. A bare
+// "Alt" ("SEC Alt", "Alt Foil") and the shorthand "AA" are as common in titles as
+// "Alt Art", and the catalog itself labels secret-rare parallels "Secret Rare
+// Alt" — a detector that needed the word "art" read those as silence, and the
+// silence rule then handed a parallel's own listing to the base print.
+const genericAltPattern = /\b(alt(?:ernate)?(?:[\s.]*art)?|parallel|full[\s-]*art|art\s*rare|aa)\b/i;
 
 export function assessPrintFidelity(input: {
   card: CardIdentityCandidate;
@@ -154,6 +159,35 @@ function classifyOnePiecePrintIdentity(
       : result("compatible", "high", "one_piece_single_print_number_is_unambiguous");
   }
 
+  // A title that names nothing but the card is describing the ordinary print.
+  //
+  // Every sibling of a retail number is worth several times the base and is sold
+  // on that fact: a seller with an alternate art, manga, special art, or event
+  // print writes it in the title, because the price makes no sense otherwise.
+  // The gate was reading the absence of that word as the absence of evidence and
+  // sending every plain listing to `unknown`, which the ranking gates exclude.
+  // On 2026-08-14 that was eight of twelve adjudicated cards — all base prints,
+  // all `inspect_first`, every winning title naming the original release and
+  // nothing else ("Roronoa Zoro OP06-118 Secret Rare Wings of the Captain").
+  //
+  // The rule is one-way and runs after every veto. A class word, a treatment, a
+  // release no sibling owns, or a stat conflict has already produced a mismatch
+  // by this point; a title naming a reprint release lands on the reprint's owners
+  // and never reaches the base. Silence proves the base and nothing else: it
+  // cannot prove an alt art, and it proves nothing among promos, where every
+  // print of a P- number is a promo and none is the ordinary one.
+  const silent = !observed.artworkClass && !observed.treatment && !/\bbase\s+print\b/i.test(text);
+  if (silent && selected.artworkClass === "base" && isOrdinaryRetailNumber(card.cardNumber)) {
+    const baseOwners = new Set(siblings.filter((sibling) => sibling.artworkClass === "base").map((sibling) => sibling.id));
+    const possible = intersectEvidence(siblings, [...evidenceSets, baseOwners]);
+    if (!possible.has(selected.id)) {
+      return result("mismatch", "high", "listing_evidence_identifies_sibling_print");
+    }
+    if (possible.size === 1) {
+      return result("compatible", "high", "one_piece_plain_title_describes_base_print");
+    }
+  }
+
   if (evidenceSets.length === 0) {
     return result("unknown", "low", "plain_family_listing_does_not_identify_print");
   }
@@ -168,13 +202,23 @@ function classifyOnePiecePrintIdentity(
   const textTokens = phraseTokens(text);
   const hasSelectedExactMarker = [...selected.exactMarkers]
     .some((marker) => phraseTokens(marker).every((token) => textTokens.includes(token)));
+  // "Alt art" and "SP" are loose words: with several non-base siblings a seller
+  // may reach for either to describe a manga or a special art, so on their own
+  // they need a release or marker to corroborate which sibling is meant. That
+  // hazard needs a wrong sibling to exist. In a two-print family — the shape of
+  // most of EB01 through EB04, a base and one alternate — the class word can
+  // point at exactly one print, and demanding corroboration only sent every
+  // "Alt Art Memorial Collection" listing to inspect. A base mislabelled as the
+  // alt is caught by the market floor against the alt's own anchor.
+  const otherNonBasePrints = siblings.filter((sibling) => sibling.id !== selected.id && sibling.artworkClass !== "base").length;
   const genericClassOnly = markerEvidence.length === 0
     && !observed.treatment
     && !hasSelectedExactMarker
     && observed.artworkClass !== "manga"
     && observed.artworkClass !== "wanted_poster"
     && observed.artworkClass !== "super_alternate"
-    && !/\bbase\s+print\b/i.test(text);
+    && !/\bbase\s+print\b/i.test(text)
+    && otherNonBasePrints > 0;
   if (genericClassOnly) {
     return result("unknown", "low", "one_piece_class_evidence_requires_corroboration");
   }
@@ -187,9 +231,15 @@ function classifyOnePiecePrintIdentity(
 
 // A tournament print shares its artwork with the release it commemorates, so the
 // listing has to name that release before the competition version can be claimed.
+// Naming it means the anniversary the 3rd Anniversary packs are known by, or the
+// print's own full release name — "Winner Pack 2025 Vol.2" is proof of the Winner
+// Pack 2025 Vol.2 print. Nothing looser counts: "tournament pack" alone could be
+// any of the numbered packs the catalog does not carry.
 function requiresCompetitionReleaseProof(card: CardIdentityCandidate, text: string) {
-  return (card.competitionTier === "winner" || card.competitionTier === "participation")
-    && !/\b\d+(?:st|nd|rd|th)\s+anniversary\b/i.test(text);
+  if (card.competitionTier !== "winner" && card.competitionTier !== "participation") return false;
+  if (/\b\d+(?:st|nd|rd|th)\s+anniversary\b/i.test(text)) return false;
+  const release = normalizePhrase(card.setName);
+  return !(release.length >= 4 && normalizePhrase(text).includes(release));
 }
 
 function buildWitnesses(cardNumber: string): PrintWitness[] {
@@ -225,16 +275,25 @@ function witnessClass(sibling: ReturnType<typeof findOnePieceCatalogVariants>[nu
   return derived;
 }
 
+// A marker is owned by every sibling whose own release wording contains it, not
+// only the sibling it was written for. Release names nest: "Event Pack" sits
+// inside "Cs 25-26 Event Pack", which sits inside "Cs 25-26 Event Pack Finalist
+// Ver."; "Regional Participation" sits inside a base print's release name that
+// the catalog never tagged. Ownership by origin made each of those a marker some
+// sibling's own careful listing contained but did not own, and the sibling veto
+// rejected the print's own listing as a different print — thirteen promo prints
+// in the 2026-09-04 audit. Ownership by containment cannot admit a wrong print:
+// a sibling only gains a marker its own release wording already carries.
 function buildMarkerOwners(siblings: PrintWitness[]): Map<string, Set<string>> {
+  const wording = siblings.map((sibling) => ({
+    id: sibling.id,
+    markers: [...sibling.markers].map(normalizePhrase).filter(Boolean),
+  }));
   const owners = new Map<string, Set<string>>();
-  for (const sibling of siblings) {
-    for (const marker of sibling.markers) {
-      const key = normalizePhrase(marker);
-      if (!key) continue;
-      const current = owners.get(key) ?? new Set<string>();
-      current.add(sibling.id);
-      owners.set(key, current);
-    }
+  for (const key of new Set(wording.flatMap((sibling) => sibling.markers))) {
+    owners.set(key, new Set(
+      wording.filter((sibling) => sibling.markers.some((marker) => marker.includes(key))).map((sibling) => sibling.id),
+    ));
   }
   return owners;
 }
@@ -331,18 +390,40 @@ function ownsStarterDeckNumber(card: CardIdentityCandidate, claimed: string) {
   return Number.isFinite(deck) && Number.isFinite(stated) && deck === stated;
 }
 
+// The forms a release name takes in a real title. Sellers shorten: "Gift
+// Collection 2023" is listed as "Gift Collection", "One Piece Card The Best
+// Vol.2" as "The Best Vol 2" or "Premium Booster", "Memorial Collection" as
+// "Memorial". Every alias here is seller-visible wording, never an internal id,
+// and a bare year is never one — "2023" names Gift Collection and Sealed Battle
+// alike and would veto the wrong print.
 function releaseAliases(releaseName: string): string[] {
   const aliases: string[] = [];
   const anniversary = releaseName.match(/\b(\d+(?:st|nd|rd|th))\s+anniversary\b/i)?.[0];
   if (anniversary) aliases.push(anniversary);
   if (/premium\s+(?:card\s+)?collection/i.test(releaseName)) aliases.push("premium collection");
-  if (/one\s+piece\s+card\s+the\s+best/i.test(releaseName)) aliases.push("the best");
+  if (/one\s+piece\s+card\s+the\s+best/i.test(releaseName)) aliases.push("the best", "premium booster");
   if (/tournament\s+pack/i.test(releaseName)) aliases.push("tournament pack");
   if (/\bwinner\b/i.test(releaseName)) aliases.push("winner");
+  if (/memorial\s+collection/i.test(releaseName)) aliases.push("memorial");
+  if (/anime\s+25th\s+collection/i.test(releaseName)) aliases.push("anime 25th");
+  if (/heroines/i.test(releaseName)) aliases.push("heroines");
+
+  // A trailing year or volume is the part sellers drop first, so the stem is its
+  // own alias. The volume is kept separately: it is what tells "The Best" from
+  // "The Best Vol.2" on the three numbers printed in both.
+  const qualifier = /\s*(?:\b20\d\d\b|\bvol\.?\s*\d+)\s*$/i;
+  const stem = releaseName.replace(qualifier, "").replace(qualifier, "").trim();
+  if (stem && stem !== releaseName.trim()) aliases.push(stem);
+  const volume = releaseName.match(/\bvol\.?\s*(\d+)/i)?.[1];
+  if (volume) aliases.push(`vol ${volume}`);
   return aliases;
 }
 
-function isGenericMarker(marker: string): boolean {
+// Class and treatment words that name a kind of print, not one print. They are
+// read by the facet detector, never used as sibling markers — "alt art" on its
+// own cannot be evidence for one alternate art over another. Exported so the
+// alignment audit judges marker uniqueness by the same rule.
+export function isGenericMarker(marker: string): boolean {
   return new Set([
     "altart", "alternateart", "parallel", "specialart", "sp", "manga", "mangaart", "mangarare",
     "wanted", "wantedposter", "posterart", "gold", "silver", "red", "superalt", "superalternateart",
@@ -424,6 +505,13 @@ function classifyPokemonPrintIdentity(
 
 function result(match: PrintMatch, confidence: "high" | "medium" | "low", reason: string) {
   return { match, confidence, reasons: [reason] };
+}
+
+// Booster, starter, extra booster, and premium booster numbers have one ordinary
+// retail print that the market treats as the default. Promo numbers do not: every
+// P- print is an event or campaign card, so "promo" on a title picks none of them.
+function isOrdinaryRetailNumber(cardNumber: string) {
+  return /^(?:OP|ST|EB|PRB)\d/i.test(cardNumber.trim());
 }
 
 function isOnePiecePrint(card: Pick<CardIdentityCandidate, "cardNumber" | "id">) {

@@ -54,6 +54,12 @@ function researchedPrintQueryToken(card: CardIdentityCandidate): string | null {
   return null;
 }
 
+// The class word alone — "alt art", "SP", "manga" — without a release name.
+// Researched tokens ("gold", "treasure cup") already are the class word.
+function printClassQueryToken(card: CardIdentityCandidate): string | null {
+  return researchedPrintQueryToken(card) ?? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null;
+}
+
 function sellerVocabularyPrintQueryToken(card: CardIdentityCandidate): string | null {
   const researched = researchedPrintQueryToken(card);
   if (researched) return researched;
@@ -289,32 +295,35 @@ export async function searchEbayAlternatives(
   // a variant-marked query and keep the unmarked query as the visible fallback.
   // Applied on top of query overrides too: the crosswalk template is the same
   // deterministic name+number string, and the fallback attempt protects recall.
-  const variantToken = isOnePieceCardKey(card.cardNumber, card.id)
-    ? sellerVocabularyPrintQueryToken(card)
-    : null;
+  const onePiece = isOnePieceCardKey(card.cardNumber, card.id);
+  const variantToken = onePiece ? sellerVocabularyPrintQueryToken(card) : null;
+  const classToken = onePiece ? printClassQueryToken(card) : null;
 
+  // Keyword rungs, most specific first. The release name is a long tail on the
+  // first rung — "alt art One Piece Card The Best Vol.2" is six extra tokens
+  // that Best Match treats as AND-ish — and sellers of the Extra and Premium
+  // Booster prints very often write the class word and skip the release. The
+  // class-only rung sits between that and the plain query so a long release
+  // name costs one broader search rather than the whole result.
+  const keywordRungs = [
+    ...(variantToken ? [`${query} ${variantToken}`] : []),
+    ...(classToken && classToken !== variantToken ? [`${query} ${classToken}`] : []),
+    query,
+  ];
   const attempts = [
     ...(ebayProduct?.epid
       ? [{ mode: "epid" as const, epid: ebayProduct.epid, query: "", fallbackReason: "" }]
       : []),
-    ...(variantToken
-      ? [{
-        mode: "keyword" as const,
-        query: `${query} ${variantToken}`,
-        fallbackReason: ebayProduct?.epid
-          ? `eBay product-ID search for ePID ${ebayProduct.epid} returned no USD candidates; broadened to the variant-marked keyword query.`
-          : "",
-      }]
-      : []),
-    {
-      mode: "keyword" as const,
-      query,
-      fallbackReason: variantToken
-        ? `eBay search for "${query} ${variantToken}" returned no USD candidates; broadened to the plain card query.`
+    ...keywordRungs.map((rung, index) => {
+      const last = index === keywordRungs.length - 1;
+      const previous = index === 0 ? null : keywordRungs[index - 1];
+      const fallbackReason = previous
+        ? `eBay search for "${previous}" returned no USD candidates; broadened to ${last ? "the plain card query" : `"${rung}"`}.`
         : ebayProduct?.epid
-          ? `eBay product-ID search for ePID ${ebayProduct.epid} returned no USD candidates; broadened to keyword fallback.`
-          : "",
-    },
+          ? `eBay product-ID search for ePID ${ebayProduct.epid} returned no USD candidates; broadened to ${variantToken ? "the variant-marked keyword query" : "keyword fallback"}.`
+          : "";
+      return { mode: "keyword" as const, query: rung, fallbackReason };
+    }),
   ];
 
   // Stopping on the first attempt that returned anything is not the same as

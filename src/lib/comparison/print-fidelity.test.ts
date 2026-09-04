@@ -136,7 +136,10 @@ describe("exact-print fidelity", () => {
     expect(result.match).toBe("unknown");
   });
 
-  it("keeps a plain One Piece name and number unresolved for every sibling print", () => {
+  it("reads a plain One Piece name and number as the base print, and as no sibling", () => {
+    // A seller with any of the seven non-base Nami prints says so — they are
+    // worth many times the base. Name and number alone describe the ordinary
+    // print, and cannot describe any other.
     for (const selected of namiPrints) {
       const result = assessPrintFidelity({
         card: selected,
@@ -145,7 +148,12 @@ describe("exact-print fidelity", () => {
         exactMarketAnchor: 100,
       });
 
-      expect(result.match, selected.id).toBe("unknown");
+      if (selected.id === "OP01-016") {
+        expect(result.match, selected.id).toBe("compatible");
+        expect(result.reasons).toContain("one_piece_plain_title_describes_base_print");
+      } else {
+        expect(result.match, selected.id).toBe("unknown");
+      }
     }
   });
 
@@ -277,7 +285,7 @@ describe("exact-print fidelity", () => {
       matchText: "Kid & Killer EB01-003",
       listingPrice: 20,
       exactMarketAnchor: 20,
-    }).match).toBe("unknown");
+    }).match).toBe("compatible");
     expect(assessPrintFidelity({
       card: special,
       matchText: "Kid & Killer EB01-003 SP Special Art Parallel",
@@ -411,11 +419,18 @@ describe("exact-print fidelity", () => {
       }
     });
 
-    it("leaves multi-print numbers needing positive evidence", () => {
+    it("proves the base of a multi-print number by silence, and leaves its siblings needing positive evidence", () => {
       const nami = namiPrints.find((card) => card.id === "OP01-016")!;
+      const alternate = namiPrints.find((card) => card.id === "OP01-016_p1")!;
 
       expect(assessPrintFidelity({
         card: nami,
+        matchText: "One Piece Card Game Nami OP01-016 English NM",
+        listingPrice: 4,
+        exactMarketAnchor: 4,
+      })).toMatchObject({ match: "compatible", reasons: ["one_piece_plain_title_describes_base_print"] });
+      expect(assessPrintFidelity({
+        card: alternate,
         matchText: "One Piece Card Game Nami OP01-016 English NM",
         listingPrice: 4,
         exactMarketAnchor: 4,

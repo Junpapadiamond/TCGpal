@@ -396,6 +396,10 @@ export function deriveOnePieceReleaseMetadata(
   else if (/anniversary/.test(normalized)) channel = "anniversary";
   else if (/pre.?release|release event|sealed battle|event/.test(normalized)) channel = "event";
   else if (/one piece card the best|premium booster/.test(normalized)) channel = "premium_booster";
+  // Extra Boosters are retail sets. Two of them carry "Collection" in the name,
+  // which the premium-collection test below would otherwise claim, tagging the
+  // ordinary EB01/EB02 print as a boxed-set reprint.
+  else if (/memorial collection|anime 25th collection|heroines edition|extra booster/.test(normalized)) channel = "booster";
   else if (/premium card collection|binder|collection/.test(normalized)) channel = "premium_collection";
   else if (/promo|promotion|magazine|store/.test(normalized)) channel = "promo";
   else if (/romance dawn|paramount war|pillars of strength|kingdoms of intrigue|new era|captain|future|two legends|new world|royal blood|divine speed|master|will|seven|battle|island/.test(normalized)) channel = "booster";

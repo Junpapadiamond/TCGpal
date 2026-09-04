@@ -415,6 +415,52 @@ describe("eBay active-listing search", () => {
     expect(results.map((listing) => listing.id)).toContain("ebay-winner");
   });
 
+  it("runs the class-only query between the release-marked one and the plain one", async () => {
+    const prbAlt = findOnePieceCatalogVariant("PRB02-006_p1");
+    if (!prbAlt) throw new Error("Missing bundled print PRB02-006_p1.");
+    const card = mapOnePieceCardToIdentity(prbAlt, { confidence: "high", matchReasons: [] });
+    const searchQueries: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        searchQueries.push(new URL(url).searchParams.get("q") ?? "");
+        return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    await searchEbayAlternatives(card, buyer, fetcher);
+    expect(searchQueries).toEqual([
+      "Roronoa Zoro PRB02-006 alt art One Piece Card The Best Vol.2",
+      "Roronoa Zoro PRB02-006 alt art",
+      "Roronoa Zoro PRB02-006",
+    ]);
+  });
+
+  it("does not add a class rung when the researched token already is the class word", async () => {
+    const manga = findOnePieceCatalogVariant("OP11-118_p2");
+    if (!manga) throw new Error("Missing bundled print OP11-118_p2.");
+    const card = mapOnePieceCardToIdentity(manga, { confidence: "high", matchReasons: [] });
+    const searchQueries: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/identity/v1/oauth2/token")) {
+        return { ok: true, status: 200, json: async () => ({ access_token: "t" }) } as Response;
+      }
+      if (url.includes("/item_summary/search")) {
+        searchQueries.push(new URL(url).searchParams.get("q") ?? "");
+        return { ok: true, status: 200, json: async () => ({ itemSummaries: [] }) } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+
+    await searchEbayAlternatives(card, buyer, fetcher);
+    expect(searchQueries).toEqual(["Monkey.D.Luffy OP11-118 manga", "Monkey.D.Luffy OP11-118"]);
+  });
+
   it("broadens past an attempt whose rows can never rank, and keeps the best set it saw", async () => {
     // The gate that decides whether to stop on a non-final attempt used to accept
     // any row that was not a proven mismatch. A base-print title is not a
@@ -458,7 +504,7 @@ describe("eBay active-listing search", () => {
     }) as unknown as typeof fetch;
 
     const results = await searchEbayAlternatives(spCard, buyer, fetcher);
-    expect(searchQueries).toEqual(["Nami OP01-016 SP Awakening Of The New Era", "Nami OP01-016"]);
+    expect(searchQueries).toEqual(["Nami OP01-016 SP Awakening Of The New Era", "Nami OP01-016 SP"]);
     expect(results.map((listing) => listing.id)).toEqual(["ebay-sp-1"]);
   });
 
@@ -518,8 +564,13 @@ describe("eBay active-listing search", () => {
     }) as unknown as typeof fetch;
 
     const results = await searchEbayAlternatives(spCard, buyer, fetcher);
+    // Three rungs: the release name is the token sellers drop, so it is
+    // broadened away first; this fixture's SP row never names the release, so
+    // it cannot prove the print and the ladder rightly continues to the plain
+    // query before settling for it.
     expect(searchUrls.map((url) => new URL(url).searchParams.get("q"))).toEqual([
       "Nami OP01-016 SP Awakening Of The New Era",
+      "Nami OP01-016 SP",
       "Nami OP01-016",
     ]);
     expect(results.map((listing) => listing.id)).toEqual(["ebay-9"]);

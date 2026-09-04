@@ -93,6 +93,23 @@ describe("One Piece exact-print metadata", () => {
     });
   });
 
+  it("tags Extra Booster sets as retail boosters, not boxed collections", () => {
+    // "Memorial Collection" and "Anime 25th Collection" are EB01 and EB02 — sets
+    // sold in booster packs. The word "Collection" had them filed with the
+    // Premium Card Collection binders, which mislabels the ordinary print of
+    // every card in two whole sets.
+    for (const [release, printId] of [
+      ["Memorial Collection", "EB01-006"],
+      ["Anime 25th Collection", "EB02-010"],
+      ["One Piece Heroines Edition", "EB03-053"],
+      ["The Azure Sea\u2019s Seven", "EB04-044"],
+    ] as const) {
+      expect(deriveOnePieceReleaseMetadata(release, printId).channel, release).toBe("booster");
+    }
+    expect(deriveOnePieceReleaseMetadata("Premium Card Collection -25th Edition", "OP01-016_p2").channel).toBe("premium_collection");
+    expect(deriveOnePieceReleaseMetadata("One Piece Card The Best Vol.2", "PRB02-006").channel).toBe("premium_booster");
+  });
+
   it("identifies researched anniversary, tournament, winner, and early wanted-poster releases", () => {
     expect(getOnePiecePrintEnrichment("OP01-016_p2")).toMatchObject({
       displayLabel: "Premium Collection Alternate Art",

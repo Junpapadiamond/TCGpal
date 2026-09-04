@@ -20,6 +20,7 @@
     "review:detail-budget": "EBAY_DETAIL_REVIEW=1 vitest run src/lib/external/ebay-detail-budget-review.test.ts",
     "review:market-anchor": "MARKET_ANCHOR_REVIEW=1 vitest run src/lib/comparison/market-anchor-coverage-review.test.ts",
     "review:market-anchor:refresh": "MARKET_ANCHOR_WRITE_SAMPLE=1 MARKET_ANCHOR_DEADLINE_MS=2700000 npm run review:market-anchor",
+    "review:one-piece-alignment": "ONE_PIECE_ALIGNMENT_REVIEW=1 vitest run src/lib/testing/one-piece-alignment-review.test.ts",
     "sample:base-proof": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/sample-base-print-precision.mjs",
     "start": "next start",
     "test": "npm run metadata:check && vitest run",
