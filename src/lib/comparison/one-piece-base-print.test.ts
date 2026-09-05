@@ -169,3 +169,48 @@ describe("One Piece competition prints: naming the print's own release is proof"
   });
 });
 
+describe("One Piece Treasure Rare: a class the detector has to see", () => {
+  it("does not let the base print take a Treasure Rare listing", () => {
+    // The one substitution the 4,571-print audit found: "Treasure Rare" was not
+    // a class the detector knew, so the listing read as silence and the silence
+    // rule handed it to the base.
+    expect(classify("OP16-011", "Vista OP16-011 Treasure Rare The Time Of Battle NM").match).toBe("mismatch");
+    expect(classify("OP16-011", "Vista OP16-011 TR The Time Of Battle").match).toBe("mismatch");
+  });
+
+  it("proves the Treasure Rare by its class word in a two-print family", () => {
+    const assessment = classify("OP16-011_p1", "Vista OP16-011 Treasure Rare The Time Of Battle English NM");
+    expect(ACCEPTED.has(assessment.match), assessment.reasons.join(",")).toBe(true);
+  });
+
+  it("does not read lower-case 'tr' as the rarity", () => {
+    expect(classify("OP16-011", "Vista OP16-011 The Time Of Battle NM tr").match).toBe("compatible");
+  });
+});
+
+describe("One Piece starter decks: the deck is named for its leader", () => {
+  // "Yamato" is both the card and the release of ST-09; "The Three Brothers" is
+  // both the release of ST-13 and the start of a card's name. A marker every
+  // listing of the card must contain cannot tell prints apart, and treating it
+  // as one rejected every sibling's own listing.
+  it("accepts the Gift Collection alt of a card whose deck shares its name", () => {
+    const assessment = classify("ST09-012_p1", "Yamato ST09-012 Gift Collection 2023 Alt Art English NM");
+    expect(ACCEPTED.has(assessment.match), assessment.reasons.join(",")).toBe(true);
+  });
+
+  it("does not reject a The Best reprint because the card name contains the deck name", () => {
+    expect(classify("ST13-019_p1", "The Three Brothers' Bond ST13-019 One Piece Card The Best Vol.2 Alt Art").match).not.toBe("mismatch");
+  });
+
+  it("accepts the ordinary print when a sibling is catalogued under the bare set code", () => {
+    // ST14-010_r1 is catalogued with the release "ST-14", which every listing of
+    // ST14-010 necessarily contains.
+    const assessment = classify("ST14-010", "Brook ST14-010 3d2y Starter Deck 14 English NM");
+    expect(ACCEPTED.has(assessment.match), assessment.reasons.join(",")).toBe(true);
+  });
+
+  it("still rejects the ordinary print when the title names the reprint set", () => {
+    expect(classify("ST09-012", "Yamato ST09-012 Gift Collection 2023 NM").match).toBe("mismatch");
+  });
+});
+

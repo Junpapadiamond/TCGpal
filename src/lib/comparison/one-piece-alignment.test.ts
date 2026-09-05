@@ -5,6 +5,7 @@ import {
   isBasePrintRow,
   isRetailFamily,
 } from "@/lib/testing/one-piece-alignment";
+import { onePieceCatalog } from "@/lib/external/one-piece-catalog";
 
 // The families a One Piece buyer is most likely to bring: the promo pool, both
 // Extra Booster and Premium Booster lines, and the chase numbers that carry the
@@ -67,3 +68,25 @@ describe("One Piece exact-print alignment", () => {
     expect(distinguishable.map((row) => `${row.printId} [${row.artworkClass}] ${row.release}: ${row.selfReason}`)).toEqual([]);
   });
 });
+
+// The two invariants that must hold for every print the catalog knows, not only
+// the families a buyer is most likely to bring. The stronger claims — every base
+// print accepted, every uniquely marked print accepted — stay on the target
+// families above, where each abstention has been read.
+describe("One Piece exact-print alignment — whole catalog", () => {
+  const prefixes = [...new Set(onePieceCatalog.map((entry) => entry.card_set_id.split("-")[0]!.toUpperCase()))];
+  const whole = auditOnePieceAlignment(familiesWithPrefix(prefixes));
+
+  it("covers every print", () => {
+    expect(whole.summary.prints).toBe(onePieceCatalog.length);
+  });
+
+  it("never lets any print accept a sibling's own listing", () => {
+    expect(whole.rows.filter((row) => row.admittedSiblings.length > 0).map((row) => `${row.printId} admits ${row.admittedSiblings.join(", ")}`)).toEqual([]);
+  });
+
+  it("never rejects any print's own listing as a different print", () => {
+    expect(whole.rows.filter((row) => row.self === "mismatch").map((row) => `${row.printId} (${row.release}): ${row.selfReason}`)).toEqual([]);
+  });
+});
+

@@ -1,4 +1,4 @@
-# One Piece exact-print alignment audit — 2026-09-04
+# One Piece exact-print alignment audit — 2026-09-05
 
 Every print in EB01–EB04, PRB01–PRB02, the P- promo pool, and the flagship chase numbers,
 checked with the production classifier against the seller-visible description of itself and of

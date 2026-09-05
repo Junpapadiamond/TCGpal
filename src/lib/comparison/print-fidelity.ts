@@ -245,9 +245,19 @@ function requiresCompetitionReleaseProof(card: CardIdentityCandidate, text: stri
 function buildWitnesses(cardNumber: string): PrintWitness[] {
   return findOnePieceCatalogVariants(cardNumber).map((sibling) => {
     const id = variantKey(sibling);
+    // A phrase every listing of this card carries — because it is the card's
+    // name or number — cannot tell one print from another. Starter decks are
+    // named for their leader ("Yamato", "The Three Brothers"), and a few
+    // reprints are catalogued under the bare set code ("ST-14"), so without
+    // this the base release is a marker that vetoes every sibling's own listing.
+    const unavoidable = [normalizePhrase(sibling.card_name), normalizePhrase(sibling.card_set_id)];
+    const distinguishing = (marker: string) => {
+      const key = normalizePhrase(marker);
+      return key.length >= 4 && !isGenericMarker(marker) && !unavoidable.some((phrase) => phrase.includes(key));
+    };
     const exactMarkers = (sibling.exact_markers ?? [])
       .map((marker) => marker.trim())
-      .filter((marker) => marker.length >= 4 && !isGenericMarker(marker));
+      .filter(distinguishing);
     const markers = [
       sibling.set_name ?? "",
       ...(sibling.collector_aliases ?? []),
@@ -255,7 +265,7 @@ function buildWitnesses(cardNumber: string): PrintWitness[] {
       ...releaseAliases(sibling.set_name ?? ""),
     ]
       .map((marker) => marker.trim())
-      .filter((marker) => marker.length >= 4 && !isGenericMarker(marker));
+      .filter(distinguishing);
     return {
       id,
       artworkClass: witnessClass(sibling),
@@ -439,7 +449,7 @@ function intersectEvidence(siblings: PrintWitness[], evidenceSets: Set<string>[]
 }
 
 function detectResearchedPrintFacet(text: string): {
-  artworkClass: CardIdentityCandidate["artworkClass"] | null;
+  artworkClass: WitnessClass | null;
   treatment: "gold" | "silver" | "red" | null;
 } {
   if (/\bred\s+super\s+(?:alt|alternate(?:\s+art)?)\b/i.test(text)) {
@@ -453,6 +463,13 @@ function detectResearchedPrintFacet(text: string): {
   }
   if (/\bmanga(?:\s+(?:art|rare))?\b/i.test(text)) {
     return { artworkClass: "manga", treatment: null };
+  }
+  // Treasure Rare is its own class (OP16 onward). Unseen here, a "Treasure Rare"
+  // listing read as silence and the silence rule handed it to the base print —
+  // the one substitution in the 4,571-print audit. "TR" is matched case-
+  // sensitively: it is the printed rarity, and lower-case "tr" is noise.
+  if (/\btreasure\s+rare\b/i.test(text) || /\bTR\b/.test(text)) {
+    return { artworkClass: "treasure", treatment: null };
   }
   if (/\bgold\b/i.test(text)) {
     return { artworkClass: /\bSP\b|special[\s-]*art/i.test(text) ? "special" : null, treatment: "gold" };
