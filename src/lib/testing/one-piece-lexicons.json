@@ -1,0 +1,1490 @@
+{
+  "seller": [
+    {
+      "phrase": "Alternate Art",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nami (053) Alternate Art EB03-053 Extra Booster: One Piece Heroines Edition Foil"
+    },
+    {
+      "phrase": "Alt Art",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Bandai One Piece CCG Nami EB03-053 SP Alt Art Holo 6000 Power English"
+    },
+    {
+      "phrase": "Alt.",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "2022 PREMIUM COLLECTION 25TH ANNIV. MANGA ALT. ART PARALLEL NAMI CGC 10 PRISTINE"
+    },
+    {
+      "phrase": "Parallel",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nami EB03-053 SP SR Parallel ONE PIECE Card Heroines edition 2025 Japanese NM"
+    },
+    {
+      "phrase": "Full Art",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Portgas D Ace OP07-053 Promo Full Art Foil 2024 Winner One Piece Card Japan"
+    },
+    {
+      "phrase": "SP",
+      "axis": "artwork_class",
+      "value": "special",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Bandai One Piece CCG Nami EB03-053 SP Alt Art Holo 6000 Power English"
+    },
+    {
+      "phrase": "Special Alternate Art",
+      "axis": "artwork_class",
+      "value": "special",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "2026 One Piece EB03 Heroines Edition Special Alternate Art EN #053 Nami PSA 8"
+    },
+    {
+      "phrase": "Manga",
+      "axis": "artwork_class",
+      "value": "manga",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "One Piece 2024 Nami Manga Alternate Art OP01-016 PRB01 JP"
+    },
+    {
+      "phrase": "Comic Parallel",
+      "axis": "artwork_class",
+      "value": "manga",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "NAMI MANGA ALT ART OP01-016 R ONE PIECE CARD THE BEST PRB-01 COMIC PARALLEL NM"
+    },
+    {
+      "phrase": "Wanted Poster",
+      "axis": "artwork_class",
+      "value": "wanted_poster",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "One Piece TCG English Monkey D Luffy OP05-119 Wanted Poster Wall ART 4x3"
+    },
+    {
+      "phrase": "Wanted",
+      "axis": "artwork_class",
+      "value": "wanted_poster",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "One Piece TCG English Monkey D Luffy OP05-119 Wanted Poster Wall ART 4x3"
+    },
+    {
+      "phrase": "Gold",
+      "axis": "treatment",
+      "value": "gold",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "DON!! Card (Nico Robin) (Gold) Extra Booster: One Piece Heroines Edition Foil"
+    },
+    {
+      "phrase": "Silver",
+      "axis": "treatment",
+      "value": "silver",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "PSA 10 Luffy Gold Silver OP05-119 Manga Alt Art Parallel One Piece Set of 3"
+    },
+    {
+      "phrase": "Extra Booster",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nami (053) Foil SR Extra Booster: One Piece Heroines Edition EB03-053 NM"
+    },
+    {
+      "phrase": "Memorial Collection",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nico Robin SP EB03-055 SR Parallel One Piece Card Game EB03 Memorial Collection"
+    },
+    {
+      "phrase": "Heroines Edition",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nami (053) Foil SR Extra Booster: One Piece Heroines Edition EB03-053 NM"
+    },
+    {
+      "phrase": "Romance Dawn",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "docs/one-piece-buy-accuracy-2026-08-14.md",
+      "evidence": "Roronoa Zoro (001) - Romance Dawn Leader  OP01-001 One Piece Card English"
+    },
+    {
+      "phrase": "Paramount War",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "docs/one-piece-buy-accuracy-2026-08-14.md",
+      "evidence": "Bandai One Piece Portgas.D.Ace Alt Art Foil SR Paramount War OP02-013 EN"
+    },
+    {
+      "phrase": "Premium Booster",
+      "axis": "release_channel",
+      "value": "premium_booster",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "2024 ONE PIECE JAPANESE PRB01-PREMIUM BOOSTER MANGA ALT ART #016 NAMI PSA 10"
+    },
+    {
+      "phrase": "The Best",
+      "axis": "release_channel",
+      "value": "premium_booster",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "One Piece Card Nami OP01-016 Manga Alt Art Parallel Japanese The Best TCG Rare"
+    },
+    {
+      "phrase": "Premium Card Collection",
+      "axis": "release_channel",
+      "value": "premium_collection",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nami OP01-016 25th Anniversary Premium Card Collection (2023) PSA 10"
+    },
+    {
+      "phrase": "Premium Collection",
+      "axis": "release_channel",
+      "value": "premium_collection",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "2022 PREMIUM COLLECTION 25TH ANNIV. MANGA ALT. ART PARALLEL NAMI CGC 10 PRISTINE"
+    },
+    {
+      "phrase": "25th Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "One Piece Card Game Nami OP01-016 25th Anniversary"
+    },
+    {
+      "phrase": "1st Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "One Piece TCG Card Game Chinese Nami OP01-016 R Exclusive 1st Anniversary Alt"
+    },
+    {
+      "phrase": "2nd Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "ONE PIECE Card Game Roronoa Zoro OP06-118 SEC 2nd ANNIVERSARY SET Japanese"
+    },
+    {
+      "phrase": "3rd Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Silver Luffy 3rd Anniversary Monkey D. Luffy OP05-119 SP One Piece CCG (LP) JP"
+    },
+    {
+      "phrase": "Tournament Pack",
+      "axis": "release_channel",
+      "value": "tournament",
+      "source": "docs/one-piece-buy-accuracy-2026-08-14.md",
+      "evidence": "Portgas.D.Ace (Tournament Pack 2024 Oct.-Dec.) OP07-053 R NM"
+    },
+    {
+      "phrase": "Winner Pack",
+      "axis": "release_channel",
+      "value": "tournament",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Portgas.D.Ace (Winner Pack 2024 Oct.-Dec.) OP07-053 One Piece Single"
+    },
+    {
+      "phrase": "Promo",
+      "axis": "release_channel",
+      "value": "promo",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nami OP01-016 Promo Parallel 25th Anniversary ONE PIECE Card Japanese Near Mint"
+    },
+    {
+      "phrase": "Promotion Cards",
+      "axis": "release_channel",
+      "value": "promo",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Nami (English 25th Anniversary Set) OP01-016 One Piece Promotion Cards..."
+    },
+    {
+      "phrase": "Winner",
+      "axis": "competition_tier",
+      "value": "winner",
+      "source": "src/lib/comparison/one-piece-unsafe-corpus.json",
+      "evidence": "Portgas.D.Ace (Winner Pack 2024 Oct.-Dec.) OP07-053 One Piece Single"
+    },
+    {
+      "phrase": "Revised",
+      "axis": "provenance",
+      "value": "reprint",
+      "source": "docs/one-piece-buy-accuracy-2026-08-14-baseline.md",
+      "evidence": "2022 One Piece Monkey D. Luffy ERRATA  Leader ST01-001 Revised holo FOIL NM"
+    }
+  ],
+  "tcgplayer": [
+    {
+      "phrase": "Alternate Art",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kouzuki Oden (Alternate Art)"
+    },
+    {
+      "phrase": "Parallel",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Roronoa Zoro (001) (Parallel)"
+    },
+    {
+      "phrase": "Full Art",
+      "axis": "artwork_class",
+      "value": "alternate",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Otama (Full Art)"
+    },
+    {
+      "phrase": "SP",
+      "axis": "artwork_class",
+      "value": "special",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kouzuki Oden (SP)"
+    },
+    {
+      "phrase": "Manga",
+      "axis": "artwork_class",
+      "value": "manga",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tony Tony.Chopper (Alternate Art) (Manga)"
+    },
+    {
+      "phrase": "Wanted Poster",
+      "axis": "artwork_class",
+      "value": "wanted_poster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Eustass\"Captain\"Kid (Wanted Poster)"
+    },
+    {
+      "phrase": "Wanted",
+      "axis": "artwork_class",
+      "value": "wanted_poster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Eustass\"Captain\"Kid (Wanted Poster)"
+    },
+    {
+      "phrase": "Super Alternate Art",
+      "axis": "artwork_class",
+      "value": "super_alternate",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (118) (Super Alternate Art)"
+    },
+    {
+      "phrase": "Gold",
+      "axis": "treatment",
+      "value": "gold",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (119) (SP) (Gold)"
+    },
+    {
+      "phrase": "Silver",
+      "axis": "treatment",
+      "value": "silver",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shanks - OP09-004 (SP) (Silver)"
+    },
+    {
+      "phrase": "Red Super Alternate Art",
+      "axis": "treatment",
+      "value": "red",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (118) (Red Super Alternate Art)"
+    },
+    {
+      "phrase": "Extra Booster",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Extra Booster: Memorial Collection"
+    },
+    {
+      "phrase": "Memorial Collection",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Extra Booster: Memorial Collection"
+    },
+    {
+      "phrase": "Heroines Edition",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Extra Booster: One Piece Heroines Edition"
+    },
+    {
+      "phrase": "Romance Dawn",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Romance Dawn"
+    },
+    {
+      "phrase": "Paramount War",
+      "axis": "release_channel",
+      "value": "booster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Paramount War"
+    },
+    {
+      "phrase": "Premium Booster",
+      "axis": "release_channel",
+      "value": "premium_booster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Premium Booster -The Best-"
+    },
+    {
+      "phrase": "The Best",
+      "axis": "release_channel",
+      "value": "premium_booster",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Premium Booster -The Best-"
+    },
+    {
+      "phrase": "Premium Card Collection",
+      "axis": "release_channel",
+      "value": "premium_collection",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Ice Time (Premium Card Collection -Best Selection Vol. 6-)"
+    },
+    {
+      "phrase": "Gift Collection",
+      "axis": "release_channel",
+      "value": "premium_collection",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Uta (Gift Collection 2023)"
+    },
+    {
+      "phrase": "1st Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Otama (Japanese 1st Anniversary Set)"
+    },
+    {
+      "phrase": "3rd Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Carrying On His Will: 3rd Anniversary Tournament Cards"
+    },
+    {
+      "phrase": "Tournament Pack",
+      "axis": "release_channel",
+      "value": "tournament",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Scratchmen Apoo (Tournament Pack 2025 Vol. 2)"
+    },
+    {
+      "phrase": "Winner Pack",
+      "axis": "release_channel",
+      "value": "tournament",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Scratchmen Apoo (Winner Pack 2025 Vol. 2)"
+    },
+    {
+      "phrase": "Regional",
+      "axis": "release_channel",
+      "value": "tournament",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kid & Killer (Offline Regional Participation Pack 2025 Vol.2)"
+    },
+    {
+      "phrase": "Treasure Cup",
+      "axis": "release_channel",
+      "value": "tournament",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tony Tony.Chopper (Treasure Cup 2024)"
+    },
+    {
+      "phrase": "Promo",
+      "axis": "release_channel",
+      "value": "promo",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (Convention Promo 2024)"
+    },
+    {
+      "phrase": "Promotion Cards",
+      "axis": "release_channel",
+      "value": "promo",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "One Piece Promotion Cards"
+    },
+    {
+      "phrase": "Magazine",
+      "axis": "release_channel",
+      "value": "promo",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (PSA Magazine)"
+    },
+    {
+      "phrase": "Event Pack",
+      "axis": "release_channel",
+      "value": "event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Raizo (Event Pack Vol. 2)"
+    },
+    {
+      "phrase": "Sealed Battle",
+      "axis": "release_channel",
+      "value": "event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sabo (Sealed Battle 2023 Vol. 1)"
+    },
+    {
+      "phrase": "Pirates Party",
+      "axis": "release_channel",
+      "value": "event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Morgan (Pirates Party Vol. 2)"
+    },
+    {
+      "phrase": "Starter Deck",
+      "axis": "release_channel",
+      "value": "starter_deck",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 24: GREEN Jewelry Bonney"
+    },
+    {
+      "phrase": "The Three Captains",
+      "axis": "release_channel",
+      "value": "starter_deck",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Nami - OP01-016 (Ultra Deck: The Three Captains)"
+    },
+    {
+      "phrase": "Winner",
+      "axis": "competition_tier",
+      "value": "winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Scratchmen Apoo (Winner Pack 2025 Vol. 2)"
+    },
+    {
+      "phrase": "Champion",
+      "axis": "competition_tier",
+      "value": "champion",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kid & Killer (Offline Regional Champion Card Set 2025 Vol.2)"
+    },
+    {
+      "phrase": "Finalist",
+      "axis": "competition_tier",
+      "value": "finalist",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kid & Killer (Offline Regional Finalist Card Set 2025 Vol.2)"
+    },
+    {
+      "phrase": "Participation",
+      "axis": "competition_tier",
+      "value": "participation",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kid & Killer (Offline Regional Participation Pack 2025 Vol.2)"
+    },
+    {
+      "phrase": "Reprint",
+      "axis": "provenance",
+      "value": "reprint",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Just Shut Up and Come with Us!!!! (Reprint)"
+    },
+    {
+      "phrase": "2025 New Year Event",
+      "axis": "release_name",
+      "value": "2025 New Year Event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Nami (2025 New Year Event)"
+    },
+    {
+      "phrase": "2025 New Year Event Winner",
+      "axis": "release_name",
+      "value": "2025 New Year Event Winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Nami (2025 New Year Event Winner)"
+    },
+    {
+      "phrase": "2025 Pirates League Store Qualifier",
+      "axis": "release_name",
+      "value": "2025 Pirates League Store Qualifier",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "When You're at Sea You Fight against Pirates!! (2025 Pirates League Store Qualifier)"
+    },
+    {
+      "phrase": "2025 Pirates League Store Qualifier Winner",
+      "axis": "release_name",
+      "value": "2025 Pirates League Store Qualifier Winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "When You're at Sea You Fight against Pirates!! (2025 Pirates League Store Qualifier Winner)"
+    },
+    {
+      "phrase": "3rd Anniversary Tournament 3 Brothers Pack",
+      "axis": "release_name",
+      "value": "3rd Anniversary Tournament 3 Brothers Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy - ST01-012 (3rd Anniversary Tournament 3 Brothers Pack)"
+    },
+    {
+      "phrase": "3rd Anniversary Winner",
+      "axis": "release_name",
+      "value": "3rd Anniversary Winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy - ST01-012 (3rd Anniversary Winner)"
+    },
+    {
+      "phrase": "500 Years in the Future",
+      "axis": "release_name",
+      "value": "500 Years in the Future",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "500 Years in the Future"
+    },
+    {
+      "phrase": "A Fist of Divine Speed",
+      "axis": "release_name",
+      "value": "A Fist of Divine Speed",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "A Fist of Divine Speed"
+    },
+    {
+      "phrase": "Adventure on Kami's Island",
+      "axis": "release_name",
+      "value": "Adventure on Kami's Island",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Adventure on Kami's Island"
+    },
+    {
+      "phrase": "Anime Expo 2023",
+      "axis": "release_name",
+      "value": "Anime Expo 2023",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (Anime Expo 2023)"
+    },
+    {
+      "phrase": "Awakening of the New Era",
+      "axis": "release_name",
+      "value": "Awakening of the New Era",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Awakening of the New Era"
+    },
+    {
+      "phrase": "BANDAI Card Games Fest 25-26",
+      "axis": "release_name",
+      "value": "BANDAI Card Games Fest 25-26",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (BANDAI Card Games Fest 25-26)"
+    },
+    {
+      "phrase": "Box Topper",
+      "axis": "release_name",
+      "value": "Box Topper",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Donquixote Rosinante (Box Topper)"
+    },
+    {
+      "phrase": "Carrying On His Will",
+      "axis": "release_name",
+      "value": "Carrying On His Will",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Carrying On His Will"
+    },
+    {
+      "phrase": "Carrying On His Will: 3rd Anniversary Tournament Cards",
+      "axis": "release_name",
+      "value": "Carrying On His Will: 3rd Anniversary Tournament Cards",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Carrying On His Will: 3rd Anniversary Tournament Cards"
+    },
+    {
+      "phrase": "Championship 2024",
+      "axis": "release_name",
+      "value": "Championship 2024",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Charlotte Katakuri (Championship 2024)"
+    },
+    {
+      "phrase": "Championship 25-26 Offline Regionals Season 2",
+      "axis": "release_name",
+      "value": "Championship 25-26 Offline Regionals Season 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Yasopp (Championship 25-26 Offline Regionals Season 2)"
+    },
+    {
+      "phrase": "Championship 25-26 Regionals Season 1",
+      "axis": "release_name",
+      "value": "Championship 25-26 Regionals Season 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Roronoa Zoro (Championship 25-26 Regionals Season 1)"
+    },
+    {
+      "phrase": "Convention Promo 2024",
+      "axis": "release_name",
+      "value": "Convention Promo 2024",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (Convention Promo 2024)"
+    },
+    {
+      "phrase": "CS 2023 Celebration Pack",
+      "axis": "release_name",
+      "value": "CS 2023 Celebration Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tashigi (CS 2023 Celebration Pack)"
+    },
+    {
+      "phrase": "CS 2024 Celebration Pack",
+      "axis": "release_name",
+      "value": "CS 2024 Celebration Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shirahoshi (CS 2024 Celebration Pack)"
+    },
+    {
+      "phrase": "CS 25-26 Celebration Pack",
+      "axis": "release_name",
+      "value": "CS 25-26 Celebration Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Hongo (CS 25-26 Celebration Pack)"
+    },
+    {
+      "phrase": "CS 25-26 Event Pack",
+      "axis": "release_name",
+      "value": "CS 25-26 Event Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shanks (CS 25-26 Event Pack)"
+    },
+    {
+      "phrase": "CS 25-26 Event Pack Finalist Ver.",
+      "axis": "release_name",
+      "value": "CS 25-26 Event Pack Finalist Ver.",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shanks (CS 25-26 Event Pack Finalist Ver.)"
+    },
+    {
+      "phrase": "CS 25-26 Finalist Card Set 1",
+      "axis": "release_name",
+      "value": "CS 25-26 Finalist Card Set 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Buggy (CS 25-26 Finalist Card Set 1)"
+    },
+    {
+      "phrase": "CS 25-26 Finalist Card Set 2",
+      "axis": "release_name",
+      "value": "CS 25-26 Finalist Card Set 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Koala (CS 25-26 Finalist Card Set 2)"
+    },
+    {
+      "phrase": "CS 25-26 Top Player Pack",
+      "axis": "release_name",
+      "value": "CS 25-26 Top Player Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Buggy (CS 25-26 Top Player Pack)"
+    },
+    {
+      "phrase": "CS 25-26 Top Player Pack Vol. 2",
+      "axis": "release_name",
+      "value": "CS 25-26 Top Player Pack Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Koala (CS 25-26 Top Player Pack Vol. 2)"
+    },
+    {
+      "phrase": "CS 25-26 Winner Card Set 2",
+      "axis": "release_name",
+      "value": "CS 25-26 Winner Card Set 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Koala (CS 25-26 Winner Card Set 2)"
+    },
+    {
+      "phrase": "Dash Pack",
+      "axis": "release_name",
+      "value": "Dash Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "O-Nami - ST18-002 (Dash Pack)"
+    },
+    {
+      "phrase": "Emperors in the New World",
+      "axis": "release_name",
+      "value": "Emperors in the New World",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Emperors in the New World"
+    },
+    {
+      "phrase": "Event Pack Vol. 1",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sengoku (Event Pack Vol. 1)"
+    },
+    {
+      "phrase": "Event Pack Vol. 2",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sanji (Event Pack Vol. 2)"
+    },
+    {
+      "phrase": "Event Pack Vol. 3",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 3",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Trafalgar Law (Event Pack Vol. 3)"
+    },
+    {
+      "phrase": "Event Pack Vol. 5",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 5",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Koala (Event Pack Vol. 5)"
+    },
+    {
+      "phrase": "Event Pack Vol. 6",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 6",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shanks (Event Pack Vol. 6)"
+    },
+    {
+      "phrase": "Event Pack Vol. 7",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 7",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Koby (Event Pack Vol. 7)"
+    },
+    {
+      "phrase": "Event Pack Vol. 8",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 8",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Marshall.D.Teach (Event Pack Vol. 8)"
+    },
+    {
+      "phrase": "Extra Booster: Anime 25th Collection",
+      "axis": "release_name",
+      "value": "Extra Booster: Anime 25th Collection",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Extra Booster: Anime 25th Collection"
+    },
+    {
+      "phrase": "Extra Booster: Memorial Collection",
+      "axis": "release_name",
+      "value": "Extra Booster: Memorial Collection",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Extra Booster: Memorial Collection"
+    },
+    {
+      "phrase": "Extra Booster: One Piece Heroines Edition",
+      "axis": "release_name",
+      "value": "Extra Booster: One Piece Heroines Edition",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Extra Booster: One Piece Heroines Edition"
+    },
+    {
+      "phrase": "Extra Grand Battle for Stores 2026",
+      "axis": "release_name",
+      "value": "Extra Grand Battle for Stores 2026",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Perona (Extra Grand Battle for Stores 2026)"
+    },
+    {
+      "phrase": "Gift Collection 2023",
+      "axis": "release_name",
+      "value": "Gift Collection 2023",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tony Tony.Chopper (Gift Collection 2023)"
+    },
+    {
+      "phrase": "Heroines Battle Pack",
+      "axis": "release_name",
+      "value": "Heroines Battle Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Jewelry Bonney (Heroines Battle Pack)"
+    },
+    {
+      "phrase": "Heroines Battle Winner Pack",
+      "axis": "release_name",
+      "value": "Heroines Battle Winner Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Jewelry Bonney (Heroines Battle Winner Pack)"
+    },
+    {
+      "phrase": "Illustration Box Vol.5",
+      "axis": "release_name",
+      "value": "Illustration Box Vol.5",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Portgas.D.Ace (Illustration Box Vol.5)"
+    },
+    {
+      "phrase": "Illustration Box Vol.6",
+      "axis": "release_name",
+      "value": "Illustration Box Vol.6",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Trafalgar Law (Illustration Box Vol.6)"
+    },
+    {
+      "phrase": "Japanese 1st Anniversary Set",
+      "axis": "release_name",
+      "value": "Japanese 1st Anniversary Set",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Marco (Japanese 1st Anniversary Set)"
+    },
+    {
+      "phrase": "Japanese Version 3rd Anniversary Set",
+      "axis": "release_name",
+      "value": "Japanese Version 3rd Anniversary Set",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Portgas.D.Ace (Japanese Version 3rd Anniversary Set)"
+    },
+    {
+      "phrase": "Kingdoms of Intrigue",
+      "axis": "release_name",
+      "value": "Kingdoms of Intrigue",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kingdoms of Intrigue"
+    },
+    {
+      "phrase": "Learn Together Deck Set",
+      "axis": "release_name",
+      "value": "Learn Together Deck Set",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Learn Together Deck Set"
+    },
+    {
+      "phrase": "Legacy of the Master",
+      "axis": "release_name",
+      "value": "Legacy of the Master",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Legacy of the Master"
+    },
+    {
+      "phrase": "Luffy Deck",
+      "axis": "release_name",
+      "value": "Luffy Deck",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy - ST21-001 (Luffy Deck)"
+    },
+    {
+      "phrase": "October Championship 2024 Online Regional",
+      "axis": "release_name",
+      "value": "October Championship 2024 Online Regional",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Rebecca (October Championship 2024 Online Regional)"
+    },
+    {
+      "phrase": "October Championship 2024 Store Regionals",
+      "axis": "release_name",
+      "value": "October Championship 2024 Store Regionals",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Nefeltari Vivi (October Championship 2024 Store Regionals)"
+    },
+    {
+      "phrase": "Official Playmat Limited Edition Vol.5",
+      "axis": "release_name",
+      "value": "Official Playmat Limited Edition Vol.5",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (Official Playmat Limited Edition Vol.5)"
+    },
+    {
+      "phrase": "Offline Regional 2024 Vol. 2",
+      "axis": "release_name",
+      "value": "Offline Regional 2024 Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Trafalgar Law (Offline Regional 2024 Vol. 2) [Participant]"
+    },
+    {
+      "phrase": "Offline Regional 2024 Vol. 3",
+      "axis": "release_name",
+      "value": "Offline Regional 2024 Vol. 3",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (091) (Offline Regional 2024 Vol. 3) [Finalist]"
+    },
+    {
+      "phrase": "Offline Regional Champion Card Set 2025 Vol.2",
+      "axis": "release_name",
+      "value": "Offline Regional Champion Card Set 2025 Vol.2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tony Tony.Chopper (Offline Regional Champion Card Set 2025 Vol.2)"
+    },
+    {
+      "phrase": "Offline Regional Finalist Card Set 2025 Vol.2",
+      "axis": "release_name",
+      "value": "Offline Regional Finalist Card Set 2025 Vol.2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tony Tony.Chopper (Offline Regional Finalist Card Set 2025 Vol.2)"
+    },
+    {
+      "phrase": "Offline Regional Participation Pack 2025 Vol.1",
+      "axis": "release_name",
+      "value": "Offline Regional Participation Pack 2025 Vol.1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Adio (Offline Regional Participation Pack 2025 Vol.1)"
+    },
+    {
+      "phrase": "Offline Regional Participation Pack 2025 Vol.2",
+      "axis": "release_name",
+      "value": "Offline Regional Participation Pack 2025 Vol.2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tony Tony.Chopper (Offline Regional Participation Pack 2025 Vol.2)"
+    },
+    {
+      "phrase": "One Piece Promotion Cards",
+      "axis": "release_name",
+      "value": "One Piece Promotion Cards",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "One Piece Promotion Cards"
+    },
+    {
+      "phrase": "Online Regional 2023",
+      "axis": "release_name",
+      "value": "Online Regional 2023",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Charlotte Pudding (Online Regional 2023) [Winner]"
+    },
+    {
+      "phrase": "OP11 Release Event",
+      "axis": "release_name",
+      "value": "OP11 Release Event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Dracule Mihawk (OP11 Release Event)"
+    },
+    {
+      "phrase": "OP11 Release Event Winner",
+      "axis": "release_name",
+      "value": "OP11 Release Event Winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Dracule Mihawk (OP11 Release Event Winner)"
+    },
+    {
+      "phrase": "OP12 Release Event",
+      "axis": "release_name",
+      "value": "OP12 Release Event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Koby (OP12 Release Event)"
+    },
+    {
+      "phrase": "OP14 Release Event",
+      "axis": "release_name",
+      "value": "OP14 Release Event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Girl (OP14 Release Event)"
+    },
+    {
+      "phrase": "OP15 Release Event",
+      "axis": "release_name",
+      "value": "OP15 Release Event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Boa Hancock (OP15 Release Event)"
+    },
+    {
+      "phrase": "OP15 Release Event Winner",
+      "axis": "release_name",
+      "value": "OP15 Release Event Winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Boa Hancock (OP15 Release Event Winner)"
+    },
+    {
+      "phrase": "OP16 Release Event",
+      "axis": "release_name",
+      "value": "OP16 Release Event",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (OP16 Release Event)"
+    },
+    {
+      "phrase": "OP16 Release Event Winner",
+      "axis": "release_name",
+      "value": "OP16 Release Event Winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (OP16 Release Event Winner)"
+    },
+    {
+      "phrase": "Paramount War",
+      "axis": "release_name",
+      "value": "Paramount War",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Paramount War"
+    },
+    {
+      "phrase": "Pillars of Strength",
+      "axis": "release_name",
+      "value": "Pillars of Strength",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Pillars of Strength"
+    },
+    {
+      "phrase": "Pirates Party 2026 Vol. 1",
+      "axis": "release_name",
+      "value": "Pirates Party 2026 Vol. 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Portgas.D.Ace (Pirates Party 2026 Vol. 1)"
+    },
+    {
+      "phrase": "Pirates Party Vol. 2",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Morgan (Pirates Party Vol. 2)"
+    },
+    {
+      "phrase": "Pirates Party Vol. 3",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 3",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (Pirates Party Vol. 3)"
+    },
+    {
+      "phrase": "Pirates Party Vol. 4",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 4",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Bellamy (Pirates Party Vol. 4)"
+    },
+    {
+      "phrase": "Pirates Party Vol. 6",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 6",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Hody & Hyouzou (Pirates Party Vol. 6)"
+    },
+    {
+      "phrase": "Pirates Party Vol. 7",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 7",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sakazuki (Pirates Party Vol. 7)"
+    },
+    {
+      "phrase": "Premium Booster -The Best-",
+      "axis": "release_name",
+      "value": "Premium Booster -The Best-",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Premium Booster -The Best-"
+    },
+    {
+      "phrase": "Premium Booster -The Best- Vol. 2",
+      "axis": "release_name",
+      "value": "Premium Booster -The Best- Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Premium Booster -The Best- Vol. 2"
+    },
+    {
+      "phrase": "Premium Card Collection -BANDAI CARD GAMES Fest. 23-24 Edition-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -BANDAI CARD GAMES Fest. 23-24 Edition-",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Jack (Premium Card Collection -BANDAI CARD GAMES Fest. 23-24 Edition-)"
+    },
+    {
+      "phrase": "Premium Card Collection -Best Selection Vol. 1-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -Best Selection Vol. 1-",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Pacifista (Premium Card Collection -Best Selection Vol. 1-)"
+    },
+    {
+      "phrase": "Premium Card Collection -Best Selection Vol. 6-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -Best Selection Vol. 6-",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sanji (Premium Card Collection -Best Selection Vol. 6-)"
+    },
+    {
+      "phrase": "Premium Card Collection -ONE PIECE FILM RED Edition-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -ONE PIECE FILM RED Edition-",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Roronoa Zoro (Premium Card Collection -ONE PIECE FILM RED Edition-)"
+    },
+    {
+      "phrase": "Promo Reprint",
+      "axis": "release_name",
+      "value": "Promo Reprint",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Buggy (Promo Reprint)"
+    },
+    {
+      "phrase": "Promotion Pack 2022",
+      "axis": "release_name",
+      "value": "Promotion Pack 2022",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kaido (Promotion Pack 2022)"
+    },
+    {
+      "phrase": "Reprint",
+      "axis": "release_name",
+      "value": "Reprint",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sanji - ST21-003 (Reprint)"
+    },
+    {
+      "phrase": "Romance Dawn",
+      "axis": "release_name",
+      "value": "Romance Dawn",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Romance Dawn"
+    },
+    {
+      "phrase": "Royal Blood",
+      "axis": "release_name",
+      "value": "Royal Blood",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Royal Blood"
+    },
+    {
+      "phrase": "Sealed Battle 2023 Vol. 1",
+      "axis": "release_name",
+      "value": "Sealed Battle 2023 Vol. 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sabo (Sealed Battle 2023 Vol. 1)"
+    },
+    {
+      "phrase": "Sealed Battle Kit Vol. 1",
+      "axis": "release_name",
+      "value": "Sealed Battle Kit Vol. 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Roronoa Zoro (Sealed Battle Kit Vol. 1)"
+    },
+    {
+      "phrase": "Special Goods Set -Ace/Sabo/Luffy-",
+      "axis": "release_name",
+      "value": "Special Goods Set -Ace/Sabo/Luffy-",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Portgas.D.Ace (Special Goods Set -Ace/Sabo/Luffy-)"
+    },
+    {
+      "phrase": "ST15 - ST20 Release Event Pack",
+      "axis": "release_name",
+      "value": "ST15 - ST20 Release Event Pack",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tashigi (ST15 - ST20 Release Event Pack)"
+    },
+    {
+      "phrase": "Starter Deck 11: Uta Deck Battle",
+      "axis": "release_name",
+      "value": "Starter Deck 11: Uta Deck Battle",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "I'm invincible (Starter Deck 11: Uta Deck Battle)"
+    },
+    {
+      "phrase": "Starter Deck 15: RED Edward.Newgate",
+      "axis": "release_name",
+      "value": "Starter Deck 15: RED Edward.Newgate",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 15: RED Edward.Newgate"
+    },
+    {
+      "phrase": "Starter Deck 16: GREEN Uta",
+      "axis": "release_name",
+      "value": "Starter Deck 16: GREEN Uta",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 16: GREEN Uta"
+    },
+    {
+      "phrase": "Starter Deck 17: BLUE Donquixote Doflamingo",
+      "axis": "release_name",
+      "value": "Starter Deck 17: BLUE Donquixote Doflamingo",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 17: BLUE Donquixote Doflamingo"
+    },
+    {
+      "phrase": "Starter Deck 18: PURPLE Monkey.D.Luffy",
+      "axis": "release_name",
+      "value": "Starter Deck 18: PURPLE Monkey.D.Luffy",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 18: PURPLE Monkey.D.Luffy"
+    },
+    {
+      "phrase": "Starter Deck 19: BLACK Smoker",
+      "axis": "release_name",
+      "value": "Starter Deck 19: BLACK Smoker",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 19: BLACK Smoker"
+    },
+    {
+      "phrase": "Starter Deck 20: YELLOW Charlotte Katakuri",
+      "axis": "release_name",
+      "value": "Starter Deck 20: YELLOW Charlotte Katakuri",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 20: YELLOW Charlotte Katakuri"
+    },
+    {
+      "phrase": "Starter Deck 22: Ace & Newgate",
+      "axis": "release_name",
+      "value": "Starter Deck 22: Ace & Newgate",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 22: Ace & Newgate"
+    },
+    {
+      "phrase": "Starter Deck 23: RED Shanks",
+      "axis": "release_name",
+      "value": "Starter Deck 23: RED Shanks",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 23: RED Shanks"
+    },
+    {
+      "phrase": "Starter Deck 24: GREEN Jewelry Bonney",
+      "axis": "release_name",
+      "value": "Starter Deck 24: GREEN Jewelry Bonney",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 24: GREEN Jewelry Bonney"
+    },
+    {
+      "phrase": "Starter Deck 25: BLUE Buggy",
+      "axis": "release_name",
+      "value": "Starter Deck 25: BLUE Buggy",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 25: BLUE Buggy"
+    },
+    {
+      "phrase": "Starter Deck 26: PURPLE/BLACK Monkey.D.Luffy",
+      "axis": "release_name",
+      "value": "Starter Deck 26: PURPLE/BLACK Monkey.D.Luffy",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 26: PURPLE/BLACK Monkey.D.Luffy"
+    },
+    {
+      "phrase": "Starter Deck 27: BLACK Marshall.D.Teach",
+      "axis": "release_name",
+      "value": "Starter Deck 27: BLACK Marshall.D.Teach",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 27: BLACK Marshall.D.Teach"
+    },
+    {
+      "phrase": "Starter Deck 28: GREEN/YELLOW Yamato",
+      "axis": "release_name",
+      "value": "Starter Deck 28: GREEN/YELLOW Yamato",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 28: GREEN/YELLOW Yamato"
+    },
+    {
+      "phrase": "Starter Deck 29: Egghead",
+      "axis": "release_name",
+      "value": "Starter Deck 29: Egghead",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 29: Egghead"
+    },
+    {
+      "phrase": "Starter Deck 7: Big Mom Pirates",
+      "axis": "release_name",
+      "value": "Starter Deck 7: Big Mom Pirates",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck 7: Big Mom Pirates"
+    },
+    {
+      "phrase": "Starter Deck EX: Gear 5",
+      "axis": "release_name",
+      "value": "Starter Deck EX: Gear 5",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck EX: Gear 5"
+    },
+    {
+      "phrase": "Starter Deck EX: Luffy & Ace",
+      "axis": "release_name",
+      "value": "Starter Deck EX: Luffy & Ace",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Starter Deck EX: Luffy & Ace"
+    },
+    {
+      "phrase": "Store 2-on-2 Battle 2025",
+      "axis": "release_name",
+      "value": "Store 2-on-2 Battle 2025",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Crocodile (Store 2-on-2 Battle 2025)"
+    },
+    {
+      "phrase": "Store 2-on-2 Battle 2025 Winner",
+      "axis": "release_name",
+      "value": "Store 2-on-2 Battle 2025 Winner",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Crocodile (Store 2-on-2 Battle 2025 Winner)"
+    },
+    {
+      "phrase": "Store Tournament 2025 Vol. 4",
+      "axis": "release_name",
+      "value": "Store Tournament 2025 Vol. 4",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Gol.D.Roger (Store Tournament 2025 Vol. 4)"
+    },
+    {
+      "phrase": "The Azure Sea's Seven",
+      "axis": "release_name",
+      "value": "The Azure Sea's Seven",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "The Azure Sea's Seven"
+    },
+    {
+      "phrase": "The Time of Battle",
+      "axis": "release_name",
+      "value": "The Time of Battle",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "The Time of Battle"
+    },
+    {
+      "phrase": "Tournament Pack 2024 Oct.-Dec.",
+      "axis": "release_name",
+      "value": "Tournament Pack 2024 Oct.-Dec.",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Edison (Tournament Pack 2024 Oct.-Dec.)"
+    },
+    {
+      "phrase": "Tournament Pack 2025 Vol. 2",
+      "axis": "release_name",
+      "value": "Tournament Pack 2025 Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Hongo (Tournament Pack 2025 Vol. 2)"
+    },
+    {
+      "phrase": "Tournament Pack 2025 Vol. 3",
+      "axis": "release_name",
+      "value": "Tournament Pack 2025 Vol. 3",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sengoku (Tournament Pack 2025 Vol. 3)"
+    },
+    {
+      "phrase": "Tournament Pack 2025 Vol. 4",
+      "axis": "release_name",
+      "value": "Tournament Pack 2025 Vol. 4",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shachi & Penguin (Tournament Pack 2025 Vol. 4)"
+    },
+    {
+      "phrase": "Tournament Pack 2026 Vol. 1",
+      "axis": "release_name",
+      "value": "Tournament Pack 2026 Vol. 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Baby 5 (Tournament Pack 2026 Vol. 1)"
+    },
+    {
+      "phrase": "Tournament Pack 2026 Vol. 2",
+      "axis": "release_name",
+      "value": "Tournament Pack 2026 Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (Tournament Pack 2026 Vol. 2)"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 1",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kaido (Tournament Pack Vol. 1)"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 2",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Black Maria (Tournament Pack Vol. 2)"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 3",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 3",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Who's.Who (Tournament Pack Vol. 3) [Participant]"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 4",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 4",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Tashigi (Tournament Pack Vol. 4)"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 5",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 5",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Kaido (Tournament Pack Vol. 5)"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 6",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 6",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shirahoshi (Tournament Pack Vol. 6)"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 7",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 7",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Bepo (Tournament Pack Vol. 7)"
+    },
+    {
+      "phrase": "Two Legends",
+      "axis": "release_name",
+      "value": "Two Legends",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Two Legends"
+    },
+    {
+      "phrase": "Ultra Deck: The Three Brothers",
+      "axis": "release_name",
+      "value": "Ultra Deck: The Three Brothers",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Ultra Deck: The Three Brothers"
+    },
+    {
+      "phrase": "Ultra Deck: The Three Captains",
+      "axis": "release_name",
+      "value": "Ultra Deck: The Three Captains",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Roronoa Zoro - OP01-025 (Ultra Deck: The Three Captains)"
+    },
+    {
+      "phrase": "Wings of the Captain",
+      "axis": "release_name",
+      "value": "Wings of the Captain",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Wings of the Captain"
+    },
+    {
+      "phrase": "Winner Pack 2025 Vol. 2",
+      "axis": "release_name",
+      "value": "Winner Pack 2025 Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Hongo (Winner Pack 2025 Vol. 2)"
+    },
+    {
+      "phrase": "Winner Pack 2025 Vol. 3",
+      "axis": "release_name",
+      "value": "Winner Pack 2025 Vol. 3",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Sengoku (Winner Pack 2025 Vol. 3)"
+    },
+    {
+      "phrase": "Winner Pack 2025 Vol. 4",
+      "axis": "release_name",
+      "value": "Winner Pack 2025 Vol. 4",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Shachi & Penguin (Winner Pack 2025 Vol. 4)"
+    },
+    {
+      "phrase": "Winner Pack 2026 Vol. 1",
+      "axis": "release_name",
+      "value": "Winner Pack 2026 Vol. 1",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Baby 5 (Winner Pack 2026 Vol. 1)"
+    },
+    {
+      "phrase": "Winner Pack 2026 Vol. 2",
+      "axis": "release_name",
+      "value": "Winner Pack 2026 Vol. 2",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Monkey.D.Luffy (Winner Pack 2026 Vol. 2)"
+    },
+    {
+      "phrase": "Zoro Deck",
+      "axis": "release_name",
+      "value": "Zoro Deck",
+      "source": "output/one-piece-exact-print-metadata.json",
+      "evidence": "Roronoa Zoro - OP12-020 (Zoro Deck)"
+    }
+  ]
+}

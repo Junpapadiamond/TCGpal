@@ -1,0 +1,3 @@
+# The metadata audit hashes the exact source bytes. Keep both sides stable on Windows.
+output/one-piece-exact-print-metadata.json text eol=lf
+output/one-piece-exact-print-audit.json text eol=lf

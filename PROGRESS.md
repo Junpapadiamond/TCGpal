@@ -1,15 +1,14 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-04
+updated_at: 2026-09-05
 canonical_branch: origin/main
 last_verified_product_commit: 0b8d198
-working_branch: claude/search-enter-nami-bugs-fangwx @ 794e385 (4 ahead of origin/main, not deployed)
+working_branch: codex/one-piece-taxonomy (from 0109532; Phase 0 gate green, Phase 1 next)
 max_lines: 300
 ---
 
 # TCGlens Progress
-
 This is the compact handoff for new threads. It is an index, not a history log. Use stable section and workstream IDs to load only the context needed for the current task.
 
 <!-- progress:section id="BOOTSTRAP" -->
@@ -30,7 +29,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Base-print silence rule + alignment audit shipped `9cde099`+`794e385` (unmerged): all 4,571 prints walked, 0 substitutions, 0 self-rejections; 90 honest abstentions across the 746 EB/PRB/promo/flagship prints; 8 of the 12 adjudicated misses were text, not photo; every PRB and promo print is still anchorless without a reviewed TCGplayer id | Re-run `measure:buy-accuracy` with credentials against `9cde099`, then decide D-OP-IMAGE-PROOF on whatever still misses |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Taxonomy Phase 0 green from `0109532`; baseline `9cde099`+`794e385` preserved; census corrects 53 prefixes, 7 leader-named families, 476 event-keyword prints | Complete taxonomy Phases 1–4; execution evidence in `docs/one-piece-taxonomy-execution-2026-09-05.md`; image proof stays separate |
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Decide whether 69.2% One Piece accuracy is postable before recruiting |
@@ -64,7 +63,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 <!-- progress:workstream id="WS-IDENTITY" state="base-print-proof-shipped-live-remeasure-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
-
+Taxonomy Phase 0 census/doc/lexicons verified (1,385 tests, lint, typecheck, build); [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). Live eBay checks lack credentials on this host.
 ### Done
 
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.
@@ -94,7 +93,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 ### Read first
 
-`src/lib/schemas.ts`, `src/lib/ai/listing-compare.ts`, `src/lib/ai/card-identity-runtime.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`, `src/lib/external/ebay.ts`, `src/lib/external/tcgcsv.ts`, `src/lib/comparison/variant-fidelity.test.ts`, `src/lib/testing/one-piece-alignment.ts`; next-agent plan: `docs/plan-one-piece-taxonomy-2026-09-05.md`
+`docs/plan-one-piece-taxonomy-2026-09-05.md` (standalone handoff), `docs/one-piece-print-taxonomy.md`, `docs/one-piece-taxonomy-execution-2026-09-05.md`, `src/lib/schemas.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`, `src/lib/external/ebay.ts`, `src/lib/external/tcgcsv.ts`, `src/lib/comparison/variant-fidelity.test.ts`
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-METADATA" state="review-gated" tags="one-piece,research,audit,manga,promo,tournament,automation" -->

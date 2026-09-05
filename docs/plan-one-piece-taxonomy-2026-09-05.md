@@ -75,6 +75,11 @@ substitution is caught by the audit.
 Computed from `src/lib/external/one-piece-catalog.generated.json` during the audit work and
 not yet pinned anywhere — Phase 0 pins it.
 
+Phase 0 verification: see [the pinned census](one-piece-catalog-census.md). The snapshot has
+53 prefixes, seven overlapping leader-named deck families, and 476 prints matching the
+event keywords listed below (499 did not reproduce). TR prints predate OP16. Original
+estimates below are retained as historical planning evidence, not verified measurements.
+
 - 4,571 prints, one row per print, keyed by `card_image_id` (`OP01-016`, `OP01-016_p1`,
   `OP01-016_r1`). `_pN` is a parallel/alternate print; `_rN` is a reprint (the ledger labels
   them "Reprint"; some carry new art, some do not — unverified per print).
