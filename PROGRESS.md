@@ -94,7 +94,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 ### Read first
 
-`src/lib/schemas.ts`, `src/lib/ai/listing-compare.ts`, `src/lib/ai/card-identity-runtime.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`, `src/lib/external/ebay.ts`, `src/lib/external/tcgcsv.ts`, `src/lib/comparison/variant-fidelity.test.ts`, `src/lib/testing/one-piece-alignment.ts`
+`src/lib/schemas.ts`, `src/lib/ai/listing-compare.ts`, `src/lib/ai/card-identity-runtime.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`, `src/lib/external/ebay.ts`, `src/lib/external/tcgcsv.ts`, `src/lib/comparison/variant-fidelity.test.ts`, `src/lib/testing/one-piece-alignment.ts`; next-agent plan: `docs/plan-one-piece-taxonomy-2026-09-05.md`
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-METADATA" state="review-gated" tags="one-piece,research,audit,manga,promo,tournament,automation" -->
