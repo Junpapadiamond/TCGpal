@@ -1,0 +1,1066 @@
+{
+  "seller": [
+    {
+      "phrase": "Alternate Art",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "Alt Art",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "Alt.",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "Parallel",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "Full Art",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "SP",
+      "axis": "artwork_class",
+      "value": "special"
+    },
+    {
+      "phrase": "Special Alternate Art",
+      "axis": "artwork_class",
+      "value": "special"
+    },
+    {
+      "phrase": "Manga",
+      "axis": "artwork_class",
+      "value": "manga"
+    },
+    {
+      "phrase": "Comic Parallel",
+      "axis": "artwork_class",
+      "value": "manga"
+    },
+    {
+      "phrase": "Wanted Poster",
+      "axis": "artwork_class",
+      "value": "wanted_poster"
+    },
+    {
+      "phrase": "Wanted",
+      "axis": "artwork_class",
+      "value": "wanted_poster"
+    },
+    {
+      "phrase": "Gold",
+      "axis": "treatment",
+      "value": "gold"
+    },
+    {
+      "phrase": "Silver",
+      "axis": "treatment",
+      "value": "silver"
+    },
+    {
+      "phrase": "Extra Booster",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Memorial Collection",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Heroines Edition",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Romance Dawn",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Paramount War",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Premium Booster",
+      "axis": "release_channel",
+      "value": "premium_booster"
+    },
+    {
+      "phrase": "The Best",
+      "axis": "release_channel",
+      "value": "premium_booster"
+    },
+    {
+      "phrase": "Premium Card Collection",
+      "axis": "release_channel",
+      "value": "premium_collection"
+    },
+    {
+      "phrase": "Premium Collection",
+      "axis": "release_channel",
+      "value": "premium_collection"
+    },
+    {
+      "phrase": "25th Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary"
+    },
+    {
+      "phrase": "1st Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary"
+    },
+    {
+      "phrase": "2nd Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary"
+    },
+    {
+      "phrase": "3rd Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary"
+    },
+    {
+      "phrase": "Tournament Pack",
+      "axis": "release_channel",
+      "value": "tournament"
+    },
+    {
+      "phrase": "Winner Pack",
+      "axis": "release_channel",
+      "value": "tournament"
+    },
+    {
+      "phrase": "Promo",
+      "axis": "release_channel",
+      "value": "promo"
+    },
+    {
+      "phrase": "Promotion Cards",
+      "axis": "release_channel",
+      "value": "promo"
+    },
+    {
+      "phrase": "Winner",
+      "axis": "competition_tier",
+      "value": "winner"
+    },
+    {
+      "phrase": "Revised",
+      "axis": "provenance",
+      "value": "reprint"
+    }
+  ],
+  "tcgplayer": [
+    {
+      "phrase": "Alternate Art",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "Parallel",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "Full Art",
+      "axis": "artwork_class",
+      "value": "alternate"
+    },
+    {
+      "phrase": "SP",
+      "axis": "artwork_class",
+      "value": "special"
+    },
+    {
+      "phrase": "Manga",
+      "axis": "artwork_class",
+      "value": "manga"
+    },
+    {
+      "phrase": "Wanted Poster",
+      "axis": "artwork_class",
+      "value": "wanted_poster"
+    },
+    {
+      "phrase": "Wanted",
+      "axis": "artwork_class",
+      "value": "wanted_poster"
+    },
+    {
+      "phrase": "Super Alternate Art",
+      "axis": "artwork_class",
+      "value": "super_alternate"
+    },
+    {
+      "phrase": "Gold",
+      "axis": "treatment",
+      "value": "gold"
+    },
+    {
+      "phrase": "Silver",
+      "axis": "treatment",
+      "value": "silver"
+    },
+    {
+      "phrase": "Red Super Alternate Art",
+      "axis": "treatment",
+      "value": "red"
+    },
+    {
+      "phrase": "Extra Booster",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Memorial Collection",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Heroines Edition",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Romance Dawn",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Paramount War",
+      "axis": "release_channel",
+      "value": "booster"
+    },
+    {
+      "phrase": "Premium Booster",
+      "axis": "release_channel",
+      "value": "premium_booster"
+    },
+    {
+      "phrase": "The Best",
+      "axis": "release_channel",
+      "value": "premium_booster"
+    },
+    {
+      "phrase": "Premium Card Collection",
+      "axis": "release_channel",
+      "value": "premium_collection"
+    },
+    {
+      "phrase": "Gift Collection",
+      "axis": "release_channel",
+      "value": "premium_collection"
+    },
+    {
+      "phrase": "1st Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary"
+    },
+    {
+      "phrase": "3rd Anniversary",
+      "axis": "release_channel",
+      "value": "anniversary"
+    },
+    {
+      "phrase": "Tournament Pack",
+      "axis": "release_channel",
+      "value": "tournament"
+    },
+    {
+      "phrase": "Winner Pack",
+      "axis": "release_channel",
+      "value": "tournament"
+    },
+    {
+      "phrase": "Regional",
+      "axis": "release_channel",
+      "value": "tournament"
+    },
+    {
+      "phrase": "Treasure Cup",
+      "axis": "release_channel",
+      "value": "tournament"
+    },
+    {
+      "phrase": "Promo",
+      "axis": "release_channel",
+      "value": "promo"
+    },
+    {
+      "phrase": "Promotion Cards",
+      "axis": "release_channel",
+      "value": "promo"
+    },
+    {
+      "phrase": "Magazine",
+      "axis": "release_channel",
+      "value": "promo"
+    },
+    {
+      "phrase": "Event Pack",
+      "axis": "release_channel",
+      "value": "event"
+    },
+    {
+      "phrase": "Sealed Battle",
+      "axis": "release_channel",
+      "value": "event"
+    },
+    {
+      "phrase": "Pirates Party",
+      "axis": "release_channel",
+      "value": "event"
+    },
+    {
+      "phrase": "Starter Deck",
+      "axis": "release_channel",
+      "value": "starter_deck"
+    },
+    {
+      "phrase": "The Three Captains",
+      "axis": "release_channel",
+      "value": "starter_deck"
+    },
+    {
+      "phrase": "Winner",
+      "axis": "competition_tier",
+      "value": "winner"
+    },
+    {
+      "phrase": "Champion",
+      "axis": "competition_tier",
+      "value": "champion"
+    },
+    {
+      "phrase": "Finalist",
+      "axis": "competition_tier",
+      "value": "finalist"
+    },
+    {
+      "phrase": "Participation",
+      "axis": "competition_tier",
+      "value": "participation"
+    },
+    {
+      "phrase": "Reprint",
+      "axis": "provenance",
+      "value": "reprint"
+    },
+    {
+      "phrase": "2025 New Year Event",
+      "axis": "release_name",
+      "value": "2025 New Year Event"
+    },
+    {
+      "phrase": "2025 New Year Event Winner",
+      "axis": "release_name",
+      "value": "2025 New Year Event Winner"
+    },
+    {
+      "phrase": "2025 Pirates League Store Qualifier",
+      "axis": "release_name",
+      "value": "2025 Pirates League Store Qualifier"
+    },
+    {
+      "phrase": "2025 Pirates League Store Qualifier Winner",
+      "axis": "release_name",
+      "value": "2025 Pirates League Store Qualifier Winner"
+    },
+    {
+      "phrase": "3rd Anniversary Tournament 3 Brothers Pack",
+      "axis": "release_name",
+      "value": "3rd Anniversary Tournament 3 Brothers Pack"
+    },
+    {
+      "phrase": "3rd Anniversary Winner",
+      "axis": "release_name",
+      "value": "3rd Anniversary Winner"
+    },
+    {
+      "phrase": "500 Years in the Future",
+      "axis": "release_name",
+      "value": "500 Years in the Future"
+    },
+    {
+      "phrase": "A Fist of Divine Speed",
+      "axis": "release_name",
+      "value": "A Fist of Divine Speed"
+    },
+    {
+      "phrase": "Adventure on Kami's Island",
+      "axis": "release_name",
+      "value": "Adventure on Kami's Island"
+    },
+    {
+      "phrase": "Anime Expo 2023",
+      "axis": "release_name",
+      "value": "Anime Expo 2023"
+    },
+    {
+      "phrase": "Awakening of the New Era",
+      "axis": "release_name",
+      "value": "Awakening of the New Era"
+    },
+    {
+      "phrase": "BANDAI Card Games Fest 25-26",
+      "axis": "release_name",
+      "value": "BANDAI Card Games Fest 25-26"
+    },
+    {
+      "phrase": "Box Topper",
+      "axis": "release_name",
+      "value": "Box Topper"
+    },
+    {
+      "phrase": "Carrying On His Will",
+      "axis": "release_name",
+      "value": "Carrying On His Will"
+    },
+    {
+      "phrase": "Carrying On His Will: 3rd Anniversary Tournament Cards",
+      "axis": "release_name",
+      "value": "Carrying On His Will: 3rd Anniversary Tournament Cards"
+    },
+    {
+      "phrase": "Championship 2024",
+      "axis": "release_name",
+      "value": "Championship 2024"
+    },
+    {
+      "phrase": "Championship 25-26 Offline Regionals Season 2",
+      "axis": "release_name",
+      "value": "Championship 25-26 Offline Regionals Season 2"
+    },
+    {
+      "phrase": "Championship 25-26 Regionals Season 1",
+      "axis": "release_name",
+      "value": "Championship 25-26 Regionals Season 1"
+    },
+    {
+      "phrase": "Convention Promo 2024",
+      "axis": "release_name",
+      "value": "Convention Promo 2024"
+    },
+    {
+      "phrase": "CS 2023 Celebration Pack",
+      "axis": "release_name",
+      "value": "CS 2023 Celebration Pack"
+    },
+    {
+      "phrase": "CS 2024 Celebration Pack",
+      "axis": "release_name",
+      "value": "CS 2024 Celebration Pack"
+    },
+    {
+      "phrase": "CS 25-26 Celebration Pack",
+      "axis": "release_name",
+      "value": "CS 25-26 Celebration Pack"
+    },
+    {
+      "phrase": "CS 25-26 Event Pack",
+      "axis": "release_name",
+      "value": "CS 25-26 Event Pack"
+    },
+    {
+      "phrase": "CS 25-26 Event Pack Finalist Ver.",
+      "axis": "release_name",
+      "value": "CS 25-26 Event Pack Finalist Ver."
+    },
+    {
+      "phrase": "CS 25-26 Finalist Card Set 1",
+      "axis": "release_name",
+      "value": "CS 25-26 Finalist Card Set 1"
+    },
+    {
+      "phrase": "CS 25-26 Finalist Card Set 2",
+      "axis": "release_name",
+      "value": "CS 25-26 Finalist Card Set 2"
+    },
+    {
+      "phrase": "CS 25-26 Top Player Pack",
+      "axis": "release_name",
+      "value": "CS 25-26 Top Player Pack"
+    },
+    {
+      "phrase": "CS 25-26 Top Player Pack Vol. 2",
+      "axis": "release_name",
+      "value": "CS 25-26 Top Player Pack Vol. 2"
+    },
+    {
+      "phrase": "CS 25-26 Winner Card Set 2",
+      "axis": "release_name",
+      "value": "CS 25-26 Winner Card Set 2"
+    },
+    {
+      "phrase": "Dash Pack",
+      "axis": "release_name",
+      "value": "Dash Pack"
+    },
+    {
+      "phrase": "Emperors in the New World",
+      "axis": "release_name",
+      "value": "Emperors in the New World"
+    },
+    {
+      "phrase": "Event Pack Vol. 1",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 1"
+    },
+    {
+      "phrase": "Event Pack Vol. 2",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 2"
+    },
+    {
+      "phrase": "Event Pack Vol. 3",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 3"
+    },
+    {
+      "phrase": "Event Pack Vol. 5",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 5"
+    },
+    {
+      "phrase": "Event Pack Vol. 6",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 6"
+    },
+    {
+      "phrase": "Event Pack Vol. 7",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 7"
+    },
+    {
+      "phrase": "Event Pack Vol. 8",
+      "axis": "release_name",
+      "value": "Event Pack Vol. 8"
+    },
+    {
+      "phrase": "Extra Booster: Anime 25th Collection",
+      "axis": "release_name",
+      "value": "Extra Booster: Anime 25th Collection"
+    },
+    {
+      "phrase": "Extra Booster: Memorial Collection",
+      "axis": "release_name",
+      "value": "Extra Booster: Memorial Collection"
+    },
+    {
+      "phrase": "Extra Booster: One Piece Heroines Edition",
+      "axis": "release_name",
+      "value": "Extra Booster: One Piece Heroines Edition"
+    },
+    {
+      "phrase": "Extra Grand Battle for Stores 2026",
+      "axis": "release_name",
+      "value": "Extra Grand Battle for Stores 2026"
+    },
+    {
+      "phrase": "Gift Collection 2023",
+      "axis": "release_name",
+      "value": "Gift Collection 2023"
+    },
+    {
+      "phrase": "Heroines Battle Pack",
+      "axis": "release_name",
+      "value": "Heroines Battle Pack"
+    },
+    {
+      "phrase": "Heroines Battle Winner Pack",
+      "axis": "release_name",
+      "value": "Heroines Battle Winner Pack"
+    },
+    {
+      "phrase": "Illustration Box Vol.5",
+      "axis": "release_name",
+      "value": "Illustration Box Vol.5"
+    },
+    {
+      "phrase": "Illustration Box Vol.6",
+      "axis": "release_name",
+      "value": "Illustration Box Vol.6"
+    },
+    {
+      "phrase": "Japanese 1st Anniversary Set",
+      "axis": "release_name",
+      "value": "Japanese 1st Anniversary Set"
+    },
+    {
+      "phrase": "Japanese Version 3rd Anniversary Set",
+      "axis": "release_name",
+      "value": "Japanese Version 3rd Anniversary Set"
+    },
+    {
+      "phrase": "Kingdoms of Intrigue",
+      "axis": "release_name",
+      "value": "Kingdoms of Intrigue"
+    },
+    {
+      "phrase": "Learn Together Deck Set",
+      "axis": "release_name",
+      "value": "Learn Together Deck Set"
+    },
+    {
+      "phrase": "Legacy of the Master",
+      "axis": "release_name",
+      "value": "Legacy of the Master"
+    },
+    {
+      "phrase": "Luffy Deck",
+      "axis": "release_name",
+      "value": "Luffy Deck"
+    },
+    {
+      "phrase": "October Championship 2024 Online Regional",
+      "axis": "release_name",
+      "value": "October Championship 2024 Online Regional"
+    },
+    {
+      "phrase": "October Championship 2024 Store Regionals",
+      "axis": "release_name",
+      "value": "October Championship 2024 Store Regionals"
+    },
+    {
+      "phrase": "Official Playmat Limited Edition Vol.5",
+      "axis": "release_name",
+      "value": "Official Playmat Limited Edition Vol.5"
+    },
+    {
+      "phrase": "Offline Regional 2024 Vol. 2",
+      "axis": "release_name",
+      "value": "Offline Regional 2024 Vol. 2"
+    },
+    {
+      "phrase": "Offline Regional 2024 Vol. 3",
+      "axis": "release_name",
+      "value": "Offline Regional 2024 Vol. 3"
+    },
+    {
+      "phrase": "Offline Regional Champion Card Set 2025 Vol.2",
+      "axis": "release_name",
+      "value": "Offline Regional Champion Card Set 2025 Vol.2"
+    },
+    {
+      "phrase": "Offline Regional Finalist Card Set 2025 Vol.2",
+      "axis": "release_name",
+      "value": "Offline Regional Finalist Card Set 2025 Vol.2"
+    },
+    {
+      "phrase": "Offline Regional Participation Pack 2025 Vol.1",
+      "axis": "release_name",
+      "value": "Offline Regional Participation Pack 2025 Vol.1"
+    },
+    {
+      "phrase": "Offline Regional Participation Pack 2025 Vol.2",
+      "axis": "release_name",
+      "value": "Offline Regional Participation Pack 2025 Vol.2"
+    },
+    {
+      "phrase": "One Piece Promotion Cards",
+      "axis": "release_name",
+      "value": "One Piece Promotion Cards"
+    },
+    {
+      "phrase": "Online Regional 2023",
+      "axis": "release_name",
+      "value": "Online Regional 2023"
+    },
+    {
+      "phrase": "OP11 Release Event",
+      "axis": "release_name",
+      "value": "OP11 Release Event"
+    },
+    {
+      "phrase": "OP11 Release Event Winner",
+      "axis": "release_name",
+      "value": "OP11 Release Event Winner"
+    },
+    {
+      "phrase": "OP12 Release Event",
+      "axis": "release_name",
+      "value": "OP12 Release Event"
+    },
+    {
+      "phrase": "OP14 Release Event",
+      "axis": "release_name",
+      "value": "OP14 Release Event"
+    },
+    {
+      "phrase": "OP15 Release Event",
+      "axis": "release_name",
+      "value": "OP15 Release Event"
+    },
+    {
+      "phrase": "OP15 Release Event Winner",
+      "axis": "release_name",
+      "value": "OP15 Release Event Winner"
+    },
+    {
+      "phrase": "OP16 Release Event",
+      "axis": "release_name",
+      "value": "OP16 Release Event"
+    },
+    {
+      "phrase": "OP16 Release Event Winner",
+      "axis": "release_name",
+      "value": "OP16 Release Event Winner"
+    },
+    {
+      "phrase": "Paramount War",
+      "axis": "release_name",
+      "value": "Paramount War"
+    },
+    {
+      "phrase": "Pillars of Strength",
+      "axis": "release_name",
+      "value": "Pillars of Strength"
+    },
+    {
+      "phrase": "Pirates Party 2026 Vol. 1",
+      "axis": "release_name",
+      "value": "Pirates Party 2026 Vol. 1"
+    },
+    {
+      "phrase": "Pirates Party Vol. 2",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 2"
+    },
+    {
+      "phrase": "Pirates Party Vol. 3",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 3"
+    },
+    {
+      "phrase": "Pirates Party Vol. 4",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 4"
+    },
+    {
+      "phrase": "Pirates Party Vol. 6",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 6"
+    },
+    {
+      "phrase": "Pirates Party Vol. 7",
+      "axis": "release_name",
+      "value": "Pirates Party Vol. 7"
+    },
+    {
+      "phrase": "Premium Booster -The Best-",
+      "axis": "release_name",
+      "value": "Premium Booster -The Best-"
+    },
+    {
+      "phrase": "Premium Booster -The Best- Vol. 2",
+      "axis": "release_name",
+      "value": "Premium Booster -The Best- Vol. 2"
+    },
+    {
+      "phrase": "Premium Card Collection -BANDAI CARD GAMES Fest. 23-24 Edition-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -BANDAI CARD GAMES Fest. 23-24 Edition-"
+    },
+    {
+      "phrase": "Premium Card Collection -Best Selection Vol. 1-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -Best Selection Vol. 1-"
+    },
+    {
+      "phrase": "Premium Card Collection -Best Selection Vol. 6-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -Best Selection Vol. 6-"
+    },
+    {
+      "phrase": "Premium Card Collection -ONE PIECE FILM RED Edition-",
+      "axis": "release_name",
+      "value": "Premium Card Collection -ONE PIECE FILM RED Edition-"
+    },
+    {
+      "phrase": "Promo Reprint",
+      "axis": "release_name",
+      "value": "Promo Reprint"
+    },
+    {
+      "phrase": "Promotion Pack 2022",
+      "axis": "release_name",
+      "value": "Promotion Pack 2022"
+    },
+    {
+      "phrase": "Reprint",
+      "axis": "release_name",
+      "value": "Reprint"
+    },
+    {
+      "phrase": "Romance Dawn",
+      "axis": "release_name",
+      "value": "Romance Dawn"
+    },
+    {
+      "phrase": "Royal Blood",
+      "axis": "release_name",
+      "value": "Royal Blood"
+    },
+    {
+      "phrase": "Sealed Battle 2023 Vol. 1",
+      "axis": "release_name",
+      "value": "Sealed Battle 2023 Vol. 1"
+    },
+    {
+      "phrase": "Sealed Battle Kit Vol. 1",
+      "axis": "release_name",
+      "value": "Sealed Battle Kit Vol. 1"
+    },
+    {
+      "phrase": "Special Goods Set -Ace/Sabo/Luffy-",
+      "axis": "release_name",
+      "value": "Special Goods Set -Ace/Sabo/Luffy-"
+    },
+    {
+      "phrase": "ST15 - ST20 Release Event Pack",
+      "axis": "release_name",
+      "value": "ST15 - ST20 Release Event Pack"
+    },
+    {
+      "phrase": "Starter Deck 11: Uta Deck Battle",
+      "axis": "release_name",
+      "value": "Starter Deck 11: Uta Deck Battle"
+    },
+    {
+      "phrase": "Starter Deck 15: RED Edward.Newgate",
+      "axis": "release_name",
+      "value": "Starter Deck 15: RED Edward.Newgate"
+    },
+    {
+      "phrase": "Starter Deck 16: GREEN Uta",
+      "axis": "release_name",
+      "value": "Starter Deck 16: GREEN Uta"
+    },
+    {
+      "phrase": "Starter Deck 17: BLUE Donquixote Doflamingo",
+      "axis": "release_name",
+      "value": "Starter Deck 17: BLUE Donquixote Doflamingo"
+    },
+    {
+      "phrase": "Starter Deck 18: PURPLE Monkey.D.Luffy",
+      "axis": "release_name",
+      "value": "Starter Deck 18: PURPLE Monkey.D.Luffy"
+    },
+    {
+      "phrase": "Starter Deck 19: BLACK Smoker",
+      "axis": "release_name",
+      "value": "Starter Deck 19: BLACK Smoker"
+    },
+    {
+      "phrase": "Starter Deck 20: YELLOW Charlotte Katakuri",
+      "axis": "release_name",
+      "value": "Starter Deck 20: YELLOW Charlotte Katakuri"
+    },
+    {
+      "phrase": "Starter Deck 22: Ace & Newgate",
+      "axis": "release_name",
+      "value": "Starter Deck 22: Ace & Newgate"
+    },
+    {
+      "phrase": "Starter Deck 23: RED Shanks",
+      "axis": "release_name",
+      "value": "Starter Deck 23: RED Shanks"
+    },
+    {
+      "phrase": "Starter Deck 24: GREEN Jewelry Bonney",
+      "axis": "release_name",
+      "value": "Starter Deck 24: GREEN Jewelry Bonney"
+    },
+    {
+      "phrase": "Starter Deck 25: BLUE Buggy",
+      "axis": "release_name",
+      "value": "Starter Deck 25: BLUE Buggy"
+    },
+    {
+      "phrase": "Starter Deck 26: PURPLE/BLACK Monkey.D.Luffy",
+      "axis": "release_name",
+      "value": "Starter Deck 26: PURPLE/BLACK Monkey.D.Luffy"
+    },
+    {
+      "phrase": "Starter Deck 27: BLACK Marshall.D.Teach",
+      "axis": "release_name",
+      "value": "Starter Deck 27: BLACK Marshall.D.Teach"
+    },
+    {
+      "phrase": "Starter Deck 28: GREEN/YELLOW Yamato",
+      "axis": "release_name",
+      "value": "Starter Deck 28: GREEN/YELLOW Yamato"
+    },
+    {
+      "phrase": "Starter Deck 29: Egghead",
+      "axis": "release_name",
+      "value": "Starter Deck 29: Egghead"
+    },
+    {
+      "phrase": "Starter Deck 7: Big Mom Pirates",
+      "axis": "release_name",
+      "value": "Starter Deck 7: Big Mom Pirates"
+    },
+    {
+      "phrase": "Starter Deck EX: Gear 5",
+      "axis": "release_name",
+      "value": "Starter Deck EX: Gear 5"
+    },
+    {
+      "phrase": "Starter Deck EX: Luffy & Ace",
+      "axis": "release_name",
+      "value": "Starter Deck EX: Luffy & Ace"
+    },
+    {
+      "phrase": "Store 2-on-2 Battle 2025",
+      "axis": "release_name",
+      "value": "Store 2-on-2 Battle 2025"
+    },
+    {
+      "phrase": "Store 2-on-2 Battle 2025 Winner",
+      "axis": "release_name",
+      "value": "Store 2-on-2 Battle 2025 Winner"
+    },
+    {
+      "phrase": "Store Tournament 2025 Vol. 4",
+      "axis": "release_name",
+      "value": "Store Tournament 2025 Vol. 4"
+    },
+    {
+      "phrase": "The Azure Sea's Seven",
+      "axis": "release_name",
+      "value": "The Azure Sea's Seven"
+    },
+    {
+      "phrase": "The Time of Battle",
+      "axis": "release_name",
+      "value": "The Time of Battle"
+    },
+    {
+      "phrase": "Tournament Pack 2024 Oct.-Dec.",
+      "axis": "release_name",
+      "value": "Tournament Pack 2024 Oct.-Dec."
+    },
+    {
+      "phrase": "Tournament Pack 2025 Vol. 2",
+      "axis": "release_name",
+      "value": "Tournament Pack 2025 Vol. 2"
+    },
+    {
+      "phrase": "Tournament Pack 2025 Vol. 3",
+      "axis": "release_name",
+      "value": "Tournament Pack 2025 Vol. 3"
+    },
+    {
+      "phrase": "Tournament Pack 2025 Vol. 4",
+      "axis": "release_name",
+      "value": "Tournament Pack 2025 Vol. 4"
+    },
+    {
+      "phrase": "Tournament Pack 2026 Vol. 1",
+      "axis": "release_name",
+      "value": "Tournament Pack 2026 Vol. 1"
+    },
+    {
+      "phrase": "Tournament Pack 2026 Vol. 2",
+      "axis": "release_name",
+      "value": "Tournament Pack 2026 Vol. 2"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 1",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 1"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 2",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 2"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 3",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 3"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 4",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 4"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 5",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 5"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 6",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 6"
+    },
+    {
+      "phrase": "Tournament Pack Vol. 7",
+      "axis": "release_name",
+      "value": "Tournament Pack Vol. 7"
+    },
+    {
+      "phrase": "Two Legends",
+      "axis": "release_name",
+      "value": "Two Legends"
+    },
+    {
+      "phrase": "Ultra Deck: The Three Brothers",
+      "axis": "release_name",
+      "value": "Ultra Deck: The Three Brothers"
+    },
+    {
+      "phrase": "Ultra Deck: The Three Captains",
+      "axis": "release_name",
+      "value": "Ultra Deck: The Three Captains"
+    },
+    {
+      "phrase": "Wings of the Captain",
+      "axis": "release_name",
+      "value": "Wings of the Captain"
+    },
+    {
+      "phrase": "Winner Pack 2025 Vol. 2",
+      "axis": "release_name",
+      "value": "Winner Pack 2025 Vol. 2"
+    },
+    {
+      "phrase": "Winner Pack 2025 Vol. 3",
+      "axis": "release_name",
+      "value": "Winner Pack 2025 Vol. 3"
+    },
+    {
+      "phrase": "Winner Pack 2025 Vol. 4",
+      "axis": "release_name",
+      "value": "Winner Pack 2025 Vol. 4"
+    },
+    {
+      "phrase": "Winner Pack 2026 Vol. 1",
+      "axis": "release_name",
+      "value": "Winner Pack 2026 Vol. 1"
+    },
+    {
+      "phrase": "Winner Pack 2026 Vol. 2",
+      "axis": "release_name",
+      "value": "Winner Pack 2026 Vol. 2"
+    },
+    {
+      "phrase": "Zoro Deck",
+      "axis": "release_name",
+      "value": "Zoro Deck"
+    }
+  ]
+}

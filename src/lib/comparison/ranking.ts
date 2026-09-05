@@ -1,3 +1,5 @@
+import { altArtTitlePattern, specificVariantMarkers, withoutJapaneseAnniversaryRelease, type PrintClass as VariantIntent } from "@/lib/external/one-piece-taxonomy";
+export { printClass as deriveVariantIntent, variantIntentLabel, type PrintClass as VariantIntent } from "@/lib/external/one-piece-taxonomy";
 import {
   normalizedListingSchema,
   rankedChoiceSchema,
@@ -76,56 +78,10 @@ const exclusionPatterns = [
   /\bx\s?\d+\s*$/i,
 ];
 
-// Which print the buyer confirmed: the plain base card, a generic alternate-art /
-// parallel, or one of the specific special classes (SP, manga, treasure). One Piece
-// reuses the same card number across all of these at very different prices, so a
-// comparison must stay on the exact confirmed class — an SP buyer must never be
-// recommended a regular alt art.
-export type VariantIntent = "base" | "alt" | "sp" | "manga" | "treasure";
-
-// Free-text markers that a listing is an alternate art / parallel / special print
-// rather than the base. Kept deliberately specific so a base comparison is not
-// polluted by (pricier) alt-art listings, and an alt-art comparison does not show
-// base copies. Titles that merely say "holo"/"foil" are NOT alt-art signals.
-const altArtTitlePattern = /\b(alt(?:ernate)?[\s.]*art|parallel|manga|full[\s-]*art|special[\s-]*art|art\s*rare|treasure\s*rare)\b/i;
-
-// Specific special-print classes, checked before the generic alt marker: a title
-// carrying one of these belongs to that class only, in both directions of the gate.
-const specificVariantMarkers: ReadonlyArray<{
-  intent: Exclude<VariantIntent, "base" | "alt">;
-  pattern: RegExp;
-  label: string;
-}> = [
-  { intent: "sp", pattern: /\bSP\b|special[\s-]*art/i, label: "SP (Special Art)" },
-  { intent: "manga", pattern: /\bmanga\b/i, label: "manga art" },
-  { intent: "treasure", pattern: /treasure\s*rare|\bTR\b/i, label: "Treasure Rare" },
-];
-
 // One Piece card keys ("OP01-016", "EB01-001_p2", "ST01-004", promo "P-096") are the
 // only catalog whose numbers span multiple prints, so they alone get variant handling.
 export function isOnePieceCardKey(cardNumber: string, id: string) {
   return /^(?:OP|ST|EB|PRB|P)-?\d/i.test(cardNumber) || /^(?:OP|ST|EB|PRB|P)\d/i.test(id);
-}
-
-// Map a confirmed catalog print (rarity + variant text as bundled in the One Piece
-// catalog) onto the variant class the comparison must stay inside. "Secret Rare Alt"
-// parallels behave as generic alternate arts: sellers title them with alt/parallel
-// markers, and the base SEC print maps to "base".
-export function deriveVariantIntent(print: { rarity?: string | null; variant?: string | null }): VariantIntent {
-  const rarity = (print.rarity ?? "").trim().toLowerCase();
-  const variant = (print.variant ?? "").trim().toLowerCase();
-  if (rarity === "sp" || rarity === "sp card" || variant.startsWith("special art")) return "sp";
-  if (variant.includes("manga")) return "manga";
-  if (rarity === "tr" || variant.includes("treasure")) return "treasure";
-  if (variant) return "alt";
-  return "base";
-}
-
-// Human label for a variant class, used in exclusion reasons and abstention copy.
-export function variantIntentLabel(intent: VariantIntent): string {
-  const specific = specificVariantMarkers.find((marker) => marker.intent === intent);
-  if (specific) return specific.label;
-  return intent === "alt" ? "alternate-art" : "base";
 }
 
 // All variant-gate exclusion reasons carry this phrase; the abstention builder
@@ -737,7 +693,7 @@ function languageAssessment(matchText: string, targetLanguage: string | null, li
   const englishTarget = target === "en" || target.includes("english");
   const japaneseTarget = target === "jp" || target === "jpn" || target.includes("japanese");
   const structured = (listingLanguage ?? "").trim();
-  const languageText = matchText.replace(/\bjapanese\s+\d+(?:st|nd|rd|th)\s+anniversary\s+set\b/gi, "");
+  const languageText = withoutJapaneseAnniversaryRelease(matchText);
   const explicitJapanese = /^(?:japanese|jpn|jp)$/i.test(structured)
     || /\b(?:japanese|jpn|jp)\b|日本語|日版/i.test(languageText);
   const explicitEnglish = /^(?:english|eng|en)$/i.test(structured)

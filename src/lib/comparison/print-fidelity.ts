@@ -1,3 +1,15 @@
+import {
+  releaseClaimPatterns,
+  releaseAliases,
+  isGenericMarker,
+  detectResearchedPrintFacet,
+  witnessClass,
+  hasConflictingOnePieceTreatments,
+  ONE_PIECE_ANNIVERSARY_PATTERN,
+  ONE_PIECE_BASE_PRINT_PATTERN,
+  type WitnessClass,
+} from "@/lib/external/one-piece-taxonomy";
+export { isGenericMarker } from "@/lib/external/one-piece-taxonomy";
 import type { CardIdentityCandidate } from "@/lib/schemas";
 import { collectorNumberConflict, collectorNumberPattern } from "@/lib/comparison/collector-number";
 import { findOnePieceCatalogVariants } from "@/lib/external/one-piece-catalog";
@@ -15,15 +27,6 @@ export type PrintFidelityAssessment = {
   reasons: string[];
   priceGuard: PrintPriceGuard;
 };
-
-type PrintClass = "base" | "alt" | "sp" | "manga" | "treasure";
-
-// Every way a seller says "not the base art" without naming which. A bare
-// "Alt" ("SEC Alt", "Alt Foil") and the shorthand "AA" are as common in titles as
-// "Alt Art", and the catalog itself labels secret-rare parallels "Secret Rare
-// Alt" — a detector that needed the word "art" read those as silence, and the
-// silence rule then handed a parallel's own listing to the base print.
-const genericAltPattern = /\b(alt(?:ernate)?(?:[\s.]*art)?|parallel|full[\s-]*art|art\s*rare|aa)\b/i;
 
 export function assessPrintFidelity(input: {
   card: CardIdentityCandidate;
@@ -64,8 +67,6 @@ function classifyPrintIdentity(
   return classifyOnePiecePrintIdentity(card, matchText.trim());
 }
 
-type WitnessClass = "base" | "alternate" | "special" | "manga" | "wanted_poster" | "super_alternate" | "treasure";
-
 type PrintWitness = {
   id: string;
   artworkClass: WitnessClass;
@@ -95,7 +96,7 @@ function classifyOnePiecePrintIdentity(
   if (!selected || siblings.length === 0) {
     return result("unknown", "low", "one_piece_witness_set_unavailable");
   }
-  if (/\bgold\b/i.test(text) && /\bsilver\b/i.test(text)) {
+  if (hasConflictingOnePieceTreatments(text)) {
     return result("unknown", "low", "listing_names_conflicting_print_treatments");
   }
 
@@ -125,7 +126,7 @@ function classifyOnePiecePrintIdentity(
       return result("mismatch", "high", "listing_names_different_artwork_class");
     }
     evidenceSets.push(owners);
-  } else if (/\bbase\s+print\b/i.test(text)) {
+  } else if (ONE_PIECE_BASE_PRINT_PATTERN.test(text)) {
     const owners = new Set(siblings.filter((sibling) => sibling.artworkClass === "base").map((sibling) => sibling.id));
     if (!owners.has(selected.id)) return result("mismatch", "high", "listing_names_sibling_print");
     evidenceSets.push(owners);
@@ -176,7 +177,7 @@ function classifyOnePiecePrintIdentity(
   // and never reaches the base. Silence proves the base and nothing else: it
   // cannot prove an alt art, and it proves nothing among promos, where every
   // print of a P- number is a promo and none is the ordinary one.
-  const silent = !observed.artworkClass && !observed.treatment && !/\bbase\s+print\b/i.test(text);
+  const silent = !observed.artworkClass && !observed.treatment && !ONE_PIECE_BASE_PRINT_PATTERN.test(text);
   if (silent && selected.artworkClass === "base" && isOrdinaryRetailNumber(card.cardNumber)) {
     const baseOwners = new Set(siblings.filter((sibling) => sibling.artworkClass === "base").map((sibling) => sibling.id));
     const possible = intersectEvidence(siblings, [...evidenceSets, baseOwners]);
@@ -217,7 +218,7 @@ function classifyOnePiecePrintIdentity(
     && observed.artworkClass !== "manga"
     && observed.artworkClass !== "wanted_poster"
     && observed.artworkClass !== "super_alternate"
-    && !/\bbase\s+print\b/i.test(text)
+    && !ONE_PIECE_BASE_PRINT_PATTERN.test(text)
     && otherNonBasePrints > 0;
   if (genericClassOnly) {
     return result("unknown", "low", "one_piece_class_evidence_requires_corroboration");
@@ -237,7 +238,7 @@ function classifyOnePiecePrintIdentity(
 // any of the numbered packs the catalog does not carry.
 function requiresCompetitionReleaseProof(card: CardIdentityCandidate, text: string) {
   if (card.competitionTier !== "winner" && card.competitionTier !== "participation") return false;
-  if (/\b\d+(?:st|nd|rd|th)\s+anniversary\b/i.test(text)) return false;
+  if (ONE_PIECE_ANNIVERSARY_PATTERN.test(text)) return false;
   const release = normalizePhrase(card.setName);
   return !(release.length >= 4 && normalizePhrase(text).includes(release));
 }
@@ -274,15 +275,6 @@ function buildWitnesses(cardNumber: string): PrintWitness[] {
       markers: new Set(markers),
     };
   });
-}
-
-function witnessClass(sibling: ReturnType<typeof findOnePieceCatalogVariants>[number]): WitnessClass {
-  if (sibling.artwork_class === "alternate") return "alternate";
-  if (sibling.artwork_class) return sibling.artwork_class;
-  const derived = printClass(sibling);
-  if (derived === "alt") return "alternate";
-  if (derived === "sp") return "special";
-  return derived;
 }
 
 // A marker is owned by every sibling whose own release wording contains it, not
@@ -361,21 +353,6 @@ function statedStatsConflict(card: CardIdentityCandidate, text: string) {
 // broader word that, if any sibling's release carries it, means the family plausibly
 // includes this release and the veto should stand down. Deliberately permissive —
 // under-firing leaves a row `unknown`, over-firing hides a real listing.
-const releaseClaimPatterns: { pattern: RegExp; aliases: string[]; kind?: "starter_deck" }[] = [
-  { pattern: /\b\d+(?:st|nd|rd|th)\s+anniversary\b/i, aliases: ["anniversary"] },
-  { pattern: /\bmagazine\s+promo(?:tion)?\b/i, aliases: ["magazine"] },
-  { pattern: /\bpromo(?:tion)?\s+cards?\b/i, aliases: ["promo", "promotion"] },
-  { pattern: /\bstarter\s+deck\s*\d+\b/i, aliases: ["starterdeck"], kind: "starter_deck" },
-  { pattern: /\btournament\s+pack\b/i, aliases: ["tournamentpack"] },
-  { pattern: /\btreasure\s+cup\b/i, aliases: ["treasurecup"] },
-  { pattern: /\bgift\s+collection\b/i, aliases: ["giftcollection"] },
-  { pattern: /\bpremium\s+card\s+collection\b/i, aliases: ["premiumcardcollection", "premiumcollection"] },
-  // Bandai's Revision Pack reprints keep the artwork and change the card text, so
-  // nothing in a title or an artwork comparison separates them from the original
-  // print — only the release name does. Observed as a $50 recommendation for a
-  // ST01-001 whose ordinary print trades near $2.
-  { pattern: /\brevision\s+pack\b/i, aliases: ["revisionpack"] },
-];
 
 function namesReleaseNoSiblingOwns(card: CardIdentityCandidate, siblings: PrintWitness[], text: string) {
   const owned = siblings.flatMap((sibling) => [...sibling.markers].map(normalizePhrase));
@@ -400,90 +377,11 @@ function ownsStarterDeckNumber(card: CardIdentityCandidate, claimed: string) {
   return Number.isFinite(deck) && Number.isFinite(stated) && deck === stated;
 }
 
-// The forms a release name takes in a real title. Sellers shorten: "Gift
-// Collection 2023" is listed as "Gift Collection", "One Piece Card The Best
-// Vol.2" as "The Best Vol 2" or "Premium Booster", "Memorial Collection" as
-// "Memorial". Every alias here is seller-visible wording, never an internal id,
-// and a bare year is never one — "2023" names Gift Collection and Sealed Battle
-// alike and would veto the wrong print.
-function releaseAliases(releaseName: string): string[] {
-  const aliases: string[] = [];
-  const anniversary = releaseName.match(/\b(\d+(?:st|nd|rd|th))\s+anniversary\b/i)?.[0];
-  if (anniversary) aliases.push(anniversary);
-  if (/premium\s+(?:card\s+)?collection/i.test(releaseName)) aliases.push("premium collection");
-  if (/one\s+piece\s+card\s+the\s+best/i.test(releaseName)) aliases.push("the best", "premium booster");
-  if (/tournament\s+pack/i.test(releaseName)) aliases.push("tournament pack");
-  if (/\bwinner\b/i.test(releaseName)) aliases.push("winner");
-  if (/memorial\s+collection/i.test(releaseName)) aliases.push("memorial");
-  if (/anime\s+25th\s+collection/i.test(releaseName)) aliases.push("anime 25th");
-  if (/heroines/i.test(releaseName)) aliases.push("heroines");
-
-  // A trailing year or volume is the part sellers drop first, so the stem is its
-  // own alias. The volume is kept separately: it is what tells "The Best" from
-  // "The Best Vol.2" on the three numbers printed in both.
-  const qualifier = /\s*(?:\b20\d\d\b|\bvol\.?\s*\d+)\s*$/i;
-  const stem = releaseName.replace(qualifier, "").replace(qualifier, "").trim();
-  if (stem && stem !== releaseName.trim()) aliases.push(stem);
-  const volume = releaseName.match(/\bvol\.?\s*(\d+)/i)?.[1];
-  if (volume) aliases.push(`vol ${volume}`);
-  return aliases;
-}
-
-// Class and treatment words that name a kind of print, not one print. They are
-// read by the facet detector, never used as sibling markers — "alt art" on its
-// own cannot be evidence for one alternate art over another. Exported so the
-// alignment audit judges marker uniqueness by the same rule.
-export function isGenericMarker(marker: string): boolean {
-  return new Set([
-    "altart", "alternateart", "parallel", "specialart", "sp", "manga", "mangaart", "mangarare",
-    "wanted", "wantedposter", "posterart", "gold", "silver", "red", "superalt", "superalternateart",
-    "anniversary", "promo", "regional", "championship",
-  ]).has(normalizePhrase(marker));
-}
-
 function intersectEvidence(siblings: PrintWitness[], evidenceSets: Set<string>[]): Set<string> {
   return evidenceSets.reduce(
     (possible, evidence) => new Set([...possible].filter((id) => evidence.has(id))),
     new Set(siblings.map((sibling) => sibling.id)),
   );
-}
-
-function detectResearchedPrintFacet(text: string): {
-  artworkClass: WitnessClass | null;
-  treatment: "gold" | "silver" | "red" | null;
-} {
-  if (/\bred\s+super\s+(?:alt|alternate(?:\s+art)?)\b/i.test(text)) {
-    return { artworkClass: "super_alternate", treatment: "red" };
-  }
-  if (/\bsuper\s+(?:alt|alternate(?:\s+art)?)\b/i.test(text)) {
-    return { artworkClass: "super_alternate", treatment: null };
-  }
-  if (/\bwanted(?:\s+poster)?\b|\bposter\s+art\b/i.test(text)) {
-    return { artworkClass: "wanted_poster", treatment: null };
-  }
-  if (/\bmanga(?:\s+(?:art|rare))?\b/i.test(text)) {
-    return { artworkClass: "manga", treatment: null };
-  }
-  // Treasure Rare is its own class (OP16 onward). Unseen here, a "Treasure Rare"
-  // listing read as silence and the silence rule handed it to the base print —
-  // the one substitution in the 4,571-print audit. "TR" is matched case-
-  // sensitively: it is the printed rarity, and lower-case "tr" is noise.
-  if (/\btreasure\s+rare\b/i.test(text) || /\bTR\b/.test(text)) {
-    return { artworkClass: "treasure", treatment: null };
-  }
-  if (/\bgold\b/i.test(text)) {
-    return { artworkClass: /\bSP\b|special[\s-]*art/i.test(text) ? "special" : null, treatment: "gold" };
-  }
-  if (/\bsilver\b/i.test(text)) {
-    return { artworkClass: /\bSP\b|special[\s-]*art/i.test(text) ? "special" : null, treatment: "silver" };
-  }
-  if (/\bSP\b|special[\s-]*art/i.test(text)) {
-    return { artworkClass: "special", treatment: null };
-  }
-  if (genericAltPattern.test(text)) {
-    return { artworkClass: "alternate", treatment: null };
-  }
-  return { artworkClass: null, treatment: null };
 }
 
 function classifyPokemonPrintIdentity(
@@ -533,15 +431,6 @@ function isOrdinaryRetailNumber(cardNumber: string) {
 
 function isOnePiecePrint(card: Pick<CardIdentityCandidate, "cardNumber" | "id">) {
   return /^(?:OP|ST|EB|PRB|P)-?\d/i.test(card.cardNumber) || /^(?:OP|ST|EB|PRB|P)\d/i.test(card.id);
-}
-
-function printClass(print: { rarity?: string | null; variant?: string | null }): PrintClass {
-  const rarity = (print.rarity ?? "").trim().toLowerCase();
-  const variant = (print.variant ?? "").trim().toLowerCase();
-  if (rarity === "sp" || rarity === "sp card" || variant.startsWith("special art")) return "sp";
-  if (variant.includes("manga")) return "manga";
-  if (rarity === "tr" || variant.includes("treasure")) return "treasure";
-  return variant ? "alt" : "base";
 }
 
 function normalizePhrase(value: string) {

@@ -107,4 +107,8 @@ for (const [phrase, evidence] of [...names].sort(([a], [b]) => a.localeCompare(b
   tcgplayer.push({ phrase, axis: "release_name", value: phrase, source: ledgerPath, evidence });
 }
 writeJson("src/lib/testing/one-piece-lexicons.json", { seller, tcgplayer });
+// Only vocabulary reaches the taxonomy; evidence titles and ledger records remain test data.
+writeJson("src/lib/external/one-piece-taxonomy-vocabulary.json", Object.fromEntries(
+  Object.entries({ seller, tcgplayer }).map(([name, rows]) => [name, rows.map(({ phrase, axis, value }) => ({ phrase, axis, value }))]),
+));
 console.log(JSON.stringify({ counts, lexicons: { seller: seller.length, tcgplayer: tcgplayer.length } }, null, 2));

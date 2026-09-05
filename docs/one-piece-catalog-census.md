@@ -57,6 +57,8 @@ The test recomputes counts without invoking the generator. Review a changed snap
 its census diff before accepting new numbers; regeneration is not approval of catalog facts.
 
 The classifier's inherited target audit is 656 accepted / 90 abstained / 0 rejected /
-0 substitutions across 746 prints. Its whole-catalog 590 abstentions (561 twins,
-23 class-corroboration cases, six silent promo cases) are classifier outcomes, not raw census
-counts. Their instrument is [the alignment audit](one-piece-alignment-audit-2026-09-05.md).
+0 substitutions across 746 prints. The expanded whole-catalog instrument measures **594**
+abstentions and 3,977 acceptances, with zero substitutions or self-rejections. Re-running the
+pre-consolidation `2e4e3ee` classifier confirmed those same numbers; the plan's 590 and its
+breakdown were not a verified baseline. These are classifier outcomes, not raw census counts.
+Their instrument is [the alignment audit](one-piece-alignment-audit-2026-09-05.md).

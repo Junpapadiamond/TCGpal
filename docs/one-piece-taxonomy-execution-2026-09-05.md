@@ -38,7 +38,7 @@ anchors before merging that matcher. Founder decisions are reported, never assum
 |---|---|---|
 | 0 | Census, taxonomy/failure doc, source-backed lexicons, full gate | Passed: lint/typecheck/build; 89 test files, 1,385 tests passed, 4 live reviews skipped |
 | 1 | Completeness across rarity/stem/release and synthetic IR rejection; full gate | Passed: lint/typecheck/build; 90 files, 1,394 tests passed, 4 live reviews skipped |
-| 2 | Shared taxonomy, each consumer audited, no duplicated class regexes; full gate | Pending |
+| 2 | Shared taxonomy, each consumer audited, no duplicated class regexes; full gate | Passed: lint/typecheck/build; 90 files, 1,395 tests passed, 4 live reviews skipped; each consumer audit unchanged |
 | 3a | Unique anchor aliases, real-name tests, live before/after anchors; full gate | Pending |
 | 3b | Taxonomy labels; English/中文 desktop and mobile captures; full gate | Pending |
 | 3c | Above-market review disposition, exact anchor only; full gate | Pending |
@@ -66,3 +66,24 @@ release names are explicitly enumerated rather than admitted by a catch-all. It 
 Uta Deck Battle rows missing from the first pattern pass. A full-suite UI test exposed its
 existing typewriter timing assumption; that static-copy assertion now requests reduced motion,
 and the subsequent full suite passed. No UI runtime code changed.
+
+Phase 1 commit: `2e4e3ee`. Phase 2 consumer audits so far:
+
+| Move | Target accepted / abstained / rejected / substitutions | Whole catalog accepted / abstained / rejected / substitutions |
+|---|---|---|
+| Pre-migration source, independently rerun | 656 / 90 / 0 / 0 | 3,977 / 594 / 0 / 0 |
+| Print-fidelity vocabulary and detector precedence | 656 / 90 / 0 / 0 | 3,977 / 594 / 0 / 0 |
+| Ranking vocabulary and shared class derivation | 656 / 90 / 0 / 0 | 3,977 / 594 / 0 / 0 |
+| eBay class/research/release query terms | 656 / 90 / 0 / 0 | 3,977 / 594 / 0 / 0 |
+| Metadata enrichment and release facets | 656 / 90 / 0 / 0 | 3,977 / 594 / 0 / 0 |
+| Shared class-rule data and remaining treatment/release detectors | 656 / 90 / 0 / 0 | 3,977 / 594 / 0 / 0 |
+
+The original 590 whole-catalog abstentions was stale. The pre-migration source was temporarily
+loaded and audited, then restored in a `finally` block; 594 is not a consolidation regression.
+The audit writer now includes the whole-catalog summary and the target test pins the
+656/90 thresholds. Its npm entry point now runs on Windows as well as POSIX.
+An AST test guards against class-word regexes returning to the four runtime consumers.
+Only `{phrase, axis, value}` lexicon projections enter the module; supporting titles and
+unapproved ledger rows remain outside runtime imports. Public schema subsets and detector
+precedence are preserved; the taxonomy's starter-deck description does not silently expand
+the current public release-channel contract.

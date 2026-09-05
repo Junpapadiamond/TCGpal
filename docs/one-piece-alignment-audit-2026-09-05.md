@@ -9,6 +9,12 @@ accepted, every marked print accepted) are enforced in `one-piece-alignment.test
 |---:|---:|---:|---:|---:|
 | 746 | 656 | 90 | 0 | 0 |
 
+## Whole catalog
+
+| prints | self accepted | honest abstentions | self-rejected | substitutions |
+|---:|---:|---:|---:|---:|
+| 4571 | 3977 | 594 | 0 | 0 |
+
 ## Honest abstentions
 
 A print here is one whose own careful listing the classifier returns `unknown` for: nothing a

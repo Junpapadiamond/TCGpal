@@ -52,6 +52,9 @@ describe("One Piece Phase 0 evidence artifacts", () => {
   it("traces every lexicon phrase to an actual seller title or TCGplayer name", () => {
     type Entry = { phrase: string; axis: string; value: string; source: string; evidence: string };
     const lexicons = readJson("src/lib/testing/one-piece-lexicons.json") as { seller: Entry[]; tcgplayer: Entry[] };
+    expect(readJson("src/lib/external/one-piece-taxonomy-vocabulary.json")).toEqual(Object.fromEntries(
+      Object.entries(lexicons).map(([name, entries]) => [name, entries.map(({ phrase, axis, value }) => ({ phrase, axis, value }))]),
+    ));
     const ledger = readJson("output/one-piece-exact-print-metadata.json") as {
       tcgplayerGroupName: string | null; tcgplayerProductName: string | null;
     }[];

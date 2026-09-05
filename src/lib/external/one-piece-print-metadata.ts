@@ -1,22 +1,6 @@
+import { normalizeCanonicalPrintId, deriveOnePieceReleaseFacets, type OnePieceArtworkClass, type OnePiecePrintTreatment, type OnePieceReleaseChannel, type OnePieceReleaseMetadata } from "@/lib/external/one-piece-taxonomy";
+export { deriveOnePieceCatalogPrintEnrichment, type OnePieceArtworkClass, type OnePiecePrintTreatment, type OnePieceReleaseChannel, type OnePieceReleaseMetadata } from "@/lib/external/one-piece-taxonomy";
 export const ONE_PIECE_PRINT_METADATA_REVISION = "2026-07-11.2";
-
-export type OnePieceArtworkClass =
-  | "alternate"
-  | "manga"
-  | "wanted_poster"
-  | "super_alternate"
-  | "special";
-
-export type OnePiecePrintTreatment = "gold" | "silver" | "red";
-export type OnePieceReleaseChannel =
-  | "anniversary"
-  | "booster"
-  | "event"
-  | "premium_booster"
-  | "premium_collection"
-  | "promo"
-  | "tournament"
-  | "unknown";
 
 export type OnePiecePrintEnrichment = {
   canonicalPrintId: string;
@@ -39,12 +23,6 @@ export type OnePiecePrintEvidence = {
   source: "tcgcsv" | "official-card-list" | "bundled-catalog";
   productId: number | null;
   checkedAt: "2026-07-11";
-};
-
-export type OnePieceReleaseMetadata = {
-  channel: OnePieceReleaseChannel;
-  competitionTier: "champion" | "finalist" | "participation" | "winner" | null;
-  provenance: "original_set" | "reprint" | "promotion" | "unknown";
 };
 
 type MetadataSeed = Omit<OnePiecePrintEnrichment, "canonicalPrintId" | "tcgplayerGroupId">;
@@ -314,10 +292,6 @@ const seeds: Record<string, MetadataSeed> = {
   "OP09-027_p3": releaseAlternate("3rd Anniversary Winner", 657800, ["anniversary", "tournament winner", "winner"], "tcgcsv+official-image", { channel: "tournament", competitionTier: "winner" }),
 };
 
-function normalizeCanonicalPrintId(value: string) {
-  return value.trim().replace(/_([pr])(\d+)$/i, (_, kind: string, number: string) => `_${kind.toLowerCase()}${number}`).toUpperCase().replace(/_([PR])(\d+)$/, (_, kind: string, number: string) => `_${kind.toLowerCase()}${number}`);
-}
-
 const normalizedSeeds = new Map(Object.entries(seeds).map(([id, seed]) => [normalizeCanonicalPrintId(id), seed]));
 
 export function getOnePiecePrintEnrichment(canonicalPrintId: string): OnePiecePrintEnrichment | null {
@@ -335,90 +309,6 @@ export function getOnePiecePrintEnrichment(canonicalPrintId: string): OnePiecePr
   });
 }
 
-export function deriveOnePieceCatalogPrintEnrichment(input: {
-  canonicalPrintId: string;
-  isAlternateArt: boolean;
-  rarity: string | null | undefined;
-  releaseName: string | null | undefined;
-}): OnePiecePrintEnrichment | null {
-  if (!input.isAlternateArt) return null;
-  const releaseName = input.releaseName?.trim() ?? "";
-  const isSpecialRarity = input.rarity?.trim().toUpperCase() === "SP CARD";
-  const isSpecialRelease = /anniversary|championship|regional|treasure cup|tournament|winner|premium card collection|promo/i.test(releaseName);
-  if (!isSpecialRarity && !isSpecialRelease) return null;
-
-  const artworkClass: OnePieceArtworkClass = isSpecialRarity ? "special" : "alternate";
-  const semanticAliases = [
-    /treasure cup/i.test(releaseName) ? "treasure cup" : null,
-    /tournament pack/i.test(releaseName) ? "tournament pack" : null,
-    /winner/i.test(releaseName) ? "tournament winner" : null,
-    /\bchampion\b/i.test(releaseName) ? "regional champion" : null,
-    /finalist/i.test(releaseName) ? "regional finalist" : null,
-    /participation/i.test(releaseName) ? "regional participation" : null,
-    /championship/i.test(releaseName) ? "championship" : null,
-    /regional/i.test(releaseName) ? "regional" : null,
-    /anniversary/i.test(releaseName) ? "anniversary" : null,
-    /premium card collection/i.test(releaseName) ? "premium collection" : null,
-    /promo/i.test(releaseName) ? "promo" : null,
-  ].filter((alias): alias is string => Boolean(alias));
-  const displayLabel = `${releaseName || "Catalog"} ${isSpecialRarity ? "Special Art" : "Art"}`;
-  const id = normalizeCanonicalPrintId(input.canonicalPrintId);
-  const promotion = isSpecialRelease && !/premium card collection/i.test(releaseName);
-
-  return Object.freeze({
-    canonicalPrintId: id,
-    artworkClass,
-    treatments: Object.freeze([]),
-    displayLabel,
-    collectorAliases: Object.freeze([displayLabel, releaseName, ...semanticAliases].filter(Boolean)),
-    exactMarkers: Object.freeze([releaseName, ...semanticAliases].filter(Boolean)),
-    tcgplayerProductId: null,
-    tcgplayerGroupId: null,
-    evidence: Object.freeze([
-      Object.freeze({ source: "bundled-catalog" as const, productId: null, checkedAt: "2026-07-11" as const }),
-    ]),
-    verification: "catalog_derived",
-    metadataSource: "bundled-catalog",
-    releaseProvenance: /_r\d+$/i.test(id) ? "reprint" : promotion ? "promotion" : "unknown",
-  });
-}
-
-export function deriveOnePieceReleaseMetadata(
-  releaseName: string,
-  canonicalPrintId: string,
-): OnePieceReleaseMetadata {
-  const normalized = releaseName.toLowerCase();
-  const enrichment = getOnePiecePrintEnrichment(canonicalPrintId);
-  let channel: OnePieceReleaseChannel = enrichment?.releaseChannel ?? "unknown";
-  if (channel !== "unknown") {
-    // Curated release metadata takes precedence over ambiguous catalog wording.
-  } else if (/championship|regional|treasure cup|tournament|finalist|\bchampion\b|\bwinner\b/.test(normalized)) channel = "tournament";
-  else if (/anniversary/.test(normalized)) channel = "anniversary";
-  else if (/pre.?release|release event|sealed battle|event/.test(normalized)) channel = "event";
-  else if (/one piece card the best|premium booster/.test(normalized)) channel = "premium_booster";
-  // Extra Boosters are retail sets. Two of them carry "Collection" in the name,
-  // which the premium-collection test below would otherwise claim, tagging the
-  // ordinary EB01/EB02 print as a boxed-set reprint.
-  else if (/memorial collection|anime 25th collection|heroines edition|extra booster/.test(normalized)) channel = "booster";
-  else if (/premium card collection|binder|collection/.test(normalized)) channel = "premium_collection";
-  else if (/promo|promotion|magazine|store/.test(normalized)) channel = "promo";
-  else if (/romance dawn|paramount war|pillars of strength|kingdoms of intrigue|new era|captain|future|two legends|new world|royal blood|divine speed|master|will|seven|battle|island/.test(normalized)) channel = "booster";
-
-  const competitionTier = enrichment?.competitionTier ?? (/\bchampion\b/.test(normalized)
-    ? "champion" as const
-    : /finalist/.test(normalized)
-      ? "finalist" as const
-      : /participation/.test(normalized)
-        ? "participation" as const
-        : /winner/.test(normalized)
-          ? "winner" as const
-          : null);
-  const provenance = enrichment?.releaseProvenance
-    ?? (channel === "anniversary" || channel === "tournament" || channel === "event" || channel === "promo"
-      ? "promotion"
-      : /_r\d+$/i.test(canonicalPrintId)
-        ? "reprint"
-        : "unknown");
-
-  return { channel, competitionTier, provenance };
+export function deriveOnePieceReleaseMetadata(releaseName: string, canonicalPrintId: string): OnePieceReleaseMetadata {
+  return deriveOnePieceReleaseFacets(releaseName, canonicalPrintId, getOnePiecePrintEnrichment(canonicalPrintId));
 }

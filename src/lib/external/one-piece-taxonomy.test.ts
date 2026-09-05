@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import ts from "typescript";
 import catalog from "@/lib/external/one-piece-catalog.generated.json";
 import {
   deriveOnePieceTaxonomy,
@@ -9,6 +11,21 @@ import {
 } from "@/lib/external/one-piece-taxonomy";
 
 describe("One Piece taxonomy completeness", () => {
+  it("keeps class-word regexes out of all four runtime consumers", () => {
+    const failures: string[] = [];
+    for (const file of ["src/lib/comparison/print-fidelity.ts", "src/lib/comparison/ranking.ts", "src/lib/external/ebay.ts", "src/lib/external/one-piece-print-metadata.ts"]) {
+      const ast = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true);
+      const visit = (node: ts.Node) => {
+        // These are class vocabulary, not product exclusions such as gold metal.
+        if (ts.isRegularExpressionLiteral(node) && /manga|alternate|special|treasure|\bSP\b|\bTR\b|alt\(/.test(node.text)) {
+          failures.push(`${file}: ${node.text}`);
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(ast);
+    }
+    expect(failures).toEqual([]);
+  });
   it("accounts for every observed rarity, variant stem and release without silent fallback", () => {
     const failures: string[] = [];
     for (const card of catalog) {

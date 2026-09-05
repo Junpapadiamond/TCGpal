@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { describe, it } from "vitest";
+import { onePieceCatalog } from "@/lib/external/one-piece-catalog";
 import {
   auditOnePieceAlignment,
   familiesWithPrefix,
@@ -37,6 +38,7 @@ function group(rows: AlignmentRow[]) {
 describe.skipIf(!ENABLED)("One Piece alignment review", () => {
   it("writes the abstention ledger", () => {
     const audit = auditOnePieceAlignment(FAMILIES);
+    const whole = auditOnePieceAlignment([...new Set(onePieceCatalog.map((card) => card.card_set_id))]);
     const date = new Date().toISOString().slice(0, 10);
     const path = `docs/one-piece-alignment-audit-${date}.md`;
     const unknown = audit.rows.filter((row) => row.self === "unknown");
@@ -54,6 +56,12 @@ describe.skipIf(!ENABLED)("One Piece alignment review", () => {
       `| prints | self accepted | honest abstentions | self-rejected | substitutions |`,
       `|---:|---:|---:|---:|---:|`,
       `| ${audit.summary.prints} | ${audit.summary.selfAccepted} | ${audit.summary.selfUnknown} | ${audit.summary.selfMismatch} | ${audit.summary.substitutions} |`,
+      "",
+      "## Whole catalog",
+      "",
+      "| prints | self accepted | honest abstentions | self-rejected | substitutions |",
+      "|---:|---:|---:|---:|---:|",
+      `| ${whole.summary.prints} | ${whole.summary.selfAccepted} | ${whole.summary.selfUnknown} | ${whole.summary.selfMismatch} | ${whole.summary.substitutions} |`,
       "",
       "## Honest abstentions",
       "",

@@ -28,7 +28,9 @@ const audit = auditOnePieceAlignment(FAMILIES);
 describe("One Piece exact-print alignment", () => {
   it("walks the whole target catalog", () => {
     expect(FAMILIES.length).toBeGreaterThan(300);
-    expect(audit.summary.prints).toBeGreaterThan(600);
+    expect(audit.summary.prints).toBe(746);
+    expect(audit.summary.selfAccepted).toBeGreaterThanOrEqual(656);
+    expect(audit.summary.selfUnknown).toBeLessThanOrEqual(90);
   });
 
   it("never lets a confirmed print accept a sibling's own listing", () => {

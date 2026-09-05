@@ -1,5 +1,6 @@
+import { printClassQueryToken, sellerVocabularyPrintQueryToken } from "@/lib/external/one-piece-taxonomy";
 import { z } from "zod";
-import { deriveVariantIntent, isOnePieceCardKey, type VariantIntent } from "@/lib/comparison/ranking";
+import { isOnePieceCardKey } from "@/lib/comparison/ranking";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
 import {
   collectorNumberConflict,
@@ -19,59 +20,6 @@ export type EbaySourceListing = SourceListing & {
   imageUrl: string | null;
   imageUrls: string[];
 };
-
-// Query token appended when the confirmed One Piece print is a special class,
-// so Best Match surfaces the right print instead of the cheaper base copies.
-const VARIANT_QUERY_TOKENS: Partial<Record<VariantIntent, string>> = {
-  sp: "SP",
-  manga: "manga",
-  treasure: "treasure rare",
-  alt: "alt art",
-};
-
-function researchedPrintQueryToken(card: CardIdentityCandidate): string | null {
-  if (card.treatments?.includes("gold")) return "gold";
-  if (card.treatments?.includes("silver")) return "silver";
-  if (card.treatments?.includes("red") && card.artworkClass === "super_alternate") return "red super alt";
-  if (card.artworkClass === "manga") return "manga";
-  if (card.artworkClass === "wanted_poster") return "wanted poster";
-  if (card.artworkClass === "super_alternate") return "super alt";
-  const aliases = card.collectorAliases ?? [];
-  for (const token of [
-    "tournament winner",
-    "tournament pack",
-    "treasure cup",
-    "regional champion",
-    "regional finalist",
-    "regional participation",
-    "premium collection",
-    "championship",
-    "anniversary",
-    "promo",
-  ]) {
-    if (aliases.some((alias) => alias.toLowerCase().includes(token))) return token;
-  }
-  return null;
-}
-
-// The class word alone — "alt art", "SP", "manga" — without a release name.
-// Researched tokens ("gold", "treasure cup") already are the class word.
-function printClassQueryToken(card: CardIdentityCandidate): string | null {
-  return researchedPrintQueryToken(card) ?? VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null;
-}
-
-function sellerVocabularyPrintQueryToken(card: CardIdentityCandidate): string | null {
-  const researched = researchedPrintQueryToken(card);
-  if (researched) return researched;
-  const printClass = VARIANT_QUERY_TOKENS[deriveVariantIntent(card)] ?? null;
-  if (!printClass) return null;
-  // The catalog's release name is seller-facing vocabulary (unlike `_pN`). It
-  // supplies the corroborating witness that broad class words such as "SP" or
-  // "alt art" cannot provide by themselves. The following plain-query attempt
-  // remains the recall fallback when sellers omit the release name.
-  const releaseName = card.variant?.trim() ? card.setName.trim() : "";
-  return [printClass, releaseName].filter(Boolean).join(" ");
-}
 
 const ebayAmountSchema = z.object({
   value: z.string(),
