@@ -1,0 +1,259 @@
+{
+  "kind": "reference-research",
+  "acquisition": "bounded TCGCSV adapter",
+  "commit": "c72ccf99a59b35307284dee86e031cd6228599d5",
+  "baselinePath": null,
+  "sources": [
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/groups",
+      "observedAt": "2026-09-05T17:18:10.354Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/3188/products",
+      "observedAt": "2026-09-05T17:18:10.513Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/last-updated.txt",
+      "observedAt": "2026-09-05T17:18:10.660Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/3188/prices",
+      "observedAt": "2026-09-05T17:18:10.685Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23333/products",
+      "observedAt": "2026-09-05T17:18:10.986Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23333/prices",
+      "observedAt": "2026-09-05T17:18:11.007Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23213/products",
+      "observedAt": "2026-09-05T17:18:11.159Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23213/prices",
+      "observedAt": "2026-09-05T17:18:11.315Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23272/products",
+      "observedAt": "2026-09-05T17:18:11.453Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23272/prices",
+      "observedAt": "2026-09-05T17:18:11.583Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23496/products",
+      "observedAt": "2026-09-05T17:18:11.801Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23496/prices",
+      "observedAt": "2026-09-05T17:18:11.962Z",
+      "status": 200
+    },
+    {
+      "url": "https://tcgcsv.com/tcgplayer/68/23243/products",
+      "observedAt": "2026-09-05T17:18:12.123Z",
+      "status": 200
+    }
+  ],
+  "rows": [
+    {
+      "printId": "OP01-016",
+      "cohort": "booster",
+      "groupId": 3188,
+      "productId": 454534,
+      "productName": "Nami",
+      "groupName": "Romance Dawn",
+      "referenceUsd": 5.91,
+      "asOf": "2026-09-04T20:06:50.000Z",
+      "observedAt": "2026-09-05T17:18:10.071Z",
+      "candidateCount": 2,
+      "error": null
+    },
+    {
+      "printId": "EB01-006",
+      "cohort": "booster",
+      "groupId": 23333,
+      "productId": 544530,
+      "productName": "Tony Tony.Chopper",
+      "groupName": "Extra Booster: Memorial Collection",
+      "referenceUsd": 23.65,
+      "asOf": "2026-09-04T20:06:50.000Z",
+      "observedAt": "2026-09-05T17:18:10.688Z",
+      "candidateCount": 3,
+      "error": null
+    },
+    {
+      "printId": "EB01-006_p1",
+      "cohort": "booster",
+      "groupId": 23333,
+      "productId": 544531,
+      "productName": "Tony Tony.Chopper (Alternate Art)",
+      "groupName": "Extra Booster: Memorial Collection",
+      "referenceUsd": 150.66,
+      "asOf": "2026-09-04T20:06:50.000Z",
+      "observedAt": "2026-09-05T17:18:11.007Z",
+      "candidateCount": 3,
+      "error": null
+    },
+    {
+      "printId": "OP05-119",
+      "cohort": "booster",
+      "groupId": 23213,
+      "productId": 527024,
+      "productName": "Monkey.D.Luffy (119)",
+      "groupName": "Awakening of the New Era",
+      "referenceUsd": 9.27,
+      "asOf": "2026-09-04T20:06:50.000Z",
+      "observedAt": "2026-09-05T17:18:11.012Z",
+      "candidateCount": 3,
+      "error": null
+    },
+    {
+      "printId": "OP06-118",
+      "cohort": "booster",
+      "groupId": 23272,
+      "productId": 541661,
+      "productName": "Roronoa Zoro",
+      "groupName": "Wings of the Captain",
+      "referenceUsd": 8.09,
+      "asOf": "2026-09-04T20:06:50.000Z",
+      "observedAt": "2026-09-05T17:18:11.317Z",
+      "candidateCount": 3,
+      "error": null
+    },
+    {
+      "printId": "OP01-016_p4",
+      "cohort": "booster",
+      "groupId": 23213,
+      "productId": 527035,
+      "productName": "Nami (SP)",
+      "groupName": "Awakening of the New Era",
+      "referenceUsd": 547.17,
+      "asOf": "2026-09-04T20:06:50.000Z",
+      "observedAt": "2026-09-05T17:18:11.587Z",
+      "candidateCount": 1,
+      "error": null
+    },
+    {
+      "printId": "PRB02-006",
+      "cohort": "prb",
+      "groupId": null,
+      "productId": null,
+      "productName": null,
+      "groupName": null,
+      "referenceUsd": null,
+      "asOf": null,
+      "observedAt": "2026-09-05T17:18:11.592Z",
+      "candidateCount": 0,
+      "error": null
+    },
+    {
+      "printId": "PRB02-006_p1",
+      "cohort": "prb",
+      "groupId": null,
+      "productId": null,
+      "productName": null,
+      "groupName": null,
+      "referenceUsd": null,
+      "asOf": null,
+      "observedAt": "2026-09-05T17:18:11.593Z",
+      "candidateCount": 0,
+      "error": null
+    },
+    {
+      "printId": "EB01-006_r1",
+      "cohort": "reviewed",
+      "groupId": 23496,
+      "productId": 587962,
+      "productName": "Tony Tony.Chopper (EB01-006) (Manga)",
+      "groupName": "Premium Booster -The Best-",
+      "referenceUsd": 3000,
+      "asOf": "2026-09-04T20:06:50.000Z",
+      "observedAt": "2026-09-05T17:18:11.593Z",
+      "candidateCount": 1,
+      "error": null
+    },
+    {
+      "printId": "P-001",
+      "cohort": "promo",
+      "groupId": null,
+      "productId": null,
+      "productName": null,
+      "groupName": null,
+      "referenceUsd": null,
+      "asOf": null,
+      "observedAt": "2026-09-05T17:18:11.963Z",
+      "candidateCount": 0,
+      "error": null
+    },
+    {
+      "printId": "P-001_p3",
+      "cohort": "promo",
+      "groupId": null,
+      "productId": null,
+      "productName": null,
+      "groupName": null,
+      "referenceUsd": null,
+      "asOf": null,
+      "observedAt": "2026-09-05T17:18:11.964Z",
+      "candidateCount": 0,
+      "error": null
+    },
+    {
+      "printId": "EB01-015_p1",
+      "cohort": "promo",
+      "groupId": null,
+      "productId": null,
+      "productName": null,
+      "groupName": null,
+      "referenceUsd": null,
+      "asOf": null,
+      "observedAt": "2026-09-05T17:18:11.965Z",
+      "candidateCount": 0,
+      "error": null
+    },
+    {
+      "printId": "EB01-015_p2",
+      "cohort": "promo",
+      "groupId": null,
+      "productId": null,
+      "productName": null,
+      "groupName": null,
+      "referenceUsd": null,
+      "asOf": null,
+      "observedAt": "2026-09-05T17:18:11.966Z",
+      "candidateCount": 0,
+      "error": null
+    },
+    {
+      "printId": "OP01-016_p3",
+      "cohort": "promo",
+      "groupId": null,
+      "productId": null,
+      "productName": null,
+      "groupName": null,
+      "referenceUsd": null,
+      "asOf": null,
+      "observedAt": "2026-09-05T17:18:11.967Z",
+      "candidateCount": 0,
+      "error": null
+    }
+  ],
+  "changedControls": [],
+  "note": "Item-only, condition-blind aggregate references. No seller inventory or mapping-row approval."
+}

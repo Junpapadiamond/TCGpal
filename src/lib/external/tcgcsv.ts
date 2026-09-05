@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 import { collectorNumberParts, normalizeCollectorNumber } from "@/lib/comparison/collector-number";
+import { onePieceReferenceGroupAliases } from "./one-piece-taxonomy";
 
 // TCGCSV republishes the TCGplayer catalog and daily aggregate price dump.
 // It is a reference feed, never concrete seller inventory. Data is daily, so
@@ -128,37 +129,38 @@ export async function resolveTcgplayerProductVariants(
   fetcher: typeof fetch = fetch,
 ): Promise<TcgplayerProductMatch[]> {
   const categoryId = inferTcgplayerCategoryId(card);
-  const group = await findTcgplayerGroup(categoryId, card.setName, fetcher, card.tcgplayerGroupId ?? null);
-  if (!group) return [];
-
-  const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 86400);
-  if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer product feed failed with ${response.status}.`);
-  const products = tcgcsvEnvelope(tcgcsvProductSchema).parse(await response.json()).results;
-
+  const groups = await findTcgplayerGroups(categoryId, card.setName, fetcher, card.tcgplayerGroupId ?? null);
   const wantedNumber = collectorNumberKey(card.cardNumber);
   const wantedPrefix = collectorPrefixKey(card.cardNumber);
   if (!wantedPrefix) return [];
 
-  const candidates = products.filter((product) => {
-    const number = productNumber(product);
-    return collectorNumberKey(number) === wantedNumber || collectorPrefixKey(number) === wantedPrefix;
-  });
+  const byGroup = await Promise.all(groups.map(async (group) => {
+    const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/${group.groupId}/products`), fetcher, 86400);
+    if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer product feed failed with ${response.status}.`);
+    const products = tcgcsvEnvelope(tcgcsvProductSchema).parse(await response.json()).results;
 
-  const nameMatches = candidates.filter((product) => productNameMatchesCard(product.cleanName || product.name, card.name));
-  const exactNumberMatches = candidates.filter(
-    (product) => collectorNumberKey(productNumber(product)) === wantedNumber,
-  );
-  const matches = nameMatches.length > 0
-    ? nameMatches
-    : exactNumberMatches.length === 1
-      ? exactNumberMatches
-      : [];
-  if (card.tcgplayerProductId) {
-    return matches
-      .filter((product) => product.productId === card.tcgplayerProductId)
-      .map((product) => toProductMatch(categoryId, group, product));
-  }
-  return sortTcgplayerProducts(matches).map((product) => toProductMatch(categoryId, group, product));
+    const candidates = products.filter((product) => {
+      const number = productNumber(product);
+      return collectorNumberKey(number) === wantedNumber || collectorPrefixKey(number) === wantedPrefix;
+    });
+
+    const nameMatches = candidates.filter((product) => productNameMatchesCard(product.cleanName || product.name, card.name));
+    const exactNumberMatches = candidates.filter(
+      (product) => collectorNumberKey(productNumber(product)) === wantedNumber,
+    );
+    const matches = nameMatches.length > 0
+      ? nameMatches
+      : exactNumberMatches.length === 1
+        ? exactNumberMatches
+        : [];
+    if (card.tcgplayerProductId) {
+      return matches
+        .filter((product) => product.productId === card.tcgplayerProductId)
+        .map((product) => toProductMatch(categoryId, group, product));
+    }
+    return sortTcgplayerProducts(matches).map((product) => toProductMatch(categoryId, group, product));
+  }));
+  return byGroup.flat();
 }
 
 function toProductMatch(
@@ -233,16 +235,25 @@ export async function findTcgplayerGroup(
   fetcher: typeof fetch = fetch,
   preferredGroupId: number | null = null,
 ) {
+  return (await findTcgplayerGroups(categoryId, setName, fetcher, preferredGroupId))[0] ?? null;
+}
+
+async function findTcgplayerGroups(
+  categoryId: number,
+  setName: string,
+  fetcher: typeof fetch = fetch,
+  preferredGroupId: number | null = null,
+) {
   const response = await tcgcsvFetch(new URL(`${TCGCSV_BASE}/${categoryId}/groups`), fetcher, 86400);
   if (!response.ok) throw new TcgcsvUnavailableError(`TCGplayer group feed failed with ${response.status}.`);
   const groups = tcgcsvEnvelope(tcgcsvGroupSchema).parse(await response.json()).results;
 
   if (preferredGroupId) {
-    return groups.find((group) => group.groupId === preferredGroupId) ?? null;
+    return groups.filter((group) => group.groupId === preferredGroupId);
   }
 
   const wantedTerms = setNameMatchTerms(setName);
-  if (!wantedTerms[0]) return null;
+  if (!wantedTerms[0]) return [];
 
   // TCGCSV group names carry a set-code prefix ("SWSH07: Evolving Skies"), so a
   // base set's name is a substring of every later release in its era and the
@@ -264,7 +275,12 @@ export async function findTcgplayerGroup(
     .sort((a, b) => b.tier - a.tier
       || extraReleaseTokens(a.group.name, setName) - extraReleaseTokens(b.group.name, setName)
       || normalize(a.group.name).length - normalize(b.group.name).length);
-  return contained[0]?.group ?? null;
+  const primary = contained[0]?.group;
+  const aliases = categoryId === ONE_PIECE_CATEGORY_ID ? onePieceReferenceGroupAliases(setName).map(normalize) : [];
+  const aliasGroups = groups.filter((group) => aliases.includes(normalize(group.name)));
+  // The existing primary group plus exact-name alias groups; never an
+  // unbounded group crawl. A failed feed prevents claiming uniqueness over it.
+  return [...new Map([...(primary ? [primary] : []), ...aliasGroups].map((group) => [group.groupId, group])).values()];
 }
 
 // Structural words spell out an edition the set name already implies: a release

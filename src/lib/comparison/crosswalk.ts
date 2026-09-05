@@ -1,5 +1,6 @@
 import {
   extraReleaseTokens,
+  inferTcgplayerCategoryId,
   releaseTokensCovered,
   resolveTcgplayerProductVariants,
   setNameMatchTerms,
@@ -10,6 +11,7 @@ import type { BuyerContext, CardIdentityCandidate } from "@/lib/schemas";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
 import { collectorNumbersEquivalent } from "@/lib/comparison/collector-number";
 import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
+import { isOnePiecePromotionGroup, isOnePieceReferenceGroupAlias } from "@/lib/external/one-piece-taxonomy";
 
 // R1: the canonical card id (pokemontcg.io id, confirmed at the version step)
 // maps to each platform's native identifier so connectors never re-match free
@@ -106,11 +108,20 @@ export function selectExactTcgplayerProduct(
   if (preferred.length === 1) {
     return exactProductIdentityMatches(card, preferred[0]) ? preferred[0] : null;
   }
-  const pool = products.filter((product) => releaseMatches(product.groupName, card.setName));
+  const aliasMatches = (product: TcgplayerProductMatch) => inferTcgplayerCategoryId(card) === 68
+    && product.categoryId === 68 && isOnePieceReferenceGroupAlias(product.groupName, card.setName);
+  const pool = products.filter((product) => releaseMatches(product.groupName, card.setName) || aliasMatches(product));
   const credible = pool.filter((product) => {
+    const alias = aliasMatches(product);
+    if (alias && !exactProductIdentityMatches(card, product)) return false;
+    // A pooled Promotion Cards group is not a claim that the product came from
+    // this print's release. Only its own product-name parenthetical can say that.
+    const matchText = alias && isOnePiecePromotionGroup(product.groupName)
+      ? `${product.productName} ${product.collectorNumber} ${card.language}`
+      : `${product.productName} ${product.collectorNumber} ${product.groupName} ${card.language} ${product.productUrl}`;
     const assessment = assessPrintFidelity({
       card,
-      matchText: `${product.productName} ${product.collectorNumber} ${product.groupName} ${card.language} ${product.productUrl}`,
+      matchText,
       listingPrice: 0,
       exactMarketAnchor: null,
     });

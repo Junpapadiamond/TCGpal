@@ -95,6 +95,33 @@ const unresolvedReleases = new Set([
   "Dreamhack Dallas 2024", "One Piece Day Dallas -card Game Celebration",
 ].map((name) => name.toLowerCase()));
 
+export function onePieceReleaseChannel(releaseName: string): OnePieceTaxonomyChannel {
+  return retailReleases[releaseName.trim().toLowerCase()]
+    ?? releasePatterns.find(({ pattern }) => pattern.test(releaseName))?.channel
+    ?? "unknown";
+}
+
+export function onePieceReferenceGroupAliases(releaseName: string): string[] {
+  const channel = onePieceReleaseChannel(releaseName);
+  if (channel === "premium_booster") {
+    return [/\bvol\.?\s*2\b/i.test(releaseName) ? "Premium Booster -The Best- Vol. 2" : "Premium Booster -The Best-"];
+  }
+  // Promotion Cards is a heterogeneous provider bucket. It admits candidate
+  // discovery only; the product's own release wording must still prove one print.
+  if (["promo", "event", "anniversary", "tournament", "premium_collection", "starter_deck"].includes(channel)) {
+    return ["One Piece Promotion Cards"];
+  }
+  return [];
+}
+
+export function isOnePieceReferenceGroupAlias(groupName: string, releaseName: string): boolean {
+  return onePieceReferenceGroupAliases(releaseName).some((alias) => normalizePhrase(alias) === normalizePhrase(groupName));
+}
+
+export function isOnePiecePromotionGroup(groupName: string): boolean {
+  return normalizePhrase(groupName) === normalizePhrase("One Piece Promotion Cards");
+}
+
 export type OnePieceTaxonomy = {
   artworkClass: OnePieceTaxonomyClass;
   treatments: OnePieceTaxonomyTreatment[];
@@ -118,9 +145,7 @@ export function deriveOnePieceTaxonomy(input: {
   const unmapped: string[] = [];
   if (!Object.hasOwn(rarities, rarity)) unmapped.push(`rarity: ${rarity}`);
   if (!Object.hasOwn(variants, variant)) unmapped.push(`variant: ${variant}`);
-  const releaseChannel = retailReleases[release.toLowerCase()]
-    ?? releasePatterns.find(({ pattern }) => pattern.test(release))?.channel
-    ?? "unknown";
+  const releaseChannel = onePieceReleaseChannel(release);
   if (releaseChannel === "unknown" && !unresolvedReleases.has(release.toLowerCase())) unmapped.push(`release: ${release}`);
   return {
     artworkClass: unmapped.some((issue) => issue.startsWith("rarity:") || issue.startsWith("variant:"))
@@ -167,6 +192,12 @@ export const releaseClaimPatterns: { pattern: RegExp; aliases: string[]; kind?: 
 
 export function releaseAliases(releaseName: string): string[] {
   const aliases: string[] = [];
+  // Real provider product names omit the catalog's editorial "Included In".
+  // Keep the full remainder, including year/volume, as the release proof.
+  if (/^included in /i.test(releaseName)) aliases.push(releaseName.replace(/^included in /i, ""));
+  // Catalog Tournament Kit 2025 Vol.2 is the provider's Tournament Pack 2025
+  // Vol. 2. This spelling alias does not erase the competition tier or volume.
+  if (/^tournament kit 2025 vol\.\s*2$/i.test(releaseName)) aliases.push("Tournament Pack 2025 Vol. 2");
   const anniversary = releaseName.match(/\b(\d+(?:st|nd|rd|th))\s+anniversary\b/i)?.[0];
   if (anniversary) aliases.push(anniversary);
   if (/premium\s+(?:card\s+)?collection/i.test(releaseName)) aliases.push("premium collection");

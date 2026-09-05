@@ -1,6 +1,6 @@
 import { normalizeCanonicalPrintId, deriveOnePieceReleaseFacets, type OnePieceArtworkClass, type OnePiecePrintTreatment, type OnePieceReleaseChannel, type OnePieceReleaseMetadata } from "@/lib/external/one-piece-taxonomy";
 export { deriveOnePieceCatalogPrintEnrichment, type OnePieceArtworkClass, type OnePiecePrintTreatment, type OnePieceReleaseChannel, type OnePieceReleaseMetadata } from "@/lib/external/one-piece-taxonomy";
-export const ONE_PIECE_PRINT_METADATA_REVISION = "2026-07-11.2";
+export const ONE_PIECE_PRINT_METADATA_REVISION = "2026-09-05.taxonomy-anchor.1";
 
 export type OnePiecePrintEnrichment = {
   canonicalPrintId: string;

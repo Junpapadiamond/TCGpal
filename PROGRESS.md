@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-09-05
 canonical_branch: origin/main
 last_verified_product_commit: 0b8d198
-working_branch: codex/one-piece-taxonomy (Phase 0 aeacba9, Phase 1 2e4e3ee; Phase 2 gate green)
+working_branch: codex/one-piece-taxonomy (Phase 0 aeacba9, Phase 1 2e4e3ee; Phase 2 c72ccf9; Phase 3a gate green)
 max_lines: 300
 ---
 
@@ -29,7 +29,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Taxonomy Phases 0–2 green (`aeacba9`, `2e4e3ee` + consumer consolidation); all four consumers share vocabulary; target 656/90/0/0, whole catalog 3977/594/0/0 | Complete taxonomy Phases 3–4; evidence in `docs/one-piece-taxonomy-execution-2026-09-05.md`; image proof stays separate |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Taxonomy Phases 0–3a green (`aeacba9`, `2e4e3ee`, `c72ccf9` + live-tested anchor aliases); all four consumers share vocabulary; target 656/90/0/0, whole catalog 3977/594/0/0 | Complete taxonomy Phases 3–4; evidence in `docs/one-piece-taxonomy-execution-2026-09-05.md`; image proof stays separate |
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Decide whether 69.2% One Piece accuracy is postable before recruiting |
@@ -63,7 +63,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 <!-- progress:workstream id="WS-IDENTITY" state="base-print-proof-shipped-live-remeasure-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
-Taxonomy Phases 0–2 verified (1,395 tests, lint, typecheck, build); [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). Whole-catalog 594 abstentions verified on pre-migration source too; 590 was stale. Live eBay checks lack credentials on this host.
+Taxonomy Phases 0–3a verified (1,411 tests, lint, typecheck, build; live aliases: +2 PRB/+4 promo, six booster controls unchanged); [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). Whole-catalog 594 abstentions verified on pre-migration source too; 590 was stale. Live eBay checks lack credentials on this host.
 ### Done
 
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.

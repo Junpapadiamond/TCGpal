@@ -5,6 +5,10 @@
 // what this card costs on the marketplace we search. If eBay asks sit
 // structurally above TCGplayer market, then the badge is partly measuring the
 // gap between two marketplaces, and the wait threshold is calibrated off-centre.
+if (process.argv.includes("--taxonomy")) {
+  await import("./measure-one-piece-taxonomy-anchors.mjs");
+  process.exit(process.exitCode ?? 0);
+}
 const BASE = process.env.TARGET || "https://lenstcg.com";
 
 const CARDS = [

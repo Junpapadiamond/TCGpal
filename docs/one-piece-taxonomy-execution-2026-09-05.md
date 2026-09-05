@@ -29,7 +29,7 @@ anchors before merging that matcher. Founder decisions are reported, never assum
   estimates are corrected in the census; no runtime classification changed to fit them.
 - Observed: 629 twin prints / 247 families reproduce, with 258 distinct twin groups.
 - Assumption to test: shared vocabulary can preserve every classifier decision.
-- Unproven: alias-enabled PRB/promo anchors will resolve uniquely against live TCGCSV products.
+- Observed: live alias matching adds two PRB and four promo anchors; six booster controls are unchanged.
 - Unproven: image-equal twin rows can be merged, or scope guards can safely be relaxed.
 
 ## Phase checklist
@@ -39,7 +39,7 @@ anchors before merging that matcher. Founder decisions are reported, never assum
 | 0 | Census, taxonomy/failure doc, source-backed lexicons, full gate | Passed: lint/typecheck/build; 89 test files, 1,385 tests passed, 4 live reviews skipped |
 | 1 | Completeness across rarity/stem/release and synthetic IR rejection; full gate | Passed: lint/typecheck/build; 90 files, 1,394 tests passed, 4 live reviews skipped |
 | 2 | Shared taxonomy, each consumer audited, no duplicated class regexes; full gate | Passed: lint/typecheck/build; 90 files, 1,395 tests passed, 4 live reviews skipped; each consumer audit unchanged |
-| 3a | Unique anchor aliases, real-name tests, live before/after anchors; full gate | Pending |
+| 3a | Unique anchor aliases, real-name tests, live before/after anchors; full gate | Passed: lint/typecheck/build; 91 files, 1,411 tests passed, 5 live reviews skipped; live run passed |
 | 3b | Taxonomy labels; English/中文 desktop and mobile captures; full gate | Pending |
 | 3c | Above-market review disposition, exact anchor only; full gate | Pending |
 | 4 | Buy accuracy, market anchors, official twin images, ePID probe; founder report | Pending |
@@ -87,3 +87,26 @@ Only `{phrase, axis, value}` lexicon projections enter the module; supporting ti
 unapproved ledger rows remain outside runtime imports. Public schema subsets and detector
 precedence are preserved; the taxonomy's starter-deck description does not silently expand
 the current public release-channel contract.
+
+## Phase 3a anchor evidence
+
+Phase 2 shipped in `c72ccf9`. The anchor matcher uses exact taxonomy group aliases and
+requires full card name, collector number, and a single print-proven product. The heterogeneous
+Promotion Cards group cannot supply release evidence. No seed IDs were added. A candidate
+feed failure remains a provider failure rather than becoming evidence of uniqueness.
+
+Real-name crosswalk tests failed first (9 of 14); the final 16 tests also cover wrong names,
+wrong numbers, competing credible rows, different volumes and a failed alias feed. The
+metadata revision changes to invalidate cached crosswalks. The classifier audit remains
+656/90/0/0 target and 3977/594/0/0 catalog-wide.
+
+`npm run measure:market-anchor -- --taxonomy` records public TCGCSV reference evidence,
+separately from the older eBay-based price-deviation measurement. See the
+[before](one-piece-taxonomy-anchors-before-2026-09-05.json) and
+[after](one-piece-taxonomy-anchors-after-2026-09-05.json) artifacts. The after run includes
+normalized source hashes because the implementation was uncommitted when measured.
+Two PRB prints and four promo prints gained anchors; P-001_p3 still abstains. The six sampled
+booster controls retained the same product IDs, groups and reference prices. This establishes
+the named sample, not an empirical claim about every booster. No listing availability or
+artwork accuracy is inferred from aggregate reference prices. Full gate: lint, typecheck,
+1,411 tests across 91 files (5 live reviews skipped), and production build passed.
