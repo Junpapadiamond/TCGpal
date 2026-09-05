@@ -37,7 +37,7 @@ anchors before merging that matcher. Founder decisions are reported, never assum
 | Phase | Required evidence | State |
 |---|---|---|
 | 0 | Census, taxonomy/failure doc, source-backed lexicons, full gate | Passed: lint/typecheck/build; 89 test files, 1,385 tests passed, 4 live reviews skipped |
-| 1 | Completeness across rarity/stem/release and synthetic IR rejection; full gate | Pending |
+| 1 | Completeness across rarity/stem/release and synthetic IR rejection; full gate | Passed: lint/typecheck/build; 90 files, 1,394 tests passed, 4 live reviews skipped |
 | 2 | Shared taxonomy, each consumer audited, no duplicated class regexes; full gate | Pending |
 | 3a | Unique anchor aliases, real-name tests, live before/after anchors; full gate | Pending |
 | 3b | Taxonomy labels; English/中文 desktop and mobile captures; full gate | Pending |
@@ -59,3 +59,10 @@ LF for the source and audit without changing either JSON payload. `graphify upda
 attempted and is unavailable on this host; no graph regeneration is claimed.
 No eBay or other provider credentials were present in the process environment or local env
 files at this checkpoint. TCGCSV is public and its market-anchor measurement remains possible.
+
+Phase 0 commit: `aeacba9`. Phase 1 adds a taxonomy module that no runtime consumer imports
+yet. Coverage names every unseen rarity/stem/release, including synthetic `IR`; six unresolved
+release names are explicitly enumerated rather than admitted by a catch-all. It found eight
+Uta Deck Battle rows missing from the first pattern pass. A full-suite UI test exposed its
+existing typewriter timing assumption; that static-copy assertion now requests reduced motion,
+and the subsequent full suite passed. No UI runtime code changed.

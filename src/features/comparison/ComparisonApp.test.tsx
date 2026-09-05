@@ -284,6 +284,19 @@ describe("comparison condition controls", () => {
   });
 
   it("keeps the default screen focused on one promise and the core search controls", async () => {
+    // This asserts static copy, not typewriter timing. Under full-suite load the
+    // animation can start before the locale assertion; reduced motion makes the
+    // same accessible static placeholder deterministic without changing product behavior.
+    vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
     render(<ComparisonApp />);
 
     expect(screen.getByRole("heading", { name: "Find the best listing for your exact card." })).toBeTruthy();

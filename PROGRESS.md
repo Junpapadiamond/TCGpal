@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-09-05
 canonical_branch: origin/main
 last_verified_product_commit: 0b8d198
-working_branch: codex/one-piece-taxonomy (from 0109532; Phase 0 gate green, Phase 1 next)
+working_branch: codex/one-piece-taxonomy (Phase 0 aeacba9; Phase 1 gate green, Phase 2 next)
 max_lines: 300
 ---
 
@@ -63,7 +63,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 <!-- progress:workstream id="WS-IDENTITY" state="base-print-proof-shipped-live-remeasure-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
-Taxonomy Phase 0 census/doc/lexicons verified (1,385 tests, lint, typecheck, build); [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). Live eBay checks lack credentials on this host.
+Taxonomy Phase 0 `aeacba9` and Phase 1 completeness verified (1,394 tests, lint, typecheck, build); [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). Live eBay checks lack credentials on this host.
 ### Done
 
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.
