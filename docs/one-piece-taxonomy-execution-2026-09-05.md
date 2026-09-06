@@ -168,3 +168,18 @@ Full gate passed: lint, typecheck, 1,426 tests in 93 files (5 live reviews skipp
 and production build. The 2026-09-06 audit remains 656/90/0/0 target and
 3977/594/0/0 catalog-wide. Graphify remains unavailable on this Windows host; its
 checked-in graph was not regenerated.
+
+## Phase 4 completion
+
+Phase 3c shipped in `a147d00` and its Vercel production deployment was observed READY.
+The [Phase 4 report](one-piece-taxonomy-phase4-2026-09-06.md) records all requested live
+instruments, all 629 official twin images/513 pairs, and the founder-owned decisions.
+The buy run returned 12 Best Buy / 1 Inspect First. Provisional agent observations are
+8 matching / 2 wrong-print-or-product / 3 unclear; human review is pending. The Ace
+price-review trigger worked live, but its photo was a different artwork. The Chopper
+winner was a slab-art accessory. The ePID probe returned a keyword fallback and is
+inconclusive about Catalog print discrimination. These findings are reported, not promoted.
+
+Final Phase 4 handoff gate: lint passed with one research-export unused-variable warning;
+typecheck, 1,430 tests in 94 files (5 opt-in reviews skipped), and production build passed.
+Report links, JSON parsing and diff whitespace checks passed; PROGRESS remains 299 lines.

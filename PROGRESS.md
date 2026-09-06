@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-06
 canonical_branch: origin/main
-last_verified_product_commit: 8d8874b
-working_branch: codex/one-piece-taxonomy (Phases 0–3b shipped through 8d8874b; Phase 3c verification recorded below)
+last_verified_product_commit: a147d00
+working_branch: codex/one-piece-taxonomy (Phases 0–3 shipped through a147d00; Phase 4 evidence complete)
 max_lines: 300
 ---
 
@@ -29,15 +29,15 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Taxonomy Phases 0–3b shipped through `8d8874b`; Phase 3c exact-anchor price review implemented; target 656/90/0/0, catalog 3977/594/0/0 | Phase 4 live checks + founder report; `docs/one-piece-taxonomy-execution-2026-09-05.md`; image proof stays separate |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Taxonomy implementation shipped `aeacba9` → `a147d00`; Phase 4 complete as evidence; target 656/90/0/0, catalog 3977/594/0/0 | Founder review: `docs/one-piece-taxonomy-phase4-2026-09-06.md`; provisional live 8/13, Chopper accessory miss, Ace wrong-art inspect lead; no mapping/twin approval |
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
-| WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Decide whether 69.2% One Piece accuracy is postable before recruiting |
+| WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Live marketplace sources beyond eBay | Medium | Whatnot + Mercari live on `feat/whatnot-live`; `main` reverted the base commit; the cost fuse is uncommitted | Decide D-WHATNOT-RELAND, then rebase onto `origin/main` before touching the code |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
-| LOCAL-STATE | Dirty local artifacts and tools | Mixed | Uncommitted provider cost-control work from 2026-08-18; checkout is 12 behind `origin/main` | Rebase before resuming; preserve Graphify, research, and screenshot artifacts (see LOCAL-STATE) |
+| LOCAL-STATE | Local artifacts and tools | Mixed | Taxonomy branch aligned with `main` through `a147d00`; Phase 4 research/report gate: 1,430 tests + lint/typecheck/build | Historical Whatnot/Mercari work is on its own branch; do not infer present dirt from the older LOCAL-STATE entry |
 <!-- progress:end -->
 
 <!-- progress:section id="GOALS" -->
@@ -61,9 +61,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - At least three voluntarily share a comparison receipt.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-IDENTITY" state="base-print-proof-shipped-live-remeasure-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
+<!-- progress:workstream id="WS-IDENTITY" state="taxonomy-shipped-founder-review-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
-Taxonomy Phases 0–3b shipped (`8d8874b`, Vercel READY); Phase 3c price review: 1,426 tests, lint/typecheck passed, EN/中文 desktop/mobile captured; [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). [2026-09-06 audit](docs/one-piece-alignment-audit-2026-09-06.md): 656/90/0/0 target, 3977/594/0/0 catalog. Local eBay credentials absent; Phase 4 will use the deployed bounded API.
+Taxonomy Phases 0–3 shipped (`a147d00`, Vercel READY; 1,426 tests + lint/typecheck/build; EN/中文/mobile captured). [Phase 4 report](docs/one-piece-taxonomy-phase4-2026-09-06.md): 1,430-test final gate passed; live probes run; 629 images/513 pairs, none pixel-identical; 12 Best Buy + 1 Inspect First; agent-only 8/13 matching, human verdicts pending. Local eBay secrets absent; deployed bounded API used.
 ### Done
 
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.
@@ -89,11 +89,11 @@ Taxonomy Phases 0–3b shipped (`8d8874b`, Vercel READY); Phase 3c price review:
 - Automated: all 39 historical unrelated-product fixtures remain ineligible at the complete v5 boundary; sibling matrices and the six-family sealed holdout remain the substitution gates, and the provisional corpus (pending human review) may no longer label correct Manga/SP identity a mismatch merely because a row is graded or non-English. Performance: classifier p99 0.0917 ms, hermetic full-comparison p95 +2.33% within the 10% gate; official eBay Browse checks passed for Bubble Mew, Base Alakazam, Nami/Robin/Zoro, manga, anniversary, tournament, Winner, and graded/custom exclusions.
 - Remaining: complete a human-adjudicated 30-listing production sample before claiming population accuracy; monitor live recall and the 12-item enrichment window. Gold/silver and broader market families retain automated coverage but still need periodic live sampling.
 - Review the seven-day production identity timeout and "try again" rate after the 2026-08-11 retry repair. If more than 5% of uncached Pokémon searches still hit the 18-second deadline, promote the lightweight local Pokémon identity index from a parked option to a separately evaluated workstream. pokemontcg.io was measurably unhealthy on 2026-08-11 (0/5 then 3/6 on `/v2/sets?pageSize=1`; successful full-page fetches averaged 6-10s), so the sample must span a healthy window before the rate means anything.
-- Recall baseline 21/30 (Pokémon 18/18, One Piece 3/12; `npm run measure:print-recall`, `docs/print-recall-baseline-2026-08-10.md`) and buy accuracy 9/13 (`npm run measure:buy-accuracy`; verdicts in `docs/one-piece-buy-accuracy-2026-08-14.md` + `-baseline`) both predate `9cde099` and are stale: the nine One Piece recall misses were all multi-print base prints, and eight of the twelve accuracy rows were base prints, blocked by the plain-title gap that commit closes rather than by print proof. Re-measure both with credentials before quoting either. Nine of the thirteen accuracy winners were `inspect_first`, so that figure scores links the buyer is asked to check, not only recommendations. The misses expected to survive are the argument for D-OP-IMAGE-PROOF, each with text that is correct or actively lying: an OP01-016_p3 whose title and eBay Set aspect say only "Romance Dawn"; a $79.99 Nor Con foil parallel of ST01-001 whose set, power, and number all read correct; an SP OP02-013_p3 sold under the P1 alt-art title with matching cost/power; a Japanese OP04-119 declared "Language: English, Country of Origin: USA". Separately, a hermetic crosswalk probe with TCGplayer's real group names shows every PRB and every promo/event print has **no market anchor** without a reviewed product id: TCGplayer files them under "Premium Booster -The Best-" and "One Piece Promotion Cards", which `releaseMatches` cannot pair with the catalog's release names, so the market floor is off for exactly the chase promos. The 214-row review sheet is the policy-compliant fix; a group-alias matcher that lets the classifier pick one credible product from the parenthetical ("(The Three Captains)", "(Winner Pack 2025 Vol. 2)") is the deterministic one and needs live TCGCSV to validate.
+- Historical 21/30 recall and human-reviewed 9/13 buy accuracy predate `9cde099`. Fresh production run on `a147d00`: 12 Best Buy + 1 price-review Inspect First from 13 requests; agent page review 8 matching / 2 clear misses / 3 unclear (61.5%, not human approval). The Ace title claims the selected alt while its photo differs; Chopper sells slab artwork without the card. Human queue: `docs/one-piece-buy-accuracy-2026-09-06.md`. Fresh TCGCSV sample retains all 14 product/group resolutions, including the six PRB/promo gains and one intentional null; no mapping rows promoted. ePID probe falls back to keywords and does not establish Catalog discrimination. See the Phase 4 report for exact sources, limitations and founder decisions.
 
 ### Read first
 
-`docs/plan-one-piece-taxonomy-2026-09-05.md` (standalone handoff), `docs/one-piece-print-taxonomy.md`, `docs/one-piece-taxonomy-execution-2026-09-05.md`, `src/lib/schemas.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`, `src/lib/external/ebay.ts`, `src/lib/external/tcgcsv.ts`, `src/lib/comparison/variant-fidelity.test.ts`
+`docs/one-piece-taxonomy-phase4-2026-09-06.md` (completed plan and founder review), `docs/plan-one-piece-taxonomy-2026-09-05.md` (historical standalone handoff), `docs/one-piece-print-taxonomy.md`, `docs/one-piece-taxonomy-execution-2026-09-05.md`, `src/lib/schemas.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-METADATA" state="review-gated" tags="one-piece,research,audit,manga,promo,tournament,automation" -->

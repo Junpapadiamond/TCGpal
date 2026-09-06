@@ -1,0 +1,77 @@
+{
+  "mode": "research-only",
+  "startedAt": "2026-09-06T05:40:18.511Z",
+  "observedAt": "2026-09-06T05:40:18.908Z",
+  "target": "https://lenstcg.com",
+  "requestedPrintId": "OP02-013_p1",
+  "resolvedPrintId": "OP02-013_p1",
+  "reportGeneratedAt": "2026-09-06T05:39:17.471Z",
+  "outcome": "inspect_first",
+  "crosswalk": {
+    "step": "card_crosswalk",
+    "actor": "Catalog crosswalk",
+    "summary": "Mapped OP02-013_p1 → eBay keyword template; TCGplayer product #486333.",
+    "status": "complete"
+  },
+  "ebayEpid": null,
+  "limitation": "Public report projection: a keyword fallback cannot distinguish no unique Catalog match from unavailable Catalog access.",
+  "anchor": {
+    "productId": 486333,
+    "value": 55.59,
+    "source": "tcgcsv",
+    "asOf": "2026-09-05T20:05:36.000Z"
+  },
+  "inspect": {
+    "url": "https://www.ebay.com/itm/227465362031",
+    "title": "Bandai One Piece Portgas.D.Ace Alt Art Foil SR Paramount War OP02-013 EN",
+    "price": 299,
+    "shipping": 9.45,
+    "printMatch": "compatible",
+    "eligibilityIssues": [
+      {
+        "code": "price_far_above_exact_market",
+        "category": "price",
+        "disposition": "review",
+        "message": "Item price is over five times the exact-print NM market reference, with at least a $20 gap. Verify the price, print and reference freshness before deciding."
+      }
+    ]
+  },
+  "platforms": [
+    {
+      "marketplace": "eBay",
+      "status": "complete"
+    },
+    {
+      "marketplace": "Cardmarket",
+      "status": "skipped"
+    },
+    {
+      "marketplace": "SNKRDUNK",
+      "status": "skipped"
+    },
+    {
+      "marketplace": "Mercari",
+      "status": "skipped"
+    },
+    {
+      "marketplace": "Whatnot",
+      "status": "skipped"
+    },
+    {
+      "marketplace": "Xianyu",
+      "status": "skipped"
+    },
+    {
+      "marketplace": "集换社",
+      "status": "skipped"
+    },
+    {
+      "marketplace": "Yahoo Auctions JP",
+      "status": "skipped"
+    },
+    {
+      "marketplace": "Shopee Taiwan",
+      "status": "skipped"
+    }
+  ]
+}

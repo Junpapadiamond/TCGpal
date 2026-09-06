@@ -1,0 +1,135 @@
+{
+  "mode": "frontier-research",
+  "reviewer": "Codex agent (not human approval)",
+  "runtimePromotion": "none",
+  "observedAt": "2026-09-06T05:45:27.941Z",
+  "productionCommit": "a147d007c3cad56d54a5e0642661f2c0ba8bceb8",
+  "acquisition": "Public production comparison API followed by interactive built-in browser observations of its 13 winner URLs and official catalog references. No raw page captures or seller identifiers retained. Automatic checking-browser pages were allowed to redirect normally; no challenge interaction or bypass.",
+  "scope": "Provisional exact-print observations, not grading, authenticity or checkout verification. All human verdicts remain pending.",
+  "summary": {
+    "rows": 13,
+    "provisionalCorrect": 8,
+    "provisionalWrongPrintOrProduct": 2,
+    "provisionalUnclear": 3,
+    "humanAdjudicated": 0
+  },
+  "observations": [
+    {
+      "card": "op-nami-op01-016",
+      "url": "https://www.ebay.com/itm/306680357872",
+      "observedAt": "2026-09-06T05:39:42.633Z",
+      "agentVerdict": "unclear",
+      "evidence": "Active purchase controls. Photo matches ordinary OP01-016 artwork, number and English text. Title says LD-01 and item specifics say Learn Together Deck Set, while confirmed catalog release is Romance Dawn. Artwork alone cannot settle release/finish equivalence.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP01-016.png",
+      "method": "interactive built-in browser; rendered title, item specifics, listing and official image screenshots inspected; no captures retained",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-zoro-op06-118",
+      "url": "https://www.ebay.com/itm/318386233254",
+      "observedAt": "2026-09-06T05:39:42.634Z",
+      "agentVerdict": "unclear",
+      "evidence": "Active listing names Non Foil; item specifics say Learn together, Reprint, Regular, English OP06-118. Confirmed catalog release is Wings of the Captain. Release/finish conflict needs adjudication; not enough to count as exact-print accuracy.",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-luffy-op05-119",
+      "url": "https://www.ebay.com/itm/306666855578",
+      "observedAt": "2026-09-06T05:39:42.634Z",
+      "agentVerdict": "correct",
+      "evidence": "Active listing. English purple cost-10/power-12000 card photograph matches official base artwork. Item specifics name OP05-119, Awakening of a New Era and Foil. Condition remains seller-claimed.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP05-119.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-luffy-st01-001",
+      "url": "https://www.ebay.com/itm/407186231869",
+      "observedAt": "2026-09-06T05:39:42.634Z",
+      "agentVerdict": "unclear",
+      "evidence": "Active $29.99 listing. English starter-leader artwork matches the official image; title claims ERRATA/Revised holo. Catalog has only one ST01-001 print and does not settle revision/finish distinctions. Do not infer that the current reference identifies that premium.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-zoro-op01-001",
+      "url": "https://www.ebay.com/itm/307153442898",
+      "observedAt": "2026-09-06T05:41:36.974Z",
+      "agentVerdict": "correct",
+      "evidence": "Page loaded normally after its automatic checking-browser screen. Active listing; English red leader photo matches official OP01-001 base artwork and number. Title and item specifics name Romance Dawn.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-ace-op02-013-p1",
+      "url": "https://www.ebay.com/itm/227465362031",
+      "observedAt": "2026-09-06T05:41:36.974Z",
+      "agentVerdict": "wrong-print",
+      "evidence": "Active listing says Alt Art/Paramount War, but the photograph has ornate gold/cloud artwork and a different pose from the selected OP02-013_p1 flames artwork. The live price review prevented a buy recommendation ($299 item vs $55.59 exact reference), but did not establish correct artwork.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP02-013_p1.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-law-op05-069",
+      "url": "https://www.ebay.com/itm/137675543806",
+      "observedAt": "2026-09-06T05:42:58.172Z",
+      "agentVerdict": "correct",
+      "evidence": "Active listing; English purple Law photograph matches the official base art, cost 3/power 5000. Title and item specifics name Awakening of the New Era.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP05-069.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-shanks-op09-001",
+      "url": "https://www.ebay.com/itm/377374661087",
+      "observedAt": "2026-09-06T05:42:58.172Z",
+      "agentVerdict": "correct",
+      "evidence": "Active listing; English red Shanks leader image matches the official base art. Item specifics name Emperors in the New World and OP09-001.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP09-001.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-rosinante-op04-119",
+      "url": "https://www.ebay.com/itm/168664843634",
+      "observedAt": "2026-09-06T05:42:58.172Z",
+      "agentVerdict": "correct",
+      "evidence": "Active listing; green cost-8/power-8000 Rosinante photograph matches the official base art. Item specifics name English, Foil and Kingdoms of Intrigue.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP04-119.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-ace-op07-119-p1",
+      "url": "https://www.ebay.com/itm/178465359858",
+      "observedAt": "2026-09-06T05:42:58.172Z",
+      "agentVerdict": "correct",
+      "evidence": "Active listing; yellow cost-10/power-10000 Ace photograph matches the selected alternate artwork; title names Parallel and 500 Years in the Future. Item specifics contain conflicting autograph fields (No versus Signed By); no signature or grade inferred.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP07-119_p1.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-chopper-eb01-006",
+      "url": "https://www.ebay.com/itm/157767198624?var=459197281290",
+      "observedAt": "2026-09-06T05:45:27.941Z",
+      "agentVerdict": "wrong-print",
+      "evidence": "Active selected BGS variation is extended artwork for a slab, not a raw card. The displayed example explicitly says 'Case And Card Not Included' and 'ARTWORK SITS BEHIND YOUR SLAB'. API nevertheless returned Best Buy at $30.50 pre-tax. This is a product-exclusion miss, not a taxonomy mapping to approve.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/EB01-006.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-linlin-op03-114",
+      "url": "https://www.ebay.com/itm/318571962051",
+      "observedAt": "2026-09-06T05:45:27.941Z",
+      "agentVerdict": "correct",
+      "evidence": "Active listing; title and specifics name English OP03-114/Pillars of Strength. Displayed SAMPLE stock image matches official base artwork. No actual-copy condition or authenticity proof inferred.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP03-114.png",
+      "status": "research-only; pending human adjudication"
+    },
+    {
+      "card": "op-ace-op07-053-p1",
+      "url": "https://www.ebay.com/itm/277966590916",
+      "observedAt": "2026-09-06T05:45:27.941Z",
+      "agentVerdict": "correct",
+      "evidence": "Active listing names Tournament Pack 2024 Oct.-Dec.; SAMPLE stock image matches official English blue OP07-053_p1 artwork. Page shows CAD with approximate USD and shipping to a different browser ZIP from the API experiment. No assertion that browser and API checkout totals match.",
+      "referenceUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP07-053_p1.png",
+      "status": "research-only; pending human adjudication"
+    }
+  ]
+}

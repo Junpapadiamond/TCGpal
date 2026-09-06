@@ -1,0 +1,19 @@
+
+> tcgpal@0.1.0 measure:market-anchor
+> node scripts/measure-market-anchor.mjs
+
+Umbreon VMAX 215/203       anchor $  2298.34  n= 8  median   +6.6%  min  -13.0%  max  +19.7%  anchor age 9.6h
+Giratina V 186/196         anchor $   832.41  n=11  median   -9.9%  min  -15.9%  max  +18.2%  anchor age 9.6h
+Charizard 4/102            anchor $     7.70  n=11  median   +3.9%  min  -22.1%  max  +81.2%  anchor age 9.6h
+Pikachu 58/102             anchor $    16.26  n= 7  median  +53.8%  min  -53.9%  max +668.7%  anchor age 9.6h
+Mewtwo & Mew-GX 222/236    anchor $   189.39  n= 4  median  +19.0%  min  -34.0%  max  +69.0%  anchor age 9.6h
+Luffy OP05-119             anchor $     9.19  n= 2  median  +65.4%  min  +65.4%  max  +65.4%  anchor age 9.6h
+Zoro OP06-118              anchor $     8.08  n= 6  median  +11.3%  min  -14.0%  max +1756.4%  anchor age 9.7h
+Nami OP01-016              anchor $     5.91  n= 7  median  +26.7%  min  -49.4%  max +728.9%  anchor age 9.7h
+
+──────── pooled across every eligible listing ────────
+listings measured        56
+median delta vs anchor   +7.4%   <- 0% would mean the anchor is centred on eBay asks
+share priced ABOVE anchor 59%   <- 50% would mean unbiased
+share past the +15% wait threshold 38%
+per-card medians         +6.6%, -9.9%, +3.9%, +53.8%, +19.0%, +65.4%, +11.3%, +26.7%

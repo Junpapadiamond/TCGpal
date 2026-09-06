@@ -5,6 +5,12 @@ alignment audit, and before any consolidation code changes, so the target is fal
 rather than retrofitted. The last section is the prompt to hand a fresh coding agent; the
 sections before it are the evidence that prompt rests on.
 
+Execution update, 2026-09-06: Phases 0–3 shipped through `a147d00`; Phase 4 measurements
+and founder decisions are in [the final report](one-piece-taxonomy-phase4-2026-09-06.md).
+Read that report before reusing the historical handoff below. Census corrections are pinned
+in [the census](one-piece-catalog-census.md); the whole-catalog abstention breakdown is
+594 = 566 ambiguous-sibling + 23 corroboration-guard + 5 plain-promo, not the earlier figures.
+
 ## One sentence
 
 Move One Piece print knowledge out of a dozen drifting regex lists into one data-driven

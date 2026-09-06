@@ -89,6 +89,17 @@ describe.skipIf(!ENABLED)("One Piece alignment review", () => {
       lines.push("");
     }
     writeFileSync(path, `${lines.join("\n")}\n`);
+    if (process.env.ONE_PIECE_RULE_SCOPE_OUTPUT) {
+      const wholeUnknown = whole.rows.filter((row) => row.self === "unknown");
+      writeFileSync(process.env.ONE_PIECE_RULE_SCOPE_OUTPUT, `${JSON.stringify({
+        status: "research-only; no rule change or mapping approval",
+        observedAt: new Date().toISOString(), summary: whole.summary,
+        reasons: Object.fromEntries(group(wholeUnknown).map(([reason, rows]) => [reason, rows.length])),
+        corroborationGuard: wholeUnknown.filter((row) => row.selfReason === "one_piece_class_evidence_requires_corroboration"),
+        plainPromoBase: wholeUnknown.filter((row) => !isRetailFamily(row.cardNumber) && isBasePrintRow(row)
+          && row.selfReason === "plain_family_listing_does_not_identify_print"),
+      }, null, 2)}\n`);
+    }
     process.stderr.write(`Wrote ${path}: ${audit.summary.prints} prints, ${unknown.length} honest abstentions (${retail.length} retail, ${promo.length} promo).\n`);
   });
 });
