@@ -41,10 +41,10 @@ describe("One Piece Phase 0 evidence artifacts", () => {
         .map((card) => card.card_image_id).sort(),
     };
     expect(actual).toEqual(census.counts);
-    expect(census.counts.prefixes).toHaveLength(53);
-    expect(census.counts.treasurePrintIds).toHaveLength(11);
-    expect(new Set(census.counts.treasurePrintIds.map((id: string) => id.split("_")[0])).size).toBe(11);
-    expect(census.counts.leaderNamedDeckFamilies).toHaveLength(7);
+    expect(census.counts.prefixes).toHaveLength(56);
+    expect(census.counts.treasurePrintIds).toHaveLength(12);
+    expect(new Set(census.counts.treasurePrintIds.map((id: string) => id.split("_")[0])).size).toBe(12);
+    expect(census.counts.leaderNamedDeckFamilies).toHaveLength(9);
     const nami = catalog.find((card) => card.card_image_id === "OP01-016_p3")!;
     expect([nami.set_id, nami.set_name]).toEqual(["OP-01", "The Three Captains"]);
   });

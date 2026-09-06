@@ -1,4 +1,5 @@
 import { resolveCardIdentity } from "@/lib/ai/card-identity";
+import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-revision";
 import { clearLocalCache, getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { createAbortError, createLinkedAbortSignal } from "@/lib/ops/abort";
 import {
@@ -8,7 +9,7 @@ import {
   type CardIdentitySearchResponse,
 } from "@/lib/schemas";
 
-const CACHE_SCOPE = "card-identity-v1";
+const CACHE_SCOPE = `card-identity-v1-${ONE_PIECE_CATALOG_REVISION}`;
 const FRESH_TTL_MS = 15 * 60 * 1000;
 const STALE_TTL_SECONDS = 6 * 60 * 60;
 // A Pokémon identity lookup permits one 8s provider attempt, a 400ms backoff,

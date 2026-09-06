@@ -40,7 +40,7 @@ describe.skipIf(!ENABLED)("One Piece alignment review", () => {
     const audit = auditOnePieceAlignment(FAMILIES);
     const whole = auditOnePieceAlignment([...new Set(onePieceCatalog.map((card) => card.card_set_id))]);
     const date = new Date().toISOString().slice(0, 10);
-    const path = `docs/one-piece-alignment-audit-${date}.md`;
+    const path = process.env.ONE_PIECE_ALIGNMENT_OUTPUT ?? `docs/one-piece-alignment-audit-${date}.md`;
     const unknown = audit.rows.filter((row) => row.self === "unknown");
     const promo = unknown.filter((row) => !isRetailFamily(row.cardNumber));
     const retail = unknown.filter((row) => isRetailFamily(row.cardNumber));

@@ -12,7 +12,8 @@ const catalogPath = "src/lib/external/one-piece-catalog.generated.json";
 const catalogBytes = readFileSync(catalogPath);
 const groups = twinGroups(JSON.parse(catalogBytes));
 const cards = groups.flat();
-if (cards.length !== 629 || groups.length !== 258) throw new Error("Catalog cohort changed; review the census before fetching");
+const census = JSON.parse(readFileSync("src/lib/testing/one-piece-catalog-census.json", "utf8")).counts;
+if (cards.length !== census.twinPrints || groups.length !== census.twinGroups) throw new Error("Catalog cohort changed; review the census before fetching");
 const origin = "https://en.onepiece-cardgame.com";
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -84,7 +85,7 @@ const result = {
     imagesObserved: [...assets.values()].filter((asset) => asset.status === "observed").length,
     pairs: pairs.length, pairsCompared: pairs.filter((pair) => pair.status === "compared").length,
     byteIdenticalPairs: pairs.filter((pair) => pair.byteIdentical).length, pixelIdenticalPairs: pairs.filter((pair) => pair.pixelIdentical).length },
-  images: [...assets.values()].map(({ vector: _vector, ...record }) => record), pairs,
+  images: [...assets.values()].map((asset) => { const record = { ...asset }; delete record.vector; return record; }), pairs,
 };
 writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`);
 console.log(JSON.stringify({ output: out, ...result.summary, stopReason }, null, 2));

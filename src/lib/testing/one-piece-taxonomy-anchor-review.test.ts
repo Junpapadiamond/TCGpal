@@ -14,6 +14,9 @@ const cases = [
   ["PRB02-006", "prb"], ["PRB02-006_p1", "prb"],
   ["EB01-006_r1", "reviewed"], ["P-001", "promo"], ["P-001_p3", "promo"],
   ["EB01-015_p1", "promo"], ["EB01-015_p2", "promo"], ["OP01-016_p3", "promo"],
+  ["OP16-001", "recent"], ["OP16-001_p1", "recent"],
+  ["OP17-001", "recent"], ["OP17-001_p1", "recent"],
+  ["OP17-079_p1", "recent"], ["OP17-079_p2", "recent"], ["OP17-040_p1", "recent"],
 ] as const;
 
 type Row = {
@@ -72,6 +75,7 @@ describe.skipIf(!enabled)("One Piece taxonomy live market-anchor review", () => 
       sourceSha256: Object.fromEntries([
         "src/lib/comparison/crosswalk.ts", "src/lib/external/tcgcsv.ts",
         "src/lib/external/one-piece-taxonomy.ts", "src/lib/external/one-piece-print-metadata.ts",
+        "src/lib/external/one-piece-catalog.generated.json", "src/lib/external/one-piece-catalog-revision.ts",
       ].map((path) => [path, createHash("sha256").update(readFileSync(path, "utf8").replace(/\r\n/g, "\n")).digest("hex")])),
       baselinePath: baselinePath ?? null, sources: [...sources.values()], rows, changedControls,
       note: "Item-only, condition-blind aggregate references. No seller inventory or mapping-row approval.",

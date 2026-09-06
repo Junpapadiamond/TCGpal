@@ -1,6 +1,7 @@
 import { clearLocalCache, getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { comparisonReportSchema, type ComparisonReport, type ComparisonRequest } from "@/lib/schemas";
 import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
+import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-revision";
 
 // R7: pure card searches (no user-supplied listing facts) are cacheable — the
 // fan-out result only depends on the confirmed card, desired condition, and
@@ -17,6 +18,7 @@ export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: 
     "identity-v4",
     COMPARISON_CACHE_REVISION,
     ONE_PIECE_PRINT_METADATA_REVISION,
+    ONE_PIECE_CATALOG_REVISION,
     confirmedCardId,
     request.buyer.desiredCondition,
     request.buyer.postalCode,

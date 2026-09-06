@@ -56,8 +56,8 @@ Do not reinterpret every Secret Rare Alt as manga or every SP as manga-adjacent 
 
 ## Release channels and their seams
 
-Retail collector-number prefixes are OP, EB, PRB and ST. The snapshot has 53 prefixes:
-OP01–OP16, EB01–EB04, PRB01–PRB02, ST01–ST30, and P.
+Retail collector-number prefixes are OP, EB, PRB and ST. The snapshot has 56 prefixes:
+OP01–OP17, EB01–EB04, PRB01–PRB02, ST01–ST32, and P (ST31/ST32 are partial sibling coverage).
 P- numbers are promos. A retail number can acquire event, promo and reprint siblings;
 the number's prefix cannot establish the selected sibling's distribution channel.
 

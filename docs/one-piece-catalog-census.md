@@ -1,21 +1,21 @@
 # One Piece catalog census
 
-Snapshot inspected on 2026-09-05: [generated catalog](../src/lib/external/one-piece-catalog.generated.json).
+Snapshot updated on 2026-09-06 for OP17: [generated catalog](../src/lib/external/one-piece-catalog.generated.json).
 This counts the raw snapshot, before reviewed seed enrichment. It measures catalog structure,
 not listing availability, artwork equality, release-history accuracy, or human-approved mappings.
 
 | Measurement | Pinned value | Definition |
 |---|---:|---|
-| Prints | 4,571 | One row per `card_image_id` |
-| Collector-number families | 2,634 | Distinct `card_set_id` |
-| Prefixes | 53 | OP01–OP16, EB01–EB04, PRB01–PRB02, ST01–ST30, P |
-| Promo prints | 225 | Collector number starts with `P-` |
-| Treasure Rares | 11 prints / 11 families | Rarity is `TR` |
-| Text twins | 629 prints | Same number, release and variant stem, in groups of at least two |
-| Twin groups / families | 258 / 247 | A family can contain several groups |
+| Prints | 4,742 | One row per `card_image_id` |
+| Collector-number families | 2,755 | Distinct `card_set_id` |
+| Prefixes | 56 | OP01–OP17, EB01–EB04, PRB01–PRB02, ST01–ST32, P (ST31/ST32 contain only required sibling families) |
+| Promo prints | 227 | Collector number starts with `P-` |
+| Treasure Rares | 12 prints / 12 families | Rarity is `TR` |
+| Text twins | 642 prints | Same number, release and variant stem, in groups of at least two |
+| Twin groups / families | 264 / 253 | A family can contain several groups |
 | Event-word cohort | 476 | Literal keyword union below; not an authoritative release channel |
 | The Best prints | 634 | Release contains `One Piece Card The Best` |
-| Leader-named deck families | 7 | Multi-print ST family; normalized base release and card name contain one another |
+| Leader-named deck families | 9 | Multi-print ST family; normalized base release and card name contain one another |
 | Bare release code | 1 | `ST14-010_r1`, whose release is `ST-14` |
 
 Rarities: **C, UC, R, SR, SEC, L, SP CARD, TR, P**. Raw variant stems are **base**
@@ -45,7 +45,7 @@ six leader-named families omitted `ST11-001` (Uta / Uta). Its claimed 499 event-
 does not reproduce from the listed keyword union: that union yields 476. Adding `regional`
 yields 489; broadening `event pack` to `event` yields 479 (492 with `regional`). None yields
 499. Keep the original estimate visible as unverified, and use the pinned, defined cohort.
-The 629/247 twin numbers and 634 The Best numbers reproduce exactly. Twin grouping uses
+The original 629/247 twin numbers and 634 The Best numbers reproduced before OP17; the current twin counts are in the table above. Twin grouping uses
 raw variant stems; it is not a claim that reviewed class metadata or official images match.
 
 ## Reproduction and review
@@ -62,3 +62,5 @@ abstentions and 3,977 acceptances, with zero substitutions or self-rejections. R
 pre-consolidation `2e4e3ee` classifier confirmed those same numbers; the plan's 590 and its
 breakdown were not a verified baseline. These are classifier outcomes, not raw census counts.
 Their instrument is [the alignment audit](one-piece-alignment-audit-2026-09-05.md).
+
+The [OP16/OP17 update](one-piece-op16-op17-2026-09-06.md) adds 169 release prints and two base siblings, leaving all 4,571 prior catalog rows unchanged. The original census remains recoverable at `aeacba9`. The two added leader/deck overlaps are ST30-001 and ST31-004. The 629-image measurement is historical and has not been rerun for the 642-print cohort.

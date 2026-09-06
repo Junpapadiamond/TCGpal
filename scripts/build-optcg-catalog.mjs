@@ -17,7 +17,10 @@ import { createRequire } from "node:module";
 import { writeFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
-const source = require("one-piece-card-game-json/en/cards.json");
+// Scoped, official-list-checked addition; do not pull unrelated new releases into
+// this snapshot merely because a newer package is available.
+const supplement = require("./lib/one-piece-op17-source.json");
+const source = [...require("one-piece-card-game-json/en/cards.json"), ...supplement.cards];
 const OUT = new URL("../src/lib/external/one-piece-catalog.generated.json", import.meta.url);
 
 function titleCase(value) {
@@ -36,7 +39,8 @@ function titleCase(value) {
 function parseSet(card) {
   const raw = typeof card.card_sets === "string" ? card.card_sets : "";
   const setId = setIdFromNumber(card.card_number);
-  const name = raw.replace(/\[[^\]]*\]/, "").replace(/^[-\s]+|[-\s]+$/g, "").trim();
+  const name = raw.replace(/^(?:BOOSTER PACK|STARTER DECK)\s*/i, "")
+    .replace(/\[[^\]]*\]/, "").replace(/^[-\s]+|[-\s]+$/g, "").trim();
   return {
     setId,
     setName: name ? titleCase(name) : setId,

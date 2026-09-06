@@ -65,7 +65,7 @@ const retailReleases: Record<string, OnePieceTaxonomyChannel> = Object.fromEntri
     "Awakening Of The New Era", "Wings Of The Captain", "500 Years In The Future",
     "Two Legends", "Emperors In The New World", "Royal Blood", "A Fist Of Divine Speed",
     "Legacy Of The Master", "Carrying On His Will", "The Azure Sea’s Seven",
-    "Adventure On Kami's Island", "The Time Of Battle", "Memorial Collection",
+    "Adventure On Kami's Island", "The Time Of Battle", "The World’s Strongest Warriors", "Memorial Collection",
     "Anime 25th Collection", "One Piece Heroines Edition",
   ].map((name) => [name.toLowerCase(), "booster"]),
   ...[
@@ -76,6 +76,7 @@ const retailReleases: Record<string, OnePieceTaxonomyChannel> = Object.fromEntri
     "Black Smoker", "Yellow Charlotte Katakuri", "Gear5", "Ace & Newgate", "Red Shanks",
     "Green Jewelry Bonney", "Blue Buggy", "Purple/black Monkey.d.luffy", "Black Marshall.d.teach",
     "Green/yellow Yamato", "Egghead", "Luffy & Ace", "Learn Together Deck Set",
+    "Red Monkey.d.luffy", "Green Roronoa Zoro",
   ].map((name) => [name.toLowerCase(), "starter_deck"]),
 ]) as Record<string, OnePieceTaxonomyChannel>;
 
@@ -99,6 +100,14 @@ export function onePieceReleaseChannel(releaseName: string): OnePieceTaxonomyCha
   return retailReleases[releaseName.trim().toLowerCase()]
     ?? releasePatterns.find(({ pattern }) => pattern.test(releaseName))?.channel
     ?? "unknown";
+}
+
+// Release codes observed in the official OP16/OP17 card lists. An insert's
+// printed number retains its original set and cannot stand in for its release.
+export function onePieceReleaseSetCode(releaseName: string): string | null {
+  const name = releaseName.trim().toLowerCase();
+  return ({ "the time of battle": "OP-16", "the world’s strongest warriors": "OP-17",
+    "red monkey.d.luffy": "ST-31", "green roronoa zoro": "ST-32" } as Record<string, string>)[name] ?? null;
 }
 
 export function onePieceReferenceGroupAliases(releaseName: string): string[] {
@@ -435,7 +444,8 @@ export function deriveOnePieceReleaseFacets(
   let channel: OnePieceReleaseChannel = enrichment?.releaseChannel ?? "unknown";
   if (channel !== "unknown") {
     // Curated release metadata takes precedence over ambiguous catalog wording.
-  } else if (/championship|regional|treasure cup|tournament|finalist|\bchampion\b|\bwinner\b/.test(normalized)) channel = "tournament";
+  } else if (onePieceReleaseSetCode(releaseName)?.startsWith("OP-")) channel = "booster";
+  else if (/championship|regional|treasure cup|tournament|finalist|\bchampion\b|\bwinner\b/.test(normalized)) channel = "tournament";
   else if (/anniversary/.test(normalized)) channel = "anniversary";
   else if (/pre.?release|release event|sealed battle|event/.test(normalized)) channel = "event";
   else if (/one piece card the best|premium booster/.test(normalized)) channel = "premium_booster";

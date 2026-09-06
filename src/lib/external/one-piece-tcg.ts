@@ -3,6 +3,7 @@ import type { CardIdentityCandidate } from "@/lib/schemas";
 import { findOnePieceCatalogCard, findOnePieceCatalogVariants, onePieceCatalog } from "./one-piece-catalog";
 import type { OnePieceArtworkClass, OnePiecePrintTreatment } from "./one-piece-print-metadata";
 import { deriveOnePieceReleaseMetadata, ONE_PIECE_PRINT_METADATA_REVISION } from "./one-piece-print-metadata";
+import { onePieceReleaseSetCode } from "./one-piece-taxonomy";
 
 // OPTCG API (https://www.optcgapi.com) is a free, no-key community catalog for the
 // One Piece Trading Card Game. It exposes static-ish JSON dumps plus per-card
@@ -209,12 +210,12 @@ async function fetchLiveAllSetCards(base: string, fetcher: typeof fetch, timeout
   }
 }
 
-// Union by card_set_id. Live entries override bundled ones (fresher art/price)
-// while bundled-only cards stay, preserving the offline guarantee.
+// Union by print identity, not collector number: each artwork keeps its own row.
+// Live entries may refresh the same print, but cannot overwrite its siblings.
 function mergeOnePieceCatalogs(bundled: OnePieceTcgCard[], live: OnePieceTcgCard[]): OnePieceTcgCard[] {
   const byId = new Map<string, OnePieceTcgCard>();
-  for (const card of bundled) byId.set(card.card_set_id.toUpperCase(), card);
-  for (const card of live) byId.set(card.card_set_id.toUpperCase(), card);
+  for (const card of bundled) byId.set(variantKey(card).toUpperCase(), card);
+  for (const card of live) byId.set(variantKey(card).toUpperCase(), card);
   return Array.from(byId.values());
 }
 
@@ -258,7 +259,8 @@ function normalizeSetToken(value: string | null | undefined): string {
 export function onePieceSetMatches(card: OnePieceTcgCard, setHint: string): boolean {
   const requested = normalizeSetToken(setHint);
   if (!requested) return false;
-  return [card.set_id, card.set_name, card.card_set_id.split("-")[0]]
+  const releaseCode = onePieceReleaseSetCode(card.set_name ?? "");
+  return [releaseCode ?? card.set_id, card.set_name, releaseCode ? null : card.card_set_id.split("-")[0]]
     .map(normalizeSetToken)
     .filter(Boolean)
     .some((value) => value === requested || value.includes(requested));

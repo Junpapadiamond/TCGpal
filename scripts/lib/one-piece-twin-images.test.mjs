@@ -5,9 +5,9 @@ import { twinGroups, compareImages, robotsAllowsResearch } from "./one-piece-twi
 describe("official twin-image research", () => {
   it("pins the actual catalog cohort without merging different releases or classes", () => {
     const groups = twinGroups(JSON.parse(readFileSync("src/lib/external/one-piece-catalog.generated.json", "utf8")));
-    expect(groups).toHaveLength(258);
-    expect(groups.flat()).toHaveLength(629);
-    expect(new Set(groups.flat().map((card) => card.card_set_id)).size).toBe(247);
+    expect(groups).toHaveLength(264);
+    expect(groups.flat()).toHaveLength(642);
+    expect(new Set(groups.flat().map((card) => card.card_set_id)).size).toBe(253);
     expect(groups.every((group) => new Set(group.map((card) => card.set_name)).size === 1)).toBe(true);
   });
   it("never calls two missing/failed images identical", () => {

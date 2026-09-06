@@ -1,8 +1,8 @@
 {
   "eventPattern": "tournament|winner|finalist|champion|participation|anniversary|treasure cup|pre.?release|release event|sealed battle|event pack|pirates party|celebration|premium card collection|gift collection|binder|playmat|dash pack|expo|magazine|store",
   "counts": {
-    "prints": 4571,
-    "families": 2634,
+    "prints": 4742,
+    "families": 2755,
     "prefixes": [
       "EB01",
       "EB02",
@@ -24,6 +24,7 @@
       "OP14",
       "OP15",
       "OP16",
+      "OP17",
       "P",
       "PRB01",
       "PRB02",
@@ -56,7 +57,9 @@
       "ST27",
       "ST28",
       "ST29",
-      "ST30"
+      "ST30",
+      "ST31",
+      "ST32"
     ],
     "rarities": [
       "C",
@@ -76,7 +79,7 @@
       "Treasure Rare",
       "base"
     ],
-    "promoPrints": 225,
+    "promoPrints": 227,
     "treasurePrintIds": [
       "OP07-109_p2",
       "OP08-052_p2",
@@ -86,13 +89,14 @@
       "OP12-108_p2",
       "OP13-037_p1",
       "OP16-011_p1",
+      "OP17-040_p1",
       "ST01-007_p3",
       "ST10-010_p2",
       "ST18-004_p1"
     ],
-    "twinPrints": 629,
-    "twinGroups": 258,
-    "twinFamilies": 247,
+    "twinPrints": 642,
+    "twinGroups": 264,
+    "twinFamilies": 253,
     "eventPrints": 476,
     "theBestPrints": 634,
     "leaderNamedDeckFamilies": [
@@ -102,7 +106,9 @@
       "ST15-002",
       "ST22-001",
       "ST26-005",
-      "ST30-001"
+      "ST27-005",
+      "ST30-001",
+      "ST31-004"
     ],
     "bareReleaseCodePrintIds": [
       "ST14-010_r1"
