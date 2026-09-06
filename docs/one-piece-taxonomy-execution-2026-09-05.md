@@ -40,7 +40,7 @@ anchors before merging that matcher. Founder decisions are reported, never assum
 | 1 | Completeness across rarity/stem/release and synthetic IR rejection; full gate | Passed: lint/typecheck/build; 90 files, 1,394 tests passed, 4 live reviews skipped |
 | 2 | Shared taxonomy, each consumer audited, no duplicated class regexes; full gate | Passed: lint/typecheck/build; 90 files, 1,395 tests passed, 4 live reviews skipped; each consumer audit unchanged |
 | 3a | Unique anchor aliases, real-name tests, live before/after anchors; full gate | Passed: lint/typecheck/build; 91 files, 1,411 tests passed, 5 live reviews skipped; live run passed |
-| 3b | Taxonomy labels; English/中文 desktop and mobile captures; full gate | Pending |
+| 3b | Taxonomy labels; English/中文 desktop and mobile captures; full gate | Passed: lint/typecheck/build; 92 files, 1,416 tests passed, 5 live reviews skipped; five-search browser smoke passed |
 | 3c | Above-market review disposition, exact anchor only; full gate | Pending |
 | 4 | Buy accuracy, market anchors, official twin images, ePID probe; founder report | Pending |
 
@@ -110,3 +110,24 @@ booster controls retained the same product IDs, groups and reference prices. Thi
 the named sample, not an empirical claim about every booster. No listing availability or
 artwork accuracy is inferred from aggregate reference prices. Full gate: lint, typecheck,
 1,411 tests across 91 files (5 live reviews skipped), and production build passed.
+
+## Phase 3b picker evidence
+
+Phase 3a shipped in `d4269fd`. Presentation derives artwork class, reviewed treatment,
+reprint provenance and release name from the taxonomy; semantic identity fields are untouched.
+All 4,571 prints have English/Chinese labels without internal P/R ordinals. Text twins still
+share labels and remain separate catalog choices. Real Nami and gold Luffy tests verify that
+localized buttons submit the original exact IDs. Pokémon image descriptions are preserved.
+
+Built-in browser, 1440×1000 desktop and 390×844 mobile:
+[English desktop](taxonomy-qa-2026-09-05/picker-en-desktop.png),
+[Chinese desktop](taxonomy-qa-2026-09-05/picker-zh-desktop.png),
+[Chinese mobile](taxonomy-qa-2026-09-05/picker-zh-mobile.png),
+[mobile labels](taxonomy-qa-2026-09-05/picker-zh-mobile-labels.png).
+No horizontal overflow (375px document inside a 390px viewport). Five sequential searches
+completed using both Edit and New Search: Nami OP01-016_p3, Charizard base1-4, Pikachu base1-58,
+Zoro OP06-118, and Luffy ST01-001. Nami's result URL preserved the selected exact ID.
+No browser console errors were observed. Local eBay credentials are absent: all five results
+abstained from recommending inventory. These are UI/source-degradation checks, not buy-accuracy
+measurements. Nami displayed the newly resolved TCGCSV anchor; Luffy had no exact mapping.
+The full gate passed after the final layout refinement (1,416 tests, 92 files, 5 live skips).

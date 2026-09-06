@@ -25,6 +25,7 @@ import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-se
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
+import { onePiecePrintDisplayLabel } from "@/lib/external/one-piece-taxonomy";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
 import { buildJapanSearchQuery } from "@/lib/comparison/japan-references";
@@ -949,7 +950,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const activeCard = report?.confirmedCard ?? null;
   const railItems = buildRail(recentCarouselCards, DEFAULT_MARQUEE_CARDS);
   const headerQuery = activeCard
-    ? [activeCard.name, activeCard.cardNumber, activeCard.variant, activeCard.setName].filter(Boolean).join(" · ")
+    ? [activeCard.name, activeCard.cardNumber, onePiecePrintDisplayLabel(activeCard, lang) ?? [activeCard.variant, activeCard.setName].filter(Boolean).join(" · ")].filter(Boolean).join(" · ")
     : heroQuery.trim() || pendingRequest?.query || cardName.trim() || t.form.heroSearchLabel;
   const selectedConditionLabel = desiredCondition === "Unknown"
     ? t.form.anyCondition
@@ -1812,17 +1813,19 @@ function CardKeyPreview({ name, setCode, cardNumber }: { name: string; setCode: 
   );
 }
 
-function CardIdentityRail({ identity, className = "" }: { identity: CardIdentityCandidate; className?: string }) {
+function CardIdentityRail({ identity, className = "", showPrintDetails = true }: { identity: CardIdentityCandidate; className?: string; showPrintDetails?: boolean }) {
+  const { lang } = useLang();
+  const variantLabel = onePiecePrintDisplayLabel(identity, lang) ?? identity.variant;
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <span className="inline-flex items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
+      {showPrintDetails && <span className="inline-flex items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#fcfbf6] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
         {identity.setSymbolUrl && (
           <Image src={identity.setSymbolUrl} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
         )}
         <span>{identity.setName}</span>
         {identity.setCode && <span className="font-mono font-black uppercase text-[#64736c]">{identity.setCode}</span>}
-      </span>
-      {identity.cardNumber && (
+      </span>}
+      {showPrintDetails && identity.cardNumber && (
         <span className="rounded-md border border-[#e2c879] bg-[#fff8dc] px-2.5 py-1.5 font-mono text-xs font-black text-[#6f5a22]">
           #{identity.cardNumber}
         </span>
@@ -1832,9 +1835,9 @@ function CardIdentityRail({ identity, className = "" }: { identity: CardIdentity
           {identity.rarity}
         </span>
       )}
-      {identity.variant && (
+      {showPrintDetails && variantLabel && (
         <span className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
-          {identity.variant}
+          {variantLabel}
         </span>
       )}
       {identity.language && (
@@ -2275,10 +2278,12 @@ function LazyIdentityGroup({
 
 function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { identity: CardIdentityCandidate; onConfirm: (identity: CardIdentityCandidate) => void; titleAs: "h3" | "h4"; compact?: boolean }) {
   const t = useT();
+  const { lang } = useLang();
+  const variantLabel = onePiecePrintDisplayLabel(identity, lang) ?? identity.variant;
   const titleClass = "font-serif text-xl font-bold text-[#2f6f73]";
   const titleDetails = [
     identity.cardNumber ? `#${identity.cardNumber}` : null,
-    identity.variant,
+    variantLabel,
   ].filter(Boolean).join(" / ");
   return (
     <article className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
@@ -2286,7 +2291,7 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
         <HoloCardArt
           key={identity.imageUrl}
           src={identity.imageUrl}
-          alt={[identity.name, identity.cardNumber, identity.variant, identity.setName].filter(Boolean).join(" · ")}
+          alt={[identity.name, identity.cardNumber, onePiecePrintDisplayLabel(identity, lang) ?? [identity.variant, identity.setName].filter(Boolean).join(" · ")].filter(Boolean).join(" · ")}
           sizes={compact ? "112px" : "144px"}
           className={`mx-auto ${compact ? "w-28" : "w-36"}`}
         />
@@ -2298,11 +2303,11 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
       {typeof identity.marketMid === "number" && (
         <p className="mt-2 font-mono text-sm font-black text-[#2f6f73]">{t.identity.marketReference(formatMoney(identity.marketMid))}</p>
       )}
-      <CardIdentityRail identity={identity} className="mt-3" />
+      <CardIdentityRail identity={identity} className="mt-3" showPrintDetails={!onePiecePrintDisplayLabel(identity, lang)} />
       <button
         className="secondary-button mt-4 w-full"
         type="button"
-        aria-label={t.identity.selectAria(identity.name, identity.cardNumber, identity.variant ?? "")}
+        aria-label={t.identity.selectAria(identity.name, identity.cardNumber, variantLabel ?? "")}
         onClick={() => onConfirm(identity)}
       >
         <IconCheck className="h-4 w-4" />
@@ -3575,6 +3580,7 @@ export function PrintIdentitySummary({
   compact?: boolean;
 }) {
   const t = useT();
+  const { lang } = useLang();
   if (!confirmedCard) return null;
 
   const identity = confirmedCard.printIdentity;
@@ -3582,7 +3588,7 @@ export function PrintIdentitySummary({
     identity?.setName ?? confirmedCard.setName,
     identity?.collectorNumber ?? confirmedCard.cardNumber,
     identity?.rarity ?? confirmedCard.rarity ?? "",
-    identity?.variantLabel ?? confirmedCard.variant ?? "",
+    onePiecePrintDisplayLabel(confirmedCard, lang) ?? identity?.variantLabel ?? confirmedCard.variant ?? "",
   );
   const reasons = listing.printMatchReasons ?? [];
   const genericCompactEvidence = compact

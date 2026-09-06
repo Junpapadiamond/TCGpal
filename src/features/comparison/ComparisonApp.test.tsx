@@ -1275,7 +1275,7 @@ describe("comparison condition controls", () => {
     fireEvent.click(within(form).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
     const p4Control = await screen.findByRole("button", {
-      name: /Select Nami OP01-016 Special Art \(P4\)/,
+      name: /Select Nami OP01-016 SP artwork · Awakening Of The New Era/,
     });
     fireEvent.click(p4Control);
 
@@ -1318,20 +1318,20 @@ describe("comparison condition controls", () => {
     fireEvent.change(query, { target: { value: "Gear 5 Luffy OP05-119" } });
     fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
-    expect(await screen.findByRole("button", { name: /Select Monkey.D.Luffy OP05-119 Manga Art/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Select Monkey.D.Luffy OP05-119 Silver Special Art/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /Select Monkey.D.Luffy OP05-119 Manga artwork/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Select Monkey.D.Luffy OP05-119 Silver · SP artwork/ })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "中文" }));
-    expect(screen.getByText("Manga Art")).toBeTruthy();
-    expect(screen.getByText("Silver Special Art")).toBeTruthy();
-    expect(screen.getByText("Gold Special Art")).toBeTruthy();
-    expect(screen.getByAltText(/Monkey.D.Luffy · OP05-119 · Gold Special Art · A Fist Of Divine Speed/i)).toBeTruthy();
-    const gold = screen.getByRole("button", { name: /Monkey.D.Luffy OP05-119 Gold Special Art/ });
+    expect(screen.getAllByText(/漫画版 ·/)[0]).toBeTruthy();
+    expect(screen.getAllByText(/银色 · SP 特别画面 ·/)[0]).toBeTruthy();
+    expect(screen.getAllByText(/金色 · SP 特别画面 ·/)[0]).toBeTruthy();
+    expect(screen.getByAltText("Monkey.D.Luffy · OP05-119 · 金色 · SP 特别画面 · 再版 · A Fist Of Divine Speed")).toBeTruthy();
+    const gold = screen.getByRole("button", { name: /Monkey.D.Luffy OP05-119 金色 · SP 特别画面/ });
     gold.focus();
     await user.keyboard("{Enter}");
 
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests[0].confirmedCardId).toBe("OP05-119_p8");
-    expect(screen.getByRole("button", { name: /Gold Special Art/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /金色 · SP 特别画面/ })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "EN" }));
   });
 
@@ -1535,7 +1535,7 @@ describe("comparison condition controls", () => {
     expect(screen.queryByRole("dialog", { name: "Seller photos" })).toBeNull();
     expect(document.activeElement).toBe(openGallery);
     expect(screen.queryByAltText("Confirmed card reference: Nami OP01-016 Special Art (P4)")).toBeNull();
-    expect(screen.getAllByText("Awakening Of The New Era · OP01-016 · SP CARD · Special Art (P4)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Awakening Of The New Era · OP01-016 · SP CARD · SP artwork · Awakening Of The New Era").length).toBeGreaterThan(0);
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
     const hero = screen.getByRole("article", { name: "Best-supported buy" });
     expect(hero.querySelector(":scope > div")?.className.split(" ")).toContain("grid-cols-[72px_minmax(0,1fr)]");

@@ -162,6 +162,30 @@ export function deriveOnePieceTaxonomy(input: {
 export type PrintClass = "base" | "alt" | "sp" | "manga" | "treasure";
 export type WitnessClass = Exclude<OnePieceTaxonomyClass, "unknown">;
 
+const displayClasses: Record<OnePieceTaxonomyClass, { en: string; zh: string }> = {
+  base: { en: "Base artwork", zh: "基础画面" },
+  alternate: { en: "Alternate artwork", zh: "异画版" },
+  special: { en: "SP artwork", zh: "SP 特别画面" },
+  manga: { en: "Manga artwork", zh: "漫画版" },
+  wanted_poster: { en: "Wanted poster", zh: "悬赏令版" },
+  super_alternate: { en: "Super alternate artwork", zh: "超级异画版" },
+  treasure: { en: "Treasure Rare", zh: "宝藏稀有版" },
+  unknown: { en: "Artwork unconfirmed", zh: "画面待确认" },
+};
+const displayTreatments = { gold: { en: "Gold", zh: "金色" }, silver: { en: "Silver", zh: "银色" }, red: { en: "Red", zh: "红色" } };
+
+/** Presentation only: release names and reviewed facets, never identity evidence.
+ * Twins can still share a label; their images and stable IDs remain separate.
+ */
+export function onePiecePrintDisplayLabel(card: CardIdentityCandidate, lang: "en" | "zh"): string | null {
+  if (!/^(?:OP\d+|ST\d+|EB\d+|PRB\d+|P)-\d+$/i.test(card.cardNumber)) return null;
+  const taxonomy = deriveOnePieceTaxonomy({ rarity: card.rarity, variant: card.variant, set_name: card.setName, card_image_id: card.id });
+  const artwork = card.artworkClass ?? taxonomy.artworkClass;
+  const treatment = (card.treatments ?? []).map((value) => displayTreatments[value][lang]).join(" / ");
+  const reprint = card.releaseProvenance === "reprint" || taxonomy.provenance === "reprint";
+  return [treatment, displayClasses[artwork][lang], reprint ? (lang === "en" ? "Reprint" : "再版") : null, card.setName].filter(Boolean).join(" · ");
+}
+
 // Runtime vocabulary migrated without changing detector precedence or witness proof.
 export const genericAltPattern = /\b(alt(?:ernate)?(?:[\s.]*art)?|parallel|full[\s-]*art|art\s*rare|aa)\b/i;
 
