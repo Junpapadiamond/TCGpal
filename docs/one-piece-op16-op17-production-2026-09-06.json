@@ -1,0 +1,373 @@
+{
+  "mode": "production-api-verification",
+  "target": "https://lenstcg.com",
+  "commit": "a461ed02288245c84df8c05c46c2ef4b30fe7783",
+  "deployment": "dpl_CVb8WtJNfcfQjWhtda93mES1xiYa",
+  "note": "Bounded API results; no seller-photo, authenticity, or physical-condition adjudication. Distinct title-evidence results do not prove seller claims truthful.",
+  "rows": [
+    {
+      "requestedPrint": "OP16-001",
+      "observedAt": "2026-09-06T22:24:59.109Z",
+      "selectedPrint": "OP16-001",
+      "image": "https://en.onepiece-cardgame.com/images/cardlist/card/OP16-001.png",
+      "outcome": "best_buy",
+      "productId": 693417,
+      "reference": 0.16,
+      "marketAsOf": "2026-09-06T20:05:30.000Z",
+      "winners": [
+        {
+          "role": "best_value",
+          "url": "https://www.ebay.com/itm/398366208545",
+          "title": "One Piece Card Game Portgas.D.Ace OP16-001 Holofoil Near Mint TCG",
+          "itemPrice": 0.99,
+          "shipping": 0.78,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "url": "https://www.ebay.com/itm/327326070137",
+          "title": "Portgas.D.Ace (001) OP16-001 Leader The Time of Battle One Piece Near Mint",
+          "itemPrice": 1.48,
+          "shipping": 0,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "safest_listing",
+          "url": "https://www.ebay.com/itm/398366208545",
+          "title": "One Piece Card Game Portgas.D.Ace OP16-001 Holofoil Near Mint TCG",
+          "itemPrice": 0.99,
+          "shipping": 0.78,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "best_condition_evidence",
+          "url": "https://www.ebay.com/itm/206534426229",
+          "title": "Portgas.D.Ace (001) OP16-001 Leader The Time of Battle One Piece Near Mint",
+          "itemPrice": 1.49,
+          "shipping": 0,
+          "printMatch": "compatible"
+        }
+      ],
+      "platforms": [
+        {
+          "marketplace": "eBay",
+          "status": "complete",
+          "count": 50
+        },
+        {
+          "marketplace": "Cardmarket",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "SNKRDUNK",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Mercari",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Whatnot",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Xianyu",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "集换社",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Yahoo Auctions JP",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Shopee Taiwan",
+          "status": "skipped",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "requestedPrint": "OP16-001_p1",
+      "observedAt": "2026-09-06T22:25:32.758Z",
+      "selectedPrint": "OP16-001_p1",
+      "image": "https://en.onepiece-cardgame.com/images/cardlist/card/OP16-001_p1.png",
+      "outcome": "best_buy",
+      "productId": 693418,
+      "reference": 49.19,
+      "marketAsOf": "2026-09-06T20:05:30.000Z",
+      "winners": [
+        {
+          "role": "best_value",
+          "url": "https://www.ebay.com/itm/267730246852",
+          "title": "Portgas.D.Ace OP16-001 Alternate Art Leader One Piece The Time of Battle Foil NM",
+          "itemPrice": 59.99,
+          "shipping": 5.99,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "url": "https://www.ebay.com/itm/147517068431",
+          "title": "One Piece TCG The Time of Battle Portgas D. Ace OP16-001 SR Alt Art Foil EN - NM",
+          "itemPrice": 65,
+          "shipping": 0,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "safest_listing",
+          "url": "https://www.ebay.com/itm/147517068431",
+          "title": "One Piece TCG The Time of Battle Portgas D. Ace OP16-001 SR Alt Art Foil EN - NM",
+          "itemPrice": 65,
+          "shipping": 0,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "best_condition_evidence",
+          "url": "https://www.ebay.com/itm/147517068431",
+          "title": "One Piece TCG The Time of Battle Portgas D. Ace OP16-001 SR Alt Art Foil EN - NM",
+          "itemPrice": 65,
+          "shipping": 0,
+          "printMatch": "compatible"
+        }
+      ],
+      "platforms": [
+        {
+          "marketplace": "eBay",
+          "status": "complete",
+          "count": 50
+        },
+        {
+          "marketplace": "Cardmarket",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "SNKRDUNK",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Mercari",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Whatnot",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Xianyu",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "集换社",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Yahoo Auctions JP",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Shopee Taiwan",
+          "status": "skipped",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "requestedPrint": "OP17-001",
+      "observedAt": "2026-09-06T22:26:05.638Z",
+      "selectedPrint": "OP17-001",
+      "image": "https://en.onepiece-cardgame.com/images/cardlist/card/OP17-001.png",
+      "outcome": "best_buy",
+      "productId": 705925,
+      "reference": 0.11,
+      "marketAsOf": "2026-09-06T20:05:30.000Z",
+      "winners": [
+        {
+          "role": "best_value",
+          "url": "https://www.ebay.com/itm/158238310615",
+          "title": "Edward.Newgate (001) OP17-001 The World's Strongest Warriors NM",
+          "itemPrice": 1.59,
+          "shipping": 0,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "url": "https://www.ebay.com/itm/198616477093",
+          "title": "Edward.Newgate (001) OP17-001 Leader NM",
+          "itemPrice": 1.49,
+          "shipping": 0,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "safest_listing",
+          "url": "https://www.ebay.com/itm/158238310615",
+          "title": "Edward.Newgate (001) OP17-001 The World's Strongest Warriors NM",
+          "itemPrice": 1.59,
+          "shipping": 0,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "best_condition_evidence",
+          "url": "https://www.ebay.com/itm/158238310615",
+          "title": "Edward.Newgate (001) OP17-001 The World's Strongest Warriors NM",
+          "itemPrice": 1.59,
+          "shipping": 0,
+          "printMatch": "compatible"
+        }
+      ],
+      "platforms": [
+        {
+          "marketplace": "eBay",
+          "status": "complete",
+          "count": 50
+        },
+        {
+          "marketplace": "Cardmarket",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "SNKRDUNK",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Mercari",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Whatnot",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Xianyu",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "集换社",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Yahoo Auctions JP",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Shopee Taiwan",
+          "status": "skipped",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "requestedPrint": "OP17-001_p1",
+      "observedAt": "2026-09-06T22:26:39.937Z",
+      "selectedPrint": "OP17-001_p1",
+      "image": "https://en.onepiece-cardgame.com/images/cardlist/card/OP17-001_p1.png",
+      "outcome": "best_buy",
+      "productId": 705924,
+      "reference": 18.94,
+      "marketAsOf": "2026-09-06T20:05:30.000Z",
+      "winners": [
+        {
+          "role": "best_value",
+          "url": "https://www.ebay.com/itm/158227837236",
+          "title": "One Piece Edward Newgate OP17-001 Alt Art L The World's Strongest Warriors",
+          "itemPrice": 20,
+          "shipping": 1.36,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "url": "https://www.ebay.com/itm/407186280657",
+          "title": "Edward Newgate OP17-001 Alt Art Leader World’s Strongest Warriors ENGLISH NM",
+          "itemPrice": 20,
+          "shipping": 0.78,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "safest_listing",
+          "url": "https://www.ebay.com/itm/318783245757",
+          "title": "Edward.Newgate OP17-001 Leader Alt Art The World’s Strongest Warriors ENGLISH NM",
+          "itemPrice": 30,
+          "shipping": 5.28,
+          "printMatch": "compatible"
+        },
+        {
+          "role": "best_condition_evidence",
+          "url": "https://www.ebay.com/itm/158227837236",
+          "title": "One Piece Edward Newgate OP17-001 Alt Art L The World's Strongest Warriors",
+          "itemPrice": 20,
+          "shipping": 1.36,
+          "printMatch": "compatible"
+        }
+      ],
+      "platforms": [
+        {
+          "marketplace": "eBay",
+          "status": "complete",
+          "count": 49
+        },
+        {
+          "marketplace": "Cardmarket",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "SNKRDUNK",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Mercari",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Whatnot",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Xianyu",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "集换社",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Yahoo Auctions JP",
+          "status": "skipped",
+          "count": 0
+        },
+        {
+          "marketplace": "Shopee Taiwan",
+          "status": "skipped",
+          "count": 0
+        }
+      ]
+    }
+  ]
+}
