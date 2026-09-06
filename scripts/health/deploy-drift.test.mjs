@@ -45,7 +45,9 @@ beforeAll(() => {
   git("checkout", "-q", "-b", "feat/parked");
   commit("other.ts", "alpha\ngamma\n", "feat: add a second marketplace");
   git("checkout", "-q", "main");
-});
+// Creating this history launches dozens of Git processes. Windows full-suite
+// runs measured 14–28 seconds for setup alone; do not time out before assertions.
+}, 60_000);
 
 afterAll(() => {
   if (repo) rmSync(repo, { recursive: true, force: true });
@@ -54,7 +56,8 @@ afterAll(() => {
 const run = (options = {}) =>
   findStrandedFixes({ cwd: repo, deployedRef: "main", refsGlob: "refs/heads", ...options });
 
-describe("deploy-drift stranded fix detection", () => {
+// Each probe also starts several Git processes; retain a bounded Windows budget.
+describe("deploy-drift stranded fix detection", { timeout: 30_000 }, () => {
   it("does not report a fix that reached main through a squash merge", () => {
     const shas = run().map((entry) => entry.sha);
     expect(shas).not.toContain(squashedFixSha.slice(0, 8));

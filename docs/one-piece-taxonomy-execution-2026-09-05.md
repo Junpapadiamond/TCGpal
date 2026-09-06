@@ -131,3 +131,40 @@ No browser console errors were observed. Local eBay credentials are absent: all 
 abstained from recommending inventory. These are UI/source-degradation checks, not buy-accuracy
 measurements. Nami displayed the newly resolved TCGCSV anchor; Luffy had no exact mapping.
 The full gate passed after the final layout refinement (1,416 tests, 92 files, 5 live skips).
+
+## Phase 3c exact-anchor price review
+
+Phase 3b shipped in `8d8874b`. The ceiling sends a proven One Piece NM listing to
+Inspect First when its item price is strictly above five times its selected print's
+TCGCSV reference and at least $20 higher. The listing stays identity-compatible and
+eligible, with a price issue carrying `review` disposition, but cannot win any buy lens.
+The report schema enforces this boundary, and the ranking cache revision changes.
+Shipping, tax, played/unknown conditions, demo inventory, missing or unmatched anchors,
+and unresolved identities do not activate the ceiling.
+
+The underlying instinct is to prevent an extreme ask from becoming the recommended buy.
+The strongest case is the adjudicated $79.99 ST01-001 listing against the documented
+approximate $2 base reference. Two objections are stale/incorrect anchors and legitimate
+premiums that a condition-blind aggregate cannot describe. Five times plus $20 is a
+conservative experiment, not a calibrated economic boundary. The $2 fixture is modeled;
+the current live Luffy anchor is absent, so this change cannot be claimed to fix that miss.
+Owner: Codex for implementation; founder for threshold policy. Review: 2026-09-06 with
+the Phase 4 results. Success: outliers become price-review leads, ordinary prices and
+noncomparable cases remain unchanged, and identity audits stay at zero errors. Kill:
+an unexplained identity regression or the rule firing on those ordinary/boundary cases.
+
+Real-title TDD covers all lenses, factor/dollar boundaries, item-only cost, condition,
+anchor provenance and public report validation. A hermetic comparison uses the observed
+Nami product 527619 and its real product name. Browser QA found two missing positive
+identity-reason translations; these now describe the existing rules without changing them.
+Captures use a visibly labeled historical-title fixture with a modeled anchor, not live
+inventory: [English desktop](taxonomy-qa-2026-09-06/ceiling-en-desktop.png),
+[Chinese desktop](taxonomy-qa-2026-09-06/ceiling-zh-desktop.png), and
+[Chinese mobile](taxonomy-qa-2026-09-06/ceiling-zh-mobile.png). Mobile document and viewport
+are both 390px. The temporary visual route was removed before the production build.
+The existing deploy-drift tests exceeded their Git-process time budgets on Windows;
+only that suite's setup/probe timeouts were increased, with all six assertions preserved.
+Full gate passed: lint, typecheck, 1,426 tests in 93 files (5 live reviews skipped),
+and production build. The 2026-09-06 audit remains 656/90/0/0 target and
+3977/594/0/0 catalog-wide. Graphify remains unavailable on this Windows host; its
+checked-in graph was not regenerated.

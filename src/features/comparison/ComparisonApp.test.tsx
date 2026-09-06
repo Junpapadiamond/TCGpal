@@ -1650,6 +1650,31 @@ describe("comparison condition controls", () => {
     expect(screen.queryByText("Our pick")).toBeNull();
   });
 
+  it("explains an exact-print price review in both languages without claiming its identity is unresolved", async () => {
+    const card = { ...mapOnePieceCardToIdentity(findOnePieceCatalogVariant("ST01-001")!, { confidence: "high", matchReasons: [] }), marketMid: 2, marketSource: "tcgcsv" as const };
+    const listing = normalizeListing({
+      listing: { ...demoListingSeeds[0], demo: false, id: "historical-luffy", cardId: card.id,
+        title: "2022 One Piece Monkey.D.Luffy ST01-001 EN Leader", price: 79.99, shipping: 5,
+        claimedCondition: "Near Mint", listingLanguage: "English" },
+      buyer: { country: "US", postalCode: "10001", taxRate: null, desiredCondition: "Near Mint" },
+      confirmedCard: card, marketPrice: 2, cardLanguage: "English",
+    });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/card-identity")) return Response.json(identityResponse([card]));
+      const request = JSON.parse(String(init?.body)) as ComparisonRequest;
+      return Response.json({ ...reportFor(request), confirmedCard: card, candidates: [listing], outcome: "inspect_first", inspectListingId: listing.id });
+    }));
+    render(<ComparisonApp />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Search for a card" }), { target: { value: "Luffy ST01-001" } });
+    fireEvent.click(screen.getByRole("button", { name: "Compare exact listings" }));
+    expect(await screen.findByText(/Its item price is unusually high against the exact-print NM reference/)).toBeTruthy();
+    expect(screen.queryByText(/its text does not prove/)).toBeNull();
+    expect(screen.queryByText("The listing identity needs manual verification.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "中文" }));
+    expect(await screen.findByText(/商品价明显高于该版本的 NM 参考价/)).toBeTruthy();
+    expect(screen.queryByText("Our pick")).toBeNull();
+  });
+
   it("offers real next actions and keeps an English abstention reason out of 中文", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = JSON.parse(String(init?.body)) as ComparisonRequest;

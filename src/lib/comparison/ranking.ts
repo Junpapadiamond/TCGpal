@@ -2,6 +2,7 @@ import { altArtTitlePattern, specificVariantMarkers, withoutJapaneseAnniversaryR
 export { printClass as deriveVariantIntent, variantIntentLabel, type PrintClass as VariantIntent } from "@/lib/external/one-piece-taxonomy";
 import {
   normalizedListingSchema,
+  requiresMarketPriceReview,
   rankedChoiceSchema,
   type BuyerContext,
   type CardIdentityCandidate,
@@ -402,6 +403,19 @@ export function normalizeListing(input: {
     printAssessment,
     Boolean(input.confirmedCard),
   );
+  // A review ceiling is not print evidence or an exclusion. Only the selected
+  // One Piece print's own TCGCSV NM reference can activate it; small-dollar
+  // singles, checkout charges and played-condition copies cannot manufacture it.
+  if (!listing.demo && input.confirmedCard
+    && (printAssessment?.match === "exact" || printAssessment?.match === "compatible")
+    && isOnePieceCardKey(input.confirmedCard.cardNumber, input.confirmedCard.id)
+    && input.confirmedCard.marketSource === "tcgcsv"
+    && input.confirmedCard.marketMid === marketPrice
+    && marketComparable && marketPrice !== null
+    && listing.price > marketPrice * 5 && listing.price - marketPrice >= 20) {
+    eligibilityIssues.push({ code: "price_far_above_exact_market", category: "price", disposition: "review",
+      message: "Item price is over five times the exact-print NM market reference, with at least a $20 gap. Verify the price, print and reference freshness before deciding." });
+  }
   const exclusionReasons = eligibilityIssues
     .filter((issue) => issue.disposition === "exclude")
     .map((issue) => issue.message);
@@ -503,7 +517,7 @@ export function rankListings(
   listings: NormalizedListing[],
   context: { marketPrice?: number | null } = {},
 ): RankedChoice[] {
-  const eligible = finalizeListingScores(listings).filter((listing) => listing.eligible);
+  const eligible = finalizeListingScores(listings).filter((listing) => listing.eligible && !requiresMarketPriceReview(listing));
   if (!eligible.length) return [];
 
   const marketPrice = context.marketPrice ?? null;

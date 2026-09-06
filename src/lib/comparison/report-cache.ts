@@ -9,7 +9,7 @@ import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-prin
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
-const COMPARISON_CACHE_REVISION = "ranking-v4";
+const COMPARISON_CACHE_REVISION = "ranking-v5-market-review";
 const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {

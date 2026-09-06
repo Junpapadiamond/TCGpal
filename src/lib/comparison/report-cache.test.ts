@@ -78,7 +78,7 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe(`identity-v4|ranking-v4|${ONE_PIECE_PRINT_METADATA_REVISION}|swsh7-215|Near Mint|10001|0.08`);
+    expect(key).toBe(`identity-v4|ranking-v5-market-review|${ONE_PIECE_PRINT_METADATA_REVISION}|swsh7-215|Near Mint|10001|0.08`);
   });
 
   it("refuses reports created before the exact-print identity contract", async () => {

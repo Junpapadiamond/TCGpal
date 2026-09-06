@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-05
+updated_at: 2026-09-06
 canonical_branch: origin/main
-last_verified_product_commit: 0b8d198
-working_branch: codex/one-piece-taxonomy (Phase 0 aeacba9, Phase 1 2e4e3ee; Phase 2 c72ccf9; Phase 3a d4269fd; Phase 3b gate green)
+last_verified_product_commit: 8d8874b
+working_branch: codex/one-piece-taxonomy (Phases 0–3b shipped through 8d8874b; Phase 3c verification recorded below)
 max_lines: 300
 ---
 
@@ -29,7 +29,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Taxonomy Phases 0–3b green (`aeacba9`, `2e4e3ee`, `c72ccf9` + `d4269fd` anchors + localized labels); all four consumers share vocabulary; target 656/90/0/0, whole catalog 3977/594/0/0 | Complete taxonomy ceiling + Phase 4; evidence in `docs/one-piece-taxonomy-execution-2026-09-05.md`; image proof stays separate |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | Taxonomy Phases 0–3b shipped through `8d8874b`; Phase 3c exact-anchor price review implemented; target 656/90/0/0, catalog 3977/594/0/0 | Phase 4 live checks + founder report; `docs/one-piece-taxonomy-execution-2026-09-05.md`; image proof stays separate |
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Decide whether 69.2% One Piece accuracy is postable before recruiting |
@@ -63,7 +63,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 <!-- progress:workstream id="WS-IDENTITY" state="base-print-proof-shipped-live-remeasure-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
-Taxonomy Phases 0–3b verified (1,416 tests, lint, typecheck, build; live aliases: +2 PRB/+4 promo, six booster controls unchanged); [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). Whole-catalog 594 abstentions verified on pre-migration source too; 590 was stale. Live eBay checks lack credentials on this host.
+Taxonomy Phases 0–3b shipped (`8d8874b`, Vercel READY); Phase 3c price review: 1,426 tests, lint/typecheck passed, EN/中文 desktop/mobile captured; [phase evidence](docs/one-piece-taxonomy-execution-2026-09-05.md). [2026-09-06 audit](docs/one-piece-alignment-audit-2026-09-06.md): 656/90/0/0 target, 3977/594/0/0 catalog. Local eBay credentials absent; Phase 4 will use the deployed bounded API.
 ### Done
 
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.
@@ -281,7 +281,7 @@ Still not verified:
 - Population-level live eBay recall and precision remain unproven until the human-adjudicated 30-listing quality gate runs; the known cross-facet sibling reproductions are fixed in v4 and covered by zero-substitution regressions.
 - Ten-buyer demand/usability pilot; monetization, distribution economics, and public-launch legal/provider readiness; dirty local experiments in LOCAL-STATE. Pokémon buy accuracy has never been measured at the One Piece standard — 18/18 recall does not adjudicate the artwork — so 69.2% describes one of the two live games, and the set-filter year label is unit-tested but never seen in a browser.
 - The eBay detail budget is measured but unshipped (default still 12); D-DETAIL-BUDGET needs the Browse daily quota. The 2026-08-11 retry improvement (45% to 29% "try again") is a simulation over the measured failure profile, not an observed production rate.
-- No production build has run since `289d334`. Whether any tagged launch link has been posted is not recorded in the repo, and the PostHog insights in `docs/launch-metrics.md` are written but not built in the tool, with no automatic `channel is not internal` / `demo_mode is not true` filters.
+- Taxonomy phases through `8d8874b` passed production builds and deployed READY. Whether any tagged launch link has been posted is not recorded in the repo, and the PostHog insights in `docs/launch-metrics.md` are written but not built in the tool, with no automatic `channel is not internal` / `demo_mode is not true` filters.
 <!-- progress:end -->
 
 <!-- progress:section id="UPDATE-PROTOCOL" -->

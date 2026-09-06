@@ -217,6 +217,7 @@ export const en = {
     noRecommendationBody: "No listing has both a compatible seller-stated condition and a complete comparable cost. Review the skipped rows instead of guessing.",
     inspectFirstTitle: "Best inspect lead",
     inspectFirstBody: "This listing may be useful, but its text does not prove it is the artwork you confirmed. Review the seller's photos and verify the live page before deciding.",
+    inspectPriceBody: "Its item price is unusually high against the exact-print NM reference. Verify the asking price, print details and reference freshness before deciding. Shipping and tax did not trigger this review.",
     inspectListing: "Inspect listing",
     nextMovesTitle: "No trustworthy buy yet",
     nextMovesBody: "TCGlens did not find a listing it can safely recommend. You can still refine the card details, retry a source, or open the manual market checks below.",
@@ -270,6 +271,8 @@ export const en = {
     printCheck: "Listing identity check",
     printReason: (reason: string) => ({
       canonical_print_id_matches: "The listing names the exact canonical print ID.",
+      one_piece_plain_title_describes_base_print: "The title is consistent with the ordinary base print under the retail-title rule.",
+      one_piece_single_print_number_is_unambiguous: "The catalog contains only one print for this collector number.",
       collector_number_identifies_print: "The available catalog metadata uniquely identifies this print.",
       named_print_class_is_unique_for_card_number: "The listing names the uniquely identifiable selected print class.",
       generic_variant_is_unique_for_card_number: "The stated variant is unique for this collector number.",
@@ -711,6 +714,7 @@ export const zh: Dict = {
     noRecommendationBody: "现在没有品相和总价都说得清的商品。可以看看被跳过的那些，我们不替你猜。",
     inspectFirstTitle: "最值得先看的一条",
     inspectFirstBody: "这条也许有用，但文字信息还证明不了它就是你确认的那张卡图。先看卖家照片，再打开商品页确认，然后再决定。",
+    inspectPriceBody: "商品价明显高于该版本的 NM 参考价。请先核对要价、版本细节和参考价更新时间，再决定。运费和税费不会触发这项核对。",
     inspectListing: "去核对",
     nextMovesTitle: "暂时没有能放心买的",
     nextMovesBody: "这次没找到能放心推荐的商品。你可以补卡片信息、重试来源，或者用下面的手动市场查询。",
@@ -760,6 +764,8 @@ export const zh: Dict = {
     printCheck: "商品版本核对",
     printReason: (reason: string) => ({
       canonical_print_id_matches: "商品写出了完全一致的标准版本编号。",
+      one_piece_plain_title_describes_base_print: "按零售卡标题规则，这个标题与普通基础版本一致。",
+      one_piece_single_print_number_is_unambiguous: "目录中这个卡号只有一个版本。",
       collector_number_identifies_print: "现有目录信息能唯一确认这个版本。",
       named_print_class_is_unique_for_card_number: "商品写的版本类型，在这个卡号下只有这一种。",
       generic_variant_is_unique_for_card_number: "商品写的变体，在这个卡号下是唯一的。",

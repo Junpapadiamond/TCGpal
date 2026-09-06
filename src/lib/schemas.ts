@@ -546,7 +546,7 @@ export const comparisonReportSchema = z.object({
   }
   for (const [index, choice] of report.rankedChoices.entries()) {
     const listing = report.candidates.find((candidate) => candidate.id === choice.listingId);
-    if (!listing || !listing.eligible || (listing.printMatch !== "exact" && listing.printMatch !== "compatible")) {
+    if (!listing || !listing.eligible || requiresMarketPriceReview(listing) || (listing.printMatch !== "exact" && listing.printMatch !== "compatible")) {
       ctx.addIssue({
         code: "custom",
         path: ["rankedChoices", index, "listingId"],
@@ -567,11 +567,13 @@ export const comparisonReportSchema = z.object({
     const inspect = report.inspectListingId
       ? report.candidates.find((candidate) => candidate.id === report.inspectListingId)
       : null;
-    if (!inspect || inspect.printMatch !== "unknown") {
+    const priceReview = inspect && inspect.eligible && requiresMarketPriceReview(inspect)
+      && (inspect.printMatch === "exact" || inspect.printMatch === "compatible");
+    if (!inspect || (inspect.printMatch !== "unknown" && !priceReview)) {
       ctx.addIssue({
         code: "custom",
         path: ["inspectListingId"],
-        message: "Inspect First requires an unresolved listing from this report.",
+        message: "Inspect First requires an unresolved identity or an eligible exact-print price-review listing from this report.",
       });
     }
   }
@@ -754,6 +756,9 @@ export type CanonicalPrintIdentity = z.infer<typeof canonicalPrintIdentitySchema
 export type PrintMatch = z.infer<typeof printMatchSchema>;
 export type EligibilityIssue = z.infer<typeof eligibilityIssueSchema>;
 export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
+export function requiresMarketPriceReview(listing: Pick<NormalizedListing, "eligibilityIssues">): boolean {
+  return listing.eligibilityIssues.some((issue) => issue.code === "price_far_above_exact_market" && issue.disposition === "review");
+}
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
 export type ComparisonReport = z.infer<typeof comparisonReportSchema>;

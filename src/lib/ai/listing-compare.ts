@@ -71,6 +71,7 @@ import {
   cardIdentityCandidateSchema,
   comparisonNarrativeSchema,
   comparisonReportSchema,
+  requiresMarketPriceReview,
   comparisonRequestSchema,
   type CardHint,
   type CardIdentityCandidate,
@@ -319,7 +320,7 @@ export async function runListingComparison(
   })));
   const rankedChoices = rankListings(normalized, { marketPrice: marketAnchor });
   const inspectLead = normalized
-    .filter((listing) => listing.printMatch === "unknown"
+    .filter((listing) => (listing.printMatch === "unknown" || (listing.eligible && requiresMarketPriceReview(listing)))
       && listing.printPriceGuard !== "exclude"
       && listing.active
       && listing.raw
@@ -350,7 +351,7 @@ export async function runListingComparison(
     ...buildJapanReferenceLinks(confirmedCard, generatedAt),
   ];
   const narrative = buildNarrative(confirmedCard, normalized, rankedChoices, references, trace);
-  const partial = normalized.filter((listing) => listing.eligible).length === 0
+  const partial = rankedChoices.length === 0
     || (!demoMode && references.every((reference) => reference.status !== "used"));
   const abstention = !demoMode && rankedChoices.length === 0 && normalized.length > 0
     ? buildAbstention(confirmedCard, normalized, variantIntent)
@@ -419,6 +420,11 @@ function buildAbstention(
   listings: NormalizedListing[],
   variantIntent: VariantIntent | null,
 ): ComparisonAbstention {
+  const priceReviews = listings.filter((listing) => listing.eligible && requiresMarketPriceReview(listing));
+  if (priceReviews.length > 0) {
+    return { reason: `${priceReviews.length} exact-print listing(s) need price review against the NM market reference before a buy recommendation.`,
+      foundCount: listings.length, variantExcludedCount: 0, suggestedCardId: null, suggestedLabel: null };
+  }
   const variantExcluded = listings.filter(
     (listing) => !listing.eligible && listing.exclusionReasons.some(isVariantMismatchReason),
   );
@@ -1299,7 +1305,9 @@ function localNarrative(
 ) {
   const eligible = listings.filter((listing) => listing.eligible);
   return comparisonNarrativeSchema.parse({
-    summary: eligible.length
+    summary: eligible.length && choices.length === 0 && eligible.some(requiresMarketPriceReview)
+      ? `TCGlens found exact-print listings for ${card.name}, but their item prices need review against the NM market reference before a buy recommendation.`
+      : eligible.length
       ? `Lens TCG found ${eligible.length} eligible ${card.name} listings and separated price, seller safety, and condition evidence instead of collapsing them into one magic answer.`
       : `Lens TCG could not find an eligible exact-match listing for ${card.name}.`,
     cautions: [

@@ -57,6 +57,7 @@ import {
 import {
   cardIdentitySearchResponseSchema,
   comparisonReportSchema,
+  requiresMarketPriceReview,
   type CardIdentityCandidate,
   type CardIdentitySearchResponse,
   type ComparisonReport,
@@ -2753,7 +2754,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
         <div>
           <h2 className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.inspectFirstTitle}</h2>
           <h3 className="mt-2 font-serif text-xl font-black text-[#24312f]">{listing.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-[#64736c]">{t.result.inspectFirstBody}</p>
+          <p className="mt-2 text-sm leading-6 text-[#64736c]">{requiresMarketPriceReview(listing) ? t.result.inspectPriceBody : t.result.inspectFirstBody}</p>
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
         </div>
         <div className="col-span-2 sm:col-span-1 sm:text-right">
@@ -3721,6 +3722,7 @@ function localizeEligibilityIssue(code: string, fallback: string, lang: Lang) {
     shipping_unknown: "运费未知，结账总价没法安全比较。",
     listing_inactive: "这条目前不在售。",
     price_far_below_market: "价格远低于市场参考价，可能是复制品、定制品，或者标错了。",
+    price_far_above_exact_market: "商品价超过该版本 NM 参考价的五倍，且至少高出 $20。请核对价格、版本和参考价更新时间。",
     language_conflict: "商品写明的语言和已确认卡片对不上。",
     identity_sibling_mismatch: "证据指向同卡号的另一种卡图。",
     identity_unverified: "商品文字还证明不了是已确认卡图，先核对一下。",
@@ -3824,6 +3826,7 @@ function CompactCandidateRow({
             </button>
           </p>
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
+          {requiresMarketPriceReview(listing) && <p className="mt-1 text-xs font-semibold text-[#8d6032]">{t.result.inspectPriceBody}</p>}
         </div>
         <div className="text-right">
           <p className="font-mono text-base font-black leading-tight text-[#24312f]">{formatMoney(total)}</p>
