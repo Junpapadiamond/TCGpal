@@ -24,7 +24,7 @@ const priceField = z
 
 const onePieceCardSchema = z.object({
   card_name: z.string(),
-  // Stable per-print id, e.g. "OP01-001", "ST01-001", "EB01-001", "P-001".
+  // Collector number shared by artworks; card_image_id identifies the print.
   card_set_id: z.string(),
   set_id: z.string().optional(), // e.g. "OP-01"
   set_name: z.string().optional(),
@@ -48,7 +48,7 @@ const onePieceCardSchema = z.object({
   card_cost: z.string().nullable().optional(),
   card_power: z.string().nullable().optional(),
   life: z.string().nullable().optional(),
-  counter_amount: z.string().nullable().optional(),
+  counter_amount: z.union([z.string(), z.number().transform(String)]).nullable().optional(),
   attribute: z.string().nullable().optional(),
   sub_types: z.string().nullable().optional(),
   card_image_id: z.string().nullable().optional(),
@@ -129,9 +129,19 @@ export async function getOnePieceCard({
 
   // Bundled-first: a curated card resolves instantly and works with no network.
   const bundled = findOnePieceCatalogCard(id);
-  if (bundled) return bundled;
+  if (bundled && variantKey(bundled).toUpperCase() === id) return bundled;
 
-  const base = resolveBaseUrl(baseUrl);
+  // Provider endpoints are keyed by collector number, including when reloading
+  // a selected parallel. Only the exact print may satisfy that selection.
+  const number = id.replace(/_p\d+$/i, "");
+  if (!CARD_SET_ID_PATTERN.test(number)) return null;
+  const cards = await fetchLiveCardFamily(number, resolveBaseUrl(baseUrl), fetcher, timeoutMs);
+  return cards.find((card) => variantKey(card).toUpperCase() === id) ?? null;
+}
+
+async function fetchLiveCardFamily(
+  id: string, base: string, fetcher: typeof fetch, timeoutMs: number,
+): Promise<OnePieceTcgCard[]> {
   // A given id lives in exactly one of these collections; try in likelihood order.
   const paths = [
     `${base}/sets/card/${encodeURIComponent(id)}/`,
@@ -142,13 +152,17 @@ export async function getOnePieceCard({
   for (const path of paths) {
     try {
       const cards = onePieceCardResponseSchema.parse(await fetchJson(path, fetcher, timeoutMs));
-      const match = cards.find((card) => card.card_set_id.toUpperCase() === id) ?? cards[0];
-      if (match) return match;
+      const family = cards.filter((card) => card.card_set_id.toUpperCase() === id);
+      if (family.length > 0) {
+        return mergeOnePieceCatalogs([], family).sort((a, b) =>
+          Number(variantKey(a).toUpperCase() !== id) - Number(variantKey(b).toUpperCase() !== id)
+          || variantKey(a).localeCompare(variantKey(b)));
+      }
     } catch {
       // Try the next collection; a 404 here just means the id is not in that set.
     }
   }
-  return null;
+  return [];
 }
 
 export async function searchOnePieceCards({
@@ -167,16 +181,14 @@ export async function searchOnePieceCards({
   // Fast path: a concrete card number (OP01-024) resolves to EVERY print of that
   // number — base art plus each alternate art / parallel / manga / treasure rare —
   // so the buyer can pick the exact version. Bundled-first, so it works with no
-  // network; only an unbundled number falls back to a single live lookup.
+  // network; an unbundled number keeps every print from the live family lookup.
   if (directId && CARD_SET_ID_PATTERN.test(directId)) {
     const prints = findOnePieceCatalogVariants(directId);
     if (prints.length > 0) {
       return { source: "optcg-api", query: normalizedQuery, cards: prints.slice(0, limit), count: prints.length };
     }
-    const card = await getOnePieceCard({ cardSetId: directId, baseUrl, fetcher, timeoutMs });
-    if (card) {
-      return { source: "optcg-api", query: normalizedQuery, cards: [card], count: 1 };
-    }
+    const live = await fetchLiveCardFamily(directId, resolveBaseUrl(baseUrl), fetcher, timeoutMs);
+    return { source: "optcg-api", query: normalizedQuery, cards: live.slice(0, limit), count: live.length };
   }
 
   if (normalizedQuery.length < 2) {
