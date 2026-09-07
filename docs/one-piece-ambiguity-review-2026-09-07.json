@@ -1,0 +1,3875 @@
+{
+  "status": "research-only; no runtime edits or human approval",
+  "observedAt": "2026-09-07T04:12:53.953Z",
+  "baselineCommit": "e8f8202",
+  "scope": "catalog-derived evidence, not live buy accuracy",
+  "before": {
+    "prints": 4742,
+    "selfAccepted": 4135,
+    "selfUnknown": 607,
+    "selfMismatch": 0,
+    "substitutions": 0
+  },
+  "unknownByReason": {
+    "one_piece_evidence_not_unique_across_siblings": 579,
+    "one_piece_class_evidence_requires_corroboration": 23,
+    "plain_family_listing_does_not_identify_print": 5
+  },
+  "unknownByRelease": {
+    "One Piece Card The Best": 307,
+    "One Piece Card The Best Vol.2": 218,
+    "Carrying On His Will": 16,
+    "The World’s Strongest Warriors": 13,
+    "One Piece Heroines Edition": 10,
+    "Cs 25-26 Event Pack": 8,
+    "Awakening Of The New Era": 3,
+    "The Time Of Battle": 3,
+    "Championship 25-26 Finals Season 1": 3,
+    "Adventure On Kami's Island": 2,
+    "Uta": 2,
+    "Pirates League Store Qualifier": 2,
+    "Seven Warlords Of The Sea Binder Set": 2,
+    "Purple/black Monkey.d.luffy": 2,
+    "The Azure Sea’s Seven": 2,
+    "Super Pre-release": 2,
+    "Op-12 Release Event": 2,
+    "2025 New Year Event": 2,
+    "A Fist Of Divine Speed": 1,
+    "Legacy Of The Master": 1,
+    "Op-11 Release Event": 1,
+    "Store 2-on-2 Battle": 1,
+    "Op14-eb04 Release Event": 1,
+    "Op15-eb04 Release Event": 1,
+    "Op-16 Release Event": 1,
+    "ST-14": 1
+  },
+  "afterInMemoryCandidate": {
+    "prints": 4742,
+    "selfAccepted": 4137,
+    "selfUnknown": 605,
+    "selfMismatch": 0,
+    "substitutions": 0
+  },
+  "scenarios": [
+    {
+      "selected": "P-055_p3",
+      "text": "Monkey.D.Luffy (P-055) (Full Art)",
+      "source": "https://tcgcsv.com/tcgplayer/68/23496/products",
+      "kind": "catalog title",
+      "before": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "compatible",
+        "confidence": "high",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ],
+        "priceGuard": "none"
+      }
+    },
+    {
+      "selected": "P-055_p3",
+      "text": "Monkey.D.Luffy (Jolly Roger Foil) | Foil | Premium Booster -The Best- #P-055",
+      "source": "https://www.ebay.com/itm/137594104902",
+      "kind": "eBay Browse title via production comparison",
+      "before": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "mismatch",
+        "confidence": "high",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ],
+        "priceGuard": "none"
+      }
+    },
+    {
+      "selected": "P-055_p3",
+      "text": "Bandai Monkey D. Luffy P-055 Promo Full Art Foil ENG One Piece Card Game 5000",
+      "source": "https://www.ebay.com/itm/158123032548",
+      "kind": "eBay Browse title via production comparison",
+      "before": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "compatible",
+        "confidence": "high",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ],
+        "priceGuard": "none"
+      }
+    },
+    {
+      "selected": "P-055_p2",
+      "text": "Monkey.D.Luffy (P-055) (Full Art)",
+      "source": "https://tcgcsv.com/tcgplayer/68/23496/products",
+      "kind": "catalog sibling negative",
+      "before": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "mismatch",
+        "confidence": "high",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ],
+        "priceGuard": "none"
+      }
+    },
+    {
+      "selected": "P-055_p2",
+      "text": "Monkey.D.Luffy (P-055) (Jolly Roger Foil)",
+      "source": "https://tcgcsv.com/tcgplayer/68/23496/products",
+      "kind": "catalog title",
+      "before": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "plain_family_listing_does_not_identify_print"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "compatible",
+        "confidence": "high",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ],
+        "priceGuard": "none"
+      }
+    },
+    {
+      "selected": "P-055_r1",
+      "text": "Monkey.D.Luffy (P-055) (Full Art)",
+      "source": "https://tcgcsv.com/tcgplayer/68/23496/products",
+      "kind": "catalog sibling negative",
+      "before": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "mismatch",
+        "confidence": "high",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ],
+        "priceGuard": "none"
+      }
+    },
+    {
+      "selected": "EB02-010_p1",
+      "text": "EB02-010 Monkey D Luffy Leader Alt Art Holo",
+      "source": "user report; collector number restored from confirmed print",
+      "kind": "user title",
+      "before": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "unknown",
+        "confidence": "low",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ],
+        "priceGuard": "none"
+      }
+    },
+    {
+      "selected": "EB02-010_p1",
+      "text": "Monkey.D.Luffy (010) (Alt Art) EB02-010 Extra Booster: Anime 25th Collection",
+      "source": "https://www.ebay.com/itm/366563209233",
+      "kind": "title only; actual item specifics separately conflict with artwork class",
+      "before": {
+        "match": "compatible",
+        "confidence": "high",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ],
+        "priceGuard": "none"
+      },
+      "afterInMemoryCandidate": {
+        "match": "compatible",
+        "confidence": "high",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ],
+        "priceGuard": "none"
+      }
+    }
+  ],
+  "unresolvedPrints": [
+    {
+      "printId": "EB01-009_p1",
+      "cardNumber": "EB01-009",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-009_r1",
+      "cardNumber": "EB01-009",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-015_p5",
+      "cardNumber": "EB01-015",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-015_r1",
+      "cardNumber": "EB01-015",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-018_p1",
+      "cardNumber": "EB01-018",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-018_r1",
+      "cardNumber": "EB01-018",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-038_p1",
+      "cardNumber": "EB01-038",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-038_r1",
+      "cardNumber": "EB01-038",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-051_p1",
+      "cardNumber": "EB01-051",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-051_r1",
+      "cardNumber": "EB01-051",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-060_p1",
+      "cardNumber": "EB01-060",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB01-060_r1",
+      "cardNumber": "EB01-060",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "EB03-003_p1",
+      "cardNumber": "EB03-003",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-018_p1",
+      "cardNumber": "EB03-018",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-024_p1",
+      "cardNumber": "EB03-024",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-026_p1",
+      "cardNumber": "EB03-026",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-031_p1",
+      "cardNumber": "EB03-031",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-042_p1",
+      "cardNumber": "EB03-042",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-045_p1",
+      "cardNumber": "EB03-045",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-053_p1",
+      "cardNumber": "EB03-053",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-055_p1",
+      "cardNumber": "EB03-055",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB03-061_p1",
+      "cardNumber": "EB03-061",
+      "release": "One Piece Heroines Edition",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "EB04-044_p1",
+      "cardNumber": "EB04-044",
+      "release": "Adventure On Kami's Island",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP01-006_p3",
+      "cardNumber": "OP01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-006_p4",
+      "cardNumber": "OP01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-006_p5",
+      "cardNumber": "OP01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-006_r1",
+      "cardNumber": "OP01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-024_p3",
+      "cardNumber": "OP01-024",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-024_r1",
+      "cardNumber": "OP01-024",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-029_p2",
+      "cardNumber": "OP01-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-029_p3",
+      "cardNumber": "OP01-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-029_r1",
+      "cardNumber": "OP01-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-033_p3",
+      "cardNumber": "OP01-033",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-033_p4",
+      "cardNumber": "OP01-033",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-033_p5",
+      "cardNumber": "OP01-033",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-033_r1",
+      "cardNumber": "OP01-033",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-039_p1",
+      "cardNumber": "OP01-039",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-039_r1",
+      "cardNumber": "OP01-039",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-041_p3",
+      "cardNumber": "OP01-041",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-041_p4",
+      "cardNumber": "OP01-041",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-041_p5",
+      "cardNumber": "OP01-041",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-041_r1",
+      "cardNumber": "OP01-041",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-047_p4",
+      "cardNumber": "OP01-047",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-047_r1",
+      "cardNumber": "OP01-047",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-051_p4",
+      "cardNumber": "OP01-051",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-051_r1",
+      "cardNumber": "OP01-051",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-052_p3",
+      "cardNumber": "OP01-052",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-052_p4",
+      "cardNumber": "OP01-052",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-052_r1",
+      "cardNumber": "OP01-052",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-055_p1",
+      "cardNumber": "OP01-055",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-055_r1",
+      "cardNumber": "OP01-055",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-070_p4",
+      "cardNumber": "OP01-070",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-070_r1",
+      "cardNumber": "OP01-070",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-078_p4",
+      "cardNumber": "OP01-078",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-078_r1",
+      "cardNumber": "OP01-078",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-120_p5",
+      "cardNumber": "OP01-120",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-120_r1",
+      "cardNumber": "OP01-120",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-121_p4",
+      "cardNumber": "OP01-121",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP01-121_r1",
+      "cardNumber": "OP01-121",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-004_p4",
+      "cardNumber": "OP02-004",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-004_r1",
+      "cardNumber": "OP02-004",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-005_p1",
+      "cardNumber": "OP02-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-005_r1",
+      "cardNumber": "OP02-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-015_p3",
+      "cardNumber": "OP02-015",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-015_p4",
+      "cardNumber": "OP02-015",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-015_r1",
+      "cardNumber": "OP02-015",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-018_p4",
+      "cardNumber": "OP02-018",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-018_p5",
+      "cardNumber": "OP02-018",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-018_p6",
+      "cardNumber": "OP02-018",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-018_r2",
+      "cardNumber": "OP02-018",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-034_p1",
+      "cardNumber": "OP02-034",
+      "release": "Uta",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-041_p2",
+      "cardNumber": "OP02-041",
+      "release": "Uta",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-068_p1",
+      "cardNumber": "OP02-068",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-068_r1",
+      "cardNumber": "OP02-068",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-089_p2",
+      "cardNumber": "OP02-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-089_p3",
+      "cardNumber": "OP02-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-089_p4",
+      "cardNumber": "OP02-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-089_r1",
+      "cardNumber": "OP02-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-096_p3",
+      "cardNumber": "OP02-096",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-096_r1",
+      "cardNumber": "OP02-096",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-099_p4",
+      "cardNumber": "OP02-099",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-099_r1",
+      "cardNumber": "OP02-099",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-106_p4",
+      "cardNumber": "OP02-106",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-106_p5",
+      "cardNumber": "OP02-106",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-106_r2",
+      "cardNumber": "OP02-106",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-114_p3",
+      "cardNumber": "OP02-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-114_r1",
+      "cardNumber": "OP02-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-117_p5",
+      "cardNumber": "OP02-117",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-117_p6",
+      "cardNumber": "OP02-117",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-117_r2",
+      "cardNumber": "OP02-117",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-121_p3",
+      "cardNumber": "OP02-121",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP02-121_r1",
+      "cardNumber": "OP02-121",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-003_p4",
+      "cardNumber": "OP03-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-003_p5",
+      "cardNumber": "OP03-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-003_p6",
+      "cardNumber": "OP03-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-003_r2",
+      "cardNumber": "OP03-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-008_p2",
+      "cardNumber": "OP03-008",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-008_r1",
+      "cardNumber": "OP03-008",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-048_p1",
+      "cardNumber": "OP03-048",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-048_r1",
+      "cardNumber": "OP03-048",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-055_p2",
+      "cardNumber": "OP03-055",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-055_p3",
+      "cardNumber": "OP03-055",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-055_r1",
+      "cardNumber": "OP03-055",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-056_p2",
+      "cardNumber": "OP03-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-056_p3",
+      "cardNumber": "OP03-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-056_p4",
+      "cardNumber": "OP03-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-056_r1",
+      "cardNumber": "OP03-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-057_p2",
+      "cardNumber": "OP03-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-057_p3",
+      "cardNumber": "OP03-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-057_p4",
+      "cardNumber": "OP03-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-057_r1",
+      "cardNumber": "OP03-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-060_p2",
+      "cardNumber": "OP03-060",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-060_p3",
+      "cardNumber": "OP03-060",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-060_r1",
+      "cardNumber": "OP03-060",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-072_p1",
+      "cardNumber": "OP03-072",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-072_r1",
+      "cardNumber": "OP03-072",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-079_p3",
+      "cardNumber": "OP03-079",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-079_p4",
+      "cardNumber": "OP03-079",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-079_r2",
+      "cardNumber": "OP03-079",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-089_p4",
+      "cardNumber": "OP03-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-089_p5",
+      "cardNumber": "OP03-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-089_p6",
+      "cardNumber": "OP03-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-089_r2",
+      "cardNumber": "OP03-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-094_p2",
+      "cardNumber": "OP03-094",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-094_p3",
+      "cardNumber": "OP03-094",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-094_r1",
+      "cardNumber": "OP03-094",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-108_p3",
+      "cardNumber": "OP03-108",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-108_r1",
+      "cardNumber": "OP03-108",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-110_p3",
+      "cardNumber": "OP03-110",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-110_p4",
+      "cardNumber": "OP03-110",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-110_p5",
+      "cardNumber": "OP03-110",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-110_r2",
+      "cardNumber": "OP03-110",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-113_p3",
+      "cardNumber": "OP03-113",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-113_r1",
+      "cardNumber": "OP03-113",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-116_p5",
+      "cardNumber": "OP03-116",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-116_p6",
+      "cardNumber": "OP03-116",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-116_r1",
+      "cardNumber": "OP03-116",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-121_p3",
+      "cardNumber": "OP03-121",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-121_p4",
+      "cardNumber": "OP03-121",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-121_r2",
+      "cardNumber": "OP03-121",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-123_p4",
+      "cardNumber": "OP03-123",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP03-123_r1",
+      "cardNumber": "OP03-123",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-016_p1",
+      "cardNumber": "OP04-016",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-016_r1",
+      "cardNumber": "OP04-016",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-029_p2",
+      "cardNumber": "OP04-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-029_p3",
+      "cardNumber": "OP04-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-029_r1",
+      "cardNumber": "OP04-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-031_p3",
+      "cardNumber": "OP04-031",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-031_r1",
+      "cardNumber": "OP04-031",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-032_p2",
+      "cardNumber": "OP04-032",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-032_p3",
+      "cardNumber": "OP04-032",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-032_r1",
+      "cardNumber": "OP04-032",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-036_p2",
+      "cardNumber": "OP04-036",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-036_p3",
+      "cardNumber": "OP04-036",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-036_r1",
+      "cardNumber": "OP04-036",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-044_p4",
+      "cardNumber": "OP04-044",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-044_r1",
+      "cardNumber": "OP04-044",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-056_p2",
+      "cardNumber": "OP04-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-056_p3",
+      "cardNumber": "OP04-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-056_p4",
+      "cardNumber": "OP04-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-056_r1",
+      "cardNumber": "OP04-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-077_p1",
+      "cardNumber": "OP04-077",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-077_r1",
+      "cardNumber": "OP04-077",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-089_p2",
+      "cardNumber": "OP04-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-089_p3",
+      "cardNumber": "OP04-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-089_p4",
+      "cardNumber": "OP04-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-089_r1",
+      "cardNumber": "OP04-089",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-095_p2",
+      "cardNumber": "OP04-095",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-095_p3",
+      "cardNumber": "OP04-095",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-095_r1",
+      "cardNumber": "OP04-095",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-096_p1",
+      "cardNumber": "OP04-096",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-096_r1",
+      "cardNumber": "OP04-096",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-100_p3",
+      "cardNumber": "OP04-100",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-100_p4",
+      "cardNumber": "OP04-100",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-100_p5",
+      "cardNumber": "OP04-100",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-100_r1",
+      "cardNumber": "OP04-100",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-104_p3",
+      "cardNumber": "OP04-104",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-104_r1",
+      "cardNumber": "OP04-104",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-112_p3",
+      "cardNumber": "OP04-112",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP04-112_r1",
+      "cardNumber": "OP04-112",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-004_p1",
+      "cardNumber": "OP05-004",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-004_r1",
+      "cardNumber": "OP05-004",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-006_p3",
+      "cardNumber": "OP05-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-006_r1",
+      "cardNumber": "OP05-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-007_p3",
+      "cardNumber": "OP05-007",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-007_r1",
+      "cardNumber": "OP05-007",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-010_p2",
+      "cardNumber": "OP05-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-010_p3",
+      "cardNumber": "OP05-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-010_r1",
+      "cardNumber": "OP05-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-015_p3",
+      "cardNumber": "OP05-015",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-015_p4",
+      "cardNumber": "OP05-015",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-015_p5",
+      "cardNumber": "OP05-015",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-015_r1",
+      "cardNumber": "OP05-015",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-021_p1",
+      "cardNumber": "OP05-021",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-021_r1",
+      "cardNumber": "OP05-021",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-030_p1",
+      "cardNumber": "OP05-030",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-030_r1",
+      "cardNumber": "OP05-030",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-034_p3",
+      "cardNumber": "OP05-034",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-034_p4",
+      "cardNumber": "OP05-034",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-034_p5",
+      "cardNumber": "OP05-034",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-034_r1",
+      "cardNumber": "OP05-034",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-036_p2",
+      "cardNumber": "OP05-036",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-036_r1",
+      "cardNumber": "OP05-036",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-043_p3",
+      "cardNumber": "OP05-043",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-043_r1",
+      "cardNumber": "OP05-043",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-052_p1",
+      "cardNumber": "OP05-052",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-052_r1",
+      "cardNumber": "OP05-052",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-057_p2",
+      "cardNumber": "OP05-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-057_p3",
+      "cardNumber": "OP05-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-057_p4",
+      "cardNumber": "OP05-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-057_r1",
+      "cardNumber": "OP05-057",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-067_p5",
+      "cardNumber": "OP05-067",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-073_p2",
+      "cardNumber": "OP05-073",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-073_p3",
+      "cardNumber": "OP05-073",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-073_r1",
+      "cardNumber": "OP05-073",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-074_p5",
+      "cardNumber": "OP05-074",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-074_r1",
+      "cardNumber": "OP05-074",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-076_p2",
+      "cardNumber": "OP05-076",
+      "release": "Pirates League Store Qualifier",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-076_p3",
+      "cardNumber": "OP05-076",
+      "release": "Pirates League Store Qualifier",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-077_p1",
+      "cardNumber": "OP05-077",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-077_r1",
+      "cardNumber": "OP05-077",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-081_p2",
+      "cardNumber": "OP05-081",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-081_p3",
+      "cardNumber": "OP05-081",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-081_p4",
+      "cardNumber": "OP05-081",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-081_r1",
+      "cardNumber": "OP05-081",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-082_p2",
+      "cardNumber": "OP05-082",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-082_p3",
+      "cardNumber": "OP05-082",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-082_p4",
+      "cardNumber": "OP05-082",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-082_r1",
+      "cardNumber": "OP05-082",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-097_p1",
+      "cardNumber": "OP05-097",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-097_p2",
+      "cardNumber": "OP05-097",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-097_r1",
+      "cardNumber": "OP05-097",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-100_p1",
+      "cardNumber": "OP05-100",
+      "release": "Awakening Of The New Era",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP05-105_p2",
+      "cardNumber": "OP05-105",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-105_p3",
+      "cardNumber": "OP05-105",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-105_p4",
+      "cardNumber": "OP05-105",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-105_r1",
+      "cardNumber": "OP05-105",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-114_p2",
+      "cardNumber": "OP05-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-114_p3",
+      "cardNumber": "OP05-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-114_r1",
+      "cardNumber": "OP05-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-115_p2",
+      "cardNumber": "OP05-115",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-115_p3",
+      "cardNumber": "OP05-115",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-115_p4",
+      "cardNumber": "OP05-115",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-115_r1",
+      "cardNumber": "OP05-115",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-117_p2",
+      "cardNumber": "OP05-117",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-117_p3",
+      "cardNumber": "OP05-117",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-117_p4",
+      "cardNumber": "OP05-117",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-117_r1",
+      "cardNumber": "OP05-117",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-118_p3",
+      "cardNumber": "OP05-118",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-118_r1",
+      "cardNumber": "OP05-118",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-119_p4",
+      "cardNumber": "OP05-119",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP05-119_r1",
+      "cardNumber": "OP05-119",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-003_p2",
+      "cardNumber": "OP06-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-003_p3",
+      "cardNumber": "OP06-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-003_r1",
+      "cardNumber": "OP06-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-023_p2",
+      "cardNumber": "OP06-023",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-023_p3",
+      "cardNumber": "OP06-023",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-023_p4",
+      "cardNumber": "OP06-023",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-023_r1",
+      "cardNumber": "OP06-023",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-035_p3",
+      "cardNumber": "OP06-035",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-035_r1",
+      "cardNumber": "OP06-035",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-036_p2",
+      "cardNumber": "OP06-036",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-036_p3",
+      "cardNumber": "OP06-036",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-036_p4",
+      "cardNumber": "OP06-036",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-036_r1",
+      "cardNumber": "OP06-036",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-038_p2",
+      "cardNumber": "OP06-038",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-038_p3",
+      "cardNumber": "OP06-038",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-038_r1",
+      "cardNumber": "OP06-038",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-044_p1",
+      "cardNumber": "OP06-044",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-044_r1",
+      "cardNumber": "OP06-044",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-049_p1",
+      "cardNumber": "OP06-049",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-049_r1",
+      "cardNumber": "OP06-049",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-056_p2",
+      "cardNumber": "OP06-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-056_p3",
+      "cardNumber": "OP06-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-056_p4",
+      "cardNumber": "OP06-056",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-056_r1",
+      "cardNumber": "OP06-056",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-056_r2",
+      "cardNumber": "OP06-056",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-058_p1",
+      "cardNumber": "OP06-058",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-058_r1",
+      "cardNumber": "OP06-058",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-059_p1",
+      "cardNumber": "OP06-059",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-059_r1",
+      "cardNumber": "OP06-059",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-060_p2",
+      "cardNumber": "OP06-060",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-060_p3",
+      "cardNumber": "OP06-060",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-060_r1",
+      "cardNumber": "OP06-060",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-063_p1",
+      "cardNumber": "OP06-063",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-063_r1",
+      "cardNumber": "OP06-063",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-064_p2",
+      "cardNumber": "OP06-064",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-064_p3",
+      "cardNumber": "OP06-064",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-064_r1",
+      "cardNumber": "OP06-064",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-065_p2",
+      "cardNumber": "OP06-065",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-065_p3",
+      "cardNumber": "OP06-065",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-065_p4",
+      "cardNumber": "OP06-065",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-065_r1",
+      "cardNumber": "OP06-065",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-066_p2",
+      "cardNumber": "OP06-066",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-066_p3",
+      "cardNumber": "OP06-066",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-066_r1",
+      "cardNumber": "OP06-066",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-067_p2",
+      "cardNumber": "OP06-067",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-067_p3",
+      "cardNumber": "OP06-067",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-067_p4",
+      "cardNumber": "OP06-067",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-067_r1",
+      "cardNumber": "OP06-067",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-068_p2",
+      "cardNumber": "OP06-068",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-068_p3",
+      "cardNumber": "OP06-068",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-068_r1",
+      "cardNumber": "OP06-068",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-069_p4",
+      "cardNumber": "OP06-069",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-069_r1",
+      "cardNumber": "OP06-069",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-073_p1",
+      "cardNumber": "OP06-073",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-073_r1",
+      "cardNumber": "OP06-073",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-076_p2",
+      "cardNumber": "OP06-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-076_r1",
+      "cardNumber": "OP06-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-078_p1",
+      "cardNumber": "OP06-078",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-078_r1",
+      "cardNumber": "OP06-078",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-079_p2",
+      "cardNumber": "OP06-079",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-079_p3",
+      "cardNumber": "OP06-079",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-079_p4",
+      "cardNumber": "OP06-079",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-079_r1",
+      "cardNumber": "OP06-079",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-086_p3",
+      "cardNumber": "OP06-086",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-086_r1",
+      "cardNumber": "OP06-086",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-091_p2",
+      "cardNumber": "OP06-091",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-091_p3",
+      "cardNumber": "OP06-091",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-091_r1",
+      "cardNumber": "OP06-091",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-100_p2",
+      "cardNumber": "OP06-100",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-100_p3",
+      "cardNumber": "OP06-100",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-100_r1",
+      "cardNumber": "OP06-100",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-101_p4",
+      "cardNumber": "OP06-101",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-106_p3",
+      "cardNumber": "OP06-106",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-106_r1",
+      "cardNumber": "OP06-106",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-110_p3",
+      "cardNumber": "OP06-110",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-110_p4",
+      "cardNumber": "OP06-110",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-110_r1",
+      "cardNumber": "OP06-110",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-114_p2",
+      "cardNumber": "OP06-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-114_p3",
+      "cardNumber": "OP06-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-114_r1",
+      "cardNumber": "OP06-114",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-115_p1",
+      "cardNumber": "OP06-115",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP06-115_r1",
+      "cardNumber": "OP06-115",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-014_p1",
+      "cardNumber": "OP07-014",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-014_r1",
+      "cardNumber": "OP07-014",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-017_p1",
+      "cardNumber": "OP07-017",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-017_r1",
+      "cardNumber": "OP07-017",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-021_p8",
+      "cardNumber": "OP07-021",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-021_r2",
+      "cardNumber": "OP07-021",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-031_p1",
+      "cardNumber": "OP07-031",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-031_r2",
+      "cardNumber": "OP07-031",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-040_p2",
+      "cardNumber": "OP07-040",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-040_p3",
+      "cardNumber": "OP07-040",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-040_r1",
+      "cardNumber": "OP07-040",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-051_p4",
+      "cardNumber": "OP07-051",
+      "release": "Seven Warlords Of The Sea Binder Set",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-051_p5",
+      "cardNumber": "OP07-051",
+      "release": "Seven Warlords Of The Sea Binder Set",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-056_p1",
+      "cardNumber": "OP07-056",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-056_r1",
+      "cardNumber": "OP07-056",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-076_p1",
+      "cardNumber": "OP07-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-076_r1",
+      "cardNumber": "OP07-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-114_p1",
+      "cardNumber": "OP07-114",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP07-114_r1",
+      "cardNumber": "OP07-114",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP08-076_p1",
+      "cardNumber": "OP08-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP08-076_r1",
+      "cardNumber": "OP08-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP08-087_p1",
+      "cardNumber": "OP08-087",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP08-087_r1",
+      "cardNumber": "OP08-087",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP08-099_p1",
+      "cardNumber": "OP08-099",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP08-099_r1",
+      "cardNumber": "OP08-099",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-014_p1",
+      "cardNumber": "OP09-014",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-014_p2",
+      "cardNumber": "OP09-014",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-014_r2",
+      "cardNumber": "OP09-014",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-027_p1",
+      "cardNumber": "OP09-027",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-027_r1",
+      "cardNumber": "OP09-027",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-033_p1",
+      "cardNumber": "OP09-033",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-033_r1",
+      "cardNumber": "OP09-033",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-056_p1",
+      "cardNumber": "OP09-056",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-056_r2",
+      "cardNumber": "OP09-056",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-076_p2",
+      "cardNumber": "OP09-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-076_r2",
+      "cardNumber": "OP09-076",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-077_p1",
+      "cardNumber": "OP09-077",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-077_r2",
+      "cardNumber": "OP09-077",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-078_p1",
+      "cardNumber": "OP09-078",
+      "release": "Purple/black Monkey.d.luffy",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-078_r1",
+      "cardNumber": "OP09-078",
+      "release": "Purple/black Monkey.d.luffy",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-079_p1",
+      "cardNumber": "OP09-079",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-079_r1",
+      "cardNumber": "OP09-079",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-084_p1",
+      "cardNumber": "OP09-084",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-084_r1",
+      "cardNumber": "OP09-084",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-086_p1",
+      "cardNumber": "OP09-086",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-086_r2",
+      "cardNumber": "OP09-086",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-097_p1",
+      "cardNumber": "OP09-097",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-097_r1",
+      "cardNumber": "OP09-097",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-098_p1",
+      "cardNumber": "OP09-098",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP09-098_r1",
+      "cardNumber": "OP09-098",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-011_p1",
+      "cardNumber": "OP10-011",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-011_r1",
+      "cardNumber": "OP10-011",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-018_p2",
+      "cardNumber": "OP10-018",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-018_r1",
+      "cardNumber": "OP10-018",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-079_p1",
+      "cardNumber": "OP10-079",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-079_r1",
+      "cardNumber": "OP10-079",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-095_p1",
+      "cardNumber": "OP10-095",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-095_r1",
+      "cardNumber": "OP10-095",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-105_p1",
+      "cardNumber": "OP10-105",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-105_r1",
+      "cardNumber": "OP10-105",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-108_p1",
+      "cardNumber": "OP10-108",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-108_r1",
+      "cardNumber": "OP10-108",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-109_p1",
+      "cardNumber": "OP10-109",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-109_r1",
+      "cardNumber": "OP10-109",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-114_p1",
+      "cardNumber": "OP10-114",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-114_p2",
+      "cardNumber": "OP10-114",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP10-114_r1",
+      "cardNumber": "OP10-114",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP11-118_p1",
+      "cardNumber": "OP11-118",
+      "release": "A Fist Of Divine Speed",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP12-118_p1",
+      "cardNumber": "OP12-118",
+      "release": "Legacy Of The Master",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP13-080_p1",
+      "cardNumber": "OP13-080",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-080_p2",
+      "cardNumber": "OP13-080",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-083_p1",
+      "cardNumber": "OP13-083",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-083_p2",
+      "cardNumber": "OP13-083",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-084_p1",
+      "cardNumber": "OP13-084",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-084_p2",
+      "cardNumber": "OP13-084",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-089_p1",
+      "cardNumber": "OP13-089",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-089_p2",
+      "cardNumber": "OP13-089",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-091_p1",
+      "cardNumber": "OP13-091",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-091_p2",
+      "cardNumber": "OP13-091",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-118_p1",
+      "cardNumber": "OP13-118",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP13-118_p2",
+      "cardNumber": "OP13-118",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-119_p1",
+      "cardNumber": "OP13-119",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP13-119_p2",
+      "cardNumber": "OP13-119",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP13-120_p1",
+      "cardNumber": "OP13-120",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP13-120_p2",
+      "cardNumber": "OP13-120",
+      "release": "Carrying On His Will",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP14-112_p1",
+      "cardNumber": "OP14-112",
+      "release": "The Azure Sea’s Seven",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP14-119_p1",
+      "cardNumber": "OP14-119",
+      "release": "The Azure Sea’s Seven",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP15-118_p1",
+      "cardNumber": "OP15-118",
+      "release": "Adventure On Kami's Island",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP16-063_p1",
+      "cardNumber": "OP16-063",
+      "release": "The Time Of Battle",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP16-065_p1",
+      "cardNumber": "OP16-065",
+      "release": "The Time Of Battle",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP16-073_p1",
+      "cardNumber": "OP16-073",
+      "release": "The Time Of Battle",
+      "selfReason": "one_piece_class_evidence_requires_corroboration"
+    },
+    {
+      "printId": "OP17-005_p1",
+      "cardNumber": "OP17-005",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-005_p2",
+      "cardNumber": "OP17-005",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-022_p1",
+      "cardNumber": "OP17-022",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-022_p2",
+      "cardNumber": "OP17-022",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-062_p1",
+      "cardNumber": "OP17-062",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-062_p2",
+      "cardNumber": "OP17-062",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-062_p3",
+      "cardNumber": "OP17-062",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-079_p1",
+      "cardNumber": "OP17-079",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-079_p2",
+      "cardNumber": "OP17-079",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-112_p1",
+      "cardNumber": "OP17-112",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-112_p2",
+      "cardNumber": "OP17-112",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-118_p1",
+      "cardNumber": "OP17-118",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "OP17-118_p2",
+      "cardNumber": "OP17-118",
+      "release": "The World’s Strongest Warriors",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-001_p1",
+      "cardNumber": "P-001",
+      "release": "Super Pre-release",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-001_p2",
+      "cardNumber": "P-001",
+      "release": "Super Pre-release",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-014_p2",
+      "cardNumber": "P-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-014_p3",
+      "cardNumber": "P-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-014_r1",
+      "cardNumber": "P-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-029_p3",
+      "cardNumber": "P-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-029_p4",
+      "cardNumber": "P-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-029_r2",
+      "cardNumber": "P-029",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-044",
+      "cardNumber": "P-044",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "plain_family_listing_does_not_identify_print"
+    },
+    {
+      "printId": "P-053_p2",
+      "cardNumber": "P-053",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-053_p3",
+      "cardNumber": "P-053",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-053_r1",
+      "cardNumber": "P-053",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-055_p2",
+      "cardNumber": "P-055",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-055_p3",
+      "cardNumber": "P-055",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-055_r1",
+      "cardNumber": "P-055",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-063",
+      "cardNumber": "P-063",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "plain_family_listing_does_not_identify_print"
+    },
+    {
+      "printId": "P-063_p1",
+      "cardNumber": "P-063",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-063_r1",
+      "cardNumber": "P-063",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-065_p1",
+      "cardNumber": "P-065",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-068_p1",
+      "cardNumber": "P-068",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-068_r1",
+      "cardNumber": "P-068",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-069_p1",
+      "cardNumber": "P-069",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-069_p3",
+      "cardNumber": "P-069",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-069_r1",
+      "cardNumber": "P-069",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-070_p1",
+      "cardNumber": "P-070",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-070_p3",
+      "cardNumber": "P-070",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-070_r1",
+      "cardNumber": "P-070",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-073",
+      "cardNumber": "P-073",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-074",
+      "cardNumber": "P-074",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-075",
+      "cardNumber": "P-075",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-077_p1",
+      "cardNumber": "P-077",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-078_p6",
+      "cardNumber": "P-078",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-078_r1",
+      "cardNumber": "P-078",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-079_p1",
+      "cardNumber": "P-079",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-079_p3",
+      "cardNumber": "P-079",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-079_r1",
+      "cardNumber": "P-079",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-081",
+      "cardNumber": "P-081",
+      "release": "Op-11 Release Event",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-081_p2",
+      "cardNumber": "P-081",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-081_r1",
+      "cardNumber": "P-081",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-082",
+      "cardNumber": "P-082",
+      "release": "Store 2-on-2 Battle",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-082_p2",
+      "cardNumber": "P-082",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-082_r1",
+      "cardNumber": "P-082",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-083_p1",
+      "cardNumber": "P-083",
+      "release": "Cs 25-26 Event Pack",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-083_p3",
+      "cardNumber": "P-083",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-083_r1",
+      "cardNumber": "P-083",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-085_p3",
+      "cardNumber": "P-085",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-085_r1",
+      "cardNumber": "P-085",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-088_p3",
+      "cardNumber": "P-088",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-088_r1",
+      "cardNumber": "P-088",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-092_p1",
+      "cardNumber": "P-092",
+      "release": "Op-12 Release Event",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-092_p2",
+      "cardNumber": "P-092",
+      "release": "Op-12 Release Event",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "P-096",
+      "cardNumber": "P-096",
+      "release": "Op14-eb04 Release Event",
+      "selfReason": "plain_family_listing_does_not_identify_print"
+    },
+    {
+      "printId": "P-115",
+      "cardNumber": "P-115",
+      "release": "Op15-eb04 Release Event",
+      "selfReason": "plain_family_listing_does_not_identify_print"
+    },
+    {
+      "printId": "P-135",
+      "cardNumber": "P-135",
+      "release": "Op-16 Release Event",
+      "selfReason": "plain_family_listing_does_not_identify_print"
+    },
+    {
+      "printId": "ST01-006_p6",
+      "cardNumber": "ST01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-006_p7",
+      "cardNumber": "ST01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-006_p8",
+      "cardNumber": "ST01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-006_r1",
+      "cardNumber": "ST01-006",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-007_p4",
+      "cardNumber": "ST01-007",
+      "release": "2025 New Year Event",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-007_p5",
+      "cardNumber": "ST01-007",
+      "release": "2025 New Year Event",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-011_p4",
+      "cardNumber": "ST01-011",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-011_r1",
+      "cardNumber": "ST01-011",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-012_p2",
+      "cardNumber": "ST01-012",
+      "release": "Awakening Of The New Era",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-012_p3",
+      "cardNumber": "ST01-012",
+      "release": "Awakening Of The New Era",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-014_p2",
+      "cardNumber": "ST01-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-014_p3",
+      "cardNumber": "ST01-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST01-014_r1",
+      "cardNumber": "ST01-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST02-004_p2",
+      "cardNumber": "ST02-004",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST02-004_p3",
+      "cardNumber": "ST02-004",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST02-004_p4",
+      "cardNumber": "ST02-004",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST02-004_r1",
+      "cardNumber": "ST02-004",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST02-007_p3",
+      "cardNumber": "ST02-007",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST02-007_r1",
+      "cardNumber": "ST02-007",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-005_p4",
+      "cardNumber": "ST03-005",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-005_p5",
+      "cardNumber": "ST03-005",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-005_r2",
+      "cardNumber": "ST03-005",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-008_p6",
+      "cardNumber": "ST03-008",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-008_p7",
+      "cardNumber": "ST03-008",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-008_r2",
+      "cardNumber": "ST03-008",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-013_p2",
+      "cardNumber": "ST03-013",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-013_p3",
+      "cardNumber": "ST03-013",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-013_p4",
+      "cardNumber": "ST03-013",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST03-013_r1",
+      "cardNumber": "ST03-013",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-003_p4",
+      "cardNumber": "ST04-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-003_r1",
+      "cardNumber": "ST04-003",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-005_p3",
+      "cardNumber": "ST04-005",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-005_p4",
+      "cardNumber": "ST04-005",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-005_r1",
+      "cardNumber": "ST04-005",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-016_p2",
+      "cardNumber": "ST04-016",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-016_p3",
+      "cardNumber": "ST04-016",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST04-016_r1",
+      "cardNumber": "ST04-016",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-008_p1",
+      "cardNumber": "ST06-008",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-008_r1",
+      "cardNumber": "ST06-008",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-010_p2",
+      "cardNumber": "ST06-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-010_p3",
+      "cardNumber": "ST06-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-010_r1",
+      "cardNumber": "ST06-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-014_p2",
+      "cardNumber": "ST06-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-014_p3",
+      "cardNumber": "ST06-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST06-014_r1",
+      "cardNumber": "ST06-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST07-007_p2",
+      "cardNumber": "ST07-007",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST07-007_p3",
+      "cardNumber": "ST07-007",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST07-007_r1",
+      "cardNumber": "ST07-007",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST09-014_p2",
+      "cardNumber": "ST09-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST09-014_p3",
+      "cardNumber": "ST09-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST09-014_r1",
+      "cardNumber": "ST09-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST10-005_p2",
+      "cardNumber": "ST10-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST10-005_r1",
+      "cardNumber": "ST10-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST10-008_p3",
+      "cardNumber": "ST10-008",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST10-008_r1",
+      "cardNumber": "ST10-008",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST10-010_p4",
+      "cardNumber": "ST10-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST10-010_r1",
+      "cardNumber": "ST10-010",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST12-005_p1",
+      "cardNumber": "ST12-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST12-005_r1",
+      "cardNumber": "ST12-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST12-014_p2",
+      "cardNumber": "ST12-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST12-014_p3",
+      "cardNumber": "ST12-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST12-014_r1",
+      "cardNumber": "ST12-014",
+      "release": "One Piece Card The Best",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST12-017_p1",
+      "cardNumber": "ST12-017",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST12-017_r1",
+      "cardNumber": "ST12-017",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-004_p2",
+      "cardNumber": "ST13-004",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-004_r1",
+      "cardNumber": "ST13-004",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-007_p2",
+      "cardNumber": "ST13-007",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-007_r1",
+      "cardNumber": "ST13-007",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-010_p2",
+      "cardNumber": "ST13-010",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-010_r1",
+      "cardNumber": "ST13-010",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-014_p2",
+      "cardNumber": "ST13-014",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-014_r1",
+      "cardNumber": "ST13-014",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-019_p1",
+      "cardNumber": "ST13-019",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST13-019_r1",
+      "cardNumber": "ST13-019",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-007_p1",
+      "cardNumber": "ST14-007",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-007_r1",
+      "cardNumber": "ST14-007",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-010_p1",
+      "cardNumber": "ST14-010",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-010_r1",
+      "cardNumber": "ST14-010",
+      "release": "ST-14",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-010_r2",
+      "cardNumber": "ST14-010",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-013_p1",
+      "cardNumber": "ST14-013",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-013_r1",
+      "cardNumber": "ST14-013",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-016_p1",
+      "cardNumber": "ST14-016",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-016_r1",
+      "cardNumber": "ST14-016",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-017_p1",
+      "cardNumber": "ST14-017",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST14-017_r1",
+      "cardNumber": "ST14-017",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST15-002_p2",
+      "cardNumber": "ST15-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST15-002_r1",
+      "cardNumber": "ST15-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST16-003_p1",
+      "cardNumber": "ST16-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST16-003_r1",
+      "cardNumber": "ST16-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST16-004_p2",
+      "cardNumber": "ST16-004",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST16-004_r1",
+      "cardNumber": "ST16-004",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST16-005_p1",
+      "cardNumber": "ST16-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST16-005_r1",
+      "cardNumber": "ST16-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST17-002_p1",
+      "cardNumber": "ST17-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST17-002_r1",
+      "cardNumber": "ST17-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST17-003_p3",
+      "cardNumber": "ST17-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST17-003_r1",
+      "cardNumber": "ST17-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST17-005_p1",
+      "cardNumber": "ST17-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST17-005_r1",
+      "cardNumber": "ST17-005",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST18-001_p2",
+      "cardNumber": "ST18-001",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST18-001_p3",
+      "cardNumber": "ST18-001",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST18-001_r1",
+      "cardNumber": "ST18-001",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST18-002_p1",
+      "cardNumber": "ST18-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST18-002_r1",
+      "cardNumber": "ST18-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST18-003_p2",
+      "cardNumber": "ST18-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST18-003_r1",
+      "cardNumber": "ST18-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST19-002_p3",
+      "cardNumber": "ST19-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST19-002_r1",
+      "cardNumber": "ST19-002",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST20-003_p1",
+      "cardNumber": "ST20-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST20-003_r1",
+      "cardNumber": "ST20-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST21-003_p2",
+      "cardNumber": "ST21-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST21-003_r1",
+      "cardNumber": "ST21-003",
+      "release": "One Piece Card The Best Vol.2",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST21-015_p2",
+      "cardNumber": "ST21-015",
+      "release": "Championship 25-26 Finals Season 1",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST21-015_p3",
+      "cardNumber": "ST21-015",
+      "release": "Championship 25-26 Finals Season 1",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    },
+    {
+      "printId": "ST21-015_p4",
+      "cardNumber": "ST21-015",
+      "release": "Championship 25-26 Finals Season 1",
+      "selfReason": "one_piece_evidence_not_unique_across_siblings"
+    }
+  ]
+}

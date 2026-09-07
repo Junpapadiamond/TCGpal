@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-06
+updated_at: 2026-09-07
 canonical_branch: origin/main
 last_verified_product_commit: 8a0eb9c
-working_branch: main (live exact-artwork fallback verified; see WS-IDENTITY)
+working_branch: main (ambiguity research only; exact mapping review pending)
 max_lines: 300
 ---
 
@@ -29,7 +29,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
-| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | OP16/OP17 155/169 release prints, 4742 total; live fallback `8a0eb9c` verified; target 660/90/0/0, catalog 4135/607/0/0 | Read `docs/one-piece-op16-op17-2026-09-06.md`; artwork selection/cache/winners separated; same-label parallels still abstain; Phase 4 founder queue remains open |
+| WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | OP16/OP17 155/169 release prints, 4742 total; live fallback `8a0eb9c` verified; target 660/90/0/0, catalog 4135/607/0/0 | Read `docs/one-piece-ambiguity-review-2026-09-07.md`; 525/607 unresolved descriptions are The Best; two P-055 marker/mapping candidates await human review; EB02 generic Alt remains ambiguous |
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
@@ -42,7 +42,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 <!-- progress:section id="GOALS" -->
 ## GOALS
-
 ### Big goals
 
 1. G-TRUST: Make the selected catalog image, marketplace listing, market anchor, and recommendation refer to the same exact print.
@@ -64,6 +63,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:workstream id="WS-IDENTITY" state="taxonomy-shipped-founder-review-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
 [OP16/OP17 follow-up](docs/one-piece-op16-op17-2026-09-06.md) shipped `a461ed0` (Vercel READY; four live searches, distinct winners and anchors): all 155/169 official release prints, separate artwork results and caches. Live fallback `8a0eb9c` now preserves every returned artwork and reloads only the exact print; 1,442 tests + lint/typecheck/build, fresh EN/中文/mobile and five searches passed. [Audit](docs/one-piece-alignment-audit-2026-09-06-op17.md): 660/90/0/0 target, 4135/607/0/0 catalog. Historical [Phase 4](docs/one-piece-taxonomy-phase4-2026-09-06.md) provisional 8/13 and founder decisions remain open; no new curated artwork mappings approved.
+[Repeated ambiguity investigation](docs/one-piece-ambiguity-review-2026-09-07.md): P-055 Full Art/Jolly Roger/Reprint labels are flattened; two in-memory marker candidates move 4135/607 to 4137/605 with 0/0 invariants. Research-only; exact mapping approval pending. The audit tests catalog-derived descriptions, not all seller vocabulary; 525/607 unresolved rows belong to The Best releases. EB02-010 release-qualified titles already pass, while short Alt Art titles lack release proof.
 ### Done
 
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.
