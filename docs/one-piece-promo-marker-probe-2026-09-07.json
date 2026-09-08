@@ -1,0 +1,867 @@
+{
+  "mode": "research-only",
+  "runtimeChanged": false,
+  "completedAt": "2026-09-08T01:51:58.961Z",
+  "scope": "6 family-specific marker hypotheses; no product mapping, label, classifier, price, or eligibility mutation",
+  "proposals": [
+    {
+      "printId": "P-014_p2",
+      "marker": "jolly roger",
+      "productId": 586195,
+      "groupId": 23496,
+      "productName": "Koby (Jolly Roger Foil)",
+      "productUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+      "groupName": "Premium Booster -The Best-",
+      "officialImageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/P-014_p2.png",
+      "priorImageEvidenceDate": "2026-07-11",
+      "humanReviewStatus": "pending"
+    },
+    {
+      "printId": "P-014_p3",
+      "marker": "full art",
+      "productId": 593571,
+      "groupId": 23496,
+      "productName": "Koby (Full Art)",
+      "productUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+      "groupName": "Premium Booster -The Best-",
+      "officialImageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/P-014_p3.png",
+      "priorImageEvidenceDate": "2026-07-11",
+      "humanReviewStatus": "pending"
+    },
+    {
+      "printId": "P-053_p2",
+      "marker": "jolly roger",
+      "productId": 586408,
+      "groupId": 23496,
+      "productName": "Nami (P-053) (Jolly Roger Foil)",
+      "productUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+      "groupName": "Premium Booster -The Best-",
+      "officialImageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/P-053_p2.png",
+      "priorImageEvidenceDate": "2026-07-11",
+      "humanReviewStatus": "pending"
+    },
+    {
+      "printId": "P-053_p3",
+      "marker": "full art",
+      "productId": 593572,
+      "groupId": 23496,
+      "productName": "Nami (P-053) (Full Art)",
+      "productUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+      "groupName": "Premium Booster -The Best-",
+      "officialImageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/P-053_p3.png",
+      "priorImageEvidenceDate": "2026-07-11",
+      "humanReviewStatus": "pending"
+    },
+    {
+      "printId": "P-055_p2",
+      "marker": "jolly roger",
+      "productId": 586480,
+      "groupId": 23496,
+      "productName": "Monkey.D.Luffy (P-055) (Jolly Roger Foil)",
+      "productUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+      "groupName": "Premium Booster -The Best-",
+      "officialImageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/P-055_p2.png",
+      "priorImageEvidenceDate": "2026-07-11",
+      "humanReviewStatus": "pending"
+    },
+    {
+      "printId": "P-055_p3",
+      "marker": "full art",
+      "productId": 593573,
+      "groupId": 23496,
+      "productName": "Monkey.D.Luffy (P-055) (Full Art)",
+      "productUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+      "groupName": "Premium Booster -The Best-",
+      "officialImageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/P-055_p3.png",
+      "priorImageEvidenceDate": "2026-07-11",
+      "humanReviewStatus": "pending"
+    }
+  ],
+  "before": {
+    "audit": {
+      "prints": 4742,
+      "selfAccepted": 4135,
+      "selfUnknown": 607,
+      "selfMismatch": 0,
+      "substitutions": 0
+    },
+    "probes": [
+      {
+        "selectedPrintId": "P-014",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p2",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p3",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_r1",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p2",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p3",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_r1",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p2",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p3",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p4",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_r1",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p2",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p3",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p4",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_r1",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p2",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p3",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p4",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_r1",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p2",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p3",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p4",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_r1",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p3",
+        "title": "Monkey.D.Luffy (Jolly Roger Foil) | Foil | Premium Booster -The Best- #P-055",
+        "expected": "mismatch",
+        "sourceUrl": "docs/one-piece-ambiguity-review-2026-09-07.json",
+        "match": "unknown",
+        "reasons": [
+          "one_piece_evidence_not_unique_across_siblings"
+        ]
+      }
+    ]
+  },
+  "after": {
+    "audit": {
+      "prints": 4742,
+      "selfAccepted": 4141,
+      "selfUnknown": 601,
+      "selfMismatch": 0,
+      "substitutions": 0
+    },
+    "probes": [
+      {
+        "selectedPrintId": "P-014",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p2",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "compatible",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p3",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_r1",
+        "title": "Koby (Jolly Roger Foil) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586195/one-piece-card-game-premium-booster-the-best-koby-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p2",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_p3",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "compatible",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ]
+      },
+      {
+        "selectedPrintId": "P-014_r1",
+        "title": "Koby (Full Art) P-014 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593571/one-piece-card-game-premium-booster-the-best-koby-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p2",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "compatible",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p3",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p4",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_r1",
+        "title": "Nami (P-053) (Jolly Roger Foil) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586408/one-piece-card-game-premium-booster-the-best-nami-p-053-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p2",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p3",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "compatible",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_p4",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-053_r1",
+        "title": "Nami (P-053) (Full Art) P-053 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593572/one-piece-card-game-premium-booster-the-best-nami-p-053-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p2",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "compatible",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p3",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p4",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_r1",
+        "title": "Monkey.D.Luffy (P-055) (Jolly Roger Foil) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/586480/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-jolly-roger-foil",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p2",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p3",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "compatible",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "compatible",
+        "reasons": [
+          "listing_evidence_uniquely_identifies_confirmed_print"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p4",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_r1",
+        "title": "Monkey.D.Luffy (P-055) (Full Art) P-055 Premium Booster -The Best- English",
+        "expected": "mismatch",
+        "sourceUrl": "https://www.tcgplayer.com/product/593573/one-piece-card-game-premium-booster-the-best-monkeydluffy-p-055-full-art",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      },
+      {
+        "selectedPrintId": "P-055_p3",
+        "title": "Monkey.D.Luffy (Jolly Roger Foil) | Foil | Premium Booster -The Best- #P-055",
+        "expected": "mismatch",
+        "sourceUrl": "docs/one-piece-ambiguity-review-2026-09-07.json",
+        "match": "mismatch",
+        "reasons": [
+          "listing_names_sibling_exact_print_marker"
+        ]
+      }
+    ],
+    "cohort": [
+      {
+        "printId": "P-014",
+        "cardNumber": "P-014",
+        "name": "Koby",
+        "variant": null,
+        "release": "Included In Film Red Promotion Card Set",
+        "artworkClass": null,
+        "siblingCount": 3,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": false
+      },
+      {
+        "printId": "P-014_p2",
+        "cardNumber": "P-014",
+        "name": "Koby",
+        "variant": "Alternate Art (P2)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 3,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-014_p3",
+        "cardNumber": "P-014",
+        "name": "Koby",
+        "variant": "Alternate Art (P3)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 3,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-014_r1",
+        "cardNumber": "P-014",
+        "name": "Koby",
+        "variant": "Alternate Art (R1)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 3,
+        "self": "unknown",
+        "selfReason": "one_piece_evidence_not_unique_across_siblings",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": false
+      },
+      {
+        "printId": "P-053",
+        "cardNumber": "P-053",
+        "name": "Nami",
+        "variant": null,
+        "release": "Sealed Battle Kit Vol.1",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": false
+      },
+      {
+        "printId": "P-053_p2",
+        "cardNumber": "P-053",
+        "name": "Nami",
+        "variant": "Alternate Art (P2)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-053_p3",
+        "cardNumber": "P-053",
+        "name": "Nami",
+        "variant": "Alternate Art (P3)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-053_p4",
+        "cardNumber": "P-053",
+        "name": "Nami",
+        "variant": "Premium Card Collection -live Action Edition Art",
+        "release": "Premium Card Collection -live Action Edition",
+        "artworkClass": "alternate",
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-053_r1",
+        "cardNumber": "P-053",
+        "name": "Nami",
+        "variant": "Alternate Art (R1)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "unknown",
+        "selfReason": "one_piece_evidence_not_unique_across_siblings",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": false
+      },
+      {
+        "printId": "P-055",
+        "cardNumber": "P-055",
+        "name": "Monkey.D.Luffy",
+        "variant": null,
+        "release": "Sealed Battle Kit Vol.1",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": false
+      },
+      {
+        "printId": "P-055_p2",
+        "cardNumber": "P-055",
+        "name": "Monkey.D.Luffy",
+        "variant": "Alternate Art (P2)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-055_p3",
+        "cardNumber": "P-055",
+        "name": "Monkey.D.Luffy",
+        "variant": "Alternate Art (P3)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-055_p4",
+        "cardNumber": "P-055",
+        "name": "Monkey.D.Luffy",
+        "variant": "Premium Card Collection -live Action Edition Art",
+        "release": "Premium Card Collection -live Action Edition",
+        "artworkClass": "alternate",
+        "siblingCount": 4,
+        "self": "accepted",
+        "selfReason": "listing_evidence_uniquely_identifies_confirmed_print",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": true
+      },
+      {
+        "printId": "P-055_r1",
+        "cardNumber": "P-055",
+        "name": "Monkey.D.Luffy",
+        "variant": "Alternate Art (R1)",
+        "release": "One Piece Card The Best",
+        "artworkClass": null,
+        "siblingCount": 4,
+        "self": "unknown",
+        "selfReason": "one_piece_evidence_not_unique_across_siblings",
+        "admittedSiblings": [],
+        "hasFamilyUniqueMarker": false
+      }
+    ]
+  },
+  "failures": []
+}
