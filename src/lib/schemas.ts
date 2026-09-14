@@ -26,6 +26,7 @@ export const platformSourceModeSchema = z.enum([
   "partner_feed",
   "licensed_provider",
   "third_party_provider",
+  "browser_dom",
   "cached_index",
   "manual_fallback",
 ]);

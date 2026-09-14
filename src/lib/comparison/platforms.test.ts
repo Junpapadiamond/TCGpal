@@ -151,14 +151,22 @@ describe("default registry (roadmap adapters)", () => {
     expect(skippedPlatformResult(pending).detail).toBe("Not connected; acquisition is under evaluation.");
   });
   it("cannot reactivate the retired paid acquisition path through old environment variables", () => {
+    vi.stubEnv("VERCEL", ""); vi.stubEnv("MERCARI_DIRECT_ENABLED", "0");
     vi.stubEnv("CROSS_MARKET_APIFY_ENABLED", "1");
     vi.stubEnv("EBAY_CLIENT_ID", "test"); vi.stubEnv("EBAY_CLIENT_SECRET", "test");
     vi.stubEnv("WHATNOT_APIFY_TOKEN", "test"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "dollars");
     vi.stubEnv("MERCARI_APIFY_TOKEN", "test");
     const configured = getPlatformAgents().filter((agent) => agent.isConfigured());
     expect(configured.map((agent) => agent.marketplace)).toEqual(["eBay"]);
-    expect(getPlatformAgents().filter((agent) => ["whatnot", "mercari"].includes(agent.id))
-      .every((agent) => agent.requiredEnv.length === 0 && agent.sourceMode === "manual_fallback")).toBe(true);
+    expect(getPlatformAgents().find((agent) => agent.id === "whatnot")?.sourceMode).toBe("manual_fallback");
+    expect(getPlatformAgents().find((agent) => agent.id === "mercari")?.sourceMode).toBe("browser_dom");
+  });
+  it("connects the self-built Mercari adapter in deployment and propagates its source mode", () => {
+    vi.stubEnv("VERCEL", "1"); vi.stubEnv("MERCARI_DIRECT_ENABLED", "");
+    const mercari = getPlatformAgents().find(agent => agent.id === "mercari")!;
+    expect(mercari.isConfigured()).toBe(true);
+    expect(mercari.requiredEnv).toEqual([]);
+    expect(summarizePlatformOutcome({ agent: mercari, seeds: [] }).result.sourceMode).toBe("browser_dom");
   });
   it("keeps eBay as the one configured-by-default (real) agent", () => {
     const agents = getPlatformAgents();

@@ -79,7 +79,7 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe(`identity-v4|ranking-v6-sales-market-buyer-fees|${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}|swsh7-215|Near Mint|10001|0.08`);
+    expect(key).toBe(`identity-v4|ranking-v7-mercari-direct|${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}|swsh7-215|Near Mint|10001|0.08`);
   });
 
   it("refuses reports created before the exact-print identity contract", async () => {

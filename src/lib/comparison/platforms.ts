@@ -5,6 +5,7 @@ import {
 } from "@/lib/external/ebay";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
+import { isMercariDirectEnabled, searchMercariDirect } from "@/lib/external/mercari-direct";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -77,10 +78,11 @@ export const whatnotPlatformAgent: PlatformAgent = stubPlatformAgent({
   id: "whatnot", marketplace: "Whatnot", label: "Whatnot — direct acquisition under research",
   sourceMode: "manual_fallback", requiredEnv: [],
 });
-export const mercariPlatformAgent: PlatformAgent = stubPlatformAgent({
-  id: "mercari", marketplace: "Mercari", label: "Mercari — direct acquisition under research",
-  sourceMode: "manual_fallback", requiredEnv: [],
-});
+export const mercariPlatformAgent: PlatformAgent = {
+  id: "mercari", marketplace: "Mercari", label: "Mercari public listing adapter",
+  sourceMode: "browser_dom", requiredEnv: [], isConfigured: isMercariDirectEnabled,
+  searchTimeoutMs: 32_000, search: searchMercariDirect,
+};
 
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
 // proving the fanout, ranking, and "sources checked" UI are fully provider-agnostic

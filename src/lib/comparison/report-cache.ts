@@ -10,7 +10,7 @@ import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-rev
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
-const COMPARISON_CACHE_REVISION = "ranking-v6-sales-market-buyer-fees";
+const COMPARISON_CACHE_REVISION = "ranking-v7-mercari-direct";
 const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {

@@ -4,6 +4,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   devIndicators: false,
+  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium"],
+  outputFileTracingIncludes: {
+    "/api/agent/listing-compare": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/mcp": ["./node_modules/@sparticuz/chromium/bin/**"],
+  },
   images: {
     // The card-image route validates the upstream URL itself; this local
     // pattern lets next/image optimize only that same-origin image endpoint.
