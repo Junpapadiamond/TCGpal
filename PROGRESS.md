@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-14
 canonical_branch: origin/main
-last_verified_product_commit: 8ba402f
-working_branch: codex/direct-metadata-research (Apify retired; direct Mercari tracer verified)
+last_verified_product_commit: e099ddf
+working_branch: main (e099ddf deployed; direct acquisition remains research)
 max_lines: 300
 ---
 
@@ -253,7 +253,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Verified production commit: `8ba402f` (implementation `91f47cb`, based on `6abdffa`). Vercel `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY at lenstcg.com (2026-09-14). Final release gate passed (2026-09-14); no live Whatnot/Mercari accuracy claim. Historical measurements below describe their stated dates, not this branch.
+Verified production commit: `e099ddf`. Vercel `dpl_HfRuHz8Qoo1ipCTLndNU21zDtnaP` is READY at lenstcg.com (2026-09-14); deployed capabilities still advertises eBay only. Full release gate passed; direct research is not production inventory. Historical measurements below describe their stated dates, not this branch.
 
 - 2026-09-14 live release check: capabilities advertises only eBay; Pikachu 58/102 resolves to base1-58 (1.49s), 999/999 returns not_found (2.72s). One real comparison (3.25s): 50 eBay rows / 5 eligible / four lenses, all winner fee/total equations reconcile. Whatnot/Mercari explicitly skipped and unconfigured; no paid provider success is claimed.
 - 2026-09-14 direct-metadata follow-up: full gate passed (lint/typecheck/build/metadata audit; 104 test files and 1,489 tests passed, 5 skipped). Five real Mercari details observed, including sold-vs-InStock conflict; one automatic two-detail run. Paid registry path removed; Graphify CLI still absent. Alternative tool primary docs recorded in the pilot document; Whatnot access still requires operator/platform resolution.
