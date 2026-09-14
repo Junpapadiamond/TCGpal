@@ -2,7 +2,11 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest: Mercari production request and server result
+## Latest: conditional Apify budget and self-build review
+
+The founder subsequently provided four Actor links and reported $5 available in a new Apify account, permitting use only when the method and cost are understood. Self-building remains preferred. This supersedes the earlier absolute Apify rejection, without activating paid production sources. The [four-Actor audit](apify-self-build-review-2026-09-14.md) records current FREE-tier event prices, input traps and mechanism claims: the linked Mercari Actor is Japan-only, and SNKRDUNK exposes product-level lowest asks. Zero Actors were started and $0 spent; account balance is unverified. Public documentation is not verified inventory or implementation source.
+
+## Mercari production request and server result
 
 After the source review below, the founder explicitly requested Mercari production deployment first. We implemented the self-built adapter on `codex/mercari-production` (`2bbef16`) and deployed a Vercel preview. This is deployment authorization from the founder, not a claim of platform permission. Whatnot is unchanged.
 
@@ -16,7 +20,7 @@ Minimal local server evidence is in `output/frontier-research/direct-metadata/20
 
 ## Earlier research decision
 
-The founder rejected Apify runtime acquisition and asked us to inspect its scraper contracts and build an automated alternative. This supersedes the paid-pilot activation plan. Whatnot and Mercari remain required targets alongside eBay; manual links and aggregate references do not fulfill the three-marketplace goal.
+The founder initially rejected Apify runtime acquisition and asked us to inspect its scraper contracts and build an automated alternative, superseding the old paid-pilot activation plan. The latest conditional budget is recorded above. Whatnot and Mercari remain required targets alongside eBay; manual links and aggregate references do not fulfill the three-marketplace goal.
 
 The underlying instinct is sound: TCGlens needs a small subset of public listing metadata. Owning acquisition removes per-result actor charges and gives us control of validation. Two serious objections remain: a browser that works locally does not prove reliable server access, and page metadata can contradict actual availability or omit destination-specific costs. Public visibility alone does not establish production source rights.
 
@@ -85,4 +89,4 @@ The production registry uses eBay Browse and unconfigured Whatnot/Mercari entrie
 
 The shipped collector-number fix, market-only anchor and deterministic incomplete-cost verdict remain. Listed midPrice/mid do not substitute for market prices. Generic merchandise “Like new” is not card NM; seller prose is a claim, not grading evidence.
 
-Outstanding: Whatnot account review, permitted acquisition/reuse for both marketplaces under the source-access review above, a repeatable deployment acquisition method independent of this desktop session, larger exact-print/field evaluation, and all Frontier Research promotion gates in AGENTS.md. Three live production marketplaces are **not complete**. Account reinstatement would restore account access, not automatically grant production data rights. Apify activation/token placement is no longer a next step.
+Outstanding: Whatnot account review, permitted acquisition/reuse for both marketplaces under the source-access review above, a repeatable deployment acquisition method independent of this desktop session, larger exact-print/field evaluation, and all Frontier Research promotion gates in AGENTS.md. Three live production marketplaces are **not complete**. Account reinstatement would restore account access, not automatically grant production data rights. Conditional Apify research does not reactivate production adapters; any paid test must first meet the current audit's scope and budget controls.
