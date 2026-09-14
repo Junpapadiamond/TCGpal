@@ -38,7 +38,7 @@ Deep links call `buildAgentSearchUrl()` and reopen the existing website identity
 | eBay sold search | Manual verification link | No | TCGlens does not fetch the result |
 | TCGplayer | User-supplied candidate | No | New API access is not assumed |
 | Facebook / Reddit | User-supplied candidate | No | Trust signals must be entered by the user |
-| Mercari / Whatnot | Optional concrete listing candidates via named Apify providers | Opt-in pilot | Shared budget and explicit rollout switch; third-party access, never claimed licensed. Unknown shipping/buyer fees prevent complete-cost winners. See [pilot evidence and activation gate](cross-market-pilot.md). |
+| Mercari / Whatnot | Manual checks in production; self-built acquisition under Frontier Research | Not connected | Paid Apify acquisition retired. The separate browser research harness records public DOM/JSON-LD facts and conflicts; it is never a production provider. See [research evidence and promotion gate](cross-market-pilot.md). |
 | Local shop / show | User-supplied candidate | No | Tax, shipping, and protection can differ |
 
 ## Offline identity investigations

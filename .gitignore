@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Local response/image-vector caches for explicit reference research.
 /output/tcgplayer-alignment-20??-??-??/
+
+# Minimal local observations from founder-triggered acquisition experiments.
+/output/frontier-research/direct-metadata/

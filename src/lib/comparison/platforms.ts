@@ -5,8 +5,6 @@ import {
 } from "@/lib/external/ebay";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
-import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
-import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -62,8 +60,8 @@ export type PlatformAgent = {
   search: (input: PlatformSearchInput) => Promise<PlatformSeed[]>;
 };
 
-// eBay Browse is the default live source. The two third-party provider pilots
-// below require a separate rollout switch; tokens alone never activate them.
+// The founder retired paid Apify acquisition. Research collectors are separate
+// from this production registry and cannot be enabled through environment flags.
 export const ebayPlatformAgent: PlatformAgent = {
   id: "ebay",
   marketplace: "eBay",
@@ -75,18 +73,14 @@ export const ebayPlatformAgent: PlatformAgent = {
     searchEbayAlternatives(card, buyer, fetcher, plan?.query, plan?.ebayProduct),
 };
 
-export const whatnotPlatformAgent: PlatformAgent = {
-  id: "whatnot", marketplace: "Whatnot", label: "Whatnot via Apify (third-party)",
-  sourceMode: "third_party_provider", requiredEnv: ["CROSS_MARKET_APIFY_ENABLED", "WHATNOT_APIFY_TOKEN", "WHATNOT_APIFY_PRICE_UNIT"],
-  isConfigured: hasWhatnotCredentials, searchTimeoutMs: 31_000,
-  search: ({ card, fetcher, signal }) => searchWhatnotListings(card, fetcher, undefined, signal),
-};
-export const mercariPlatformAgent: PlatformAgent = {
-  id: "mercari", marketplace: "Mercari", label: "Mercari via Apify (third-party)",
-  sourceMode: "third_party_provider", requiredEnv: ["CROSS_MARKET_APIFY_ENABLED", "MERCARI_APIFY_TOKEN"],
-  isConfigured: hasMercariCredentials, searchTimeoutMs: 31_000,
-  search: ({ card, fetcher, signal }) => searchMercariListings(card, fetcher, undefined, signal),
-};
+export const whatnotPlatformAgent: PlatformAgent = stubPlatformAgent({
+  id: "whatnot", marketplace: "Whatnot", label: "Whatnot — direct acquisition under research",
+  sourceMode: "manual_fallback", requiredEnv: [],
+});
+export const mercariPlatformAgent: PlatformAgent = stubPlatformAgent({
+  id: "mercari", marketplace: "Mercari", label: "Mercari — direct acquisition under research",
+  sourceMode: "manual_fallback", requiredEnv: [],
+});
 
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
 // proving the fanout, ranking, and "sources checked" UI are fully provider-agnostic
@@ -218,7 +212,9 @@ export function summarizePlatformOutcome(outcome: PlatformOutcome): {
 // A configured-but-absent platform: surfaced in the sources panel (no warning,
 // no trace spam) so the operator sees which APIs would join once their keys are set.
 export function skippedPlatformResult(agent: PlatformAgent): ComparisonPlatformResult {
-  return { id: agent.id, marketplace: agent.marketplace, label: agent.label, sourceMode: agent.sourceMode, status: "skipped", configured: false, count: 0, detail: `Not configured (needs ${agent.requiredEnv.join(", ")}).` };
+  const detail = agent.requiredEnv.length ? `Not configured (needs ${agent.requiredEnv.join(", ")}).`
+    : "Not connected; acquisition is under evaluation.";
+  return { id: agent.id, marketplace: agent.marketplace, label: agent.label, sourceMode: agent.sourceMode, status: "skipped", configured: false, count: 0, detail };
 }
 
 // Fan out across every configured platform agent IN PARALLEL, isolating each

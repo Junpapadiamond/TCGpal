@@ -1,55 +1,64 @@
-# Cross-market pilot: eBay, Whatnot and Mercari
+# Cross-market acquisition: build our own metadata collector
 
-Decision and evidence date: **2026-09-14**. Engineering owner: Codex. Source-access and rollout owner: founder. Review date: **2026-09-21**.
+Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-The founder explicitly requested cross-market product discovery, a TCGlens verdict, an investigation of cheaper acquisition, and fixes for listed-median pricing and collector-number search. This reopens D-WHATNOT-RELAND. It authorizes this implementation and bounded evaluation; it does not establish marketplace licensing or prove live field accuracy.
+## Current decision
 
-## Decision and falsifiable test
+The founder rejected Apify runtime acquisition and asked us to inspect its scraper contracts and build an automated alternative. This supersedes the paid-pilot activation plan. Whatnot and Mercari remain required targets alongside eBay; manual links and aggregate references do not fulfill the three-marketplace goal.
 
-The underlying need is to locate the exact card across marketplaces and help decide which listing to inspect or buy. Apify is an acquisition option, not the product itself. Its strongest case is that it can supply concrete listing metadata through the existing provider interface quickly. Serious objections are undocumented field changes (including a possible 100× price-unit mismatch), incomplete checkout costs, platform access restrictions, and per-search costs/latency for an anonymous application.
+The underlying instinct is sound: TCGlens needs a small subset of public listing metadata. Owning acquisition removes per-result actor charges and gives us control of validation. Two serious objections remain: a browser that works locally does not prove reliable server access, and page metadata can contradict actual availability or omit destination-specific costs. Public visibility alone does not establish production source rights.
 
-Implement eBay + opt-in Whatnot/Mercari adapters and a deterministic conditional verdict. Preserve unknown shipping and buyer fees. The paid adapters remain off until the operator sets `CROSS_MARKET_APIFY_ENABLED=1`. Existing tokens alone cannot activate a new production source. The source mode is `third_party_provider`, never `official_api` or `licensed_provider`.
+**Decision:** retire paid adapters from the production registry; build a separate, founder-triggered browser research collector. The first falsifiable test is two queries across Pokémon and One Piece, with at most three observed details per query. It must produce real page evidence without paid providers, record price/status conflicts, and preserve unknown costs and exact-print uncertainty. Stop on access restrictions; no stealth, session extraction, proxy rotation or CAPTCHA bypass. No background crawler or scheduler.
 
-Before rollout, sample 20 distinct exact cards across both games on two separate runs. Require 100% correct currency, price units and buy-now/availability classification in inspected rows, at least 98% exact-print precision, field provenance for every surfaced monetary fact, no unsupported complete-cost winner, p95 provider latency below 30 seconds, and cost no greater than $0.30 per uncached two-provider search. Measure usable additional coverage against eBay alone. Stop on any price-unit error, access block requiring evasion, unsupported inventory claim, budget-counter failure, or no additional useful exact-print coverage. These are acceptance criteria, **not completed measurements**.
+Before promotion, test 20 exact cards on two runs. Require 100% inspected monetary-unit/currency/status accuracy, at least 98% exact-print precision, monetary provenance, no unsupported complete-cost winner, useful additional coverage over eBay, and p95 latency below 30 seconds. Measure actual compute/browser/agent cost: zero Apify calls is not zero operating cost. Kill on a price-unit error, access requiring evasion, unsupported inventory or no useful incremental coverage. These larger gates have **not** been measured.
 
-The founder owns the source-rights, platform-policy, privacy and operational review before public activation. No proxy rotation, authentication bypass, CAPTCHA solving, private endpoint credentials or session extraction is implemented. No scheduler or crawler is added.
+## What the public scraper material establishes
 
-## Observations, not assumptions
-
-| Question | Observed evidence | Consequence |
+| Source | Described mechanism | Evidence limits |
 | --- | --- | --- |
-| Can direct fetching replace Apify today? | One transparent public search-page request to each marketplace on 2026-09-14 returned HTTP 403 and a verification page. The initial sandbox network failures were retried with network access before classifying this result. | No self-hosted acquisition success is claimed. Do not retry through stealth/proxies. |
-| Does Whatnot expose a buyer search API? | Its [developer introduction](https://developers.whatnot.com/docs/getting-started/introduction) describes seller integrations, not a general buyer inventory feed. | The seller API is not a replacement for this comparison source. |
-| Are the old Whatnot mappings reliable? | The [current actor documentation](https://apify.com/epicscrapers/whatnot-scraper) gives `amountSafe: 9.00`, `BUY_NOW`, `PUBLISHED` and `scrapedAt`; the old branch assumed cents, `BUY_IT_NOW` and `ACTIVE`. | Require a verified `WHATNOT_APIFY_PRICE_UNIT` setting. Accept the two documented/legacy fixed-price status spellings; reject auctions. A live sample is still required. |
-| Is Mercari shipping always unavailable? | The [provider contract](https://apify.com/getascraper/mercari-us-scraper) documents `shipping_payer`, `shipping_fee`, observation time, and active status. | Preserve the shipping field rather than discard it. Status and monetary fields remain validated; merchandise `like_new` does not mean card NM. |
-| Is item + shipping sufficient for Mercari? | [Mercari's fee page](https://www.mercari.com/us/help_center/article/169/) documents buyer fees and legacy exceptions. The provider does not expose the final checkout fee. | `buyerFee: null` prevents a complete-cost recommendation. Do not turn a fee-policy estimate into an observed checkout charge. |
+| [Epic Scrapers Whatnot](https://apify.com/epicscrapers/whatnot-scraper) | Author describes direct web GraphQL queries and cursor pagination without required login. Fields include title, amountSafe, currency, transaction type, public status, images and timestamps. | Author claims, not an independently verified query. The official Seller API is a separate account-scoped interface. |
+| [getascraper Mercari](https://apify.com/getascraper/mercari-us-scraper) and [author repository](https://github.com/getascraper/how-to-scrape-mercari-us) | Author describes reading native browser network payloads instead of hardcoded GraphQL hashes. Documents item price, status, shipping, condition, images and seller aggregates. | The indexed README is readable, but the current repository and GitHub contents API returned 404. It is not available implementation source to copy. |
+| Public actor version endpoints | Whatnot v0.2, Mercari v0.3 and devcake Whatnot v0.0 returned source-type/version metadata. | No source files, archive or Git URL was exposed. No actor was started and no paid dataset was purchased. |
 
-Robots files were reviewed for the two public search paths. Robots permission alone does not establish source rights. Provider advertising is a contract to test, not proof of the fields in a current listing. No real paid actor run has been validated in this workspace: credentials were not present in the local environment when inspected.
+Do not infer Whatnot price units from magnitude. Catalog products and livestreams are not active listings; a sample catalog lastSalePrice is not a verified transaction ledger.
 
-## Acquisition cost and cheaper options
+## Actual observations
 
-Public Apify actor metadata for [Whatnot](https://api.apify.com/v2/acts/omgr8VWKxGZrtwQKJ) and [Mercari](https://api.apify.com/v2/acts/getascraper~mercari-us-scraper) was read without starting a run. On the free tier, the currently effective Whatnot price is $0.003/result; Mercari is $0.00299/result, plus small start charges. Forty results per source is approximately **$0.24 per cold comparison**, before account-plan considerations. Mercari metadata also announces a 2026-09-16 change adding $0.04/search and lowering its result rate to $0.00275; that is a future price at the observation date.
+Reviewed [Whatnot robots](https://www.whatnot.com/robots.txt) and [Mercari robots](https://www.mercari.com/robots.txt) on the evidence date. The tested public search/canonical item paths are not excluded. Mercari tracking ref URLs are excluded; the collector opens observed canonical item paths without tracking parameters.
 
-The [Apify synchronous-run API](https://docs.apify.com/api/v2/actor-run-sync-get-dataset-items-post) supports `maxTotalChargeUsd`. Each adapter sets it to $0.15, limits requested results to 40, disables restart-on-error, and applies a 25-second actor timeout plus a bounded HTTP timeout. A shared counter permits at most 25 uncached attempts per provider per UTC day: a maximum configured charge allowance of $7.50/day for the two providers together. Exhausted or unavailable production counters fail closed. Actual billing and useful-field yield still require the live acceptance test.
+- Direct transparent HTTP requests to both search pages returned 403 verification pages. This describes that transport, not every acquisition method.
+- The ordinary in-app browser initially rendered Whatnot search results, then navigated to an account-restriction page. No detail page was verified; access stopped. Do not infer the restriction's cause or treat initial search cards as confirmed inventory.
+- Mercari search and details were readable in the ordinary browser. Public Product JSON-LD plus DOM fields expose current price, condition, shipping and Buyer Protection fee; this observed surface did not require network interception.
+- Five Mercari details across two queries were inspected: four had enabled Buy now controls; one had a disabled Item sold control. The One Piece search-to-two-details run executed automatically. Those two details took 2.43s and 2.33s locally; this is not p95 or a reliability estimate.
+- One Pokémon item displayed $3.10 item price, $0.49 shipping and $0.12 fee. Another displayed $13.99 current price versus $35.00 crossed out, $5.66 discounted shipping and $0.70 fee. These are listing-page facts, not checkout quotes.
+- The sold control contradicted JSON-LD still saying InStock. The reader now records that conflict and retains sold status. Its displayed price is not asserted to be the completed transaction price.
+- One One Piece candidate was Japanese, graded and alternate-art; another title was only “One piece card.” Search relevance is not exact-print proof. Neither entered ranking.
 
-Lower-cost work completed: identical concurrent searches coalesce within a process; sanitized successful results cache for 15 minutes; genuinely empty results cache for 60 seconds; failures never become cached empty inventory. Cached rows retain their observation timestamps; rows older than 15 minutes at cache read must refresh. No seller usernames, descriptions, provider tokens, or raw response captures enter that cache. Do not claim a cache hit rate or realized savings before measuring them.
+Minimal local evidence: output/frontier-research/direct-metadata/2026-09-14-observations.json (ignored by Git). Each field has URL, time, method, supporting evidence and confidence. No seller profiles, cookies or raw page captures are stored; no production cache, analytics or receipt is written.
 
-A separate [Whatnot actor](https://apify.com/devcake/whatnot-data-scraper) advertises a lower starting price but exposes a different schema. Its quality, fixed-price classification and actual effective cost have not been evaluated. Switching based on headline price alone would recreate the field-contract problem. A self-hosted collector could remove actor charges, but direct access is currently blocked and the operational/source-access cost is unresolved.
+## Repeatable harness
 
-## Result contract
+### Alternatives checked in the browser
 
-- eBay's complete eligible listings can win the existing four lenses. Any future provider row must pass the same print, condition, exclusion, availability, cost and price-review gates.
-- Whatnot supplies active fixed-price listing candidates; its unknown shipping remains `null`.
-- Mercari retains known shipping and records unknown mandatory buyer fees as `null`. Neither `Unknown` card condition nor missing seller history is upgraded.
-- `incompleteCostOpportunity` considers only listings whose remaining exclusion is missing shipping/fees. It compares their known subtotal with the cheapest eligible complete pre-tax total. A positive difference is the strict break-even budget for all missing charges; it is not a buy recommendation. When no benchmark exists, it abstains from a cheaper claim.
-- The UI shows item price, shipping, fees, seller/evidence coverage, source method and observation time. API payloads keep the same monetary facts; deterministic TypeScript owns the verdict math.
-- TCGCSV `midPrice` and inline TCGplayer `mid` never substitute for sales-based market price. Missing/zero/negative market values produce no anchor; the crosswalk and timestamp remain usable.
-- An explicit Pokémon collector number is retained through identity resolution. If live search returns only broader names, the real catalog snapshot can recover an exact number; otherwise the search returns no matching number. Demo identities are not used as outage inventory.
+| Option | What the primary documentation supports | Decision for TCGlens |
+| --- | --- | --- |
+| [Playwright](https://playwright.dev/docs/network) + our own parser | Browser DOM access and observation of normal page HTTP/fetch responses. No paid actor is required. | Preferred small implementation for the existing Node stack. The current tracer uses the supported browser tool; a standalone worker is not deployed or verified. |
+| [Crawlee](https://crawlee.dev/) | Free open-source JavaScript/Python crawler library with request limits, browser integration and local output. [Deployment docs](https://crawlee.dev/python/docs/next/deployment/apify-platform) explicitly allow local/other-cloud execution. | Maintained by Apify, but using the library does not require buying Apify actors. Useful if we need queues and concurrency; not necessary for this small tracer. |
+| [Crawl4AI self-hosting](https://docs.crawl4ai.com/core/self-hosting/) | Docker/local execution and structured CSS extraction without a required LLM; operating resources remain our responsibility. | Possible Python alternative. The current guide mixes v0.9 notices with v0.8 examples, so verify the migration/version before deployment. Not tested against Whatnot. |
+| [Whatnot Seller API](https://developers.whatnot.com/) | Account-scoped seller inventory management; currently not accepting new applicants. | Not a public cross-seller buyer-search replacement. |
 
-## Configuration and verification
+These are capability comparisons, not a claim that any tool defeats a Whatnot access restriction. The [official restriction guidance](https://help.whatnot.com/hc/en-us/articles/44133015373837-If-your-account-is-suspended-or-banned) directs restricted users to Account Health and eligible appeals; changing accounts to evade enforcement is prohibited. Restoring account access is an operator/platform step, separate from proving production data access. No support message or appeal was sent.
 
-Set the two provider tokens server-side, shared Redis credentials, the verified Whatnot price unit (`dollars` or `cents`), then the explicit rollout switch. Never put credentials in client settings or URLs. Set the switch back to `0` to stop new paid calls.
+- scripts/frontier-research/direct-metadata/mercari-dom.mjs: read-only DOM/JSON-LD extraction with title/URL binding, conflict handling and explicit unknowns.
+- scripts/frontier-research/direct-metadata/collect.mjs: takes a supported-browser tab, one card query and today's robots-review date; opens one search and up to three observed canonical details. Stops on access blocks. No pagination, retries, proxy or HTTP fallback.
+- Colocated hermetic tests cover prices, discounts, missing fees, stale InStock, access-page remnants, unrelated products, privacy minimization and bounded discovery.
 
-`scripts/testing/cross-market-preview.mjs` is a local-only QA proxy for the real Next dev UI on port 3000. It replaces external API calls with synthetic fixtures, removes inherited external-service credentials and disables durable writes. Run it with Node and open `http://127.0.0.1:4317` in the built-in browser. The screen is visibly labeled as synthetic QA. It is never imported by product routes or deployed as an endpoint. This harness verifies the flow, not live marketplace coverage or provider accuracy.
+Invoke `collectMercariResearch(tab, query, { founderTriggered: true, robotsReviewedAt: "YYYY-MM-DD", maxDetails: 2 })` inside the supported browser REPL after normal browser selection and a current robots review. This is agent-run research, **not a standalone production service**. Keep observations in the ignored research directory; never import the collector into product routes or the production registry.
 
-Current verification and remaining rollout work are recorded in `PROGRESS.md` → `WS-SOURCES`.
+## Production and remaining work
+
+The production registry uses eBay Browse and unconfigured Whatnot/Mercari entries. Old Apify environment variables cannot activate paid acquisition. Historical provider parsers remain unused by the registry for reference tests; no credentials are requested.
+
+The shipped collector-number fix, market-only anchor and deterministic incomplete-cost verdict remain. Listed midPrice/mid do not substitute for market prices. Generic merchandise “Like new” is not card NM; seller prose is a claim, not grading evidence.
+
+Outstanding: permitted Whatnot access, a repeatable deployment acquisition method independent of this desktop session, larger exact-print/field evaluation, and all Frontier Research promotion gates in AGENTS.md. Three live production marketplaces are **not complete**. Apify activation/token placement is no longer a next step.
