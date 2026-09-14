@@ -29,6 +29,38 @@ const pikachuCards = [
 ];
 
 describe("resolveCardIdentity", () => {
+  it.each([{ cards: pikachuCards }, { cards: [] }])("recovers Pikachu 58/102 from the real snapshot when live search misses the number", async ({ cards }) => {
+    const result = await resolveCardIdentity(
+      { query: "Pikachu 58/102", cardHint: { game: "pokemon" } },
+      { fetcher: pokemonFetcher(cards) },
+    );
+    expect(result.status).toBe("resolved");
+    expect(result.confirmedCard?.id).toBe("base1-58");
+    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.candidates.every((card) => card.cardNumber === "58/102")).toBe(true);
+    expect(result.warnings.join(" ")).toMatch(/local catalog snapshot/i);
+  });
+
+  it.each([null, undefined, 0])("does not use inline listed median as a market fallback (%s)", async (market) => {
+    const result = await resolveCardIdentity(
+      { query: "Pikachu", cardHint: { game: "pokemon" } },
+      { fetcher: pokemonFetcher([{ ...pikachuCards[0], tcgplayer: {
+        url: "https://www.tcgplayer.com/product/1", prices: { normal: { market, mid: 39999.50 } },
+      } }]) },
+    );
+    expect(result.candidates[0]?.marketMid).toBeNull();
+  });
+
+  it("does not offer unrelated numbers when an explicit collector number is unknown", async () => {
+    const result = await resolveCardIdentity(
+      { query: "Pikachu 999/999", cardHint: { game: "pokemon" } },
+      { fetcher: pokemonFetcher(pikachuCards) },
+    );
+    expect(result.status).toBe("not_found");
+    expect(result.candidates).toEqual([]);
+    expect(result.confirmedCard).toBeNull();
+  });
+
   it("returns a confirmation gallery for a name-only Pokémon search", async () => {
     const result = await resolveCardIdentity(
       { query: "Pikachu", cardHint: { game: "pokemon" } },

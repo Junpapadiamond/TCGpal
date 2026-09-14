@@ -211,11 +211,13 @@ export async function searchTcgplayerListings(
     getTcgcsvLastUpdated(fetcher),
   ]);
 
-  const anchorRow = sortByVariantPreference(rows).find((row) => row.marketPrice !== null || row.midPrice !== null) ?? null;
+  // midPrice is the median active asking price, not the sales-based Market
+  // Price. Missing sales evidence must not become a fabricated market floor.
+  const anchorRow = sortByVariantPreference(rows).find((row) => typeof row.marketPrice === "number" && row.marketPrice > 0) ?? null;
   const anchor = anchorRow
     ? {
       low: anchorRow.lowPrice ?? null,
-      mid: anchorRow.marketPrice ?? anchorRow.midPrice ?? null,
+      mid: anchorRow.marketPrice ?? null,
       high: anchorRow.highPrice ?? null,
       subTypeName: anchorRow.subTypeName,
       url: product.productUrl,

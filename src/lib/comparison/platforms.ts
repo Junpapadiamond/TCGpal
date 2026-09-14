@@ -5,6 +5,8 @@ import {
 } from "@/lib/external/ebay";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
+import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
+import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -16,10 +18,9 @@ import type {
 } from "@/lib/schemas";
 
 // A "platform agent" is one marketplace the comparison can pull live listings
-// from. Each agent self-declares whether it is configured (its own API
-// credentials), so the cross-platform system simply works for whatever APIs the
-// operator has — add a key, and that platform joins the fan-out; remove it, and
-// the platform sits out cleanly. Adding a new marketplace is one PlatformAgent.
+// from. Each agent declares whether its credentials and rollout requirements
+// are satisfied. Unconfigured providers sit out cleanly; adding a marketplace
+// requires implementing this interface and its approved source boundary.
 //
 // The seed shape is the pre-scored listing: deterministic normalization, tax,
 // and ranking are applied uniformly afterwards, so every platform reconciles in
@@ -39,6 +40,7 @@ export type PlatformSearchInput = {
   buyer: BuyerContext;
   fetcher: typeof fetch;
   plan?: PlatformSearchPlan;
+  signal?: AbortSignal;
 };
 
 export type PlatformAgent = {
@@ -56,12 +58,12 @@ export type PlatformAgent = {
   // Env vars this agent needs. Surfaced for diagnostics only — never the values.
   requiredEnv: string[];
   isConfigured: () => boolean;
+  searchTimeoutMs?: number;
   search: (input: PlatformSearchInput) => Promise<PlatformSeed[]>;
 };
 
-// eBay is the one marketplace with a real, legal Browse API wired today. Other
-// platforms stay manual-ledger until a licensed provider is connected; when one
-// is, it becomes another PlatformAgent here and the fan-out picks it up.
+// eBay Browse is the default live source. The two third-party provider pilots
+// below require a separate rollout switch; tokens alone never activate them.
 export const ebayPlatformAgent: PlatformAgent = {
   id: "ebay",
   marketplace: "eBay",
@@ -71,6 +73,19 @@ export const ebayPlatformAgent: PlatformAgent = {
   isConfigured: hasEbayCredentials,
   search: ({ card, buyer, fetcher, plan }) =>
     searchEbayAlternatives(card, buyer, fetcher, plan?.query, plan?.ebayProduct),
+};
+
+export const whatnotPlatformAgent: PlatformAgent = {
+  id: "whatnot", marketplace: "Whatnot", label: "Whatnot via Apify (third-party)",
+  sourceMode: "third_party_provider", requiredEnv: ["CROSS_MARKET_APIFY_ENABLED", "WHATNOT_APIFY_TOKEN", "WHATNOT_APIFY_PRICE_UNIT"],
+  isConfigured: hasWhatnotCredentials, searchTimeoutMs: 31_000,
+  search: ({ card, fetcher, signal }) => searchWhatnotListings(card, fetcher, undefined, signal),
+};
+export const mercariPlatformAgent: PlatformAgent = {
+  id: "mercari", marketplace: "Mercari", label: "Mercari via Apify (third-party)",
+  sourceMode: "third_party_provider", requiredEnv: ["CROSS_MARKET_APIFY_ENABLED", "MERCARI_APIFY_TOKEN"],
+  isConfigured: hasMercariCredentials, searchTimeoutMs: 31_000,
+  search: ({ card, fetcher, signal }) => searchMercariListings(card, fetcher, undefined, signal),
 };
 
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
@@ -96,8 +111,6 @@ function stubPlatformAgent(config: {
 const ROADMAP_AGENTS: PlatformAgent[] = [
   stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket adapter", sourceMode: "licensed_provider", requiredEnv: ["CARDMARKET_API_KEY"] }),
   stubPlatformAgent({ id: "snkrdunk", marketplace: "SNKRDUNK", label: "SNKRDUNK adapter", sourceMode: "licensed_provider", requiredEnv: ["SNKRDUNK_PROVIDER_KEY"] }),
-  stubPlatformAgent({ id: "mercari", marketplace: "Mercari", label: "Mercari adapter", sourceMode: "licensed_provider", requiredEnv: ["MERCARI_PROVIDER_KEY"] }),
-  stubPlatformAgent({ id: "whatnot", marketplace: "Whatnot", label: "Whatnot adapter", sourceMode: "licensed_provider", requiredEnv: ["WHATNOT_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "xianyu", marketplace: "Xianyu", label: "Xianyu adapter", sourceMode: "licensed_provider", requiredEnv: ["XIANYU_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "jihuanshe", marketplace: "集换社", label: "集换社 adapter", sourceMode: "licensed_provider", requiredEnv: ["JIHUANSHE_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "yahoo-auctions-jp", marketplace: "Yahoo Auctions JP", label: "Yahoo Auctions JP adapter", sourceMode: "partner_feed", requiredEnv: ["YAHOO_AUCTIONS_JP_PARTNER_KEY"] }),
@@ -106,7 +119,7 @@ const ROADMAP_AGENTS: PlatformAgent[] = [
 
 // TCGCSV is intentionally absent: it is an aggregate market reference, not
 // seller-specific inventory. Only concrete active listings belong in this registry.
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, ...ROADMAP_AGENTS];
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, mercariPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
@@ -123,7 +136,7 @@ export type PlatformFanout = {
   warnings: string[];
   results: ComparisonPlatformResult[];
   // How many agents actually ran (were configured). When this is zero the caller
-  // is responsible for the labeled-demo fallback — there is no live source at all.
+  // must return next moves when no trustworthy live rows are available.
   configuredCount: number;
 };
 
@@ -133,6 +146,7 @@ export type RunPlatformFanoutInput = {
   fetcher: typeof fetch;
   plan?: PlatformSearchPlan;
   agents?: PlatformAgent[];
+  signal?: AbortSignal;
   opsContext?: {
     requestId?: string;
     route?: OpsRoute;
@@ -156,8 +170,9 @@ const PLATFORM_SEARCH_TIMEOUT_MS = 10000;
 export async function searchPlatformWithTimeout(
   agent: PlatformAgent,
   input: PlatformSearchInput,
-  timeoutMs = PLATFORM_SEARCH_TIMEOUT_MS,
+  timeoutMs = agent.searchTimeoutMs ?? PLATFORM_SEARCH_TIMEOUT_MS,
 ): Promise<PlatformSeed[]> {
+  const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(
@@ -166,9 +181,11 @@ export async function searchPlatformWithTimeout(
     );
   });
   try {
-    return await Promise.race([agent.search(input), timeout]);
+    const signal = input.signal ? AbortSignal.any([input.signal, controller.signal]) : controller.signal;
+    return await Promise.race([agent.search({ ...input, signal }), timeout]);
   } finally {
     clearTimeout(timer!);
+    controller.abort();
   }
 }
 
@@ -213,6 +230,7 @@ export async function runPlatformFanout({
   fetcher,
   plan,
   agents = getPlatformAgents(),
+  signal,
   opsContext,
 }: RunPlatformFanoutInput): Promise<PlatformFanout> {
   const seeds: PlatformSeed[] = [];
@@ -225,7 +243,7 @@ export async function runPlatformFanout({
   const settled = await Promise.all(
     configured.map(async (agent): Promise<PlatformOutcome> => {
       try {
-        return { agent, seeds: await searchPlatformWithTimeout(agent, { card, buyer, fetcher, plan }) };
+        return { agent, seeds: await searchPlatformWithTimeout(agent, { card, buyer, fetcher, plan, signal }) };
       } catch (error) {
         return { agent, error: error instanceof Error ? error.message : "Unknown marketplace error." };
       }

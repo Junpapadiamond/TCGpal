@@ -3,7 +3,7 @@ import { agentCapabilitiesSchema, tcgGameSchema, type AgentCapabilities } from "
 
 export function getAgentCapabilities(): AgentCapabilities {
   const live = getPlatformAgents()
-    .filter((agent) => agent.sourceMode === "official_api")
+    .filter((agent) => agent.sourceMode === "official_api" || agent.isConfigured())
     .map((agent) => ({
       name: agent.marketplace,
       role: "active_listings" as const,

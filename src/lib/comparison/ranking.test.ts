@@ -65,6 +65,14 @@ describe("comparison ranking", () => {
     expect(listing.estimatedLandedCost).toBeNull();
   });
 
+  it("includes known mandatory buyer fees when selecting the cheapest complete listing", () => {
+    const feeListing = normalizeListing({ listing: { ...demoListingSeeds[0], id: "fee", price: 90, shipping: 0, buyerFee: 15 }, buyer: { ...buyer, taxRate: null } });
+    const other = normalizeListing({ listing: { ...demoListingSeeds[0], id: "other", price: 100, shipping: 0, buyerFee: 0 }, buyer: { ...buyer, taxRate: null } });
+    expect(feeListing.preTaxTotal).toBe(105);
+    expect(feeListing.costComplete).toBe(true);
+    expect(rankListings([feeListing, other]).find((choice) => choice.role === "lowest_landed_cost")?.listingId).toBe("other");
+  });
+
   it("uses explicit seller and evidence score tables", () => {
     expect(calculateSellerTrustScore(demoListingSeeds[1].seller)).toBe(100);
     expect(calculateEvidenceCompletenessScore(demoListingSeeds[2].evidence)).toBe(100);

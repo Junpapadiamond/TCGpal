@@ -17,6 +17,7 @@ function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
     currency: "USD",
     price: 10,
     shipping: 0,
+    buyerFee: 0,
     costComplete: true,
     estimatedTax: null,
     preTaxTotal: 10,

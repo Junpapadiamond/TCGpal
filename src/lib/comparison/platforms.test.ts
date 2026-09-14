@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ebayPlatformAgent,
   getPlatformAgents,
@@ -26,6 +26,8 @@ const buyer: BuyerContext = { country: "US", postalCode: "10001", taxRate: 0.08,
 const fetcher = (async () => {
   throw new Error("agents are mocked; no network");
 }) as unknown as typeof fetch;
+
+afterEach(() => vi.unstubAllEnvs());
 
 function seed(id: string, marketplace: Marketplace): PlatformSeed {
   return {
@@ -143,6 +145,15 @@ describe("platform fan-out", () => {
 });
 
 describe("default registry (roadmap adapters)", () => {
+  it("configures three concrete sources when their actual prerequisites are present", () => {
+    vi.stubEnv("CROSS_MARKET_APIFY_ENABLED", "1");
+    vi.stubEnv("EBAY_CLIENT_ID", "test"); vi.stubEnv("EBAY_CLIENT_SECRET", "test");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "test"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "dollars");
+    vi.stubEnv("MERCARI_APIFY_TOKEN", "test");
+    const configured = getPlatformAgents().filter((agent) => agent.isConfigured());
+    expect(configured.map((agent) => agent.marketplace)).toEqual(["eBay", "Whatnot", "Mercari"]);
+    expect(configured.find((agent) => agent.id === "whatnot")?.sourceMode).toBe("third_party_provider");
+  });
   it("keeps eBay as the one configured-by-default (real) agent", () => {
     const agents = getPlatformAgents();
     expect(agents).toContain(ebayPlatformAgent);
@@ -151,7 +162,7 @@ describe("default registry (roadmap adapters)", () => {
 
   it("registers roadmap marketplaces behind the same interface, all self-gated off until wired", async () => {
     const agents = getPlatformAgents();
-    const roadmap = agents.filter((agent) => agent.id !== "ebay" && agent.id !== "tcgplayer");
+    const roadmap = agents.filter((agent) => !["ebay", "tcgplayer", "whatnot", "mercari"].includes(agent.id));
 
     // Proves the fanout/UI are provider-agnostic today: every roadmap agent implements
     // search() and is registered, but none is configured, so none joins a real fan-out.

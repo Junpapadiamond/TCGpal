@@ -255,6 +255,7 @@ export async function runListingComparison(
     card: confirmedCard,
     buyer: request.buyer,
     fetcher,
+    signal: dependencies.signal,
     plan: {
       query: crosswalk?.ebayQueryTemplate,
       ebayProduct: crosswalk?.ebayProduct ?? null,
@@ -402,10 +403,7 @@ export async function resolveCardIdentityCandidates(
         && (!explicitNumber.total || candidate.total === explicitNumber.total);
     })
     : [];
-  const candidates = sameNumber.length > 0 ? sameNumber : identities;
-  if (explicitNumber.number && sameNumber.length === 0 && identities.length > 0) {
-    warnings.push("That collector number did not match the catalog results, so broader name matches are shown for confirmation.");
-  }
+  const candidates = explicitNumber.number ? sameNumber : identities;
   const confirmedCard = resolveConfirmedCard(request, candidates);
   return { request, candidates, confirmedCard, warnings, trace, generatedAt: now().toISOString() };
 }
@@ -806,6 +804,27 @@ async function identifyCards(
       if (result.cards.length > 0) warnings.push(snapshotFallbackWarning());
     }
 
+    const requestedNumber = collectorNumberParts(request.cardHint.cardNumber);
+    const matchesRequestedNumber = (card: PokemonTcgCard) => {
+      const candidate = collectorNumberParts(formatCollectorNumber(card.number ?? "", card.set));
+      return candidate.number === requestedNumber.number
+        && (!requestedNumber.total || candidate.total === requestedNumber.total);
+    };
+    // Live search can successfully return a relaxed name tier while missing the
+    // requested print. Recover from the real catalog before rejecting it; never
+    // present newer, differently numbered cards as answers to an exact number.
+    if (requestedNumber.number && !result.cards.some(matchesRequestedNumber)) {
+      const snapshot = searchPokemonCatalogSnapshot({
+        query: searchName, cardNumber: request.cardHint.cardNumber,
+        setHint: request.cardHint.setCode, pageSize: 250,
+      });
+      const exact = snapshot.cards.filter(matchesRequestedNumber);
+      if (exact.length > 0) {
+        result = { ...snapshot, cards: exact, count: exact.length, totalCount: exact.length };
+        warnings.push(`Live search did not return the requested collector number; used the bundled English local catalog snapshot (source updated ${POKEMON_CATALOG_SNAPSHOT_UPDATED_AT}).`);
+      }
+    }
+
     if (result.source !== "pokemon-catalog-snapshot"
       && result.cards.length === 0
       && !request.cardHint.cardNumber
@@ -830,6 +849,7 @@ async function identifyCards(
 
     if (result) {
       const apiMatches = result.cards
+        .filter((card) => !requestedNumber.number || matchesRequestedNumber(card))
         .map((card) => ({ card, match: evaluateIdentity(card, request, source) }))
         .sort((a, b) => b.match.score - a.match.score)
         .map(({ card, match }) => toIdentityCandidate(card, request, match));
@@ -1561,7 +1581,7 @@ function tokenOverlap(left: string, right: string) {
 type TcgplayerVariantPrice = { low?: number | null; mid?: number | null; high?: number | null; market?: number | null };
 
 // pokemontcg.io returns TCGplayer prices inline (USD, in dollars) under a few
-// variant keys. Pick the first variant with a usable market/mid value so we have
+// variant keys. Pick the first variant with a usable sales-based market value for
 // a single fair-price anchor for the confirmed card.
 function extractTcgplayerPricing(tcgplayer: PokemonTcgCard["tcgplayer"]) {
   const asOf = tcgplayer?.updatedAt ? toIsoDateOrNull(tcgplayer.updatedAt) : null;
@@ -1572,8 +1592,8 @@ function extractTcgplayerPricing(tcgplayer: PokemonTcgCard["tcgplayer"]) {
   for (const key of keys) {
     const variant = prices[key];
     if (!variant) continue;
-    const mid = numberOrNull(variant.market) ?? numberOrNull(variant.mid);
-    if (mid === null) continue;
+    const mid = numberOrNull(variant.market);
+    if (mid === null || mid <= 0) continue;
     return {
       marketUrl: tcgplayer?.url ?? null,
       marketLow: numberOrNull(variant.low),

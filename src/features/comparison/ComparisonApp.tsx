@@ -40,6 +40,7 @@ import {
 } from "./identity-filters";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
+import { CrossMarketOpportunities } from "./CrossMarketOpportunities";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
 import { submitsOnEnter } from "@/features/comparison/search-submit";
 import { summarizeExclusions } from "@/features/comparison/exclusion-summary";
@@ -2707,6 +2708,8 @@ function ComparisonResult({
 
           <BuyerSourceNotice report={report} hasComparableListings={eligibleCount > 0} />
 
+          <CrossMarketOpportunities candidates={report.candidates} platforms={report.platforms} />
+
           <OtherMarketplaces report={report} />
 
           <DecisionReceipt
@@ -3720,6 +3723,7 @@ function localizeEligibilityIssue(code: string, fallback: string, lang: Lang) {
     title_condition_below_requested: "标题里写了更低的品相；给出区间时按差的那一端算。",
     unsupported_currency: "这条不是美元计价。",
     shipping_unknown: "运费未知，结账总价没法安全比较。",
+    buyer_fee_unknown: "买家手续费未知，需要在结账时确认。",
     listing_inactive: "这条目前不在售。",
     price_far_below_market: "价格远低于市场参考价，可能是复制品、定制品，或者标错了。",
     price_far_above_exact_market: "商品价超过该版本 NM 参考价的五倍，且至少高出 $20。请核对价格、版本和参考价更新时间。",

@@ -153,6 +153,7 @@ function listingFor(card: CardIdentityCandidate, cost: number): NormalizedListin
     raw: true,
     currency: "USD",
     price: cost,
+    buyerFee: 0,
     shipping: 0,
     costComplete: true,
     estimatedTax: null,

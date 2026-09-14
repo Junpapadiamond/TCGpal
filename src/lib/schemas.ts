@@ -25,6 +25,7 @@ export const platformSourceModeSchema = z.enum([
   "official_api",
   "partner_feed",
   "licensed_provider",
+  "third_party_provider",
   "cached_index",
   "manual_fallback",
 ]);
@@ -360,6 +361,9 @@ export const normalizedListingSchema = z.object({
   currency: z.literal("USD"),
   price: z.number().min(0),
   shipping: z.number().min(0).nullable(),
+  // Mandatory buyer-side marketplace fees, separate from shipping and tax.
+  // Existing sources have none; adapters must explicitly use null if unknown.
+  buyerFee: z.number().min(0).nullable().default(0),
   // Shipping must be known before a row may compete for a recommendation.
   // Tax may still be unknown, in which case the row is compared pre-tax.
   costComplete: z.boolean(),
@@ -734,7 +738,16 @@ export type ListingSeed = Omit<
   | "printMatchReasons"
   | "printPriceGuard"
   | "imageUrls"
-> & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string; imageUrls?: string[] };
+  | "buyerFee"
+> & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string; imageUrls?: string[]; buyerFee?: number | null };
+
+export const listingSeedSchema = normalizedListingSchema.omit({
+  estimatedTax: true, preTaxTotal: true, estimatedLandedCost: true, costComplete: true,
+  sellerTrustScore: true, evidenceCompletenessScore: true, conditionCompatibilityScore: true,
+  marketComparable: true, priceScore: true, safetyScore: true, valueScore: true,
+  riskLabel: true, trustNotes: true, eligible: true, eligibilityIssues: true, exclusionReasons: true,
+  printMatch: true, printMatchConfidence: true, printMatchReasons: true, printPriceGuard: true,
+});
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;

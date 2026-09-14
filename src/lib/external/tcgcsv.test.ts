@@ -425,6 +425,20 @@ describe("TCGCSV TCGplayer connector", () => {
     expect(result.product).toBeNull();
   });
 
+  it.each([null, undefined, 0, -1])("does not substitute listed median when market price is %s", async (marketPrice) => {
+    const product = await resolveTcgplayerProduct(card, tcgcsvFetcher());
+    const fetcher = (async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/prices")) return Response.json({ results: [{
+        ...pricesPayload.results[0], marketPrice, midPrice: 39999.50,
+      }] });
+      return tcgcsvFetcher()(input);
+    }) as typeof fetch;
+    const result = await searchTcgplayerListings(card, product, fetcher);
+    expect(result.anchor).toBeNull();
+    expect(result.product?.productId).toBe(246723);
+    expect(result.asOf).toBe("2026-07-02T20:06:28.000Z");
+  });
+
   it("reports freshness and flags >48h-stale data", async () => {
     const asOf = await getTcgcsvLastUpdated(tcgcsvFetcher());
     expect(asOf).toBe("2026-07-02T20:06:28.000Z");

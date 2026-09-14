@@ -349,9 +349,10 @@ export function normalizeListing(input: {
   confirmedCard?: CardIdentityCandidate | null;
 }) {
   const { listing, buyer } = input;
-  const costComplete = listing.shipping !== null;
+  const buyerFee = listing.buyerFee === undefined ? 0 : listing.buyerFee;
+  const costComplete = listing.shipping !== null && buyerFee !== null;
   const shipping = listing.shipping ?? 0;
-  const preTaxTotal = roundMoney(listing.price + shipping);
+  const preTaxTotal = roundMoney(listing.price + shipping + (buyerFee ?? 0));
   // Tax the pre-tax total (item + shipping), not the item alone: that is what eBay
   // charges in most states and it keeps the math reconcilable — pre-tax, tax, and the
   // landed total now satisfy landed === preTax × (1 + rate).
@@ -448,6 +449,7 @@ export function normalizeListing(input: {
     printMatchReasons: printAssessment?.reasons ?? ["print_identity_not_assessed"],
     printPriceGuard: printAssessment?.priceGuard ?? "none",
     costComplete,
+    buyerFee,
     estimatedTax,
     preTaxTotal,
     estimatedLandedCost,
@@ -638,7 +640,7 @@ const MARKET_FLOOR_RATIO = PRINT_IDENTITY_EXCLUDE_RATIO;
 
 function getEligibilityIssues(
   listing: Pick<NormalizedListing, "active" | "raw" | "currency" | "matchConfidence" | "title" | "price" | "shipping" | "claimedCondition" | "marketplace" | "userSupplied">
-    & { listingLanguage?: string | null; matchAspectText?: string },
+    & { listingLanguage?: string | null; matchAspectText?: string; buyerFee?: number | null },
   buyer: BuyerContext,
   marketPrice: number | null,
   variantIntent: VariantIntent | null = null,
@@ -673,6 +675,7 @@ function getEligibilityIssues(
   }
   if (listing.currency !== "USD") add({ code: "unsupported_currency", category: "cost", disposition: "exclude", message: "Listing is not priced in USD." });
   if (listing.shipping === null) add({ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Shipping cost is unknown, so the checkout total cannot be compared safely." });
+  if (listing.buyerFee === null) add({ code: "buyer_fee_unknown", category: "cost", disposition: "exclude", message: "Mandatory buyer fees are unknown; confirm the checkout fees before comparing totals." });
   if (!listing.active) add({ code: "listing_inactive", category: "availability", disposition: "exclude", message: "Listing is not active." });
   const marketFloorApplies = buyer.desiredCondition === "Near Mint" || buyer.desiredCondition === "Lightly Played";
   // Exact-print evidence proves identity, not commercial plausibility. Keep the

@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
         hostname: "i.ebayimg.com",
         pathname: "/**",
       },
+      // Listing images from the bounded third-party marketplace adapters.
+      { protocol: "https", hostname: "images.whatnot.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "u-mercari-images.mercdn.net", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "static.mercdn.net", port: "", pathname: "/**" },
       // One Piece card art. en.onepiece-cardgame.com serves the official
       // watermarked "SAMPLE" images used by the bundled catalog; the optcgapi
       // hosts cover images returned by the live OPTCG augmentation.

@@ -33,6 +33,7 @@ export function listingFixture(overrides: ListingOverrides = {}): NormalizedList
     raw: true,
     currency: "USD",
     price,
+    buyerFee: 0,
     shipping,
     costComplete: shipping !== null,
     estimatedTax,

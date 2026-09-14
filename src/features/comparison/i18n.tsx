@@ -395,7 +395,7 @@ export const en = {
     // any of that, and the unsupported-claim rule covers our own copy.
     tcgplayerAbout: "The US singles marketplace most price references come from. The figure here is an aggregate market price, not one seller's listing.",
     mercariAbout: "US peer-to-peer marketplace. Sellers are mostly not card specialists, so condition wording varies and bundles are common.",
-    whatnotAbout: "Live-auction app built around streamed breaks and singles. Prices are bid-driven, so there is no fixed total to compare.",
+    whatnotAbout: "Live auctions and fixed-price Buy Now listings. Only active Buy Now singles can enter comparison; shipping still needs checkout confirmation.",
     snkrdunkAbout: "Japanese marketplace with its own authentication service. Carries Japan-exclusive prints and prices in JPY; import cost and checkout are yours to work out.",
     openMarketplace: (marketplace: Marketplace) => `Open ${marketplace}`,
     noExactLink: "No exact product link",
@@ -882,7 +882,7 @@ export const zh: Dict = {
     marketReferenceUnavailable: "没有确切的 TCGplayer 映射",
     tcgplayerAbout: "美国单卡主要交易平台，大多数参考价都出自这里。这里显示的是汇总市价，不是某一条卖家商品。",
     mercariAbout: "美国的个人二手平台。卖家大多不是卡类玩家，品相写法参差，打包出售常见。",
-    whatnotAbout: "以直播拍卖和开包为主的平台。价格由出价决定，所以这里比不了总价。",
+    whatnotAbout: "提供直播拍卖和一口价商品。只有在售的一口价单卡能进入比价；运费仍需在结账时确认。",
     snkrdunkAbout: "日本平台，自带鉴定服务。有日版限定卡，标价用日元；关税和结账要你自己处理。",
     openMarketplace: (marketplace: Marketplace) => `打开 ${marketplace === "Mercari" ? "Mercari（煤炉）" : marketplace}`,
     noExactLink: "没有确切商品链接",

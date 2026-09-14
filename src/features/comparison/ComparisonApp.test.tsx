@@ -1729,7 +1729,7 @@ describe("comparison condition controls", () => {
     // in the fact slot was removed, and that slot now stays empty on rows that
     // carry no fact of their own.
     expect(within(followUps).queryByText("Not checked by TCGlens")).toBeNull();
-    expect(within(followUps).getByText(/Prices are bid-driven/)).toBeTruthy();
+    expect(within(followUps).getByText(/fixed-price Buy Now listings/)).toBeTruthy();
     expect(within(followUps).getByText(/prices in JPY/)).toBeTruthy();
     expect(within(followUps).getByRole("link", { name: /TCGplayer/ }).getAttribute("href")).toBe("https://www.tcgplayer.com/product/123456");
     const mercariLink = within(followUps).getByRole("link", { name: /Mercari/ });
