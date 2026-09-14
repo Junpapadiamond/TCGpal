@@ -4,7 +4,7 @@ Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/sour
 
 ## Latest: conditional Apify budget and self-build review
 
-The founder subsequently provided four Actor links and reported $5 available in a new Apify account, permitting use only when the method and cost are understood. Self-building remains preferred. This supersedes the earlier absolute Apify rejection, without activating paid production sources. The [four-Actor audit](apify-self-build-review-2026-09-14.md) records current FREE-tier event prices, input traps and mechanism claims: the linked Mercari Actor is Japan-only, and SNKRDUNK exposes product-level lowest asks. Zero Actors were started and $0 spent; account balance is unverified. Public documentation is not verified inventory or implementation source.
+The founder subsequently provided four Actor links and permitted carefully understood use of a $5 Apify balance; self-building remains preferred. After login, Free/$5 was confirmed. One Whatnot query with a $0.03 cap returned three listing records for $0.00905 in event charges. The [four-Actor audit and real pilot](apify-self-build-review-2026-09-14.md) record inputs, pricing, output gaps and an offline ranking replay. Monetary units still need listing-page confirmation; no shipping/buyer-fee data arrived and none of the three qualified for the requested NM/Base print. Paid production sources remain inactive. The linked Mercari Actor is Japan-only; SNKRDUNK exposes product-level lowest asks.
 
 ## Mercari production request and server result
 

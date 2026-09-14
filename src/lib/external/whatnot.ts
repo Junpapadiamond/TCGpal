@@ -4,8 +4,9 @@ import { isGradedListing } from "@/lib/comparison/graded-listing";
 import { APIFY_MAX_RESULTS, httpsImageUrls, observationTime, providerRows, runApifySearch, sellerCardCondition } from "./apify";
 import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 
-// The provider's current README says dollars; the earlier branch assumed cents.
-// An operator must verify a sample against its listing before selecting a unit.
+// The README shows dollars, but the September 14 pilot returned amountSafe equal
+// to amount (16600, 100, 13900). Official Money.amount docs describe minor units;
+// a listing-page check is still required before selecting the production unit.
 // Never infer units from the price magnitude or silently migrate an old token.
 export type WhatnotPriceUnit = "dollars" | "cents";
 export function hasWhatnotCredentials() {
@@ -50,11 +51,11 @@ export function parseWhatnotListings(payload: unknown, card: CardIdentityCandida
       matchAspectText, listingLanguage: language, active: true,
       raw: !isGradedListing(item.title) && !facets.some((facet) => /^graded$/i.test(facet)), currency: "USD",
       price,
-      shipping: null, buyerFee: 0,
+      shipping: null, buyerFee: null,
       claimedCondition: sellerCardCondition(`${item.title} ${matchAspectText}`),
       imageUrl: images[0] ?? null, imageUrls: images,
       seller: { feedbackPercentage: null, feedbackCount: reviews && reviews > 0 ? reviews : null, returnsAccepted: null, topRated: null, buyerProtection: null, subRatings: null },
-      evidence: { photoCount: images.length, frontBackExplicit: labels.has("FRONT") && labels.has("BACK"), closeupsExplicit: false, surfaceExplicit: false, identityExplicit: false, substantiveConditionNotes: false, missing: ["Shipping requires checkout confirmation."] },
+      evidence: { photoCount: images.length, frontBackExplicit: labels.has("FRONT") && labels.has("BACK"), closeupsExplicit: false, surfaceExplicit: false, identityExplicit: false, substantiveConditionNotes: false, missing: ["Shipping and buyer fees require checkout confirmation."] },
       observedAt: observationTime(item.scrapedAt, now), demo: false, userSupplied: false,
     });
   }

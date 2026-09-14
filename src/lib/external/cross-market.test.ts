@@ -27,6 +27,21 @@ describe("cross-market provider facts", () => {
       expect(parseWhatnotListings([{ ...whatnot, ...changes }], card, now, "dollars")).toEqual([]);
     }
   });
+  it("accepts the observed ACTIVE/BUY_IT_NOW shape without inventing missing checkout charges", () => {
+    // Anonymized structural regression from the September 14 pilot. The unit is
+    // explicit test input, not evidence that a live listing price was verified.
+    const [seed] = parseWhatnotListings([{
+      ...whatnot, publicStatus: "ACTIVE", transactionType: "BUY_IT_NOW",
+      price: { amount: 100, amountSafe: 100, currency: "USD" },
+    }], card, now, "cents");
+    expect(seed.price).toBe(1);
+    expect(seed.shipping).toBeNull();
+    expect(seed.buyerFee).toBeNull();
+    const listing = normalizeListing({ listing: seed, buyer: { country: "US", postalCode: "", taxRate: null, desiredCondition: "Near Mint" }, confirmedCard: card });
+    expect(listing.costComplete).toBe(false);
+    expect(listing.eligible).toBe(false);
+    expect(listing.eligibilityIssues.map((issue) => issue.code)).toContain("buyer_fee_unknown");
+  });
   it("retains Mercari shipping while admitting that checkout fees are unknown", () => {
     const [seed] = parseMercariListings([mercari], card, now);
     expect(seed.shipping).toBe(4.99);
