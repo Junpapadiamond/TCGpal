@@ -11,6 +11,8 @@ import {
 import { cardIdentityCandidateSchema, comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
 import { clearComparisonCache } from "@/lib/comparison/report-cache";
 import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
+import { demoListingSeeds } from "@/lib/comparison/fixtures";
+import type { PlatformAgent } from "@/lib/comparison/platforms";
 
 // Keep the orchestration tests hermetic: stub the Pokémon catalog response so we
 // never hit the live API. eBay/PriceCharting short-circuit on missing env creds
@@ -136,6 +138,21 @@ function makeBarrier(parties: number) {
 }
 
 describe("listing comparison agent", () => {
+  it("runs injected marketplace fixtures through real normalization without publishing them to the report cache", async () => {
+    const agents: PlatformAgent[] = (["eBay", "Whatnot", "Mercari"] as const).map((marketplace) => ({
+      id: marketplace.toLowerCase(), marketplace, label: "Isolated QA fixture", sourceMode: "third_party_provider",
+      requiredEnv: [], isConfigured: () => true,
+      search: async () => [{ ...demoListingSeeds[0], id: marketplace, marketplace, demo: false, shipping: null, buyerFee: null }],
+    }));
+    const pure = { ...request, confirmedCardId: "swsh7-215", sourceListing: { ...request.sourceListing, title: "", description: "", url: "", price: null } };
+    const report = await runListingComparison(pure, { fetcher, agents });
+    expect(report.platforms.filter((platform) => platform.status === "complete")).toHaveLength(3);
+    expect(new Set(report.candidates.map((listing) => listing.marketplace)).size).toBe(3);
+    expect(report.rankedChoices).toHaveLength(0);
+    const isolated = await runListingComparison(pure, { fetcher, agents: [] });
+    expect(isolated.candidates).toHaveLength(0);
+  });
+
   it("keeps identity metadata optional for older and demo responses", () => {
     const parsed = cardIdentityCandidateSchema.parse({
       id: "demo-card",

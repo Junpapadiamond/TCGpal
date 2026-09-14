@@ -10,7 +10,7 @@ import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 // Never infer units from the price magnitude or silently migrate an old token.
 export type WhatnotPriceUnit = "dollars" | "cents";
 export function hasWhatnotCredentials() {
-  return process.env.CROSS_MARKET_APIFY_ENABLED === "1" && Boolean(process.env.WHATNOT_APIFY_TOKEN?.trim())
+  return process.env.CROSS_MARKET_PRICE_PILOT_ENABLED === "1" && Boolean(process.env.WHATNOT_APIFY_TOKEN?.trim())
     && ["dollars", "cents"].includes(process.env.WHATNOT_APIFY_PRICE_UNIT ?? "");
 }
 
@@ -18,7 +18,7 @@ const itemSchema = z.object({
   type: z.string().optional(), id: z.string().min(1).max(200), title: z.string().min(1).max(2000),
   subtitle: z.string().nullish(), description: z.string().nullish(),
   publicStatus: z.string().nullish(), transactionType: z.string().nullish(), quantity: z.number().nullish(),
-  price: z.object({ amountSafe: z.number().nullish(), currency: z.string().nullish() }).nullish(),
+  price: z.object({ amount: z.number().int().nonnegative().nullish(), amountSafe: z.number().nullish(), currency: z.string().nullish() }).nullish(),
   images: z.array(z.object({ url: z.string().nullish(), label: z.string().nullish() })).nullish(),
   user: z.object({ sellerRating: z.object({ overall: z.number().nullish(), numReviews: z.number().int().nonnegative().nullish() }).nullish() }).nullish(),
   scrapedAt: z.string().nullish(),
@@ -35,8 +35,10 @@ export function parseWhatnotListings(payload: unknown, card: CardIdentityCandida
     const item = parsed.data;
     if ((item.type && item.type !== "listing") || !["BUY_NOW", "BUY_IT_NOW"].includes(item.transactionType ?? "")
       || !["ACTIVE", "PUBLISHED"].includes(item.publicStatus ?? "") || (item.quantity != null && item.quantity <= 0)
-      || item.price?.currency !== "USD" || typeof item.price.amountSafe !== "number" || item.price.amountSafe <= 0) continue;
-    const price = Math.round(item.price.amountSafe * (unit === "cents" ? 1 : 100)) / 100;
+      || item.price?.currency !== "USD") continue;
+    const sourceAmount = unit === "cents" ? item.price.amount ?? item.price.amountSafe : item.price.amountSafe;
+    if (typeof sourceAmount !== "number" || sourceAmount <= 0) continue;
+    const price = Math.round(sourceAmount * (unit === "cents" ? 1 : 100)) / 100;
     if (price <= 0) continue;
     const facets = (item.subtitle ?? "").split(/[∙·•]/).map((s) => s.trim());
     const language = facets.find((facet) => /^(english|japanese|korean|german|french|spanish|italian|traditional chinese|simplified chinese)$/i.test(facet)) ?? null;
@@ -68,9 +70,9 @@ export async function searchWhatnotListings(card: CardIdentityCandidate, fetcher
   const search = (query ?? `${card.name} ${card.cardNumber}`).trim().slice(0, 250);
   const unit = process.env.WHATNOT_APIFY_PRICE_UNIT as WhatnotPriceUnit;
   return runApifySearch({
-    provider: "whatnot", actor: "epicscrapers~whatnot-scraper", token: process.env.WHATNOT_APIFY_TOKEN!,
+    provider: "whatnot", actor: "epicscrapers~whatnot-scraper", build: "0.2.30", memoryMbytes: 256, token: process.env.WHATNOT_APIFY_TOKEN!,
     key: JSON.stringify([card.id, card.language, search, unit]), fetcher, signal,
-    input: { mode: "search", vertical: "PRODUCT", includeListings: true, includeLivestreams: false, includeProducts: false, includeUsers: false, includeCategories: false, searchQueries: [search], maxResults: APIFY_MAX_RESULTS, maxResultsPerQuery: APIFY_MAX_RESULTS, proxyConfiguration: { useApifyProxy: false } },
+    input: { mode: "search", vertical: "PRODUCT", includeListings: true, includeLivestreams: false, includeProducts: false, includeUsers: false, includeCategories: false, searchUrls: [], searchQueries: [search], filters: [], maxResults: APIFY_MAX_RESULTS, maxResultsPerQuery: APIFY_MAX_RESULTS, proxyConfiguration: { useApifyProxy: false }, cookies: null },
     parse: (payload, now) => parseWhatnotListings(payload, card, now, unit),
   });
 }

@@ -41,6 +41,7 @@ import {
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
 import { CrossMarketOpportunities } from "./CrossMarketOpportunities";
+import { CrossMarketPrices } from "./CrossMarketPrices";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
 import { submitsOnEnter } from "@/features/comparison/search-submit";
 import { summarizeExclusions } from "@/features/comparison/exclusion-summary";
@@ -2571,6 +2572,8 @@ function ComparisonResult({
       )}
 
       {report.request.cardHint.game === "onePiece" && <GameBetaNotice />}
+
+      <CrossMarketPrices candidates={report.candidates} platforms={report.platforms} card={report.confirmedCard} />
 
       {outcome === "next_moves" && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">

@@ -37,6 +37,19 @@ Another [public implementation](https://github.com/TSavo/arbitrage-scout/blob/54
 
 The current [US buyer shipping guide](https://help.whatnot.com/hc/en-us/articles/16369289657741-Shipping-for-buyers-in-the-US) confirms that product category, shipment weight/size, seller settings and delivery distance can affect shipping; eligible combined purchases can change the incremental charge. Its published rate table does not establish any sampled listing's shipping cost. No standard flat fee was added to the parser. Additional official-source research identified [CardTrader's market API application path](cardtrader-source-review-2026-09-14.md); its access request is prepared but unsent, and the founder has no account. It is an additional candidate, not a replacement for the required Whatnot/Mercari work.
 
+## Mercari US follow-up — bounded Console tests
+
+The founder approved one `getascraper/mercari-us-scraper` test with a standard Apify US proxy, only Giratina V 186/196, at most three rows, 30 seconds and a $0.03 run cap, without marketplace credentials/cookies. This is a single research exception, not a recurring production proxy grant.
+
+| Actor/run | Input and observed outcome |
+| --- | --- |
+| `jongoose/mercari-scraper`, `YNk7VVkr3mS5SinMg` | Build 0.1.1, 512 MB, same query, best-match, three rows, proxy disabled, 30 seconds/$0.03. Timed out at 23:19:21 UTC with zero rows. The log reports blocked authorization and repeated new-IP attempts despite the input; do not adopt or repeat this transport. |
+| `getascraper/mercari-us-scraper`, `KLmUn7bqZtZasXasa` | Build 0.3.2, 2 GB, relevance/on-sale, three rows, standard Apify residential US proxy, 30 seconds/$0.03. Timed out at 23:24:32 UTC with zero rows. Container pull began 23:24:02.902, creation at 23:24:25.721 and search navigation at 23:24:28.238. About 23 seconds went to startup; this run does not establish whether an adequately timed search can return listings. |
+
+Both runs are terminal; neither produced production inventory. Opening the getascraper cost breakdown confirmed zero Listing events and two Actor Start units totaling **$0.0001**; platform usage is included. The rounded header shows $0.000, not truly free execution. The current getascraper Free tariff is $0.00299/listing plus $0.00005 per startup GB. Its published future tariff takes effect September 16 at 02:13:04 UTC and adds $0.04 per search plus $0.00275/listing. A $0.03 cap must not silently increase when this takes effect. No rental or subscription was accepted.
+
+A separate 90-second retry was proposed with the same three-row/$0.03 boundaries; it has not been approved or started. New code prepares a capped price-display pilot but keeps paid activation off. The shared application allowance permits at most 20 starts with [`maxTotalChargeUsd`](https://docs.apify.com/api/v2/actor-run-sync-get-dataset-items-post) set to $0.03 each; this counter does not include historical Console tests or unrelated account usage. `maxItems` alone is not a spending safeguard for pay-per-event Actors, so actor-specific input limits and the total-cost cap remain mandatory.
+
 ## What the four exact Actors establish
 
 The public Actor and build APIs exposed pricing, README and input schemas, not implementation source. The mechanisms below are author descriptions; only Whatnot has now had the bounded output test described above.

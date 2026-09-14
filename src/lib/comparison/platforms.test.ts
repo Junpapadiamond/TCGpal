@@ -158,8 +158,17 @@ describe("default registry (roadmap adapters)", () => {
     vi.stubEnv("MERCARI_APIFY_TOKEN", "test");
     const configured = getPlatformAgents().filter((agent) => agent.isConfigured());
     expect(configured.map((agent) => agent.marketplace)).toEqual(["eBay"]);
-    expect(getPlatformAgents().find((agent) => agent.id === "whatnot")?.sourceMode).toBe("manual_fallback");
+    expect(getPlatformAgents().find((agent) => agent.id === "whatnot")?.sourceMode).toBe("third_party_provider");
     expect(getPlatformAgents().find((agent) => agent.id === "mercari")?.sourceMode).toBe("browser_dom");
+  });
+  it("connects the explicit price pilot through the same three-platform fan-out", () => {
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+    vi.stubEnv("MERCARI_APIFY_PROXY_ENABLED", "1");
+    vi.stubEnv("EBAY_CLIENT_ID", "test"); vi.stubEnv("EBAY_CLIENT_SECRET", "test");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "test"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    vi.stubEnv("MERCARI_APIFY_TOKEN", "test");
+    expect(getPlatformAgents().filter((agent) => agent.isConfigured()).map((agent) => agent.marketplace)).toEqual(["eBay", "Whatnot", "Mercari"]);
+    expect(getPlatformAgents().find((agent) => agent.id === "mercari")?.sourceMode).toBe("third_party_provider");
   });
   it("connects the self-built Mercari adapter in deployment and propagates its source mode", () => {
     vi.stubEnv("VERCEL", "1"); vi.stubEnv("MERCARI_DIRECT_ENABLED", "");

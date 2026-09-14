@@ -83,9 +83,19 @@ These are capability comparisons, not a claim that any tool defeats a Whatnot ac
 
 Invoke `collectMercariResearch(tab, query, { founderTriggered: true, robotsReviewedAt: "YYYY-MM-DD", maxDetails: 2 })` inside the supported browser REPL after normal browser selection and a current robots review. This is agent-run research, **not a standalone production service**. Keep observations in the ignored research directory; never import the collector into product routes or the production registry.
 
+## Price-display pilot update — September 14
+
+The founder now prioritizes one search displaying eBay, Whatnot and Mercari asking prices. Missing shipping/fees or unresolved condition/print evidence must be visible, but are no longer a prerequisite for displaying the item price. Known conflicts, sold/graded items and excluded products are still filtered. The existing strict complete-cost verdict and ranking remain unchanged. This supersedes the earlier requirement to finish the larger evaluation before building the display; it does not establish successful three-source acquisition or grant recurring proxy access.
+
+The strongest case is immediate buyer utility from seeing concrete offers together. Two material risks are comparing a cheaper wrong print and spending the small balance on failed searches. The implementation flags unresolved evidence, preserves deterministic exclusions and attribution, caps each Actor at $0.03/three rows, and shares a durable lifetime allowance of 20 starts across both providers. Cache hits do not reserve another start; an unavailable counter stops paid calls. This is a prepared rollout ceiling, not authorization to spend it. Old rollout flags cannot enable the new pilot. Actor builds are pinned, but prices can change independently of builds.
+
+The smallest next live test remains Giratina V 186/196, at most three records. The approved 30-second Mercari US proxy test returned no rows after spending about 23 seconds starting its container. A proposed 90-second retry retains the $0.03 cap and needs a separate user answer. Success requires at least one active raw listing with an evidenced USD amount and source URL; price, variant and unknown cost classifications must survive the real parser. Kill on zero useful rows, a money-mapping error, another access barrier or budget exhaustion. Codex owns implementation and evidence; the founder owns additional spending/proxy authorization. Review on September 15 before activation. Exact runs and pricing are in [the Actor review](apify-self-build-review-2026-09-14.md).
+
+The local browser harness injects synthetic provider fixtures through trusted function dependencies and the real parsers/ranking. Custom-source evaluations cannot read or publish production report caches. The harness is visibly labeled and never calls a paid Actor; screenshots prove UI behavior only.
+
 ## Production and remaining work
 
-The production registry uses eBay Browse and unconfigured Whatnot/Mercari entries. Old Apify environment variables cannot activate paid acquisition. Historical provider parsers remain unused by the registry for reference tests; no credentials are requested.
+Production has not been switched to the paid pilot. The candidate registry supports Whatnot via Apify and Mercari via the gated Apify adapter or its existing direct adapter; source failures remain visible. The new pilot flag defaults off. Whatnot requires an explicit checked monetary unit; Mercari additionally requires a proxy flag that has not been approved for production. No provider credential was copied into production during this update. The current 25-second Actor timeout is not validated for Mercari cold starts and must be reconciled with a successful bounded test before rollout.
 
 The shipped collector-number fix, market-only anchor and deterministic incomplete-cost verdict remain. Listed midPrice/mid do not substitute for market prices. Generic merchandise “Like new” is not card NM; seller prose is a claim, not grading evidence.
 

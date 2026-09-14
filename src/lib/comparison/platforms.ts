@@ -6,6 +6,8 @@ import {
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
 import { isMercariDirectEnabled, searchMercariDirect } from "@/lib/external/mercari-direct";
+import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
+import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -61,8 +63,8 @@ export type PlatformAgent = {
   search: (input: PlatformSearchInput) => Promise<PlatformSeed[]>;
 };
 
-// The founder retired paid Apify acquisition. Research collectors are separate
-// from this production registry and cannot be enabled through environment flags.
+// Price-display pilot sources are explicitly enabled, independently of the
+// retired Apify flag. Their shared spending cap is enforced before every run.
 export const ebayPlatformAgent: PlatformAgent = {
   id: "ebay",
   marketplace: "eBay",
@@ -74,14 +76,22 @@ export const ebayPlatformAgent: PlatformAgent = {
     searchEbayAlternatives(card, buyer, fetcher, plan?.query, plan?.ebayProduct),
 };
 
-export const whatnotPlatformAgent: PlatformAgent = stubPlatformAgent({
-  id: "whatnot", marketplace: "Whatnot", label: "Whatnot — direct acquisition under research",
-  sourceMode: "manual_fallback", requiredEnv: [],
-});
+export const whatnotPlatformAgent: PlatformAgent = {
+  id: "whatnot", marketplace: "Whatnot", label: "Whatnot listing prices via Apify",
+  sourceMode: "third_party_provider", requiredEnv: ["WHATNOT_APIFY_TOKEN", "WHATNOT_APIFY_PRICE_UNIT", "CROSS_MARKET_PRICE_PILOT_ENABLED"],
+  isConfigured: hasWhatnotCredentials, searchTimeoutMs: 32_000,
+  search: ({ card, fetcher, plan, signal }) => searchWhatnotListings(card, fetcher, plan?.query, signal),
+};
 export const mercariPlatformAgent: PlatformAgent = {
   id: "mercari", marketplace: "Mercari", label: "Mercari public listing adapter",
   sourceMode: "browser_dom", requiredEnv: [], isConfigured: isMercariDirectEnabled,
   searchTimeoutMs: 32_000, search: searchMercariDirect,
+};
+const mercariApifyPlatformAgent: PlatformAgent = {
+  id: "mercari", marketplace: "Mercari", label: "Mercari listing prices via Apify",
+  sourceMode: "third_party_provider", requiredEnv: ["MERCARI_APIFY_TOKEN", "MERCARI_APIFY_PROXY_ENABLED", "CROSS_MARKET_PRICE_PILOT_ENABLED"],
+  isConfigured: hasMercariCredentials, searchTimeoutMs: 32_000,
+  search: ({ card, fetcher, plan, signal }) => searchMercariListings(card, fetcher, plan?.query, signal),
 };
 
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
@@ -119,7 +129,7 @@ const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
-  return DEFAULT_AGENTS;
+  return DEFAULT_AGENTS.map((agent) => agent.id === "mercari" && hasMercariCredentials() ? mercariApifyPlatformAgent : agent);
 }
 
 export function getConfiguredPlatformAgents(agents: PlatformAgent[] = getPlatformAgents()): PlatformAgent[] {

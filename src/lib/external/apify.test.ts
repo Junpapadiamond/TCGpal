@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runApifySearch } from "./apify";
 import { clearLocalCache } from "@/lib/ops/cache";
-import { enforceRateLimit } from "@/lib/ops/rate-limit";
+import { reserveApifyPilotRun } from "./apify-budget";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 
-vi.mock("@/lib/ops/rate-limit", () => ({ enforceRateLimit: vi.fn() }));
+vi.mock("./apify-budget", () => ({ reserveApifyPilotRun: vi.fn() }));
 vi.mock("@/lib/ops/redis", () => ({ isRedisConfigured: () => true, getRedisClient: () => null }));
 const parse = () => [{ ...demoListingSeeds[0], demo: false, observedAt: "2026-09-14T16:00:00.000Z" }];
 const base = { provider: "whatnot" as const, actor: "epicscrapers~whatnot-scraper", token: "test-secret", key: "test-card", input: { searchQueries: ["Pikachu 58/102"] }, parse };
-beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-14T16:00:00Z")); clearLocalCache(); vi.mocked(enforceRateLimit).mockResolvedValue({ allowed: true, limit: 25, remaining: 24, resetAt: new Date(), retryAfterSeconds: 0, backend: "redis" }); });
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-14T16:00:00Z")); clearLocalCache(); vi.mocked(reserveApifyPilotRun).mockResolvedValue(undefined); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
 describe("paid source safeguards", () => {
@@ -20,7 +20,9 @@ describe("paid source safeguards", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(a[0].observedAt).toBe("2026-09-14T16:00:00.000Z");
     const [url, init] = vi.mocked(fetcher).mock.calls[0] as unknown as [URL, RequestInit];
-    expect(url.searchParams.get("maxTotalChargeUsd")).toBe("0.15");
+    expect(url.searchParams.get("maxTotalChargeUsd")).toBe("0.03");
+    expect(url.searchParams.get("maxItems")).toBe("3");
+    expect(reserveApifyPilotRun).toHaveBeenCalledTimes(1);
     expect(url.href).not.toContain("test-secret");
     expect(init.headers).toMatchObject({ authorization: "Bearer test-secret" });
   });
@@ -40,10 +42,10 @@ describe("paid source safeguards", () => {
   });
   it("makes no paid request when the global budget is exhausted or unavailable in production", async () => {
     const fetcher = vi.fn();
-    vi.mocked(enforceRateLimit).mockResolvedValueOnce({ allowed: false, limit: 25, remaining: 0, resetAt: new Date(), retryAfterSeconds: 99, backend: "redis" });
+    vi.mocked(reserveApifyPilotRun).mockRejectedValueOnce(new Error("Pilot budget reached"));
     await expect(runApifySearch({ ...base, fetcher })).rejects.toThrow(/budget/);
     vi.stubEnv("NODE_ENV", "production");
-    vi.mocked(enforceRateLimit).mockResolvedValueOnce({ allowed: true, limit: 25, remaining: 24, resetAt: new Date(), retryAfterSeconds: 0, backend: "memory" });
+    vi.mocked(reserveApifyPilotRun).mockRejectedValueOnce(new Error("Shared pilot counter is unavailable"));
     await expect(runApifySearch({ ...base, fetcher })).rejects.toThrow(/counter is unavailable/);
     expect(fetcher).not.toHaveBeenCalled();
   });

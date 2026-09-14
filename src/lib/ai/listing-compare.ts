@@ -17,7 +17,7 @@ import {
   parseEbayUrl,
   type EbaySourceListing,
 } from "@/lib/external/ebay";
-import { getConfiguredPlatformAgents, runPlatformFanout } from "@/lib/comparison/platforms";
+import { getConfiguredPlatformAgents, runPlatformFanout, type PlatformAgent } from "@/lib/comparison/platforms";
 import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
 import { canonicalPrintIdentity } from "@/lib/comparison/print-fidelity";
 import {
@@ -95,6 +95,9 @@ export async function runListingComparison(
   rawRequest: ComparisonRequest,
   dependencies: {
     fetcher?: typeof fetch;
+    // Trusted dependency injection for isolated evaluations, never public input.
+    // Custom source runs cannot reuse or publish production report caches.
+    agents?: PlatformAgent[];
     now?: () => Date;
     signal?: AbortSignal;
     opsContext?: {
@@ -145,7 +148,7 @@ export async function runListingComparison(
       inspectListingId: null,
       identityContractVersion: 4,
       comparisonContractVersion: 5,
-      demoMode: getConfiguredPlatformAgents().length === 0,
+      demoMode: getConfiguredPlatformAgents(dependencies.agents).length === 0,
       generatedAt,
     });
   }
@@ -160,7 +163,7 @@ export async function runListingComparison(
 
   // R7: pure card searches are served from a 15-minute cache keyed by
   // card + condition + delivery context.
-  const cacheable = isCacheableRequest(request);
+  const cacheable = dependencies.agents === undefined && isCacheableRequest(request);
   const cacheKey = comparisonCacheKey(request, confirmedCard.id);
   if (cacheable) {
     const cached = await getCachedComparison(cacheKey, now());
@@ -252,6 +255,7 @@ export async function runListingComparison(
   // API credentials, so this scales to whatever platforms the operator has wired —
   // a failing one is isolated and never sinks the others.
   const fanout = await runPlatformFanout({
+    agents: dependencies.agents,
     card: confirmedCard,
     buyer: request.buyer,
     fetcher,

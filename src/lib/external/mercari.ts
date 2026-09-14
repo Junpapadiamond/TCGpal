@@ -4,7 +4,10 @@ import { isGradedListing } from "@/lib/comparison/graded-listing";
 import { APIFY_MAX_RESULTS, httpsImageUrls, observationTime, providerRows, runApifySearch, sellerCardCondition } from "./apify";
 import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 
-export function hasMercariCredentials() { return process.env.CROSS_MARKET_APIFY_ENABLED === "1" && Boolean(process.env.MERCARI_APIFY_TOKEN?.trim()); }
+export function hasMercariCredentials() {
+  return process.env.CROSS_MARKET_PRICE_PILOT_ENABLED === "1" && process.env.MERCARI_APIFY_PROXY_ENABLED === "1"
+    && Boolean(process.env.MERCARI_APIFY_TOKEN?.trim());
+}
 const itemSchema = z.object({
   type: z.string().optional(), listing_id: z.string().regex(/^m\d+$/),
   url: z.string().url().refine((value) => {
@@ -58,9 +61,10 @@ export async function searchMercariListings(card: CardIdentityCandidate, fetcher
   if (!hasMercariCredentials()) throw new Error("Mercari provider token is required.");
   const search = (query ?? `${card.name} ${card.cardNumber}`).trim().slice(0, 250);
   return runApifySearch({
-    provider: "mercari", actor: "getascraper~mercari-us-scraper", token: process.env.MERCARI_APIFY_TOKEN!,
+    provider: "mercari", actor: "getascraper~mercari-us-scraper", build: "0.3.2", memoryMbytes: 2048, token: process.env.MERCARI_APIFY_TOKEN!,
     key: JSON.stringify([card.id, card.language, search]), fetcher, signal,
-    input: { keyword: search, status: ["on_sale"], limit: APIFY_MAX_RESULTS, proxyConfiguration: { useApifyProxy: false } },
+    input: { startUrls: [], keyword: search, sort: "relevance", status: ["on_sale"], limit: APIFY_MAX_RESULTS,
+      proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"], apifyProxyCountry: "US" } },
     parse: (payload, now) => parseMercariListings(payload, card, now),
   });
 }

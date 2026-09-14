@@ -8,9 +8,11 @@ import { createJiti } from "jiti";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const port = Number(process.env.TCGLENS_QA_PORT ?? 4317);
-const jiti = createJiti(import.meta.url, { alias: { "@": path.join(root, "src") } });
+const jiti = createJiti(import.meta.url, { interopDefault: false, alias: { "@": path.join(root, "src") } });
 process.env.EBAY_CLIENT_ID = "local-qa-only";
-process.env.CROSS_MARKET_APIFY_ENABLED = "1";
+process.env.CROSS_MARKET_PRICE_PILOT_ENABLED = "0";
+process.env.MERCARI_APIFY_PROXY_ENABLED = "0";
+process.env.MERCARI_DIRECT_ENABLED = "0";
 process.env.EBAY_CLIENT_SECRET = "local-qa-only";
 process.env.WHATNOT_APIFY_TOKEN = "local-qa-only";
 process.env.WHATNOT_APIFY_PRICE_UNIT = "dollars";
@@ -24,6 +26,18 @@ const { resolveCardIdentity } = await jiti.import(path.join(root, "src/lib/ai/ca
 const { runListingComparison } = await jiti.import(path.join(root, "src/lib/ai/listing-compare.ts"));
 const { getPokemonCardFromSnapshot } = await jiti.import(path.join(root, "src/lib/external/pokemon-catalog-snapshot.ts"));
 const { findOnePieceCatalogVariant } = await jiti.import(path.join(root, "src/lib/external/one-piece-catalog.ts"));
+const { ebayPlatformAgent } = await jiti.import(path.join(root, "src/lib/comparison/platforms.ts"));
+const { parseWhatnotListings } = await jiti.import(path.join(root, "src/lib/external/whatnot.ts"));
+const { parseMercariListings } = await jiti.import(path.join(root, "src/lib/external/mercari.ts"));
+// Exercise real parsers and ranking through explicit trusted dependency injection.
+// Never invoke paid run/start or Redis paths; never mutate the default registry.
+const fixtureAgents = [ebayPlatformAgent, {
+  id: "whatnot", marketplace: "Whatnot", label: "Whatnot QA fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true,
+  search: async ({ card, fetcher }) => parseWhatnotListings(await (await fetcher("https://api.apify.com/fixtures/whatnot-scraper")).json(), card, new Date(), "dollars"),
+}, {
+  id: "mercari", marketplace: "Mercari", label: "Mercari QA fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true,
+  search: async ({ card, fetcher }) => parseMercariListings(await (await fetcher("https://api.apify.com/fixtures/mercari-us-scraper")).json(), card, new Date()),
+}];
 
 function fixtureFetcher(request = {}) {
   const chosen = getPokemonCardFromSnapshot(request.confirmedCardId ?? "") ?? findOnePieceCatalogVariant(request.confirmedCardId ?? "");
@@ -71,7 +85,7 @@ const server = http.createServer(async (req, res) => {
       const input = JSON.parse(body.toString());
       const value = pathname.endsWith("card-identity")
         ? await resolveCardIdentity(input, { fetcher: fixtureFetcher(input) })
-        : await runListingComparison(input, { fetcher: fixtureFetcher(input) });
+        : await runListingComparison(input, { fetcher: fixtureFetcher(input), agents: fixtureAgents });
       res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify(value));
       return;

@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { getJsonCache, setJsonCache } from "@/lib/ops/cache";
-import { enforceRateLimit } from "@/lib/ops/rate-limit";
-import { isRedisConfigured } from "@/lib/ops/redis";
+import { reserveApifyPilotRun } from "./apify-budget";
 import { listingSeedSchema, type ListingSeed } from "@/lib/schemas";
 import { titleConditionFloor } from "@/lib/comparison/ranking";
 
-export const APIFY_MAX_RESULTS = 40;
-export const APIFY_MAX_CHARGE_USD = 0.15;
+export const APIFY_MAX_RESULTS = 3;
+export const APIFY_MAX_CHARGE_USD = 0.03;
 export const APIFY_TIMEOUT_MS = 30_000;
 const cacheSchema = z.array(listingSeedSchema).max(APIFY_MAX_RESULTS);
 const flights = new Map<string, Promise<ListingSeed[]>>();
@@ -14,6 +13,8 @@ const flights = new Map<string, Promise<ListingSeed[]>>();
 type Search = {
   provider: "whatnot" | "mercari";
   actor: string;
+  build?: string;
+  memoryMbytes?: number;
   token: string;
   key: string;
   input: Record<string, unknown>;
@@ -23,10 +24,10 @@ type Search = {
 };
 
 // Successful sanitized facts retain their acquisition time. Errors never become
-// cached empty inventory. Global daily limits fail closed in production if the
-// shared counter is unavailable; per-process counters are only for local tests.
+// cached empty inventory. Both sources share a durable pilot spending ceiling;
+// a missing counter closes paid acquisition in every environment.
 export async function runApifySearch(search: Search): Promise<ListingSeed[]> {
-  const key = `${search.provider}:v1:${search.key}`;
+  const key = `${search.provider}:v2:${search.actor}:${search.build ?? "latest"}:${search.key}`;
   const previous = flights.get(key);
   if (previous) return previous;
   const pending = load(search, key).finally(() => flights.delete(key));
@@ -44,17 +45,12 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
     } catch { return null; }
   } });
   if (cached) return cached;
-  if (process.env.NODE_ENV === "production" && !isRedisConfigured()) {
-    throw new Error("Paid source paused: shared daily budget counter is not configured.");
-  }
-  const limit = await enforceRateLimit(`apify:${search.provider}`, { max: 25, windowMs: 24 * 60 * 60 * 1000 });
-  if (process.env.NODE_ENV === "production" && limit.backend !== "redis") {
-    throw new Error("Paid source paused: shared daily budget counter is unavailable.");
-  }
-  if (!limit.allowed) throw new Error("Daily source budget reached; try again after the UTC reset.");
   search.signal?.throwIfAborted();
+  await reserveApifyPilotRun();
   const url = new URL(`https://api.apify.com/v2/acts/${search.actor}/run-sync-get-dataset-items`);
   url.search = new URLSearchParams({ timeout: "25", maxItems: String(APIFY_MAX_RESULTS), maxTotalChargeUsd: String(APIFY_MAX_CHARGE_USD), restartOnError: "false", clean: "true" }).toString();
+  if (search.build) url.searchParams.set("build", search.build);
+  if (search.memoryMbytes) url.searchParams.set("memory", String(search.memoryMbytes));
   let response: Response;
   try {
     response = await search.fetcher(url, {

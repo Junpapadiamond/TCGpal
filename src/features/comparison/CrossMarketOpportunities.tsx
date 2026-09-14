@@ -41,9 +41,11 @@ export function CrossMarketOpportunities({ candidates, platforms = [] }: {
             : budget > 0
               ? zh ? `额外运费和手续费低于 ${money(budget)}，才比当前最低价更便宜。` : `Cheaper only if the missing shipping and fees stay below ${money(budget)}.`
               : zh ? "已知费用已达到或超过当前最低价；还需加上缺失费用。" : "Known costs already meet or exceed the cheapest complete listing; missing charges come on top.";
+          const sourceMode = platforms.find((platform) => platform.marketplace === listing.marketplace)?.sourceMode;
           const source = listing.userSupplied ? zh ? "用户提供" : "User supplied"
-            : ["Whatnot", "Mercari"].includes(listing.marketplace) ? zh ? "Apify 第三方数据" : "Third-party data via Apify"
-              : listing.marketplace;
+            : sourceMode === "browser_dom" ? zh ? "商品页面数据" : "Listing page data"
+              : sourceMode === "third_party_provider" ? zh ? "Apify 第三方数据" : "Third-party data via Apify"
+                : listing.marketplace;
           return <li key={listing.id} className="px-4 py-5 sm:px-5">
             <div className="flex items-start gap-4">
               <ListingPhoto listing={listing} />

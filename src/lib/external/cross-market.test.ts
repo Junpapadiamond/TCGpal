@@ -27,6 +27,10 @@ describe("cross-market provider facts", () => {
       expect(parseWhatnotListings([{ ...whatnot, ...changes }], card, now, "dollars")).toEqual([]);
     }
   });
+  it("uses the integer minor-unit amount when the cents contract is selected, without dividing formatted dollars twice", () => {
+    const [seed] = parseWhatnotListings([{ ...whatnot, price: { amount: 12345, amountSafe: 123.45, currency: "USD" } }], card, now, "cents");
+    expect(seed.price).toBe(123.45);
+  });
   it("accepts the observed ACTIVE/BUY_IT_NOW shape without inventing missing checkout charges", () => {
     // Anonymized structural regression from the September 14 pilot. The unit is
     // explicit test input, not evidence that a live listing price was verified.
