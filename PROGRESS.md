@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-09-14
 canonical_branch: origin/main
 last_verified_product_commit: 91f47cb
-working_branch: main (91f47cb verified; opt-in sources await live acceptance)
+working_branch: main (91f47cb locally verified; GitHub publication uses the same file tree)
 max_lines: 300
 ---
 
@@ -224,7 +224,7 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-- 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to local main. Remote push/deployment verification follows this handoff update.
+- 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to local main. Local Git has no push credential; the connected GitHub API publishes an identical verified tree, preserving the local validation commits separately.
 - Node 24.19 and dependencies are present. npm is absent from PATH, so verification invokes the installed ESLint, TypeScript, Vitest, metadata audit and Next CLIs directly; no dependency changes/install.
 - Graphify CLI is unavailable here (the documented macOS path and Windows PATH do not resolve). Existing AST graph was used for navigation; no graph regeneration is claimed. Structural graph refresh remains a tooling follow-up.
 - Browser evidence is in the local Codex visualization directory `2026/09/14/01a0a16e-9654-7801-ba6a-bd2355fbcb09/cross-market-qa/`: EN/中文 desktop, 中文 mobile and a five-search manifest. Synthetic provider facts are visibly labeled; no credentials or raw marketplace pages are committed.
@@ -253,7 +253,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Current verified product commit: `91f47cb`, fast-forwarded from `6abdffa` to main. Final release gate passed (2026-09-14); no live Whatnot/Mercari accuracy claim. Historical measurements below describe their stated dates, not this branch.
+Locally verified product commit: `91f47cb`, based on `6abdffa`. GitHub publication is validated by matching the complete file-tree hash; the local validation commit is retained separately. Final release gate passed (2026-09-14); no live Whatnot/Mercari accuracy claim. Historical measurements below describe their stated dates, not this branch.
 
 - 2026-09-14 browser acceptance: Pikachu 58/102 → Edit Luffy OP01-024 → New Charizard 4/102 → Edit Zoro OP01-001 → New Giratina V 186/196. Both games, explicit IDs, no stale-card carryover; EN/中文 desktop and 390px mobile screenshots. Synthetic provider facts only. Final gate: lint/typecheck/build and metadata audit passed; 102 test files passed, 5 skipped; 1,477 tests passed, 5 skipped. Plugin validator passed. Git diff whitespace check passed. Graphify refresh could not run because its CLI is absent.
 
