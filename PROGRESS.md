@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-14
 canonical_branch: origin/main
-last_verified_product_commit: 91f47cb
-working_branch: main (91f47cb verified; remote publication blocked by GitHub login)
+last_verified_product_commit: 8ba402f
+working_branch: main (8ba402f deployed; Apify live acceptance pending)
 max_lines: 300
 ---
 
@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay + opt-in Whatnot/Mercari implemented; exact-number and market-only price fixes | Complete credentialed samples and source review before setting the rollout flag |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Deployed 8ba402f: opt-in Whatnot/Mercari, exact-number and market-only price fixes | Complete credentialed samples and source review before setting the rollout flag |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows checkout from current main; cross-market changes under final verification | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -224,7 +224,7 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-- 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to local main. Remote remains `6abdffa`: HTTPS Git has no credential; the connected GitHub create-tree request was rejected by automatic approval because its 35 files exceed the 200,000-byte review limit. No remote write succeeded; do not fragment the request to bypass review. A local GitHub login question is pending.
+- 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to main. After user completed GitHub login, normal Git push published through `8ba402f`; Vercel deployment `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY and aliased to lenstcg.com. The earlier oversized connector write was rejected and never retried by fragmentation.
 - Node 24.19 and dependencies are present. npm is absent from PATH, so verification invokes the installed ESLint, TypeScript, Vitest, metadata audit and Next CLIs directly; no dependency changes/install.
 - Graphify CLI is unavailable here (the documented macOS path and Windows PATH do not resolve). Existing AST graph was used for navigation; no graph regeneration is claimed. Structural graph refresh remains a tooling follow-up.
 - Browser evidence is in the local Codex visualization directory `2026/09/14/01a0a16e-9654-7801-ba6a-bd2355fbcb09/cross-market-qa/`: EN/中文 desktop, 中文 mobile and a five-search manifest. Synthetic provider facts are visibly labeled; no credentials or raw marketplace pages are committed.
@@ -253,8 +253,9 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Locally verified product commit: `91f47cb`, based on `6abdffa`. Publication remains pending. Local GitHub login is required for normal push; the attempted connector publication was rejected before creating a tree. No deployment of these changes is claimed. Final release gate passed (2026-09-14); no live Whatnot/Mercari accuracy claim. Historical measurements below describe their stated dates, not this branch.
+Verified production commit: `8ba402f` (implementation `91f47cb`, based on `6abdffa`). Vercel `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY at lenstcg.com (2026-09-14). Final release gate passed (2026-09-14); no live Whatnot/Mercari accuracy claim. Historical measurements below describe their stated dates, not this branch.
 
+- 2026-09-14 live release check: capabilities advertises only eBay; Pikachu 58/102 resolves to base1-58 (1.49s), 999/999 returns not_found (2.72s). One real comparison (3.25s): 50 eBay rows / 5 eligible / four lenses, all winner fee/total equations reconcile. Whatnot/Mercari explicitly skipped and unconfigured; no paid provider success is claimed.
 - 2026-09-14 browser acceptance: Pikachu 58/102 → Edit Luffy OP01-024 → New Charizard 4/102 → Edit Zoro OP01-001 → New Giratina V 186/196. Both games, explicit IDs, no stale-card carryover; EN/中文 desktop and 390px mobile screenshots. Synthetic provider facts only. Final gate: lint/typecheck/build and metadata audit passed; 102 test files passed, 5 skipped; 1,477 tests passed, 5 skipped. Plugin validator passed. Git diff whitespace check passed. Graphify refresh could not run because its CLI is absent.
 
 - 2026-08-27 gate on `feat/whatnot-live` at `2db3ebc`, including the uncommitted WS-SOURCES work: `npm run lint` clean, `npm run typecheck` clean, `npm run test` green at 85 files passed / 5 skipped (90) and 1344 tests passed / 7 skipped (1351) in 10.97s, including the `metadata:check` audit gate. `npm run build` was not run; the last recorded build is still `289d334`.
