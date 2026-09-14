@@ -8,7 +8,7 @@ The founder rejected Apify runtime acquisition and asked us to inspect its scrap
 
 The underlying instinct is sound: TCGlens needs a small subset of public listing metadata. Owning acquisition removes per-result actor charges and gives us control of validation. Two serious objections remain: a browser that works locally does not prove reliable server access, and page metadata can contradict actual availability or omit destination-specific costs. Public visibility alone does not establish production source rights.
 
-**Decision:** retire paid adapters from the production registry; build a separate, founder-triggered browser research collector. The first falsifiable test is two queries across Pokémon and One Piece, with at most three observed details per query. It must produce real page evidence without paid providers, record price/status conflicts, and preserve unknown costs and exact-print uncertainty. Stop on access restrictions; no stealth, session extraction, proxy rotation or CAPTCHA bypass. No background crawler or scheduler.
+**Decision:** retire paid adapters from the production registry; retain the separate, founder-triggered browser research collector and its completed observations. The initial falsifiable test was two queries across Pokémon and One Piece, with at most three observed details per query. It produced Mercari evidence without paid providers and retained cost/status/identity uncertainty; Whatnot details remained inaccessible. The source-access review below now blocks deployment promotion. Stop on access restrictions; no stealth, session extraction, proxy rotation or CAPTCHA bypass. No background crawler or scheduler.
 
 Before promotion, test 20 exact cards on two runs. Require 100% inspected monetary-unit/currency/status accuracy, at least 98% exact-print precision, monetary provenance, no unsupported complete-cost winner, useful additional coverage over eBay, and p95 latency below 30 seconds. Measure actual compute/browser/agent cost: zero Apify calls is not zero operating cost. Kill on a price-unit error, access requiring evasion, unsupported inventory or no useful incremental coverage. These larger gates have **not** been measured.
 
@@ -38,6 +38,18 @@ Minimal local evidence: output/frontier-research/direct-metadata/2026-09-14-obse
 
 ## Repeatable harness
 
+### Source-access review: unresolved, not approved
+
+Checked on 2026-09-14 against primary platform documents:
+
+- [Mercari Prohibited Conduct](https://www.mercari.com/us/help_center/topics/account/policies/prohibited-conduct/) prohibits third-party automated access and extraction, including scrapers. Its [Terms of Service](https://www.mercari.com/us/help_center/topics/account/policies/terms-of-service/) incorporate that policy. No permission applicable to TCGlens was established.
+- [Whatnot Terms of Service](https://legal.whatnot.com/) (English v2.0, effective 2026-03-04) prohibit automated use and scraping/harvesting. The defined App includes the website, not only the mobile application.
+- The same legal center's API License Agreement (v1.1, effective 2026-07-30) applies to the **Seller API**. Its internal-business license is not evidence of permission for public cross-seller comparison; uses outside its grant require prior written consent. The [developer introduction](https://developers.whatnot.com/docs/getting-started/introduction) still says new users are not being onboarded.
+
+The earlier robots review establishes tested path eligibility only; it does not settle these platform terms or grant reuse rights. These are documented promotion constraints, not a legal conclusion about every possible use. Local readability and an Apify actor's availability do not establish authorization for TCGlens.
+
+Recommendation: preserve the prototype and offline tests, but do not deploy or expand it into production harvesting. The smallest next access test is a platform response identifying a permitted channel for public listing title/URL, price/currency, availability, condition, shipping/fees, images and freshness, including display/cache rights and operational limits. Founder owns outreach and review; no request was sent. A permitted channel plus restored Whatnot access would enable the larger evaluation; neither condition alone proves production readiness. Review remains 2026-09-21.
+
 ### Alternatives checked in the browser
 
 | Option | What the primary documentation supports | Decision for TCGlens |
@@ -61,4 +73,4 @@ The production registry uses eBay Browse and unconfigured Whatnot/Mercari entrie
 
 The shipped collector-number fix, market-only anchor and deterministic incomplete-cost verdict remain. Listed midPrice/mid do not substitute for market prices. Generic merchandise “Like new” is not card NM; seller prose is a claim, not grading evidence.
 
-Outstanding: permitted Whatnot access, a repeatable deployment acquisition method independent of this desktop session, larger exact-print/field evaluation, and all Frontier Research promotion gates in AGENTS.md. Three live production marketplaces are **not complete**. Apify activation/token placement is no longer a next step.
+Outstanding: Whatnot account review, permitted acquisition/reuse for both marketplaces under the source-access review above, a repeatable deployment acquisition method independent of this desktop session, larger exact-print/field evaluation, and all Frontier Research promotion gates in AGENTS.md. Three live production marketplaces are **not complete**. Account reinstatement would restore account access, not automatically grant production data rights. Apify activation/token placement is no longer a next step.
