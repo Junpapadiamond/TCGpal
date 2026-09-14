@@ -2,7 +2,19 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Current decision
+## Latest: Mercari production request and server result
+
+After the source review below, the founder explicitly requested Mercari production deployment first. We implemented the self-built adapter on `codex/mercari-production` (`2bbef16`) and deployed a Vercel preview. This is deployment authorization from the founder, not a claim of platform permission. Whatnot is unchanged.
+
+- Candidate: `src/lib/external/mercari-browser.ts`, `mercari-direct.ts`, and the promoted DOM reader beside them. Uses pinned Puppeteer/Chromium, no Apify, account, cookie reuse, proxy, stealth or verification bypass. Checks robots, bounds search/detail navigation and time, validates Zod facts/provenance/freshness, and retains existing deterministic ranking gates. Generic merchandise condition does not become NM. Shared limiter/cache is used when configured; the process-local fallback is not a global deployment budget guarantee.
+- Local gate: lint, typecheck, metadata audit and build passed; 107 test files / 1,508 tests passed, 5 skipped. Comparison function trace includes four Chromium binaries and is approximately 78.3 MB. Graphify CLI is unavailable in this Windows checkout; no graph refresh is claimed.
+- Preview `dpl_FaXQPGRhBSpJT2uTsLgdNmczC9DC` reached READY. A real `Pikachu 58/102` comparison (no buyer ZIP or personal data) took 8.05 seconds: eBay returned 50 rows; **Mercari's launched browser received HTTP 403**, producing `fallback`, count 0, and an explicit access-restriction message. No Mercari detail was reached in this server test. No source retry or evasion followed.
+- Result: the code/deployment boundary works; server-to-Mercari acquisition fails. `configured: true` in the preview means an adapter is installed, not that its live inventory is accessible. Do not claim the preview's capability list proves useful Mercari coverage.
+- The candidate remains on its preview branch, **not merged into main or promoted to lenstcg.com**. The actual production app remains eBay-only. The next required evidence is a permitted server acquisition path returning real Mercari pages, followed by field/exact-print/cost evaluation. The 20-card/two-run gate remains unmeasured; repeating it against the same access block would add no evidence.
+
+Minimal local server evidence is in `output/frontier-research/direct-metadata/2026-09-14-mercari-server-probe.json` (ignored). No credentials, session material, seller identifiers or raw captures are committed.
+
+## Earlier research decision
 
 The founder rejected Apify runtime acquisition and asked us to inspect its scraper contracts and build an automated alternative. This supersedes the paid-pilot activation plan. Whatnot and Mercari remain required targets alongside eBay; manual links and aggregate references do not fulfill the three-marketplace goal.
 

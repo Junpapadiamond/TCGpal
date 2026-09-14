@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-09-14
 canonical_branch: origin/main
 last_verified_product_commit: e099ddf
-working_branch: main (e099ddf deployed; direct acquisition remains research)
+working_branch: codex/mercari-production (2bbef16 preview; Mercari server access returns 403)
 max_lines: 300
 ---
 
@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | Exact-number/market-only fixes live; Apify retired; 5 real Mercari detail observations | Whatnot account review and permitted data access for both platforms; pass promotion gates |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Fixes live; self-built Mercari candidate 2bbef16 passes local gate but Vercel receives 403 | Resolve server acquisition before merging Mercari; Whatnot account review remains separate |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows checkout from current main; cross-market changes under final verification | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -188,7 +188,8 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Plain HTTP search returned 403 for both platforms. Normal browser Whatnot search initially rendered then redirected to an account restriction; no details verified, access stopped, no cause inferred. Do not evade this restriction or count its initial cards as confirmed inventory.
 - Self-built Mercari DOM/JSON-LD tracer verified 5 real details across Pokemon/One Piece (4 active, 1 sold), including an automatic search-to-two-details run. Observed item/shipping/buyer fees; found stale InStock JSON-LD on a visibly sold page and added a tested conflict rule. Research is not exact-print-approved or production inventory. Raw observations stay ignored under `output/frontier-research/direct-metadata/`.
 - Source-access review on 2026-09-14 found explicit automated-extraction restrictions in Mercari Prohibited Conduct and Whatnot Terms; Whatnot's July 2026 API license covers the Seller API, not an established public comparison grant. Promotion is unresolved; robots eligibility is not permission. User confirmed Whatnot restrictions across browsers; the banned account's violations table is empty. Official appeal form/draft prepared, nothing submitted.
-- Read first: `docs/cross-market-pilot.md`, `scripts/frontier-research/direct-metadata/collect.mjs`, `mercari-dom.mjs` beside it, `src/lib/comparison/platforms.ts`, `src/lib/comparison/incomplete-cost.ts`. Next: account review, permitted data access, deployment transport, 20-card/two-run evaluation and promotion review (founder; 2026-09-21).
+- Founder then requested Mercari production first. Candidate `2bbef16` on `codex/mercari-production`: self-built server Chromium, bounded robots-aware acquisition, Zod validation, browser_dom source mode, no Apify; local full gate green (1,508 tests). Preview `dpl_FaXQPGRhBSpJT2uTsLgdNmczC9DC` READY; actual no-ZIP Pikachu 58/102 run: eBay 50 rows, Mercari HTTP 403 / fallback / 0 rows, 8.05s. Main/production unchanged; do not equate configured with live success or evade the block.
+- Read first: `docs/cross-market-pilot.md`, `src/lib/external/mercari-browser.ts`, `mercari-direct.ts` beside it, `src/lib/comparison/platforms.ts`. Next: permitted server acquisition, then field/exact-print evaluation and production promotion; Whatnot account review remains separate (founder; 2026-09-21).
 <!-- progress:end -->
 
 <!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-released-firecrawl-frontier-killed" tags="mcp,plugin,agents,marketplaces,distribution,business,firecrawl,frontier" -->
