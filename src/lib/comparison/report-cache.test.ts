@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearComparisonCache,
   comparisonCacheKey,
@@ -59,7 +59,32 @@ function platformStub(overrides: Partial<ComparisonReport["platforms"][number]> 
 }
 
 describe("comparison report cache", () => {
-  beforeEach(clearComparisonCache);
+  beforeEach(() => {
+    clearComparisonCache();
+    vi.stubEnv("EBAY_CLIENT_ID", "");
+    vi.stubEnv("MERCARI_DIRECT_ENABLED", "0");
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "0");
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("does not reuse an eBay-only report after enabling a marketplace or changing its monetary mapping", () => {
+    const disabled = comparisonCacheKey(pureSearch, "swsh7-215");
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "private-test-token");
+    vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    const cents = comparisonCacheKey(pureSearch, "swsh7-215");
+    expect(cents).not.toBe(disabled);
+    expect(cents).not.toContain("private-test-token");
+    vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "dollars");
+    expect(comparisonCacheKey(pureSearch, "swsh7-215")).not.toBe(cents);
+    vi.stubEnv("MERCARI_DIRECT_ENABLED", "1");
+    const direct = comparisonCacheKey(pureSearch, "swsh7-215");
+    vi.stubEnv("MERCARI_APIFY_PROXY_ENABLED", "1");
+    vi.stubEnv("MERCARI_APIFY_TOKEN", "private-mercari-token");
+    const apify = comparisonCacheKey(pureSearch, "swsh7-215");
+    expect(apify).not.toBe(direct);
+    expect(apify).not.toContain("private-mercari-token");
+  });
 
   it("only treats pure card searches as cacheable", () => {
     expect(isCacheableRequest(pureSearch)).toBe(true);
@@ -79,7 +104,7 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe(`identity-v4|ranking-v8-cross-market-prices|${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}|swsh7-215|Near Mint|10001|0.08`);
+    expect(key).toBe(`identity-v4|ranking-v8-cross-market-prices|${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}|sources:none|swsh7-215|Near Mint|10001|0.08`);
   });
 
   it("refuses reports created before the exact-print identity contract", async () => {

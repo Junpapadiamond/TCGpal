@@ -90,7 +90,9 @@ export const mercariPlatformAgent: PlatformAgent = {
 const mercariApifyPlatformAgent: PlatformAgent = {
   id: "mercari", marketplace: "Mercari", label: "Mercari listing prices via Apify",
   sourceMode: "third_party_provider", requiredEnv: ["MERCARI_APIFY_TOKEN", "MERCARI_APIFY_PROXY_ENABLED", "CROSS_MARKET_PRICE_PILOT_ENABLED"],
-  isConfigured: hasMercariCredentials, searchTimeoutMs: 32_000,
+  // Actor 90s + HTTP response 5s + outer cleanup 2s. Other sources retain
+  // their existing bounds; this path still requires explicit paid-pilot flags.
+  isConfigured: hasMercariCredentials, searchTimeoutMs: 97_000,
   search: ({ card, fetcher, plan, signal }) => searchMercariListings(card, fetcher, plan?.query, signal),
 };
 

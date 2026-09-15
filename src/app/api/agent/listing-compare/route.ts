@@ -7,10 +7,10 @@ import { rateLimitHeaders, rateLimitRequest } from "@/lib/ops/rate-limit";
 import { captureOperationalException } from "@/lib/ops/sentry";
 import { comparisonRequestSchema } from "@/lib/schemas";
 
-// Give the multi-provider comparison enough headroom for cold provider paths and
-// optional expanded discovery, so upstream slowness can degrade into a JSON
-// result instead of Vercel's plain-text timeout body.
-export const maxDuration = 60;
+// The optional Mercari pilot is bounded at 97s including Actor startup/response.
+// Leave headroom for identity, crosswalk and report generation so provider
+// timeout becomes a partial JSON result rather than Vercel's timeout body.
+export const maxDuration = 180;
 
 export async function POST(request: Request) {
   const route = "listing-compare";

@@ -170,6 +170,21 @@ describe("default registry (roadmap adapters)", () => {
     expect(getPlatformAgents().filter((agent) => agent.isConfigured()).map((agent) => agent.marketplace)).toEqual(["eBay", "Whatnot", "Mercari"]);
     expect(getPlatformAgents().find((agent) => agent.id === "mercari")?.sourceMode).toBe("third_party_provider");
   });
+  it("retains a Mercari result that arrives after the former 32-second provider deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+      vi.stubEnv("MERCARI_APIFY_PROXY_ENABLED", "1");
+      vi.stubEnv("MERCARI_APIFY_TOKEN", "test");
+      const agent = getPlatformAgents().find((candidate) => candidate.id === "mercari")!;
+      const pending = searchPlatformWithTimeout({ ...agent, search: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 40_000));
+        return [seed("slow-mercari", "Mercari")];
+      } }, { card, buyer, fetcher }).then((rows) => ({ rows }), (error: Error) => ({ error: error.message }));
+      await vi.advanceTimersByTimeAsync(40_000);
+      expect(await pending).toMatchObject({ rows: [expect.objectContaining({ id: "slow-mercari" })] });
+    } finally { vi.useRealTimers(); }
+  });
   it("connects the self-built Mercari adapter in deployment and propagates its source mode", () => {
     vi.stubEnv("VERCEL", "1"); vi.stubEnv("MERCARI_DIRECT_ENABLED", "");
     const mercari = getPlatformAgents().find(agent => agent.id === "mercari")!;

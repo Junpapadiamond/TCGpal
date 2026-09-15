@@ -6,7 +6,9 @@ import { titleConditionFloor } from "@/lib/comparison/ranking";
 
 export const APIFY_MAX_RESULTS = 3;
 export const APIFY_MAX_CHARGE_USD = 0.03;
-export const APIFY_TIMEOUT_MS = 30_000;
+// Mercari's observed image pull consumed ~23s before navigation began.
+// Keep Whatnot's shorter bound; allow the proposed capped Mercari pilot 90s.
+const ACTOR_TIMEOUT_SECONDS = { whatnot: 25, mercari: 90 } as const;
 const cacheSchema = z.array(listingSeedSchema).max(APIFY_MAX_RESULTS);
 const flights = new Map<string, Promise<ListingSeed[]>>();
 
@@ -47,8 +49,10 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
   if (cached) return cached;
   search.signal?.throwIfAborted();
   await reserveApifyPilotRun();
+  const actorTimeoutSeconds = ACTOR_TIMEOUT_SECONDS[search.provider];
+  const requestTimeoutMs = (actorTimeoutSeconds + 5) * 1000;
   const url = new URL(`https://api.apify.com/v2/acts/${search.actor}/run-sync-get-dataset-items`);
-  url.search = new URLSearchParams({ timeout: "25", maxItems: String(APIFY_MAX_RESULTS), maxTotalChargeUsd: String(APIFY_MAX_CHARGE_USD), restartOnError: "false", clean: "true" }).toString();
+  url.search = new URLSearchParams({ timeout: String(actorTimeoutSeconds), maxItems: String(APIFY_MAX_RESULTS), maxTotalChargeUsd: String(APIFY_MAX_CHARGE_USD), restartOnError: "false", clean: "true" }).toString();
   if (search.build) url.searchParams.set("build", search.build);
   if (search.memoryMbytes) url.searchParams.set("memory", String(search.memoryMbytes));
   let response: Response;
@@ -56,7 +60,7 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
     response = await search.fetcher(url, {
       method: "POST", headers: { authorization: `Bearer ${search.token}`, "content-type": "application/json" },
       body: JSON.stringify(search.input), cache: "no-store", redirect: "error",
-      signal: search.signal ? AbortSignal.any([search.signal, AbortSignal.timeout(APIFY_TIMEOUT_MS)]) : AbortSignal.timeout(APIFY_TIMEOUT_MS),
+      signal: search.signal ? AbortSignal.any([search.signal, AbortSignal.timeout(requestTimeoutMs)]) : AbortSignal.timeout(requestTimeoutMs),
     });
   } catch {
     throw new Error("Provider request failed or timed out; no inventory was inferred.");

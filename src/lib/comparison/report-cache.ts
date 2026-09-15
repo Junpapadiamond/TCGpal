@@ -2,6 +2,7 @@ import { clearLocalCache, getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { comparisonReportSchema, type ComparisonReport, type ComparisonRequest } from "@/lib/schemas";
 import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-revision";
+import { getConfiguredPlatformAgents } from "./platforms";
 
 // R7: pure card searches (no user-supplied listing facts) are cacheable — the
 // fan-out result only depends on the confirmed card, desired condition, and
@@ -14,11 +15,19 @@ const COMPARISON_CACHE_REVISION = "ranking-v8-cross-market-prices";
 const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
+  // Activation and money-mapping changes must not reuse an earlier source mix.
+  // Only public source modes and the allowlisted unit enter the key, never keys
+  // or tokens. Custom evaluation agents already bypass this cache entirely.
+  const sources = getConfiguredPlatformAgents().map((agent) => [
+    agent.id, agent.sourceMode,
+    ...(agent.id === "whatnot" ? [process.env.WHATNOT_APIFY_PRICE_UNIT === "cents" ? "cents" : "dollars"] : []),
+  ].join(":")).sort().join(",");
   return [
     "identity-v4",
     COMPARISON_CACHE_REVISION,
     ONE_PIECE_PRINT_METADATA_REVISION,
     ONE_PIECE_CATALOG_REVISION,
+    `sources:${sources || "none"}`,
     confirmedCardId,
     request.buyer.desiredCondition,
     request.buyer.postalCode,

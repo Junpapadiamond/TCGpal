@@ -6,7 +6,8 @@ import { runWithMcpRequestContext } from "@/lib/mcp/request-context";
 import { rateLimitHeaders, rateLimitMcpRequest } from "@/lib/ops/rate-limit";
 import { captureOperationalException } from "@/lib/ops/sentry";
 
-export const maxDuration = 60;
+// Same comparison engine and optional cold-provider allowance as the REST route.
+export const maxDuration = 180;
 
 const mcpHandler = createMcpHandler(
   (server) => registerTcglensTools(server),
