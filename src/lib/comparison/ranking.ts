@@ -62,7 +62,7 @@ const exclusionPatterns = [
   // Case", a bare "... 215/203 Extended Art") through as a raw single. The real
   // print classes sellers do use — "alternate art", "full art", "art rare",
   // "special art" — are matched by altArtTitlePattern and unaffected.
-  /\bextended[\s-]*art\b/i,
+  /\bextended[\s-]*art(?:work)?\b/i,
   /\bart\s+case\b/i,
   /\bmagnetic\s+(?:case|holder)\b/i,
   /\bwall\s+art\b/i,

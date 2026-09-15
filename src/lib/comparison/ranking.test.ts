@@ -478,6 +478,7 @@ describe("comparison ranking", () => {
       "Umbreon VMAX 215/203 Extended Art",
       "Pokemon Umbreon VMAX 215/203 Extended-Art Holo",
       "Umbreon VMAX Alt Art 215/203 EXTENDED ART Premium Art Case",
+      "Pokemon Giratina V Alternate Art 186/196 Lost Origin Extended Artwork Case",
     ]) {
       const novelty = normalizeListing({ listing: { ...demoListingSeeds[0], id: title, title }, buyer });
       expect(novelty.eligible, title).toBe(false);

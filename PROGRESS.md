@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-14
 canonical_branch: origin/main
-last_verified_product_commit: e099ddf
-working_branch: codex/mercari-production (production activation requested; configuration pending)
+last_verified_product_commit: 1fefdda
+working_branch: main (cross-market code deployed; paid source configuration pending)
 max_lines: 300
 ---
 
@@ -17,7 +17,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Live concrete source: eBay Browse. Founder now requests production activation of the three-marketplace price pilot; Vercel Passkey login and a separately reviewed $0.03 Mercari test are pending. No production credentials/flags changed. Prior Whatnot 3 rows/$0.00905; Mercari 0/$0.0001 (WS-SOURCES). TCGCSV remains reference data.
+- Live concrete source: eBay Browse. Three-marketplace code 1fefdda is production READY on lenstcg.com; capabilities confirms only eBay configured. Vercel Passkey login and separately reviewed $0.03 Mercari test pending; no production credentials/flags changed. Prior Whatnot 3 rows/$0.00905; Mercari 0/$0.0001 (WS-SOURCES). TCGCSV remains reference data.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | Production activation requested; release preparation in progress | Complete Vercel Passkey login; resolve explicit 90s/$0.03 test approval; configure and verify real source prices |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Code deployed at 1fefdda; source configuration pending | Complete Vercel Passkey login; resolve explicit 90s/$0.03 test approval; configure and verify real source prices |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows checkout from current main; cross-market changes under final verification | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -181,7 +181,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 ## WS-SOURCES - Cross-market comparison
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
-- Founder now explicitly requests production activation. `CrossMarketPrices` shows up to 3/source with unknown fees/condition, attribution and timestamps; known wrong/sold/graded products remain excluded, ranking unchanged. EN/中文 desktop and 390px mobile fixture QA passed. Retain shared Redis's 20 lifetime starts/$0.03 cap. Vercel configuration awaits founder Passkey login. `docs/cross-market-pilot.md`.
+- Founder requested production activation; code 1fefdda is production READY (dpl_E8yDe5WjwCh44o46c86vHJJUBHWU, lenstcg.com). Live Giratina search renders three panels: eBay 50 rows, Whatnot/Mercari Not connected; verdict $745 pre-tax. Prior EN/中文/mobile fixture QA passed. Retain Redis 20 starts/$0.03 cap. Vercel configuration awaits founder Passkey login. Live QA found Extended Artwork Case missing the novelty filter; narrow fix and cache invalidation prepared. `docs/cross-market-pilot.md`.
 - Whatnot: anonymous GraphQL 403; prior Apify pilot 3 rows/$0.00905, units still require a live check. Mercari: approved getascraper US proxy run `KLmUn7bqZtZasXasa` timed out/0 rows/$0.0001, ~23s startup. Automatic approval rejected the additional 90s Console start: production activation wording did not explicitly cover that paid test. Specific 3-row/$0.03 confirmation pending; no new run started. Do not retry indirectly. `docs/apify-self-build-review-2026-09-14.md`.
 - Deterministic `incompleteCostOpportunity` gives a strict missing-charge budget against the cheapest eligible complete pre-tax total. It requires all non-cost gates; incomplete-cost listings never win a lens. The UI shows source counts/failures, item/shipping/fee facts, evidence and a conditional verdict.
 - Market anchors use sales-based `marketPrice` / `market`, never listed `midPrice` / `mid`; exact collector numbers remain strict. Cache includes configured modes/Whatnot unit. Builds pinned Whatnot 0.2.30 / Mercari 0.3.2; Mercari Actor/HTTP/fan-out 90/95/97s, REST/MCP 180s. Deployment no longer automatically enables the direct HTTP-403 transport: `MERCARI_DIRECT_ENABLED=1` is required. Regression tests verified red then green; Apify flags remain independent.
@@ -255,7 +255,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
-Verified production deployment: `e211599`, `dpl_GxbMwf2EUsbbMb19AoLXp9gnJn8a` READY (2026-09-14); production still uses eBay only. Price UI candidate `b6ad204` is READY in preview. Timeout/cache follow-up: lint/typecheck/build and metadata audit passed; 109 files/1,524 tests passed (5 skipped), including the sequential two-game flow. EN/中文 desktop and 390px mobile price UI QA used synthetic fixtures. Graphify CLI remains unavailable. Real three-platform prices and paid activation remain unverified; historical measurements retain their stated dates.
+Verified production: 1fefdda READY on lenstcg.com, 70.5s Vercel build; capabilities 200 lists only eBay, immediate deployment error scan empty. Fresh lint/typecheck/build + metadata audit and 109 files/1,524 tests pass (5 skipped), including sequential two-game flow and direct-default-off regression. Live Giratina result renders all source panels with missing connections explicit; Extended Artwork Case follow-up passed red/green regression. Prior EN/中文/mobile price QA used synthetic fixtures. Real paid activation and three-source prices remain unverified.
 
 - 2026-09-14 live release check: capabilities advertises only eBay; Pikachu 58/102 resolves to base1-58 (1.49s), 999/999 returns not_found (2.72s). One real comparison (3.25s): 50 eBay rows / 5 eligible / four lenses, all winner fee/total equations reconcile. Whatnot/Mercari explicitly skipped and unconfigured; no paid provider success is claimed.
 - 2026-09-14 direct-metadata follow-up: full gate passed (lint/typecheck/build/metadata audit; 104 test files and 1,489 tests passed, 5 skipped). Five real Mercari details observed, including sold-vs-InStock conflict; one automatic two-detail run. Paid registry path removed; Graphify CLI still absent. Alternative tool primary docs recorded in the pilot document; Whatnot access still requires operator/platform resolution.
