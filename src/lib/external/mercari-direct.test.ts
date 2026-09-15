@@ -38,9 +38,10 @@ describe("direct Mercari production facts", () => {
     const [graded] = parseMercariObservations([observation({ description: "Japanese PSA 10 card" })], card, now);
     expect(graded.raw).toBe(false); expect(graded.matchAspectText).toContain("Japanese");
   });
-  it("enables the direct adapter on Vercel with an explicit kill switch, independently of Apify", () => {
+  it("does not activate the blocked direct transport merely by deploying to Vercel", () => {
     vi.stubEnv("VERCEL", "1"); vi.stubEnv("MERCARI_DIRECT_ENABLED", "");
-    expect(isMercariDirectEnabled()).toBe(true);
+    expect(isMercariDirectEnabled()).toBe(false);
+    vi.stubEnv("MERCARI_DIRECT_ENABLED", "1"); expect(isMercariDirectEnabled()).toBe(true);
     vi.stubEnv("MERCARI_DIRECT_ENABLED", "0"); expect(isMercariDirectEnabled()).toBe(false);
   });
   it("returns a collector access failure instead of caching empty success", async () => {

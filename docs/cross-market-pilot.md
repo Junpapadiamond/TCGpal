@@ -2,7 +2,15 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest: conditional Apify budget and self-build review
+## Latest: production activation requested
+
+The founder explicitly requested "在生产环境启用" after reviewing the prepared candidate. This authorizes deploying and configuring the existing bounded production pilot; it does not establish successful live acquisition or resolve platform reuse rights. Keep the existing three-result/$0.03 per-run limits and shared 20-start lifetime allowance, without resetting it or increasing charges. Codex owns deployment and a same-card source verification; review on September 15. Success requires real source prices and URLs surviving the parsers and UI. Disable an affected source on monetary-unit error, access failure or budget exhaustion while retaining other source results.
+
+Current operational state: Vercel's environment-settings login requires the founder's Passkey/security key. No production token or flag has been changed yet. Automatic approval rejected starting the additional 90-second Mercari Console test because it treats that paid run as requiring separate explicit authorization; the test has not started and its prepared form retains the $0.03 cap. A specific confirmation is pending. Earlier statements below describe their historical state unless superseded here.
+
+The previously HTTP-403-blocked direct Mercari adapter now requires `MERCARI_DIRECT_ENABLED=1`; being on Vercel no longer activates it automatically. This prevents deploying the Apify-capable code from silently selecting the failed direct transport while credentials are still being configured. Regression tests cover both the default-off state and explicit activation. No symbols/import relationships changed, so no graph regeneration is needed for this guard change.
+
+## Conditional Apify budget and self-build review
 
 The founder subsequently provided four Actor links and permitted carefully understood use of a $5 Apify balance; self-building remains preferred. After login, Free/$5 was confirmed. One Whatnot query with a $0.03 cap returned three listing records for $0.00905 in event charges. The [four-Actor audit and real pilot](apify-self-build-review-2026-09-14.md) record inputs, pricing, output gaps and an offline ranking replay. Monetary units still need listing-page confirmation; no shipping/buyer-fee data arrived and none of the three qualified for the requested NM/Base print. Paid production sources remain inactive. The linked Mercari Actor is Japan-only; SNKRDUNK exposes product-level lowest asks.
 

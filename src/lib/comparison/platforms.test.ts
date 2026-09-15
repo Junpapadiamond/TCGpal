@@ -185,9 +185,11 @@ describe("default registry (roadmap adapters)", () => {
       expect(await pending).toMatchObject({ rows: [expect.objectContaining({ id: "slow-mercari" })] });
     } finally { vi.useRealTimers(); }
   });
-  it("connects the self-built Mercari adapter in deployment and propagates its source mode", () => {
+  it("requires explicit direct Mercari activation and propagates its source mode", () => {
     vi.stubEnv("VERCEL", "1"); vi.stubEnv("MERCARI_DIRECT_ENABLED", "");
     const mercari = getPlatformAgents().find(agent => agent.id === "mercari")!;
+    expect(mercari.isConfigured()).toBe(false);
+    vi.stubEnv("MERCARI_DIRECT_ENABLED", "1");
     expect(mercari.isConfigured()).toBe(true);
     expect(mercari.requiredEnv).toEqual([]);
     expect(summarizePlatformOutcome({ agent: mercari, seeds: [] }).result.sourceMode).toBe("browser_dom");

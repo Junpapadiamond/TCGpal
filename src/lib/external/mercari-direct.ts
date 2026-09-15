@@ -21,8 +21,9 @@ const flights = new Map<string, Promise<ListingSeed[]>>();
 const TTL_MS = 5 * 60 * 1000;
 
 export function isMercariDirectEnabled() {
-  return process.env.MERCARI_DIRECT_ENABLED !== "0"
-    && (process.env.VERCEL === "1" || process.env.MERCARI_DIRECT_ENABLED === "1");
+  // The deployment probe returned HTTP 403. Deploying the Apify pilot must not
+  // silently reactivate this separate transport when its credentials are absent.
+  return process.env.MERCARI_DIRECT_ENABLED === "1";
 }
 
 export function parseMercariObservations(payload: unknown, card: CardIdentityCandidate, now = new Date()): ListingSeed[] {
