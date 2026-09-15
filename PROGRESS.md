@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-14
 canonical_branch: origin/main
-last_verified_product_commit: e23f832
+last_verified_product_commit: 05ee332
 working_branch: main (cross-market code deployed; paid source configuration pending)
 max_lines: 300
 ---
@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | Chrome login works; free Redis installed/connected, runtime compatibility ready | Verify deployed Redis, obtain 90s/$0.03 test answer, complete provider credentials/money checks, then enable |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Free Redis installed; production read/write verified on 05ee332 | Obtain 90s/$0.03 test answer, complete provider credentials/money checks, then enable |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows checkout from current main; cross-market changes under final verification | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -181,7 +181,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 ## WS-SOURCES - Cross-market comparison
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
-- Production e23f832 verified artwork-case exclusion and three source panels; paid sources Not connected. Chrome session resolved Vercel login. Founder confirmed Upstash install: tcglens-production-redis Available/Free, 500k commands, iad1, eviction off, Production only. Initial DBSIZE 0; sensitive KV_REST_API_* credentials injected, no values copied. Compatibility tests red then green; full gate 110 files/1,530 tests, lint/typecheck/build passed. Graphify CLI unavailable. Prior rejected paid test/activation actions not retried. `docs/cross-market-pilot.md`.
+- Production 05ee332 READY on lenstcg.com; prior e23f832 verified artwork-case exclusion/three panels. Free tcglens-production-redis connected only to Production (500k commands, iad1, eviction off); KV_REST_API_* compatibility deployed, no credentials copied. Public card-identity POST returned 200/resolved/1 candidate; DBSIZE rose 0 to 2, paid-start key nil, no warning/error/fatal logs. Full gate 110 files/1,530 tests, lint/typecheck/build passed; Graphify CLI unavailable. Paid sources remain Not connected; rejected actions not retried. `docs/cross-market-pilot.md`.
 - Whatnot: anonymous GraphQL 403; prior Apify pilot 3 rows/$0.00905, units still require a live check. Mercari: approved getascraper US proxy run `KLmUn7bqZtZasXasa` timed out/0 rows/$0.0001, ~23s startup. Automatic approval rejected the additional 90s Console start: production activation wording did not explicitly cover that paid test. Specific 3-row/$0.03 confirmation pending; no new run started. Do not retry indirectly. `docs/apify-self-build-review-2026-09-14.md`.
 - Deterministic `incompleteCostOpportunity` gives a strict missing-charge budget against the cheapest eligible complete pre-tax total. It requires all non-cost gates; incomplete-cost listings never win a lens. The UI shows source counts/failures, item/shipping/fee facts, evidence and a conditional verdict.
 - Market anchors use sales-based `marketPrice` / `market`, never listed `midPrice` / `mid`; exact collector numbers remain strict. Cache includes configured modes/Whatnot unit. Builds pinned Whatnot 0.2.30 / Mercari 0.3.2; Mercari Actor/HTTP/fan-out 90/95/97s, REST/MCP 180s. Deployment no longer automatically enables the direct HTTP-403 transport: `MERCARI_DIRECT_ENABLED=1` is required. Regression tests verified red then green; Apify flags remain independent.
