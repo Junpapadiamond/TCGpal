@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-23
 canonical_branch: origin/main
-last_verified_product_commit: 9cf1511
+last_verified_product_commit: 6b1453d
 working_branch: main (recommendation-first layout; eBay + Whatnot live; Mercari blocked)
 max_lines: 300
 ---
@@ -255,7 +255,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 - September 23 result-layout gate: lint/typecheck/build + metadata audit passed; 111 files / 1,543 tests passed, 5 skipped. Regression proves the buy appears before closed supplementary prices; disclosure/filter tests passed. Built-in browser verified EN/中文 desktop and 390px mobile, keyboard Enter, hidden links while collapsed, and no horizontal overflow. Synthetic QA only, no new paid source calls. The initial parallel run hit one 5s UI timeout and a malformed generated `.next/dev/types/routes.d.ts`; stopping dev, restoring that generated file from the successful build output, and rerunning the suite with four workers passed without weakening tests. Graphify CLI still unavailable.
-Verified production: 9cf1511 READY on lenstcg.com, 72.6s Vercel build; capabilities 200 lists eBay + Whatnot, deployment warning/error/fatal scan empty. Lint/typecheck/build + metadata audit and 111 files/1,542 tests pass (5 skipped). Real Giratina report at 2026-09-23 06:26 UTC has 50 eBay + 3 Whatnot rows ($950/$984/$1,000); $950 verified on its listing page. Unknown shipping/fees keep Whatnot out of winners. Real EN/中文 desktop and 390px mobile screenshots captured in built-in browser. Mercari remains off after its approved HTTP 403/90s/0-row test ($0.0001).
+Verified production: 6b1453d READY on lenstcg.com (`dpl_83vwS7jakJBAc7RkGoX5fiqunzt7`, 71.7s Vercel build); deployment warning/error/fatal scan empty. Restored the existing Giratina receipt without new provider calls: eBay recommendation first, lens switching works, supplementary prices closed by default, three Whatnot prices still visible on expansion and Mercari shows its compact unavailable state. Real EN/中文 desktop and 390px mobile screenshots captured in built-in browser. Source activation remains 9cf1511: 50 eBay + 3 Whatnot rows ($950/$984/$1,000; $950 page-checked), unknown charges cannot win. Mercari remains off after its approved HTTP 403/90s/0-row test ($0.0001).
 
 - 2026-09-14 live release check: capabilities advertises only eBay; Pikachu 58/102 resolves to base1-58 (1.49s), 999/999 returns not_found (2.72s). One real comparison (3.25s): 50 eBay rows / 5 eligible / four lenses, all winner fee/total equations reconcile. Whatnot/Mercari explicitly skipped and unconfigured; no paid provider success is claimed.
 - 2026-09-14 direct-metadata follow-up: full gate passed (lint/typecheck/build/metadata audit; 104 test files and 1,489 tests passed, 5 skipped). Five real Mercari details observed, including sold-vs-InStock conflict; one automatic two-detail run. Paid registry path removed; Graphify CLI still absent. Alternative tool primary docs recorded in the pilot document; Whatnot access still requires operator/platform resolution.
