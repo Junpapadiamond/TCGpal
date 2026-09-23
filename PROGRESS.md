@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-14
+updated_at: 2026-09-23
 canonical_branch: origin/main
 last_verified_product_commit: 05ee332
-working_branch: main (cross-market code deployed; paid source configuration pending)
+working_branch: codex/apify-cross-market-activation (Whatnot configured; Mercari live test failed)
 max_lines: 300
 ---
 
@@ -17,7 +17,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Live concrete source: eBay Browse; paid sources remain unconfigured. Founder approved free Redis installation: tcglens-production-redis Available, Free/500k commands, iad1, eviction off, Production only. Vercel injected sensitive KV_REST_API_* variables; runtime compatibility added and full gate green (1,530 tests). $0.03 Mercari test and Whatnot money verification remain pending (WS-SOURCES).
+- Live concrete source: eBay Browse; Whatnot Production configuration is prepared pending deployment/live check. September 23: Whatnot cents verified against a real $1.00 page; Mercari 90s/$0.05 test hit HTTP 403 and timed out with zero rows ($0.0001), so its paid switch stays off. Redis is configured; original 20-start key stays unchanged. See WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | Free Redis installed; production read/write verified on 05ee332 | Obtain 90s/$0.03 test answer, complete provider credentials/money checks, then enable |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Whatnot cents verified/configured; Mercari approved live test failed | Deploy tariff guard and verify Whatnot; keep Mercari off after HTTP 403/zero rows |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows checkout from current main; cross-market changes under final verification | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -177,12 +177,12 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 `src/features/comparison/ComparisonApp.tsx`, `src/features/comparison/i18n.tsx`, `src/features/comparison/ComparisonApp.test.tsx`, `src/lib/testing/standard-comparison-flow.ts`; receipt flow in `src/features/receipt/ReceiptPageClient.tsx` and `src/lib/comparison/report-snapshot.ts`.
 <!-- progress:end -->
 
-<!-- progress:workstream id="WS-SOURCES" state="production-activation-pending-config" tags="whatnot,mercari,metadata,provider-cost,unknown-shipping,marketplace" -->
+<!-- progress:workstream id="WS-SOURCES" state="whatnot-activation-mercari-access-blocked" tags="whatnot,mercari,metadata,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
 - Production 05ee332 READY on lenstcg.com; prior e23f832 verified artwork-case exclusion/three panels. Free tcglens-production-redis connected only to Production (500k commands, iad1, eviction off); KV_REST_API_* compatibility deployed, no credentials copied. Public card-identity POST returned 200/resolved/1 candidate; DBSIZE rose 0 to 2, paid-start key nil, no warning/error/fatal logs. Full gate 110 files/1,530 tests, lint/typecheck/build passed; Graphify CLI unavailable. Paid sources remain Not connected; rejected actions not retried. `docs/cross-market-pilot.md`.
-- Whatnot: anonymous GraphQL 403; prior Apify pilot 3 rows/$0.00905, units still require a live check. Mercari: approved getascraper US proxy run `KLmUn7bqZtZasXasa` timed out/0 rows/$0.0001, ~23s startup. Automatic approval rejected the additional 90s Console start: production activation wording did not explicitly cover that paid test. Specific 3-row/$0.03 confirmation pending; no new run started. Do not retry indirectly. `docs/apify-self-build-review-2026-09-14.md`.
+- September 23 authorization resolves the earlier paid-test approval blocker: Mercari 90s/3 rows/$0.05 once, enable only on success; retain Whatnot $0.03 and the unreset shared 20 application starts (new worst-case $1.05 including Console test). Run `5HANREIWAfkebjj0y` hit HTTP 403, timed out/0 rows, cost $0.0001; no retry. Mercari token saved as Production Secret but proxy switch stays off. Whatnot amount 100 matched $1.00 on the same public listing; cents + pilot flags saved for next deployment. Runtime tariff preflight now rejects changed/unknown/over-cap prices before reserving a start. `docs/cross-market-pilot.md`.
 - Deterministic `incompleteCostOpportunity` gives a strict missing-charge budget against the cheapest eligible complete pre-tax total. It requires all non-cost gates; incomplete-cost listings never win a lens. The UI shows source counts/failures, item/shipping/fee facts, evidence and a conditional verdict.
 - Market anchors use sales-based `marketPrice` / `market`, never listed `midPrice` / `mid`; exact collector numbers remain strict. Cache includes configured modes/Whatnot unit. Builds pinned Whatnot 0.2.30 / Mercari 0.3.2; Mercari Actor/HTTP/fan-out 90/95/97s, REST/MCP 180s. Deployment no longer automatically enables the direct HTTP-403 transport: `MERCARI_DIRECT_ENABLED=1` is required. Regression tests verified red then green; Apify flags remain independent.
 - Plain HTTP search returned 403 for both platforms. Normal browser Whatnot search initially rendered then redirected to an account restriction; no details verified, access stopped, no cause inferred. Do not evade this restriction or count its initial cards as confirmed inventory.

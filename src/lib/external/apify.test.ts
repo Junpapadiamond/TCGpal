@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runApifySearch } from "./apify";
 import { clearLocalCache } from "@/lib/ops/cache";
 import { reserveApifyPilotRun } from "./apify-budget";
+import { checkApifyPricing } from "./apify-pricing";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 
 vi.mock("./apify-budget", () => ({ reserveApifyPilotRun: vi.fn() }));
+vi.mock("./apify-pricing", () => ({ checkApifyPricing: vi.fn() }));
 vi.mock("@/lib/ops/redis", () => ({ isRedisConfigured: () => true, getRedisClient: () => null }));
 const parse = () => [{ ...demoListingSeeds[0], demo: false, observedAt: "2026-09-14T16:00:00.000Z" }];
 const base = { provider: "whatnot" as const, actor: "epicscrapers~whatnot-scraper", token: "test-secret", key: "test-card", input: { searchQueries: ["Pikachu 58/102"] }, parse };
@@ -12,6 +14,13 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-14T16:
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.restoreAllMocks(); vi.clearAllMocks(); });
 
 describe("paid source safeguards", () => {
+  it("does not consume a lifetime start or call the Actor when current pricing exceeds the cap", async () => {
+    vi.mocked(checkApifyPricing).mockRejectedValueOnce(new Error("Current pricing exceeds the cap"));
+    const fetcher = vi.fn();
+    await expect(runApifySearch({ ...base, fetcher })).rejects.toThrow(/pricing exceeds/);
+    expect(reserveApifyPilotRun).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
   it("allows Mercari cold startup and a 40-second result while keeping the three-row spending cap", async () => {
     const timeout = vi.spyOn(AbortSignal, "timeout");
     const fetcher = vi.fn(async () => {
@@ -23,7 +32,7 @@ describe("paid source safeguards", () => {
     await expect(pending).resolves.toHaveLength(1);
     const [url] = fetcher.mock.calls[0] as unknown as [URL];
     expect(url.searchParams.get("timeout")).toBe("90");
-    expect(url.searchParams.get("maxTotalChargeUsd")).toBe("0.03");
+    expect(url.searchParams.get("maxTotalChargeUsd")).toBe("0.05");
     expect(url.searchParams.get("maxItems")).toBe("3");
     expect(timeout).toHaveBeenCalledWith(95_000);
     expect(fetcher).toHaveBeenCalledTimes(1);

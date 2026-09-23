@@ -4,9 +4,8 @@ import { isGradedListing } from "@/lib/comparison/graded-listing";
 import { APIFY_MAX_RESULTS, httpsImageUrls, observationTime, providerRows, runApifySearch, sellerCardCondition } from "./apify";
 import type { CardIdentityCandidate, ListingSeed } from "@/lib/schemas";
 
-// The README shows dollars, but the September 14 pilot returned amountSafe equal
-// to amount (16600, 100, 13900). Official Money.amount docs describe minor units;
-// a listing-page check is still required before selecting the production unit.
+// September 23 listing-page check: pilot amount/amountSafe 100 matched $1.00
+// on the same Pikachu 58/102 listing. This Actor's checked unit is cents.
 // Never infer units from the price magnitude or silently migrate an old token.
 export type WhatnotPriceUnit = "dollars" | "cents";
 export function hasWhatnotCredentials() {

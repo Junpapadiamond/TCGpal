@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { reserveApifyPilotRun } from "./apify-budget";
+import { checkApifyPricing } from "./apify-pricing";
 import { listingSeedSchema, type ListingSeed } from "@/lib/schemas";
 import { titleConditionFloor } from "@/lib/comparison/ranking";
 
 export const APIFY_MAX_RESULTS = 3;
-export const APIFY_MAX_CHARGE_USD = 0.03;
+// September 23 approval: Mercari's $0.04 search event needs a $0.05 cap.
+// Whatnot retains $0.03; the shared lifetime allowance remains 20 starts.
+export const APIFY_MAX_CHARGE_USD = { whatnot: 0.03, mercari: 0.05 } as const;
 // Mercari's observed image pull consumed ~23s before navigation began.
 // Keep Whatnot's shorter bound; allow the proposed capped Mercari pilot 90s.
 const ACTOR_TIMEOUT_SECONDS = { whatnot: 25, mercari: 90 } as const;
@@ -48,11 +51,15 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
   } });
   if (cached) return cached;
   search.signal?.throwIfAborted();
+  await checkApifyPricing({ actor: search.actor, provider: search.provider,
+    memoryMbytes: search.memoryMbytes ?? 256, maxResults: APIFY_MAX_RESULTS,
+    maxChargeUsd: APIFY_MAX_CHARGE_USD[search.provider], fetcher: search.fetcher, signal: search.signal });
+  search.signal?.throwIfAborted();
   await reserveApifyPilotRun();
   const actorTimeoutSeconds = ACTOR_TIMEOUT_SECONDS[search.provider];
   const requestTimeoutMs = (actorTimeoutSeconds + 5) * 1000;
   const url = new URL(`https://api.apify.com/v2/acts/${search.actor}/run-sync-get-dataset-items`);
-  url.search = new URLSearchParams({ timeout: String(actorTimeoutSeconds), maxItems: String(APIFY_MAX_RESULTS), maxTotalChargeUsd: String(APIFY_MAX_CHARGE_USD), restartOnError: "false", clean: "true" }).toString();
+  url.search = new URLSearchParams({ timeout: String(actorTimeoutSeconds), maxItems: String(APIFY_MAX_RESULTS), maxTotalChargeUsd: String(APIFY_MAX_CHARGE_USD[search.provider]), restartOnError: "false", clean: "true" }).toString();
   if (search.build) url.searchParams.set("build", search.build);
   if (search.memoryMbytes) url.searchParams.set("memory", String(search.memoryMbytes));
   let response: Response;

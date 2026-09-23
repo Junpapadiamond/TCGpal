@@ -38,7 +38,7 @@ Deep links call `buildAgentSearchUrl()` and reopen the existing website identity
 | eBay sold search | Manual verification link | No | TCGlens does not fetch the result |
 | TCGplayer | User-supplied candidate | No | New API access is not assumed |
 | Facebook / Reddit | User-supplied candidate | No | Trust signals must be entered by the user |
-| Mercari / Whatnot | Manual checks in production; self-built acquisition under Frontier Research | Not connected | Paid Apify acquisition retired. The separate browser research harness records public DOM/JSON-LD facts and conflicts; it is never a production provider. See [research evidence and promotion gate](cross-market-pilot.md). |
+| Mercari / Whatnot | Explicitly gated, bounded Apify price-display pilot | Configured per source; live success tracked separately | Whatnot needs a token and checked money unit; Mercari additionally needs the US proxy flag. Latest effective pricing is checked before spending: at most 3 rows and $0.03/Whatnot or $0.05/Mercari, with an unreset shared 20-start Redis allowance. Unknown shipping/fees never become zero or win complete-cost ranking. Separate browser research remains outside production. See [current live verification and access failures](cross-market-pilot.md). |
 | Local shop / show | User-supplied candidate | No | Tax, shipping, and protection can differ |
 
 ## Offline identity investigations

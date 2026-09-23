@@ -1,7 +1,8 @@
 import { getRedisClient } from "@/lib/ops/redis";
 
 // Both marketplace Actors share this lifetime pilot allowance: 20 starts at
-// no more than $0.03 each. Never reset it on a new day, deploy or process.
+// $0.03/Whatnot or $0.05/Mercari (at most $1 total). Never reset it on a new
+// day, deploy or process. Separate approved Console tests are not app starts.
 export const APIFY_PILOT_MAX_RUNS = 20;
 const budgetKey = "tcglens:apify-pilot:2026-09-14:reserved-runs";
 

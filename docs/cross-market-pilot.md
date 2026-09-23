@@ -2,7 +2,18 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest: production activation requested
+## Latest — September 23: Whatnot ready; Mercari live access failed
+
+The founder explicitly authorized using the existing Apify credentials from Chrome/Vercel to integrate both sources. After reviewing the changed Mercari tariff, the founder approved one 90-second/three-result/$0.05 Console test, with production activation only on success. Application calls retain the original, unreset shared 20-start counter: Whatnot remains capped at $0.03/start; Mercari may use $0.05/start. Worst-case new spending, including the separate Console test, is $1.05. No subscription, top-up, scheduler or additional Actor was authorized.
+
+- **Whatnot monetary unit checked:** the historical Actor's amount/amountSafe `100` matches `$1.00` on the same [Pikachu 58/102 listing](https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjIwMTExOTkyNg%3D%3D), observed September 23 in the founder's existing Chrome session. The page showed one available, Damaged, Base Set, English, with shipping/tax additional. This verifies cents, not an NM recommendation or complete cost. No account-reinstatement conclusion is inferred. Vercel Production now has `WHATNOT_APIFY_PRICE_UNIT=cents` and `CROSS_MARKET_PRICE_PILOT_ENABLED=1`, alongside its existing secret token. Deployment/live comparison verification is pending below.
+- **Mercari failed:** run `5HANREIWAfkebjj0y`, build 0.3.2, Giratina V 186/196, 2 GB, three rows, residential US proxy, 90 seconds, $0.05 cap. Started 2026-09-23 06:17:27 UTC; timed out at 06:18:57 with zero rows. Logs show HTTP 403, an Actor-internal retry, then zero hydrated results. No agent retry or resurrection followed. Console billing: two startup events, **$0.0001** total; no search or listing events charged, platform usage included. `MERCARI_APIFY_TOKEN` is stored as a Production Secret, but `MERCARI_APIFY_PROXY_ENABLED` remains unset/off. Do not enable or repeatedly spend against this failed transport.
+- **Tariffs checked read-only:** current Free pricing estimates three Whatnot rows at $0.00905; Mercari's September 16 search fee adds $0.04, bringing three rows plus 2 GB startup to $0.04835. Runtime now checks the latest effective public tariff before reserving an application start; unavailable, malformed, unknown-event or over-cap prices stop acquisition. Pinned builds do not pin prices. Secrets are not sent with the public tariff request.
+- **Engineering:** price-preflight, cost-cap and failure-isolation regressions are included. Graphify CLI is unavailable on this Windows checkout, so source navigation used focused searches and no graph refresh is claimed. No UI, identity, eligibility or complete-cost ranking rule is loosened. Codex owns deployment/verification; founder owns source-access/provider resolution. Review September 23. A replacement Mercari acquisition method requires an explicit bounded review; this failure is not a reason to evade the access block.
+
+The sections below are historical context; this section supersedes their pending-authorization and $0.03-for-both statements.
+
+## September 14: production activation requested
 
 The founder explicitly requested "在生产环境启用" after reviewing the prepared candidate. This authorizes deploying and configuring the existing bounded production pilot; it does not establish successful live acquisition or resolve platform reuse rights. Keep the existing three-result/$0.03 per-run limits and shared 20-start lifetime allowance, without resetting it or increasing charges. Codex owns deployment and a same-card source verification; review on September 15. Success requires real source prices and URLs surviving the parsers and UI. Disable an affected source on monetary-unit error, access failure or budget exhaustion while retaining other source results.
 

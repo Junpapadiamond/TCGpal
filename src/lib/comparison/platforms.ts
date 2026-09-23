@@ -79,7 +79,7 @@ export const ebayPlatformAgent: PlatformAgent = {
 export const whatnotPlatformAgent: PlatformAgent = {
   id: "whatnot", marketplace: "Whatnot", label: "Whatnot listing prices via Apify",
   sourceMode: "third_party_provider", requiredEnv: ["WHATNOT_APIFY_TOKEN", "WHATNOT_APIFY_PRICE_UNIT", "CROSS_MARKET_PRICE_PILOT_ENABLED"],
-  isConfigured: hasWhatnotCredentials, searchTimeoutMs: 32_000,
+  isConfigured: hasWhatnotCredentials, searchTimeoutMs: 35_000,
   search: ({ card, fetcher, plan, signal }) => searchWhatnotListings(card, fetcher, plan?.query, signal),
 };
 export const mercariPlatformAgent: PlatformAgent = {
@@ -90,9 +90,9 @@ export const mercariPlatformAgent: PlatformAgent = {
 const mercariApifyPlatformAgent: PlatformAgent = {
   id: "mercari", marketplace: "Mercari", label: "Mercari listing prices via Apify",
   sourceMode: "third_party_provider", requiredEnv: ["MERCARI_APIFY_TOKEN", "MERCARI_APIFY_PROXY_ENABLED", "CROSS_MARKET_PRICE_PILOT_ENABLED"],
-  // Actor 90s + HTTP response 5s + outer cleanup 2s. Other sources retain
-  // their existing bounds; this path still requires explicit paid-pilot flags.
-  isConfigured: hasMercariCredentials, searchTimeoutMs: 97_000,
+  // Pricing check 3s + Actor 90s + HTTP response 5s + outer cleanup 2s.
+  // This path still requires explicit paid-pilot flags.
+  isConfigured: hasMercariCredentials, searchTimeoutMs: 100_000,
   search: ({ card, fetcher, plan, signal }) => searchMercariListings(card, fetcher, plan?.query, signal),
 };
 
