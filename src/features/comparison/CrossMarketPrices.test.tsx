@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { CrossMarketPrices } from "./CrossMarketPrices";
 import { LanguageProvider } from "./i18n";
@@ -16,6 +16,18 @@ const renderPrices = (candidates: ReturnType<typeof listingFixture>[], sources =
 );
 
 describe("three-marketplace asking prices", () => {
+  it("keeps supplementary prices collapsed until the buyer opens them", () => {
+    renderPrices([listingFixture({ title: "Supplementary listing", price: 95 })]);
+    const disclosure = screen.getByText("View marketplace asking prices").closest("details")!;
+    expect(disclosure.open).toBe(false);
+    expect(screen.getByRole("link", { name: /View listing/ }).closest("details")).toBe(disclosure);
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
+    expect(disclosure.open).toBe(true);
+    expect(screen.getByRole("link", { name: /View listing/ })).toBeTruthy();
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
+    expect(disclosure.open).toBe(false);
+  });
+
   it("shows each platform's real asking price even when condition, print evidence or checkout costs need review", () => {
     renderPrices([
       listingFixture({ id: "ebay", title: "eBay card", marketplace: "eBay", price: 95 }),
@@ -24,6 +36,7 @@ describe("three-marketplace asking prices", () => {
       listingFixture({ id: "mercari", title: "Mercari card", marketplace: "Mercari", price: 85, claimedCondition: "Unknown", eligible: false,
         eligibilityIssues: [{ code: "identity_unverified", category: "identity", disposition: "exclude", message: "Check the artwork" }, { code: "condition_unstated", category: "condition", disposition: "exclude", message: "Condition unknown" }] }),
     ]);
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
     for (const price of ["$95.00", "$80.00", "$85.00"]) expect(screen.getByText(price)).toBeTruthy();
     expect(screen.getByText(/Version needs checking/)).toBeTruthy();
     expect(screen.getByText(/Condition not stated/)).toBeTruthy();
@@ -39,12 +52,14 @@ describe("three-marketplace asking prices", () => {
       listingFixture({ id: "sibling", price: 3, eligibilityIssues: [{ code: "identity_sibling_mismatch", category: "identity", disposition: "exclude", message: "Wrong print" }] }),
       listingFixture({ id: "replica", price: 4, eligibilityIssues: [{ code: "excluded_product_type", category: "product", disposition: "exclude", message: "Replica" }] }),
     ]);
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
     for (const price of ["$1.00", "$2.00", "$3.00", "$4.00"]) expect(screen.queryByText(price)).toBeNull();
     expect(screen.getAllByText(/No matching active listings/)).toHaveLength(3);
   });
 
   it("shows a failed source as unavailable without turning a stale row into a price", () => {
     renderPrices([listingFixture({ marketplace: "Whatnot", price: 44 })], platforms.map((p) => p.id === "whatnot" ? { ...p, status: "fallback", count: 0 } : p));
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
     const source = screen.getByRole("region", { name: "Whatnot prices" });
     expect(within(source).getByText("Unavailable this search")).toBeTruthy();
     expect(within(source).queryByText("$44.00")).toBeNull();
@@ -55,12 +70,14 @@ describe("three-marketplace asking prices", () => {
       listingFixture({ id: "wrong", title: "Giratina V 185/196", marketplace: "Mercari", price: 44 }),
       listingFixture({ id: "matching", title: "Giratina V 186/196", marketplace: "Mercari", price: 90 }),
     ], platforms, { id: "swsh11-186", name: "Giratina V", setName: "Lost Origin", setCode: "SWSH11", cardNumber: "186/196", language: "English", imageUrl: null, confidence: "high", matchReasons: [] });
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
     expect(screen.queryByText("$44.00")).toBeNull();
     expect(screen.getByText("$90.00")).toBeTruthy();
   });
 
   it("limits each source to three rows and retains both complete and incomplete price candidates", () => {
     renderPrices([70, 40, 60, 50].map((price) => listingFixture({ id: `whatnot-${price}`, marketplace: "Whatnot", price })));
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
     const source = screen.getByRole("region", { name: "Whatnot prices" });
     expect(within(source).getAllByRole("link", { name: /View listing/ })).toHaveLength(3);
     expect(within(source).queryByText("$70.00")).toBeNull();

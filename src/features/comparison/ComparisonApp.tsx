@@ -2573,8 +2573,6 @@ function ComparisonResult({
 
       {report.request.cardHint.game === "onePiece" && <GameBetaNotice />}
 
-      <CrossMarketPrices candidates={report.candidates} platforms={report.platforms} card={report.confirmedCard} />
-
       {outcome === "next_moves" && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.nextMovesTitle}</h3>
@@ -2712,6 +2710,8 @@ function ComparisonResult({
           <BuyerSourceNotice report={report} hasComparableListings={eligibleCount > 0} />
 
           <CrossMarketOpportunities candidates={report.candidates} platforms={report.platforms} />
+
+          <CrossMarketPrices candidates={report.candidates} platforms={report.platforms} card={report.confirmedCard} />
 
           <OtherMarketplaces report={report} />
 

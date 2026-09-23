@@ -1539,6 +1539,9 @@ describe("comparison condition controls", () => {
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
     const hero = screen.getByRole("article", { name: "Best-supported buy" });
     expect(hero.querySelector(":scope > div")?.className.split(" ")).toContain("grid-cols-[72px_minmax(0,1fr)]");
+    const supplementaryPrices = screen.getByRole("region", { name: "Marketplace asking prices" });
+    expect(hero.compareDocumentPosition(supplementaryPrices) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(supplementaryPrices.querySelector("details")?.open).toBe(false);
     expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[72px_minmax(0,1fr)]");
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));

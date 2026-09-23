@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-09-23
 canonical_branch: origin/main
 last_verified_product_commit: 9cf1511
-working_branch: main (eBay + Whatnot live; Mercari blocked after approved live test)
+working_branch: main (recommendation-first layout; eBay + Whatnot live; Mercari blocked)
 max_lines: 300
 ---
 
@@ -33,7 +33,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Landing onboarding + card rail reworked through `4388774` | Observe trust, sharing, and empty outcomes; watch picker length on flagship names |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Recommendation-first result layout; supplementary marketplace prices collapsed | Observe trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay + Whatnot live on 9cf1511; Mercari approved live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
@@ -153,9 +153,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
-
 ### Done
 
+- September 23 result hierarchy: recommendation/Inspect First/Next Moves precedes supplementary asking prices; existing lens controls stay beside the primary recommendation. Platform asking prices are a closed, keyboard-accessible disclosure below the decision and cross-market opportunities. Expanded prices use compact rows; unavailable/empty platforms use one-line statuses. Price eligibility filters, fees, source timestamps and ranking are unchanged. EN/中文 1440px and 中文 390px local fixture screenshots verified; no paid acquisition for this layout change.
 - Card search now has explicit identity and comparison phases: name-only searches show the identity gallery, exact catalog matches proceed with a fixed confirmed-card anchor, and same-number sibling prints remain confirmation-gated. The comparison loader keeps one fixed confirmed-card anchor (reduced-motion users get it static); exact version image selection immediately submits the canonical print; results distinguish best_buy / inspect_first / next_moves and never use demo or low-confidence inventory as real recommendations.
 - `POST /api/agent/card-identity` resolves catalog identity without marketplace fan-out, ranking, or market-anchor work; the comparison route remains backward-compatible. The result-page Edit button follows the newly typed query: set-only One Piece searches such as `luffy op01` say Browse card versions and return to identity confirmation instead of implying listing comparison.
 - Result listings show only the seller/listing image, with the selected print explicit in a separate text block so nothing implies TCGlens visually compared it with the catalog reference. Supporting listings read as one hairline ledger; generic exact-print evidence collapses to a keyboard-focusable `✓ print` / `✓ 版本` tag while special-print reasons keep the full block. eBay results preserve up to 24 official seller-photo URLs in a lazy-mounted gallery with thumbnails, keyboard navigation, focus restoration, and zoom, and the copy says outright that condition and authenticity are not verified from them.
@@ -254,7 +254,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
-
+- September 23 result-layout gate: lint/typecheck/build + metadata audit passed; 111 files / 1,543 tests passed, 5 skipped. Regression proves the buy appears before closed supplementary prices; disclosure/filter tests passed. Built-in browser verified EN/中文 desktop and 390px mobile, keyboard Enter, hidden links while collapsed, and no horizontal overflow. Synthetic QA only, no new paid source calls. The initial parallel run hit one 5s UI timeout and a malformed generated `.next/dev/types/routes.d.ts`; stopping dev, restoring that generated file from the successful build output, and rerunning the suite with four workers passed without weakening tests. Graphify CLI still unavailable.
 Verified production: 9cf1511 READY on lenstcg.com, 72.6s Vercel build; capabilities 200 lists eBay + Whatnot, deployment warning/error/fatal scan empty. Lint/typecheck/build + metadata audit and 111 files/1,542 tests pass (5 skipped). Real Giratina report at 2026-09-23 06:26 UTC has 50 eBay + 3 Whatnot rows ($950/$984/$1,000); $950 verified on its listing page. Unknown shipping/fees keep Whatnot out of winners. Real EN/中文 desktop and 390px mobile screenshots captured in built-in browser. Mercari remains off after its approved HTTP 403/90s/0-row test ($0.0001).
 
 - 2026-09-14 live release check: capabilities advertises only eBay; Pikachu 58/102 resolves to base1-58 (1.49s), 999/999 returns not_found (2.72s). One real comparison (3.25s): 50 eBay rows / 5 eligible / four lenses, all winner fee/total equations reconcile. Whatnot/Mercari explicitly skipped and unconfigured; no paid provider success is claimed.
