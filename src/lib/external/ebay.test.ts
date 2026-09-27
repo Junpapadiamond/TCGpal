@@ -202,6 +202,20 @@ describe("eBay active-listing search", () => {
 
   const buyer = { country: "US" as const, postalCode: "10001", taxRate: 0.08, desiredCondition: "Unknown" as const };
 
+  it("spends limited detail lookups on plausible condition-compatible singles before known exclusions", () => {
+    const rows = [
+      { itemId: "1", title: "Umbreon VMAX 215/203 Damaged", price: { value: "700", currency: "USD" } },
+      { itemId: "2", title: "Umbreon VMAX 215/203 metal card", price: { value: "800", currency: "USD" } },
+      { itemId: "3", title: "Umbreon VMAX 215/203 NM", price: { value: "3", currency: "USD" } },
+      { itemId: "4", title: "Umbreon VMAX 215/203 Japanese", price: { value: "800", currency: "USD" } },
+      { itemId: "9", title: "Umbreon VMAX 215/203", condition: "Ungraded", price: { value: "800", currency: "USD" } },
+    ];
+    const selected = selectEbayDetailTargets(rows, { ...card, marketMid: 1000 }, 1, { ...buyer, desiredCondition: "Near Mint" });
+    expect(selected.map((item) => item.itemId)).toEqual(["9"]);
+    expect(selected[0]?.condition).toBe("Ungraded");
+    expect(selectEbayDetailTargets(rows, { ...card, marketMid: 1000 }, 50, { ...buyer, desiredCondition: "Near Mint" })).toHaveLength(5);
+  });
+
   // `searchUrl` is the FIRST search this fetcher served. The rows it returns name a
   // different card than any One Piece fixture asks for, so the search ladder is
   // entitled to broaden past them; the queries under test here are the ones the

@@ -4,6 +4,7 @@ import { collectorNumberConflict } from "@/lib/comparison/collector-number";
 import type { CardIdentityCandidate, ComparisonPlatformResult, NormalizedListing } from "@/lib/schemas";
 import { useLang, useT } from "./i18n";
 import { IconChevronDown } from "./icons";
+import { sourceStatusLabel } from "./source-status";
 
 const markets = ["eBay", "Whatnot", "Mercari"] as const;
 const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
@@ -37,9 +38,8 @@ export function CrossMarketPrices({ candidates, platforms, card }: {
             && !listing.eligibilityIssues.some((issue) => incompatible.has(issue.code))
             && !(card && collectorNumberConflict(`${listing.title} ${listing.matchAspectText}`, card.cardNumber)))
             .sort((a, b) => a.price - b.price || a.id.localeCompare(b.id)).slice(0, 3) : [];
-          const empty = source?.status === "fallback" ? zh ? "本次读取失败" : "Unavailable this search"
-            : source?.status === "complete" ? zh ? "未找到匹配的在售商品" : "No matching active listings"
-              : zh ? "尚未连接" : "Not connected";
+          const empty = source?.status === "complete" ? zh ? "未找到匹配的在售商品" : "No matching active listings"
+            : sourceStatusLabel(source, lang);
           return <section key={marketplace} aria-label={zh ? `${marketplace} 标价` : `${marketplace} prices`} className="min-w-0 py-3">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <h3 className="text-sm font-black text-[#2f6f73]">{marketplace}</h3>

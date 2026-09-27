@@ -126,7 +126,7 @@ function englishCatch(listing: NormalizedListing) {
     return "The return policy was not verified.";
   }
   if (listing.evidenceCompletenessScore < 50) {
-    return "The listing has only partial review material; Lens TCG did not inspect photo content.";
+    return "The listing has only partial review material; TCGlens did not inspect photo content.";
   }
   return "Condition remains the seller's claim. Review the listing before deciding.";
 }
@@ -148,7 +148,7 @@ function chineseCatch(listing: NormalizedListing) {
     return "退货政策没核实。";
   }
   if (listing.evidenceCompletenessScore < 50) {
-    return "这条只有一部分材料可查；Lens TCG 没看照片内容。";
+    return "这条只有一部分材料可查；TCGlens 没看照片内容。";
   }
   return "品相是卖家自己说的，下单前去商品页再看一眼。";
 }

@@ -69,9 +69,9 @@ describe("Bubble Mew production-shaped regression", () => {
     process.env.EBAY_CLIENT_ID = "test-id";
     process.env.EBAY_CLIENT_SECRET = "test-secret";
     const detailCalls: string[] = [];
-    const summaries = Array.from({ length: 13 }, (_, index) => ({
+    const summaries = Array.from({ length: 14 }, (_, index) => ({
       itemId: `bubble-${String(index + 1).padStart(2, "0")}`,
-      title: index === 12
+      title: index === 13
         ? "Mew ex 232/091 Paldean Fates English NM RAW outside enrichment window"
         : `Mew ex 232/091 Paldean Fates NM RAW copy ${index + 1}`,
       condition: "Ungraded",
@@ -133,13 +133,15 @@ describe("Bubble Mew production-shaped regression", () => {
     const report = await runListingComparison(request, { fetcher });
     const first = report.candidates.find((candidate) => candidate.id === "ebay-bubble-01");
     const withoutSpecifics = report.candidates.find((candidate) => candidate.id === "ebay-bubble-04");
-    const outsideWindow = report.candidates.find((candidate) => candidate.id === "ebay-bubble-13");
+    const outsideWindow = report.candidates.find((candidate) => candidate.id === "ebay-bubble-14");
     const wrongCondition = report.candidates.find((candidate) => candidate.id === "ebay-bubble-02");
     const unknownShipping = report.candidates.find((candidate) => candidate.id === "ebay-bubble-03");
     const wrongNumber = report.candidates.find((candidate) => candidate.id === "ebay-wrong-number");
 
     expect(detailCalls).toHaveLength(12);
-    expect(detailCalls).not.toContain("bubble-13");
+    expect(detailCalls).not.toContain("bubble-14");
+    expect(detailCalls).not.toContain("bubble-02");
+    expect(detailCalls).toContain("bubble-13");
     expect(first).toMatchObject({ matchConfidence: "high", printMatch: "compatible", printMatchConfidence: "high", eligible: true });
     expect(first?.printMatchReasons).not.toContain("pokemon_listing_missing_full_collector_number");
     expect(withoutSpecifics).toMatchObject({ printMatch: "compatible", eligible: true });

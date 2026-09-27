@@ -57,6 +57,7 @@ export async function POST(request: Request) {
     const response = await answerComparisonQuestion(parsed.report, parsed.question, parsed.targetListingId, {
       webContext: parsed.webContext,
       activeRole: parsed.activeRole,
+      lang: parsed.lang,
     });
     logOpsEvent({
       event: "api_request_completed",

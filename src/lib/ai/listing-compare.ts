@@ -137,7 +137,7 @@ export async function runListingComparison(
       rankedChoices: [],
       references: [],
       narrative: {
-        summary: "Confirm the exact card before Lens TCG compares prices. Similar artwork and reprints can produce a precise-looking but wrong result.",
+        summary: "Confirm the exact card before TCGlens compares prices. Similar artwork and reprints can produce a precise-looking but wrong result.",
         cautions: ["No marketplace ranking has been created yet."],
       },
       warnings,
@@ -1332,8 +1332,8 @@ function localNarrative(
     summary: eligible.length && choices.length === 0 && eligible.some(requiresMarketPriceReview)
       ? `TCGlens found exact-print listings for ${card.name}, but their item prices need review against the NM market reference before a buy recommendation.`
       : eligible.length
-      ? `Lens TCG found ${eligible.length} eligible ${card.name} listings and separated price, seller safety, and condition evidence instead of collapsing them into one magic answer.`
-      : `Lens TCG could not find an eligible exact-match listing for ${card.name}.`,
+      ? `TCGlens found ${eligible.length} eligible ${card.name} listings and separated price, seller safety, and condition evidence instead of collapsing them into one magic answer.`
+      : `TCGlens could not find an eligible exact-match listing for ${card.name}.`,
     cautions: [
       choices.length < 3 ? "Fewer than three decision lenses had enough eligible evidence." : "One listing may lead several lenses; none is a grade prediction.",
       references.some((reference) => reference.label === "Sold transactions" && reference.status !== "used")

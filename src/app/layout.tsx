@@ -28,7 +28,7 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "Lens TCG — Compare Pokémon & One Piece card listings with evidence",
+  title: "TCGlens — Compare Pokémon & One Piece card listings with evidence",
   description: "Compare landed cost, seller signals, and condition evidence before buying Pokémon or One Piece cards.",
   icons: {
     icon: [
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   // the cream background; "black-translucent" would slide the page under it.
   appleWebApp: {
     capable: true,
-    title: "Lens TCG",
+    title: "TCGlens",
     statusBarStyle: "default",
   },
 };

@@ -79,6 +79,42 @@ const report = {
 } as ComparisonReport;
 
 describe("comparison question answering", () => {
+  it("explains exclusions even when no listing can win", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const answer = await answerComparisonQuestion({ ...report, rankedChoices: [], candidates: [listing({ eligible: false, exclusionReasons: ["Seller condition is not stated."] })] }, "Why were listings excluded?");
+    expect(answer.answer).toContain("1 listing");
+    expect(answer.cautions).toContain("Seller condition is not stated.");
+  });
+
+  it("answers missing-evidence questions with the selected listing's unknowns", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const answer = await answerComparisonQuestion(report, "What is missing?");
+    expect(answer.answer).toContain("Seller condition is not stated");
+    expect(answer.answer).toContain("Tax is not estimated");
+  });
+
+  it("explains an excluded target even when the report has no winner", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const answer = await answerComparisonQuestion({ ...report, rankedChoices: [], candidates: [listing({ id: "excluded", eligible: false, exclusionReasons: ["Seller condition is not stated."] })] }, "Why not this listing?", "excluded");
+    expect(answer.answer).toContain("Seller condition is not stated.");
+  });
+
+  it("keeps the Chinese recommendation explanation available without AI", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const answer = await answerComparisonQuestion(report, "为什么选这条？", undefined, { lang: "zh" });
+    expect(answer.answer).toContain("卖家");
+    expect(answer.answer).toContain("82/100");
+  });
+
+  it("attributes an AI answer to the configured model rather than model-authored metadata", async () => {
+    vi.stubEnv("AI_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "test-only");
+    vi.stubEnv("OPENAI_WIRE_API", "chat");
+    vi.stubEnv("OPENAI_MODEL_REVIEW", "test-model");
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ choices: [{ message: { content: JSON.stringify({ answer: "The report has two candidates.", cautions: [], model: "invented-model" }) } }] })));
+    const answer = await answerComparisonQuestion(report, "Why this pick?");
+    expect(answer).toMatchObject({ usedAi: true, model: "test-model" });
+  });
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();

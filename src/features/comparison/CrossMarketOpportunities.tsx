@@ -4,6 +4,7 @@ import { incompleteCostOpportunity } from "@/lib/comparison/incomplete-cost";
 import type { ComparisonPlatformResult, NormalizedListing } from "@/lib/schemas";
 import { ListingPhoto } from "./SellerPhotoGallery";
 import { useLang } from "./i18n";
+import { sourceStatusLabel } from "./source-status";
 
 const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 
@@ -24,10 +25,7 @@ export function CrossMarketOpportunities({ candidates, platforms = [] }: {
       <div className="px-4 py-4 sm:px-5">
         <h3 className="font-serif text-xl font-black text-[#24312f]">{zh ? "跨平台比价" : "Across marketplaces"}</h3>
         {sources.length > 0 && <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#52635c]">
-          {sources.map((source) => <li key={source.id}><strong>{source.marketplace}</strong> · {source.status === "complete"
-            ? zh ? `找到 ${source.count} 条` : `${source.count} found`
-            : source.status === "fallback" ? zh ? "本次读取失败" : "Unavailable this search"
-              : zh ? "尚未连接" : "Not connected"}</li>)}
+          {sources.map((source) => <li key={source.id}><strong>{source.marketplace}</strong> · {sourceStatusLabel(source, lang)}</li>)}
         </ul>}
         {opportunities.length > 0 && <p className="mt-3 max-w-3xl text-sm leading-6 text-[#52635c]">{zh
           ? "以下商品通过了版本和品相筛选，但最终费用还不完整。先核对缺失费用，再决定是否比当前最低价更划算；此处比较均未计税。"

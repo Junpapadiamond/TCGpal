@@ -16,6 +16,12 @@ const renderPrices = (candidates: ReturnType<typeof listingFixture>[], sources =
 );
 
 describe("three-marketplace asking prices", () => {
+  it("distinguishes an exhausted pilot from a temporary provider outage", () => {
+    renderPrices([], platforms.map((p) => p.id === "whatnot" ? { ...p, status: "fallback", count: 0, detail: "Cross-market pilot budget reached; this source is paused." } : p));
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
+    expect(within(screen.getByRole("region", { name: "Whatnot prices" })).getByText("Pilot paused — allowance reached")).toBeTruthy();
+  });
+
   it("keeps supplementary prices collapsed until the buyer opens them", () => {
     renderPrices([listingFixture({ title: "Supplementary listing", price: 95 })]);
     const disclosure = screen.getByText("View marketplace asking prices").closest("details")!;

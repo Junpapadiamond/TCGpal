@@ -20,8 +20,8 @@ export async function generateMetadata({ params }: ReceiptPageProps): Promise<Me
   const snapshot = await getReceipt(id);
   if (!snapshot) {
     return {
-      title: "Receipt unavailable — Lens TCG",
-      description: "This saved Lens TCG comparison is unavailable or has expired.",
+      title: "Receipt unavailable — TCGlens",
+      description: "This saved TCGlens comparison is unavailable or has expired.",
       robots: { index: false, follow: false },
     };
   }

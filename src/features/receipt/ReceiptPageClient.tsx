@@ -47,7 +47,7 @@ const chineseChoiceLabels: Record<RankedChoice["role"], string> = {
 
 const copy = {
   en: {
-    home: "Lens TCG home",
+    home: "TCGlens home",
     method: "Method",
     receipt: "Decision receipt",
     saved: "Saved comparison",
@@ -75,7 +75,7 @@ const copy = {
     tax: "estimated tax",
     preTax: "pre-tax total",
     landed: "estimated landed total",
-    sellerClaim: "Condition is still the seller’s claim. Lens TCG counts available photos but does not grade or authenticate their contents.",
+    sellerClaim: "Condition is still the seller’s claim. TCGlens counts available photos but does not grade or authenticate their contents.",
     frontBack: "Front and back explicitly documented",
     closeups: "Closeups explicitly documented",
     surface: "Surface explicitly documented",
@@ -120,7 +120,7 @@ const copy = {
     confidenceBody: "Confidence describes support for the comparison, not card condition, authenticity, or a guaranteed outcome.",
   },
   zh: {
-    home: "Lens TCG 首页",
+    home: "TCGlens 首页",
     method: "方法",
     receipt: "决策凭证",
     saved: "已保存的比价",
@@ -148,7 +148,7 @@ const copy = {
     tax: "预估税",
     preTax: "税前总价",
     landed: "预估到手价",
-    sellerClaim: "品相是卖家自己说的。Lens TCG 只数照片数量，不给照片里的卡评级，也不鉴定真伪。",
+    sellerClaim: "品相是卖家自己说的。TCGlens 只数照片数量，不给照片里的卡评级，也不鉴定真伪。",
     frontBack: "正反面写清楚了",
     closeups: "细节近照写清楚了",
     surface: "卡面情况写清楚了",
@@ -265,7 +265,7 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
       <header className="border-b border-[#d6ded5] bg-[#fcfbf6]">
         <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" aria-label={text.home} className="shrink-0">
-            <Image src="/lens-logo-horizontal.svg" alt="Lens TCG" width={112} height={32} priority />
+            <Image src="/lens-logo-horizontal.svg" alt="TCGlens" width={112} height={32} priority />
           </Link>
           <div className="flex items-center gap-3 text-xs font-black text-[#64736c]">
             <a className="hidden hover:text-[#2f6f73] sm:inline" href="/method">{text.method}</a>

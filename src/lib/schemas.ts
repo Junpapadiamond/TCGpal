@@ -619,6 +619,7 @@ export const comparisonQuestionRequestSchema = z.object({
   question: z.string().trim().min(1).max(500),
   targetListingId: z.string().trim().min(1).max(200).optional(),
   activeRole: rankedChoiceRoleSchema.optional(),
+  lang: z.enum(["en", "zh"]).default("en"),
   // "auto" lets the assistant add cited web context for source legitimacy,
   // translation, reference-discovery, and identity-help questions. Report/ranking
   // questions remain report-only.
@@ -636,6 +637,7 @@ export const comparisonQuestionResponseSchema = z.object({
   answer: z.string().trim().min(1),
   cautions: z.array(z.string()).default([]),
   usedAi: z.boolean().default(false),
+  model: z.string().trim().min(1).max(100).optional(),
   webContextChecked: z.boolean().default(false),
   webCitations: z.array(webCitationSchema).default([]),
 });

@@ -1,29 +1,27 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-23
+updated_at: 2026-09-26
 canonical_branch: origin/main
 last_verified_product_commit: 6b1453d
-working_branch: main (recommendation-first layout; eBay + Whatnot live; Mercari blocked)
+working_branch: codex/comparison-trust-fixes (release gate; Whatnot allowance exhausted; Mercari blocked)
 max_lines: 300
 ---
 
 # TCGlens Progress
 This is the compact handoff for new threads. It is an index, not a history log. Use stable section and workstream IDs to load only the context needed for the current task.
-
 <!-- progress:section id="BOOTSTRAP" -->
 ## BOOTSTRAP
 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Live concrete sources: eBay Browse + bounded Whatnot Apify pilot, verified on 9cf1511. September 23 Giratina search: 50 eBay + 3 Whatnot rows ($950/$984/$1,000); $950 checked against its page, missing fees/shipping remain unknown and cannot win. Mercari 90s/$0.05 test hit HTTP 403 and timed out/zero rows ($0.0001), so its paid switch stays off. Original 20-start Redis key unchanged. See WS-SOURCES.
+- Current live concrete source: eBay Browse. September 26 Whatnot returned the exhausted-pilot-allowance error; its successful September 23 data is historical. Mercari stays off after its 90s/$0.05 test hit HTTP 403 and returned zero rows ($0.0001). Original shared 20-start Redis key unchanged; no reset or new paid test. See WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
 - Non-goals until the comparison pilot passes: auth, payments, saved collections, recommendation feeds, automated grading, and marketplace scraping.
 <!-- progress:end -->
-
 <!-- progress:section id="TASK-INDEX" -->
 ## TASK-INDEX
 
@@ -33,13 +31,12 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Recommendation-first result layout; supplementary marketplace prices collapsed | Observe trust, sharing, and empty outcomes |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Evidence Q&A prompts/attribution, source-pause copy and TCGlens naming verified locally | Observe trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay + Whatnot live on 9cf1511; Mercari approved live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay live; Whatnot allowance exhausted; Mercari live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows checkout from current main; cross-market changes under final verification | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
-
 <!-- progress:section id="GOALS" -->
 ## GOALS
 ### Big goals
@@ -59,7 +56,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Fewer than 10% correct the confirmed card/version.
 - At least three voluntarily share a comparison receipt.
 <!-- progress:end -->
-
 <!-- progress:workstream id="WS-IDENTITY" state="taxonomy-shipped-founder-review-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
 [OP16/OP17 follow-up](docs/one-piece-op16-op17-2026-09-06.md) shipped `a461ed0` (Vercel READY; four live searches, distinct winners and anchors): all 155/169 official release prints, separate artwork results and caches. Live fallback `8a0eb9c` now preserves every returned artwork and reloads only the exact print; 1,442 tests + lint/typecheck/build, fresh EN/中文/mobile and five searches passed. [Audit](docs/one-piece-alignment-audit-2026-09-06-op17.md): 660/90/0/0 target, 4135/607/0/0 catalog. Historical [Phase 4](docs/one-piece-taxonomy-phase4-2026-09-06.md) provisional 8/13 and founder decisions remain open; no new curated artwork mappings approved.
@@ -95,7 +91,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `docs/one-piece-op16-op17-2026-09-06.md` (latest coverage), `docs/one-piece-taxonomy-phase4-2026-09-06.md` (founder review), `docs/plan-one-piece-taxonomy-2026-09-05.md` (historical standalone handoff), `docs/one-piece-print-taxonomy.md`, `docs/one-piece-taxonomy-execution-2026-09-05.md`, `src/lib/schemas.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`
 <!-- progress:end -->
-
 <!-- progress:workstream id="WS-METADATA" state="review-gated" tags="one-piece,research,audit,manga,promo,tournament,automation" -->
 ## WS-METADATA - One Piece research ledger
 
@@ -111,7 +106,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `output/one-piece-exact-print-audit.json` (summary and blockers only), `scripts/research-one-piece-exact-prints.mjs`, `scripts/lib/one-piece-metadata-audit.mjs`, `src/lib/external/one-piece-print-metadata.ts`, `docs/card-identity-research-policy.md`, `.github/workflows/refresh-one-piece-metadata.yml`. Avoid loading the 5+ MB ledger; query a specific canonicalPrintId when needed.
 <!-- progress:end -->
-
 <!-- progress:workstream id="WS-LAUNCH" state="instrumented-not-posted" tags="analytics,posthog,funnel,privacy,reddit,rednote,attribution" -->
 ## WS-LAUNCH - Launch instrumentation and attribution
 
@@ -133,7 +127,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `src/lib/analytics.ts`, `src/lib/analytics.test.ts`, `docs/launch-metrics.md`, `docs/launch-links.md`
 <!-- progress:end -->
-
 <!-- progress:workstream id="WS-PILOT" state="blocked-on-accuracy" tags="demand,needs,taste,pricing,validation,buyer" -->
 ## WS-PILOT - Demand and buyer validation
 
@@ -150,11 +143,11 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `docs/validation-plan.md`, `docs/product-spec.md`, `docs/product-principles.md`. Historical council artifacts (`output/product-readiness-audit-2026-07-10/council/chairman.md`, `docs/councils/tcgpal_feature_scorecard.md`) are absent from origin/main and retained only in the original checkout.
 <!-- progress:end -->
-
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
 ### Done
 
+- September 26 trust fixes: [review](docs/comparison-trust-fixes-2026-09-26.md). Deterministic eBay parsing separates HP stats from condition and retains worse condition ranges; detail priority favors recoverable evidence within the existing budget. Q&A has prompts, model/fallback attribution, exclusion/missing-evidence answers and Chinese request language. Current copy uses TCGlens; ZIP-estimate guidance is explicit.
 - September 23 result hierarchy: recommendation/Inspect First/Next Moves precedes supplementary asking prices; existing lens controls stay beside the primary recommendation. Platform asking prices are a closed, keyboard-accessible disclosure below the decision and cross-market opportunities. Expanded prices use compact rows; unavailable/empty platforms use one-line statuses. Price eligibility filters, fees, source timestamps and ranking are unchanged. EN/中文 1440px and 中文 390px local fixture screenshots verified; no paid acquisition for this layout change.
 - Card search now has explicit identity and comparison phases: name-only searches show the identity gallery, exact catalog matches proceed with a fixed confirmed-card anchor, and same-number sibling prints remain confirmation-gated. The comparison loader keeps one fixed confirmed-card anchor (reduced-motion users get it static); exact version image selection immediately submits the canonical print; results distinguish best_buy / inspect_first / next_moves and never use demo or low-confidence inventory as real recommendations.
 - `POST /api/agent/card-identity` resolves catalog identity without marketplace fan-out, ranking, or market-anchor work; the comparison route remains backward-compatible. The result-page Edit button follows the newly typed query: set-only One Piece searches such as `luffy op01` say Browse card versions and return to identity confirmation instead of implying listing comparison.
@@ -176,9 +169,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `src/features/comparison/ComparisonApp.tsx`, `src/features/comparison/i18n.tsx`, `src/features/comparison/ComparisonApp.test.tsx`, `src/lib/testing/standard-comparison-flow.ts`; receipt flow in `src/features/receipt/ReceiptPageClient.tsx` and `src/lib/comparison/report-snapshot.ts`.
 <!-- progress:end -->
-
-<!-- progress:workstream id="WS-SOURCES" state="whatnot-live-mercari-access-blocked" tags="whatnot,mercari,metadata,provider-cost,unknown-shipping,marketplace" -->
+<!-- progress:workstream id="WS-SOURCES" state="whatnot-budget-paused-mercari-access-blocked" tags="whatnot,mercari,metadata,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
+- September 26 live check: Whatnot returned the pilot-budget-exhausted pause; Mercari remains disabled. No counter reset, paid retry or source expansion. Source copy distinguishes pauses from outages. Before-fix Charizard NM: 50 eBay / 0 eligible / 39 price-floor issues, overlapping with other reasons. [Review](docs/comparison-trust-fixes-2026-09-26.md).
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
 - Production 9cf1511 READY (`dpl_DHGDLRyxfJfUzkqW7u7sK4bY7eNb`) on lenstcg.com; capabilities lists eBay + Whatnot. Real Giratina report has 50 eBay + 3 Whatnot rows, 7 eligible, no Whatnot lens winner; receipt `0cf43307deb34b5cba7661ba73b6b128`. English/中文 desktop and 390px mobile verified in built-in browser. Warning/error/fatal scan empty. Full gate: 111 files/1,542 tests, 5 skipped; lint/typecheck/metadata/build pass. Redis counter unchanged; Graphify CLI unavailable. `docs/cross-market-pilot.md`.
@@ -191,7 +184,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Founder then requested Mercari production first. Candidate `2bbef16` on `codex/mercari-production`: self-built server Chromium, bounded robots-aware acquisition, Zod validation, browser_dom source mode, no Apify; local full gate green (1,508 tests). Preview `dpl_FaXQPGRhBSpJT2uTsLgdNmczC9DC` READY; actual no-ZIP Pikachu 58/102 run: eBay 50 rows, Mercari HTTP 403 / fallback / 0 rows, 8.05s. Main/production unchanged; do not equate configured with live success or evade the block.
 - Read first: `docs/apify-self-build-review-2026-09-14.md`, `docs/cross-market-pilot.md`. CardTrader official marketplace API is an additional candidate, with third-party use subject to staff review; founder has no account. Request prepared, unsent: `docs/cardtrader-source-review-2026-09-14.md`. Whatnot/Mercari access, field evaluation and promotion remain required (founder/Codex; 2026-09-21).
 <!-- progress:end -->
-
 <!-- progress:workstream id="WS-DISTRIBUTION" state="mcp-released-firecrawl-frontier-killed" tags="mcp,plugin,agents,marketplaces,distribution,business,firecrawl,frontier" -->
 ## WS-DISTRIBUTION - Sources, distribution, and business model
 
@@ -203,7 +195,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Firecrawl `/scrape` JSON mode failed the 2026-07-31 six-platform frontier tracer: 3/6 reviewable pages, 56.25% raw factual precision, 0/6 cost-comparable, 14.768-second median latency, and 72 total credits. Yahoo Auctions JP and SNKRDUNK returned high-confidence schema-shaped example payloads; Mercari JP was region-blocked after a JP tunnel failure. The deterministic frontier harness discards placeholder payloads, unsupported zero defaults, `N/A` sentinels, and generic seller boilerplate. It is isolated from product routes, `PlatformAgent`, caches, analytics, and ranking. The 30-page expansion was stopped by its predefined kill criteria; evidence and retest conditions are in `docs/frontier-firecrawl-pilot.md`.
 - Retrieval-agent Phase 0 is complete and it argues against Phase 1. `docs/plan-retrieval-agent-2026-08-10.md` assumed the product abstains because one search per platform returns the wrong prints. Measured: every failing card returned a full first page of 50 live listings, and 0 of 500 candidates across the ten failures were print-provable. The agent's own stop condition is `eligible >= 1`, which no query could reach for those cards, so it would spend its full step budget and move recall 0 points — under the plan's own 5-point kill criterion. The blocker was a deterministic ranking rule; half of it was fixed in `484483a` for 0 model calls. Phase 1 stays not started. Baseline harness (`npm run measure:print-recall`) is kept for whatever replaces it. Also corrected by Phase 0: the plan's premise that the failures abstain with `next_moves`. They return `inspect_first`, so the buyer does get a listing to inspect. Real problem, lower severity than written.
 <!-- progress:end -->
-
 <!-- progress:section id="DECISIONS" -->
 ## DECISIONS
 
@@ -222,17 +213,16 @@ The user must decide these; agents must not infer them:
 11. D-ANCHOR-GAPS (open): whether to make the crosswalk resolve the five sets measured to have no market anchor on 2026-08-27 — Supreme Victors, Pokémon Rumble, Scarlet & Violet Energies, Celebrations: Classic Collection, Pokémon Futsal Collection. Three fail identically: the TCGplayer product name carries no full collector number ("Absol G", "Venusaur", "Basic Water Energy - 003"), so print fidelity returns `unknown` and the selector abstains. Resolving them means relaxing a number requirement inside exact-print identity, where the standing non-negotiable is that a cheaper sibling must never replace the selected artwork — the set is already pinned by the matched group, which is the argument for it, but the blast radius is the market anchor that feeds `MARKET_FLOOR_RATIO`. Celebrations is a genuine numbering disagreement between pokemontcg.io and TCGplayer; Futsal has no TCGplayer group at all and may simply be permanent. Buyers on these sets see "Exact TCGplayer mapping unavailable" and the floor gate loses its input, so this is a real if narrow product gap, not only a CI colour.
 12. D-LOGIN (answered 2026-08-14, awaiting founder acceptance): recommendation is **do not build login now** — the premise was false (Vercel route handlers already are the backend; the real questions are a durable store and who verifies the password), auth is an explicit AGENTS.md non-goal until the pilot gates pass, and the measured constraint is accuracy, not retention. Cheap version of the same test: anonymous return-visitor measurement through the existing allowlist plus the shareable receipt, run through the 10-person pilot. Success ≥4/10 return with a second card in 14 days and ≥2 ask unprompted to save a comparison; kill <2/10. Nothing in the snapshot schema forecloses a later user id, so waiting accrues no migration debt. Evidence `docs/decision-login-backend-2026-08-14.md`.
 <!-- progress:end -->
-
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
+- September 26: clean main/origin/main `3177d56` → `codex/comparison-trust-fixes`; implementation and release gate in progress. Local raw observations/logs under `output/trust-fixes/` are excluded from Git; screenshots in the September 26 Codex visualization directory.
 - 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to main. After user completed GitHub login, normal Git push published through `8ba402f`; Vercel deployment `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY and aliased to lenstcg.com. The earlier oversized connector write was rejected and never retried by fragmentation.
 - Node 24.19 and dependencies are present. npm is absent from PATH, so verification invokes the installed ESLint, TypeScript, Vitest, metadata audit and Next CLIs directly; no dependency changes/install.
 - Graphify CLI is unavailable here (the documented macOS path and Windows PATH do not resolve). Existing AST graph was used for navigation; no graph regeneration is claimed. Structural graph refresh remains a tooling follow-up.
 - Browser evidence is in the local Codex visualization directory `2026/09/14/01a0a16e-9654-7801-ba6a-bd2355fbcb09/cross-market-qa/`: EN/中文 desktop, 中文 mobile and a five-search manifest. Synthetic provider facts are visibly labeled; no credentials or raw marketplace pages are committed.
-- Provider tokens were absent locally. The connected Vercel app exposes deployment inspection but no callable environment-variable reader in this session. An asynchronous configuration-location question is pending; never paste credentials into chat.
+- Provider tokens are absent locally. Vercel configuration was inspected in founder-authorized Chrome; secrets were not copied. Production AI health reports OpenAI-compatible primary/cheap `gpt-5.6-luna`; exact custom base URL remains unverified. No configuration question is pending.
 <!-- progress:end -->
-
 <!-- progress:section id="FIRST-READ" -->
 ## FIRST-READ
 
@@ -251,9 +241,9 @@ The user must decide these; agents must not infer them:
 
 Use Graphify before broad cross-file exploration. Verify ambiguous graph edges in source.
 <!-- progress:end -->
-
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
+- September 26 trust-fix gate: lint/typecheck/metadata audit/build pass; 113 test files / 1,562 tests passed, 5 skipped. EN/中文 desktop and 390px mobile Q&A passed; five sequential fixture searches used Edit, New Search and One Piece version confirmation. Production release pending; evidence in `docs/comparison-trust-fixes-2026-09-26.md`.
 - September 23 result-layout gate: lint/typecheck/build + metadata audit passed; 111 files / 1,543 tests passed, 5 skipped. Regression proves the buy appears before closed supplementary prices; disclosure/filter tests passed. Built-in browser verified EN/中文 desktop and 390px mobile, keyboard Enter, hidden links while collapsed, and no horizontal overflow. Synthetic QA only, no new paid source calls. The initial parallel run hit one 5s UI timeout and a malformed generated `.next/dev/types/routes.d.ts`; stopping dev, restoring that generated file from the successful build output, and rerunning the suite with four workers passed without weakening tests. Graphify CLI still unavailable.
 Verified production: 6b1453d READY on lenstcg.com (`dpl_83vwS7jakJBAc7RkGoX5fiqunzt7`, 71.7s Vercel build); deployment warning/error/fatal scan empty. Restored the existing Giratina receipt without new provider calls: eBay recommendation first, lens switching works, supplementary prices closed by default, three Whatnot prices still visible on expansion and Mercari shows its compact unavailable state. Real EN/中文 desktop and 390px mobile screenshots captured in built-in browser. Source activation remains 9cf1511: 50 eBay + 3 Whatnot rows ($950/$984/$1,000; $950 page-checked), unknown charges cannot win. Mercari remains off after its approved HTTP 403/90s/0-row test ($0.0001).
 
@@ -278,13 +268,12 @@ Verified production: 6b1453d READY on lenstcg.com (`dpl_83vwS7jakJBAc7RkGoX5fiqu
 
 Still not verified:
 
-- Three-source production comparison remains incomplete: eBay + Whatnot live acquisition is verified for one query; repeatability/coverage and complete Whatnot checkout cost remain unmeasured. Mercari's approved September 23 paid test hit HTTP 403 and timed out/0 rows; credentials alone do not fix source access (WS-SOURCES).
+- Three-source production comparison remains incomplete: Whatnot allowance is exhausted as of September 26; its September 23 one-query success did not establish repeatability or complete checkout cost. Mercari's approved September 23 paid test hit HTTP 403 and timed out/0 rows; credentials alone do not fix source access (WS-SOURCES).
 - Population-level live eBay recall and precision remain unproven until the human-adjudicated 30-listing quality gate runs; the known cross-facet sibling reproductions are fixed in v4 and covered by zero-substitution regressions.
 - Ten-buyer demand/usability pilot; monetization, distribution economics, and public-launch legal/provider readiness; dirty local experiments in LOCAL-STATE. Pokémon buy accuracy has never been measured at the One Piece standard — 18/18 recall does not adjudicate the artwork — so 69.2% describes one of the two live games, and the set-filter year label is unit-tested but never seen in a browser.
 - The eBay detail budget is measured but unshipped (default still 12); D-DETAIL-BUDGET needs the Browse daily quota. The 2026-08-11 retry improvement (45% to 29% "try again") is a simulation over the measured failure profile, not an observed production rate.
 - Taxonomy phases through `8d8874b` passed production builds and deployed READY. Whether any tagged launch link has been posted is not recorded in the repo, and the PostHog insights in `docs/launch-metrics.md` are written but not built in the tool, with no automatic `channel is not internal` / `demo_mode is not true` filters.
 <!-- progress:end -->
-
 <!-- progress:section id="UPDATE-PROTOCOL" -->
 ## UPDATE-PROTOCOL
 

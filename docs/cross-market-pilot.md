@@ -2,7 +2,11 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest — September 23: Whatnot live; Mercari live access failed
+## Latest — September 26: Whatnot allowance exhausted; Mercari still blocked
+
+A real production Charizard 4/102 search returned 50 eBay rows and the explicit Whatnot error `Cross-market pilot budget reached; this source is paused.` Whatnot previously returned real data on September 23, but that does not describe current availability. The existing shared 20-start counter was not reset or increased. Mercari remains disabled after the failed authorized test below. Buyer copy now distinguishes the allowance pause from a temporary outage and labels inactive sources as manual checks. No new paid run or activation was performed. See [the trust-fix review](comparison-trust-fixes-2026-09-26.md).
+
+## September 23: Whatnot live; Mercari live access failed
 
 The founder explicitly authorized using the existing Apify credentials from Chrome/Vercel to integrate both sources. After reviewing the changed Mercari tariff, the founder approved one 90-second/three-result/$0.05 Console test, with production activation only on success. Application calls retain the original, unreset shared 20-start counter: Whatnot remains capped at $0.03/start; Mercari may use $0.05/start. Worst-case new spending, including the separate Console test, is $1.05. No subscription, top-up, scheduler or additional Actor was authorized.
 

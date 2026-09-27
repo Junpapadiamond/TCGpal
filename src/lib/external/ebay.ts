@@ -1,6 +1,6 @@
 import { printClassQueryToken, sellerVocabularyPrintQueryToken } from "@/lib/external/one-piece-taxonomy";
 import { z } from "zod";
-import { isOnePieceCardKey } from "@/lib/comparison/ranking";
+import { isOnePieceCardKey, normalizeListing, titleConditionFloor } from "@/lib/comparison/ranking";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
 import {
   collectorNumberConflict,
@@ -185,10 +185,21 @@ export function resetEbayTokenCacheForTests() {
 
 export function selectEbayDetailTargets(
   summaries: Array<z.infer<typeof ebayItemSchema>>,
-  card: Pick<CardIdentityCandidate, "name" | "setName" | "setCode" | "cardNumber">,
+  card: CardIdentityCandidate,
   detailBudget: number,
+  buyer: BuyerContext = { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
 ) {
   const confidenceRank = { high: 0, medium: 1, low: 2 } as const;
+  // Spend scarce detail calls on rows that can still qualify. Missing condition,
+  // shipping or print proof is exactly why we fetch details; explicit conflicts,
+  // excluded products and implausible prices should not consume the window first.
+  // This changes lookup priority only: every summary still enters final ranking.
+  const recoverable = new Set(["condition_unstated", "shipping_unknown", "buyer_fee_unknown", "identity_unverified"]);
+  const blocked = new Map(summaries.map((item) => {
+    const listing = normalizeListing({ listing: toNormalizedSeed(item, card), buyer,
+      confirmedCard: card, cardLanguage: card.language, marketPrice: card.marketMid ?? null });
+    return [item.itemId, Number(listing.eligibilityIssues.some((issue) => issue.disposition === "exclude" && !recoverable.has(issue.code)))];
+  }));
   return [...summaries]
     .filter((item) => {
       const match = assessTitleMatch(item.title, card);
@@ -197,7 +208,8 @@ export function selectEbayDetailTargets(
     .sort((left, right) => {
       const leftConfidence = assessTitleMatch(left.title, card).confidence;
       const rightConfidence = assessTitleMatch(right.title, card).confidence;
-      return confidenceRank[leftConfidence] - confidenceRank[rightConfidence]
+      return (blocked.get(left.itemId) ?? 0) - (blocked.get(right.itemId) ?? 0)
+        || confidenceRank[leftConfidence] - confidenceRank[rightConfidence]
         || left.itemId.localeCompare(right.itemId);
     })
     .slice(0, Math.max(0, Math.trunc(detailBudget)));
@@ -351,7 +363,7 @@ export async function searchEbayAlternatives(
   // carries eBay's structured Card Condition descriptor (NM/LP/MP/HP/Damaged).
   // Enrich a bounded exact-match shortlist in parallel so condition is a real
   // deterministic input without turning the search into an unbounded crawl.
-  const detailTargets = selectEbayDetailTargets(summaries, card, detailBudget);
+  const detailTargets = selectEbayDetailTargets(summaries, card, detailBudget, buyer);
   const details = await Promise.all(detailTargets.map(async (item) => {
     try {
       return await getEbayItemDetailWithRetry(item.itemId, buyer, fetcher);
@@ -497,7 +509,7 @@ function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: stri
     description,
     price: toUsd(item.price),
     shipping: cheapestUsdShipping(item.shippingOptions),
-    claimedCondition: normalizeCondition(`${descriptorText} ${item.condition ?? ""} ${item.title}`),
+    claimedCondition: normalizeEbayCondition(`${descriptorText} ${item.condition ?? ""}`, item.title),
     active: !item.itemEndDate || new Date(item.itemEndDate).getTime() > Date.now(),
     imageUrl: imageUrls[0] ?? null,
     imageUrls,
@@ -846,13 +858,22 @@ function evidenceFromText(text: string, photoCount: number, substantiveCondition
   };
 }
 
-function normalizeCondition(value: string | undefined): SourceListing["claimedCondition"] {
-  const condition = value?.toLowerCase() ?? "";
-  if (/\b(near[\s-]?mint|nm|mint)\b/.test(condition) || condition.trim() === "new") return "Near Mint";
-  if (/\b(light(?:ly)?[\s-]?played|lp)\b/.test(condition)) return "Lightly Played";
-  if (/\b(moderate(?:ly)?[\s-]?played|mp)\b/.test(condition)) return "Moderately Played";
-  if (/\b(heavy|heavily[\s-]?played|hp)\b/.test(condition)) return "Heavily Played";
-  if (/\b(damaged?|crease[ds]?)\b/.test(condition)) return "Damaged";
+export function normalizeEbayCondition(structured: string, title: string): SourceListing["claimedCondition"] {
+  // HP in a title can be the printed hit-point stat. Only the structured
+  // condition field or an explicit title condition context may mean played.
+  const structuredText = structured.replace(/\bhp\b/gi, "Heavily Played")
+    .replace(/\blight[ -]?played\b/gi, "Lightly Played")
+    .replace(/\bmoderate[ -]?played\b/gi, "Moderately Played")
+    .replace(/\bheavy[ -]?played\b/gi, "Heavily Played");
+  const damageText = `${structuredText} ${title}`.replace(/\b(?:no|without)\s+(?:visible\s+)?(?:damage|creases?)(?:\s+(?:or|and)\s+(?:damage|creases?))?\b/gi, "");
+  if (/\b(?:damaged?|crease[ds]?)\b/i.test(damageText)) return "Damaged";
+  const floors = [titleConditionFloor(structuredText), titleConditionFloor(title)];
+  for (const condition of ["Damaged", "Heavily Played", "Moderately Played", "Lightly Played"] as const) {
+    if (floors.includes(condition)) return condition;
+  }
+  const text = `${structuredText} ${title}`;
+  if (/\b(?:not|non|almost)\s*[- ]?\s*(?:near[ -]?mint|nm|mint)\b/i.test(text)) return "Unknown";
+  if (/\b(?:near[\s-]?mint|nm|mint)\b/i.test(text)) return "Near Mint";
   return "Unknown";
 }
 

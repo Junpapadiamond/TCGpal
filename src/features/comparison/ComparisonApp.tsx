@@ -42,6 +42,7 @@ import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
 import { CrossMarketOpportunities } from "./CrossMarketOpportunities";
 import { CrossMarketPrices } from "./CrossMarketPrices";
+import { sourceStatusLabel } from "./source-status";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
 import { submitsOnEnter } from "@/features/comparison/search-submit";
 import { summarizeExclusions } from "@/features/comparison/exclusion-summary";
@@ -1203,6 +1204,9 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                       <input {...form.register("taxRatePercent")} inputMode="decimal" placeholder={t.form.ph.tax} />
                       <span>%</span>
                     </div>
+                    <span className="text-xs font-normal leading-5 text-[#64736c]">{lang === "zh"
+                      ? "留空时，已识别的美国邮编使用州平均税率估算；无法识别则显示税前总价。实际税费以结账为准。"
+                      : "Leave blank to estimate from your ZIP using a state average. Unrecognized ZIPs show pre-tax totals. Checkout tax may differ."}</span>
                   </label>
                 </div>
               </div>
@@ -1450,7 +1454,7 @@ function Header({ onLogoClick }: { onLogoClick: () => void }) {
     <header className="border-b border-[#d6ded5] bg-[#f7f9f5]/95">
       <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <button className="flex items-center gap-3" type="button" onClick={onLogoClick} aria-label={t.header.home}>
-          <Image src="/lens-logo-horizontal.svg" alt="Lens TCG" width={140} height={40} priority />
+          <Image src="/lens-logo-horizontal.svg" alt="TCGlens" width={140} height={40} priority />
         </button>
         <div className="flex items-center gap-3 sm:gap-6">
           <nav className="hidden items-center gap-6 text-sm font-bold text-[#64736c] sm:flex">
@@ -1537,7 +1541,7 @@ function ResultsHeader({
           onClick={onNewSearch}
           aria-label={t.header.home}
         >
-          <Image src="/lens-logo-horizontal.svg" alt="Lens TCG" width={105} height={30} priority />
+          <Image src="/lens-logo-horizontal.svg" alt="TCGlens" width={105} height={30} priority />
         </button>
         <button
           className={`flex min-w-0 items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 sm:py-2 lg:max-w-[610px] ${condensed ? "order-none flex-1 basis-0 py-1" : "order-3 basis-full py-2"}`}
@@ -2521,19 +2525,22 @@ function ComparisonResult({
   async function askQuestion(options: { question?: string; targetListing?: NormalizedListing | null } = {}) {
     const question = (options.question ?? qaQuestion).trim();
     if (!question || qaLoading) return;
+    if (options.question) setQaQuestion(question);
     const targetListing = options.targetListing === undefined
       ? qaTarget ? listingMap.get(qaTarget.id) ?? null : null
       : options.targetListing;
     if (targetListing) {
       setQaQuestion(question);
       setQaTarget({ id: targetListing.id, label: `${targetListing.marketplace} · ${formatMoney(targetListing.estimatedLandedCost ?? targetListing.preTaxTotal)}` });
+    } else if (options.targetListing === null) {
+      setQaTarget(null);
     }
     setQaLoading(true);
     setQaError(null);
     try {
       const json = await postJsonWithRetry(
         "/api/agent/listing-compare/explain",
-        { report, question, targetListingId: targetListing?.id, activeRole: selectedRole ?? undefined, webContext: "auto" },
+        { report, question, targetListingId: targetListing?.id, activeRole: selectedRole ?? undefined, webContext: "auto", lang },
         t.result.askError,
       );
       setQaAnswer(json as ComparisonQuestionResponse);
@@ -2692,7 +2699,7 @@ function ComparisonResult({
                 loading={qaLoading}
                 targetLabel={qaTarget?.label ?? null}
                 onQuestionChange={setQaQuestion}
-                onAsk={askQuestion}
+                onAsk={(question, scope) => askQuestion({ question, targetListing: scope === "report" ? null : undefined })}
                 onClose={closeQaPanel}
               />
             </div>
@@ -2777,7 +2784,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
   );
 }
 
-function ComparisonQuestionBox({
+export function ComparisonQuestionBox({
   question,
   answer,
   error,
@@ -2793,10 +2800,14 @@ function ComparisonQuestionBox({
   loading: boolean;
   targetLabel: string | null;
   onQuestionChange: (value: string) => void;
-  onAsk: () => void | Promise<void>;
+  onAsk: (question?: string, scope?: "report") => void | Promise<void>;
   onClose: () => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
+  const zh = lang === "zh";
+  const suggestions = zh ? ["为什么选这条？", "为什么排除这些商品？", "还缺哪些信息？"]
+    : ["Why this pick?", "Why were listings excluded?", "What is missing?"];
   return (
     <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4">
       <div className="flex items-start justify-between gap-3">
@@ -2808,6 +2819,12 @@ function ComparisonQuestionBox({
         >
           {t.result.askClose}
         </button>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[#64736c]">{zh ? "回答依据本次报告；外部参考会单独标注。" : "Answers use this report. Outside references are labeled separately."}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {suggestions.map((suggestion) => <button key={suggestion} type="button" disabled={loading}
+          className="min-h-11 rounded-md border border-[#c9d7ce] px-3 py-2 text-xs font-bold text-[#2f6f73] hover:bg-[#e7efe8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] disabled:opacity-50"
+          onClick={() => { onQuestionChange(suggestion); void onAsk(suggestion, "report"); }}>{suggestion}</button>)}
       </div>
       {targetLabel && (
         <p className="mt-3 inline-flex max-w-full items-center gap-2 rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2.5 py-1.5 text-xs font-bold text-[#2f6f73]">
@@ -2831,6 +2848,9 @@ function ComparisonQuestionBox({
       </div>
       {answer && (
         <div aria-live="polite" className="mt-4 rounded-md border border-[#c9d7ce] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
+          <p className="mb-2 text-xs font-bold text-[#64736c]">{answer.usedAi
+            ? `${zh ? "AI 解读" : "AI explanation"}${answer.model ? ` · ${answer.model}` : ""}`
+            : zh ? "规则解读" : "Rule-based explanation"}</p>
           {answer.webContextChecked && (
             <p className="mb-2 inline-flex items-center gap-2 rounded-md border border-[#d9c27b] bg-[#fff8dc] px-2.5 py-1 text-xs font-black uppercase tracking-[0.08em] text-[#6f5a22]">
               <IconExternal className="h-3.5 w-3.5" />
@@ -3186,11 +3206,10 @@ function GameBetaNotice() {
 
 function BuyerSourceNotice({ report, hasComparableListings }: { report: ComparisonReport; hasComparableListings: boolean }) {
   const t = useT();
+  const { lang } = useLang();
   const messages = report.platforms
     .filter((platform) => platform.configured && platform.status === "fallback")
-    .map((platform) => platform.marketplace === "eBay"
-      ? t.result.ebayUnavailable
-      : t.result.marketplaceUnavailable(platform.marketplace));
+    .map((platform) => `${platform.marketplace} · ${sourceStatusLabel(platform, lang)}`);
   const ebay = report.platforms.find((platform) => platform.id === "ebay");
   if (!hasComparableListings && ebay?.status === "complete") messages.push(t.result.ebayNoComparable);
   if (messages.length === 0) return null;

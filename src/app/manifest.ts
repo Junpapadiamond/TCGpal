@@ -11,8 +11,8 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Lens TCG — evidence-backed card listing comparison",
-    short_name: "Lens TCG",
+    name: "TCGlens — evidence-backed card listing comparison",
+    short_name: "TCGlens",
     description:
       "Confirm the exact print, compare live listings by complete cost, and see the evidence behind the pick.",
     start_url: "/",
