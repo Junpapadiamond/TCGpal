@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-26
 canonical_branch: origin/main
-last_verified_product_commit: f016616
-working_branch: codex/comparison-trust-fixes (Q&A latency follow-up; Whatnot allowance exhausted; Mercari blocked)
+last_verified_product_commit: 15c06d6
+working_branch: main (trust fixes deployed; Whatnot allowance exhausted; Mercari blocked)
 max_lines: 300
 ---
 
@@ -31,11 +31,11 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Evidence Q&A prompts/attribution, source-pause copy and TCGlens naming verified locally | Observe trust, sharing, and empty outcomes |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Trust fixes deployed; Q&A fallback works, model requests still time out | Observe trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay live; Whatnot allowance exhausted; Mercari live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
-| LOCAL-STATE | Local artifacts and tools | Mixed | Windows checkout from current main; cross-market changes under final verification | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
+| LOCAL-STATE | Local artifacts and tools | Mixed | Windows main; trust fixes deployed and verified | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
 <!-- progress:section id="GOALS" -->
 ## GOALS
@@ -171,6 +171,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-SOURCES" state="whatnot-budget-paused-mercari-access-blocked" tags="whatnot,mercari,metadata,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
+
 - September 26 live check: Whatnot returned the pilot-budget-exhausted pause; Mercari remains disabled. No counter reset, paid retry or source expansion. Source copy distinguishes pauses from outages. Before-fix Charizard NM: 50 eBay / 0 eligible / 39 price-floor issues, overlapping with other reasons. [Review](docs/comparison-trust-fixes-2026-09-26.md).
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
@@ -216,7 +217,7 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-- September 26: clean main/origin/main `3177d56` → `codex/comparison-trust-fixes`; `f016616` fast-forwarded/pushed and verified READY. Q&A low-reasoning follow-up passed the full gate. Local raw observations/logs under `output/trust-fixes/` are excluded from Git; screenshots in the September 26 Codex visualization directory.
+- September 26: clean main/origin/main `3177d56` → `codex/comparison-trust-fixes` → main; `f016616` and `15c06d6` fast-forwarded/pushed and verified READY. Local raw observations/logs under `output/trust-fixes/` are excluded from Git; screenshots in the September 26 Codex visualization directory. Dev/fixture servers stopped after QA.
 - 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to main. After user completed GitHub login, normal Git push published through `8ba402f`; Vercel deployment `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY and aliased to lenstcg.com. The earlier oversized connector write was rejected and never retried by fragmentation.
 - Node 24.19 and dependencies are present. npm is absent from PATH, so verification invokes the installed ESLint, TypeScript, Vitest, metadata audit and Next CLIs directly; no dependency changes/install.
 - Graphify CLI is unavailable here (the documented macOS path and Windows PATH do not resolve). Existing AST graph was used for navigation; no graph regeneration is claimed. Structural graph refresh remains a tooling follow-up.
@@ -243,6 +244,8 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
+
+- Final September 26 product deployment `15c06d6` READY (`dpl_3veDyoN3xNSLxjJARfMc1uveXhJu`, 54.1s), lenstcg.com aliased; full gate still 1,562 pass / 5 skipped, scoped warning/error/fatal scan empty. Low reasoning did not resolve Q&A's deadline: the second live answer used accurate, labeled fallback after 12,201ms. Model-backed live answers remain unverified; Chinese fallback detail reasons may remain English. Final EN/中文 desktop and 390px mobile production screenshots captured. No new paid source start, quota reset or activation.
 - September 26 trust-fix gate: lint/typecheck/metadata audit/build pass; 113 test files / 1,562 tests passed, 5 skipped. EN/中文 desktop and 390px mobile Q&A passed; five sequential fixture searches used Edit, New Search and One Piece version confirmation. `f016616` READY on lenstcg.com (`dpl_6HrcUg5gtG1k1STQVraxutKtMgDS`, 82s); warning/error/fatal scan empty. Live Charizard: 50 rows / 1 eligible / 38 price-floor issues, 3.69s; 47 IDs overlap, so the new winner is not a causal recall gain. Unknown $499/$600 rows now have explicit LP claims and stay excluded. Q&A accurately used labeled fallback after 12,085ms; low reasoning follow-up retains the deadline and passed the full gate. Evidence: `docs/comparison-trust-fixes-2026-09-26.md`.
 - September 23 result-layout gate: lint/typecheck/build + metadata audit passed; 111 files / 1,543 tests passed, 5 skipped. Regression proves the buy appears before closed supplementary prices; disclosure/filter tests passed. Built-in browser verified EN/中文 desktop and 390px mobile, keyboard Enter, hidden links while collapsed, and no horizontal overflow. Synthetic QA only, no new paid source calls. The initial parallel run hit one 5s UI timeout and a malformed generated `.next/dev/types/routes.d.ts`; stopping dev, restoring that generated file from the successful build output, and rerunning the suite with four workers passed without weakening tests. Graphify CLI still unavailable.
 Verified production: 6b1453d READY on lenstcg.com (`dpl_83vwS7jakJBAc7RkGoX5fiqunzt7`, 71.7s Vercel build); deployment warning/error/fatal scan empty. Restored the existing Giratina receipt without new provider calls: eBay recommendation first, lens switching works, supplementary prices closed by default, three Whatnot prices still visible on expansion and Mercari shows its compact unavailable state. Real EN/中文 desktop and 390px mobile screenshots captured in built-in browser. Source activation remains 9cf1511: 50 eBay + 3 Whatnot rows ($950/$984/$1,000; $950 page-checked), unknown charges cannot win. Mercari remains off after its approved HTTP 403/90s/0-row test ($0.0001).

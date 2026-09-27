@@ -48,3 +48,16 @@ The same Charizard request completed in 3.69 seconds: 50 eBay rows, one eligible
 The new detail priority established Lightly Played on the previously unknown $499 and $600 rows; both correctly stayed excluded from the NM request. Correcting `120 HP` to Unknown by itself never makes a listing eligible.
 
 The production Q&A returned an accurate rule-based exclusion answer, with the fallback visibly labeled. Its 12,085 ms request duration matched the model deadline despite successful model health probes. Follow-up hypothesis: low reasoning effort can fit a short evidence explanation into the unchanged 12-second deadline. A failing-then-passing request test verifies the setting; no timeout, model, source, price or ranking boundary was expanded. One follow-up live question will test model-backed completion; a timeout still returns deterministic evidence. Review owner: Codex, September 26.
+
+## Final deployment and remaining limits
+
+- **URL:** [lenstcg.com](https://lenstcg.com)
+- **Target / status:** production / READY
+- **Product commit:** `15c06d6`; deployment `dpl_3veDyoN3xNSLxjJARfMc1uveXhJu`
+- **Framework / build:** Next.js 16.2.6 / 54.1 seconds
+- **Gate:** lint, typecheck, metadata audit, build and 1,562 tests passed; 5 optional live tests skipped.
+- **Observability:** scoped warning/error/fatal scan returned no matching logs. Drains were not inspected. The bounded question requests returned HTTP 200 via fallback, so a clean error scan does not prove model success.
+
+The low-reasoning follow-up still reached the deadline (12,201 ms) and used rule-based output. It did **not** establish improved model latency. Do not call model-backed Q&A reliable from health probes or this release. The new prompts and deterministic evidence answers work; configured-model attribution is unit tested, but no model-backed live answer was observed in these two checks. Some detailed fallback reasons retain the report's English wording in Chinese mode.
+
+Current source blockers remain Whatnot's exhausted allowance and Mercari's failed access path. No new paid quota or activation was authorized or performed. The production UI visibly shows these states, estimated tax, the TCGlens name and the conditional waiting verdict. English desktop, Chinese desktop and Chinese 390px mobile production screenshots were captured; the local five-search QA remains synthetic. Local dev and fixture servers were stopped after verification.
