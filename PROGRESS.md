@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-26
+updated_at: 2026-09-27
 canonical_branch: origin/main
-last_verified_product_commit: 15c06d6
-working_branch: main (trust fixes deployed; Whatnot allowance exhausted; Mercari blocked)
+last_verified_product_commit: e92f566
+working_branch: main (search-entry refresh; Whatnot allowance exhausted; Mercari blocked)
 max_lines: 300
 ---
 
@@ -31,7 +31,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Trust fixes deployed; Q&A fallback works, model requests still time out | Observe trust, sharing, and empty outcomes |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Search-entry refresh verified; trust fixes deployed; Q&A model requests still time out | Observe example use, trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay live; Whatnot allowance exhausted; Mercari live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
@@ -147,6 +147,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 ## WS-UX - Decision experience
 ### Done
 
+- September 27 search entry (`e92f566`): simpler rounded search and larger serif heading, six clickable examples from 16 per game, explicit More examples, no consecutive repeated group. Clicking fills editable identity/condition fields without querying providers; the placeholder follows the current examples. Original rolling/clickable card rail is retained with an EN/中文 click hint. No new AI/budget parsing, provider or ranking behavior. See [design QA](design-qa.md).
 - September 26 trust fixes: [review](docs/comparison-trust-fixes-2026-09-26.md). Deterministic eBay parsing separates HP stats from condition and retains worse condition ranges; detail priority favors recoverable evidence within the existing budget. Q&A has prompts, model/fallback attribution, exclusion/missing-evidence answers and Chinese request language. Current copy uses TCGlens; ZIP-estimate guidance is explicit.
 - September 23 result hierarchy: recommendation/Inspect First/Next Moves precedes supplementary asking prices; existing lens controls stay beside the primary recommendation. Platform asking prices are a closed, keyboard-accessible disclosure below the decision and cross-market opportunities. Expanded prices use compact rows; unavailable/empty platforms use one-line statuses. Price eligibility filters, fees, source timestamps and ranking are unchanged. EN/中文 1440px and 中文 390px local fixture screenshots verified; no paid acquisition for this layout change.
 - Card search now has explicit identity and comparison phases: name-only searches show the identity gallery, exact catalog matches proceed with a fixed confirmed-card anchor, and same-number sibling prints remain confirmation-gated. The comparison loader keeps one fixed confirmed-card anchor (reduced-motion users get it static); exact version image selection immediately submits the canonical print; results distinguish best_buy / inspect_first / next_moves and never use demo or low-confidence inventory as real recommendations.
@@ -217,6 +218,7 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
+- September 27: `codex/search-examples` fast-forwarded/pushed to main at `e92f566`; full local gate and built-in browser QA passed. Vercel `dpl_FFwCuE83Mw7oUKNg8Px7JCxXQ1xK` READY and aliased to lenstcg.com; live homepage shows six examples and the rail hint, inspected console clean. Dev preview remains on port 3000; screenshots are in the September 27 Codex visualization directory, `tcglens-phia-design/`.
 - September 26: clean main/origin/main `3177d56` → `codex/comparison-trust-fixes` → main; `f016616` and `15c06d6` fast-forwarded/pushed and verified READY. Local raw observations/logs under `output/trust-fixes/` are excluded from Git; screenshots in the September 26 Codex visualization directory. Dev/fixture servers stopped after QA.
 - 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to main. After user completed GitHub login, normal Git push published through `8ba402f`; Vercel deployment `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY and aliased to lenstcg.com. The earlier oversized connector write was rejected and never retried by fragmentation.
 - Node 24.19 and dependencies are present. npm is absent from PATH, so verification invokes the installed ESLint, TypeScript, Vitest, metadata audit and Next CLIs directly; no dependency changes/install.
@@ -245,6 +247,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
 
+- 2026-09-27 search entry: lint/typecheck/metadata audit/build passed; 114 test files and 1,571 tests passed, 5 skipped. TDD covered example selection, stale-field reset, real condition presets, game/locale changes and the six-card standard flow. Built-in browser verified EN/中文 1440px desktop, 390px mobile, original rail pointer click, and six sequential searches across both games with Edit/New and Nami SP confirmation. Synthetic providers only; inspected console logs empty. Graphify CLI remains unavailable.
 - Final September 26 product deployment `15c06d6` READY (`dpl_3veDyoN3xNSLxjJARfMc1uveXhJu`, 54.1s), lenstcg.com aliased; full gate still 1,562 pass / 5 skipped, scoped warning/error/fatal scan empty. Low reasoning did not resolve Q&A's deadline: the second live answer used accurate, labeled fallback after 12,201ms. Model-backed live answers remain unverified; Chinese fallback detail reasons may remain English. Final EN/中文 desktop and 390px mobile production screenshots captured. No new paid source start, quota reset or activation.
 - September 26 trust-fix gate: lint/typecheck/metadata audit/build pass; 113 test files / 1,562 tests passed, 5 skipped. EN/中文 desktop and 390px mobile Q&A passed; five sequential fixture searches used Edit, New Search and One Piece version confirmation. `f016616` READY on lenstcg.com (`dpl_6HrcUg5gtG1k1STQVraxutKtMgDS`, 82s); warning/error/fatal scan empty. Live Charizard: 50 rows / 1 eligible / 38 price-floor issues, 3.69s; 47 IDs overlap, so the new winner is not a causal recall gain. Unknown $499/$600 rows now have explicit LP claims and stay excluded. Q&A accurately used labeled fallback after 12,085ms; low reasoning follow-up retains the deadline and passed the full gate. Evidence: `docs/comparison-trust-fixes-2026-09-26.md`.
 - September 23 result-layout gate: lint/typecheck/build + metadata audit passed; 111 files / 1,543 tests passed, 5 skipped. Regression proves the buy appears before closed supplementary prices; disclosure/filter tests passed. Built-in browser verified EN/中文 desktop and 390px mobile, keyboard Enter, hidden links while collapsed, and no horizontal overflow. Synthetic QA only, no new paid source calls. The initial parallel run hit one 5s UI timeout and a malformed generated `.next/dev/types/routes.d.ts`; stopping dev, restoring that generated file from the successful build output, and rerunning the suite with four workers passed without weakening tests. Graphify CLI still unavailable.
