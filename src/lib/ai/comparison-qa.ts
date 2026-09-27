@@ -28,6 +28,8 @@ export async function answerComparisonQuestion(
   try {
     const response = await provider.completeJson({
       role: "critic",
+      // Short report explanations must fit the existing 12-second deadline.
+      reasoningEffort: "low",
       schemaName: "comparison_question_answer",
       schema: comparisonQuestionResponseSchema.omit({ usedAi: true, model: true }),
       system: [
@@ -95,6 +97,7 @@ async function answerWithWebContext(
   try {
     const response = await provider.completeJson({
       role: "critic",
+      reasoningEffort: "low",
       schemaName: "comparison_question_answer_with_web_context",
       schema: comparisonQuestionResponseSchema.omit({ usedAi: true, model: true, webContextChecked: true, webCitations: true }),
       system: [

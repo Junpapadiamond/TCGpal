@@ -114,6 +114,8 @@ describe("comparison question answering", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ choices: [{ message: { content: JSON.stringify({ answer: "The report has two candidates.", cautions: [], model: "invented-model" }) } }] })));
     const answer = await answerComparisonQuestion(report, "Why this pick?");
     expect(answer).toMatchObject({ usedAi: true, model: "test-model" });
+    const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));
+    expect(body.reasoning_effort).toBe("low");
   });
   afterEach(() => {
     vi.unstubAllEnvs();

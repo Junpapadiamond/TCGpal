@@ -38,3 +38,13 @@ Decision: fix demonstrated deterministic parsing errors, prioritize useful detai
 - Local screenshots are in the Codex visualization directory for September 26. Raw live report and local logs remain uncommitted under `output/trust-fixes/`.
 - Graphify's CLI is absent on this Windows checkout. Existing graph/source navigation was used; graph regeneration is not claimed.
 - Release gate and deployment evidence are indexed in `PROGRESS.md` → `VERIFICATION`.
+
+## First production verification
+
+`f016616` reached READY on [lenstcg.com](https://lenstcg.com) in 82 seconds (`dpl_6HrcUg5gtG1k1STQVraxutKtMgDS`). The scoped warning/error/fatal log scan was empty at verification time.
+
+The same Charizard request completed in 3.69 seconds: 50 eBay rows, one eligible, 38 price-floor issues, Whatnot still paused and Mercari still manual only. Forty-seven candidate IDs overlapped with the earlier sample. The sole eligible row was newly returned, so the winner does not establish a causal recall improvement. Its seller-stated NM, $1,200 item + $8.15 shipping + $102.93 estimated tax = $1,311.08 were present; the UI still said **Consider waiting**, with item price 27% above the $944.53 reference.
+
+The new detail priority established Lightly Played on the previously unknown $499 and $600 rows; both correctly stayed excluded from the NM request. Correcting `120 HP` to Unknown by itself never makes a listing eligible.
+
+The production Q&A returned an accurate rule-based exclusion answer, with the fallback visibly labeled. Its 12,085 ms request duration matched the model deadline despite successful model health probes. Follow-up hypothesis: low reasoning effort can fit a short evidence explanation into the unchanged 12-second deadline. A failing-then-passing request test verifies the setting; no timeout, model, source, price or ranking boundary was expanded. One follow-up live question will test model-backed completion; a timeout still returns deterministic evidence. Review owner: Codex, September 26.
