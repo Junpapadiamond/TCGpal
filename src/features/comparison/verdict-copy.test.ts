@@ -106,7 +106,7 @@ describe("buildVerdictCopy", () => {
       lang: "zh",
     });
 
-    expect(copy.why).toContain("卖家标注近全新（NM）");
+    expect(copy.why).toContain("卖家标注 近全新（NM）");
     expect(copy.catch).toContain("2 张实物照片");
     expect(copy.alternative).toContain("7 张实物照片");
     expect(copy.alternative).toContain("贵 $27.00");
@@ -601,8 +601,8 @@ describe("buildVerdictCopy", () => {
         lang: "zh",
       });
 
-      expect(cheapest.pricePosition).toBe("3 条可比商品里最便宜");
-      expect(third.pricePosition).toBe("3 条可比商品里第 3 便宜");
+      expect(cheapest.pricePosition).toBe("3 条符合条件的商品里，总价最低");
+      expect(third.pricePosition).toBe("3 条符合条件的商品里，总价排第 3");
     });
 
     it("ranks on comparable cost, not item price alone", () => {

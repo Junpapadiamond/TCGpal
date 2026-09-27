@@ -407,10 +407,10 @@ describe("comparison condition controls", () => {
     expect(screen.queryByText("We understood:")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(await screen.findByRole("heading", { name: "认准你要的那张卡，挑出最值得买的一件。" })).toBeTruthy();
-    expect((screen.getByRole("textbox", { name: "搜索卡片" }) as HTMLInputElement).placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
-    expect(screen.queryByRole("button", { name: "粘贴链接" })).toBeNull();
-    expect(screen.getByText("One Piece 仍在 Beta 阶段，覆盖稳定性可能稍弱。")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "收这张卡，先比比价。" })).toBeTruthy();
+    expect((screen.getByRole("textbox", { name: "想收哪张卡？" }) as HTMLInputElement).placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
+    expect(screen.queryByRole("button", { name: "贴链接比价" })).toBeNull();
+    expect(screen.getByText("海贼王还在测试中，部分版本可能查不到。")).toBeTruthy();
     expect(screen.getByRole("button", { name: /筛选.+近全新/i })).toBeTruthy();
   });
 
@@ -1309,7 +1309,7 @@ describe("comparison condition controls", () => {
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     await waitFor(() => {
       expect(within(editForm as HTMLFormElement).getByRole("button", {
-        name: "浏览全部版本",
+        name: "看看有哪些版本",
       })).toBeTruthy();
     });
   });
@@ -1407,16 +1407,16 @@ describe("comparison condition controls", () => {
     expect(screen.getByRole("button", { name: /Select Monkey.D.Luffy OP05-119 Silver · SP artwork/ })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "中文" }));
     expect(screen.getAllByText(/漫画版 ·/)[0]).toBeTruthy();
-    expect(screen.getAllByText(/银色 · SP 特别画面 ·/)[0]).toBeTruthy();
-    expect(screen.getAllByText(/金色 · SP 特别画面 ·/)[0]).toBeTruthy();
-    expect(screen.getByAltText("Monkey.D.Luffy · OP05-119 · 金色 · SP 特别画面 · 再版 · A Fist Of Divine Speed")).toBeTruthy();
-    const gold = screen.getByRole("button", { name: /Monkey.D.Luffy OP05-119 金色 · SP 特别画面/ });
+    expect(screen.getAllByText(/银色 · SP 特殊卡图 ·/)[0]).toBeTruthy();
+    expect(screen.getAllByText(/金色 · SP 特殊卡图 ·/)[0]).toBeTruthy();
+    expect(screen.getByAltText("Monkey.D.Luffy · OP05-119 · 金色 · SP 特殊卡图 · 再版 · A Fist Of Divine Speed")).toBeTruthy();
+    const gold = screen.getByRole("button", { name: /Monkey.D.Luffy OP05-119 金色 · SP 特殊卡图/ });
     gold.focus();
     await user.keyboard("{Enter}");
 
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests[0].confirmedCardId).toBe("OP05-119_p8");
-    expect(screen.getByRole("button", { name: /金色 · SP 特别画面/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /金色 · SP 特殊卡图/ })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "EN" }));
   });
 
@@ -1759,7 +1759,7 @@ describe("comparison condition controls", () => {
     expect(screen.queryByText(/its text does not prove/)).toBeNull();
     expect(screen.queryByText("The listing identity needs manual verification.")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(await screen.findByText(/商品价明显高于该版本的 NM 参考价/)).toBeTruthy();
+    expect(await screen.findByText(/这条标价比这个版本的 NM 参考价高出不少/)).toBeTruthy();
     expect(screen.queryByText("Our pick")).toBeNull();
   });
 
@@ -1830,9 +1830,9 @@ describe("comparison condition controls", () => {
     fireEvent.click(mercariLink);
     expect(trackEvent).toHaveBeenCalledWith("other_marketplace_clicked", { marketplace: "Mercari", game: "onePiece" });
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(await screen.findByRole("heading", { name: "暂时没有能放心买的" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "这次还没找到合适的" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "去其他平台看看" })).toBeTruthy();
-    expect(screen.getByText("Mercari（煤炉）")).toBeTruthy();
+    expect(screen.getByText("Mercari 美国站")).toBeTruthy();
     expect(screen.queryByText("Found listings, but none matched the selected SP print.")).toBeNull();
   });
 });

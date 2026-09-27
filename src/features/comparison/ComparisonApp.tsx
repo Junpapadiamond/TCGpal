@@ -2834,7 +2834,7 @@ export function ComparisonQuestionBox({
           {t.result.askClose}
         </button>
       </div>
-      <p className="mt-2 text-xs leading-5 text-[#64736c]">{zh ? "回答依据本次报告；外部参考会单独标注。" : "Answers use this report. Outside references are labeled separately."}</p>
+      <p className="mt-2 text-xs leading-5 text-[#64736c]">{zh ? "按这次查到的信息回答，引用外部资料时会注明来源。" : "Answers use this report. Outside references are labeled separately."}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {suggestions.map((suggestion) => <button key={suggestion} type="button" disabled={loading}
           className="min-h-11 rounded-md border border-[#c9d7ce] px-3 py-2 text-xs font-bold text-[#2f6f73] hover:bg-[#e7efe8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] disabled:opacity-50"
@@ -2864,7 +2864,7 @@ export function ComparisonQuestionBox({
         <div aria-live="polite" className="mt-4 rounded-md border border-[#c9d7ce] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
           <p className="mb-2 text-xs font-bold text-[#64736c]">{answer.usedAi
             ? `${zh ? "AI 解读" : "AI explanation"}${answer.model ? ` · ${answer.model}` : ""}`
-            : zh ? "规则解读" : "Rule-based explanation"}</p>
+            : zh ? "按比价数据整理" : "Rule-based explanation"}</p>
           {answer.webContextChecked && (
             <p className="mb-2 inline-flex items-center gap-2 rounded-md border border-[#d9c27b] bg-[#fff8dc] px-2.5 py-1 text-xs font-black uppercase tracking-[0.08em] text-[#6f5a22]">
               <IconExternal className="h-3.5 w-3.5" />
@@ -3758,17 +3758,17 @@ function localizeEligibilityIssue(code: string, fallback: string, lang: Lang) {
     condition_below_requested: "卖家标注的品相低于你设的最低品相。",
     title_condition_below_requested: "标题里写了更低的品相；给出区间时按差的那一端算。",
     unsupported_currency: "这条不是美元计价。",
-    shipping_unknown: "运费未知，结账总价没法安全比较。",
+    shipping_unknown: "运费没写清，还没法比较总价。",
     buyer_fee_unknown: "买家手续费未知，需要在结账时确认。",
     listing_inactive: "这条目前不在售。",
-    price_far_below_market: "价格远低于市场参考价，可能是复制品、定制品，或者标错了。",
+    price_far_below_market: "标价远低于这个版本的参考价，先核对商品内容和价格。",
     price_far_above_exact_market: "商品价超过该版本 NM 参考价的五倍，且至少高出 $20。请核对价格、版本和参考价更新时间。",
     language_conflict: "商品写明的语言和已确认卡片对不上。",
-    identity_sibling_mismatch: "证据指向同卡号的另一种卡图。",
+    identity_sibling_mismatch: "商品信息对应的是同卡号的另一版卡图。",
     identity_unverified: "商品文字还证明不了是已确认卡图，先核对一下。",
     identity_price_guard: "价格远低于确切版本参考价，商品也没证明是所选卡图。",
     identity_variant_mismatch: "商品写的是另一个版本。",
-    identity_low_confidence: "卡片或版本的匹配把握太低。",
+    identity_low_confidence: "现有信息还对不上卡片或版本。",
   };
   return messages[code] ?? fallback;
 }

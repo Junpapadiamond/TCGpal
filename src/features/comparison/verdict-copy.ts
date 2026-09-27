@@ -64,8 +64,8 @@ function englishCondition(listing: NormalizedListing) {
 
 function chineseCondition(listing: NormalizedListing) {
   return listing.claimedCondition === "Unknown"
-    ? "这条没标品相的商品"
-    : `这条卖家标注${zhConditions[listing.claimedCondition]}的商品`;
+    ? "卖家没标品相"
+    : `卖家标注 ${zhConditions[listing.claimedCondition]}`;
 }
 
 function englishTotal(listing: NormalizedListing) {
@@ -98,13 +98,13 @@ function chineseWhy(listing: NormalizedListing, choice: RankedChoice) {
   const total = chineseTotal(listing);
   switch (choice.role) {
     case "best_value":
-      return `${condition}，${total}。价格、卖家记录和可查证据合起来看，它在这批里最好。`;
+      return `${condition}，${total}。连同卖家评价和图文信息一起看，这次更推荐这条。`;
     case "lowest_landed_cost":
-      return `${condition}，${total}，是这批可比商品里最低的。`;
+      return `${condition}，${total}，是这次符合条件的商品里总价最低的。`;
     case "safest_listing":
-      return `${condition}，${total}。卖家记录加商品证据，这次它最稳。`;
+      return `${condition}，${total}。按卖家评价和资料完整程度，这条排在前面。`;
     case "best_condition_evidence":
-      return `${condition}，${total}，有 ${listing.evidence.photoCount} 张实物照片，是这次能查的材料最多的一条。`;
+      return `${condition}，${total}，有 ${listing.evidence.photoCount} 张实物照片，图文信息是这次最全的。`;
   }
 }
 
@@ -136,10 +136,10 @@ function chineseCatch(listing: NormalizedListing) {
     return "这条用的是你自己填的信息，下单前回商品页逐项核一遍。";
   }
   if (listing.riskLabel === "unverified") {
-    return "来源没给卖家历史记录，所以这里保持中性，标为信息不足。";
+    return "没查到卖家的评价记录，暂时没法判断信誉。";
   }
   if (listing.evidence.photoCount <= 3) {
-    return `只列了 ${listing.evidence.photoCount} 张实物照片，卖家说的品相没多少材料可查。`;
+    return `只列了 ${listing.evidence.photoCount} 张实物照片，还不足以看清卖家说的品相。`;
   }
   if (listing.seller.returnsAccepted === false) {
     return "卖家不接受退货。";
@@ -148,7 +148,7 @@ function chineseCatch(listing: NormalizedListing) {
     return "退货政策没核实。";
   }
   if (listing.evidenceCompletenessScore < 50) {
-    return "这条只有一部分材料可查；TCGlens 没看照片内容。";
+    return "图文信息还不全，照片内容也没有核实。";
   }
   return "品相是卖家自己说的，下单前去商品页再看一眼。";
 }
@@ -186,15 +186,15 @@ function englishAlternative(listing: NormalizedListing, alternative: NormalizedL
 function chineseAlternative(listing: NormalizedListing, alternative: NormalizedListing) {
   const difference = priceDifference(listing, alternative, "zh");
   if (alternative.evidenceCompletenessScore > listing.evidenceCompletenessScore) {
-    return `想多看点材料的话，下一条 ${alternative.marketplace} 商品有 ${alternative.evidence.photoCount} 张实物照片，${difference}。`;
+    return `想多看看实拍的话，下一条 ${alternative.marketplace} 商品有 ${alternative.evidence.photoCount} 张实物照片，${difference}。`;
   }
   if (alternative.sellerTrustScore > listing.sellerTrustScore) {
-    return `更看重卖家信号的话，下一条 ${alternative.marketplace} 商品${difference}。`;
+    return `更看重卖家评价的话，下一条 ${alternative.marketplace} 商品${difference}。`;
   }
   if (listingCost(alternative) < listingCost(listing)) {
     return `想再压压总价的话，下一条 ${alternative.marketplace} 商品${difference}。`;
   }
-  return `下一条可比的 ${alternative.marketplace} 商品${difference}。`;
+  return `另一条符合条件的 ${alternative.marketplace} 商品${difference}。`;
 }
 
 // Measured 2026-08-10: same-day eBay asks for one card spread 33-36 points
@@ -224,8 +224,8 @@ function buildPricePosition(
   const rank = alternatives.filter((alternative) => listingCost(alternative) < cost).length + 1;
   if (lang === "zh") {
     return rank === 1
-      ? `${total} 条可比商品里最便宜`
-      : `${total} 条可比商品里第 ${rank} 便宜`;
+      ? `${total} 条符合条件的商品里，总价最低`
+      : `${total} 条符合条件的商品里，总价排第 ${rank}`;
   }
   return rank === 1
     ? `Cheapest of ${total} comparable copies`
@@ -242,7 +242,7 @@ function cheaperTradeoffs(cheapest: NormalizedListing, listing: NormalizedListin
   const reasons: string[] = [];
   if (cheapest.evidenceCompletenessScore + CHEAPER_TRADEOFF_MARGIN <= listing.evidenceCompletenessScore) {
     reasons.push(lang === "zh"
-      ? `能查的材料更少（${cheapest.evidence.photoCount} 张对 ${listing.evidence.photoCount} 张实物照片）`
+      ? `图文信息更少（${cheapest.evidence.photoCount} 张对 ${listing.evidence.photoCount} 张实物照片）`
       : `less to review (${cheapest.evidence.photoCount} vs ${listing.evidence.photoCount} item-specific photos)`);
   }
   if (cheapest.riskLabel === "higher_risk") {
@@ -251,13 +251,13 @@ function cheaperTradeoffs(cheapest: NormalizedListing, listing: NormalizedListin
       ? (lang === "zh" ? `卖家 ${record}` : `a seller with ${record}`)
       : (lang === "zh" ? "卖家记录上有风险信号" : "risk signals on its seller track record"));
   } else if (cheapest.sellerTrustScore + CHEAPER_TRADEOFF_MARGIN <= listing.sellerTrustScore) {
-    reasons.push(lang === "zh" ? "卖家记录更弱" : "a weaker seller record");
+    reasons.push(lang === "zh" ? "卖家信誉评分更低" : "a weaker seller record");
   }
   if (cheapest.seller.returnsAccepted === false && listing.seller.returnsAccepted !== false) {
     reasons.push(lang === "zh" ? "不接受退货" : "no returns accepted");
   }
   if (reasons.length === 0) {
-    reasons.push(lang === "zh" ? "综合价值分更低" : "a lower combined value read");
+    reasons.push(lang === "zh" ? "综合评分更低" : "a lower combined value read");
   }
   return reasons.slice(0, 2);
 }
@@ -273,7 +273,7 @@ function buildWhyNotCheapest(
   if (savings < 0.01) return null;
   const reasons = cheaperTradeoffs(cheapest, listing, lang);
   if (lang === "zh") {
-    return `${formatMoney(listingCost(cheapest))} 能省 ${formatMoney(savings)} —— ${reasons.join("、")}。`;
+    return `${formatMoney(listingCost(cheapest))} 能省 ${formatMoney(savings)}，不过${reasons.join("、")}。`;
   }
   return `${formatMoney(listingCost(cheapest))} saves ${formatMoney(savings)} — ${reasons.join(" and ")}.`;
 }
@@ -294,11 +294,11 @@ function buildAction(
     const record = sellerRecordDetail(listing, lang);
     return {
       kind: "pass",
-      label: lang === "zh" ? "建议放弃" : "Consider passing",
+      label: lang === "zh" ? "这条先跳过" : "Consider passing",
       note: lang === "zh"
         ? record
-          ? `这个卖家 ${record}，卖家信任分 ${listing.sellerTrustScore}/100。除非商品页能打消疑虑，不如先放掉这条。`
-          : `这个卖家的信任分只有 ${listing.sellerTrustScore}/100。除非商品页能打消疑虑，不如先放掉这条。`
+          ? `这个卖家 ${record}，卖家信誉评分 ${listing.sellerTrustScore}/100。先核对卖家评价和商品描述，有疑问就先别下单。`
+          : `这个卖家的信誉评分只有 ${listing.sellerTrustScore}/100。先核对卖家评价和商品描述，有疑问就先别下单。`
         : record
           ? `This seller shows ${record}, scoring ${listing.sellerTrustScore}/100 on seller trust — consider passing unless the listing page resolves it.`
           : `This seller scores ${listing.sellerTrustScore}/100 on seller trust — consider passing unless the listing page resolves it.`,
@@ -315,11 +315,11 @@ function buildAction(
       const cheaperHere = alternatives.some((alternative) => listingCost(alternative) < listingCost(listing));
       return {
         kind: "wait",
-        label: lang === "zh" ? "建议再等等" : "Consider waiting",
+        label: lang === "zh" ? "先别急着收" : "Consider waiting",
         note: lang === "zh"
           ? cheaperHere
             ? `这条标价比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%。先看看这次比较里更便宜的几条。`
-            : `这条标价比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%。不是急着要的话，可以先不下手。`
+            : `这条标价比 ${formatMoney(marketPrice)} 的市场参考价高出约 ${pct}%。不急着收的话，可以再比较一下。`
           : cheaperHere
             ? `About ${pct}% over the ${formatMoney(marketPrice)} market reference — check the cheaper copies in this comparison first.`
             : `About ${pct}% over the ${formatMoney(marketPrice)} market reference. No rush unless you need this exact copy.`,
@@ -330,11 +330,11 @@ function buildAction(
     const photos = listing.evidence.photoCount;
     return {
       kind: "wait",
-      label: lang === "zh" ? "建议再等等" : "Consider waiting",
+      label: lang === "zh" ? "先别急着收" : "Consider waiting",
       note: lang === "zh"
         ? photos === 0
-          ? "没有实物照片可看。下单前先找卖家要正反面照片。"
-          : `只有 ${photos} 张实物照片可看。下单前先找卖家要正反面照片。`
+          ? "没有实物照片可看。收之前先找卖家要正反面实拍。"
+          : `只有 ${photos} 张实物照片可看。收之前先找卖家要正反面实拍。`
         : photos === 0
           ? "No item-specific photos to review — ask the seller for front and back before you commit."
           : `Only ${photos} item-specific photo${photos === 1 ? "" : "s"} to review — ask the seller for front and back before you commit.`,

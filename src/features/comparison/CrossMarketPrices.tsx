@@ -18,7 +18,7 @@ export function CrossMarketPrices({ candidates, platforms, card }: {
   const { lang } = useLang();
   const t = useT();
   const zh = lang === "zh";
-  return <section aria-label={zh ? "三平台商品标价" : "Marketplace asking prices"} className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]">
+  return <section aria-label={zh ? "各平台标价" : "Marketplace asking prices"} className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]">
     <details className="group/prices">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-black text-[#2f6f73] transition hover:text-[#24585c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">
         <span>{zh ? "查看各平台标价" : "View marketplace asking prices"}</span>
@@ -26,7 +26,7 @@ export function CrossMarketPrices({ candidates, platforms, card }: {
       </summary>
       <div className="border-t border-[#d6ded5] px-4 pb-1 pt-3">
         <p className="text-xs leading-5 text-[#52635c]">{zh
-          ? "补充报价供核对，按各平台商品标价从低到高排列。运费、手续费和税另计；版本、品相或费用未核实的商品不会成为购买推荐。"
+          ? "这些单卡按各平台标价从低到高排列，运费、手续费和税另算。版本、品相或费用没确认齐的，先供你查看，不会入选推荐。"
           : "Additional listings to review, ordered by asking price within each marketplace. Shipping, buyer fees and tax are separate. Unverified versions, conditions or costs cannot become a buy recommendation."}</p>
       </div>
       <div className="divide-y divide-[#d6ded5] px-4">
@@ -38,7 +38,7 @@ export function CrossMarketPrices({ candidates, platforms, card }: {
             && !listing.eligibilityIssues.some((issue) => incompatible.has(issue.code))
             && !(card && collectorNumberConflict(`${listing.title} ${listing.matchAspectText}`, card.cardNumber)))
             .sort((a, b) => a.price - b.price || a.id.localeCompare(b.id)).slice(0, 3) : [];
-          const empty = source?.status === "complete" ? zh ? "未找到匹配的在售商品" : "No matching active listings"
+          const empty = source?.status === "complete" ? zh ? "这次没找到对应的在售单卡" : "No matching active listings"
             : sourceStatusLabel(source, lang);
           return <section key={marketplace} aria-label={zh ? `${marketplace} 标价` : `${marketplace} prices`} className="min-w-0 py-3">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -58,7 +58,7 @@ export function CrossMarketPrices({ candidates, platforms, card }: {
                   </div>
                   <div className="min-w-0">
                     <p className="mt-2 break-words text-sm font-bold leading-6 text-[#24312f] sm:mt-0">{listing.title}</p>
-                    <p className="mt-2 text-xs leading-5 text-[#52635c]">{conditionNeedsChecking ? zh ? "品相未注明" : "Condition not stated" : `${zh ? "卖家声称" : "Seller claims"}: ${t.conditions[listing.claimedCondition]}`}</p>
+                    <p className="mt-2 text-xs leading-5 text-[#52635c]">{conditionNeedsChecking ? zh ? "卖家没标品相" : "Condition not stated" : `${zh ? "卖家标注" : "Seller claims"}: ${t.conditions[listing.claimedCondition]}`}</p>
                     <p className="text-xs leading-5 text-[#52635c]">{zh ? "运费" : "Shipping"}: {listing.shipping === null ? zh ? "未知" : "unknown" : money(listing.shipping)} · {zh ? "买家手续费" : "Buyer fees"}: {listing.buyerFee === null ? zh ? "未知" : "unknown" : money(listing.buyerFee ?? 0)}</p>
                     {(versionNeedsChecking || conditionDiffers || priceNeedsChecking) && <p className="mt-2 text-xs font-bold leading-5 text-[#806521]">{[
                       versionNeedsChecking ? zh ? "版本待核对" : "Version needs checking" : null,

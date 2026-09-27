@@ -90,10 +90,10 @@ describe("receipt page interactions", () => {
     expect(screen.queryByText("raw adapter warning")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(screen.getByRole("heading", { name: "决策凭证" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "比价记录" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "重新查在售商品" })).toBeTruthy();
-    const noBuyLabel = screen.getAllByText(/^暂时没有能放心买的/).find((element) => element.tagName === "STRONG");
-    expect(noBuyLabel?.textContent).toBe("暂时没有能放心买的。");
+    const noBuyLabel = screen.getAllByText(/^这次还没找到合适的/).find((element) => element.tagName === "STRONG");
+    expect(noBuyLabel?.textContent).toBe("这次还没找到合适的。");
     expect(screen.getByText("可信度较低。")).toBeTruthy();
   });
 
@@ -110,7 +110,7 @@ describe("receipt page interactions", () => {
     expect(formatReceiptCondition("Near Mint", "zh")).toBe("近全新（NM）");
     expect(formatReceiptCondition("Lightly Played", "zh")).toBe("微瑕（LP）");
     expect(formatReceiptCondition("Lightly Played", "en")).toBe("Lightly Played");
-    expect(formatReceiptChoiceLabel({ role: "best_value", label: "Best value" }, "zh")).toBe("最划算");
+    expect(formatReceiptChoiceLabel({ role: "best_value", label: "Best value" }, "zh")).toBe("综合推荐");
     expect(formatReceiptIdentityNote("print_identity_not_assessed")).toBeNull();
     expect(formatReceiptIdentityNote("Collector number and card name match.")).toBe("Collector number and card name match.");
   });

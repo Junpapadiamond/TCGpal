@@ -172,14 +172,14 @@ export type PrintClass = "base" | "alt" | "sp" | "manga" | "treasure";
 export type WitnessClass = Exclude<OnePieceTaxonomyClass, "unknown">;
 
 const displayClasses: Record<OnePieceTaxonomyClass, { en: string; zh: string }> = {
-  base: { en: "Base artwork", zh: "基础画面" },
+  base: { en: "Base artwork", zh: "普通版" },
   alternate: { en: "Alternate artwork", zh: "异画版" },
-  special: { en: "SP artwork", zh: "SP 特别画面" },
+  special: { en: "SP artwork", zh: "SP 特殊卡图" },
   manga: { en: "Manga artwork", zh: "漫画版" },
   wanted_poster: { en: "Wanted poster", zh: "悬赏令版" },
   super_alternate: { en: "Super alternate artwork", zh: "超级异画版" },
   treasure: { en: "Treasure Rare", zh: "宝藏稀有版" },
-  unknown: { en: "Artwork unconfirmed", zh: "画面待确认" },
+  unknown: { en: "Artwork unconfirmed", zh: "卡图待确认" },
 };
 const displayTreatments = { gold: { en: "Gold", zh: "金色" }, silver: { en: "Silver", zh: "银色" }, red: { en: "Red", zh: "红色" } };
 
