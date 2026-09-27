@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-09-27
 canonical_branch: origin/main
-last_verified_product_commit: e92f566
-working_branch: main (search-entry refresh; Whatnot allowance exhausted; Mercari blocked)
+last_verified_product_commit: 12f7b6a
+working_branch: main (Mainland Chinese copy + search-entry refresh; Whatnot allowance exhausted; Mercari blocked)
 max_lines: 300
 ---
 
@@ -249,7 +249,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 ## VERIFICATION
 
 - 2026-09-27 search entry: lint/typecheck/metadata audit/build passed; 114 test files and 1,571 tests passed, 5 skipped. TDD covered example selection, stale-field reset, real condition presets, game/locale changes and the six-card standard flow. Built-in browser verified EN/中文 1440px desktop, 390px mobile, original rail pointer click, and six sequential searches across both games with Edit/New and Nami SP confirmation. Synthetic providers only; inspected console logs empty. Graphify CLI remains unavailable.
-- September 27 Chinese copy gate: lint, typecheck, metadata audit, production build and 113 test files / 1,562 tests passed, 5 skipped. Built-in browser checked EN/中文 desktop, 390px Chinese mobile, results, One Piece confirmation and method copy with labeled local fixtures. Receipt interactions passed component tests. [Evidence](docs/chinese-copy-2026-09-27.md). Ranking/provider behavior is unchanged; no live or paid marketplace checks were needed.
+- September 27 Chinese copy gate: lint, typecheck, metadata audit, production build and 114 test files / 1,571 tests passed, 5 skipped after rebasing onto the released search entry. Built-in browser checked EN/中文 desktop, 390px Chinese mobile, results, One Piece confirmation and method copy with labeled local fixtures. Receipt interactions passed component tests. [Evidence](docs/chinese-copy-2026-09-27.md). Ranking/provider behavior is unchanged; no live or paid marketplace checks were needed.
 - Final September 26 product deployment `15c06d6` READY (`dpl_3veDyoN3xNSLxjJARfMc1uveXhJu`, 54.1s), lenstcg.com aliased; full gate still 1,562 pass / 5 skipped, scoped warning/error/fatal scan empty. Low reasoning did not resolve Q&A's deadline: the second live answer used accurate, labeled fallback after 12,201ms. Model-backed live answers remain unverified; Chinese fallback detail reasons may remain English. Final EN/中文 desktop and 390px mobile production screenshots captured. No new paid source start, quota reset or activation.
 - September 26 trust-fix gate: lint/typecheck/metadata audit/build pass; 113 test files / 1,562 tests passed, 5 skipped. EN/中文 desktop and 390px mobile Q&A passed; five sequential fixture searches used Edit, New Search and One Piece version confirmation. `f016616` READY on lenstcg.com (`dpl_6HrcUg5gtG1k1STQVraxutKtMgDS`, 82s); warning/error/fatal scan empty. Live Charizard: 50 rows / 1 eligible / 38 price-floor issues, 3.69s; 47 IDs overlap, so the new winner is not a causal recall gain. Unknown $499/$600 rows now have explicit LP claims and stay excluded. Q&A accurately used labeled fallback after 12,085ms; low reasoning follow-up retains the deadline and passed the full gate. Evidence: `docs/comparison-trust-fixes-2026-09-26.md`.
 - September 23 result-layout gate: lint/typecheck/build + metadata audit passed; 111 files / 1,543 tests passed, 5 skipped. Regression proves the buy appears before closed supplementary prices; disclosure/filter tests passed. Built-in browser verified EN/中文 desktop and 390px mobile, keyboard Enter, hidden links while collapsed, and no horizontal overflow. Synthetic QA only, no new paid source calls. The initial parallel run hit one 5s UI timeout and a malformed generated `.next/dev/types/routes.d.ts`; stopping dev, restoring that generated file from the successful build output, and rerunning the suite with four workers passed without weakening tests. Graphify CLI still unavailable.

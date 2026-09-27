@@ -28,7 +28,7 @@ Unknown seller history stays unverified; incomplete charges never become zero; m
 - Receipt copy and link behavior were verified in the existing receipt component tests. A durable shared receipt was not published during this copy review.
 - React review: no changes to hooks, state, component boundaries or data fetching; accessible names and text-based interactions pass the existing UI suite.
 - No search behavior changed, so the five-search manual smoke was not repeated. The hermetic sequential flow remains part of the full suite. No provider credential checks, paid runs, plugin validation or Graphify regeneration were needed for string-only edits.
-- Work was isolated from the uncommitted `codex/search-examples` checkout. That work was not included in this release.
+- Work began in an isolated checkout, then rebased onto the completed search-entry release (`4062fc4`). New example behavior and the original card rail are preserved; the new Chinese example labels follow the same vocabulary. Landing screenshots were refreshed after integration.
 
 ## Screenshots
 
