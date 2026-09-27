@@ -21,6 +21,8 @@ import {
 } from "./icons";
 import { initializeAnalytics, markResultShown, timeToOpenBucket, trackEvent } from "@/lib/analytics";
 import { typewriterFrame } from "./onboarding";
+import { SearchExamples, useSearchExamples } from "./SearchExamples";
+import { applySearchExample, type SearchExample } from "./search-examples";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
@@ -428,8 +430,6 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const loading = journeyState === "identifying" || journeyState === "comparing";
 
   const heroQuery = useWatch({ control: form.control, name: "heroQuery" });
-  // Only while the box is untouched — the moment the buyer types, the hint stops.
-  const typedPlaceholder = useTypedPlaceholder(t.form.heroSearchExamples, !heroQuery?.trim());
   const marketplace = useWatch({ control: form.control, name: "marketplace" });
   const sourceUrl = useWatch({ control: form.control, name: "url" });
   const postalCode = useWatch({ control: form.control, name: "postalCode" });
@@ -437,6 +437,9 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const setCode = useWatch({ control: form.control, name: "setCode" });
   const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
   const game = useWatch({ control: form.control, name: "game" });
+  const { examples, refreshExamples } = useSearchExamples(game);
+  const exampleQueries = useMemo(() => examples.length > 0 ? examples.map((item) => item.query) : t.form.heroSearchExamples, [examples, t.form.heroSearchExamples]);
+  const typedPlaceholder = useTypedPlaceholder(exampleQueries, !heroQuery?.trim());
   const desiredCondition = useWatch({ control: form.control, name: "desiredCondition" });
   const preferredRole = useWatch({ control: form.control, name: "preferredRole" });
   const ph = game === "onePiece" ? t.form.phOnePiece : t.form.ph;
@@ -986,12 +989,21 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     setCompactSearchOpen(false);
     const reset = resetForNewCardSearch(form.getValues());
     form.reset(reset);
+    refreshExamples();
     writeJourney("search", "push", currentSnapshot({
       form: reset, report: null, identityResult: null, selectedIdentity: null, pendingRequest: null, journeyState: "idle",
     }));
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
     });
+  }
+
+  function chooseSearchExample(example: SearchExample) {
+    form.reset(applySearchExample(form.getValues(), example));
+    setError(null);
+    setRefineOpen(false);
+    setListingOpen(false);
+    form.setFocus("heroQuery");
   }
 
   function startPasteListing() {
@@ -1085,12 +1097,12 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-6 sm:pt-8"}`}>
         {!compactMode && (
           <>
-        <section id="compare" className="mx-auto max-w-[720px] pt-4 text-center sm:pt-7">
-          <h1 className="display-soft mx-auto max-w-2xl font-serif text-3xl font-black leading-[1.08] tracking-normal text-[#24312f] sm:text-4xl lg:text-[42px]">
+        <section id="compare" className="landing-hero mx-auto max-w-[860px] pt-4 text-center sm:pt-9">
+          <h1 className="display-soft mx-auto max-w-[800px] font-serif text-[32px] font-semibold leading-[1.12] tracking-normal text-[#24312f] sm:text-[44px] lg:text-[52px]">
             {t.hero.title}
           </h1>
 
-          <form className="paper-panel mt-6 p-4 text-left shadow-[0_14px_40px_rgba(36,49,47,0.07)] sm:p-5" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
+          <form className="mt-7 text-left sm:mt-9" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
             <label className="block">
               <span className="sr-only">{t.form.heroSearchLabel}</span>
               <span className="landing-search-row">
@@ -1116,6 +1128,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
               <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
             )}
 
+            <SearchExamples examples={examples} onSelect={chooseSearchExample} onRefresh={refreshExamples} />
             <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
 
             <div className="landing-control-row">
@@ -1692,7 +1705,8 @@ function CardMarquee({
   // buyer has checked many unique prints.
   const durationSeconds = Math.max(46, items.length * 5.75);
   return (
-    <section className="card-marquee-wrap mt-8 sm:mt-10" aria-label={t.rail.ariaLabel}>
+    <section className="card-marquee-wrap mt-8 sm:mt-10" aria-label={t.rail.ariaLabel} aria-describedby="card-rail-hint">
+      <p id="card-rail-hint" className="text-center text-sm text-[#64736c]">{t.rail.hint}</p>
       {/*
         Pausing is CSS-only (`.card-marquee:hover`). Driving it from React state
         put a re-render between "pointer entered" and "motion stopped", and in

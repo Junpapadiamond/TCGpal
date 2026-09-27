@@ -18,6 +18,9 @@ export type StandardComparisonFlowCard = {
   cardNumber: string;
   expectedCardId: string;
   entryMode: StandardComparisonEntryMode;
+  // The UI smoke may start through a search example, then continue through
+  // the same explicit-query, confirmation, Edit, and New search contract.
+  searchExampleId?: string;
   desiredCondition?: ConditionClaim;
 };
 
@@ -56,6 +59,7 @@ export const STANDARD_COMPARISON_FLOW_CARDS: StandardComparisonFlowCard[] = [
     cardNumber: "215/203",
     expectedCardId: "swsh7-215",
     entryMode: "first_search",
+    searchExampleId: "pokemon-umbreon",
   },
   {
     label: "One Piece edit search: Monkey.D.Luffy OP01-024",

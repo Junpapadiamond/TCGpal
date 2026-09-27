@@ -531,18 +531,22 @@ a {
   }
 }
 
-/* The landing form is one contained decision surface. */
+/* A quiet search surface; the card rail supplies the artwork. */
 .landing-search-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: stretch;
   overflow: hidden;
-  border: 2px solid #2f6f73;
-  border-radius: 0.7rem;
+  border: 1px solid #b9ceca;
+  border-radius: 999px;
   background: #fffef9;
-  box-shadow:
-    0 0 0 4px rgba(47, 111, 115, 0.09),
-    0 14px 40px rgba(36, 49, 47, 0.07);
+  padding: 0.35rem;
+  box-shadow: 0 5px 18px rgba(36, 49, 47, 0.04);
+}
+
+.landing-search-row:focus-within {
+  border-color: #2f6f73;
+  box-shadow: 0 0 0 3px rgba(47, 111, 115, 0.12);
 }
 
 .landing-search-icon {
@@ -557,14 +561,14 @@ a {
   background: transparent;
   color: #24312f;
   outline: none;
-  padding: 1.18rem 0.9rem;
-  font-size: 1.25rem;
-  font-weight: 650;
+  padding: 1rem 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 500;
   letter-spacing: 0;
 }
 
 .landing-search-row input::placeholder {
-  color: #93a29b;
+  color: #64736c;
   font-weight: 500;
 }
 
@@ -574,6 +578,7 @@ a {
   justify-content: center;
   gap: 0.5rem;
   border: 0;
+  border-radius: 999px;
   background: #2f6f73;
   color: #f4f7f3;
   padding: 0 1.5rem;
@@ -584,6 +589,58 @@ a {
 
 .landing-search-row button:hover {
   background: #24585c;
+}
+
+.search-examples {
+  margin: 0.65rem 0 1rem;
+  min-height: 8rem;
+}
+
+.search-examples-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #64736c;
+  font-size: 0.8rem;
+}
+
+.search-examples-heading button {
+  min-height: 44px;
+  padding: 0 0.25rem;
+  color: #2f6f73;
+  font-size: 0.8rem;
+}
+
+.search-examples-heading button:hover { text-decoration: underline; }
+
+.search-example-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+}
+
+.search-example-list button {
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid #d6ded5;
+  border-radius: 999px;
+  background: #edf2ec;
+  padding: 0.4rem 0.8rem;
+  color: #324b46;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.search-example-list button:hover { background: #e1ebe4; border-color: #9bb8ac; }
+.search-example-list button:active { background: #d7e5dc; }
+.search-example-condition { color: #52665e; }
+
+@media (max-width: 639px) {
+  .search-examples { min-height: 11rem; }
+  .landing-search-row input { font-size: 1rem; padding-inline: 0.5rem; }
+  .landing-search-row button { padding-inline: 0.85rem; font-size: 0.8rem; }
+  .landing-search-icon { margin-left: 0.5rem; }
 }
 
 .landing-control-row {
@@ -874,6 +931,7 @@ a {
 @media (max-width: 700px) {
   .landing-search-row {
     grid-template-columns: auto minmax(0, 1fr);
+    border-radius: 1.5rem;
   }
 
   .landing-search-row input {

@@ -21,6 +21,7 @@ import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
 import { markResultShown, trackEvent } from "@/lib/analytics";
+import { SEARCH_EXAMPLES } from "./search-examples";
 
 vi.mock("@/lib/analytics", () => ({
   initializeAnalytics: vi.fn(),
@@ -237,6 +238,7 @@ describe("comparison condition controls", () => {
       configurable: true,
       value: createMemoryStorage(),
     });
+    Object.defineProperty(window, "sessionStorage", { configurable: true, value: createMemoryStorage() });
     setLanguage("en");
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       if (String(input).endsWith("/api/comparison-snapshots")) {
@@ -281,6 +283,88 @@ describe("comparison condition controls", () => {
     cleanup();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it("fills an editable example and its condition without starting a provider request", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+    render(<ComparisonApp />);
+    const examples = screen.getByRole("group", { name: "Search examples" });
+    const buttons = await within(examples).findAllByRole("button", { name: /^Use search example:/ });
+    expect(buttons).toHaveLength(6);
+    fireEvent.change(screen.getByRole("textbox", { name: "Delivery ZIP" }), { target: { value: "10001" } });
+    fireEvent.click(within(examples).getByRole("button", { name: /Use search example: Charizard,/ }));
+    const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
+    expect(query.value).toBe("Charizard");
+    expect(document.activeElement).toBe(query);
+    expect(screen.getByRole("button", { name: /Filters, Minimum seller-stated condition: Lightly Played/ })).toBeTruthy();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    fireEvent.keyDown(query, { key: "Enter" });
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]).toMatchObject({ query: "Charizard", buyer: { desiredCondition: "Lightly Played", postalCode: "10001" } });
+  });
+
+  it("changes examples on request and between visits without replacing typed text", async () => {
+    const view = render(<ComparisonApp />);
+    const examples = screen.getByRole("group", { name: "Search examples" });
+    const first = (await within(examples).findAllByRole("button", { name: /^Use search example:/ })).map((button) => button.textContent);
+    const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
+    fireEvent.change(query, { target: { value: "My card" } });
+    fireEvent.click(within(examples).getByRole("button", { name: "More examples" }));
+    const second = within(examples).getAllByRole("button", { name: /^Use search example:/ }).map((button) => button.textContent);
+    expect(second.every((label) => !first.includes(label))).toBe(true);
+    expect(query.value).toBe("My card");
+    view.unmount();
+    render(<ComparisonApp />);
+    const third = (await within(screen.getByRole("group", { name: "Search examples" })).findAllByRole("button", { name: /^Use search example:/ })).map((button) => button.textContent);
+    expect(third.every((label) => !second.includes(label))).toBe(true);
+  });
+
+  it("uses the selected game's examples and keeps them stable when switching languages", async () => {
+    render(<ComparisonApp />);
+    const examples = screen.getByRole("group", { name: "Search examples" });
+    await within(examples).findAllByRole("button", { name: /^Use search example:/ });
+    fireEvent.click(screen.getByRole("button", { name: /One Piece Card Game/ }));
+    await waitFor(() => {
+      const buttons = within(examples).getAllByRole("button", { name: /^Use search example:/ });
+      expect(buttons).toHaveLength(6);
+      expect(buttons.every((button) => SEARCH_EXAMPLES.some((item) => item.game === "onePiece" && button.textContent?.startsWith(item.query)))).toBe(true);
+    });
+    const before = within(examples).getAllByRole("button", { name: /^Use search example:/ }).map((button) => button.getAttribute("data-example-id"));
+    act(() => setLanguage("zh"));
+    const translated = screen.getByRole("group", { name: "搜索示例" });
+    expect(within(translated).getByRole("button", { name: "换一组" })).toBeTruthy();
+    expect(within(translated).getAllByRole("button", { name: /^使用搜索示例：/ }).map((button) => button.getAttribute("data-example-id"))).toEqual(before);
+  });
+
+  it("continues the standard six-card journey from an example through Edit and New search", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+    render(<ComparisonApp />);
+    let previousExamples: string[] = [];
+    for (const [index, card] of STANDARD_COMPARISON_FLOW_CARDS.entries()) {
+      if (card.entryMode === "edit_search") {
+        fireEvent.click(document.querySelector<HTMLButtonElement>('button[aria-controls="results-edit-panel"]')!);
+      } else {
+        if (card.entryMode === "new_search") fireEvent.click(screen.getByRole("button", { name: "New search" }));
+        const examples = screen.getByRole("group", { name: "Search examples" });
+        const buttons = await within(examples).findAllByRole("button", { name: /^Use search example:/ });
+        const ids = buttons.map((button) => button.getAttribute("data-example-id")!);
+        if (previousExamples.length) expect(ids.every((id) => !previousExamples.includes(id))).toBe(true);
+        previousExamples = ids;
+      }
+      const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
+      if (card.searchExampleId) {
+        const example = SEARCH_EXAMPLES.find((item) => item.id === card.searchExampleId)!;
+        expect(example.query).toBe(card.query);
+        fireEvent.click(screen.getByRole("button", { name: `Use search example: ${example.query}` }));
+        expect(query.value).toBe(card.query);
+      } else {
+        fireEvent.change(query, { target: { value: card.query } });
+      }
+      fireEvent.keyDown(query, { key: "Enter" });
+      await waitFor(() => expect(requests).toHaveLength(index + 1));
+      expect(requests[index]).toMatchObject({ query: card.query, cardHint: { game: card.game } });
+      await screen.findByRole("button", { name: "New search" });
+    }
   });
 
   it("keeps the default screen focused on one promise and the core search controls", async () => {
@@ -334,6 +418,7 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     const rail = screen.getByRole("region", { name: "Cards you can check" });
+    expect(within(rail).getByText("Click a card to compare")).toBeTruthy();
     await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
     const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
     expect(accessibleCards.every((button) => button.getAttribute("data-rail-source") === "chase")).toBe(true);

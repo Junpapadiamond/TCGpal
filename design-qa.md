@@ -1,34 +1,38 @@
-# TCGpal App Shell Design QA
+# TCGlens search-entry design QA — 2026-09-27
 
-- Source visual truth: `/Users/chenjunhsu/Desktop/projects/TCGpal/output/design-qa/app-shell-reference.png`
-- Implementation screenshot: `/Users/chenjunhsu/Desktop/projects/TCGpal/output/design-qa/results-en-desktop-final.png`
-- English desktop: `/Users/chenjunhsu/Desktop/projects/TCGpal/output/design-qa/results-en-desktop-final.png`
-- Chinese desktop: `/Users/chenjunhsu/Desktop/projects/TCGpal/output/design-qa/results-zh-desktop-final.png`
-- Mobile viewport: `/Users/chenjunhsu/Desktop/projects/TCGpal/output/design-qa/results-en-mobile-final.png`
-- Full-view comparison: `/Users/chenjunhsu/Desktop/projects/TCGpal/output/design-qa/side-by-side-final.png`
-- Focused comparison: `/Users/chenjunhsu/Desktop/projects/TCGpal/output/design-qa/focused-comparison-final.png`
-- Desktop viewport: 1280px wide, complete labeled-demo result state
-- Mobile viewport: 390 × 844, complete labeled-demo result state
+## Result
 
-**Findings**
+No actionable P0/P1/P2 findings remain for this change.
 
-- No actionable P0/P1/P2 findings remain.
-- Fonts and typography: the implementation preserves TCGpal's existing Fraunces/Noto Serif display stack and compact system body text. The hierarchy matches the source: compact app bar, serif card identity/title, monospaced prices, and small data labels. Long listing titles truncate on compact rows and wrap on the lead row without collision.
-- Spacing and layout rhythm: the persistent query bar, market strip, four lens controls, lead listing row, supporting rows, sticky rail, and footer match the source composition. The preview is intentionally limited to four rows before “Show all,” preserving the target density.
-- Colors and visual tokens: the existing cream/teal/gold system is retained. Semantic green, amber, terracotta, and neutral tags remain legible and consistent with the product's risk/evidence language.
-- Image quality and asset fidelity: live catalog/listing card images replace the mockup's placeholder thumbnails at the correct card aspect ratio. Existing brand and icon assets are reused; no placeholder artwork was introduced.
-- Copy and content: marketing copy disappears in the results state. Market information is expressed as compact data marks. Dynamic source warnings remain visible because source transparency is a product requirement.
-- Responsive behavior: the 390px result view keeps the app bar, editable query, market data, lens controls, and lead row usable without horizontal overflow.
-- Accessibility and behavior: lens tabs expose pressed state; Save and Track expose persistent state; Track uses a semantic switch; Edit opens a labeled compact form; language switching updates the page language; focus styles and reduced-motion behavior remain present.
+## Visual target and evidence
 
-**Patches made since the previous QA pass**
+- Target: the first displayed Phia-inspired concept, adjusted by the founder to remove decorative lines, keep the existing rolling/clickable card rail, and offer more varied search examples.
+- Source: `C:/Users/徐晨濬/.codex/generated_images/01a0e143-728d-7b31-8752-9e5dc1d2bd0d/exec-2018fc45-a650-4949-a950-80053164d8eb.png` (1487 × 1058).
+- Evidence directory: `C:/Users/徐晨濬/.codex/visualizations/2026/09/27/01a0e143-728d-7b31-8752-9e5dc1d2bd0d/tcglens-phia-design/`.
+- Implementation: `landing-en-desktop.png`, `landing-zh-desktop.png` (1440 × 1024 CSS viewport); `landing-zh-mobile.png`, `landing-en-mobile.png` (390 × 844 CSS viewport, full-page captures).
+- State: empty card-search homepage, cream/teal theme, six examples, original card art/rolling rail. Source and implementation were opened together in the same comparison input. The source is a concept image, not a browser capture; composition was compared proportionally, not as a pixel-perfect diff.
+- Focused comparison: the search controls, chip labels and card rail are legible in the full desktop images; mobile controls were inspected separately at 390px.
 
-- Reduced the default result preview from eight rows to four.
-- Changed “Check the math” from a boxed submodule to a compact inline disclosure.
-- Verified Best Value/Cheapest reordering, Save card, Track card, English/中文 switching, and mobile layout.
+## Findings and fixes
 
-**Follow-up Polish**
+- [Resolved P2] A pill radius on the two-row mobile search box produced a large oval. The breakpoint now uses a 24px radius; the submit button remains fully visible. Re-captured and inspected in `landing-zh-mobile.png`.
+- Typography: existing Fraunces/Noto Serif families retained, with a larger, lighter hero heading. The centered hierarchy follows the selected concept. Existing exact-card copy remains instead of the concept's marketing headline.
+- Layout: rounded search surface, six wrapping examples and explicit refresh control. The existing game, ZIP and condition controls remain directly below. No horizontal overflow at 390px; a longer mobile page is expected from six usable touch targets.
+- Colors: existing cream, teal and restrained gold tokens retained. Decorative lines, textured art and handwritten text from the concept are omitted as requested.
+- Images: actual existing catalog card art and original rolling track retained. Generated concept card art is not used. No failed images were observed on the homepage.
+- Content: examples contain supported card-name/number queries. Explicit condition presets update the real minimum-condition control. Budget parsing or new AI capability is not claimed. The rail hint reads “Click a card to compare” / “点击卡片，开始比价”.
 
-- [P3] The live-source warning adds vertical space above the market strip when a provider fails. This is intentional evidence transparency, but a future iteration could compress repeated provider errors into a one-line status disclosure.
+## Interaction and accessibility checks
+
+- Examples fill the editable field and focus it; condition presets apply, with no comparison until submit. More examples preserves typed text. Six distinct examples are selected from each game's 16-item pool and avoid the previous group.
+- Original rail animation remains running; a real pointer click on Charizard starts comparison. Existing focus, clone-click and reduced-motion behavior is unchanged and covered by the suite.
+- Built-in browser smoke: Umbreon VMAX 215/203 → Edit Luffy OP01-024 (base) → New/rail click Charizard 4/102 → Edit Zoro OP01-001 (base) → New Pikachu 25/165 → New Nami OP01-016 (SP). Correct identity remained visible after each transition. One Piece fixture rows correctly remained inspect leads when fixture evidence was incomplete.
+- Flow used the visibly labeled local synthetic-provider harness; no paid acquisition or live provider validation was performed.
+- English/中文 desktop and mobile checked. Example buttons have accessible labels and 44px minimum height. Browser warning/error logs were empty in the inspected tabs.
+- Gate: ESLint, TypeScript, metadata audit, 114 test files / 1,571 tests passed (5 files/tests skipped), and Next production build passed. Installed CLIs were invoked directly because npm is absent from PATH.
+
+## Follow-up polish
+
+- No blocking follow-up. Graphify CLI is unavailable on this Windows host; structural graph regeneration remains unverified.
 
 final result: passed
