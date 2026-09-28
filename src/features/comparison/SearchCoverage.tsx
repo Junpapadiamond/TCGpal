@@ -19,7 +19,7 @@ const zhReasons: Record<string, string> = {
   identity_sibling_mismatch: "同卡号的其他版本", identity_variant_mismatch: "版本不符", identity_low_confidence: "卡片身份不确定",
   identity_price_guard: "价格与确切版本不符", price_far_below_market: "价格远低于参考价", price_far_above_exact_market: "价格过高，需复核",
   excluded_product_type: "不支持的商品类型", not_raw_single: "不是裸卡单张", listing_inactive: "当前不在售",
-  language_conflict: "语言不符", over_budget: "含必付费用的税前总价超预算",
+  language_conflict: "语言不符", language_unverified: "商品未标注语言，请在原页面核对", over_budget: "含必付费用的税前总价超预算",
 };
 
 export function SearchCoverage({ coverage, lang }: { coverage?: RecallCoverage[]; lang: "en" | "zh" }) {
