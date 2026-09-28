@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-27
+updated_at: 2026-09-28
 canonical_branch: origin/main
-last_verified_product_commit: 12f7b6a
-working_branch: main (Mainland Chinese copy + search-entry refresh; Whatnot allowance exhausted; Mercari blocked)
+last_verified_product_commit: 810d4de
+working_branch: main (bounded recall receipt deployed; Whatnot allowance exhausted; Mercari blocked)
 max_lines: 300
 ---
 
@@ -35,7 +35,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay live; Whatnot allowance exhausted; Mercari live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
-| LOCAL-STATE | Local artifacts and tools | Mixed | Windows main; trust fixes deployed and verified | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
+| LOCAL-STATE | Local artifacts and tools | Mixed | Windows main; recall receipt deployed and verified | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
 <!-- progress:section id="GOALS" -->
 ## GOALS
@@ -58,7 +58,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-IDENTITY" state="taxonomy-shipped-founder-review-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
-- September 28: bounded eBay price-sorted recall check implemented separately from primary ranking; per-rung counts and new cheaper matches/unknown evidence appear in live/shared receipts. One extra search, 10 summaries, 2s, no details/retries; `EBAY_RECALL_PROBE_ENABLED=false` is the kill switch. [Decision, evaluation and rollout](docs/ebay-recall-probe-2026-09-28.md); no live yield claim yet.
+- September 28: bounded eBay recall check deployed in live/shared receipts: one extra search, 10 summaries, 2s, no details/retries, original winners unchanged; `EBAY_RECALL_PROBE_ENABLED=false` disables it. Fixed 20-card run: 3 cheaper rule hits (human review pending), 4 inconclusive, 13 no-cheaper (one lacked a baseline); no population recall claim. [Decision, review queue and rollout](docs/ebay-recall-probe-2026-09-28.md), founder review October 5.
 [OP16/OP17 follow-up](docs/one-piece-op16-op17-2026-09-06.md) shipped `a461ed0` (Vercel READY; four live searches, distinct winners and anchors): all 155/169 official release prints, separate artwork results and caches. Live fallback `8a0eb9c` now preserves every returned artwork and reloads only the exact print; 1,442 tests + lint/typecheck/build, fresh EN/中文/mobile and five searches passed. [Audit](docs/one-piece-alignment-audit-2026-09-06-op17.md): 660/90/0/0 target, 4135/607/0/0 catalog. Historical [Phase 4](docs/one-piece-taxonomy-phase4-2026-09-06.md) provisional 8/13 and founder decisions remain open; no new curated artwork mappings approved.
 [TCGplayer review](docs/one-piece-tcgplayer-alignment-2026-09-07.md): 608-print census (607 catalog abstentions + EB02 example), 605 with priced candidates; 20 direct pages, three Zoro trophy pages lack market prices. A 150-print specific-label hypothesis yields 4285/457/0/0 with 677 passing probes; six Luffy/Nami/Koby rows are a subset. Human review pending; runtime unchanged. Lint/typecheck/build + 1,447 tests pass. 491 historical mappings remain in catalog, 404 without old conflicts; CDN 403 blocked fresh bulk image comparison. [Per-print queue](docs/one-piece-tcgplayer-review-queue-2026-09-07.md) preserves IDs; [earlier seller cases](docs/one-piece-ambiguity-review-2026-09-07.md) remain valid.
 ### Done
@@ -220,7 +220,7 @@ The user must decide these; agents must not infer them:
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
 
-- September 27: `codex/search-examples` fast-forwarded/pushed to main at `e92f566`; full local gate and built-in browser QA passed. Vercel `dpl_FFwCuE83Mw7oUKNg8Px7JCxXQ1xK` READY and aliased to lenstcg.com; live homepage shows six examples and the rail hint, inspected console clean. Dev preview remains on port 3000; screenshots are in the September 27 Codex visualization directory, `tcglens-phia-design/`.
+- September 28: recall work isolated from `codex/natural-language-search`, rebased onto `af3c14a`, then fast-forwarded/pushed to main through `810d4de`; unrelated branch retained. Vercel `dpl_9aFgYVD91TsHaCHiJUNoRAg2sNoW` READY on lenstcg.com. Fixed 20-card observations are ignored under `output/recall-probe/`; screenshots in the September 28 visualization directory `recall-probe/`. Fixture proxy stopped; pre-existing port 3000 retained.
 - September 26: clean main/origin/main `3177d56` → `codex/comparison-trust-fixes` → main; `f016616` and `15c06d6` fast-forwarded/pushed and verified READY. Local raw observations/logs under `output/trust-fixes/` are excluded from Git; screenshots in the September 26 Codex visualization directory. Dev/fixture servers stopped after QA.
 - 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to main. After user completed GitHub login, normal Git push published through `8ba402f`; Vercel deployment `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY and aliased to lenstcg.com. The earlier oversized connector write was rejected and never retried by fragmentation.
 - Node 24.19 and dependencies are present. npm is absent from PATH, so verification invokes the installed ESLint, TypeScript, Vitest, metadata audit and Next CLIs directly; no dependency changes/install.
@@ -248,7 +248,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
-- September 28 recall check: main-based lint/typecheck/metadata audit/build/plugin validation and 1,599 tests pass (5 optional live tests skipped). Built-in browser EN/中文 desktop + 390px mobile and five sequential synthetic searches pass; One Piece fixtures without character names correctly inspect/abstain. Deployment and 20-card live readout pending; Graphify CLI unavailable.
+- September 28 recall check: lint/typecheck/metadata audit/build/plugin validation pass; 1,599 tests pass, 5 optional live tests skipped. Five sequential synthetic searches and built-in EN/中文 desktop + 390px mobile pass; One Piece name-less fixtures correctly inspect/abstain. `810d4de` READY; live Luffy receipt reproduces $5.02 vs $38.98 pre-tax without replacing the winner. Twenty-card run: 3 rule hits awaiting human review / 4 inconclusive / 13 no-cheaper; scoped error/fatal logs empty. Graphify CLI unavailable.
 
 - 2026-09-27 search entry: lint/typecheck/metadata audit/build passed; 114 test files and 1,571 tests passed, 5 skipped. TDD covered example selection, stale-field reset, real condition presets, game/locale changes and the six-card standard flow. Built-in browser verified EN/中文 1440px desktop, 390px mobile, original rail pointer click, and six sequential searches across both games with Edit/New and Nami SP confirmation. Synthetic providers only; inspected console logs empty. Graphify CLI remains unavailable.
 - September 27 Chinese copy gate: lint, typecheck, metadata audit, production build and 114 test files / 1,571 tests passed, 5 skipped after rebasing onto the released search entry. Built-in browser checked EN/中文 desktop, 390px Chinese mobile, results, One Piece confirmation and method copy with labeled local fixtures. Receipt interactions passed component tests. [Evidence](docs/chinese-copy-2026-09-27.md). Ranking/provider behavior is unchanged; no live or paid marketplace checks were needed.

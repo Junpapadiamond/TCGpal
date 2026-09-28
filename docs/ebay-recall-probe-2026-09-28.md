@@ -29,3 +29,27 @@ Run `node scripts/measure-recall-probe.mjs` for the fixed 20-card readout (Bubbl
 The release is based on `origin/main` (`af3c14a`), without the separate unmerged natural-language-search changes. Lint, typecheck, metadata audit, build and plugin validation passed; 1,599 tests passed and five optional live tests were skipped. Built-in browser QA exercised Mew ex 232/091, Charizard 4/102, Pikachu 58/102, Luffy ST01-001 and Nami OP01-016 in one session, including Edit, New search and Nami base-art confirmation. The two One Piece fixture titles omit the character name and correctly retain `inspect_first`; they are not asserted as successful inventory acquisition. English/中文 desktop and 390px mobile screenshots are in the September 28 Codex visualization folder under `recall-probe/`.
 
 `104006f` deployed READY as `dpl_EHzaiLbeX9fMZY1Ho8n7wfaJ5bE9`, aliased to [lenstcg.com](https://lenstcg.com). Live Bubble Mew returned 50 canonical + 50 padded summaries, 98 unique primary candidates and 15 eligible rows. The probe found 10 new IDs and zero comparable rows; its three lowest item-price exclusions named FAN ART ($2.79, $2.79 and $3.99). These facts support bounded operation and visible exclusions, not improved recall. The production browser error console and scoped error/fatal log scan were empty. Chinese live QA exposed one untranslated language-review reason; the copy follow-up translates it and passed the same full gate.
+
+`810d4de` deployed READY as `dpl_9aFgYVD91TsHaCHiJUNoRAg2sNoW`, aliased to lenstcg.com. The corrected Chinese reason was verified live. English/中文 desktop and 390px mobile views also reproduced the Luffy cheaper-match receipt; mobile had no horizontal overflow and the browser error console was empty. The scoped error/fatal runtime scan was empty. Whatnot still reports its existing exhausted allowance; Mercari remains a manual check. No pilot quota or provider activation changed.
+
+## Fixed 20-card production readout
+
+Run: 2026-09-28 06:26:05–06:37:09 UTC, ten Pokémon and ten One Piece cards. All twenty produced a probe observation: 200 summaries, 156 new IDs relative to their own primary candidate sets, nine comparable new rows and eight rows with unresolved evidence. There were no failed/disabled probes or unresolved card selections. Report-level status was 17 complete / 3 partial; report status is distinct from probe status.
+
+| Probe result | Cards | Interpretation |
+| --- | ---: | --- |
+| `cheaper_found` | 3 | Rule-passing discoveries; all await founder adjudication. |
+| `inconclusive` | 4 | Missing evidence prevents a negative conclusion. |
+| `no_cheaper_found` | 13 | Twelve had an original complete-cost Cheapest baseline. Ace OP02-013 alt had none and does not count toward the negative kill denominator. |
+
+The ten Pokémon samples all returned `no_cheaper_found`. All three cheaper discoveries were One Piece base prints. Every probe used keywords (Mew used its padded rung); this run establishes no ePID coverage. Keep this bounded version under evaluation, with zero human-confirmed gains so far. Neither the human-confirmed success criterion nor the 50-conclusive-sample kill criterion has been reached. Counts are incremental discoveries within this fixed stress set, not a population recall rate.
+
+| Human review queue | Observed UTC | Original cheapest, pre-tax | Probe, pre-tax | Difference | Review |
+| --- | --- | ---: | ---: | ---: | --- |
+| [Luffy OP05-119 base](https://www.ebay.com/itm/198615396354) | 06:33:18 | $38.98 | $5.02 | $33.96 | Pending |
+| [Law OP05-069 base](https://www.ebay.com/itm/198615397819) | 06:35:30 | $1.75 | $1.73 | $0.02 | Pending |
+| [Shanks OP09-001 base](https://www.ebay.com/itm/257717391009) | 06:36:03 | $1.59 | $0.99 | $0.60 | Pending |
+
+The API reported NM claims and zero shipping/mandatory fees for these three summaries. The deterministic print state was `compatible`; physical artwork, language, current availability and checkout have not been independently human-verified. A separate browser run of the live app reproduced the same Luffy URL and $5.02 versus $38.98 at 06:35:31 UTC; the original recommendation remained unchanged. No marketplace page was fetched for this review. The two-cent Law result meets the literal cheaper criterion but does not establish material buyer benefit.
+
+Minimal raw observations remain in ignored `output/recall-probe/latest.json`. Screenshots are in `C:/Users/徐晨濬/.codex/visualizations/2026/09/28/01a0e69e-7cdb-7182-ab38-0757e71061e3/recall-probe/` (`production-hit-en-desktop.png`, `production-hit-zh-desktop.png`, `production-hit-zh-mobile.png`). The temporary fixture proxy was stopped; the pre-existing development server on port 3000 was retained. No scheduled evaluation or ongoing harvesting was created.
