@@ -10,6 +10,7 @@ import {
 } from "@/lib/comparison/collector-number";
 import { isGradedListing } from "@/lib/comparison/graded-listing";
 import type { RecallObservation } from "@/lib/comparison/recall-probe";
+import { listingSeedSchema } from "@/lib/schemas";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -442,7 +443,13 @@ export async function probeEbayRecall(
       const parsed = ebaySearchSchema.parse(await response.json());
       const sample = parsed.itemSummaries.slice(0, 10);
       const rows = [...new Map(sample.filter(item => item.price.currency === "USD").map(item => [item.itemId, item])).values()];
-      return { ...observation, status: "complete", returnedCount: sample.length, seeds: rows.map(item => toNormalizedSeed(item, card)) };
+      const seeds = rows.map(item => {
+        if (!item.price.value.trim() || !Number.isFinite(Number(item.price.value)) || Number(item.price.value) < 0) {
+          throw new Error("Invalid probe price.");
+        }
+        return listingSeedSchema.parse(toNormalizedSeed(item, card));
+      });
+      return { ...observation, status: "complete", returnedCount: sample.length, seeds };
     };
     return await Promise.race([read(), deadline]);
   } catch {

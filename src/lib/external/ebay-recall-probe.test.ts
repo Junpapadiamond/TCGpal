@@ -54,4 +54,8 @@ describe("eBay recall probe acquisition", () => {
     expect((await probeEbayRecall({ card, buyer, fetcher }, [])).status).toBe("disabled");
     expect(calls).toHaveLength(0);
   });
+  it.each(["-1", "NaN", ""])("isolates malformed price %j instead of inventing zero or breaking the report", async value => {
+    const f: typeof fetch = async input => String(input).includes("oauth2") ? response({ access_token: "t" }) : response({ itemSummaries: [{ ...item, price: { value, currency: "USD" } }] });
+    expect((await probeEbayRecall({ card, buyer, fetcher: f }, [{ kind: "keyword", value: "Mew", status: "complete", returnedCount: 1, usdCount: 1 }])).status).toBe("failed");
+  });
 });
