@@ -251,7 +251,7 @@ async function runAgentFanout(input: {
     if (!agent.isConfigured()) results.push(skippedPlatformResult(agent));
   }
 
-  return { seeds, traces, warnings, results, configuredCount: input.configured.length };
+  return { seeds, traces, warnings, results, configuredCount: input.configured.length, recallObservations: [] };
 }
 
 function sampleSeedsForAllocator(seeds: PlatformSeed[]) {

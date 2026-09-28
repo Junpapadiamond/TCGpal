@@ -492,6 +492,30 @@ export const comparisonAbstentionSchema = z.object({
   suggestedLabel: z.string().nullable(),
 });
 
+export const searchAttemptSchema = z.object({
+  kind: z.enum(["keyword", "padded", "epid"]),
+  value: z.string(),
+  status: z.enum(["complete", "failed"]),
+  returnedCount: z.number().int().min(0).nullable(),
+  usdCount: z.number().int().min(0).nullable(),
+});
+
+// Bounded search diagnostics, separate from the recommendation candidate set.
+export const recallCoverageSchema = z.object({
+  marketplace: marketplaceSchema,
+  attempts: z.array(searchAttemptSchema).max(10),
+  query: searchAttemptSchema.pick({ kind: true, value: true }).nullable(),
+  status: z.enum(["cheaper_found", "additional_match", "no_cheaper_found", "inconclusive", "failed", "disabled"]),
+  observedAt: z.string().datetime(),
+  returnedCount: z.number().int().min(0).max(10),
+  newCount: z.number().int().min(0).max(10),
+  comparableCount: z.number().int().min(0).max(10),
+  unresolvedCount: z.number().int().min(0).max(10),
+  baselineCheapestTotal: z.number().min(0).nullable(),
+  listing: normalizedListingSchema.nullable(),
+  excluded: z.array(normalizedListingSchema).max(3),
+});
+
 export const comparisonReportSchema = z.object({
   status: z.enum(["needs_confirmation", "complete", "partial"]),
   request: comparisonRequestSchema,
@@ -505,6 +529,7 @@ export const comparisonReportSchema = z.object({
   trace: z.array(comparisonTraceSchema),
   platforms: z.array(comparisonPlatformResultSchema).default([]),
   webDiscoveries: z.array(webDiscoverySchema).default([]),
+  searchCoverage: z.array(recallCoverageSchema).optional(),
   abstention: comparisonAbstentionSchema.nullable().optional(),
   outcome: z.enum(["best_buy", "inspect_first", "next_moves"]).optional(),
   inspectListingId: z.string().nullable().optional(),
@@ -778,6 +803,8 @@ export function requiresMarketPriceReview(listing: Pick<NormalizedListing, "elig
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;
 export type ComparisonReport = z.infer<typeof comparisonReportSchema>;
+export type SearchAttempt = z.infer<typeof searchAttemptSchema>;
+export type RecallCoverage = z.infer<typeof recallCoverageSchema>;
 export type ComparisonAbstention = z.infer<typeof comparisonAbstentionSchema>;
 export type ComparisonQuestionResponse = z.infer<typeof comparisonQuestionResponseSchema>;
 export type WebCitation = z.infer<typeof webCitationSchema>;

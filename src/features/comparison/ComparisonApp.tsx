@@ -1,4 +1,6 @@
 "use client";
+import { SearchCoverage, recallHeadline } from "./SearchCoverage";
+import type { RecallCoverage } from "@/lib/schemas";
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
@@ -2745,6 +2747,7 @@ function ComparisonResult({
             observedTime={observedTime}
             excluded={excluded}
             cautions={report.narrative.cautions}
+            searchCoverage={report.searchCoverage}
           />
 
           {inspectorEnabled && <DevelopmentInspector report={report} selectedListing={selectedListing} />}
@@ -3673,6 +3676,7 @@ function DecisionReceipt({
   observedTime,
   excluded,
   cautions,
+  searchCoverage,
 }: {
   card: CardIdentityCandidate | null;
   generatedAt: string;
@@ -3682,6 +3686,7 @@ function DecisionReceipt({
   observedTime: string;
   excluded: NormalizedListing[];
   cautions: string[];
+  searchCoverage?: RecallCoverage[];
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -3699,10 +3704,12 @@ function DecisionReceipt({
       <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3">
         <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#52635c]" title={summaryLine}>{summaryLine}</span>
         <IconChevronDown className="h-4 w-4 shrink-0 text-[#64736c]" />
+        {searchCoverage?.map((check, i) => <span key={i} className="w-full text-xs font-bold text-[#8d6032]">{recallHeadline(check.status, lang)}</span>)}
       </summary>
 
       <div className="px-4 pb-4 sm:px-5">
       <h3 className="font-serif text-lg font-black text-[#24312f]">{t.result.decisionReceipt}</h3>
+      <SearchCoverage coverage={searchCoverage} lang={lang} />
 
       <div className="mt-3 grid gap-2">
         <MarketReferenceLine card={card} generatedAt={generatedAt} listedRange={listedRange} />
@@ -3731,11 +3738,12 @@ function DecisionReceipt({
         <details className="mt-3 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
           <summary className="cursor-pointer text-sm font-bold text-[#64736c]">{t.result.importantExclusions}</summary>
           <div className="mt-3 space-y-2 text-sm leading-6 text-[#64736c]">
-            {excluded.map((listing) => (
+            <p>{lang === "zh" ? "按商品价排序，展示最低的 3 条；未知费用不计为零。" : "Lowest 3 by item price; unknown charges are not treated as zero."}</p>
+            {[...excluded].sort((a, b) => a.price - b.price || a.id.localeCompare(b.id)).slice(0, 3).map((listing) => (
               <p key={listing.id}>
                 <span className="font-black uppercase tracking-[0.04em] text-[#9a4a2c]">{t.result.tooRiskySkip}</span>
                 {": "}
-                <strong>{listing.title}</strong>: {listing.eligibilityIssues
+                <strong>${listing.price.toFixed(2)} · {listing.title}</strong>: {listing.eligibilityIssues
                   .filter((issue) => issue.disposition === "exclude")
                   .map((issue) => localizeEligibilityIssue(issue.code, issue.message, lang))
                   .join(" ") || listing.exclusionReasons.join(" ")}

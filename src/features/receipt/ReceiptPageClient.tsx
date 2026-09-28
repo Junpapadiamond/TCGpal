@@ -1,4 +1,5 @@
 "use client";
+import { SearchCoverage } from "@/features/comparison/SearchCoverage";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -363,6 +364,8 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
             </div>
           )}
         </section>
+
+        <SearchCoverage coverage={snapshot.report.searchCoverage} lang={lang} />
 
         <section aria-label={text.uncertainty} className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5">
           <div className="flex gap-3">

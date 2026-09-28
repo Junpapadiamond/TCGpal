@@ -8,7 +8,7 @@ import {
   CATALOG_RUNTIME_DEADLINE_MS,
   runListingComparison,
 } from "@/lib/ai/listing-compare";
-import { cardIdentityCandidateSchema, comparisonReportSchema, type ComparisonRequest } from "@/lib/schemas";
+import { cardIdentityCandidateSchema, comparisonReportSchema, comparisonRequestSchema, type ComparisonRequest } from "@/lib/schemas";
 import { clearComparisonCache } from "@/lib/comparison/report-cache";
 import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
@@ -107,6 +107,18 @@ const request: ComparisonRequest = {
   manualCandidates: [],
   webDiscoveryMode: "off",
 };
+
+it("publishes recall diagnostics after the shared gates without replacing the original lens winners", async () => {
+  const seed = { ...demoListingSeeds[0], id: "baseline", title: "Umbreon VMAX 215/203 Near Mint English", cardId: "swsh7-215", marketplace: "eBay" as const, price: 300, shipping: 0, demo: false, userSupplied: false };
+  const agent: PlatformAgent = { id: "ebay", label: "eBay fixture", marketplace: "eBay", sourceMode: "official_api", requiredEnv: [], isConfigured: () => true,
+    search: async () => [seed],
+    recallProbe: async () => ({ marketplace: "eBay", attempts: [], query: { kind: "keyword", value: seed.title }, status: "complete", observedAt: "2026-09-28T12:00:00.000Z", returnedCount: 1, seeds: [{ ...seed, id: "probe", price: 250 }] }),
+  };
+  const report = await runListingComparison(comparisonRequestSchema.parse({ ...request, confirmedCardId: "swsh7-215", sourceListing: { marketplace: "Other" } }), { fetcher, agents: [agent] });
+  expect(report.searchCoverage?.[0]).toMatchObject({ status: "cheaper_found", listing: { id: "probe", price: 250 } });
+  expect(report.candidates.map(row => row.id)).toEqual(["baseline"]);
+  expect(report.rankedChoices.every(choice => choice.listingId === "baseline")).toBe(true);
+});
 
 beforeEach(() => {
   clearComparisonCache();

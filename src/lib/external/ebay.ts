@@ -9,11 +9,13 @@ import {
   paddedCollectorNumber,
 } from "@/lib/comparison/collector-number";
 import { isGradedListing } from "@/lib/comparison/graded-listing";
+import type { RecallObservation } from "@/lib/comparison/recall-probe";
 import type {
   BuyerContext,
   CardIdentityCandidate,
   ListingSeed,
   SourceListing,
+  SearchAttempt,
 } from "@/lib/schemas";
 
 export type EbaySourceListing = SourceListing & {
@@ -241,6 +243,7 @@ export async function searchEbayAlternatives(
   // Measurement seam: lets an A/B drive both arms through this exact code path
   // instead of a reimplementation. Production leaves it unset.
   detailBudget: number = ebayDetailBudget(),
+  onSearchAttempt?: (attempt: SearchAttempt) => void,
 ): Promise<ListingSeed[]> {
   // Recall-first query: name + collector number. Set names are the token real
   // titles most often omit, and Best Match treats extra terms as AND-ish — so
@@ -303,6 +306,7 @@ export async function searchEbayAlternatives(
     const endpoint = buildEbaySearchEndpoint(attempt);
     const response = await fetchEbayAuthed(endpoint, buyer, fetcher);
     if (!response.ok) {
+      onSearchAttempt?.({ kind: attempt.mode, value: attempt.mode === "epid" ? attempt.epid : attempt.query, status: "failed", returnedCount: null, usdCount: null });
       if (!finalAttempt) {
         searchNote = attempt.mode === "epid"
           ? `eBay product-ID search for ePID ${attempt.epid} failed with ${response.status}; broadened to keyword fallback.`
@@ -313,6 +317,7 @@ export async function searchEbayAlternatives(
     }
     const result = ebaySearchSchema.parse(await response.json());
     let rows = result.itemSummaries.filter((item) => item.price.currency === "USD");
+    onSearchAttempt?.({ kind: attempt.mode, value: attempt.mode === "epid" ? attempt.epid : attempt.query, status: "complete", returnedCount: result.itemSummaries.length, usdCount: rows.length });
     if (!finalAttempt && rows.length > 0) {
       const assessed = rows.map((item) => ({
         item,
@@ -340,13 +345,13 @@ export async function searchEbayAlternatives(
     if (rows.length === 0 && fallback) {
       // The broader query found nothing; the narrower rows are still the honest
       // answer, and they still populate the excluded ledger the empty state reads.
-      summaries = await addPaddedCollectorNumberRows(fallback.rows, card, fallback.attempt, buyer, fetcher);
+      summaries = await addPaddedCollectorNumberRows(fallback.rows, card, fallback.attempt, buyer, fetcher, onSearchAttempt);
       searchNote = broadenedFromUnrankable
         ? `${broadenedFromUnrankable} That query returned no USD candidates, so the narrower result stands.`
         : searchNote;
       break;
     }
-    summaries = await addPaddedCollectorNumberRows(rows, card, attempt, buyer, fetcher);
+    summaries = await addPaddedCollectorNumberRows(rows, card, attempt, buyer, fetcher, onSearchAttempt);
     searchNote = attempt.mode === "epid"
       ? `Searched eBay by product ID ePID ${attempt.epid}.`
       : broadenedFromUnrankable || attempt.fallbackReason || (variantToken && !finalAttempt
@@ -355,7 +360,7 @@ export async function searchEbayAlternatives(
     if (summaries.length > 0 || finalAttempt) break;
   }
   if (summaries.length === 0 && fallback) {
-    summaries = await addPaddedCollectorNumberRows(fallback.rows, card, fallback.attempt, buyer, fetcher);
+    summaries = await addPaddedCollectorNumberRows(fallback.rows, card, fallback.attempt, buyer, fetcher, onSearchAttempt);
     searchNote = broadenedFromUnrankable || searchNote;
   }
 
@@ -399,6 +404,54 @@ function buildEbaySearchEndpoint(attempt:
   // enforced below by dropping any non-USD summaries instead of via the request filter.
   endpoint.searchParams.set("filter", "buyingOptions:{FIXED_PRICE}");
   return endpoint;
+}
+
+// One second opinion after a successful primary search. No pagination, detail
+// enrichment or auth retry: the extra Browse request really is capped at one.
+// Token acquisition, headers and body consumption share the same 2s deadline.
+export async function probeEbayRecall(
+  { card, buyer, fetcher, signal }: { card: CardIdentityCandidate; buyer: BuyerContext; fetcher: typeof fetch; signal?: AbortSignal },
+  attempts: SearchAttempt[],
+): Promise<RecallObservation> {
+  const successes = attempts.filter(attempt => attempt.status === "complete");
+  const chosen = successes.findLast(attempt => (attempt.usdCount ?? 0) > 0) ?? successes.at(-1);
+  const observation: RecallObservation = {
+    marketplace: "eBay", attempts, query: chosen ? { kind: chosen.kind, value: chosen.value } : null,
+    status: "disabled", observedAt: new Date().toISOString(), returnedCount: 0, seeds: [],
+  };
+  if (process.env.EBAY_RECALL_PROBE_ENABLED === "false") return observation;
+  if (!chosen || signal?.aborted) return { ...observation, status: "failed" };
+  const controller = new AbortController();
+  const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  let rejectAbort: () => void = () => {};
+  const deadline = new Promise<never>((_, reject) => {
+    rejectAbort = () => reject(new Error("Recall probe cancelled or timed out."));
+    combined.addEventListener("abort", rejectAbort, { once: true });
+  });
+  const timer = setTimeout(() => controller.abort(), 2_000);
+  try {
+    const read = async (): Promise<RecallObservation> => {
+      const token = await getEbayToken(fetcher);
+      combined.throwIfAborted();
+      const endpoint = buildEbaySearchEndpoint(chosen.kind === "epid"
+        ? { mode: "epid", epid: chosen.value } : { mode: "keyword", query: chosen.value });
+      endpoint.searchParams.set("limit", "10");
+      endpoint.searchParams.set("sort", "price");
+      const response = await fetcher(endpoint, { headers: ebayHeaders(token, buyer), cache: "no-store", signal: combined });
+      if (!response.ok) throw new Error("Recall probe rejected.");
+      const parsed = ebaySearchSchema.parse(await response.json());
+      const sample = parsed.itemSummaries.slice(0, 10);
+      const rows = [...new Map(sample.filter(item => item.price.currency === "USD").map(item => [item.itemId, item])).values()];
+      return { ...observation, status: "complete", returnedCount: sample.length, seeds: rows.map(item => toNormalizedSeed(item, card)) };
+    };
+    return await Promise.race([read(), deadline]);
+  } catch {
+    return { ...observation, status: "failed" };
+  } finally {
+    clearTimeout(timer);
+    combined.removeEventListener("abort", rejectAbort);
+    controller.abort();
+  }
 }
 
 export async function resolveEbayProductForCard(
@@ -763,20 +816,30 @@ async function addPaddedCollectorNumberRows(
   attempt: { mode: "epid" | "keyword"; query: string },
   buyer: BuyerContext,
   fetcher: typeof fetch,
+  onSearchAttempt?: (attempt: SearchAttempt) => void,
 ) {
   if (attempt.mode !== "keyword") return summaries;
   const padded = paddedCollectorNumberQuery(card.cardNumber);
   if (!padded || !attempt.query.includes(card.cardNumber)) return summaries;
 
+  const value = attempt.query.replace(card.cardNumber, padded);
   const response = await fetchEbayAuthed(
-    buildEbaySearchEndpoint({ mode: "keyword", query: attempt.query.replace(card.cardNumber, padded) }),
+    buildEbaySearchEndpoint({ mode: "keyword", query: value }),
     buyer,
     fetcher,
   );
-  if (!response.ok) return summaries;
+  if (!response.ok) {
+    onSearchAttempt?.({ kind: "padded", value, status: "failed", returnedCount: null, usdCount: null });
+    return summaries;
+  }
 
   const parsed = ebaySearchSchema.safeParse(await response.json());
-  if (!parsed.success) return summaries;
+  if (!parsed.success) {
+    onSearchAttempt?.({ kind: "padded", value, status: "failed", returnedCount: null, usdCount: null });
+    return summaries;
+  }
+  onSearchAttempt?.({ kind: "padded", value, status: "complete", returnedCount: parsed.data.itemSummaries.length,
+    usdCount: parsed.data.itemSummaries.filter(item => item.price.currency === "USD").length });
 
   const seen = new Set(summaries.map((item) => item.itemId));
   return [

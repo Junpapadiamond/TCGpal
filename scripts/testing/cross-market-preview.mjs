@@ -52,7 +52,7 @@ function fixtureFetcher(request = {}) {
     if (url.hostname === "api.pokemontcg.io") {
       if (url.pathname.startsWith("/v2/cards/")) {
         const card = getPokemonCardFromSnapshot(decodeURIComponent(url.pathname.split("/").at(-1)));
-        return card ? Response.json({ data: card }) : Response.json({}, { status: 404 });
+        return card ? Response.json({ data: { ...card, tcgplayer: { prices: { holofoil: { market: 100 } } } } }) : Response.json({}, { status: 404 });
       }
       // Exercise the exact-number recovery path, including Pikachu 58/102.
       return Response.json({ data: [], count: 0, totalCount: 0 });
@@ -60,7 +60,11 @@ function fixtureFetcher(request = {}) {
     if (url.hostname === "api.ebay.com") {
       if (url.pathname.includes("/oauth2/token")) return Response.json({ access_token: "qa", expires_in: 3600 });
       if (url.pathname.includes("/commerce/catalog/")) return Response.json({ productSummaries: [] });
-      if (url.pathname.includes("/item_summary/search")) return Response.json({ itemSummaries: [item] });
+      if (url.pathname.includes("/item_summary/search")) return Response.json({ itemSummaries: url.searchParams.get("sort") === "price" ? [
+        { ...item, itemId: "qa-probe", price: { value: "85", currency: "USD" }, shippingOptions: [{ shippingCost: { value: "5", currency: "USD" } }] },
+        { ...item, itemId: "qa-proxy", title: `${title} gold metal replica`, price: { value: "1", currency: "USD" } },
+        { ...item, itemId: "qa-unknown", title: title.replace("Near Mint", ""), conditionDescriptors: [], price: { value: "70", currency: "USD" }, shippingOptions: [] },
+      ] : [item] });
       if (url.pathname.includes("/buy/browse/v1/item/")) return Response.json(item);
     }
     if (url.hostname === "api.apify.com") {

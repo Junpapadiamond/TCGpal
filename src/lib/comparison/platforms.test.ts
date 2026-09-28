@@ -11,6 +11,20 @@ import {
 } from "@/lib/comparison/platforms";
 import type { BuyerContext, CardIdentityCandidate, Marketplace } from "@/lib/schemas";
 
+describe("recall probe failure isolation", () => {
+  it("preserves primary rows when the optional diagnostic probe fails", async () => {
+    const attempts = [{ kind: "keyword" as const, value: "Umbreon VMAX 215/203", status: "complete" as const, returnedCount: 1, usdCount: 1 }];
+    const agent: PlatformAgent = { ...ebayPlatformAgent, isConfigured: () => true,
+      search: async input => { input.onSearchAttempt?.(attempts[0]); return [seed("a", "eBay")]; },
+      recallProbe: async () => { throw new Error("probe failed"); },
+    };
+    const result = await runPlatformFanout({ card, buyer, fetcher: vi.fn(), agents: [agent] });
+    expect(result.seeds.map(row => row.id)).toEqual(["a"]);
+    expect(result.results[0].status).toBe("complete");
+    expect(result.recallObservations).toMatchObject([{ status: "failed", attempts, seeds: [] }]);
+  });
+});
+
 const card: CardIdentityCandidate = {
   id: "swsh7-215",
   name: "Umbreon VMAX",

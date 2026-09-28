@@ -56,6 +56,15 @@ describe("comparison report snapshots", () => {
     })).rejects.toThrow(/pure card searches/i);
   });
 
+  it("retains the observed recall state on shared receipts while removing the buyer ZIP", async () => {
+    const input = report();
+    input.searchCoverage = [{ marketplace: "eBay", attempts: [], query: null, status: "failed", observedAt: "2026-09-28T12:00:00.000Z", returnedCount: 0, newCount: 0, comparableCount: 0, unresolvedCount: 0, baselineCheapestTotal: null, listing: null, excluded: [] }];
+    const saved = await saveComparisonSnapshot(input);
+    const restored = await getComparisonSnapshot(saved.id);
+    expect(restored?.report.searchCoverage).toEqual(input.searchCoverage);
+    expect(restored?.report.request.buyer.postalCode).toBe("");
+  });
+
   it("rejects malformed snapshot identifiers", async () => {
     await expect(getComparisonSnapshot("../../secret")).resolves.toBeNull();
   });

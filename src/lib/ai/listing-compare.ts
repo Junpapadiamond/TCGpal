@@ -18,6 +18,7 @@ import {
   type EbaySourceListing,
 } from "@/lib/external/ebay";
 import { getConfiguredPlatformAgents, runPlatformFanout, type PlatformAgent } from "@/lib/comparison/platforms";
+import { buildRecallCoverage } from "@/lib/comparison/recall-probe";
 import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
 import { canonicalPrintIdentity } from "@/lib/comparison/print-fidelity";
 import {
@@ -324,6 +325,9 @@ export async function runListingComparison(
     confirmedCard: demoMode ? null : confirmedCard,
   })));
   const rankedChoices = rankListings(normalized, { marketPrice: marketAnchor });
+  const searchCoverage = fanout.recallObservations.map(observation => buildRecallCoverage({
+    card: confirmedCard, buyer: request.buyer, baseline: normalized, observation,
+  }));
   const inspectLead = normalized
     .filter((listing) => (listing.printMatch === "unknown" || (listing.eligible && requiresMarketPriceReview(listing)))
       && listing.printPriceGuard !== "exclude"
@@ -374,6 +378,7 @@ export async function runListingComparison(
     warnings,
     trace,
     platforms: platformResults,
+    searchCoverage,
     webDiscoveries: webDiscovery.results,
     abstention,
     outcome,

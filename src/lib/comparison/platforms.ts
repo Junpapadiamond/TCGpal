@@ -2,7 +2,9 @@ import {
   hasEbayCredentials,
   type EbayProductResolution,
   searchEbayAlternatives,
+  probeEbayRecall,
 } from "@/lib/external/ebay";
+import type { RecallObservation } from "./recall-probe";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
 import { isMercariDirectEnabled, searchMercariDirect } from "@/lib/external/mercari-direct";
@@ -16,6 +18,7 @@ import type {
   ListingSeed,
   Marketplace,
   PlatformSourceMode,
+  SearchAttempt,
 } from "@/lib/schemas";
 
 // A "platform agent" is one marketplace the comparison can pull live listings
@@ -42,6 +45,7 @@ export type PlatformSearchInput = {
   fetcher: typeof fetch;
   plan?: PlatformSearchPlan;
   signal?: AbortSignal;
+  onSearchAttempt?: (attempt: SearchAttempt) => void;
 };
 
 export type PlatformAgent = {
@@ -61,6 +65,9 @@ export type PlatformAgent = {
   isConfigured: () => boolean;
   searchTimeoutMs?: number;
   search: (input: PlatformSearchInput) => Promise<PlatformSeed[]>;
+  // Runs after a successful primary search, outside its timeout/failure budget.
+  // Implementations must bound their own request/body deadline.
+  recallProbe?: (input: PlatformSearchInput, attempts: SearchAttempt[]) => Promise<RecallObservation>;
 };
 
 // Price-display pilot sources are explicitly enabled, independently of the
@@ -72,8 +79,9 @@ export const ebayPlatformAgent: PlatformAgent = {
   sourceMode: "official_api",
   requiredEnv: ["EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET"],
   isConfigured: hasEbayCredentials,
-  search: ({ card, buyer, fetcher, plan }) =>
-    searchEbayAlternatives(card, buyer, fetcher, plan?.query, plan?.ebayProduct),
+  search: ({ card, buyer, fetcher, plan, onSearchAttempt }) =>
+    searchEbayAlternatives(card, buyer, fetcher, plan?.query, plan?.ebayProduct, undefined, onSearchAttempt),
+  recallProbe: probeEbayRecall,
 };
 
 export const whatnotPlatformAgent: PlatformAgent = {
@@ -146,6 +154,7 @@ export type PlatformFanout = {
   // How many agents actually ran (were configured). When this is zero the caller
   // must return next moves when no trustworthy live rows are available.
   configuredCount: number;
+  recallObservations: RecallObservation[];
 };
 
 export type RunPlatformFanoutInput = {
@@ -168,6 +177,7 @@ export type PlatformOutcome = {
   agent: PlatformAgent;
   seeds?: PlatformSeed[];
   error?: string;
+  recallObservation?: RecallObservation;
 };
 
 // Per-agent search timeout. The fan-out owns this rather than trusting every
@@ -253,7 +263,18 @@ export async function runPlatformFanout({
   const settled = await Promise.all(
     configured.map(async (agent): Promise<PlatformOutcome> => {
       try {
-        return { agent, seeds: await searchPlatformWithTimeout(agent, { card, buyer, fetcher, plan, signal }) };
+        const attempts: SearchAttempt[] = [];
+        const input = { card, buyer, fetcher, plan, signal, onSearchAttempt: (attempt: SearchAttempt) => attempts.push(attempt) };
+        const seeds = await searchPlatformWithTimeout(agent, input);
+        let recallObservation: RecallObservation | undefined;
+        if (agent.recallProbe) {
+          try {
+            recallObservation = await agent.recallProbe(input, attempts);
+          } catch {
+            recallObservation = { marketplace: agent.marketplace, attempts, query: null, status: "failed", observedAt: new Date().toISOString(), returnedCount: 0, seeds: [] };
+          }
+        }
+        return { agent, seeds, recallObservation };
       } catch (error) {
         return { agent, error: error instanceof Error ? error.message : "Unknown marketplace error." };
       }
@@ -299,5 +320,6 @@ export async function runPlatformFanout({
     if (!agent.isConfigured()) results.push(skippedPlatformResult(agent));
   }
 
-  return { seeds, traces, warnings, results, configuredCount: configured.length };
+  return { seeds, traces, warnings, results, configuredCount: configured.length,
+    recallObservations: settled.flatMap(outcome => outcome.recallObservation ? [outcome.recallObservation] : []) };
 }

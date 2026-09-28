@@ -48,6 +48,12 @@ function snapshot(): ComparisonSnapshot {
 }
 
 describe("receipt page interactions", () => {
+  it("shows persisted search failures on a shared receipt", () => {
+    const value = snapshot();
+    value.report.searchCoverage = [{ marketplace: "eBay", attempts: [], query: null, status: "failed", observedAt: "2026-09-28T12:00:00.000Z", returnedCount: 0, newCount: 0, comparableCount: 0, unresolvedCount: 0, baselineCheapestTotal: null, listing: null, excluded: [] }];
+    render(<ReceiptPageClient snapshot={value} />);
+    expect(screen.getByText("Search check unavailable")).toBeTruthy();
+  });
   const clipboard = { writeText: vi.fn(async () => undefined) };
 
   beforeEach(() => {

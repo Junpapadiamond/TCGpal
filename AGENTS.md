@@ -37,6 +37,8 @@ TCGlens is not a price predictor, grading app, investment advisor, marketplace s
 - One Piece research ledgers are review queues, not runtime overlays. Only explicitly reviewed entries in `src/lib/external/one-piece-print-metadata.ts` may affect identity or market anchors.
 - Card-version investigations may use official card lists and announcements, structured catalogs, specialist guides, forums, and Reddit. Community material is discovery/corroboration evidence only: record the URL and access date, resolve conflicts against stronger sources, and require human-reviewed curation plus tests before changing runtime identity behavior. Follow `docs/card-identity-research-policy.md`.
 
+- After a successful eBay primary search, a separate recall check may make one additional Browse `sort=price` request, limited to 10 summaries and two seconds including body parsing. No pagination, detail calls, auth retry, or ranking promotion. It compares new IDs against the original Cheapest lens using the same deterministic gates and pre-tax complete costs. Unknown evidence is inconclusive, failures remain visible, and a negative sample never proves complete recall. `EBAY_RECALL_PROBE_ENABLED=false` disables the check; receipts retain bounded query counts and evidence separately from candidates.
+
 Mutable release state, open decisions, verification evidence, and exact versions belong in sectioned `PROGRESS.md`, not this always-loaded guide. Detailed provider and interface behavior belongs in `docs/architecture-and-data-sources.md`.
 
 ## Product Guardrails
