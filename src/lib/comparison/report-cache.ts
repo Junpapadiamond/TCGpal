@@ -32,6 +32,7 @@ export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: 
     request.buyer.desiredCondition,
     request.buyer.postalCode,
     request.buyer.taxRate ?? "no-tax",
+    request.buyer.budget ? `pre-tax-budget:${request.buyer.budget.max}` : "no-budget",
   ].join("|");
 }
 

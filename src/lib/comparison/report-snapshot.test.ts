@@ -59,6 +59,15 @@ describe("comparison report snapshots", () => {
   it("rejects malformed snapshot identifiers", async () => {
     await expect(getComparisonSnapshot("../../secret")).resolves.toBeNull();
   });
+  it("keeps budgets separate in latest-receipt lookups", async () => {
+    const value = report();
+    value.request.buyer.budget = { max: 150, basis: "pre_tax" };
+    const confirmedCardId = STANDARD_COMPARISON_FLOW_CARDS[0].expectedCardId;
+    const saved = await saveComparisonSnapshot(value, { confirmedCardId });
+    const lookup = { confirmedCardId, game: "pokemon" as const, desiredCondition: "Near Mint" as const };
+    expect(await getLatestComparisonSnapshot(lookup)).toBeNull();
+    expect((await getLatestComparisonSnapshot({ ...lookup, budgetMax: 150 }))?.id).toBe(saved.id);
+  });
 
   it("indexes the newest matching receipt without mutating the previous snapshot", async () => {
     const confirmedCardId = STANDARD_COMPARISON_FLOW_CARDS[0].expectedCardId;

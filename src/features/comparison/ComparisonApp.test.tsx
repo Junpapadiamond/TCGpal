@@ -285,6 +285,34 @@ describe("comparison condition controls", () => {
     vi.restoreAllMocks();
   });
 
+  it("reviews a natural-language budget before comparing the selected print and clears it for a new search", async () => {
+    const candidate: CardIdentityCandidate = { ...identityForQuery("Charizard 4/102"), marketMid: 90, marketSource: "tcgcsv", marketAsOf: "2026-09-28T00:00:00Z", marketUrl: "https://www.tcgplayer.com/product/1" };
+    const normalFetch = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      if (!String(input).endsWith("/api/agent/card-identity")) return normalFetch(input, init);
+      expect(JSON.parse(String(init?.body)).interpretQuery).toBe(true);
+      return Response.json({ ...identityResponse([candidate], "needs_confirmation"), searchIntent: {
+        query: "Charizard", game: "pokemon", budgetMax: 150, desiredCondition: "Near Mint", conditionAssumed: true, issue: null, source: "ai",
+      }, priceCoverage: { checked: 1, total: 1 } });
+    });
+    render(<ComparisonApp />);
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "150块以下好品相的Charizard" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await screen.findByText("Versions to explore");
+    expect(requests).toHaveLength(0);
+    expect(screen.getByText(/Good condition is interpreted as/)).toBeTruthy();
+    expect(window.location.search).toContain("budget=150");
+    fireEvent.click(screen.getByRole("button", { name: /Select Charizard/ }));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]).toMatchObject({ query: "Charizard", buyer: { desiredCondition: "Near Mint", budget: { max: 150, basis: "pre_tax" } } });
+    fireEvent.click(screen.getByRole("button", { name: /Charizard.*Edit/ }));
+    expect((screen.getByRole("spinbutton", { name: /Budget/ }) as HTMLInputElement).value).toBe("150");
+    fireEvent.click(screen.getByRole("button", { name: "New search" }));
+    fireEvent.click(screen.getByRole("button", { name: /Filters,/ }));
+    expect((screen.getByRole("spinbutton", { name: /Budget/ }) as HTMLInputElement).value).toBe("");
+  });
+
   it("fills an editable example and its condition without starting a provider request", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0.999);
     render(<ComparisonApp />);
@@ -388,7 +416,7 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("Pokémon & One Piece · raw singles · U.S. listings")).toBeTruthy();
 
     const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
-    expect(query.placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
+    expect(query.placeholder).toBe("Charizard under $150 in good condition");
     expect(screen.getByRole("button", { name: "Browse card versions" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Paste listing" })).toBeNull();
     expect(screen.queryByText(/paste marketplace links back/i)).toBeNull();
@@ -408,7 +436,7 @@ describe("comparison condition controls", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     expect(await screen.findByRole("heading", { name: "收这张卡，先比比价。" })).toBeTruthy();
-    expect((screen.getByRole("textbox", { name: "想收哪张卡？" }) as HTMLInputElement).placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
+    expect((screen.getByRole("textbox", { name: "想收哪张卡？" }) as HTMLInputElement).placeholder).toBe("150美元以下、品相好的Charizard");
     expect(screen.queryByRole("button", { name: "贴链接比价" })).toBeNull();
     expect(screen.getByText("海贼王还在测试中，部分版本可能查不到。")).toBeTruthy();
     expect(screen.getByRole("button", { name: /筛选.+近全新/i })).toBeTruthy();
@@ -651,6 +679,9 @@ describe("comparison condition controls", () => {
         confidence: "medium",
         matchReasons: ["Card name matches."],
         marketMid: 412.5,
+        marketSource: "pokemontcg",
+        marketAsOf: "2026-07-12T00:00:00Z",
+        marketUrl: "https://www.tcgplayer.com/product/1",
       }],
       confirmedCard: null,
       warnings: [],
@@ -658,7 +689,8 @@ describe("comparison condition controls", () => {
     }), { headers: { "Content-Type": "application/json" } }));
 
     expect(await screen.findByRole("heading", { name: "Choose your Pikachu" })).toBeTruthy();
-    expect(screen.getByText("$412.50 market reference")).toBeTruthy();
+    expect(screen.getByText("$412.50", { exact: false })).toBeTruthy();
+    expect(screen.getByText("NM item reference")).toBeTruthy();
     expect(screen.queryByText("Medium confidence")).toBeNull();
 
     fireEvent.error(screen.getByAltText("Pikachu · 18/91 · Paldean Fates"));

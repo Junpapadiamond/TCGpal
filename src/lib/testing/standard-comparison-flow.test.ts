@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runListingComparison } from "@/lib/ai/listing-compare";
 import { resolveCardIdentity } from "@/lib/ai/card-identity";
+import { resolveBuyerSearch } from "@/lib/ai/buyer-search";
 import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
 import {
   STANDARD_COMPARISON_FLOW_CARDS,
@@ -105,6 +106,23 @@ afterEach(() => {
 });
 
 describe("standard multi-card comparison flow", () => {
+  it("carries interpreted budgets into the selected print and clears them for subsequent cards", async () => {
+    const seen: ComparisonRequest[] = [];
+    const result = await runStandardComparisonFlow({
+      cards: STANDARD_COMPARISON_FLOW_CARDS.map((card, index) => index === 2 ? { ...card, searchText: "Charizard 4/102 under $150 NM" } : card),
+      identify: (input) => input.interpretQuery ? resolveBuyerSearch(input, {
+        provider: null,
+        identify: (request) => resolveCardIdentity(request, { fetcher: standardFlowFetcher }),
+        prices: async (cards) => ({ cards, checked: 0 }),
+      }) : resolveCardIdentity(input, { fetcher: standardFlowFetcher }),
+      compare: (request) => { seen.push(request); return runListingComparison(request, { fetcher: standardFlowFetcher }); },
+    });
+    expect(seen[2].buyer.budget).toEqual({ max: 150, basis: "pre_tax" });
+    expect(result.cards[2].rankedChoiceCount).toBe(0);
+    expect(result.cards[2].confirmedCardId).toBe("base1-4");
+    expect(seen[3].buyer.budget).toBeUndefined();
+    expect(result.cards[3].rankedChoiceCount).toBeGreaterThan(0);
+  });
   it("codifies the pilot smoke standard as at least five sequential searches across both live games", () => {
     expect(() => assertStandardComparisonFlowPlan(STANDARD_COMPARISON_FLOW_CARDS)).not.toThrow();
     expect(STANDARD_COMPARISON_FLOW_CARDS).toHaveLength(6);

@@ -9,8 +9,8 @@ export type SearchExample = {
 };
 
 // Search starters, never inventory, trending claims, or pre-confirmed prints.
-// Keep the query separate from the condition so the catalog only receives a
-// supported identity query and the visible condition control does real work.
+// Natural-language starters go through intent parsing before catalog lookup.
+// Plain queries may also set the visible condition control directly.
 export const SEARCH_EXAMPLES: readonly SearchExample[] = [
   { id: "pokemon-charizard", game: "pokemon", query: "Charizard", desiredCondition: "Lightly Played" },
   { id: "pokemon-pikachu", game: "pokemon", query: "Pikachu 58/102" },
@@ -28,7 +28,11 @@ export const SEARCH_EXAMPLES: readonly SearchExample[] = [
   { id: "pokemon-snorlax", game: "pokemon", query: "Snorlax", desiredCondition: "Lightly Played" },
   { id: "pokemon-sylveon", game: "pokemon", query: "Sylveon VMAX" },
   { id: "pokemon-blastoise", game: "pokemon", query: "Blastoise" },
+  { id: "pokemon-charizard-budget", game: "pokemon", query: "Charizard under $150 in good condition" },
+  { id: "pokemon-pikachu-budget", game: "pokemon", query: "Pikachu under $50 NM" },
   { id: "onePiece-luffy", game: "onePiece", query: "Luffy OP05-119", desiredCondition: "Near Mint" },
+  { id: "onePiece-luffy-budget", game: "onePiece", query: "Luffy under $150 NM" },
+  { id: "onePiece-nami-budget", game: "onePiece", query: "Nami under $50 LP" },
   { id: "onePiece-nami", game: "onePiece", query: "Nami OP01-016" },
   { id: "onePiece-zoro", game: "onePiece", query: "Roronoa Zoro OP06-118" },
   { id: "onePiece-shanks", game: "onePiece", query: "Shanks" },

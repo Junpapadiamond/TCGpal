@@ -27,6 +27,7 @@ export const comparisonSnapshotLookupSchema = z.object({
   confirmedCardId: z.string().trim().min(1).max(160),
   game: tcgGameSchema,
   desiredCondition: conditionClaimSchema,
+  budgetMax: z.number().positive().max(1_000_000).optional(),
 });
 
 const comparisonSnapshotPointerSchema = z.object({
@@ -68,6 +69,7 @@ export async function saveComparisonSnapshot(
       confirmedCardId,
       game: report.request.cardHint.game,
       desiredCondition: report.request.buyer.desiredCondition,
+      budgetMax: report.request.buyer.budget?.max,
     });
     await setJsonCache(SNAPSHOT_LATEST_SCOPE, comparisonSnapshotLookupKey(lookup), { id }, {
       ttlSeconds: SNAPSHOT_TTL_SECONDS,
@@ -107,5 +109,5 @@ export async function getLatestComparisonSnapshot(
 }
 
 function comparisonSnapshotLookupKey(input: ComparisonSnapshotLookup) {
-  return JSON.stringify([input.confirmedCardId, input.game, input.desiredCondition]);
+  return JSON.stringify([input.confirmedCardId, input.game, input.desiredCondition, input.budgetMax ?? null]);
 }

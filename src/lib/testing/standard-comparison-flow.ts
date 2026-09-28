@@ -21,6 +21,7 @@ export type StandardComparisonFlowCard = {
   // The UI smoke may start through a search example, then continue through
   // the same explicit-query, confirmation, Edit, and New search contract.
   searchExampleId?: string;
+  searchText?: string;
   desiredCondition?: ConditionClaim;
 };
 
@@ -160,8 +161,14 @@ export async function runStandardComparisonFlow({
   for (const card of cards) {
     const request = buildStandardComparisonRequest(card);
     const identity = identify
-      ? await identify({ query: card.query, cardHint: request.cardHint })
+      ? await identify({ query: card.searchText ?? card.query, cardHint: request.cardHint,
+        ...(card.searchText ? { interpretQuery: true } : {}) })
       : null;
+    if (identity?.searchIntent && !identity.searchIntent.issue) {
+      request.query = identity.searchIntent.query;
+      request.buyer.desiredCondition = identity.searchIntent.desiredCondition ?? request.buyer.desiredCondition;
+      if (identity.searchIntent.budgetMax !== null) request.buyer.budget = { max: identity.searchIntent.budgetMax, basis: "pre_tax" };
+    }
     if (identity && identity.status !== "resolved" && identity.status !== "needs_confirmation") {
       throw new Error(`Standard comparison flow could not identify ${card.label}: ${identity.status}.`);
     }

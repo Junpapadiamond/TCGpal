@@ -417,6 +417,10 @@ export function normalizeListing(input: {
     eligibilityIssues.push({ code: "price_far_above_exact_market", category: "price", disposition: "review",
       message: "Item price is over five times the exact-print NM market reference, with at least a $20 gap. Verify the price, print and reference freshness before deciding." });
   }
+  if (buyer.budget && costComplete && preTaxTotal > buyer.budget.max) {
+    eligibilityIssues.push({ code: "over_budget", category: "price", disposition: "exclude",
+      message: `Pre-tax total $${preTaxTotal.toFixed(2)} exceeds the buyer's $${buyer.budget.max.toFixed(2)} budget (item, shipping and mandatory fees).` });
+  }
   const exclusionReasons = eligibilityIssues
     .filter((issue) => issue.disposition === "exclude")
     .map((issue) => issue.message);

@@ -27,6 +27,8 @@ import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-se
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
+import { needsSearchInterpretation } from "@/lib/comparison/search-intent";
+import { BuyerSearchReview, BudgetVersions, MarketReferencePrice } from "./BuyerSearchReview";
 import { onePiecePrintDisplayLabel } from "@/lib/external/one-piece-taxonomy";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
 import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
@@ -73,6 +75,7 @@ import {
   type NormalizedListing,
   type RankedChoice,
   type TcgGame,
+  type SearchIntent,
 } from "@/lib/schemas";
 
 const marketplaces: Marketplace[] = [
@@ -210,6 +213,8 @@ async function requestCardIdentity(request: ComparisonRequest, fallbackMessage: 
   const json = await postJsonWithRetry("/api/agent/card-identity", {
     query: request.query || request.cardHint.name,
     cardHint: request.cardHint,
+    ...(needsSearchInterpretation(request.query || request.cardHint.name) ? { interpretQuery: true } : {}),
+    ...(request.buyer.budget ? { budgetMax: request.buyer.budget.max } : {}),
   }, fallbackMessage, signal, 1);
   return cardIdentitySearchResponseSchema.parse(json);
 }
@@ -609,6 +614,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     params.set("game", snapshot.form.game);
     params.set("step", step);
     params.set("condition", snapshot.form.desiredCondition);
+    if (snapshot.form.budgetMax) params.set("budget", snapshot.form.budgetMax);
     const cardId = snapshot.selectedIdentity?.id ?? snapshot.pendingRequest?.confirmedCardId;
     if (cardId) params.set("card", cardId);
     window.history[mode === "push" ? "pushState" : "replaceState"](
@@ -652,7 +658,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
 
     preserveSearchBeforeSubmit(values);
     const operation = beginRequest();
-    const request = buildRequest(values, confirmedCardId);
+    let request = buildRequest(values, confirmedCardId);
     setResultSnapshot(null);
     setPendingRequest(request);
     setError(null);
@@ -674,6 +680,16 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       const identity = await requestCardIdentity(request, t.error.identityTemporary, operation.controller.signal);
       if (!requestIsCurrent(operation)) return;
       setIdentityResult(identity);
+      if (identity.searchIntent && !identity.searchIntent.issue) {
+        const intent = identity.searchIntent;
+        values = { ...values, heroQuery: intent.query, game: intent.game,
+          desiredCondition: intent.desiredCondition ?? values.desiredCondition,
+          budgetMax: intent.budgetMax !== null ? String(intent.budgetMax) : values.budgetMax,
+          cardName: "", setCode: "", cardNumber: "" };
+        form.reset(values);
+        request = buildRequest(values);
+        setPendingRequest(request);
+      }
       if (identity.status === "resolved" && identity.confirmedCard) {
         const confirmedRequest = { ...request, confirmedCardId: identity.confirmedCard.id };
         setPendingRequest(confirmedRequest);
@@ -802,6 +818,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       form.setValue("heroQuery", restoredReport.request.query ?? restoredReport.request.cardHint.name);
       form.setValue("game", restoredReport.request.cardHint.game);
       form.setValue("desiredCondition", restoredReport.request.buyer.desiredCondition);
+      form.setValue("budgetMax", restoredReport.request.buyer.budget ? String(restoredReport.request.buyer.budget.max) : "");
       setResultSnapshot({
         id: snapshot.id,
         durable: true,
@@ -844,18 +861,21 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       confirmedCardId: journey.confirmedCardId,
       autoSubmit: journey.step !== "search",
       desiredCondition: journey.desiredCondition,
+      budgetMax: journey.budgetMax,
     } : nativeSubmit ? {
       query: nativeSubmit.query,
       game: nativeSubmit.game ?? "pokemon" as const,
       confirmedCardId: undefined,
       autoSubmit: true,
       desiredCondition: undefined,
+      budgetMax: undefined,
     } : null);
     if (!restored) return;
 
     form.setValue("heroQuery", restored.query);
     form.setValue("game", restored.game);
     if (restored.desiredCondition) form.setValue("desiredCondition", restored.desiredCondition);
+    if (restored.budgetMax !== undefined) form.setValue("budgetMax", String(restored.budgetMax));
     if (!restored.autoSubmit) return;
 
     if (!handoff && journey?.step === "result" && journey.confirmedCardId && journey.desiredCondition) {
@@ -864,7 +884,8 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       };
       const lookupUrl = `/api/comparison-snapshots?card=${encodeURIComponent(journey.confirmedCardId)}`
         + `&game=${encodeURIComponent(journey.game)}`
-        + `&condition=${encodeURIComponent(journey.desiredCondition)}`;
+        + `&condition=${encodeURIComponent(journey.desiredCondition)}`
+        + (journey.budgetMax !== undefined ? `&budget=${journey.budgetMax}` : "");
       queueMicrotask(() => setJourneyState("restoring"));
       void fetch(lookupUrl)
         .then(async (response) => {
@@ -964,6 +985,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     : t.conditions[desiredCondition];
   const appliedCondition = pendingRequest?.buyer.desiredCondition ?? desiredCondition;
   const headerContext = [
+    pendingRequest?.buyer.budget ? `${formatMoney(pendingRequest.buyer.budget.max)} ${lang === "zh" ? "税前预算" : "pre-tax budget"}` : null,
     (pendingRequest?.cardHint.game ?? game) === "onePiece" ? t.form.onePieceBetaLabel : t.form.games.pokemon,
     (pendingRequest?.buyer.postalCode ?? postalCode) ? `ZIP ${pendingRequest?.buyer.postalCode ?? postalCode}` : null,
     appliedCondition === "Unknown"
@@ -1044,7 +1066,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
           editPanel={compactSearchOpen ? (
             <form
               id="results-edit-panel"
-              className="mx-auto grid max-h-[calc(100dvh-8rem)] max-w-[1180px] gap-3 overflow-y-auto overscroll-contain border-t border-[#d6ded5] px-4 py-4 sm:grid-cols-2 sm:items-end sm:px-6 lg:max-h-none lg:grid-cols-[minmax(220px,1fr)_140px_minmax(220px,240px)_120px_auto] lg:overflow-visible lg:px-8"
+              className="mx-auto grid max-h-[calc(100dvh-8rem)] max-w-[1180px] gap-3 overflow-y-auto overscroll-contain border-t border-[#d6ded5] px-4 py-4 sm:grid-cols-2 sm:items-end sm:px-6 lg:max-h-none lg:grid-cols-3 lg:overflow-visible lg:px-8"
               onSubmit={form.handleSubmit((values) => {
                 setCompactSearchOpen(false);
                 // This panel only lets the buyer edit the free-text query — clear the
@@ -1080,6 +1102,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                 </select>
               </label>
               <DesiredConditionField form={form} />
+              <BudgetField form={form} />
               <label className="field">
                 <span>{t.form.deliveryZip}</span>
                 <input {...form.register("postalCode")} inputMode="numeric" />
@@ -1211,6 +1234,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                 <CardKeyPreview name={cardName} setCode={setCode} cardNumber={cardNumber} />
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <DesiredConditionField form={form} />
+                  <BudgetField form={form} />
                   <label className="field">
                     <span>{t.form.optionalTaxRate}</span>
                     <div className="input-suffix">
@@ -1422,6 +1446,8 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
           <IdentityConfirmation
             identities={identityResult.candidates}
             warnings={identityResult.warnings}
+            searchIntent={identityResult.searchIntent}
+            priceCoverage={identityResult.priceCoverage}
             onConfirm={confirmIdentity}
             onRetry={() => void retryComparison()}
             onRefine={() => {
@@ -2077,20 +2103,34 @@ function DesiredConditionField({ form }: { form: UseFormReturn<ComparisonForm> }
   );
 }
 
+function BudgetField({ form }: { form: UseFormReturn<ComparisonForm> }) {
+  const { lang } = useLang();
+  return <label className="field">
+    <span>{lang === "zh" ? "预算上限（美元，税前）" : "Budget (USD, pre-tax)"}</span>
+    <input {...form.register("budgetMax")} type="number" min="0.01" max="1000000" step="0.01" inputMode="decimal" placeholder={lang === "zh" ? "不限" : "Any budget"} />
+    <span className="text-xs font-normal text-[#64736c]">{lang === "zh" ? "包含运费及必收费用" : "Includes shipping and mandatory fees"}</span>
+  </label>;
+}
+
 function IdentityConfirmation({
   identities,
   warnings = [],
+  searchIntent,
+  priceCoverage,
   onConfirm,
   onRetry,
   onRefine,
 }: {
   identities: CardIdentityCandidate[];
   warnings?: string[];
+  searchIntent?: SearchIntent;
+  priceCoverage?: CardIdentitySearchResponse["priceCoverage"];
   onConfirm: (identity: CardIdentityCandidate) => void;
   onRetry: () => void;
   onRefine: () => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
   const [filters, setFilters] = useState<IdentityFilters>({ setFilter: "", rarityFilter: "", printTypeFilter: "" });
   // A print's rarity and its print-type bucket are not independent (SP CARD
   // rarity is always Special Art, SEC never coexists with Special Art, ...), so
@@ -2131,7 +2171,7 @@ function IdentityConfirmation({
   const sharedNumber = identities.length > 1 && identities.every((identity) => identity.cardNumber === identities[0]?.cardNumber)
     ? identities[0]?.cardNumber ?? ""
     : "";
-  const heading = identities.length === 0
+  const heading = searchIntent?.issue ? (lang === "zh" ? "调整一下搜索条件" : "Adjust your search") : identities.length === 0
     ? (lookupUnavailable ? t.identity.lookupUnavailableTitle : t.identity.noMatchTitle)
     : t.identity.chooseHeading(identities[0]?.name ?? "card", sharedNumber);
   return (
@@ -2144,10 +2184,11 @@ function IdentityConfirmation({
             : t.identity.eyebrow}
         </p>
         <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{heading}</h2>
-        <p className="mt-2 leading-7 text-[#64736c]">
+        {!searchIntent?.issue && <p className="mt-2 leading-7 text-[#64736c]">
           {identities.length === 0 ? (lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch) : t.identity.desc}
-        </p>
+        </p>}
       </div>
+      {searchIntent && <BuyerSearchReview intent={searchIntent} onEdit={onRefine} coverage={priceCoverage} />}
       {showFilters && (
         <div className="mt-5 flex flex-wrap items-end gap-3 rounded-lg border border-[#d6ded5] bg-[#f7f9f5] p-3">
           {setOptions.length > 1 && (
@@ -2197,7 +2238,7 @@ function IdentityConfirmation({
           )}
         </div>
       )}
-      {identities.length === 0 ? (
+      {searchIntent?.issue ? null : identities.length === 0 ? (
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
           {lookupUnavailable ? (
             <button className="secondary-button" type="button" onClick={onRetry}>{t.identity.retryCatalog}</button>
@@ -2214,6 +2255,9 @@ function IdentityConfirmation({
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
           {t.identity.filterNoMatches}
         </div>
+      ) : searchIntent?.budgetMax != null ? (
+        <BudgetVersions cards={filteredIdentities} max={searchIntent.budgetMax}
+          renderCard={(identity) => <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h3" />} />
       ) : grouped ? (
         <div className="mt-6 space-y-7">
           {likelyMatches.length > 0 && (
@@ -2321,9 +2365,7 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
       )}
       {titleAs === "h4" ? <h4 className={`${titleClass} mt-4`}>{identity.name}</h4> : <h3 className={`${titleClass} mt-4`}>{identity.name}</h3>}
       {titleDetails && <p className="mt-1 text-sm font-black text-[#24312f]">{titleDetails}</p>}
-      {typeof identity.marketMid === "number" && (
-        <p className="mt-2 font-mono text-sm font-black text-[#2f6f73]">{t.identity.marketReference(formatMoney(identity.marketMid))}</p>
-      )}
+      <MarketReferencePrice identity={identity} />
       <CardIdentityRail identity={identity} className="mt-3" showPrintDetails={!onePiecePrintDisplayLabel(identity, lang)} />
       <button
         className="secondary-button mt-4 w-full"
@@ -4107,6 +4149,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
       // landed cost reflects roughly what eBay charges. Null (unknown ZIP) → pre-tax total.
       taxRate: taxPercent === null ? estimateSalesTaxRateFromZip(values.postalCode.trim()) : taxPercent / 100,
       desiredCondition: values.desiredCondition,
+      ...(values.budgetMax.trim() ? { budget: { max: Number(values.budgetMax), basis: "pre_tax" as const } } : {}),
     },
     cardHint: {
       game: values.game,

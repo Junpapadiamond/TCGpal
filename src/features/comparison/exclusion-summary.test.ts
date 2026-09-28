@@ -17,6 +17,9 @@ function listing(id: string, eligible: boolean, issues: Partial<EligibilityIssue
 }
 
 describe("summarizeExclusions", () => {
+  it("reports over-budget listings separately from missing costs", () => {
+    expect(summarizeExclusions([listing("over", false, [{ code: "over_budget", category: "price" }])]).groups).toEqual([{ code: "budget", count: 1 }]);
+  });
   it("counts what was seen and buckets each excluded listing under one reason", () => {
     const summary = summarizeExclusions([
       listing("kept", true),

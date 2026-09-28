@@ -75,6 +75,7 @@ export async function GET(request: Request) {
     confirmedCardId: searchParams.get("card") ?? "",
     game: searchParams.get("game") ?? "",
     desiredCondition: searchParams.get("condition") ?? "",
+    ...(searchParams.has("budget") ? { budgetMax: Number(searchParams.get("budget")) } : {}),
   });
   const snapshot = id
     ? await getComparisonSnapshot(id)

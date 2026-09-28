@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-27
+updated_at: 2026-09-28
 canonical_branch: origin/main
 last_verified_product_commit: 12f7b6a
-working_branch: main (Mainland Chinese copy + search-entry refresh; Whatnot allowance exhausted; Mercari blocked)
+working_branch: codex/natural-language-search (local implementation; visual QA blocked; not deployed)
 max_lines: 300
 ---
 
@@ -31,7 +31,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Search-entry refresh verified; trust fixes deployed; Q&A model requests still time out | Observe example use, trust, sharing, and empty outcomes |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Natural-language budget search implemented locally; visual QA pending | Finish EN/中文 desktop/mobile QA and sequential manual smoke before release |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay live; Whatnot allowance exhausted; Mercari live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
@@ -143,7 +143,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `docs/validation-plan.md`, `docs/product-spec.md`, `docs/product-principles.md`. Historical council artifacts (`output/product-readiness-audit-2026-07-10/council/chairman.md`, `docs/councils/tcgpal_feature_scorecard.md`) are absent from origin/main and retained only in the original checkout.
 <!-- progress:end -->
-<!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
+<!-- progress:workstream id="WS-UX" state="in-progress" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
 ### Done
 
@@ -225,7 +225,7 @@ The user must decide these; agents must not infer them:
 - Node 24.19 and dependencies are present. npm is absent from PATH, so verification invokes the installed ESLint, TypeScript, Vitest, metadata audit and Next CLIs directly; no dependency changes/install.
 - Graphify CLI is unavailable here (the documented macOS path and Windows PATH do not resolve). Existing AST graph was used for navigation; no graph regeneration is claimed. Structural graph refresh remains a tooling follow-up.
 - Browser evidence is in the local Codex visualization directory `2026/09/14/01a0a16e-9654-7801-ba6a-bd2355fbcb09/cross-market-qa/`: EN/中文 desktop, 中文 mobile and a five-search manifest. Synthetic provider facts are visibly labeled; no credentials or raw marketplace pages are committed.
-- Provider tokens are absent locally. Vercel configuration was inspected in founder-authorized Chrome; secrets were not copied. Production AI health reports OpenAI-compatible primary/cheap `gpt-5.6-luna`; exact custom base URL remains unverified. No configuration question is pending.
+- eBay credentials are absent locally. September 28 founder-supplied model configuration is in ignored `.env.local` only; the Anthropic-compatible gateway passed health and bounded intent probes. Production configuration was not changed. Earlier production AI health reports OpenAI-compatible `gpt-5.6-luna`.
 <!-- progress:end -->
 <!-- progress:section id="FIRST-READ" -->
 ## FIRST-READ

@@ -131,6 +131,7 @@ Until all five gates pass, frontier outputs remain research evidence and may not
 
 The AI layer may:
 
+- Interpret a buyer's natural-language card query into editable card, USD budget and seller-claimed condition preferences. Deterministic money extraction and identity constraints veto model changes; budget browsing uses dated catalog/TCGCSV references before exact-print confirmation. The buyer's ceiling applies to item + shipping + mandatory fees before tax, with unknown charges excluded from winners.
 - Reconcile ambiguous structured evidence.
 - Explain why deterministic rankings differ.
 - Produce cautious, schema-shaped summaries.

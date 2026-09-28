@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { resolveCardIdentityRuntime } from "@/lib/ai/card-identity-runtime";
+import { resolveBuyerSearch } from "@/lib/ai/buyer-search";
 import { createRequestId, getOperationalErrorCode, logOpsEvent } from "@/lib/ops/events";
 import { rateLimitHeaders, rateLimitRequest } from "@/lib/ops/rate-limit";
 import { captureOperationalException } from "@/lib/ops/sentry";
 import { cardIdentitySearchRequestSchema } from "@/lib/schemas";
 
-export const maxDuration = 20;
+export const maxDuration = 40;
 
 export async function POST(request: Request) {
   const route = "card-identity" as const;
@@ -38,7 +39,8 @@ export async function POST(request: Request) {
   try {
     const input = cardIdentitySearchRequestSchema.parse(await request.json());
     requestValidated = true;
-    const result = await resolveCardIdentityRuntime(input, {
+    const resolve = input.interpretQuery || input.budgetMax !== undefined ? resolveBuyerSearch : resolveCardIdentityRuntime;
+    const result = await resolve(input, {
       now: () => new Date(),
       signal: request.signal,
     });

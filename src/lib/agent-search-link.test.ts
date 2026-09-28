@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { buildAgentSearchUrl, parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 
 describe("agent search links", () => {
+  it("round-trips a budget and rejects invalid ceilings", () => {
+    const url = buildAgentSearchUrl("https://lenstcg.com", { query: "Charizard", game: "pokemon", budgetMax: 150 });
+    expect(parseAgentSearchParams(new URL(url).searchParams)?.budgetMax).toBe(150);
+    expect(parseJourneySearchParams(new URLSearchParams("query=Charizard&game=pokemon&step=confirmation&budget=150"))?.budgetMax).toBe(150);
+    expect(parseJourneySearchParams(new URLSearchParams("query=Charizard&game=pokemon&step=result&budget=-1"))).toBeNull();
+  });
   it("round-trips an exact One Piece card handoff", () => {
     const url = buildAgentSearchUrl("https://tcgpal.vercel.app", {
       query: "Monkey.D.Luffy OP05-119 Japanese manga rare",

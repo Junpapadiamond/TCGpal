@@ -13,6 +13,16 @@
 
 Every AI failure falls back to deterministic behavior.
 
+## Natural-language entry and budget browsing
+
+`POST /api/agent/card-identity` accepts optional `interpretQuery` and `budgetMax`. `buyer-search.ts` parses English/Chinese buyer intent with an optional eight-second model call and a deterministic fallback. Numeric ceilings are extracted from money expressions, never collector numbers. Explicit card-number, set, language and print constraints cannot be added or removed by the model. Unsupported currency, graded products and conflicting constraints return an editable clarification state.
+
+Budget searches always stop at the version gallery, including exact single matches. `browse-market.ts` refreshes references for at most 24 versions with four workers and an eight-second shared deadline. It calls only the existing TCGCSV adapters and exact-product crosswalk selector; it does not call marketplace agents. Other versions retain sourced catalog references or show unknown. Reference price is the condition-blind NM item-only market anchor, with source/date and an older-reference label after 72 hours. It is a browsing hint, not a claim that a current listing fits the budget. Unknown and above-reference-budget versions remain accessible.
+
+After confirmation, optional `buyer.budget = { max, basis: "pre_tax" }` is enforced in deterministic ranking. Over-budget item + shipping + mandatory-fee totals are excluded; missing charges remain incomplete. Tax is shown separately. Budget travels through Edit, history, validated handoff URLs, comparison caches and receipt indexes; New search clears it. The optional fields preserve existing clients. The older agent discovery endpoint remains a separate contract.
+
+See [the experiment and verification record](natural-language-search-2026-09-28.md).
+
 ## Interface architecture
 
 ```text

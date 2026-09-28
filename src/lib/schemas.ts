@@ -110,6 +110,8 @@ export const buyerContextSchema = z.object({
   postalCode: z.string().trim().max(10).default(""),
   taxRate: z.number().min(0).max(0.2).nullable().default(null),
   desiredCondition: conditionClaimSchema.default("Near Mint"),
+  // Explicit buyer ceiling: complete item + shipping + mandatory fees, before tax.
+  budget: z.object({ max: z.number().positive().max(1_000_000), basis: z.literal("pre_tax").default("pre_tax") }).optional(),
 });
 
 export const tcgGameSchema = z.enum(["pokemon", "onePiece"]);
@@ -271,6 +273,8 @@ export const cardIdentityCandidateSchema = z.object({
 
 export const cardIdentitySearchRequestSchema = z.object({
   query: z.string().trim().min(1).max(200),
+  interpretQuery: z.boolean().optional(),
+  budgetMax: z.number().positive().max(1_000_000).optional(),
   cardHint: cardHintSchema.default({
     game: "pokemon",
     name: "",
@@ -282,6 +286,17 @@ export const cardIdentitySearchRequestSchema = z.object({
   }),
 });
 
+export const searchIntentSchema = z.object({
+  query: z.string().trim().max(200),
+  game: tcgGameSchema,
+  budgetMax: z.number().positive().max(1_000_000).nullable(),
+  desiredCondition: conditionClaimSchema.nullable(),
+  conditionAssumed: z.boolean(),
+  issue: z.enum(["currency", "graded", "card_required", "clarify"]).nullable(),
+  source: z.enum(["rules", "ai", "fallback"]),
+});
+export type SearchIntent = z.infer<typeof searchIntentSchema>;
+
 export const cardIdentitySearchResponseSchema = z.object({
   identityContractVersion: z.literal(1),
   status: z.enum(["resolved", "needs_confirmation", "not_found", "unavailable"]),
@@ -289,6 +304,8 @@ export const cardIdentitySearchResponseSchema = z.object({
   confirmedCard: cardIdentityCandidateSchema.nullable(),
   warnings: z.array(z.string()),
   generatedAt: z.string(),
+  searchIntent: searchIntentSchema.optional(),
+  priceCoverage: z.object({ checked: z.number().int().min(0), total: z.number().int().min(0) }).optional(),
 }).superRefine((response, ctx) => {
   if (response.status === "resolved" && !response.confirmedCard) {
     ctx.addIssue({ code: "custom", path: ["confirmedCard"], message: "A resolved identity response requires one confirmed card." });

@@ -19,6 +19,7 @@ export type ExclusionGroupCode =
   | "price_floor"
   | "condition"
   | "cost"
+  | "budget"
   | "language"
   | "availability"
   | "other";
@@ -40,6 +41,7 @@ const GROUP_PRIORITY: ExclusionGroupCode[] = [
   "condition",
   "language",
   "cost",
+  "budget",
   "availability",
   "other",
 ];
@@ -50,6 +52,7 @@ const GROUP_PRIORITY: ExclusionGroupCode[] = [
 const CODE_GROUPS: Record<string, ExclusionGroupCode> = {
   price_far_below_market: "price_floor",
   identity_price_guard: "price_floor",
+  over_budget: "budget",
 };
 
 function groupFor(issue: EligibilityIssue): ExclusionGroupCode {

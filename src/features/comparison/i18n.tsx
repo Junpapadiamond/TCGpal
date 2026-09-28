@@ -59,12 +59,12 @@ export const en = {
   },
   form: {
     heroSearchLabel: "Search for a card",
-    heroSearchPlaceholder: "Charizard 4/102 · Luffy OP01-003 · SWSH144",
+    heroSearchPlaceholder: "Charizard under $150 in good condition",
     // Typed one at a time into the empty search box. Card names are the same in
     // both locales. Deliberately mixed: a bare name is enough to start, and a
     // collector number just narrows it — leading with numbers every time makes
     // the search look like it demands one.
-    heroSearchExamples: ["Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-003", "Umbreon VMAX"],
+    heroSearchExamples: ["Charizard under $150 in good condition", "Pikachu 58/102", "Mew", "Luffy OP01-003", "Umbreon VMAX"],
     heroSearchRequired: "Type a card to search, or fill in the details below.",
     searchExamples: "Search examples",
     trySearch: "Try a search",
@@ -240,6 +240,7 @@ export const en = {
       product: (count: number) => `${count} graded, sealed, lot, or replica ${count === 1 ? "listing" : "listings"}`,
       identity: (count: number) => `${count} that did not prove the exact print you confirmed`,
       price_floor: (count: number) => `${count} priced below the exact-print floor`,
+      budget: (count: number) => `${count} above your pre-tax budget`,
       condition: (count: number) => `${count} below the condition you asked for`,
       cost: (count: number) => `${count} without a complete comparable cost`,
       language: (count: number) => `${count} in a conflicting language`,
@@ -570,8 +571,8 @@ export const zh: Dict = {
   },
   form: {
     heroSearchLabel: "想收哪张卡？",
-    heroSearchPlaceholder: "Charizard 4/102 · Luffy OP01-003 · SWSH144",
-    heroSearchExamples: ["Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-003", "Umbreon VMAX"],
+    heroSearchPlaceholder: "150美元以下、品相好的Charizard",
+    heroSearchExamples: ["150美元以下、品相好的Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-003", "Umbreon VMAX"],
     heroSearchRequired: "输入英文卡名，卡号可以不填。",
     searchExamples: "搜索示例",
     trySearch: "试试这几张",
@@ -740,6 +741,7 @@ export const zh: Dict = {
       product: (count: number) => `${count} 条是评级卡、未拆封、整套或复刻品`,
       identity: (count: number) => `${count} 条证明不了就是你确认的那个版本`,
       price_floor: (count: number) => `${count} 条价格低于该版本的合理下限`,
+      budget: (count: number) => `${count} 条税前总价超过预算`,
       condition: (count: number) => `${count} 条品相低于你的要求`,
       cost: (count: number) => `${count} 条缺少运费或其他必要费用`,
       language: (count: number) => `${count} 条语言版本对不上`,

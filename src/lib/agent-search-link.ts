@@ -7,6 +7,7 @@ const agentSearchSchema = z.object({
   confirmedCardId: z.string().trim().min(1).max(160).optional(),
   autoSubmit: z.boolean(),
   desiredCondition: conditionClaimSchema.optional(),
+  budgetMax: z.number().positive().max(1_000_000).optional(),
 });
 
 export type AgentSearchHandoff = z.infer<typeof agentSearchSchema>;
@@ -17,6 +18,7 @@ const journeySearchSchema = z.object({
   step: z.enum(["search", "confirmation", "result"]),
   confirmedCardId: z.string().trim().min(1).max(160).optional(),
   desiredCondition: conditionClaimSchema.optional(),
+  budgetMax: z.number().positive().max(1_000_000).optional(),
 });
 
 export function parseJourneySearchParams(params: URLSearchParams) {
@@ -24,6 +26,7 @@ export function parseJourneySearchParams(params: URLSearchParams) {
     query: params.get("query") ?? "",
     game: params.get("game") ?? "",
     step: params.get("step") ?? "",
+    ...(params.has("budget") ? { budgetMax: Number(params.get("budget")) } : {}),
     confirmedCardId: params.get("card") || undefined,
     ...(params.has("condition") ? { desiredCondition: params.get("condition") } : {}),
   });
@@ -38,6 +41,7 @@ export function parseAgentSearchParams(params: URLSearchParams): AgentSearchHand
     game: params.get("game") ?? "",
     confirmedCardId: params.get("card") || undefined,
     autoSubmit: params.get("auto") !== "0",
+    ...(params.has("budget") ? { budgetMax: Number(params.get("budget")) } : {}),
     ...(params.has("condition") ? { desiredCondition: params.get("condition") } : {}),
   });
   return parsed.success ? parsed.data : null;
@@ -51,6 +55,7 @@ export function buildAgentSearchUrl(
     confirmedCardId?: string;
     autoSubmit?: boolean;
     desiredCondition?: ConditionClaim;
+    budgetMax?: number;
   },
 ) {
   const url = new URL("/", origin);
@@ -60,5 +65,6 @@ export function buildAgentSearchUrl(
   if (input.confirmedCardId) url.searchParams.set("card", input.confirmedCardId.trim());
   if (input.autoSubmit === false) url.searchParams.set("auto", "0");
   if (input.desiredCondition) url.searchParams.set("condition", input.desiredCondition);
+  if (input.budgetMax !== undefined) url.searchParams.set("budget", String(input.budgetMax));
   return url.toString();
 }

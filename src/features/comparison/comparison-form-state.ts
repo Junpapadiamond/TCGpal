@@ -32,6 +32,7 @@ export type ComparisonForm = {
   preferredRole: LensRole;
   claimedCondition: ConditionClaim;
   desiredCondition: ConditionClaim;
+  budgetMax: string;
   feedbackPercentage: string;
   feedbackCount: string;
   returnsAccepted: boolean;
@@ -70,6 +71,7 @@ export const defaultComparisonFormValues: ComparisonForm = {
   preferredRole: "best_value",
   claimedCondition: "Unknown",
   desiredCondition: "Near Mint",
+  budgetMax: "",
   feedbackPercentage: "",
   feedbackCount: "",
   returnsAccepted: false,
