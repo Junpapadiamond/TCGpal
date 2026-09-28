@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-09-28
 canonical_branch: origin/main
 last_verified_product_commit: 12f7b6a
-working_branch: codex/natural-language-search (local implementation; visual QA blocked; not deployed)
+working_branch: codex/natural-language-search (preview deployed; live smoke passed; full release QA pending)
 max_lines: 300
 ---
 
@@ -31,7 +31,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Natural-language budget search implemented locally; visual QA pending | Finish EN/中文 desktop/mobile QA and sequential manual smoke before release |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Natural-language search preview + AI configured; EN/中文/mobile and live Charizard smoke checked | Finish five-card manual smoke and pointer verification before production release |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay live; Whatnot allowance exhausted; Mercari live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
@@ -147,6 +147,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 ## WS-UX - Decision experience
 ### Done
 
+- September 28 natural-language preview (`b9636df`, deployment `dpl_ESampSx2ND9WTFG6sq3oHaaiNRwe`): branch-scoped Vercel InteNext secrets/config saved; cloud health confirms `claude-opus-5`. Chinese Charizard/$150/NM search returned 99 versions; TG03/TG30 comparison returned 69 eBay rows/20 eligible and a $29.95 pre-tax winner. Luffy OP05-119/$150/LP and New-search budget clearing verified by keyboard. EN/中文 desktop and 390px mobile captured. Full five-card/pointer release gate remains open; production unchanged. See [verification](docs/natural-language-search-2026-09-28.md).
 - September 27 search entry (`e92f566`): simpler rounded search and larger serif heading, six clickable examples from 16 per game, explicit More examples, no consecutive repeated group. Clicking fills editable identity/condition fields without querying providers; the placeholder follows the current examples. Original rolling/clickable card rail is retained with an EN/中文 click hint. No new AI/budget parsing, provider or ranking behavior. See [design QA](design-qa.md).
 - September 27 Mainland Chinese copy: card-buyer language across search, version selection, results, sharing, receipts and method copy; labels now 综合推荐 / 总价最低 / 稳妥优先 / 图文最全. POKECOLOR, 集换社 and Humanizer-zh research is recorded in [the copy standard](docs/zh-cn-copy-standard.md); [review and screenshots](docs/chinese-copy-2026-09-27.md). String-only changes preserve English UI, identity, ranking and provider boundaries. Built-in browser verified EN/中文 desktop and 中文 mobile using labeled local fixtures; no paid acquisition. Rebased onto the completed search-entry release; new examples and original rail are preserved.
 - September 26 trust fixes: [review](docs/comparison-trust-fixes-2026-09-26.md). Deterministic eBay parsing separates HP stats from condition and retains worse condition ranges; detail priority favors recoverable evidence within the existing budget. Q&A has prompts, model/fallback attribution, exclusion/missing-evidence answers and Chinese request language. Current copy uses TCGlens; ZIP-estimate guidance is explicit.

@@ -31,7 +31,7 @@ Recommendation: ship an editable interpretation and reference-priced version gal
 
 ## Live observations
 
-The founder supplied an Anthropic-compatible gateway configuration for local testing. The credential is stored only in ignored `.env.local`; no credential or response headers are recorded here. Production model configuration was not changed.
+The founder supplied an Anthropic-compatible gateway configuration for testing. The credential is stored in ignored `.env.local` and, after the founder's September 28 request, encrypted Vercel Preview variables scoped to `codex/natural-language-search`. No credential or response headers are recorded here. Production model configuration was not changed.
 
 - Gateway health: HTTP 200, requested model `claude-opus-5`, minimal response in 3.6 seconds.
 - Initial semantic probe incorrectly inferred Chinese card language from a Chinese buyer sentence. Regression coverage now rejects model-added language or altered card numbers and falls back to the local parse.
@@ -44,4 +44,15 @@ Behavior changes were implemented test-first: intent parsing, model failures/con
 
 Final automated gate: lint, TypeScript, metadata audit, plugin validation, `git diff --check`, and production build passed. Vitest: 119 files / 1,612 tests passed; five opt-in suites/tests skipped. The standard six-card journey ran with injected providers, including a $150 pre-tax ceiling that excludes the fixture's $255 offer and does not leak into the next card's request.
 
-Built-in browser access to the local page was rejected by the browser security policy. EN/中文 desktop, mobile screenshots and the sequential manual smoke are pending; no alternate browser surface was used. The automated gate alone does not satisfy the repository's UI release gate. This work stays on `codex/natural-language-search` until visual verification is available. Graphify's documented macOS CLI is unavailable on this Windows host; structural graph regeneration is pending.
+Built-in browser access to the local page was rejected by the browser security policy; that local access was not retried. The founder subsequently requested a Vercel test deployment and environment setup. Cloud-preview observations are recorded below. The automated gate and bounded smoke alone do not satisfy the complete UI release gate. Graphify's documented macOS CLI is unavailable on this Windows host; structural graph regeneration is pending.
+
+## Vercel preview verification — September 28
+
+- READY deployment: `dpl_ESampSx2ND9WTFG6sq3oHaaiNRwe`, runtime commit `b9636df9c53c7ab3b8c4c1972c2f1810bda4d3da`, [preview](https://tcgpal-8eorjkcyl-junhsus-projects.vercel.app/). Access requires Vercel authentication or an authorized temporary share link.
+- Preview branch overrides: `AI_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL=https://api.intenext.ai`, `ANTHROPIC_MODEL=claude-opus-5`; encrypted `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` both use the founder-supplied credential. Vercel's form disallows empty values, so the inherited bearer token was replaced only for this branch. Both bearer and x-api-key authentication returned HTTP 200 in bounded probes. No production or other-branch variables were replaced.
+- Redeployed after saving configuration. The deployed `/api/ai/health` returned HTTP 200, `ok: true`, provider `anthropic`, model `claude-opus-5` with a successful probe.
+- Built-in browser, original query `我要搜150块一下的好品项的charizard`: resolved Charizard, editable seller-stated NM, $150 pre-tax ceiling; 99 catalog versions, 24 refreshed references, 58 references within budget, six initially visible. Visible refreshed TCGCSV references were dated September 27.
+- Selecting Charizard TG03/TG30 returned 69 eBay rows, 20 eligible; displayed winner $29.95 pre-tax, item $29.95 and free shipping, with 14 seller photos. Lower item-price rows with unknown shipping stayed separate. Whatnot/Mercari remained manual checks; no paid pilot was enabled.
+- Edit search to `Luffy OP05-119 under $150 LP`: One Piece, exact collector number retained, LP, $150 ceiling, nine versions. New search cleared the query and budget; the existing condition preference remained LP.
+- EN and 中文 desktop plus 390×844 中文 mobile views captured. Mobile page width 375px within a 390px viewport, with no horizontal overflow. Interaction verification used keyboard activation: browser pointer actions did not produce observable changes, so pointer behavior is inconclusive rather than marked passed.
+- Still pending before production release: the full five-card sequential manual smoke, reliable pointer activation checks, and structural Graphify refresh when its CLI is available. This preview does not change `lenstcg.com`.
