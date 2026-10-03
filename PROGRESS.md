@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-09-28
+updated_at: 2026-10-03
 canonical_branch: origin/main
 last_verified_product_commit: 810d4de
-working_branch: main (bounded recall receipt deployed; Whatnot allowance exhausted; Mercari blocked)
+working_branch: codex/cross-market-recovery (free merchant API release verification; paid allowance unchanged)
 max_lines: 300
 ---
 
@@ -16,7 +16,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Current live concrete source: eBay Browse. September 26 Whatnot returned the exhausted-pilot-allowance error; its successful September 23 data is historical. Mercari stays off after its 90s/$0.05 test hit HTTP 403 and returned zero rows ($0.0001). Original shared 20-start Redis key unchanged; no reset or new paid test. See WS-SOURCES.
+- Current live concrete source: eBay Browse. October 3 Stomping Grounds merchant API implementation passed local tests; production activation/check pending. It displays source-reported raw USD offers for review, with inventory-maintenance warning and unknown shipping/fees. Whatnot allowance exhausted; Mercari remains off after HTTP 403. Original paid counter unchanged. See WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -33,9 +33,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Search-entry refresh verified; trust fixes deployed; Q&A model requests still time out | Observe example use, trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay live; Whatnot allowance exhausted; Mercari live test failed | Resolve Mercari provider access before another approved test; keep its paid switch off |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Free Stomping Grounds adapter ready for release; Whatnot paused; Mercari blocked | Finish deployed acquisition check; no paid renewal configured |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
-| LOCAL-STATE | Local artifacts and tools | Mixed | Windows main; recall receipt deployed and verified | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
+| LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery from a49ff88 | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
 <!-- progress:section id="GOALS" -->
 ## GOALS
@@ -172,8 +172,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `src/features/comparison/ComparisonApp.tsx`, `src/features/comparison/i18n.tsx`, `src/features/comparison/ComparisonApp.test.tsx`, `src/lib/testing/standard-comparison-flow.ts`; receipt flow in `src/features/receipt/ReceiptPageClient.tsx` and `src/lib/comparison/report-snapshot.ts`.
 <!-- progress:end -->
-<!-- progress:workstream id="WS-SOURCES" state="whatnot-budget-paused-mercari-access-blocked" tags="whatnot,mercari,metadata,provider-cost,unknown-shipping,marketplace" -->
+<!-- progress:workstream id="WS-SOURCES" state="merchant-api-release-verification" tags="stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
+- October 3: founder requested any workable cross-market alternative, with payment approval before new spending. Ten free intended Shopify Catalog calls across five cards/two games succeeded; Stomping Grounds adapter, dynamic source UI, caution propagation and Whatnot check-before-increment repair implemented. Default paid cap/key unchanged; optional expiring Whatnot renewal remains unconfigured. Merchant offers cannot win with unknown charges; stock-maintenance warning persists in REST/MCP/receipts. [Decision, access review, operator recovery and release evidence](docs/cross-market-recovery-2026-10-03.md); [provider alternatives](docs/research/cross-market-options-2026-10-03.md).
 
 - September 26 live check: Whatnot returned the pilot-budget-exhausted pause; Mercari remains disabled. No counter reset, paid retry or source expansion. Source copy distinguishes pauses from outages. Before-fix Charizard NM: 50 eBay / 0 eligible / 39 price-floor issues, overlapping with other reasons. [Review](docs/comparison-trust-fixes-2026-09-26.md).
 
@@ -194,7 +195,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - A versioned capabilities REST endpoint and production-path Streamable HTTP MCP server expose identity browsing, bounded discovery, exact-card comparison, and deep-link continuation through the existing domain engine. The repo/team `tcglens` Work plugin 1.0.1 bundles the production remote MCP connection and an anti-FOMO usage skill. Other Codex users can add the public GitHub marketplace and install it, but it is not published in ChatGPT's universal plugin directory and therefore is not searchable/installable from the phone plugin catalog.
 - MCP comparison contract v4 has a separate rate-limit/request-ID/ops boundary and separates canonical-ID/print proof from seller/photo purchase review without full traces or provider credentials.
 - v1 uses deep links back to the website; inline Apps SDK UI, OAuth, and per-user quota are explicitly deferred.
-- eBay is the only live concrete-listing source. Manual/pasted facts are separate. Self-built acquisition remains experimental; conditional Apify research authorization has not activated paid production sources — see WS-SOURCES.
+- Current acquisition and rollout truth is in WS-SOURCES. Manual/pasted facts and frontier experiments remain separate from verified production adapters.
 - Subscription and advertising are hypotheses, not implemented models; marketplace expansion, paid acquisition, and monetization are deferred until WS-IDENTITY and WS-PILOT gates pass. Open launch question: marketplace/data terms and any required partner agreements need review before a public commercial launch.
 - Firecrawl `/scrape` JSON mode failed the 2026-07-31 six-platform frontier tracer: 3/6 reviewable pages, 56.25% raw factual precision, 0/6 cost-comparable, 14.768-second median latency, and 72 total credits. Yahoo Auctions JP and SNKRDUNK returned high-confidence schema-shaped example payloads; Mercari JP was region-blocked after a JP tunnel failure. The deterministic frontier harness discards placeholder payloads, unsupported zero defaults, `N/A` sentinels, and generic seller boilerplate. It is isolated from product routes, `PlatformAgent`, caches, analytics, and ranking. The 30-page expansion was stopped by its predefined kill criteria; evidence and retest conditions are in `docs/frontier-firecrawl-pilot.md`.
 - Retrieval-agent Phase 0 is complete and it argues against Phase 1. `docs/plan-retrieval-agent-2026-08-10.md` assumed the product abstains because one search per platform returns the wrong prints. Measured: every failing card returned a full first page of 50 live listings, and 0 of 500 candidates across the ten failures were print-provable. The agent's own stop condition is `eligible >= 1`, which no query could reach for those cards, so it would spend its full step budget and move recall 0 points — under the plan's own 5-point kill criterion. The blocker was a deterministic ranking rule; half of it was fixed in `484483a` for 0 model calls. Phase 1 stays not started. Baseline harness (`npm run measure:print-recall`) is kept for whatever replaces it. Also corrected by Phase 0: the plan's premise that the failures abstain with `next_moves`. They return `inspect_first`, so the buyer does get a listing to inspect. Real problem, lower severity than written.
@@ -219,7 +220,7 @@ The user must decide these; agents must not infer them:
 <!-- progress:end -->
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
-
+- October 3: branch `codex/cross-market-recovery` from `a49ff88`; 1,665 tests + lint/typecheck/metadata pass, build/deploy pending. Built-in browser synthetic EN/中文 desktop and 390px mobile views saved in the October 3 visualization directory `cross-market/`; own ports 3001/4321 stopped, pre-existing 3000/4317 retained. Graphify CLI and requested plugin validator absent; graph navigation and hermetic MCP/plugin tests used, no regeneration/validator run claimed.
 - September 28: recall work isolated from `codex/natural-language-search`, rebased onto `af3c14a`, then fast-forwarded/pushed to main through `810d4de`; unrelated branch retained. Vercel `dpl_9aFgYVD91TsHaCHiJUNoRAg2sNoW` READY on lenstcg.com. Fixed 20-card observations are ignored under `output/recall-probe/`; screenshots in the September 28 visualization directory `recall-probe/`. Fixture proxy stopped; pre-existing port 3000 retained.
 - September 26: clean main/origin/main `3177d56` → `codex/comparison-trust-fixes` → main; `f016616` and `15c06d6` fast-forwarded/pushed and verified READY. Local raw observations/logs under `output/trust-fixes/` are excluded from Git; screenshots in the September 26 Codex visualization directory. Dev/fixture servers stopped after QA.
 - 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to main. After user completed GitHub login, normal Git push published through `8ba402f`; Vercel deployment `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY and aliased to lenstcg.com. The earlier oversized connector write was rejected and never retried by fragmentation.

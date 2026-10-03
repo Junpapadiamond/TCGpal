@@ -10,6 +10,7 @@ import { captureOperationalException } from "@/lib/ops/sentry";
 import { isMercariDirectEnabled, searchMercariDirect } from "@/lib/external/mercari-direct";
 import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
 import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
+import { isStompingGroundsEnabled, searchStompingGrounds } from "@/lib/external/stomping-grounds";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -63,6 +64,9 @@ export type PlatformAgent = {
   // Env vars this agent needs. Surfaced for diagnostics only — never the values.
   requiredEnv: string[];
   isConfigured: () => boolean;
+  // Buyer-visible caveats for successful, nonempty acquisition. These are not
+  // provider failures and must survive REST, MCP, and saved report projections.
+  resultCautions?: string[];
   searchTimeoutMs?: number;
   search: (input: PlatformSearchInput) => Promise<PlatformSeed[]>;
   // Runs after a successful primary search, outside its timeout/failure budget.
@@ -104,6 +108,15 @@ const mercariApifyPlatformAgent: PlatformAgent = {
   search: ({ card, fetcher, plan, signal }) => searchMercariListings(card, fetcher, plan?.query, signal),
 };
 
+export const stompingGroundsPlatformAgent: PlatformAgent = {
+  id: "stomping-grounds", marketplace: "Stomping Grounds",
+  label: "Stomping Grounds store-reported offers via Shopify Catalog",
+  sourceMode: "official_api", requiredEnv: ["STOMPING_GROUNDS_ENABLED"],
+  isConfigured: isStompingGroundsEnabled, searchTimeoutMs: 10_000,
+  resultCautions: ["Stomping Grounds reports stock, but warns inventory may be inaccurate during maintenance. Confirm availability at the store. Shipping and buyer fees remain unverified."],
+  search: searchStompingGrounds,
+};
+
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
 // proving the fanout, ranking, and "sources checked" UI are fully provider-agnostic
 // today — but stays permanently unconfigured (search() is unreachable) until a real
@@ -135,7 +148,7 @@ const ROADMAP_AGENTS: PlatformAgent[] = [
 
 // TCGCSV is intentionally absent: it is an aggregate market reference, not
 // seller-specific inventory. Only concrete active listings belong in this registry.
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, mercariPlatformAgent, ...ROADMAP_AGENTS];
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, mercariPlatformAgent, stompingGroundsPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
@@ -215,6 +228,7 @@ export function summarizePlatformOutcome(outcome: PlatformOutcome): {
   trace: ComparisonTrace;
   result: ComparisonPlatformResult;
   warning?: string;
+  resultCautions?: string[];
 } {
   const { agent } = outcome;
   if (outcome.seeds === undefined && outcome.error !== undefined) {
@@ -228,8 +242,9 @@ export function summarizePlatformOutcome(outcome: PlatformOutcome): {
   const seeds = outcome.seeds ?? [];
   return {
     seeds,
-    trace: { step: "marketplace_search", actor: agent.label, summary: `Loaded ${seeds.length} live active-listing candidate${seeds.length === 1 ? "" : "s"}.`, status: "complete" },
-    result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, sourceMode: agent.sourceMode, status: "complete", configured: true, count: seeds.length, detail: `${seeds.length} live candidate${seeds.length === 1 ? "" : "s"}.` },
+    resultCautions: seeds.length > 0 ? agent.resultCautions : undefined,
+    trace: { step: "marketplace_search", actor: agent.label, summary: `Loaded ${seeds.length} source-reported listing candidate${seeds.length === 1 ? "" : "s"}.`, status: "complete" },
+    result: { id: agent.id, marketplace: agent.marketplace, label: agent.label, sourceMode: agent.sourceMode, status: "complete", configured: true, count: seeds.length, detail: `${seeds.length} source-reported listing candidate${seeds.length === 1 ? "" : "s"}.` },
   };
 }
 
@@ -287,6 +302,7 @@ export async function runPlatformFanout({
     traces.push(summary.trace);
     results.push(summary.result);
     if (summary.warning) warnings.push(summary.warning);
+    warnings.push(...(summary.resultCautions ?? []));
     logOpsEvent({
       event: summary.warning ? "provider_failure" : "source_outcome",
       level: summary.warning ? "warn" : "info",

@@ -67,6 +67,15 @@ describe("comparison report cache", () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
+  it("invalidates the source mix when the direct merchant catalog is enabled", () => {
+    vi.stubEnv("STOMPING_GROUNDS_ENABLED", "0");
+    const before = comparisonCacheKey(pureSearch, "swsh7-215");
+    vi.stubEnv("STOMPING_GROUNDS_ENABLED", "1");
+    const after = comparisonCacheKey(pureSearch, "swsh7-215");
+    expect(after).not.toBe(before);
+    expect(after).toContain("stomping-grounds:official_api");
+  });
+
   it("does not reuse an eBay-only report after enabling a marketplace or changing its monetary mapping", () => {
     const disabled = comparisonCacheKey(pureSearch, "swsh7-215");
     vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");

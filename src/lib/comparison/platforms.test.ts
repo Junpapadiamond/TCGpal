@@ -80,6 +80,30 @@ function mockAgent(overrides: Partial<PlatformAgent> & Pick<PlatformAgent, "id" 
 }
 
 describe("platform fan-out", () => {
+  it("preserves a successful source's availability cautions without classifying it as a failure", async () => {
+    const caution = "Store-reported stock may be inaccurate during maintenance; confirm availability at the store.";
+    const agent = mockAgent({ id: "store", marketplace: "Stomping Grounds", resultCautions: [caution],
+      search: async () => [seed("store-1", "Stomping Grounds")] });
+    const result = await runPlatformFanout({ card, buyer, fetcher, agents: [agent] });
+    expect(result.results[0]).toMatchObject({ status: "complete", count: 1 });
+    expect(result.warnings).toEqual([caution]);
+    expect(result.traces[0].summary).toBe("Loaded 1 source-reported listing candidate.");
+    expect(result.results[0].detail).toBe("1 source-reported listing candidate.");
+    expect(summarizePlatformOutcome({ agent, seeds: result.seeds }).warning).toBeUndefined();
+  });
+
+  it("does not attach successful-stock cautions to empty or failed source results", async () => {
+    const caution = "Store-reported stock requires confirmation.";
+    const agent = mockAgent({ id: "store", marketplace: "Stomping Grounds", resultCautions: [caution] });
+    const empty = await runPlatformFanout({ card, buyer, fetcher, agents: [agent] });
+    expect(empty.results[0]).toMatchObject({ status: "complete", count: 0 });
+    expect(empty.warnings).toEqual([]);
+    const failed = await runPlatformFanout({ card, buyer, fetcher, agents: [{ ...agent, search: async () => { throw new Error("unavailable"); } }] });
+    expect(failed.results[0].status).toBe("fallback");
+    expect(failed.warnings).not.toContain(caution);
+    expect(failed.warnings[0]).toContain("unavailable");
+  });
+
   it("aggregates seeds from every configured agent and reports each as complete", async () => {
     const agents = [
       mockAgent({ id: "ebay", marketplace: "eBay", search: async () => [seed("ebay-1", "eBay")] }),
@@ -160,6 +184,18 @@ describe("platform fan-out", () => {
 });
 
 describe("default registry (roadmap adapters)", () => {
+  it("enables the merchant-owned catalog independently of paid marketplace pilots", () => {
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "0");
+    vi.stubEnv("STOMPING_GROUNDS_ENABLED", "0");
+    const merchant = getPlatformAgents().find(agent => agent.id === "stomping-grounds");
+    expect(merchant).toBeDefined();
+    expect(merchant?.isConfigured()).toBe(false);
+    vi.stubEnv("STOMPING_GROUNDS_ENABLED", "1");
+    expect(merchant?.isConfigured()).toBe(true);
+    expect(merchant?.marketplace).toBe("Stomping Grounds");
+    expect(merchant?.sourceMode).toBe("official_api");
+    expect(merchant?.resultCautions?.join(" ")).toContain("inventory may be inaccurate during maintenance");
+  });
   it("does not ask for missing credentials when no production connector exists", () => {
     const pending = getPlatformAgents().find((agent) => agent.id === "mercari")!;
     expect(skippedPlatformResult(pending).detail).toBe("Not connected; acquisition is under evaluation.");
@@ -216,7 +252,7 @@ describe("default registry (roadmap adapters)", () => {
 
   it("registers roadmap marketplaces behind the same interface, all self-gated off until wired", async () => {
     const agents = getPlatformAgents();
-    const roadmap = agents.filter((agent) => !["ebay", "tcgplayer", "whatnot", "mercari"].includes(agent.id));
+    const roadmap = agents.filter((agent) => !["ebay", "tcgplayer", "whatnot", "mercari", "stomping-grounds"].includes(agent.id));
 
     // Proves the fanout/UI are provider-agnostic today: every roadmap agent implements
     // search() and is registered, but none is configured, so none joins a real fan-out.

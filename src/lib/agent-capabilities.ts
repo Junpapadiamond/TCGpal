@@ -3,7 +3,9 @@ import { agentCapabilitiesSchema, tcgGameSchema, type AgentCapabilities } from "
 
 export function getAgentCapabilities(): AgentCapabilities {
   const live = getPlatformAgents()
-    .filter((agent) => agent.sourceMode === "official_api" || agent.isConfigured())
+    // eBay remains the baseline supported connector. Optional official merchant
+    // APIs must satisfy their rollout switch before being advertised as live.
+    .filter((agent) => agent.id === "ebay" || agent.isConfigured())
     .map((agent) => ({
       name: agent.marketplace,
       role: "active_listings" as const,

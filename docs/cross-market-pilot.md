@@ -2,7 +2,11 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest — September 26: Whatnot allowance exhausted; Mercari still blocked
+## Latest — October 3: merchant API recovery; paid limits preserved
+
+The founder requested working cross-market offers and explicitly accepted alternative sources. A merchant-owned Shopify Catalog API returned repeated concrete Pokemon and One Piece variant offers without a subscription. Stomping Grounds integration and deployment verification are tracked in [the recovery review](cross-market-recovery-2026-10-03.md); merchant inventory maintenance and unknown checkout costs require review-only display. Whatnot's original counter and allowance remain; atomic reservation now prevents rejected traffic from inflating it. An expiring Whatnot-only cumulative extension is prepared but no higher allowance or new paid run has been approved. Mercari's access failure is unchanged. Historical rollout statements below describe their dated phase, not current activation.
+
+## September 26: Whatnot allowance exhausted; Mercari still blocked
 
 A real production Charizard 4/102 search returned 50 eBay rows and the explicit Whatnot error `Cross-market pilot budget reached; this source is paused.` Whatnot previously returned real data on September 23, but that does not describe current availability. The existing shared 20-start counter was not reset or increased. Mercari remains disabled after the failed authorized test below. Buyer copy now distinguishes the allowance pause from a temporary outage and labels inactive sources as manual checks. No new paid run or activation was performed. See [the trust-fix review](comparison-trust-fixes-2026-09-26.md).
 

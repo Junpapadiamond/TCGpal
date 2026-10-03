@@ -6,7 +6,7 @@ import { useLang, useT } from "./i18n";
 import { IconChevronDown } from "./icons";
 import { sourceStatusLabel } from "./source-status";
 
-const markets = ["eBay", "Whatnot", "Mercari"] as const;
+const defaultMarkets = ["eBay", "Whatnot", "Mercari"] as const;
 const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 const incompatible = new Set(["excluded_product_type", "not_raw_single", "identity_sibling_mismatch", "identity_variant_mismatch", "language_conflict", "listing_inactive"]);
 
@@ -18,6 +18,9 @@ export function CrossMarketPrices({ candidates, platforms, card }: {
   const { lang } = useLang();
   const t = useT();
   const zh = lang === "zh";
+  const markets = [...new Set([...defaultMarkets, ...platforms
+    .filter((source) => source.configured && source.status !== "skipped")
+    .map((source) => source.marketplace)])];
   return <section aria-label={zh ? "各平台标价" : "Marketplace asking prices"} className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]">
     <details className="group/prices">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-black text-[#2f6f73] transition hover:text-[#24585c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">
@@ -45,6 +48,9 @@ export function CrossMarketPrices({ candidates, platforms, card }: {
               <h3 className="text-sm font-black text-[#2f6f73]">{marketplace}</h3>
               {rows.length === 0 && <p className="text-xs text-[#64736c]">{empty}</p>}
             </div>
+            {marketplace === "Stomping Grounds" && rows.length > 0 && <p className="mt-2 text-xs leading-5 text-[#806521]">{zh
+              ? "商店显示有货，但提醒维护期间库存可能不准确。请到商店确认是否有货。"
+              : "Store reports stock, but warns inventory may be inaccurate during maintenance. Confirm availability at the store."}</p>}
             {rows.length > 0 && <ul className="divide-y divide-[#e0e5dc]">
               {rows.map((listing) => {
                 const versionNeedsChecking = listing.printMatch !== "exact" || listing.eligibilityIssues.some((issue) => issue.code === "identity_unverified");

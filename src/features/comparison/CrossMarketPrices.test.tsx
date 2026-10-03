@@ -2,11 +2,11 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { CrossMarketPrices } from "./CrossMarketPrices";
-import { LanguageProvider } from "./i18n";
+import { LanguageProvider, setLanguage } from "./i18n";
 import { listingFixture } from "@/lib/ai/verdict-note-fixtures";
 import type { CardIdentityCandidate, ComparisonPlatformResult } from "@/lib/schemas";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); setLanguage("en"); });
 const platforms: ComparisonPlatformResult[] = ["eBay", "Whatnot", "Mercari"].map((marketplace) => ({
   id: marketplace.toLowerCase(), marketplace: marketplace as ComparisonPlatformResult["marketplace"],
   label: marketplace, sourceMode: "official_api", configured: true, status: "complete", count: 1, detail: "1 result",
@@ -14,8 +14,59 @@ const platforms: ComparisonPlatformResult[] = ["eBay", "Whatnot", "Mercari"].map
 const renderPrices = (candidates: ReturnType<typeof listingFixture>[], sources = platforms, card?: CardIdentityCandidate) => render(
   <LanguageProvider><CrossMarketPrices candidates={candidates} platforms={sources} card={card} /></LanguageProvider>,
 );
+const storeSource: ComparisonPlatformResult = {
+  id: "stomping-grounds", marketplace: "Stomping Grounds", label: "Stomping Grounds",
+  sourceMode: "official_api", configured: true, status: "complete", count: 1, detail: "1 result",
+};
 
 describe("three-marketplace asking prices", () => {
+  it.each(["en", "zh"] as const)("shows an additional configured store with unknown costs and its stock warning in %s", (lang) => {
+    setLanguage(lang);
+    renderPrices([listingFixture({ marketplace: "Stomping Grounds", title: "Store card", price: 85,
+      shipping: null, buyerFee: null, costComplete: false, eligible: false,
+      eligibilityIssues: [{ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Unknown shipping" }] })],
+    [...platforms, storeSource, { ...storeSource, id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket", configured: false, status: "skipped", count: 0 }]);
+    fireEvent.click(screen.getByText(lang === "zh" ? "查看各平台标价" : "View marketplace asking prices"));
+    const source = screen.getByRole("region", { name: lang === "zh" ? "Stomping Grounds 标价" : "Stomping Grounds prices" });
+    expect(within(source).getByText("$85.00")).toBeTruthy();
+    expect(within(source).getByText(lang === "zh" ? /商店显示有货，但提醒维护期间库存可能不准确/ : /Store reports stock, but warns inventory may be inaccurate during maintenance/)).toBeTruthy();
+    expect(within(source).getByText(lang === "zh" ? /运费: 未知 · 买家手续费: 未知/ : /Shipping: unknown · Buyer fees: unknown/)).toBeTruthy();
+    expect(source.querySelector("time")?.dateTime).toBe("2026-08-10T15:00:00.000Z");
+    expect(screen.queryByRole("region", { name: /Cardmarket/ })).toBeNull();
+  });
+
+  it("uses the existing print, stock and raw-card filters for an additional store", () => {
+    renderPrices([
+      listingFixture({ id: "sold-store", marketplace: "Stomping Grounds", active: false, price: 1 }),
+      listingFixture({ id: "slab-store", marketplace: "Stomping Grounds", raw: false, price: 2 }),
+      listingFixture({ id: "sibling-store", marketplace: "Stomping Grounds", price: 3, printMatch: "mismatch" }),
+      listingFixture({ id: "valid-store", marketplace: "Stomping Grounds", title: "Correct store card", price: 85 }),
+    ], [...platforms, storeSource]);
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
+    const source = screen.getByRole("region", { name: "Stomping Grounds prices" });
+    for (const price of ["$1.00", "$2.00", "$3.00"]) expect(within(source).queryByText(price)).toBeNull();
+    expect(within(source).getAllByRole("link", { name: /View listing/ })).toHaveLength(1);
+    expect(within(source).getByText("$85.00")).toBeTruthy();
+  });
+
+  it("shows an additional configured store's failure without stale prices", () => {
+    renderPrices([listingFixture({ marketplace: "Stomping Grounds", price: 85 })],
+      [...platforms, { ...storeSource, status: "fallback", count: 0 }]);
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
+    const source = screen.getByRole("region", { name: "Stomping Grounds prices" });
+    expect(within(source).getByText("Unavailable this search")).toBeTruthy();
+    expect(within(source).queryByText("$85.00")).toBeNull();
+  });
+
+  it.each(["empty", "filtered"] as const)("does not claim store stock when its asking-price rows are %s", (kind) => {
+    renderPrices(kind === "filtered" ? [listingFixture({ marketplace: "Stomping Grounds", printMatch: "mismatch" })] : [],
+      [...platforms, { ...storeSource, count: kind === "filtered" ? 1 : 0 }]);
+    fireEvent.click(screen.getByText("View marketplace asking prices"));
+    const source = screen.getByRole("region", { name: "Stomping Grounds prices" });
+    expect(within(source).getByText("No matching active listings")).toBeTruthy();
+    expect(within(source).queryByText(/Store reports stock/)).toBeNull();
+  });
+
   it("distinguishes an exhausted pilot from a temporary provider outage", () => {
     renderPrices([], platforms.map((p) => p.id === "whatnot" ? { ...p, status: "fallback", count: 0, detail: "Cross-market pilot budget reached; this source is paused." } : p));
     fireEvent.click(screen.getByText("View marketplace asking prices"));

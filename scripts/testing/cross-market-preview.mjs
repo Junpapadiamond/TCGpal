@@ -8,6 +8,7 @@ import { createJiti } from "jiti";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const port = Number(process.env.TCGLENS_QA_PORT ?? 4317);
+const upstreamPort = Number(process.env.TCGLENS_QA_UPSTREAM_PORT ?? 3000);
 const jiti = createJiti(import.meta.url, { interopDefault: false, alias: { "@": path.join(root, "src") } });
 process.env.EBAY_CLIENT_ID = "local-qa-only";
 process.env.CROSS_MARKET_PRICE_PILOT_ENABLED = "0";
@@ -29,6 +30,7 @@ const { findOnePieceCatalogVariant } = await jiti.import(path.join(root, "src/li
 const { ebayPlatformAgent } = await jiti.import(path.join(root, "src/lib/comparison/platforms.ts"));
 const { parseWhatnotListings } = await jiti.import(path.join(root, "src/lib/external/whatnot.ts"));
 const { parseMercariListings } = await jiti.import(path.join(root, "src/lib/external/mercari.ts"));
+const { parseStompingGroundsListings } = await jiti.import(path.join(root, "src/lib/external/stomping-grounds.ts"));
 // Exercise real parsers and ranking through explicit trusted dependency injection.
 // Never invoke paid run/start or Redis paths; never mutate the default registry.
 const fixtureAgents = [ebayPlatformAgent, {
@@ -37,6 +39,9 @@ const fixtureAgents = [ebayPlatformAgent, {
 }, {
   id: "mercari", marketplace: "Mercari", label: "Mercari QA fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true,
   search: async ({ card, fetcher }) => parseMercariListings(await (await fetcher("https://api.apify.com/fixtures/mercari-us-scraper")).json(), card, new Date()),
+}, {
+  id: "stomping-grounds", marketplace: "Stomping Grounds", label: "Stomping Grounds QA fixture", sourceMode: "official_api", requiredEnv: [], isConfigured: () => true,
+  search: async ({ card, fetcher }) => parseStompingGroundsListings(await (await fetcher("https://singles.stompinggroundstcg.com/api/ucp/mcp")).json(), card, new Date()),
 }];
 
 function fixtureFetcher(request = {}) {
@@ -49,6 +54,10 @@ function fixtureFetcher(request = {}) {
     shippingOptions: [{ shippingCost: { value: "10", currency: "USD" } }] };
   return async (input) => {
     const url = new URL(String(input));
+    if (url.hostname === "singles.stompinggroundstcg.com") return Response.json({ jsonrpc: "2.0", id: 1, result: { structuredContent: { products: [{
+      id: "gid://shopify/Product/123", title, url: "https://singles.stompinggroundstcg.com/products/qa-fixture", description: { html: "<p>SYNTHETIC QA FACTS ONLY</p>" }, tags: [],
+      variants: [{ id: "gid://shopify/ProductVariant/456", title: "Near Mint", price: { amount: 9200, currency: "USD" }, availability: { available: true }, requires: { shipping: true }, options: [{ name: "Condition", label: "Near Mint" }] }],
+    }] } } });
     if (url.hostname === "api.pokemontcg.io") {
       if (url.pathname.startsWith("/v2/cards/")) {
         const card = getPokemonCardFromSnapshot(decodeURIComponent(url.pathname.split("/").at(-1)));
@@ -97,7 +106,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/api/comparison-snapshots") {
       res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify({ snapshot: null, durable: false })); return;
     }
-    const response = await fetch(`http://127.0.0.1:3000${req.url}`, { method: req.method, body: body.length ? body : undefined,
+    const response = await fetch(`http://127.0.0.1:${upstreamPort}${req.url}`, { method: req.method, body: body.length ? body : undefined,
       headers: { ...(req.headers["content-type"] ? { "content-type": req.headers["content-type"] } : {}) } });
     const headers = Object.fromEntries(response.headers);
     delete headers["content-encoding"]; delete headers["content-length"]; delete headers["transfer-encoding"];
@@ -112,8 +121,8 @@ const server = http.createServer(async (req, res) => {
 // Next development waits for its HMR connection before hydrating. Forward only
 // this local socket; dropping Upgrade makes the otherwise-real UI look inert.
 server.on("upgrade", (request, socket, head) => {
-  const upstream = net.connect(3000, "127.0.0.1", () => {
-    const headers = { ...request.headers, host: "127.0.0.1:3000" };
+  const upstream = net.connect(upstreamPort, "127.0.0.1", () => {
+    const headers = { ...request.headers, host: `127.0.0.1:${upstreamPort}` };
     upstream.write(`${request.method} ${request.url} HTTP/1.1\r\n${Object.entries(headers).map(([key, value]) => `${key}: ${value}`).join("\r\n")}\r\n\r\n`);
     if (head.length) upstream.write(head);
     socket.pipe(upstream).pipe(socket);
@@ -121,4 +130,4 @@ server.on("upgrade", (request, socket, head) => {
   upstream.on("error", () => socket.destroy());
   socket.on("error", () => upstream.destroy());
 });
-server.listen(port, "127.0.0.1", () => console.log(`Local fixture QA at http://127.0.0.1:${port} (Next UI required on port 3000)`));
+server.listen(port, "127.0.0.1", () => console.log(`Local fixture QA at http://127.0.0.1:${port} (Next UI required on port ${upstreamPort})`));

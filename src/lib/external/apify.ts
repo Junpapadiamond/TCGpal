@@ -55,7 +55,7 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
     memoryMbytes: search.memoryMbytes ?? 256, maxResults: APIFY_MAX_RESULTS,
     maxChargeUsd: APIFY_MAX_CHARGE_USD[search.provider], fetcher: search.fetcher, signal: search.signal });
   search.signal?.throwIfAborted();
-  await reserveApifyPilotRun();
+  await reserveApifyPilotRun(search.provider);
   const actorTimeoutSeconds = ACTOR_TIMEOUT_SECONDS[search.provider];
   const requestTimeoutMs = (actorTimeoutSeconds + 5) * 1000;
   const url = new URL(`https://api.apify.com/v2/acts/${search.actor}/run-sync-get-dataset-items`);

@@ -82,6 +82,16 @@ afterEach(() => {
 });
 
 describe("runMarketSearch", () => {
+  it("preserves source cautions through the model allocator and its deterministic safety net", async () => {
+    const caution = "Store-reported stock requires confirmation during maintenance.";
+    const agent: PlatformAgent = { ...ebayMock(async () => [seed("store-1", "Stomping Grounds")]),
+      id: "store", marketplace: "Stomping Grounds", resultCautions: [caution] };
+    const model = scriptedModel([{ kind: "final", output: "Done." }]);
+    const result = await runMarketSearch({ card, buyer, fetcher, agents: [agent], model, config });
+    expect(result.results[0]).toMatchObject({ status: "complete", count: 1 });
+    expect(result.warnings).toContain(caution);
+  });
+
   it("uses the deterministic fan-out when no model is provided and the agent is off", async () => {
     const agents = [ebayMock(async () => [seed("ebay-1", "eBay")])];
     const result = await runMarketSearch({ card, buyer, fetcher, agents });

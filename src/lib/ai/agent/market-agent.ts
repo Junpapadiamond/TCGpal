@@ -245,6 +245,7 @@ async function runAgentFanout(input: {
     traces.push(summary.trace);
     results.push(summary.result);
     if (summary.warning) warnings.push(summary.warning);
+    warnings.push(...(summary.resultCautions ?? []));
   }
 
   for (const agent of input.agents) {

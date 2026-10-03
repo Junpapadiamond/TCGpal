@@ -1,8 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getAgentCapabilities } from "@/lib/agent-capabilities";
 import { agentCapabilitiesSchema } from "@/lib/schemas";
 
 describe("agent capabilities", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  it("advertises the new official catalog only after explicit activation", () => {
+    vi.stubEnv("STOMPING_GROUNDS_ENABLED", "0");
+    expect(getAgentCapabilities().liveListingPlatforms).not.toContain("Stomping Grounds");
+    vi.stubEnv("STOMPING_GROUNDS_ENABLED", "1");
+    expect(getAgentCapabilities().sourceAccess.live).toContainEqual({
+      name: "Stomping Grounds", role: "active_listings", mode: "official_api",
+    });
+  });
   it("returns the versioned public support matrix", () => {
     const capabilities = getAgentCapabilities();
 

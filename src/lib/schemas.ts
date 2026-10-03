@@ -8,6 +8,7 @@ export const marketplaceSchema = z.enum([
   "Reddit",
   "Mercari",
   "Whatnot",
+  "Stomping Grounds",
   "SNKRDUNK",
   "Xianyu",
   "集换社",

@@ -40,6 +40,7 @@ Deep links call `buildAgentSearchUrl()` and reopen the existing website identity
 | Facebook / Reddit | User-supplied candidate | No | Trust signals must be entered by the user |
 | Mercari / Whatnot | Explicitly gated, bounded Apify price-display pilot | Configured per source; live success tracked separately | Whatnot needs a token and checked money unit; Mercari additionally needs the US proxy flag. Latest effective pricing is checked before spending: at most 3 rows and $0.03/Whatnot or $0.05/Mercari, with an unreset shared 20-start Redis allowance. Unknown shipping/fees never become zero or win complete-cost ranking. Separate browser research remains outside production. See [current live verification and access failures](cross-market-pilot.md). |
 | Local shop / show | User-supplied candidate | No | Tax, shipping, and protection can differ |
+| Stomping Grounds Singles | Merchant-reported offers for review | Explicit `STOMPING_GROUNDS_ENABLED=1` | Fixed merchant-owned Shopify Catalog MCP, one read-only search, max 5 products/12 raw USD variants. 8s/2MB bound, 5-minute sanitized cache, shared production limit 60/hour. Inventory-maintenance warning persists in report warnings and evidence; shipping/fees unknown, no complete-cost winner, no stock images counted as seller photos. [Review and rollout](cross-market-recovery-2026-10-03.md). |
 
 ## Offline identity investigations
 
@@ -79,6 +80,7 @@ The response includes:
 
 - URL fetching is public-HTTPS-only, robots-aware, size/time bounded, and limited to the exact user-pasted page.
 - Search-discovered and unsupported URLs are never fetched or ranked.
+- Stomping Grounds queries use only its documented merchant-scoped UCP API and TCGlens's catalog-only `/ucp-profile.json`. Its returned product URL must remain on the merchant host; generated links select an observed numeric variant ID. No HTML, cart or checkout calls run in this adapter. Enabling it changes the existing source-mix report-cache key.
 - API keys remain server-side.
 - Provider requests use timeouts and fresh fetches. Card-identity cancellation propagates from the browser through the route and resolver to the Pokémon adapter.
 - Missing eBay credentials produce a visible unavailable/skipped source and an honest empty result unless the user supplied a concrete listing. Demo fixtures remain test-only.
@@ -99,6 +101,7 @@ The response includes:
 - The comparison and explain routes emit `x-request-id` and rate-limit headers so production failures can be correlated without logging request bodies.
 - MCP adds its own request-ID and per-tool rate-limit boundary before tool execution. Browse, discovery, and comparison retain the existing identity/discovery/comparison quotas; discovery remains capped at five live comparisons. Provider timeouts and partial-failure isolation stay inside the shared comparison engine.
 - Operational events never include raw ZIPs, full queries, request bodies, listing URLs, seller identifiers, images, or secrets.
+- Apify reservations atomically check before incrementing the original unreset counter. A separately authorized, expiring cumulative ceiling may extend Whatnot only; missing configuration retains the original 20 starts, and invalid/expired renewal fails closed. This is prepared budget control, not spending permission; [approval procedure](cross-market-recovery-2026-10-03.md#whatnot-budget-repair).
 
 ## MCP and plugin distribution
 
