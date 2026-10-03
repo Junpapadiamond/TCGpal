@@ -1589,6 +1589,7 @@ describe("comparison condition controls", () => {
         ...reportFor(request),
         confirmedCard,
         candidates: [listing, alternative],
+        platforms: [{ id: "ebay", marketplace: "eBay", label: "eBay", sourceMode: "official_api", configured: true, status: "complete", count: 2, detail: "2 source-reported listings" }],
         rankedChoices: rankListings([listing, alternative], { marketPrice: 130 }),
         outcome: "best_buy",
         identityContractVersion: 4,
@@ -1624,7 +1625,8 @@ describe("comparison condition controls", () => {
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
     const hero = screen.getByRole("article", { name: "Best-supported buy" });
     expect(hero.querySelector(":scope > div")?.className.split(" ")).toContain("grid-cols-[72px_minmax(0,1fr)]");
-    const supplementaryPrices = screen.getByRole("region", { name: "Marketplace asking prices" });
+    const supplementaryPrices = screen.getByRole("region", { name: "Across marketplaces" });
+    expect(screen.queryByRole("region", { name: "Marketplace asking prices" })).toBeNull();
     expect(hero.compareDocumentPosition(supplementaryPrices) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(supplementaryPrices.querySelector("details")?.open).toBe(false);
     expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[72px_minmax(0,1fr)]");
@@ -1809,22 +1811,22 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("One Piece Beta")).toBeTruthy();
     expect(screen.getByText("One Piece coverage is in beta and may be less stable.")).toBeTruthy();
     const followUps = screen.getByRole("region", { name: "Check other marketplaces" });
+    expect(followUps.querySelector("details")?.open).toBe(false);
+    fireEvent.click(within(followUps).getByText("Check other marketplaces"));
     expect(within(followUps).getByText("Market reference")).toBeTruthy();
-    // Mercari and Whatnot are both plain manual checks and share the label.
-    expect(within(followUps).getAllByText("Manual check")).toHaveLength(2);
+    const across = screen.getByRole("region", { name: "Across marketplaces" });
     expect(within(followUps).getByText("Japan manual check")).toBeTruthy();
     // The MANUAL CHECK label is the disclaimer; a "not checked" line repeating it
     // in the fact slot was removed, and that slot now stays empty on rows that
     // carry no fact of their own.
     expect(within(followUps).queryByText("Not checked by TCGlens")).toBeNull();
-    expect(within(followUps).getByText(/fixed-price Buy Now listings/)).toBeTruthy();
     expect(within(followUps).getByText(/prices in JPY/)).toBeTruthy();
     expect(within(followUps).getByRole("link", { name: /TCGplayer/ }).getAttribute("href")).toBe("https://www.tcgplayer.com/product/123456");
-    const mercariLink = within(followUps).getByRole("link", { name: /Mercari/ });
+    const mercariLink = within(across).getByRole("link", { name: /Search Mercari manually/ });
     expect(mercariLink.getAttribute("href")).toContain("mercari.com/search");
     expect(within(followUps).getByRole("link", { name: /SNKRDUNK/ }).getAttribute("href")).toContain("snkrdunk.com/search");
     // Live-auction supply the buyer may want, on a row that never claims a cost.
-    const whatnotLink = within(followUps).getByRole("link", { name: /Whatnot/ });
+    const whatnotLink = within(across).getByRole("link", { name: /Search Whatnot manually/ });
     expect(whatnotLink.getAttribute("href")).toContain("whatnot.com/search?query=");
     expect(whatnotLink.getAttribute("href")).toContain("OP01-016");
     fireEvent.click(mercariLink);
@@ -1832,7 +1834,7 @@ describe("comparison condition controls", () => {
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     expect(await screen.findByRole("heading", { name: "这次还没找到合适的" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "去其他平台看看" })).toBeTruthy();
-    expect(screen.getByText("Mercari 美国站")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "手动搜索 Mercari" })).toBeTruthy();
     expect(screen.queryByText("Found listings, but none matched the selected SP print.")).toBeNull();
   });
 });

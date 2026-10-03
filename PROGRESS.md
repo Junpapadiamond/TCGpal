@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-10-03
 canonical_branch: origin/main
 last_verified_product_commit: f51ce31
-working_branch: codex/cross-market-recovery (remote main deployed; main held by another worktree)
+ working_branch: codex/cross-market-recovery (source recovery in progress; main held by another worktree)
 max_lines: 300
 ---
 
@@ -176,7 +176,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:workstream id="WS-SOURCES" state="merchant-api-live-review-only" tags="stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
 - October 3: `f51ce31` READY (`dpl_A3F4CHXNH7Prhs4eGj7EPhYJaBTX`), Stomping Grounds enabled. Two deployed no-ZIP checks: Blastoise $136.50 (two condition variants), regular Luffy $3.50 (parallel/Japanese conflicts excluded), 50 eBay each, ~4.2s. Unknown shipping/fees prevent merchant winners; stock caution persists in REST/MCP/receipts. Ten earlier free API calls covered five cards/two games. Whatnot check-before-increment fixed; default paid cap/key unchanged and optional expiring renewal unset. [Decision, access review, operator recovery and release evidence](docs/cross-market-recovery-2026-10-03.md); [alternatives](docs/research/cross-market-options-2026-10-03.md).
-- September 26 live check: Whatnot returned the pilot-budget-exhausted pause; Mercari remains disabled. No counter reset, paid retry or source expansion. Source copy distinguishes pauses from outages. Before-fix Charizard NM: 50 eBay / 0 eligible / 39 price-floor issues, overlapping with other reasons. [Review](docs/comparison-trust-fixes-2026-09-26.md).
+- October 3 follow-up: compact marketplace UI and quota-copy removal pass English/Chinese/mobile QA; 1,695 tests plus lint/typecheck/metadata/webpack build pass. Own Whatnot collector robots request returned 403; local Mercari detail worked and one hosted preview test is pending. Redis counter read as 180, untouched; $3/100 additional Whatnot starts awaits approval. Docs-only main `b60690b` failed in the Turbopack font module; build now uses supported webpack. [Evidence](docs/cross-market-recovery-2026-10-03.md#follow-up-source-recovery-and-page-cleanup).
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
 - Production 9cf1511 READY (`dpl_DHGDLRyxfJfUzkqW7u7sK4bY7eNb`) on lenstcg.com; capabilities lists eBay + Whatnot. Real Giratina report has 50 eBay + 3 Whatnot rows, 7 eligible, no Whatnot lens winner; receipt `0cf43307deb34b5cba7661ba73b6b128`. English/中文 desktop and 390px mobile verified in built-in browser. Warning/error/fatal scan empty. Full gate: 111 files/1,542 tests, 5 skipped; lint/typecheck/metadata/build pass. Redis counter unchanged; Graphify CLI unavailable. `docs/cross-market-pilot.md`.

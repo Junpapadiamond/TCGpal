@@ -6,6 +6,7 @@ import type { Browser, Page } from "puppeteer-core";
 const ORIGIN = "https://www.mercari.com";
 const USER_AGENT = "TCGlens/1.0 (+https://lenstcg.com)";
 const MAX_MS = 30_000;
+const MAX_ROBOTS_BYTES = 64_000;
 
 export function mercariRequestAllowed(value: string, resourceType: string) {
   try {
@@ -26,14 +27,45 @@ export function mercariRobotsAllowed(text: string, url: string) {
 async function robots(fetcher: typeof fetch, signal: AbortSignal) {
   const cached = await getJsonCache<string>("mercari-robots", "v1", { validate: value => typeof value === "string" ? value : null });
   if (cached) return cached;
+  const policySignal = AbortSignal.any([signal, AbortSignal.timeout(4000)]);
   const response = await fetcher(`${ORIGIN}/robots.txt`, { redirect: "error", cache: "no-store",
-    headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.any([signal, AbortSignal.timeout(4000)]) });
+    headers: { "User-Agent": USER_AGENT }, signal: policySignal });
   if (!response.ok) throw new Error(`Mercari robots policy unavailable (HTTP ${response.status}).`);
-  const text = await response.text();
-  if (Buffer.byteLength(text) > 64_000) throw new Error("Mercari robots policy exceeded its size limit.");
+  const text = await readRobotsBody(response, policySignal);
   mercariRobotsAllowed(text, `${ORIGIN}/search/`);
   await setJsonCache("mercari-robots", "v1", text, { ttlSeconds: 3600 });
   return text;
+}
+
+async function readRobotsBody(response: Response, signal: AbortSignal) {
+  if (Number(response.headers.get("content-length")) > MAX_ROBOTS_BYTES) {
+    await response.body?.cancel();
+    throw new Error("Mercari robots policy exceeded its size limit.");
+  }
+  if (!response.body) throw new Error("Mercari robots policy unavailable.");
+  const reader = response.body.getReader();
+  const abort = () => { void reader.cancel(signal.reason).catch(() => undefined); };
+  signal.addEventListener("abort", abort, { once: true });
+  const decoder = new TextDecoder();
+  let bytes = 0;
+  let text = "";
+  try {
+    while (true) {
+      signal.throwIfAborted();
+      const chunk = await reader.read();
+      signal.throwIfAborted();
+      if (chunk.done) return text + decoder.decode();
+      bytes += chunk.value.byteLength;
+      if (bytes > MAX_ROBOTS_BYTES) throw new Error("Mercari robots policy exceeded its size limit.");
+      text += decoder.decode(chunk.value, { stream: true });
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => undefined);
+    throw error;
+  } finally {
+    signal.removeEventListener("abort", abort);
+    reader.releaseLock();
+  }
 }
 
 // No account, cookie reuse, stealth, proxies, CAPTCHA solving or alternate API.

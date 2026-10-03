@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "benchmark:print-fidelity": "vitest bench src/lib/comparison/print-fidelity.bench.ts --run",
-    "build": "next build",
+    "build": "next build --webpack",
     "catalog:freshness": "node scripts/check-catalog-freshness.mjs",
     "catalog:freshness:check": "node scripts/check-catalog-freshness.mjs --check",
     "check:tavily": "node scripts/check-tavily.mjs",

@@ -31,7 +31,7 @@ import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/compariso
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { onePiecePrintDisplayLabel } from "@/lib/external/one-piece-taxonomy";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
-import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
+import { tcgplayerSearchUrl } from "@/lib/comparison/marketplace-search";
 import { buildJapanSearchQuery } from "@/lib/comparison/japan-references";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
@@ -44,9 +44,7 @@ import {
 } from "./identity-filters";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
-import { CrossMarketOpportunities } from "./CrossMarketOpportunities";
 import { CrossMarketPrices } from "./CrossMarketPrices";
-import { sourceStatusLabel } from "./source-status";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
 import { submitsOnEnter } from "@/features/comparison/search-submit";
 import { summarizeExclusions } from "@/features/comparison/exclusion-summary";
@@ -2732,9 +2730,7 @@ function ComparisonResult({
 
           <BuyerSourceNotice report={report} hasComparableListings={eligibleCount > 0} />
 
-          <CrossMarketOpportunities candidates={report.candidates} platforms={report.platforms} />
-
-          <CrossMarketPrices candidates={report.candidates} platforms={report.platforms} card={report.confirmedCard} />
+          <CrossMarketPrices candidates={report.candidates} platforms={report.platforms} card={report.confirmedCard} game={report.request.cardHint.game} />
 
           <OtherMarketplaces report={report} />
 
@@ -3223,17 +3219,12 @@ function GameBetaNotice() {
 
 function BuyerSourceNotice({ report, hasComparableListings }: { report: ComparisonReport; hasComparableListings: boolean }) {
   const t = useT();
-  const { lang } = useLang();
-  const messages = report.platforms
-    .filter((platform) => platform.configured && platform.status === "fallback")
-    .map((platform) => `${platform.marketplace} · ${sourceStatusLabel(platform, lang)}`);
   const ebay = report.platforms.find((platform) => platform.id === "ebay");
-  if (!hasComparableListings && ebay?.status === "complete") messages.push(t.result.ebayNoComparable);
-  if (messages.length === 0) return null;
+  if (hasComparableListings || ebay?.status !== "complete") return null;
 
   return (
     <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm leading-6 text-[#6f5a22]">
-      {Array.from(new Set(messages)).map((message) => <p key={message}>{message}</p>)}
+      <p>{t.result.ebayNoComparable}</p>
     </div>
   );
 }
@@ -3268,20 +3259,6 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       url: tcgplayerUrl ?? tcgplayerSearchUrl(report.request.cardHint.game, query),
     },
     {
-      marketplace: "Mercari" as const,
-      label: t.result.manualCheck,
-      detail: null,
-      note: t.result.mercariAbout,
-      url: `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`,
-    },
-    {
-      marketplace: "Whatnot" as const,
-      label: t.result.manualCheck,
-      detail: null,
-      note: t.result.whatnotAbout,
-      url: whatnotSearchUrl(query),
-    },
-    {
       marketplace: "SNKRDUNK" as const,
       label: t.result.japanManualCheck,
       detail: null,
@@ -3297,10 +3274,12 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
 
   return (
     <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]" aria-label={t.result.otherMarketplacesTitle}>
-      <div className="border-b border-[#d6ded5] px-4 py-3">
-        <h3 className="font-serif text-lg font-black text-[#24312f]">{t.result.otherMarketplacesTitle}</h3>
-      </div>
-      <div className="divide-y divide-[#e4ebe3]">
+      <details className="group/manual">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">
+        <span>{t.result.otherMarketplacesTitle}</span>
+        <IconChevronDown className="h-4 w-4 shrink-0 group-open/manual:rotate-180" />
+      </summary>
+      <div className="divide-y divide-[#e4ebe3] border-t border-[#d6ded5]">
         {rows.map((row) => (
           <div key={row.marketplace} className="grid gap-3 px-4 py-3 sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center">
             <MarketplaceBrand marketplace={row.marketplace} />
@@ -3327,6 +3306,7 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
           </div>
         ))}
       </div>
+      </details>
     </section>
   );
 }
