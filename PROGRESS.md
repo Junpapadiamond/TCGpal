@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-10-03
 canonical_branch: origin/main
-last_verified_product_commit: 810d4de
-working_branch: codex/cross-market-recovery (free merchant API release verification; paid allowance unchanged)
+last_verified_product_commit: f51ce31
+working_branch: codex/cross-market-recovery (remote main deployed; main held by another worktree)
 max_lines: 300
 ---
 
@@ -16,7 +16,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Current live concrete source: eBay Browse. October 3 Stomping Grounds merchant API implementation passed local tests; production activation/check pending. It displays source-reported raw USD offers for review, with inventory-maintenance warning and unknown shipping/fees. Whatnot allowance exhausted; Mercari remains off after HTTP 403. Original paid counter unchanged. See WS-SOURCES.
+- Current concrete sources: eBay Browse and October 3 verified Stomping Grounds merchant API. The latter displays source-reported raw USD offers for review, with inventory-maintenance warning and unknown shipping/fees; it cannot win complete-cost ranking. Whatnot allowance exhausted; Mercari remains off after HTTP 403. Original paid counter unchanged. See WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -33,9 +33,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Search-entry refresh verified; trust fixes deployed; Q&A model requests still time out | Observe example use, trust, sharing, and empty outcomes |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | Free Stomping Grounds adapter ready for release; Whatnot paused; Mercari blocked | Finish deployed acquisition check; no paid renewal configured |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | eBay + free Stomping Grounds verified in production; Whatnot paused; Mercari blocked | Review merchant stock warning on change; no paid renewal configured |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
-| LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery from a49ff88 | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
+| LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; remote main f51ce31 deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
 <!-- progress:section id="GOALS" -->
 ## GOALS
@@ -173,10 +173,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `src/features/comparison/ComparisonApp.tsx`, `src/features/comparison/i18n.tsx`, `src/features/comparison/ComparisonApp.test.tsx`, `src/lib/testing/standard-comparison-flow.ts`; receipt flow in `src/features/receipt/ReceiptPageClient.tsx` and `src/lib/comparison/report-snapshot.ts`.
 <!-- progress:end -->
-<!-- progress:workstream id="WS-SOURCES" state="merchant-api-release-verification" tags="stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
+<!-- progress:workstream id="WS-SOURCES" state="merchant-api-live-review-only" tags="stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
-- October 3: founder requested any workable cross-market alternative, with payment approval before new spending. Ten free intended Shopify Catalog calls across five cards/two games succeeded; Stomping Grounds adapter, dynamic source UI, caution propagation and Whatnot check-before-increment repair implemented. Default paid cap/key unchanged; optional expiring Whatnot renewal remains unconfigured. Merchant offers cannot win with unknown charges; stock-maintenance warning persists in REST/MCP/receipts. [Decision, access review, operator recovery and release evidence](docs/cross-market-recovery-2026-10-03.md); [provider alternatives](docs/research/cross-market-options-2026-10-03.md).
-
+- October 3: `f51ce31` READY (`dpl_A3F4CHXNH7Prhs4eGj7EPhYJaBTX`), Stomping Grounds enabled. Two deployed no-ZIP checks: Blastoise $136.50 (two condition variants), regular Luffy $3.50 (parallel/Japanese conflicts excluded), 50 eBay each, ~4.2s. Unknown shipping/fees prevent merchant winners; stock caution persists in REST/MCP/receipts. Ten earlier free API calls covered five cards/two games. Whatnot check-before-increment fixed; default paid cap/key unchanged and optional expiring renewal unset. [Decision, access review, operator recovery and release evidence](docs/cross-market-recovery-2026-10-03.md); [alternatives](docs/research/cross-market-options-2026-10-03.md).
 - September 26 live check: Whatnot returned the pilot-budget-exhausted pause; Mercari remains disabled. No counter reset, paid retry or source expansion. Source copy distinguishes pauses from outages. Before-fix Charizard NM: 50 eBay / 0 eligible / 39 price-floor issues, overlapping with other reasons. [Review](docs/comparison-trust-fixes-2026-09-26.md).
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
@@ -221,7 +220,7 @@ The user must decide these; agents must not infer them:
 <!-- progress:end -->
 <!-- progress:section id="LOCAL-STATE" -->
 ## LOCAL-STATE
-- October 3: branch `codex/cross-market-recovery` from `a49ff88`; 1,665 tests + lint/typecheck/metadata pass, build/deploy pending. Built-in browser synthetic EN/中文 desktop and 390px mobile views saved in the October 3 visualization directory `cross-market/`; own ports 3001/4321 stopped, pre-existing 3000/4317 retained. Graphify CLI and requested plugin validator absent; graph navigation and hermetic MCP/plugin tests used, no regeneration/validator run claimed.
+- October 3: cross-market `bf8a401` integrated concurrent search-example `c975d6f` at `f51ce31`, then fast-forwarded remote main. Local branch stays `codex/cross-market-recovery` because main is held by the animated-search-examples worktree. Real and synthetic EN/中文 desktop + 390px mobile views are in October 3 visualization directory `cross-market/`; own ports 3001/4321 stopped, pre-existing ports retained. Graphify CLI/plugin validator absent; no regeneration/validator run claimed.
 - September 28: recall work isolated from `codex/natural-language-search`, rebased onto `af3c14a`, then fast-forwarded/pushed to main through `810d4de`; unrelated branch retained. Vercel `dpl_9aFgYVD91TsHaCHiJUNoRAg2sNoW` READY on lenstcg.com. Fixed 20-card observations are ignored under `output/recall-probe/`; screenshots in the September 28 visualization directory `recall-probe/`. Fixture proxy stopped; pre-existing port 3000 retained.
 - September 26: clean main/origin/main `3177d56` → `codex/comparison-trust-fixes` → main; `f016616` and `15c06d6` fast-forwarded/pushed and verified READY. Local raw observations/logs under `output/trust-fixes/` are excluded from Git; screenshots in the September 26 Codex visualization directory. Dev/fixture servers stopped after QA.
 - 2026-09-14: Windows checkout `C:/Users/徐晨濬/projects/TCGpal`, started clean from main/origin/main `6abdffa`. Implementation `91f47cb` passed the release gate and was fast-forwarded to main. After user completed GitHub login, normal Git push published through `8ba402f`; Vercel deployment `dpl_EqkyNPHcf7G76vBAZNM6nmmugPHh` is READY and aliased to lenstcg.com. The earlier oversized connector write was rejected and never retried by fragmentation.
@@ -250,6 +249,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
+- October 3 cross-market: lint/typecheck/metadata + 1,672 tests (119 files, five skipped) pass. Local webpack build and Vercel default preview/production builds pass; local Turbopack font URL-query error only. Two real deployed card comparisons verified source facts, null charges, excluded sibling/language conflicts and no merchant winner. Built-in EN/中文/mobile and console checks pass; scoped production warning/error/fatal logs empty. See cross-market recovery document for exact evidence and limits.
 - October 3 animated examples: lint/typecheck/metadata audit/default Turbopack build and full suite (118 files / 1,606 tests, five optional live tests skipped) passed in an isolated worktree. Built-in browser EN/中文 desktop + 390px mobile and six sequential synthetic searches passed. Timer tests cover 3s rotation, focus/hover, pause/resume, reduced motion, hidden tabs, typing, game changes, cleanup, and manual refresh. See [design QA](design-qa.md). Graphify CLI unavailable; no provider behavior changed.
 - September 28 recall check: lint/typecheck/metadata audit/build/plugin validation pass; 1,599 tests pass, 5 optional live tests skipped. Five sequential synthetic searches and built-in EN/中文 desktop + 390px mobile pass; One Piece name-less fixtures correctly inspect/abstain. `810d4de` READY; live Luffy receipt reproduces $5.02 vs $38.98 pre-tax without replacing the winner. Twenty-card run: 3 rule hits awaiting human review / 4 inconclusive / 13 no-cheaper; scoped error/fatal logs empty. Graphify CLI unavailable.
 - 2026-09-27 search entry: lint/typecheck/metadata audit/build passed; 114 test files and 1,571 tests passed, 5 skipped. TDD covered example selection, stale-field reset, real condition presets, game/locale changes and the six-card standard flow. Built-in browser verified EN/中文 1440px desktop, 390px mobile, original rail pointer click, and six sequential searches across both games with Edit/New and Nami SP confirmation. Synthetic providers only; inspected console logs empty. Graphify CLI remains unavailable.
@@ -279,7 +279,7 @@ Verified production: 6b1453d READY on lenstcg.com (`dpl_83vwS7jakJBAc7RkGoX5fiqu
 
 Still not verified:
 
-- Three-source production comparison remains incomplete: Whatnot allowance is exhausted as of September 26; its September 23 one-query success did not establish repeatability or complete checkout cost. Mercari's approved September 23 paid test hit HTTP 403 and timed out/0 rows; credentials alone do not fix source access (WS-SOURCES).
+- eBay + Stomping Grounds price display works; complete checkout-cost comparison remains eBay-only. Whatnot allowance is exhausted; Mercari remains HTTP-403 blocked. Merchant stock reliability and charges are unverified; no subscription or paid renewal approved (WS-SOURCES).
 - Population-level live eBay recall and precision remain unproven until the human-adjudicated 30-listing quality gate runs; the known cross-facet sibling reproductions are fixed in v4 and covered by zero-substitution regressions.
 - Ten-buyer demand/usability pilot; monetization, distribution economics, and public-launch legal/provider readiness; dirty local experiments in LOCAL-STATE. Pokémon buy accuracy has never been measured at the One Piece standard — 18/18 recall does not adjudicate the artwork — so 69.2% describes one of the two live games, and the set-filter year label is unit-tested but never seen in a browser.
 - The eBay detail budget is measured but unshipped (default still 12); D-DETAIL-BUDGET needs the Browse daily quota. The 2026-08-11 retry improvement (45% to 29% "try again") is a simulation over the measured failure profile, not an observed production rate.
