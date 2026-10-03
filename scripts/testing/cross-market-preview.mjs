@@ -14,6 +14,7 @@ process.env.EBAY_CLIENT_ID = "local-qa-only";
 process.env.CROSS_MARKET_PRICE_PILOT_ENABLED = "0";
 process.env.MERCARI_APIFY_PROXY_ENABLED = "0";
 process.env.MERCARI_DIRECT_ENABLED = "0";
+process.env.SOLDGRAPH_ENABLED = "0";
 process.env.EBAY_CLIENT_SECRET = "local-qa-only";
 process.env.WHATNOT_APIFY_TOKEN = "local-qa-only";
 process.env.WHATNOT_APIFY_PRICE_UNIT = "dollars";
@@ -21,7 +22,7 @@ process.env.MERCARI_APIFY_TOKEN = "local-qa-only";
 process.env.NODE_ENV = "test";
 // Never send an inherited credential, analytics event, or durable cache write.
 for (const key of Object.keys(process.env)) {
-  if (/OPENAI|ANTHROPIC|UPSTASH|SENTRY|POSTHOG|PRICECHARTING|TAVILY|EXA_|VERCEL/.test(key)) delete process.env[key];
+  if (/OPENAI|ANTHROPIC|UPSTASH|KV_REST|SOLDGRAPH|SENTRY|POSTHOG|PRICECHARTING|TAVILY|EXA_|VERCEL/.test(key)) delete process.env[key];
 }
 const { resolveCardIdentity } = await jiti.import(path.join(root, "src/lib/ai/card-identity.ts"));
 const { runListingComparison } = await jiti.import(path.join(root, "src/lib/ai/listing-compare.ts"));
@@ -31,14 +32,20 @@ const { ebayPlatformAgent } = await jiti.import(path.join(root, "src/lib/compari
 const { parseWhatnotListings } = await jiti.import(path.join(root, "src/lib/external/whatnot.ts"));
 const { parseMercariListings } = await jiti.import(path.join(root, "src/lib/external/mercari.ts"));
 const { parseStompingGroundsListings } = await jiti.import(path.join(root, "src/lib/external/stomping-grounds.ts"));
+const { parseSoldgraphListings } = await jiti.import(path.join(root, "src/lib/external/soldgraph.ts"));
+const soldgraphQA = process.env.TCGLENS_QA_PROVIDER === "soldgraph";
 // Exercise real parsers and ranking through explicit trusted dependency injection.
 // Never invoke paid run/start or Redis paths; never mutate the default registry.
 const fixtureAgents = [ebayPlatformAgent, {
-  id: "whatnot", marketplace: "Whatnot", label: "Whatnot QA fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true,
-  search: async ({ card, fetcher }) => parseWhatnotListings(await (await fetcher("https://api.apify.com/fixtures/whatnot-scraper")).json(), card, new Date(), "dollars"),
+  id: "whatnot", marketplace: "Whatnot", label: soldgraphQA ? "Whatnot via Soldgraph · QA fixture" : "Whatnot QA fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true,
+  search: async ({ card, fetcher }) => soldgraphQA
+    ? parseSoldgraphListings(await (await fetcher("https://api.soldgraph.com/v1/whatnot/listings")).json(), "whatnot", card, `${card.name} ${card.cardNumber}`, new Date())
+    : parseWhatnotListings(await (await fetcher("https://api.apify.com/fixtures/whatnot-scraper")).json(), card, new Date(), "dollars"),
 }, {
-  id: "mercari", marketplace: "Mercari", label: "Mercari QA fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true,
-  search: async ({ card, fetcher }) => parseMercariListings(await (await fetcher("https://api.apify.com/fixtures/mercari-us-scraper")).json(), card, new Date()),
+  id: "mercari", marketplace: "Mercari", label: soldgraphQA ? "Mercari via Soldgraph · QA fixture" : "Mercari QA fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true,
+  search: async ({ card, fetcher }) => soldgraphQA
+    ? parseSoldgraphListings(await (await fetcher("https://api.soldgraph.com/v1/mercari/listings")).json(), "mercari", card, `${card.name} ${card.cardNumber}`, new Date())
+    : parseMercariListings(await (await fetcher("https://api.apify.com/fixtures/mercari-us-scraper")).json(), card, new Date()),
 }, {
   id: "stomping-grounds", marketplace: "Stomping Grounds", label: "Stomping Grounds QA fixture", sourceMode: "official_api", requiredEnv: [], isConfigured: () => true,
   search: async ({ card, fetcher }) => parseStompingGroundsListings(await (await fetcher("https://singles.stompinggroundstcg.com/api/ucp/mcp")).json(), card, new Date()),
@@ -54,6 +61,15 @@ function fixtureFetcher(request = {}) {
     shippingOptions: [{ shippingCost: { value: "10", currency: "USD" } }] };
   return async (input) => {
     const url = new URL(String(input));
+    if (url.hostname === "api.soldgraph.com") {
+      const provider = url.pathname.includes("whatnot") ? "whatnot" : "mercari";
+      const id = provider === "whatnot" ? "TGlzdGluZzox==" : "m123456";
+      return Response.json({ provider, country: "us", query: `${chosen?.name ?? request.cardHint?.name ?? "Pikachu"} ${number}`,
+        page: 1, count: 1, collected_at: new Date().toISOString(), schema_version: 2, completeness: "provider_page_only",
+        data: [{ id, title, link: provider === "whatnot" ? `https://www.whatnot.com/listing/${id}` : `https://www.mercari.com/us/item/${id}/`,
+          condition: provider === "whatnot" ? "Near Mint" : "Like New", displayed_price: { amount: provider === "whatnot" ? 90 : 85, currency: "USD" },
+          ...(provider === "whatnot" ? { quantity: 1, grading_service: null, grade: null, card_set: null, card_number: number, language: "English" } : {}) }] });
+    }
     if (url.hostname === "singles.stompinggroundstcg.com") return Response.json({ jsonrpc: "2.0", id: 1, result: { structuredContent: { products: [{
       id: "gid://shopify/Product/123", title, url: "https://singles.stompinggroundstcg.com/products/qa-fixture", description: { html: "<p>SYNTHETIC QA FACTS ONLY</p>" }, tags: [],
       variants: [{ id: "gid://shopify/ProductVariant/456", title: "Near Mint", price: { amount: 9200, currency: "USD" }, availability: { available: true }, requires: { shipping: true }, options: [{ name: "Condition", label: "Near Mint" }] }],

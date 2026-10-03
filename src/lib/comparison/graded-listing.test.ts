@@ -14,6 +14,7 @@ describe("graded-listing detection", () => {
     "Zoro OP01-025 BGS Black Label 10",
     "Robin EB03-055 ACE Mint 10",
     "Luffy OP05-119 TAG Gem Mint 10",
+    "Luffy OP05-119 AGS 10 Gem Mint",
     "Mew ex graded 9",
     "Mew ex grading slab",
     "Mew ex slabbed card",

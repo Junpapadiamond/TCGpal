@@ -1,0 +1,327 @@
+{
+  "label": "frontier-research",
+  "acquisitionMethod": "soldgraph-public-api-docs-try-it",
+  "productionVerified": false,
+  "verifiedForRanking": false,
+  "observations": [
+    {
+      "request_id": "8e3a5690-55d8-4c61-8958-dda7306676ce",
+      "status": "complete",
+      "credits": 1,
+      "cached": false,
+      "result": {
+        "provider": "whatnot",
+        "country": "us",
+        "query": "Blastoise ex 200/165",
+        "page": 1,
+        "count": 3,
+        "collected_at": "2026-10-03T13:39:56.936773+00:00",
+        "schema_version": 2,
+        "completeness": "provider_page_only",
+        "data": [
+          {
+            "id": "TGlzdGluZ05vZGU6MjI5NDcwMDk1NA==",
+            "title": "EN Blastoise ex SIR",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjI5NDcwMDk1NA==",
+            "condition": "Near Mint",
+            "displayed_price": {
+              "amount": 140,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": "151",
+            "card_number": "200/165",
+            "language": "English"
+          },
+          {
+            "id": "TGlzdGluZ05vZGU6MjMzMDM4NDQwNQ==",
+            "title": "NM - Blastoise ex 200/165 - SIR",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjMzMDM4NDQwNQ==",
+            "condition": "Near Mint",
+            "displayed_price": {
+              "amount": 135,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": "Scarlet & Violet 151",
+            "card_number": "200/165",
+            "language": "English"
+          },
+          {
+            "id": "TGlzdGluZ05vZGU6MjM3MTc3MDkyMw==",
+            "title": "Pokemon Blastoise ex 200/165 Special Illustration Rare 151 Pokemon Holo NM",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjM3MTc3MDkyMw==",
+            "condition": "Near Mint",
+            "displayed_price": {
+              "amount": 145,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": null,
+            "card_number": null,
+            "language": null
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "664f9adc-7d24-4d54-85d7-73ce06afc53f",
+      "status": "complete",
+      "credits": 1,
+      "cached": false,
+      "result": {
+        "provider": "mercari",
+        "country": "us",
+        "query": "Blastoise ex 200/165",
+        "page": 1,
+        "count": 3,
+        "collected_at": "2026-10-03T13:44:04.129652+00:00",
+        "schema_version": 2,
+        "completeness": "provider_page_only",
+        "data": [
+          {
+            "id": "m72930642581",
+            "title": "Blastoise ex 200/165 SV 151 Special Illustration Rare Holo English 330 HP",
+            "link": "https://www.mercari.com/us/item/m72930642581/",
+            "condition": "Like New",
+            "displayed_price": {
+              "amount": 135,
+              "currency": "USD"
+            }
+          },
+          {
+            "id": "m40196553057",
+            "title": "Pokemon 151 - Blastoise EX Trading Card 200/165 NM",
+            "link": "https://www.mercari.com/us/item/m40196553057/",
+            "condition": "Like New",
+            "displayed_price": {
+              "amount": 138.89,
+              "currency": "USD"
+            }
+          },
+          {
+            "id": "m84499922715",
+            "title": "Pokemon Blastoise EX 200/165 Trading Card",
+            "link": "https://www.mercari.com/us/item/m84499922715/",
+            "condition": "Like New",
+            "displayed_price": {
+              "amount": 45,
+              "currency": "USD"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "90d82f09-ca9f-466e-b5a8-f3502824af47",
+      "status": "complete",
+      "credits": 1,
+      "cached": false,
+      "result": {
+        "provider": "whatnot",
+        "country": "us",
+        "query": "Monkey D Luffy OP05-119",
+        "page": 1,
+        "count": 3,
+        "collected_at": "2026-10-03T13:51:37.899445+00:00",
+        "schema_version": 2,
+        "completeness": "provider_page_only",
+        "data": [
+          {
+            "id": "TGlzdGluZ05vZGU6MjM4MTgxNDQ4Mg==",
+            "title": "Monkey D. Luffy 119 - One Piece OP05- Awakening of The New Era PSA 10 GEM MT",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjM4MTgxNDQ4Mg==",
+            "condition": "Graded",
+            "displayed_price": {
+              "amount": 650,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": null,
+            "card_number": null,
+            "language": null
+          },
+          {
+            "id": "TGlzdGluZ05vZGU6MjM0MzEwNDI2OA==",
+            "title": "2024 Japanese One Piece Secret Monkey D. Luffy #OP05-119 AGS 10 Gem Mint",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjM0MzEwNDI2OA==",
+            "condition": null,
+            "displayed_price": {
+              "amount": 100,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": null,
+            "card_number": null,
+            "language": null
+          },
+          {
+            "id": "TGlzdGluZ05vZGU6MjM1ODk0NTgzMg==",
+            "title": "CGC PRISTINE 10 Monkey D. Luffy",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjM1ODk0NTgzMg==",
+            "condition": "Graded",
+            "displayed_price": {
+              "amount": 150,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": "Certified Guaranty Company (CGC)",
+            "grade": "10",
+            "card_set": "Awakening of the New Era",
+            "card_number": null,
+            "language": null
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "be6f7794-3647-4f8d-80a6-367bf1eda45d",
+      "status": "complete",
+      "credits": 1,
+      "cached": false,
+      "result": {
+        "provider": "mercari",
+        "country": "us",
+        "query": "Monkey D Luffy OP05-119",
+        "page": 1,
+        "count": 3,
+        "collected_at": "2026-10-03T13:51:00.332837+00:00",
+        "schema_version": 2,
+        "completeness": "provider_page_only",
+        "data": [
+          {
+            "id": "m64386445713",
+            "title": "Luffy - SEC - OP05",
+            "link": "https://www.mercari.com/us/item/m64386445713/",
+            "condition": "Like New",
+            "displayed_price": {
+              "amount": 10,
+              "currency": "USD"
+            }
+          },
+          {
+            "id": "m27216547173",
+            "title": "Monkey D Luffy OP05-119 Custom Textured Card ✨",
+            "link": "https://www.mercari.com/us/item/m27216547173/",
+            "condition": "New",
+            "displayed_price": {
+              "amount": 15.43,
+              "currency": "USD"
+            }
+          },
+          {
+            "id": "m51265151702",
+            "title": "Monkey D Luffy OP05-119 Custom Manga Card ✨",
+            "link": "https://www.mercari.com/us/item/m51265151702/",
+            "condition": "New",
+            "displayed_price": {
+              "amount": 10.61,
+              "currency": "USD"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "8b03d547-e95a-4a40-8e12-d5dd54ff106b",
+      "status": "complete",
+      "credits": 1,
+      "cached": true,
+      "result": {
+        "provider": "whatnot",
+        "country": "us",
+        "query": "Blastoise ex 200/165",
+        "page": 1,
+        "count": 3,
+        "collected_at": "2026-10-03T13:39:56.936773+00:00",
+        "schema_version": 2,
+        "completeness": "provider_page_only",
+        "data": [
+          {
+            "id": "TGlzdGluZ05vZGU6MjI5NDcwMDk1NA==",
+            "title": "EN Blastoise ex SIR",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjI5NDcwMDk1NA==",
+            "condition": "Near Mint",
+            "displayed_price": {
+              "amount": 140,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": "151",
+            "card_number": "200/165",
+            "language": "English"
+          },
+          {
+            "id": "TGlzdGluZ05vZGU6MjMzMDM4NDQwNQ==",
+            "title": "NM - Blastoise ex 200/165 - SIR",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjMzMDM4NDQwNQ==",
+            "condition": "Near Mint",
+            "displayed_price": {
+              "amount": 135,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": "Scarlet & Violet 151",
+            "card_number": "200/165",
+            "language": "English"
+          },
+          {
+            "id": "TGlzdGluZ05vZGU6MjM3MTc3MDkyMw==",
+            "title": "Pokemon Blastoise ex 200/165 Special Illustration Rare 151 Pokemon Holo NM",
+            "link": "https://www.whatnot.com/listing/TGlzdGluZ05vZGU6MjM3MTc3MDkyMw==",
+            "condition": "Near Mint",
+            "displayed_price": {
+              "amount": 145,
+              "currency": "USD"
+            },
+            "quantity": 1,
+            "grading_service": null,
+            "grade": null,
+            "card_set": null,
+            "card_number": null,
+            "language": null
+          }
+        ]
+      }
+    }
+  ],
+  "independentMercariObservations": [
+    {
+      "url": "https://www.mercari.com/us/item/m72930642581/",
+      "observedAt": "2026-10-03T13:01:00.651Z",
+      "price": 135,
+      "shipping": 4.91,
+      "buyerProtectionFee": 5.03,
+      "condition": "Like New",
+      "method": "ordinary-public-browser",
+      "scope": "research-only"
+    },
+    {
+      "url": "https://www.mercari.com/us/item/m84499922715/",
+      "observedAt": "2026-10-03T13:52:59.608Z",
+      "price": 45,
+      "shipping": 0,
+      "buyerProtectionFee": 1.62,
+      "condition": "Like New",
+      "buyNowEnabled": true,
+      "method": "ordinary-public-browser",
+      "scope": "research-only",
+      "identityConfidence": "unresolved",
+      "note": "Title and visible asking price agree. No authenticity or card-condition determination was made."
+    }
+  ]
+}

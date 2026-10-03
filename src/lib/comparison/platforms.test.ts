@@ -184,6 +184,19 @@ describe("platform fan-out", () => {
 });
 
 describe("default registry (roadmap adapters)", () => {
+  it("requires Soldgraph's own flag/key, then selects it for both marketplaces without paid fallback", () => {
+    vi.stubEnv("SOLDGRAPH_ENABLED", "0"); vi.stubEnv("SOLDGRAPH_API_KEY", "sg_test_only");
+    expect(getPlatformAgents().filter(agent => agent.label.includes("Soldgraph"))).toEqual([]);
+    vi.stubEnv("SOLDGRAPH_ENABLED", "1");
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "private-apify"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    vi.stubEnv("MERCARI_DIRECT_ENABLED", "1");
+    const sources = getPlatformAgents().filter(agent => ["whatnot", "mercari"].includes(agent.id));
+    expect(sources.map(agent => agent.label)).toEqual(["Whatnot via Soldgraph", "Mercari via Soldgraph"]);
+    expect(sources.every(agent => agent.isConfigured() && agent.sourceMode === "third_party_provider")).toBe(true);
+    expect(sources.every(agent => agent.resultCautions?.some(caution => caution.includes("Shipping")))).toBe(true);
+    expect(sources.flatMap(agent => agent.requiredEnv)).not.toContain("WHATNOT_APIFY_TOKEN");
+  });
   it("enables the merchant-owned catalog independently of paid marketplace pilots", () => {
     vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "0");
     vi.stubEnv("STOMPING_GROUNDS_ENABLED", "0");

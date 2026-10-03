@@ -11,6 +11,8 @@ import { getJsonCache } from "@/lib/ops/cache";
 import { comparisonReportSchema, type ComparisonReport, type ComparisonRequest } from "@/lib/schemas";
 import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-revision";
+import { demoIdentities, demoListingSeeds } from "@/lib/comparison/fixtures";
+import { normalizeListing } from "@/lib/comparison/ranking";
 
 const pureSearch = {
   sourceListing: { marketplace: "Other", url: "", title: "", price: null },
@@ -64,8 +66,24 @@ describe("comparison report cache", () => {
     vi.stubEnv("EBAY_CLIENT_ID", "");
     vi.stubEnv("MERCARI_DIRECT_ENABLED", "0");
     vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "0");
+    vi.stubEnv("SOLDGRAPH_ENABLED", "0");
   });
   afterEach(() => vi.unstubAllEnvs());
+
+  it("separates Soldgraph and Apify reports even though both use third-party source mode", () => {
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "private-apify");
+    vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    const before = comparisonCacheKey(pureSearch, "swsh7-215");
+    vi.stubEnv("SOLDGRAPH_ENABLED", "1");
+    vi.stubEnv("SOLDGRAPH_API_KEY", "sg_private_test");
+    const after = comparisonCacheKey(pureSearch, "swsh7-215");
+    expect(after).not.toBe(before);
+    expect(after).toContain("Soldgraph");
+    expect(after).not.toMatch(/private-apify|sg_private_test/);
+    vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "dollars");
+    expect(comparisonCacheKey(pureSearch, "swsh7-215")).toBe(after);
+  });
 
   it("invalidates the source mix when the direct merchant catalog is enabled", () => {
     vi.stubEnv("STOMPING_GROUNDS_ENABLED", "0");
@@ -133,6 +151,17 @@ describe("comparison report cache", () => {
     await setCachedComparison("key", reportStub(), at);
     expect(await getCachedComparison("key", new Date("2026-07-03T10:14:00Z"))).not.toBeNull();
     expect(await getCachedComparison("key", new Date("2026-07-03T10:16:00Z"))).toBeNull();
+  });
+
+  it("never extends a Soldgraph observation past its original 15-minute freshness window", async () => {
+    const at = new Date("2026-07-03T10:10:00Z");
+    const listing = normalizeListing({ listing: { ...demoListingSeeds[0], marketplace: "Whatnot", demo: false,
+      observedAt: "2026-07-03T10:00:00Z", shipping: null, buyerFee: null }, buyer: pureSearch.buyer, confirmedCard: demoIdentities[0] });
+    await setCachedComparison("soldgraph-freshness", reportStub({ candidates: [listing], platforms: [
+      platformStub({ id: "whatnot", marketplace: "Whatnot", label: "Whatnot via Soldgraph", sourceMode: "third_party_provider" }),
+    ] }), at);
+    expect(await getCachedComparison("soldgraph-freshness", new Date("2026-07-03T10:14:59Z"))).not.toBeNull();
+    expect(await getCachedComparison("soldgraph-freshness", new Date("2026-07-03T10:15:00Z"))).toBeNull();
   });
 
   it("coalesces concurrent cold requests for the same report key", async () => {

@@ -21,6 +21,31 @@ const storeSource: ComparisonPlatformResult = {
 const openOffers = () => document.querySelectorAll("summary").forEach((summary) => fireEvent.click(summary));
 
 describe("three-marketplace asking prices", () => {
+  it.each([
+    ["en", "Whatnot"], ["zh", "Whatnot"], ["en", "Mercari"], ["zh", "Mercari"],
+  ] as const)("attributes Soldgraph offers in %s on %s without inventing fees", (lang, marketplace) => {
+    setLanguage(lang);
+    renderPrices([listingFixture({ marketplace, shipping: null, buyerFee: null, costComplete: false, eligible: false,
+      eligibilityIssues: [{ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Unknown shipping" }] })],
+    platforms.map((source) => source.marketplace === marketplace ? { ...source, sourceMode: "third_party_provider", label: `${marketplace} via Soldgraph`, detail: "Private provider diagnostic" } : source));
+    openOffers();
+    const source = screen.getByRole("region", { name: lang === "zh" ? `${marketplace} 标价` : `${marketplace} prices` });
+    expect(within(source).getByText(lang === "zh" ? /Soldgraph 数据源/ : /Source: Soldgraph/)).toBeTruthy();
+    expect(within(source).getByText(lang === "zh" ? "Soldgraph 报告这些商品在售，请到平台确认是否仍有货。" : "Soldgraph reports these listings as active. Confirm availability on the marketplace.")).toBeTruthy();
+    expect(within(source).queryByText(/Apify/)).toBeNull();
+    expect(within(source).getByText(lang === "zh" ? /运费: 未知 · 买家手续费: 未知/ : /Shipping: unknown · Buyer fees: unknown/)).toBeTruthy();
+    expect(screen.queryByText("Private provider diagnostic")).toBeNull();
+  });
+
+  it.each(["en", "zh"] as const)("preserves existing Apify attribution in %s", (lang) => {
+    setLanguage(lang);
+    renderPrices([listingFixture({ marketplace: "Whatnot" })], platforms.map((source) => source.marketplace === "Whatnot"
+      ? { ...source, sourceMode: "third_party_provider", label: "Whatnot via Apify" } : source));
+    openOffers();
+    expect(screen.getByText(lang === "zh" ? /Apify 数据源/ : /Source: Apify/)).toBeTruthy();
+    expect(screen.queryByText(/Soldgraph/)).toBeNull();
+  });
+
   it.each(["en", "zh"] as const)("shows an additional configured store with unknown costs and its stock warning in %s", (lang) => {
     setLanguage(lang);
     renderPrices([listingFixture({ marketplace: "Stomping Grounds", title: "Store card", price: 85,

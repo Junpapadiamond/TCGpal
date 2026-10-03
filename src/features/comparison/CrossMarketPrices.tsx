@@ -13,6 +13,18 @@ const defaultMarkets = ["eBay", "Whatnot", "Mercari"] as const;
 const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 const incompatible = new Set(["excluded_product_type", "not_raw_single", "identity_sibling_mismatch", "identity_variant_mismatch", "language_conflict", "listing_inactive"]);
 
+function sourceAttribution(marketplace: NormalizedListing["marketplace"], source: ComparisonPlatformResult | undefined, zh: boolean) {
+  if (marketplace === "eBay") return "eBay Browse";
+  if (source?.sourceMode === "browser_dom") return zh ? "商品页面数据" : "Listing page data";
+  if (source?.sourceMode === "third_party_provider") {
+    // Only controlled adapter labels select a known provider name; diagnostics
+    // and arbitrary source text never become buyer-facing attribution.
+    const provider = source.label.includes("Soldgraph") ? "Soldgraph" : "Apify";
+    return zh ? `${provider} 数据源` : `Source: ${provider}`;
+  }
+  return marketplace;
+}
+
 export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon" }: {
   candidates: NormalizedListing[];
   platforms: ComparisonPlatformResult[];
@@ -71,6 +83,9 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
               {marketplace === "Stomping Grounds" && <p className="pt-3 text-xs leading-5 text-[#806521]">{zh
                 ? "商店显示有货，但提醒维护期间库存可能不准确。请到商店确认是否有货。"
                 : "Store reports stock, but warns inventory may be inaccurate during maintenance. Confirm availability at the store."}</p>}
+              {source?.sourceMode === "third_party_provider" && source.label.includes("Soldgraph") && <p className="pt-3 text-xs leading-5 text-[#806521]">{zh
+                ? "Soldgraph 报告这些商品在售，请到平台确认是否仍有货。"
+                : "Soldgraph reports these listings as active. Confirm availability on the marketplace."}</p>}
               <ul className="divide-y divide-[#e0e5dc]">
                 {rows.map((listing) => {
                   const versionNeedsChecking = listing.printMatch !== "exact" || listing.eligibilityIssues.some((issue) => issue.code === "identity_unverified");
@@ -91,7 +106,7 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
                     <CrossMarketCostNote listing={listing} candidates={candidates} />
                     {marketplace === "Stomping Grounds" && <p className="mt-1 text-xs leading-5 text-[#64736c]">{zh ? "卖家记录未核实 · 缺少单张卡实拍照片" : "Seller track record unverified · Individual card photos unavailable"}</p>}
                     <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4">
-                      <p className="text-xs leading-5 text-[#64736c]">{marketplace === "eBay" ? "eBay Browse" : source?.sourceMode === "browser_dom" ? zh ? "商品页面数据" : "Listing page data" : source?.sourceMode === "third_party_provider" ? zh ? "Apify 数据源" : "Source: Apify" : marketplace} · <time dateTime={listing.observedAt}>{new Date(listing.observedAt).toLocaleString(zh ? "zh-CN" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC</time></p>
+                      <p className="text-xs leading-5 text-[#64736c]">{sourceAttribution(marketplace, source, zh)} · <time dateTime={listing.observedAt}>{new Date(listing.observedAt).toLocaleString(zh ? "zh-CN" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC</time></p>
                       {listing.url && <a href={listing.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-xs font-bold text-[#2f6f73] underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73]">{zh ? "查看商品" : "View listing"} ↗</a>}
                     </div>
                   </li>;

@@ -11,6 +11,7 @@ import { isMercariDirectEnabled, searchMercariDirect } from "@/lib/external/merc
 import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
 import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
 import { isStompingGroundsEnabled, searchStompingGrounds } from "@/lib/external/stomping-grounds";
+import { hasSoldgraphCredentials, searchSoldgraphListings } from "@/lib/external/soldgraph";
 import type {
   BuyerContext,
   CardIdentityCandidate,
@@ -108,6 +109,25 @@ const mercariApifyPlatformAgent: PlatformAgent = {
   search: ({ card, fetcher, plan, signal }) => searchMercariListings(card, fetcher, plan?.query, signal),
 };
 
+// Explicitly gated after the bounded free evaluation and source review. Acquisition remains
+// provider-reported asking prices; unknown charges never become ranking facts.
+const soldgraphAgents: Record<"whatnot" | "mercari", PlatformAgent> = {
+  whatnot: {
+    id: "whatnot", marketplace: "Whatnot", label: "Whatnot via Soldgraph",
+    sourceMode: "third_party_provider", requiredEnv: ["SOLDGRAPH_ENABLED", "SOLDGRAPH_API_KEY"],
+    isConfigured: hasSoldgraphCredentials, searchTimeoutMs: 22_000,
+    resultCautions: ["Whatnot asking prices and availability are reported by Soldgraph. Shipping, buyer fees, seller record and condition photos require confirmation on the live listing."],
+    search: ({ card, fetcher, plan, signal }) => searchSoldgraphListings("whatnot", card, fetcher, plan?.query, signal),
+  },
+  mercari: {
+    id: "mercari", marketplace: "Mercari", label: "Mercari via Soldgraph",
+    sourceMode: "third_party_provider", requiredEnv: ["SOLDGRAPH_ENABLED", "SOLDGRAPH_API_KEY"],
+    isConfigured: hasSoldgraphCredentials, searchTimeoutMs: 22_000,
+    resultCautions: ["Mercari asking prices and availability are reported by Soldgraph. Shipping, buyer fees, seller record and card condition require confirmation on the live listing."],
+    search: ({ card, fetcher, plan, signal }) => searchSoldgraphListings("mercari", card, fetcher, plan?.query, signal),
+  },
+};
+
 export const stompingGroundsPlatformAgent: PlatformAgent = {
   id: "stomping-grounds", marketplace: "Stomping Grounds",
   label: "Stomping Grounds store-reported offers via Shopify Catalog",
@@ -152,7 +172,10 @@ const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
-  return DEFAULT_AGENTS.map((agent) => agent.id === "mercari" && hasMercariCredentials() ? mercariApifyPlatformAgent : agent);
+  return DEFAULT_AGENTS.map((agent) => {
+    if (hasSoldgraphCredentials() && (agent.id === "whatnot" || agent.id === "mercari")) return soldgraphAgents[agent.id];
+    return agent.id === "mercari" && hasMercariCredentials() ? mercariApifyPlatformAgent : agent;
+  });
 }
 
 export function getConfiguredPlatformAgents(agents: PlatformAgent[] = getPlatformAgents()): PlatformAgent[] {

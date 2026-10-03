@@ -16,11 +16,11 @@ const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
   // Activation and money-mapping changes must not reuse an earlier source mix.
-  // Only public source modes and the allowlisted unit enter the key, never keys
+  // Only public source labels/modes and the allowlisted unit enter the key, never keys
   // or tokens. Custom evaluation agents already bypass this cache entirely.
   const sources = getConfiguredPlatformAgents().map((agent) => [
-    agent.id, agent.sourceMode,
-    ...(agent.id === "whatnot" ? [process.env.WHATNOT_APIFY_PRICE_UNIT === "cents" ? "cents" : "dollars"] : []),
+    agent.id, agent.sourceMode, agent.label,
+    ...(agent.id === "whatnot" && agent.label.includes("Apify") ? [process.env.WHATNOT_APIFY_PRICE_UNIT === "cents" ? "cents" : "dollars"] : []),
   ].join(":")).sort().join(",");
   return [
     "identity-v4",
@@ -71,7 +71,17 @@ export async function setCachedComparison(key: string, report: ComparisonReport,
   // should re-attempt the live sources on the next request.
   if (report.demoMode || report.status === "needs_confirmation" || report.identityContractVersion !== 4) return;
   if (hasFailedLiveSource(report)) return;
-  await setJsonCache(CACHE_SCOPE, key, report, { ttlSeconds: CACHE_TTL_SECONDS, now });
+  // A provider cache can supply a page already several minutes old. A new
+  // report must not grant those facts another full freshness window.
+  const soldgraphMarkets = new Set(report.platforms.filter(platform => platform.label.includes("Soldgraph")).map(platform => platform.marketplace));
+  let ttlSeconds = CACHE_TTL_SECONDS;
+  for (const listing of report.candidates) {
+    if (!soldgraphMarkets.has(listing.marketplace)) continue;
+    const remaining = Math.floor((Date.parse(listing.observedAt) + CACHE_TTL_MS - now.getTime()) / 1000);
+    if (!Number.isFinite(remaining) || remaining <= 0) return;
+    ttlSeconds = Math.min(ttlSeconds, remaining);
+  }
+  await setJsonCache(CACHE_SCOPE, key, report, { ttlSeconds, now });
 }
 
 // Collapse simultaneous cold requests within one server process. The durable
