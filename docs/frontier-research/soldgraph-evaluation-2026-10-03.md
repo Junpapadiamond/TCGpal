@@ -1,6 +1,6 @@
 # Soldgraph acquisition evaluation — October 3, 2026
 
-**Free acquisition evaluation passed for a bounded asking-price display; deployment verification is pending.** The founder completed the Free signup and explicitly approved creating a TCGlens key, testing both marketplaces and storing it as a Production-only Vercel server secret. Five completed test requests consumed five free credits. No paid plan, payment card, automatic overage or Apify extension was enabled.
+**Whatnot and Mercari asking-price search is deployed and working through Soldgraph.** Product commit `cb3318d` is production READY on [TCGlens](https://lenstcg.com/); the actual Blastoise comparison returned three offers per marketplace. The founder completed the Free signup and explicitly approved creating a TCGlens key, testing both marketplaces and storing it as a Production-only Vercel server secret. Five completed evaluation requests consumed five free credits. No paid plan, payment card, automatic overage or Apify extension was enabled.
 
 ## Decision and falsifiable test
 
@@ -33,7 +33,7 @@ A separate atomic Redis sorted-set allowance permits at most 80 initial applicat
 
 Only sanitized listing seeds are cached, no longer than the original collection timestamp plus 15 minutes. Credentials, seller names/profiles and search thumbnails are discarded. Conflicting card/language claims survive into deterministic gates. Raw/graded exclusions, null shipping/fees, unknown seller history and unverified condition photography remain explicit. Source failures isolate to their own platform and never become cached empty inventory. Report cache keys distinguish Soldgraph from Apify even though both use third-party source mode.
 
-Evaluation evidence and source/policy/privacy review are recorded here; AGENTS.md now names this bounded boundary. The full application gate and end-to-end production observation remain required before calling the feature working. Credentials alone never establish success. The first key was rotated after an accidental browser snapshot exposure; its revocation and the replacement Production Secret update were visibly confirmed. Neither credential was written to a local file or committed artifact.
+Evaluation evidence and source/policy/privacy review are recorded here; AGENTS.md names this bounded boundary. The full application gate and end-to-end production observation passed on October 3: 1,752 tests, lint, typecheck, metadata audit and webpack build; actual Whatnot/Mercari offers in the built-in browser; structured API evidence that incomplete rows cannot become winners. Credentials alone never establish success. The first key was rotated after an accidental browser snapshot exposure; its revocation and the replacement Production Secret update were visibly confirmed. Neither credential was written to a local file or committed artifact.
 
 ## Live results
 
@@ -50,3 +50,11 @@ The [minimal observations](soldgraph-observations-2026-10-03.json) retain listin
 Mercari's $135 listing matched the independent 13:01 public-page observation; the $45 listing's title and asking price matched a separate public-page observation during evaluation. The latter page also showed free shipping and a $1.62 buyer fee, but these research-only facts are not injected into production. Its authenticity, condition and exact print remain unverified. Whatnot detail verification remains unavailable through the restricted direct path; no retry or bypass was attempted.
 
 The negative sample exposed a missing AGS grade-title pattern. TDD reproduced it and added AGS to the shared deterministic graded-listing guard. Offline review of the recorded provider pages using the application parser and normalizer produced zero winners; custom products and slab rows do not enter the price panel. This two-query sample proves useful Pokémon acquisition and safe abstention on the One Piece sample, not comprehensive marketplace recall or independent exact-print precision.
+
+## Deployed verification
+
+Production deployment `dpl_8BKPesDEmoiXb87hCAGuWTS31AWN` became READY and current for lenstcg.com on October 3, with a 92-second build. The actual user comparison displayed 50 eBay, three Whatnot, three Mercari and two Stomping Grounds rows. Whatnot asks were $135/$140/$145; Mercari asks were $45/$135/$138.89. Offers expand into canonical links, original collection timestamps and Soldgraph attribution. The unusual $45 offer is explicitly flagged for inspection. Internal pilot/allowance text is absent from buyer-facing status labels.
+
+A separate no-ZIP production API request at 14:08:12.899 UTC returned HTTP 200 in 2.114 seconds, `demoMode=false`, and both marketplaces complete. All six Soldgraph rows retained `shipping=null`, `buyerFee=null`, `eligible=false` and `costComplete=false`. Their original collection times remained 14:04:05.886/14:04:05.892 UTC; all four ranked choices referenced eBay. Built-in browser checks passed English and 中文 desktop, a 390px production receipt viewport, and console checks; mobile content width equaled viewport width. The full mobile offer panel was also checked with explicitly synthetic local fixtures. Scoped production warning/error/fatal logs from 14:03 through 14:08:31 UTC returned no entries.
+
+At 14:10 UTC the refreshed account dashboard showed Free and **17 of 100 requests** used. This account-wide number includes requests beyond the five recorded evaluation jobs; it is not attributed entirely to this test. The independent 80-start application ceiling remains conservative, and source caching does not renew observation freshness. This is usable bounded search, not unlimited public capacity or a completed checkout-cost source. Review before increasing capacity or expanding scope.
