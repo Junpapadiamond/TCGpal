@@ -21,6 +21,53 @@ const storeSource: ComparisonPlatformResult = {
 const openOffers = () => document.querySelectorAll("summary").forEach((summary) => fireEvent.click(summary));
 
 describe("three-marketplace asking prices", () => {
+  it("shows a visible verdict and source preview on each market before opening other offers", () => {
+    renderPrices([
+      listingFixture({ id: "ebay-visible", marketplace: "eBay", title: "eBay lead", price: 100, shipping: 5, preTaxTotal: 105 }),
+      listingFixture({ id: "whatnot-visible", marketplace: "Whatnot", title: "Whatnot lead", price: 90,
+        imageUrl: "https://images.whatnot.com/preview.jpg", imageUrls: [], imageKind: "listing_preview",
+        shipping: null, buyerFee: null, costComplete: false, eligible: false,
+        eligibilityIssues: [{ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Unknown shipping" },
+          { code: "buyer_fee_unknown", category: "cost", disposition: "exclude", message: "Unknown buyer fees" }] }),
+      listingFixture({ id: "mercari-visible", marketplace: "Mercari", title: "Mercari lead", price: 95,
+        imageUrl: "https://u-mercari-images.mercdn.net/photos/preview.jpg", imageUrls: [], imageKind: "listing_preview",
+        shipping: null, buyerFee: null, costComplete: false, eligible: false,
+        eligibilityIssues: [{ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Unknown shipping" },
+          { code: "buyer_fee_unknown", category: "cost", disposition: "exclude", message: "Unknown buyer fees" }] }),
+    ]);
+    for (const marketplace of ["eBay", "Whatnot", "Mercari"]) {
+      const region = screen.getByRole("region", { name: `${marketplace} prices` });
+      expect(within(region).getByText("Verdict")).toBeTruthy();
+      expect(within(region).getByText("Card-match confidence: high")).toBeTruthy();
+      expect(within(region).getByRole("link", { name: /View listing/ }).closest("details")).toBeNull();
+    }
+    expect(screen.getByRole("button", { name: "Inspect listing preview: Whatnot lead" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Inspect listing preview: Mercari lead" })).toBeTruthy();
+    expect(screen.getByText(/shipping \+ buyer fees stay below \$15.00/i)).toBeTruthy();
+    expect(screen.getByText(/shipping \+ buyer fees stay below \$10.00/i)).toBeTruthy();
+    expect(screen.queryByText(/Reasonable to buy/)).not.toBeNull();
+  });
+
+  it("leads with a condition-compatible offer rather than a flagged low item price", () => {
+    renderPrices([
+      listingFixture({ id: "mercari-anomaly", marketplace: "Mercari", title: "Unusual cheap card", price: 45,
+        claimedCondition: "Unknown", eligible: false, eligibilityIssues: [{ code: "price_below_market_floor", category: "price", disposition: "exclude", message: "Inspect price" }] }),
+      listingFixture({ id: "mercari-review", marketplace: "Mercari", title: "NM card worth checking", price: 138.89,
+        shipping: null, buyerFee: null, costComplete: false, eligible: false,
+        eligibilityIssues: [{ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Unknown shipping" }] }),
+    ]);
+    const source = screen.getByRole("region", { name: "Mercari prices" });
+    expect(within(source).getByText("NM card worth checking").closest("details")).toBeNull();
+    expect(within(source).getByText("Unusual cheap card").closest("details")).not.toBeNull();
+    expect(within(source).getByText("Other 1 offer")).toBeTruthy();
+  });
+
+  it("does not show a complete-total label when a stale payload flag contradicts unknown charges", () => {
+    renderPrices([listingFixture({ marketplace: "Whatnot", shipping: null, buyerFee: null, costComplete: true })]);
+    const source = screen.getByRole("region", { name: "Whatnot prices" });
+    expect(within(source).queryByText("pre-tax total")).toBeNull();
+    expect(within(source).getByText("item price · total unconfirmed")).toBeTruthy();
+  });
   it.each([
     ["en", "Whatnot"], ["zh", "Whatnot"], ["en", "Mercari"], ["zh", "Mercari"],
   ] as const)("attributes Soldgraph offers in %s on %s without inventing fees", (lang, marketplace) => {
@@ -103,15 +150,16 @@ describe("three-marketplace asking prices", () => {
     expect(screen.getAllByRole("region", { name: "Across marketplaces" })).toHaveLength(1);
   });
 
-  it("keeps supplementary prices collapsed until the buyer opens them", () => {
-    renderPrices([listingFixture({ title: "Supplementary listing", price: 95 })]);
-    const disclosure = screen.getByText("eBay").closest("summary")!.parentElement as HTMLDetailsElement;
+  it("keeps other offers collapsed while the primary verdict stays visible", () => {
+    renderPrices([listingFixture({ id: "primary", title: "Primary listing", price: 95 }), listingFixture({ id: "other", title: "Other listing", price: 100 })]);
+    const disclosure = screen.getByText("Other 1 offer").closest("details") as HTMLDetailsElement;
     expect(disclosure.open).toBe(false);
-    expect(screen.getByRole("link", { name: /View listing/ }).closest("details")).toBe(disclosure);
-    fireEvent.click(screen.getByText("eBay"));
+    expect(screen.getByText("Primary listing").closest("details")).toBeNull();
+    expect(screen.getByText("Other listing").closest("details")).toBe(disclosure);
+    fireEvent.click(screen.getByText("Other 1 offer"));
     expect(disclosure.open).toBe(true);
-    expect(screen.getByRole("link", { name: /View listing/ })).toBeTruthy();
-    fireEvent.click(screen.getByText("eBay"));
+    expect(screen.getAllByRole("link", { name: /View listing/ })).toHaveLength(2);
+    fireEvent.click(screen.getByText("Other 1 offer"));
     expect(disclosure.open).toBe(false);
   });
 

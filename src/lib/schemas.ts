@@ -378,6 +378,9 @@ export const normalizedListingSchema = z.object({
   // Seller-provided listing photos. The primary image is first when available;
   // clients must not treat these URLs as condition or authenticity verification.
   imageUrls: z.array(z.string().url()).max(24).default([]),
+  // Acquisition role, not visual verification. A provider search preview must
+  // never be counted as item-specific condition photography.
+  imageKind: z.enum(["listing_preview", "seller_photos", "catalog_reference", "unknown"]).default("unknown"),
   seller: sellerTrustSignalsSchema,
   evidence: listingEvidenceSchema,
   sellerTrustScore: z.number().int().min(0).max(100),
@@ -767,8 +770,9 @@ export type ListingSeed = Omit<
   | "printMatchReasons"
   | "printPriceGuard"
   | "imageUrls"
+  | "imageKind"
   | "buyerFee"
-> & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string; imageUrls?: string[]; buyerFee?: number | null };
+> & { webDiscovered?: boolean; listingLanguage?: string | null; matchAspectText?: string; imageUrls?: string[]; imageKind?: NormalizedListing["imageKind"]; buyerFee?: number | null };
 
 export const listingSeedSchema = normalizedListingSchema.omit({
   estimatedTax: true, preTaxTotal: true, estimatedLandedCost: true, costComplete: true,

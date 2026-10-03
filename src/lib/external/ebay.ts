@@ -740,6 +740,7 @@ function toNormalizedSeed(item: z.infer<typeof ebayItemSchema>, card: CardIdenti
     matchAspectText: buildMatchAspectText(item),
     imageUrl: imageUrls[0] ?? null,
     imageUrls,
+    imageKind: imageUrls.length > 0 ? "seller_photos" as const : "unknown" as const,
     seller: source.seller,
     evidence: source.evidence,
     observedAt: new Date().toISOString(),

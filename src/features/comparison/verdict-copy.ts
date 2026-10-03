@@ -284,7 +284,7 @@ function buildWhyNotCheapest(
 const ACTION_ABOVE_MARKET_RATIO = 0.15;
 const ACTION_THIN_EVIDENCE_SCORE = 25;
 
-function buildAction(
+export function buildListingAction(
   listing: NormalizedListing,
   marketPrice: number | null,
   lang: VerdictCopyInput["lang"],
@@ -375,6 +375,6 @@ export function buildVerdictCopy({
       : null,
     whyNotCheapest: buildWhyNotCheapest(listing, alternatives, lang),
     pricePosition: buildPricePosition(listing, alternatives, lang),
-    action: buildAction(listing, marketPrice, lang, alternatives),
+    action: buildListingAction(listing, marketPrice, lang, alternatives),
   };
 }

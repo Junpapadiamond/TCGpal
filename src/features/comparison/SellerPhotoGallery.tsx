@@ -13,43 +13,50 @@ import {
   IconZoomIn,
   IconZoomOut,
 } from "./icons";
-import { useT } from "./i18n";
+import { useLang, useT } from "./i18n";
 
 type ListingPhotoProps = {
-  listing: Pick<NormalizedListing, "imageUrl" | "imageUrls" | "marketplace" | "title">;
+  listing: Pick<NormalizedListing, "imageUrl" | "imageUrls" | "marketplace" | "title"> & Partial<Pick<NormalizedListing, "imageKind">>;
 };
 
 export function ListingPhoto({ listing }: ListingPhotoProps) {
   const t = useT();
+  const zh = useLang().lang === "zh";
+  const preview = listing.imageKind === "listing_preview" || listing.imageKind === "catalog_reference";
+  const caption = listing.imageKind === "catalog_reference" ? zh ? "卡片参考图" : "Catalog reference"
+    : preview ? zh ? "商品预览图" : "Listing preview" : t.result.listingEvidencePhoto;
   const openerRef = useRef<HTMLButtonElement>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const photos = useMemo(() => [...new Set([
     ...(listing.imageUrl ? [listing.imageUrl] : []),
-    ...listing.imageUrls,
-  ])], [listing.imageUrl, listing.imageUrls]);
+    ...(preview ? [] : listing.imageUrls),
+  ])], [listing.imageUrl, listing.imageUrls, preview]);
   const closeGallery = useCallback(() => setGalleryOpen(false), []);
 
   return (
     <figure className="w-[64px] min-w-0 lg:w-[72px]">
-      {photos.length > 0 ? (
+      {photos.length > 0 && failedUrl !== photos[0] ? (
         <button
           ref={openerRef}
           type="button"
-          aria-label={t.result.inspectSellerPhotos(photos.length, listing.title)}
+          aria-label={preview ? `${zh ? "查看商品预览图：" : "Inspect listing preview: "}${listing.title}` : t.result.inspectSellerPhotos(photos.length, listing.title)}
           className="group relative block aspect-[2.5/3.5] w-full overflow-hidden rounded-md border border-[#c9d7ce] bg-[#e7efe8] text-[#fcfbf6] transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/30"
           onClick={() => setGalleryOpen(true)}
         >
           <Image
             src={photos[0]}
-            alt={t.result.listingEvidenceAlt(listing.title)}
+            alt={preview ? `${caption}: ${listing.title}` : t.result.listingEvidenceAlt(listing.title)}
             fill
             loading="eager"
+            unoptimized={preview}
+            onError={() => setFailedUrl(photos[0])}
             sizes="72px"
             className="object-contain transition duration-200 group-hover:scale-[1.03]"
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#24312f]/78 px-1 py-1 text-[9px] font-black">
             <IconPhotoProof className="h-3 w-3" />
-            {photos.length}
+            {preview ? <IconZoomIn className="h-3 w-3" /> : photos.length}
           </span>
         </button>
       ) : (
@@ -58,7 +65,7 @@ export function ListingPhoto({ listing }: ListingPhotoProps) {
         </div>
       )}
       <figcaption className="mt-1 text-center text-[9px] font-black uppercase leading-3 tracking-[0.04em] text-[#64736c]">
-        {t.result.listingEvidencePhoto}
+        {failedUrl !== null && failedUrl === photos[0] ? zh ? "图片暂不可用" : "Image unavailable" : caption}
       </figcaption>
       {galleryOpen && photos.length > 0 && (
         <SellerPhotoDialog
@@ -79,11 +86,16 @@ function SellerPhotoDialog({
   onClose,
 }: {
   photos: string[];
-  listing: Pick<NormalizedListing, "marketplace" | "title">;
+  listing: Pick<NormalizedListing, "marketplace" | "title"> & Partial<Pick<NormalizedListing, "imageKind">>;
   openerRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
 }) {
   const t = useT();
+  const zh = useLang().lang === "zh";
+  const preview = listing.imageKind === "listing_preview" || listing.imageKind === "catalog_reference";
+  const previewTitle = listing.imageKind === "catalog_reference" ? zh ? "卡片参考图" : "Catalog reference"
+    : zh ? "商品预览图" : "Listing preview";
+  const dialogTitle = preview ? previewTitle : t.result.sellerPhotosTitle;
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
@@ -158,14 +170,14 @@ function SellerPhotoDialog({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label={t.result.sellerPhotosTitle}
+        aria-label={dialogTitle}
         className="flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden rounded-t-xl border border-[#52635c] bg-[#182220] text-[#fcfbf6] shadow-2xl sm:h-auto sm:max-h-[92vh] sm:rounded-xl"
       >
         <header className="flex items-start justify-between gap-4 border-b border-[#52635c]/70 px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <IconPhotoProof className="h-4 w-4 shrink-0 text-[#d7a84e]" />
-              <h2 className="font-serif text-lg font-black">{t.result.sellerPhotosTitle}</h2>
+              <h2 className="font-serif text-lg font-black">{dialogTitle}</h2>
               <span className="rounded border border-[#64736c] px-1.5 py-0.5 text-[10px] font-black text-[#d7ddd8]">
                 {t.result.sellerPhotoCount(photoNumber, photos.length)}
               </span>
@@ -175,7 +187,7 @@ function SellerPhotoDialog({
           <button
             ref={closeRef}
             type="button"
-            aria-label={t.result.closePhotoGallery}
+            aria-label={preview ? zh ? "关闭预览图" : "Close preview" : t.result.closePhotoGallery}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#64736c] text-[#fcfbf6] transition hover:bg-[#2b3935] focus:outline-none focus:ring-2 focus:ring-[#d7a84e]"
             onClick={onClose}
           >
@@ -188,7 +200,7 @@ function SellerPhotoDialog({
             <Image
               key={photos[index]}
               src={photos[index]}
-              alt={t.result.sellerPhotoAlt(photoNumber, photos.length, listing.title)}
+              alt={preview ? `${previewTitle}: ${listing.title}` : t.result.sellerPhotoAlt(photoNumber, photos.length, listing.title)}
               width={1200}
               height={1600}
               unoptimized
@@ -220,7 +232,9 @@ function SellerPhotoDialog({
         <footer className="border-t border-[#52635c]/70 bg-[#182220] px-4 py-3 sm:px-5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-semibold leading-5 text-[#becac3]">
-              {listing.marketplace === "eBay"
+              {preview ? zh ? "这是数据源提供的预览图，不代表已核实的品相证据。请到商品页查看完整照片并核对实物。"
+                : "Provider-supplied preview, not verified condition evidence. Open the listing for full photographs and inspect the actual item."
+                : listing.marketplace === "eBay"
                 ? t.result.sellerPhotosDisclaimer
                 : t.result.sellerPhotosDisclaimer.replace("eBay", marketplaceName)}
             </p>

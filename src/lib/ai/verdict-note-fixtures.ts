@@ -43,6 +43,7 @@ export function listingFixture(overrides: ListingOverrides = {}): NormalizedList
     listingLanguage: "English",
     imageUrl: null,
     imageUrls: [],
+    imageKind: "unknown",
     seller: {
       feedbackPercentage: 99.6,
       feedbackCount: 4120,

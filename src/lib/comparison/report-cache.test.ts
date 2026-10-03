@@ -131,7 +131,7 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe(`identity-v4|ranking-v10-recall-coverage|recall:true|${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}|sources:none|swsh7-215|Near Mint|10001|0.08`);
+    expect(key).toBe(`identity-v4|ranking-v11-market-verdict-previews|recall:true|${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}|sources:none|swsh7-215|Near Mint|10001|0.08`);
   });
 
   it("separates reports when the recall probe is switched off", () => {

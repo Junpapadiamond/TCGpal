@@ -1603,8 +1603,9 @@ describe("comparison condition controls", () => {
     fireEvent.change(query, { target: { value: "Nami SP OP01-016" } });
     fireEvent.click(within(query.closest("form")!).getByRole("button", { name: /Browse card versions|Compare exact listings/ }));
 
-    expect(await screen.findByAltText("Listing photo: Nami OP01-016 SP Special Art")).toBeTruthy();
-    const openGallery = screen.getByRole("button", { name: "Inspect 3 seller photos: Nami OP01-016 SP Special Art" });
+    const recommended = await screen.findByRole("article", { name: "Best-supported buy" });
+    expect(within(recommended).getByAltText("Listing photo: Nami OP01-016 SP Special Art")).toBeTruthy();
+    const openGallery = within(recommended).getByRole("button", { name: "Inspect 3 seller photos: Nami OP01-016 SP Special Art" });
     expect(screen.queryByRole("dialog", { name: "Seller photos" })).toBeNull();
     expect(screen.queryByAltText("Seller photo 2 of 3: Nami OP01-016 SP Special Art")).toBeNull();
     fireEvent.click(openGallery);
@@ -1632,11 +1633,12 @@ describe("comparison condition controls", () => {
     expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[72px_minmax(0,1fr)]");
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));
-    expect(screen.getByAltText("Listing photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
     const alternativeTitle = screen.getByRole("heading", { name: "Nami OP01-016 P4 SP alternate seller" });
+    const alternativeRow = within(alternativeTitle.closest("article")!);
+    expect(alternativeRow.getByAltText("Listing photo: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
     expect(alternativeTitle.className.split(" ")).not.toContain("truncate");
     expect(screen.getByRole("button", { name: "Ask about listing: Nami OP01-016 P4 SP alternate seller" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Inspect 1 seller photo: Nami OP01-016 P4 SP alternate seller" }));
+    fireEvent.click(alternativeRow.getByRole("button", { name: "Inspect 1 seller photo: Nami OP01-016 P4 SP alternate seller" }));
     const singlePhotoGallery = screen.getByRole("dialog", { name: "Seller photos" });
     expect(within(singlePhotoGallery).getByAltText("Seller photo 1 of 1: Nami OP01-016 P4 SP alternate seller")).toBeTruthy();
     expect(within(singlePhotoGallery).queryByRole("button", { name: "Next photo" })).toBeNull();

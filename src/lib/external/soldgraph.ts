@@ -13,12 +13,19 @@ const MAX_RESULTS = 3;
 const MAX_BYTES = 1_000_000;
 const DEADLINE_MS = 20_000;
 const MAX_AGE_MS = 15 * 60 * 1000;
+const IMAGE_HOSTS: Record<SoldgraphMarketplace, readonly string[]> = {
+  whatnot: ["images.whatnot.com"],
+  mercari: ["u-mercari-images.mercdn.net"],
+};
 const flights = new Map<string, Promise<ListingSeed[]>>();
 const cacheSchema = z.object({ observedAt: z.iso.datetime({ offset: true }), seeds: z.array(listingSeedSchema).max(MAX_RESULTS) });
 const claim = z.string().max(200).nullable();
 const rowSchema = z.object({
   id: z.string().min(1).max(200), title: z.string().min(1).max(2000).nullable(), link: z.string().max(1000),
   condition: claim, displayed_price: z.object({ amount: z.number().nonnegative(), currency: z.literal("USD") }).nullable(),
+  // The documented nullable primary image is a search preview, not a gallery
+  // or independently checked condition photography (OpenAPI schema v2).
+  image: z.string().max(4096).nullable(),
   quantity: z.number().int().nonnegative().optional(), grading_service: claim.optional(), grade: claim.optional(),
   card_set: claim.optional(), card_number: claim.optional(), language: claim.optional(),
   // These fields are not currently supplied. If a future response contradicts
@@ -43,6 +50,20 @@ function freshTimestamp(value: string, now: Date) {
     throw new Error("Soldgraph observation is invalid or stale.");
   }
   return new Date(time).toISOString();
+}
+
+function listingPreview(value: string | null, marketplace: SoldgraphMarketplace) {
+  if (!value) return null;
+  try {
+    const image = new URL(value);
+    if (image.protocol !== "https:" || image.username || image.password || image.port || image.hash
+      || !IMAGE_HOSTS[marketplace].includes(image.hostname)) return null;
+    // Preserve the provider's signed CDN query without constructing another
+    // URL or fetching a marketplace page. The client may display this preview.
+    return image.href;
+  } catch {
+    return null;
+  }
 }
 
 function parsePage(payload: unknown, marketplace: SoldgraphMarketplace, query: string, now: Date) {
@@ -78,6 +99,7 @@ export function parseSoldgraphListings(payload: unknown, marketplace: SoldgraphM
     if (marketplace === "whatnot" && (row.quantity === 0
       || [row.grading_service, row.grade].some(value => value != null && !/^(?:raw|ungraded|none|n\/a)$/i.test(value)))) continue;
     const match = assessTitleMatch(`${row.title} ${attrs}`, card);
+    const imageUrl = listingPreview(row.image, marketplace);
     seeds.push({
       id: `${marketplace}-${row.id}`, marketplace: marketplace === "mercari" ? "Mercari" : "Whatnot", url: row.link,
       title: row.title, cardId: card.id, matchConfidence: match.confidence, matchReasons: match.reasons,
@@ -85,7 +107,7 @@ export function parseSoldgraphListings(payload: unknown, marketplace: SoldgraphM
       active: true, raw: true, currency: "USD", price, shipping: null, buyerFee: null,
       // Mercari's generic Like New is not a trading-card Near Mint assertion.
       claimedCondition: sellerCardCondition(`${row.title} ${marketplace === "whatnot" ? row.condition ?? "" : ""}`),
-      imageUrl: null, imageUrls: [],
+      imageUrl, imageKind: imageUrl ? "listing_preview" : "unknown", imageUrls: [],
       seller: { feedbackPercentage: null, feedbackCount: null, returnsAccepted: null, topRated: null, buyerProtection: null, subRatings: null },
       evidence: { photoCount: 0, frontBackExplicit: false, closeupsExplicit: false, surfaceExplicit: false,
         identityExplicit: false, substantiveConditionNotes: false,
@@ -136,7 +158,8 @@ export async function searchSoldgraphListings(marketplace: SoldgraphMarketplace,
   if (!hasSoldgraphCredentials()) throw new Error("Soldgraph is not enabled with a valid server credential.");
   const search = (query ?? `${card.name} ${card.cardNumber}`).trim().replace(/\s+/g, " ").slice(0, 200);
   if (!search) throw new Error("Soldgraph search query is required.");
-  const key = JSON.stringify(["v1", marketplace, card.id, card.language, search]);
+  // v1 deliberately discarded previews; do not reuse those image-less seeds.
+  const key = JSON.stringify(["v2", marketplace, card.id, card.language, search]);
   const previous = flights.get(key);
   if (previous) return previous;
   const flight = load(marketplace, card, fetcher, search, key, signal).finally(() => flights.delete(key));

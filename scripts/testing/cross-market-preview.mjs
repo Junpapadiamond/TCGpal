@@ -67,6 +67,7 @@ function fixtureFetcher(request = {}) {
       return Response.json({ provider, country: "us", query: `${chosen?.name ?? request.cardHint?.name ?? "Pikachu"} ${number}`,
         page: 1, count: 1, collected_at: new Date().toISOString(), schema_version: 2, completeness: "provider_page_only",
         data: [{ id, title, link: provider === "whatnot" ? `https://www.whatnot.com/listing/${id}` : `https://www.mercari.com/us/item/${id}/`,
+          image: provider === "whatnot" ? "https://images.whatnot.com/qa-preview.jpg" : "https://u-mercari-images.mercdn.net/photos/qa-preview.jpg",
           condition: provider === "whatnot" ? "Near Mint" : "Like New", displayed_price: { amount: provider === "whatnot" ? 90 : 85, currency: "USD" },
           ...(provider === "whatnot" ? { quantity: 1, grading_service: null, grade: null, card_set: null, card_number: number, language: "English" } : {}) }] });
     }
@@ -115,8 +116,20 @@ const server = http.createServer(async (req, res) => {
       const value = pathname.endsWith("card-identity")
         ? await resolveCardIdentity(input, { fetcher: fixtureFetcher(input) })
         : await runListingComparison(input, { fetcher: fixtureFetcher(input), agents: fixtureAgents });
+      // QA renders an unmistakably synthetic local preview after exercising
+      // the provider's real CDN validation. Never substitute runtime inventory.
+      if (soldgraphQA && value.candidates) {
+        for (const listing of value.candidates) {
+          if (listing.imageKind === "listing_preview") listing.imageUrl = `http://127.0.0.1:${port}/__qa__/preview.svg?marketplace=${encodeURIComponent(listing.marketplace)}`;
+        }
+      }
       res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify(value));
+      return;
+    }
+    if (pathname === "/__qa__/preview.svg") {
+      res.writeHead(200, { "content-type": "image/svg+xml", "cache-control": "no-store" });
+      res.end('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420"><rect width="300" height="420" fill="#e7efe8"/><rect x="12" y="12" width="276" height="396" rx="16" fill="#fcfbf6" stroke="#2f6f73" stroke-width="3"/><text x="150" y="190" text-anchor="middle" fill="#2f6f73" font-family="sans-serif" font-size="24">SYNTHETIC QA</text><text x="150" y="230" text-anchor="middle" fill="#52635c" font-family="sans-serif" font-size="18">Listing preview</text></svg>');
       return;
     }
     if (pathname === "/api/comparison-snapshots") {

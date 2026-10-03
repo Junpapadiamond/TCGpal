@@ -358,6 +358,7 @@ describe("eBay active-listing search", () => {
 
     expect(results[0]?.imageUrl).toBe(primary);
     expect(results[0]?.imageUrls).toEqual([primary, back, closeup]);
+    expect(results[0]?.imageKind).toBe("seller_photos");
     expect(results[0]?.evidence.photoCount).toBe(3);
   });
 

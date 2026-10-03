@@ -444,6 +444,8 @@ export function normalizeListing(input: {
   return normalizedListingSchema.parse({
     ...listing,
     raw,
+    imageKind: listing.imageKind ?? (listing.imageUrl && listing.evidence.photoCount > 0
+      ? "seller_photos" : listing.imageUrl && listing.marketplace === "Stomping Grounds" ? "catalog_reference" : "unknown"),
     printMatch: printAssessment?.match ?? "unknown",
     printMatchConfidence: printAssessment?.confidence ?? "low",
     printMatchReasons: printAssessment?.reasons ?? ["print_identity_not_assessed"],
