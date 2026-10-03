@@ -1130,7 +1130,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
               <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
             )}
 
-            <SearchExamples examples={examples} onSelect={chooseSearchExample} onRefresh={refreshExamples} />
+            <SearchExamples examples={examples} onSelect={chooseSearchExample} onRefresh={refreshExamples} active={!heroQuery?.trim() && !loading} />
             <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
 
             <div className="landing-control-row">
