@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-10-03
 canonical_branch: origin/main
-last_verified_product_commit: cb3318d
-working_branch: codex/cross-market-recovery (source recovery deployed; main held by another worktree)
+last_verified_product_commit: e95ccfa
+working_branch: codex/cross-market-recovery (verdicts and source previews deployed; main held by another worktree)
 max_lines: 300
 ---
 
@@ -16,7 +16,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Current concrete sources: eBay Browse + Stomping Grounds + Soldgraph Whatnot/Mercari. `cb3318d` is production READY; deployed Blastoise returned three offers from each restored marketplace. Additional asking-price sources retain unknown charges and cannot win complete-cost ranking. Original Apify counter is unchanged. See WS-SOURCES.
+- Current concrete sources: eBay Browse + Stomping Grounds + Soldgraph Whatnot/Mercari. `e95ccfa` READY: three-platform verdicts and real pictures verified on Blastoise. Missing-charge sources receive conditional/inspect verdicts and cannot win complete-cost ranking. Original Apify counter is unchanged. See WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -31,11 +31,11 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Per-platform verdicts and previews prepared; live validation pending | Finish three-source EN/中文/mobile verification; see WS-SOURCES |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Per-market verdicts and source pictures live; EN/中文/mobile pass | Observe verdict usefulness and picture review; see WS-SOURCES |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | Soldgraph Whatnot/Mercari live: three offers each; full gate and production checks pass | Review coverage and free rolling allowance before expansion; no paid upgrade or Apify renewal |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Soldgraph Whatnot/Mercari verdicts + pictures live; full gate and production checks pass | Review coverage and free rolling allowance before expansion; no paid upgrade or Apify renewal |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
-| LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product cb3318d pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
+| LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product e95ccfa pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
 <!-- progress:section id="GOALS" -->
 ## GOALS
@@ -176,7 +176,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:workstream id="WS-SOURCES" state="soldgraph-and-merchant-live-review-only" tags="soldgraph,stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
 - October 3: `f51ce31` READY (`dpl_A3F4CHXNH7Prhs4eGj7EPhYJaBTX`), Stomping Grounds enabled. Two deployed no-ZIP checks: Blastoise $136.50 (two condition variants), regular Luffy $3.50 (parallel/Japanese conflicts excluded), 50 eBay each, ~4.2s. Unknown shipping/fees prevent merchant winners; stock caution persists in REST/MCP/receipts. Ten earlier free API calls covered five cards/two games. Whatnot check-before-increment fixed; default paid cap/key unchanged and optional expiring renewal unset. [Decision, access review, operator recovery and release evidence](docs/cross-market-recovery-2026-10-03.md); [alternatives](docs/research/cross-market-options-2026-10-03.md).
-- October 3: `cb3318d` restored three Whatnot/Mercari asks each, original Apify counter 180 untouched; no paid upgrade. Follow-up prepares visible per-market verdicts and validated provider preview pictures, keeping unknown charges out of winners. 1,807 tests/lint/typecheck/metadata/webpack build and synthetic EN/中文/mobile QA pass; live verification pending. [Verdict contract](docs/cross-market-verdicts-2026-10-03.md), [prior release](docs/cross-market-recovery-2026-10-03.md#deployed-soldgraph-verification), [source review](docs/frontier-research/soldgraph-evaluation-2026-10-03.md).
+- October 3: `e95ccfa` READY (`dpl_8STzv571V2RTKEqwpLR4vcKqdXJc`): three-platform verdicts + real CDN pictures verified, Whatnot/Mercari three each; $45 Mercari stays inspect-first. Null charges prevent winners. 1,807 tests/lint/typecheck/metadata/webpack build, EN/中文 desktop and 390px live QA pass; scoped logs empty. Apify counter 180 untouched; no paid upgrade. [Verdict release](docs/cross-market-verdicts-2026-10-03.md#deployed-evidence), [source review](docs/frontier-research/soldgraph-evaluation-2026-10-03.md).
 
 - Founder request on 2026-09-14 authorizes eBay + Whatnot + Mercari, a verdict, cheaper acquisition research, and fixes for listed median and explicit collector numbers. This replaces the old branch-only reland blocker; historical `feat/whatnot-live` is not being merged wholesale.
 - Production 9cf1511 READY (`dpl_DHGDLRyxfJfUzkqW7u7sK4bY7eNb`) on lenstcg.com; capabilities lists eBay + Whatnot. Real Giratina report has 50 eBay + 3 Whatnot rows, 7 eligible, no Whatnot lens winner; receipt `0cf43307deb34b5cba7661ba73b6b128`. English/中文 desktop and 390px mobile verified in built-in browser. Warning/error/fatal scan empty. Full gate: 111 files/1,542 tests, 5 skipped; lint/typecheck/metadata/build pass. Redis counter unchanged; Graphify CLI unavailable. `docs/cross-market-pilot.md`.
@@ -279,7 +279,7 @@ Verified production: 6b1453d READY on lenstcg.com (`dpl_83vwS7jakJBAc7RkGoX5fiqu
 
 Still not verified:
 
-- eBay + Stomping Grounds + Soldgraph Whatnot/Mercari price display works on production. Complete checkout-cost ranking remains eBay-only. Provider-reported availability, exact art and missing charges need confirmation; free capacity is 80 application starts per rolling 30 days across both sources. No subscription or paid renewal approved (WS-SOURCES).
+- eBay + Soldgraph Whatnot/Mercari show visible verdicts and actual pictures in production; Stomping Grounds also has review verdicts. Complete-cost ranking remains eBay-only; stock and missing charges need confirmation. Free capacity is 80 application starts per rolling 30 days across both restored sources; no paid upgrade (WS-SOURCES).
 - Population-level live eBay recall and precision remain unproven until the human-adjudicated 30-listing quality gate runs; the known cross-facet sibling reproductions are fixed in v4 and covered by zero-substitution regressions.
 - Ten-buyer demand/usability pilot; monetization, distribution economics, and public-launch legal/provider readiness; dirty local experiments in LOCAL-STATE. Pokémon buy accuracy has never been measured at the One Piece standard — 18/18 recall does not adjudicate the artwork — so 69.2% describes one of the two live games, and the set-filter year label is unit-tested but never seen in a browser.
 - The eBay detail budget is measured but unshipped (default still 12); D-DETAIL-BUDGET needs the Browse daily quota. The 2026-08-11 retry improvement (45% to 29% "try again") is a simulation over the measured failure profile, not an observed production rate.
