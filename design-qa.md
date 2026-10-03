@@ -1,4 +1,16 @@
-# TCGlens search-entry design QA — 2026-09-27
+# TCGlens search-entry design QA
+
+## Animated search examples — 2026-10-03
+
+- Six curated suggestions rotate every three seconds with a 280ms fade/5px upward entrance and a 35ms stagger. Automatic changes stay within the examples component; they do not modify the search field or call providers.
+- Hover, keyboard focus, typing, hidden tabs, and reduced-motion preferences stop automatic changes. A localized pause/resume button and the existing More examples control remain available. A refresh excludes the currently displayed group even when session storage is unavailable.
+- Mobile uses two columns with three fixed-height rows. English and 中文 were inspected at 1440 × 1024 and 390 × 844; the mobile document width remained 390px. Desktop reserves a second chip row so the controls below remain stable for normal groups.
+- Screenshots: `C:/Users/徐晨濬/.codex/visualizations/2026/10/03/01a101bb-46d9-7242-b70f-a9b7beb310e6/search-examples/`: `en-desktop.jpg`, `zh-desktop.jpg`, `en-mobile.jpg`, `zh-mobile.jpg`.
+- Built-in browser smoke: Pikachu 58/102 example → Edit Luffy OP01-024/base → New Charizard 4/102 → Edit Zoro OP01-001/base → New Pikachu 25/165 → New Nami OP01-016/SP. Every result retained the selected identity; incomplete One Piece synthetic evidence remained an inspect lead. No live marketplace acquisition was used.
+- Verification: seven timer/interaction regression tests, the existing 53 comparison tests, lint, typecheck, metadata audit, and the default Turbopack production build passed. The final full suite passed 118 files / 1,606 tests, with five optional live tests skipped. Installed CLIs were invoked directly because npm is absent from PATH. The isolated worktree uses a local copy of existing dependencies because Turbopack rejects a junction outside its root.
+- Browser console: one expected Fast Refresh reload warning during development; no application errors. Graphify regeneration remains unavailable because this Windows host has no Graphify CLI.
+
+## Search-entry redesign — 2026-09-27
 
 ## Result
 
