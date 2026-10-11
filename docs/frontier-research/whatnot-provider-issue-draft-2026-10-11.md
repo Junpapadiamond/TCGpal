@@ -1,12 +1,12 @@
-# Unsent provider issue: subscribed Whatnot API returns 404
+# Submitted provider issue: subscribed Whatnot API returns 404
 
-Status: prepared for founder review; **not submitted**. Intended recipient: OmkarCloud, the maintainer of [whatnot-scraper](https://github.com/omkarcloud/whatnot-scraper) and the linked [RapidAPI Whatnot API](https://rapidapi.com/OmkarCloud/api/best-whatnot-scraper-free-1000-calls). Sending this external message requires explicit founder authorization. Do not include API keys, account IDs, email, headers containing credentials, screenshots of code snippets, or private application data.
+Status: **submitted with explicit founder authorization on October 11, 2026**. [GitHub issue #1](https://github.com/omkarcloud/whatnot-scraper/issues/1) is Open in OmkarCloud's repository. The integration could not create an issue in the external repository (HTTP 403, integration permission); the normal authenticated GitHub website successfully created it, and the resulting issue title/body/status were verified. The message below is exactly what was sent. No API keys, account IDs, email, credential headers, code-snippet screenshots or private application data were included. Maintainer response or a confirmed endpoint correction is required before another bounded test; issue submission does not restore production.
 
-## Proposed title
+## Submitted title
 
 RapidAPI Basic subscription: documented Whatnot search endpoints return 404
 
-## Proposed message
+## Submitted message
 
 I subscribed to the $0 Basic plan, and RapidAPI confirmed the subscription. On October 11, 2026, the documented host `best-whatnot-scraper-free-1000-calls.p.rapidapi.com` returned HTTP 404 for authenticated requests to both documented search routes.
 

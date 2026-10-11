@@ -74,7 +74,7 @@ The documented host is `best-whatnot-scraper-free-1000-calls.p.rapidapi.com`. Au
 | 17:07:37.750 | `/whatnot/search/listings`, alias mounted in the author's public source | HTTP 404, gateway says the endpoint does not exist |
 | 17:08:30.874 | `/search`, documented universal search with the same query | HTTP 404, `{"status":404,"message":"Not Found"}` |
 
-Stop further route/query guessing. No live Whatnot record was acquired. The endpoint failures cannot be fixed by copying sample output or increasing quota. A [provider issue draft](whatnot-provider-issue-draft-2026-10-11.md) is prepared; it has not been sent. Bright Data's authenticated scraper-library search for `whatnot` separately returned **No results found**. That observation covers the reviewed catalog, not every possible private product.
+Stop further route/query guessing. No live Whatnot record was acquired. The endpoint failures cannot be fixed by copying sample output or increasing quota. After the founder explicitly authorized sending the prepared report, [provider issue #1](https://github.com/omkarcloud/whatnot-scraper/issues/1) was submitted and verified Open. The [local record](whatnot-provider-issue-draft-2026-10-11.md) retains its exact public message. Wait for a maintainer response or confirmed correction before a bounded retest. Bright Data's authenticated scraper-library search for `whatnot` separately returned **No results found**. That observation covers the reviewed catalog, not every possible private product.
 
 ### Mercari: automatic discovery and details work experimentally
 
