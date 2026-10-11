@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-10-03
+updated_at: 2026-10-11
 canonical_branch: origin/main
 last_verified_product_commit: e95ccfa
-working_branch: codex/cross-market-recovery (verdicts and source previews deployed; main held by another worktree)
+working_branch: codex/cross-market-recovery (free-capacity recovery in progress; main held by another worktree)
 max_lines: 300
 ---
 
@@ -16,7 +16,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Current concrete sources: eBay Browse + Stomping Grounds + Soldgraph Whatnot/Mercari. `e95ccfa` READY: three-platform verdicts and real pictures verified on Blastoise. Missing-charge sources receive conditional/inspect verdicts and cannot win complete-cost ranking. Original Apify counter is unchanged. See WS-SOURCES.
+- Current source incident (October 11): Soldgraph Whatnot/Mercari both return `free allowance reached`; account dashboard 85/100, application ceiling 80/rolling 30 days. Founder requires both sources and automatic website search without added payment. Free alternatives are under evaluation, not restored. eBay/Stomping Grounds still return rows; incomplete costs cannot win. See WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -33,7 +33,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Per-market verdicts and source pictures live; EN/中文/mobile pass | Observe verdict usefulness and picture review; see WS-SOURCES |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | Soldgraph Whatnot/Mercari verdicts + pictures live; full gate and production checks pass | Review coverage and free rolling allowance before expansion; no paid upgrade or Apify renewal |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Both Soldgraph sources quota-paused; independent provider selection and isolated free-source harness prepared | Await free account/Apify allowance approval; validate active USD evidence before activation |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product e95ccfa pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -173,8 +173,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 `src/features/comparison/ComparisonApp.tsx`, `src/features/comparison/i18n.tsx`, `src/features/comparison/ComparisonApp.test.tsx`, `src/lib/testing/standard-comparison-flow.ts`; receipt flow in `src/features/receipt/ReceiptPageClient.tsx` and `src/lib/comparison/report-snapshot.ts`.
 <!-- progress:end -->
-<!-- progress:workstream id="WS-SOURCES" state="soldgraph-and-merchant-live-review-only" tags="soldgraph,stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
+<!-- progress:workstream id="WS-SOURCES" state="free-capacity-recovery-pending" tags="soldgraph,crawlora,apify,stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
+- October 11: production Charizard returns 50 eBay/three merchant rows; both Soldgraph sources fail at the application's 80-search cap. Provider dashboard 85/100, existing Apify Free $0.01/$5 used. Founder rejected payment, substitute stores and manual import. Explicit per-market selection of existing providers and a 16-case isolated Crawlora research client are prepared; no new account, live Crawlora call, provider switch or counter change. Await founder acceptance of Crawlora terms/profile sharing/server key and a bounded Whatnot free-credit extension; never infer approval. [Evidence, falsifiable test, source/privacy review and pending approval](docs/frontier-research/free-recovery-2026-10-11.md). Crawlora docs lack supported currency, active status and collection time: these are promotion gates, not fields to invent.
 - October 3: `f51ce31` READY (`dpl_A3F4CHXNH7Prhs4eGj7EPhYJaBTX`), Stomping Grounds enabled. Two deployed no-ZIP checks: Blastoise $136.50 (two condition variants), regular Luffy $3.50 (parallel/Japanese conflicts excluded), 50 eBay each, ~4.2s. Unknown shipping/fees prevent merchant winners; stock caution persists in REST/MCP/receipts. Ten earlier free API calls covered five cards/two games. Whatnot check-before-increment fixed; default paid cap/key unchanged and optional expiring renewal unset. [Decision, access review, operator recovery and release evidence](docs/cross-market-recovery-2026-10-03.md); [alternatives](docs/research/cross-market-options-2026-10-03.md).
 - October 3: `e95ccfa` READY (`dpl_8STzv571V2RTKEqwpLR4vcKqdXJc`): three-platform verdicts + real CDN pictures verified, Whatnot/Mercari three each; $45 Mercari stays inspect-first. Null charges prevent winners. 1,807 tests/lint/typecheck/metadata/webpack build, EN/中文 desktop and 390px live QA pass; scoped logs empty. Apify counter 180 untouched; no paid upgrade. [Verdict release](docs/cross-market-verdicts-2026-10-03.md#deployed-evidence), [source review](docs/frontier-research/soldgraph-evaluation-2026-10-03.md).
 

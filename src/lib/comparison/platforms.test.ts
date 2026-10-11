@@ -184,6 +184,47 @@ describe("platform fan-out", () => {
 });
 
 describe("default registry (roadmap adapters)", () => {
+  it("can assign each marketplace an explicit provider without consuming the other provider's allowance", () => {
+    vi.stubEnv("SOLDGRAPH_ENABLED", "1"); vi.stubEnv("SOLDGRAPH_API_KEY", "sg_test_only");
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "test"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    vi.stubEnv("WHATNOT_LISTING_PROVIDER", "apify");
+    vi.stubEnv("MERCARI_LISTING_PROVIDER", "soldgraph");
+    const sources = getPlatformAgents().filter(agent => ["whatnot", "mercari"].includes(agent.id));
+    expect(sources.map(agent => agent.label)).toEqual(["Whatnot listing prices via Apify", "Mercari via Soldgraph"]);
+    expect(sources.every(agent => agent.isConfigured())).toBe(true);
+  });
+
+  it("does not silently switch providers when an explicitly selected provider lacks credentials", () => {
+    vi.stubEnv("SOLDGRAPH_ENABLED", "0"); vi.stubEnv("SOLDGRAPH_API_KEY", "");
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "test"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    vi.stubEnv("WHATNOT_LISTING_PROVIDER", "soldgraph");
+    const source = getPlatformAgents().find(agent => agent.id === "whatnot")!;
+    expect(source.label).toBe("Whatnot via Soldgraph");
+    expect(source.isConfigured()).toBe(false);
+  });
+
+  it.each(["disabled", "invalid-provider"])("fails closed for %s without disabling the other marketplace", value => {
+    vi.stubEnv("SOLDGRAPH_ENABLED", "1"); vi.stubEnv("SOLDGRAPH_API_KEY", "sg_test_only");
+    vi.stubEnv("WHATNOT_LISTING_PROVIDER", value);
+    vi.stubEnv("MERCARI_LISTING_PROVIDER", "soldgraph");
+    const sources = getPlatformAgents();
+    expect(sources.find(agent => agent.id === "whatnot")?.isConfigured()).toBe(false);
+    expect(sources.find(agent => agent.id === "mercari")?.isConfigured()).toBe(true);
+  });
+
+  it("an explicit Apify selection still requires the existing activation gate", () => {
+    vi.stubEnv("SOLDGRAPH_ENABLED", "1"); vi.stubEnv("SOLDGRAPH_API_KEY", "sg_test_only");
+    vi.stubEnv("WHATNOT_LISTING_PROVIDER", "apify"); vi.stubEnv("MERCARI_LISTING_PROVIDER", "apify");
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "0");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "test"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    vi.stubEnv("MERCARI_APIFY_TOKEN", "test"); vi.stubEnv("MERCARI_APIFY_PROXY_ENABLED", "1");
+    const sources = getPlatformAgents().filter(agent => ["whatnot", "mercari"].includes(agent.id));
+    expect(sources.every(agent => agent.label.includes("Apify"))).toBe(true);
+    expect(sources.every(agent => !agent.isConfigured())).toBe(true);
+  });
+
   it("requires Soldgraph's own flag/key, then selects it for both marketplaces without paid fallback", () => {
     vi.stubEnv("SOLDGRAPH_ENABLED", "0"); vi.stubEnv("SOLDGRAPH_API_KEY", "sg_test_only");
     expect(getPlatformAgents().filter(agent => agent.label.includes("Soldgraph"))).toEqual([]);

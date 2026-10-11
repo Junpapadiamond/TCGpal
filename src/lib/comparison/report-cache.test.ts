@@ -94,6 +94,19 @@ describe("comparison report cache", () => {
     expect(after).toContain("stomping-grounds:official_api");
   });
 
+  it("separates explicit mixed-provider reports from the previous shared provider", () => {
+    vi.stubEnv("SOLDGRAPH_ENABLED", "1"); vi.stubEnv("SOLDGRAPH_API_KEY", "sg_private_test");
+    vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");
+    vi.stubEnv("WHATNOT_APIFY_TOKEN", "private-test"); vi.stubEnv("WHATNOT_APIFY_PRICE_UNIT", "cents");
+    const shared = comparisonCacheKey(pureSearch, "swsh7-215");
+    vi.stubEnv("WHATNOT_LISTING_PROVIDER", "apify");
+    const mixed = comparisonCacheKey(pureSearch, "swsh7-215");
+    expect(mixed).not.toBe(shared);
+    expect(mixed).toContain("Whatnot listing prices via Apify");
+    expect(mixed).toContain("Mercari via Soldgraph");
+    expect(mixed).not.toMatch(/private-test|sg_private_test/);
+  });
+
   it("does not reuse an eBay-only report after enabling a marketplace or changing its monetary mapping", () => {
     const disabled = comparisonCacheKey(pureSearch, "swsh7-215");
     vi.stubEnv("CROSS_MARKET_PRICE_PILOT_ENABLED", "1");

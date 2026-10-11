@@ -173,7 +173,20 @@ const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
   return DEFAULT_AGENTS.map((agent) => {
-    if (hasSoldgraphCredentials() && (agent.id === "whatnot" || agent.id === "mercari")) return soldgraphAgents[agent.id];
+    if (agent.id === "whatnot" || agent.id === "mercari") {
+      const envName = `${agent.id.toUpperCase()}_LISTING_PROVIDER`;
+      const selected = process.env[envName]?.trim();
+      // Selection is an operator decision, never an error-triggered transport
+      // fallback. Each selected adapter retains its own activation/budget gates.
+      if (selected === "soldgraph") return soldgraphAgents[agent.id];
+      if (selected === "apify") return agent.id === "whatnot" ? whatnotPlatformAgent : mercariApifyPlatformAgent;
+      if (selected) return stubPlatformAgent({
+        id: agent.id, marketplace: agent.marketplace,
+        label: selected === "disabled" ? `${agent.marketplace} automatic search disabled` : `${agent.marketplace} provider configuration unavailable`,
+        sourceMode: "manual_fallback", requiredEnv: selected === "disabled" ? [] : [envName],
+      });
+      if (hasSoldgraphCredentials()) return soldgraphAgents[agent.id];
+    }
     return agent.id === "mercari" && hasMercariCredentials() ? mercariApifyPlatformAgent : agent;
   });
 }
