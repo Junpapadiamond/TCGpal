@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-10-11
 canonical_branch: origin/main
-last_verified_product_commit: e95ccfa
+last_verified_product_commit: bff6f57
 working_branch: codex/cross-market-recovery (free-capacity recovery in progress; main held by another worktree)
 max_lines: 300
 ---
@@ -175,6 +175,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-SOURCES" state="free-capacity-recovery-pending" tags="soldgraph,crawlora,apify,stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
+- October 11 prepared-code release `bff6f57` is READY/current on lenstcg.com (`dpl_D7gKsFFwr7oD9NBgwiZP5L98vVzz`). Full gate: 1,829 tests, five optional skips, lint/typecheck/metadata/webpack build pass. Production 14:41:14 UTC no-ZIP Charizard returns eBay 50/merchant three; both Soldgraph sources remain quota-paused. No source switch or authorization inferred. This is preparation, not restoration; the user's goal remains unfinished.
 - October 11: production Charizard returns 50 eBay/three merchant rows; both Soldgraph sources fail at the application's 80-search cap. Provider dashboard 85/100, existing Apify Free $0.01/$5 used. Founder rejected payment, substitute stores and manual import. Explicit per-market selection of existing providers and a 16-case isolated Crawlora research client are prepared; no new account, live Crawlora call, provider switch or counter change. Await founder acceptance of Crawlora terms/profile sharing/server key and a bounded Whatnot free-credit extension; never infer approval. [Evidence, falsifiable test, source/privacy review and pending approval](docs/frontier-research/free-recovery-2026-10-11.md). Crawlora docs lack supported currency, active status and collection time: these are promotion gates, not fields to invent.
 - October 3: `f51ce31` READY (`dpl_A3F4CHXNH7Prhs4eGj7EPhYJaBTX`), Stomping Grounds enabled. Two deployed no-ZIP checks: Blastoise $136.50 (two condition variants), regular Luffy $3.50 (parallel/Japanese conflicts excluded), 50 eBay each, ~4.2s. Unknown shipping/fees prevent merchant winners; stock caution persists in REST/MCP/receipts. Ten earlier free API calls covered five cards/two games. Whatnot check-before-increment fixed; default paid cap/key unchanged and optional expiring renewal unset. [Decision, access review, operator recovery and release evidence](docs/cross-market-recovery-2026-10-03.md); [alternatives](docs/research/cross-market-options-2026-10-03.md).
 - October 3: `e95ccfa` READY (`dpl_8STzv571V2RTKEqwpLR4vcKqdXJc`): three-platform verdicts + real CDN pictures verified, Whatnot/Mercari three each; $45 Mercari stays inspect-first. Null charges prevent winners. 1,807 tests/lint/typecheck/metadata/webpack build, EN/中文 desktop and 390px live QA pass; scoped logs empty. Apify counter 180 untouched; no paid upgrade. [Verdict release](docs/cross-market-verdicts-2026-10-03.md#deployed-evidence), [source review](docs/frontier-research/soldgraph-evaluation-2026-10-03.md).
