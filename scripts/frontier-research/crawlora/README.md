@@ -12,4 +12,4 @@ Run offline verification:
 node node_modules/vitest/vitest.mjs run scripts/frontier-research/crawlora/client.test.mjs
 ```
 
-The fixtures are synthetic. No live test has been performed. See [the decision and approval boundary](../../../docs/frontier-research/free-recovery-2026-10-11.md).
+The fixtures are synthetic. On October 11, a founder-authorized Free account completed one search through this client and one separately bounded item request (six credits total). Neither response established activity, currency or collection time, so evaluation stopped and no production integration was added. See [the decision, actual evidence and approval boundary](../../../docs/frontier-research/free-recovery-2026-10-11.md).
