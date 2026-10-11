@@ -1,6 +1,6 @@
 # Whatnot and Mercari free-capacity recovery — October 11, 2026
 
-Status at 17:15 UTC: preparation deployed; three free service accounts are available. RapidAPI's subscribed Whatnot endpoints return 404. Crawlora discovery plus Bright Data details returned two title/number-matching Mercari offers, but the source-access review fails the existing promotion boundary. Neither production source has been restored. Owner: Codex for implementation/evaluation, founder for external communication and budget authorization. Review: October 11; resume acquisition only on new relevant evidence. No scheduled harvesting or monitoring.
+Status at 17:36 UTC: a limited Soldgraph free-capacity recovery is being released after the renewed founder instruction to solve the outage. The existing account has 15 free requests left; the application ceiling changes from 80 to 90 on the original counter. Live recovery is not yet verified. Three alternative free accounts are available, but Whatnot RapidAPI remains 404 and the experimental Mercari chain fails source review. Owner: Codex for implementation/evaluation, founder for external communication and budget authorization. Review: October 11. No scheduled harvesting or monitoring.
 
 ## Requested outcome and observed failure
 
@@ -11,6 +11,18 @@ The deployed Charizard ex 199/165 comparison returned `Soldgraph free allowance 
 The existing Apify dashboard showed Free, $0.01/$5.00 monthly usage and no running jobs. That visibility does not authorize more starts. The last verified historical Redis count was 180 on October 3; a current read is still required. Never reset/refund that counter or substitute a new key.
 
 ## Decision challenge and smallest test
+
+### Limited recovery on the existing approved source
+
+The renewed founder request authorizes restoring automatic queries within the previously stated zero-additional-payment constraint. The instinct is to restore both sources immediately; the mechanism is to release ten additional application starts from the existing free account, not to create new accounts or reset usage. The authenticated Billing page at 17:35 UTC shows **Free, 85/100 rolling requests, 15 remaining, $0/month, auto top-up off**. [Current usage documentation](https://soldgraph.com/docs/api/usage) says accounts created before October 9 retain the recurring 100-request allowance; newer accounts receive a one-time trial. This existing account predates that cutoff.
+
+Strongest case: this reuses an already reviewed, working adapter and verified remaining free capacity without acquiring another service or changing source facts. Serious objections: ten starts support only about five uncached two-market comparisons, so this does not meet the lasting-capacity objective; other account usage can consume the headroom, and a provider outage or empty result can still prevent useful offers. A 100-request ceiling would leave no allowance for the five observed non-application requests, so 90 is the bounded recommendation. The provider's own exhaustion response remains a failure, with no paid fallback or automatic recharge.
+
+Decision: change only the maximum to 90, retaining `tcglens:soldgraph:free-searches:v1`, Redis server time, the rolling 30-day window, failure reservations, cache lifetime, query bounds and source selection. No reset/refund, Apify extension, production credential change or new collector. Test success requires the original no-ZIP Charizard comparison to return actual source observations through the deployed application while null costs and ranking exclusion remain intact. Stop on exhausted capacity, access denial, unsupported facts or unexpected charges. One additional exact-card query is permitted only if the first response cannot establish both sources' useful output. Owner: Codex; review October 11 after deployment. Lasting free capacity remains an unresolved requirement even if this test passes.
+
+TDD first failed on the old 80 limit, then passed with 90: a seeded count of 80 admits exactly ten additional starts and does not inflate on rejection. All 59 Soldgraph tests pass. Full suite: 1,830 tests passed, five optional live tests skipped; lint, typecheck, metadata audit and webpack production build pass. Production evidence is recorded below when complete. This constant/test/documentation change adds no navigable symbols or imports, so no graph regeneration is needed.
+
+### Alternative-provider investigation
 
 The underlying instinct is to preserve automatic cross-market coverage without additional cash cost. The proposed mechanism is to use existing monthly Apify credits for Whatnot and evaluate Crawlora's monthly free Mercari endpoint.
 
@@ -75,6 +87,8 @@ The documented host is `best-whatnot-scraper-free-1000-calls.p.rapidapi.com`. Au
 | 17:08:30.874 | `/search`, documented universal search with the same query | HTTP 404, `{"status":404,"message":"Not Found"}` |
 
 Stop further route/query guessing. No live Whatnot record was acquired. The endpoint failures cannot be fixed by copying sample output or increasing quota. After the founder explicitly authorized sending the prepared report, [provider issue #1](https://github.com/omkarcloud/whatnot-scraper/issues/1) was submitted and verified Open. The [local record](whatnot-provider-issue-draft-2026-10-11.md) retains its exact public message. Wait for a maintainer response or confirmed correction before a bounded retest. Bright Data's authenticated scraper-library search for `whatnot` separately returned **No results found**. That observation covers the reviewed catalog, not every possible private product.
+
+A fifth diagnostic used the provider's own RapidAPI Search Listings playground after the renewed founder request. The same card query, limit three, US, Buy It Now and ungraded filters returned **404 Client Error, 183 ms, 39 bytes**, with `{"status":404,"message":"Not Found"}`. This rules out the local client's request construction as the sole cause. No further guessed routes or duplicate issue were submitted.
 
 ### Mercari: automatic discovery and details work experimentally
 

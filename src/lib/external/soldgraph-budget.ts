@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { getRedisClient } from "@/lib/ops/redis";
 
-// Free plan: 100 completed requests / rolling 30 days, no automatic overage.
+// Existing pre-October-9 free account: 100 completed requests / rolling 30 days,
+// no automatic overage. New accounts do not receive this recurring allowance.
 // Reserve every initial request conservatively (including failures), leaving
-// 20 requests for founder evaluation. Polls do not start another search. This
+// 10 requests outside the application ceiling. Polls do not start another search. This
 // independent allowance never reads, resets or refunds the Apify counter.
-const MAX_SEARCHES = 80;
+// October 11 recovery uses the existing counter, not a fresh allowance.
+const MAX_SEARCHES = 90;
 const WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 const KEY = "tcglens:soldgraph:free-searches:v1";
 const reserveScript = `
