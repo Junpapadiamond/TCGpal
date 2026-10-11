@@ -1,6 +1,6 @@
 # Whatnot and Mercari free-capacity recovery — October 11, 2026
 
-Status: preparation deployed; Crawlora Free registered and tested, but its current schema fails the promotion gate. Neither production source has been restored by this work. Owner: Codex for implementation/evaluation, founder for new account terms and budget authorization. Review: October 11 before any acquisition or source promotion. No scheduled harvesting or monitoring.
+Status at 17:15 UTC: preparation deployed; three free service accounts are available. RapidAPI's subscribed Whatnot endpoints return 404. Crawlora discovery plus Bright Data details returned two title/number-matching Mercari offers, but the source-access review fails the existing promotion boundary. Neither production source has been restored. Owner: Codex for implementation/evaluation, founder for external communication and budget authorization. Review: October 11; resume acquisition only on new relevant evidence. No scheduled harvesting or monitoring.
 
 ## Requested outcome and observed failure
 
@@ -41,7 +41,7 @@ At **14:46:10.843 UTC**, one bounded search for `Charizard ex 199/165` completed
 
 At **14:49:31.346 UTC**, one separate documented item request for the first observed ID returned HTTP 200 and the matching ID. Its field names were `id`, `url`, `title`, `description`, `photos`, `price_cents`, `condition_code`, `shipping_from_state` and `similar_items`. The [item documentation](https://crawlora.net/docs/mercari/mercari-item) and actual response do not establish active/unsold state, USD, or upstream collection time. A successful item response is not evidence that it remains for sale. Generic condition codes still cannot establish Near Mint.
 
-**Decision: stop the acquisition evaluation at the first failed promotion gate.** Do not spend the remaining test budget to manufacture a larger sample of the same missing fields. Search/item observations remain `frontier-research`; production still selects Soldgraph. Minimal field evidence and account screenshots are local, outside committed artifacts. No seller identifiers, profile details, IP addresses, raw responses or credentials are committed.
+**Initial decision: stop standalone Crawlora promotion at the first failed gate.** Later Bright Data evidence supplied activity and a collection timestamp, justifying one additional discovery test described below. That does not retroactively supply missing fields in Crawlora responses. Search/item observations remain `frontier-research`; production still selects Soldgraph. Minimal field evidence and account screenshots are local, outside committed artifacts. No seller identifiers, profile details, IP addresses, raw responses or credentials are committed.
 
 ## Self-hosting feasibility
 
@@ -57,13 +57,46 @@ Read-only source inspection found:
 
 The existing [Mercari direct evaluation](mercari-direct-2026-10-03.md) already demonstrated useful local DOM facts but not unattended hosted success. Its hosted 403 remains a separate unresolved constraint. No new server or public collector was created just to expose an unavailable source.
 
-## Additional free services: pending registration review
+## Additional free services: completed registration and live tests
 
-The [Omkar Cloud Whatnot Basic plan](https://rapidapi.com/OmkarCloud/api/best-whatnot-scraper-free-1000-calls/pricing) visibly lists $0/month and a hard limit of 1,000 monthly requests. It also lists a separate bandwidth charge above 10,240 MB; do not describe all usage as unconditionally free. [RapidAPI terms](https://rapidapi.com/page/terms) state that API-specific rights belong to the provider/consumer agreement, with marketplace logging and separate provider obligations. The author's sample fields are not a live acquisition. No account, subscription or API call has been made.
+At approximately 17:01 UTC, the previously prepared RapidAPI and Bright Data tabs were authenticated: the founder had completed registration. The old pending-registration blocker is resolved; do not ask for those agreements again. Server credentials were saved only to git-ignored research environment files, with no production secrets or configuration changes. No payment card or paid plan was added.
 
-[Bright Data Mercari](https://brightdata.com/products/web-scraper/mercari) advertises 5,000 recurring monthly credits without a card and states that requests stop at exhaustion when no balance is deposited. Its public example accepts item URLs; keyword discovery, output currency/activity, collection semantics and latency still need evaluation. [Service terms](https://brightdata.com/license) retain client responsibility for third-party rights and may require compliance review. [Privacy terms](https://brightdata.com/privacy) cover account/profile and usage data; only basic profile scope and public card inputs are contemplated here. No ID documents, payment data, network-sharing software or proxy services are authorized.
+### Whatnot: subscribed free API is unavailable
 
-Both signup screens have been reached, and a single action-time confirmation asks whether to accept these two new agreements, share basic Google name/email/photo, create server-only credentials and evaluate only without a card or paid commitment. The browser confirmation rule requires this for new legal agreements; the earlier Crawlora approval does not cover them. While pending, do not submit registration or run authenticated calls. A successful free test would still need all five production promotion gates; neither plan alone establishes marketplace access rights or a reliable replacement.
+The [Omkar Cloud Whatnot Basic plan](https://rapidapi.com/OmkarCloud/api/best-whatnot-scraper-free-1000-calls/pricing) was subscribed successfully: **$0/month, 1,000 monthly requests, hard request limit**. The UI confirmed the subscription. It also lists bandwidth charges above 10,240 MB; do not describe all possible usage as unconditionally free. Four diagnostic requests were individually bounded to 1 MB and no paid tier was selected. [RapidAPI terms](https://rapidapi.com/page/terms) leave API-specific rights to the provider/consumer agreement; subscription does not establish marketplace permission.
+
+The documented host is `best-whatnot-scraper-free-1000-calls.p.rapidapi.com`. Authenticated requests yielded:
+
+| UTC | Documented route | Result |
+|---|---|---|
+| 17:04:49.933 | `/search/listings`, query `Charizard ex 199/165`, limit 3, best match, Buy It Now, ungraded, US | HTTP 404, status/message object |
+| 17:05:44.441 | `/search/listings`, same filters without optional sort | HTTP 404, `{"status":404,"message":"Not Found"}` |
+| 17:07:37.750 | `/whatnot/search/listings`, alias mounted in the author's public source | HTTP 404, gateway says the endpoint does not exist |
+| 17:08:30.874 | `/search`, documented universal search with the same query | HTTP 404, `{"status":404,"message":"Not Found"}` |
+
+Stop further route/query guessing. No live Whatnot record was acquired. The endpoint failures cannot be fixed by copying sample output or increasing quota. A [provider issue draft](whatnot-provider-issue-draft-2026-10-11.md) is prepared; it has not been sent. Bright Data's authenticated scraper-library search for `whatnot` separately returned **No results found**. That observation covers the reviewed catalog, not every possible private product.
+
+### Mercari: automatic discovery and details work experimentally
+
+[Bright Data Mercari](https://brightdata.com/products/web-scraper/mercari) advertises 5,000 recurring monthly credits without a card, with requests stopping at exhaustion absent deposited funds. The authenticated account initially showed 5,000/5,000; Billing showed **No payment methods yet**. Its reviewed catalog offers only Collect by URL, dataset `gd_mko64a75i42976xsn`; it does not itself establish keyword discovery. No ID documents, payment data, network-sharing software or proxy service was configured.
+
+The [documented synchronous request](https://docs.brightdata.com/api-reference/rest-api/scraper/asynchronous-requests) accepts `POST /datasets/v3/scrape` with `format=json`, a bounded `input` URL array and `limit_per_input=1`. The [snapshot download API](https://docs.brightdata.com/api-reference/scrapers/delivery-apis/download-snapshot) permits inspection of the same completed result without another acquisition.
+
+- A first request without explicit JSON format failed local parsing; its HTTP status was not retained. Do not diagnose it as authentication failure, source denial or a successful job. A read-only snapshot listing returned HTTP 200 and no jobs before the corrected request.
+- The corrected one-URL request started at 17:06:38.706 and completed in 9.440 seconds. It read the already discovered 183/165 listing. Source fields gave original price `$49.00`, sale price `$46.55`, `availability=in_stock`, `store_country=US`, `target_countries=[US]`, and timestamp `2026-10-11T17:06:47.160Z`. Its sale price agrees with Crawlora's 4,655 cents; the original price is not a contradiction. The wrong collector number was intentional for this field-contract test and cannot enter the requested card display.
+- One new Crawlora search at 17:11:49.424 completed in 3.846 seconds: 100 first-page records, 14 title/number candidates after a limited research filter. Only three minimal discoveries were retained. A cheap `Card Display` entry was rejected before any detail request. Discovery filtering is not exact-print approval. This was the third successful Crawlora request in this evaluation, nine documented credits total; its refreshed account balance was not rechecked.
+- A single two-URL Bright Data request started at 17:12:06 and completed in 37.236 seconds. Both returned `in_stock`, US target/store fields and source collection timestamps. The first title was `Pokemon Charizard EX Trading Card 199/165`, current sale ask **$220** (original $320), timestamp 17:12:33.284. The second title was `Pokemon Charizard ex 199/165 Scarlet & Violet 151 Secret Rare Raw`, current sale ask **$373.99** (original $440), timestamp 17:12:42.365. Its description explicitly claimed English and raw/ungraded. Both URLs originated in the immediately preceding automatic discovery request; neither was manually supplied as a fallback.
+- The UI showed both snapshots Ready (one and two records), with no running job. Its credit badge still showed 4,999/5,000 when inspected; that lagging display is not a reconciled final billing ledger. No additional requests were made to force a balance update.
+
+These are source-reported asking prices, not independently verified stock or authenticity. The dollar strings plus US fields support a regional USD inference, but no explicit currency field was returned and no production currency mapping was promoted. Shipping, mandatory buyer fees, tax, supported card condition and exact artwork remain unknown. Description mentions of PSA/BGS/CGC in a negated “never submitted” sentence must not be mistaken for a graded listing. The 37-second detail batch also demonstrates that the first fast result does not establish reliable comparison latency.
+
+### Source review and stopping condition
+
+[Bright Data service terms](https://brightdata.com/license) retain client responsibility for third-party rights and may require compliance review; [privacy terms](https://brightdata.com/privacy) cover account/profile, inputs and usage. Neither establishes marketplace collection permission. The Mercari-specific product page explicitly advertises built-in proxies, unlocking, retries and **anti-bot/CAPTCHA bypass**, including on the free plan. This does not prove a bypass occurred in any particular test, but the reviewed standard collector offers no verified opt-out for those mechanisms.
+
+That is adverse evidence under the existing Frontier Research rule, “Do not bypass authentication, CAPTCHAs, paywalls, rate limits, robots exclusions applicable to automated access, or technical blocks; do not use stealth, credential extraction, or anti-detection techniques.” It also meets the previously documented provider-review kill criterion for disclosed transport circumvention. **Stop new Bright Data acquisitions and do not promote this chain.** Do not replace it with Scraper Studio, Unlocker, Browser API or residential proxies after the access failures.
+
+The strongest case for the two-provider chain is demonstrated automatic discovery plus current source-reported activity at zero cash cost. Serious objections are the disclosed access mechanism, dependency on two independently finite allowances, and variable latency. Decision: retain the observations as research; no production adapter, quota change or ranking candidate conversion. Owner: Codex; reviewed October 11 at 17:15 UTC. A meaningful next test requires a provider-supported access method that passes the source review or repair of the already subscribed Whatnot endpoint; unchanged retries would add no evidence. The separate Apify extension remains unapproved. The original two-market automatic website goal remains unresolved.
 
 ## Local preparation
 
