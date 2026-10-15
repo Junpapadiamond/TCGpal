@@ -1,6 +1,6 @@
 # Single-account Apify verification — October 15, 2026
 
-Status: **one authorized account authenticated; one Whatnot test succeeded; its token is saved as a Vercel Production Secret. Production provider activation is pending a fresh read of the original shared counter.** This is acquisition evidence, not a complete-cost recommendation or a source-rights finding.
+Status: **one authorized account authenticated; one Whatnot test succeeded; its token is saved as a Vercel Production Secret. The original counter was read at 180 after founder-completed device verification, and a bounded Whatnot renewal is configured for deployment.** Website acquisition still requires post-deploy verification. This is not a complete-cost recommendation or a source-rights finding.
 
 ## Decision and boundary
 
@@ -10,7 +10,7 @@ The strongest case for this approach is a working, already integrated Actor with
 
 Decision: use a fixed account and the existing bounded Whatnot adapter. The smallest test was one three-row run, pinned build, no agent retry, capped at $0.03. Success required matching account authentication, an affordable current tariff, returned records and preserved unknown charges. Authentication/access failures, an over-cap tariff or missing budget evidence stop further activation. Codex owns implementation and verification; the founder owns provider/source authorization. Review date: October 15, 2026. No scheduled work was created.
 
-After a fresh counter read, the proposed rollout is at most 20 additional Whatnot starts ($0.60 maximum), using the original counter plus an explicit cumulative ceiling and expiry, within the authorized account credit. This rollout has **not** been configured or started. Mercari's failed access path has not been retried or expanded.
+After the founder completed Vercel passkey authentication, a fresh read of the unchanged original counter returned **180**. The configured rollout permits at most 20 additional Whatnot starts ($0.60 maximum): `APIFY_PILOT_APPROVED_MAX_RUNS=200`, `APIFY_PILOT_APPROVAL_EXPIRES_AT=2026-10-22T00:00:00Z`, and `WHATNOT_LISTING_PROVIDER=apify`, Production only. This fits within the authorized account credit; including the settled research run, the Actor-charge bound is $0.60905. The counter has not been reset or refunded. Review the renewal on October 22; expiry stops new starts automatically without scheduled monitoring. Mercari's failed access path has not been retried or expanded.
 
 ## Observed API result
 
@@ -25,11 +25,11 @@ No email addresses, credentials, seller identifiers or raw page captures are com
 
 ## Application configuration and remaining gate
 
-`WHATNOT_APIFY_TOKEN` was updated as a write-only **Production Secret** on the `tcgpal` project and verified through both the dashboard success state and connector metadata. Saving the Secret does not switch the active provider or update an existing deployment. `WHATNOT_LISTING_PROVIDER`, the renewal ceiling/expiry and Mercari activation were not changed; the original Redis counter was not touched.
+`WHATNOT_APIFY_TOKEN` was updated as a write-only **Production Secret** on the `tcgpal` project and verified through both the dashboard success state and connector metadata. Saving configuration does not update an existing deployment. The explicit provider selection and bounded renewal were subsequently saved to Production; Mercari selection and activation were not changed. The original Redis counter was only read.
 
-Vercel's Redis Browser requires passkey reauthentication before reading the original key. The authenticated environment-variable connector returned metadata without secret values, so it could not provide the alternative read-only Redis connection. Device authentication is pending; no reset, guessed counter value or alternate key was used. The last documented count of 180 is historical, not a current reading.
+At the initial handoff, Vercel's Redis Browser required passkey reauthentication and the environment-variable connector returned metadata without secret values. The founder then completed authentication. The Redis Browser displayed the original `tcglens:apify-pilot:2026-09-14:reserved-runs` key, no expiry, and value **180**. No guessed value, alternate key, reset or refund was used.
 
-Resume by completing Vercel's passkey prompt, reading the original counter, setting the bounded cumulative Whatnot allowance and expiry, explicitly selecting Apify, then deploying and verifying an actual website comparison. Do not mark the website restored from the standalone Actor result. Preserve null charges and exact-print gates, and capture English/Chinese desktop plus mobile evidence of the resulting display.
+Remaining release verification: deploy the saved configuration and run an actual website comparison. Do not mark the website restored from the standalone Actor result. Preserve null charges and exact-print gates, and capture English/Chinese desktop plus mobile evidence of the resulting display.
 
 ## Verification
 

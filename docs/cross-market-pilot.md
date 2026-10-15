@@ -2,9 +2,9 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest — October 15: single-account Whatnot API test passed; activation pending
+## Latest — October 15: single-account Whatnot renewal configured
 
-The founder authorized a single selected Apify account. Its bearer token authenticated; one bounded three-row Whatnot run succeeded in about seven seconds and settled at $0.00905. Two rows passed existing normalization, with prices, images, feedback counts and seller-stated condition; shipping and buyer fees remained unknown. The token is saved as a Vercel Production Secret. A fresh original-counter read is blocked by Vercel passkey reauthentication, so no provider switch, budget extension or counter reset has occurred. The website has not been verified using this new account. See the [single-account decision and evidence](frontier-research/apify-single-account-2026-10-15.md).
+The founder authorized a single selected Apify account. Its bearer token authenticated; one bounded three-row Whatnot run succeeded in about seven seconds and settled at $0.00905. Two rows passed existing normalization, with prices, images, feedback counts and seller-stated condition; shipping and buyer fees remained unknown. After founder-completed Vercel passkey authentication, the original counter read **180**. The Production Secret, explicit Apify selection and cumulative limit **200** with expiry `2026-10-22T00:00:00Z` are saved: at most 20 additional Whatnot starts/$0.60, without resetting the counter. Website verification is pending deployment. Mercari's failed transport is not expanded. See the [single-account decision and evidence](frontier-research/apify-single-account-2026-10-15.md).
 
 ## October 3: merchant API recovery; paid limits preserved
 
