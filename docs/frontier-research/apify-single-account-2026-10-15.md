@@ -1,6 +1,6 @@
 # Single-account Apify verification — October 15, 2026
 
-Status: **one authorized account authenticated; one Whatnot test succeeded; its token is saved as a Vercel Production Secret. The original counter was read at 180 after founder-completed device verification, and a bounded Whatnot renewal is configured for deployment.** Website acquisition still requires post-deploy verification. This is not a complete-cost recommendation or a source-rights finding.
+Status: **single-account Whatnot acquisition is deployed and verified on lenstcg.com.** The original counter moved from 180 to 181 during verification, leaving 19 starts under the cumulative 200 ceiling, expiring October 22 UTC. Mercari still reports Soldgraph's exhausted free allowance. This is not a complete-cost recommendation or a source-rights finding.
 
 ## Decision and boundary
 
@@ -29,7 +29,17 @@ No email addresses, credentials, seller identifiers or raw page captures are com
 
 At the initial handoff, Vercel's Redis Browser required passkey reauthentication and the environment-variable connector returned metadata without secret values. The founder then completed authentication. The Redis Browser displayed the original `tcglens:apify-pilot:2026-09-14:reserved-runs` key, no expiry, and value **180**. No guessed value, alternate key, reset or refund was used.
 
-Remaining release verification: deploy the saved configuration and run an actual website comparison. Do not mark the website restored from the standalone Actor result. Preserve null charges and exact-print gates, and capture English/Chinese desktop plus mobile evidence of the resulting display.
+## Deployed evidence
+
+Commit `be894217e8373453d2a2af7e5374a0da09216b65`, production deployment `dpl_GBSY1EioPq3yrfC8bDu6TPccFUnP`, reached READY and was aliased to `lenstcg.com`. A normal no-ZIP browser search for Giratina V 186/196 produced a non-demo report at approximately 07:48 UTC: eBay 50 source candidates, Whatnot two, Stomping Grounds two, and an explicit Mercari failure. The Whatnot card showed the Apify source and observation time.
+
+The two Whatnot asking prices were $725 and $1,000. The $725 offer displayed seller-stated Near Mint, two photos, unknown shipping and buyer fees, and a conditional comparison: its extra charges must be below $30.72 to beat the $755.72 eBay pre-tax benchmark. It was not a lens winner. Both Whatnot rows retained `shipping=null`, `buyerFee=null`, `costComplete=false` and `eligible=false`; all four lens choices remained eBay. A same-card API check at 07:49:32 UTC returned HTTP 200 and passed the public report schema. Provider observation times remained at 07:48 UTC. The final Redis read remained **181**, confirming only one application Actor reservation across these checks.
+
+English and Chinese 1440px desktop views and a Chinese 390px mobile view were inspected and captured; Whatnot photos, costs, conditional verdict and attribution rendered. Browser warning/error output was empty. The deployment-scoped warning/error/fatal log scan returned no entries. No UI flow changed, so the five-search manual regression was not repeated. The previously passed full automated flow gate still covers the unchanged application code.
+
+Mercari's live report specifically says `Soldgraph free allowance reached`; its configured source remains Soldgraph. The historical failed Mercari Apify transport was not retried, enabled or given additional budget. Whatnot recovery must not be described as restoring both marketplaces or as resolving missing checkout fields.
+
+Minimal ignored production evidence: `output/frontier-research/direct-metadata/2026-10-15-production-result.json`. The browser result remains open for review. Recheck actual source availability and remaining counter value before any later budget extension; neither a deployment nor credit availability resets the allowance.
 
 ## Verification
 

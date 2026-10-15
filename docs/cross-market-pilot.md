@@ -2,9 +2,9 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest — October 15: single-account Whatnot renewal configured
+## Latest — October 15: single-account Whatnot renewal live and verified
 
-The founder authorized a single selected Apify account. Its bearer token authenticated; one bounded three-row Whatnot run succeeded in about seven seconds and settled at $0.00905. Two rows passed existing normalization, with prices, images, feedback counts and seller-stated condition; shipping and buyer fees remained unknown. After founder-completed Vercel passkey authentication, the original counter read **180**. The Production Secret, explicit Apify selection and cumulative limit **200** with expiry `2026-10-22T00:00:00Z` are saved: at most 20 additional Whatnot starts/$0.60, without resetting the counter. Website verification is pending deployment. Mercari's failed transport is not expanded. See the [single-account decision and evidence](frontier-research/apify-single-account-2026-10-15.md).
+The founder authorized a single selected Apify account. Its bearer token authenticated; one bounded three-row Whatnot research run settled at $0.00905. After founder-completed Vercel passkey authentication, the original counter read **180**. Production now selects Apify for Whatnot, with cumulative limit **200** and expiry `2026-10-22T00:00:00Z`: at most 20 additional Whatnot starts/$0.60, without a counter reset. Commit `be89421` reached READY and the real Giratina browser search returned two Whatnot offers ($725/$1,000), unknown shipping/fees and no Whatnot lens winner. EN/Chinese desktop and mobile were verified; the final counter was **181**, leaving 19 starts. Mercari still reports Soldgraph's free-allowance exhaustion; its failed Apify transport was not expanded. See the [single-account decision and deployed evidence](frontier-research/apify-single-account-2026-10-15.md#deployed-evidence).
 
 ## October 3: merchant API recovery; paid limits preserved
 
