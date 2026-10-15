@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-10-15
 canonical_branch: origin/main
-last_verified_product_commit: be89421
-working_branch: codex/market-mode-switch (isolated release worktree; original feat/whatnot-live dirt preserved)
+last_verified_product_commit: 1c2ffcb
+working_branch: codex/market-mode-switch (1c2ffcb fast-forwarded to main, pushed, Vercel READY)
 max_lines: 300
 ---
 
@@ -15,7 +15,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Current source work (October 15): on-demand market views/account-pool release prepared; [decision and verification](docs/market-views-account-pool-2026-10-15.md). Prior rollout: `be89421` READY; fixed-account Apify Whatnot returned two real Giratina offers on lenstcg.com, null charges and no Whatnot lens winner. Original counter 180→181, cumulative ceiling 200/expiry October 22 UTC; 19 starts remain absent other traffic. Mercari still reports exhausted Soldgraph allowance. EN/Chinese/mobile verified; see WS-SOURCES.
+- Current source work (October 15): `1c2ffcb` on-demand market views/account pool READY; live single=eBay 50, cross=Whatnot 2 + eBay 50; Mercari quota-paused; [decision and verification](docs/market-views-account-pool-2026-10-15.md). Prior rollout: `be89421` READY; fixed-account Apify Whatnot returned two real Giratina offers on lenstcg.com, null charges and no Whatnot lens winner. Original counter 180→181, cumulative ceiling 200/expiry October 22 UTC; 19 starts remain absent other traffic. Mercari still reports exhausted Soldgraph allowance. EN/Chinese/mobile verified; see WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -29,9 +29,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Default eBay; explicit homepage/result cross opt-in, compact text tabs, unified cards | Verify release; see October 15 decision and WS-SOURCES |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Default eBay; explicit cross opt-in, text tabs, unified cards and 92px mobile examples READY | Observe buyer use; see October 15 decision and WS-SOURCES |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | `be89421` READY; Whatnot browser-verified; counter 181/200, expiry October 22 UTC; Mercari quota-paused | Review finite renewal before expiry; Mercari still needs a permitted working source |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | `1c2ffcb` READY; account-pool Whatnot 2 live offers; cumulative ceiling 1846, expiry October 22 UTC; Mercari quota-paused | Review finite renewal before expiry; Mercari still needs a permitted working source |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product e95ccfa pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
