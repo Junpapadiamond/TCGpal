@@ -336,6 +336,112 @@ describe("comparison condition controls", () => {
     expect(within(translated).getAllByRole("button", { name: /^使用搜索示例：/ }).map((button) => button.getAttribute("data-example-id"))).toEqual(before);
   });
 
+  it("only searches cross-market from the homepage after explicit opt-in and resets it for a new search", async () => {
+    render(<ComparisonApp />);
+    const option = screen.getByRole("checkbox", { name: "Include cross-market search" });
+    expect((option as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(option);
+    expect(requests).toHaveLength(0);
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await screen.findByRole("region", { name: "Across marketplaces" });
+    expect(requests.filter((request) => request.marketScope === "cross")).toHaveLength(1);
+    expect(requests.filter((request) => request.marketScope !== "cross")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Cross Market", pressed: true })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
+    expect(screen.getByRole("region", { name: "Single market results" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
+    expect(requests).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "New search" }));
+    expect((screen.getByRole("checkbox", { name: "Include cross-market search" }) as HTMLInputElement).checked).toBe(false);
+  });
+
+  it("does not start paid fan-out when the initial eBay request fails", async () => {
+    const originalFetch = fetch;
+    const scopes: unknown[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/listing-compare")) {
+        scopes.push(JSON.parse(String(init?.body)).marketScope);
+        return Response.json({ error: "Invalid request" }, { status: 400 });
+      }
+      return originalFetch(input, init);
+    }));
+    render(<ComparisonApp />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include cross-market search" }));
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await screen.findByText("Invalid request");
+    expect(scopes).toEqual(["single"]);
+  });
+
+  it("preserves eBay and shows the failed paid attempt without automatically retrying", async () => {
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/listing-compare") && JSON.parse(String(init?.body)).marketScope === "cross") {
+        return new Response("Unavailable", { status: 503 });
+      }
+      return originalFetch(input, init);
+    }));
+    render(<ComparisonApp />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include cross-market search" }));
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await screen.findByRole("alert");
+    expect(screen.getByRole("alert").textContent).toContain("Credits may have been used");
+    expect(vi.mocked(fetch).mock.calls.filter(([input, init]) => String(input).endsWith("/api/agent/listing-compare") && JSON.parse(String(init?.body)).marketScope === "cross")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
+    expect(screen.getByRole("region", { name: "Single market results" })).toBeTruthy();
+  });
+
+  it("switches equal-priority market views without refetching and retains the selection across languages", async () => {
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await originalFetch(input, init);
+      if (String(input).endsWith("/api/agent/listing-compare")) {
+        const body = await response.json();
+        return Response.json({ ...body, confirmedCard: identityForQuery("Pikachu 58/102") });
+      }
+      return response;
+    }));
+    render(<ComparisonApp />);
+    expect(screen.queryByRole("group", { name: "Comparison view" })).toBeNull();
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await screen.findByRole("button", { name: "New search" });
+    expect(screen.getByRole("button", { name: "Single Market", pressed: true })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Across marketplaces" })).toBeNull();
+    const manualSection = screen.getByRole("region", { name: "Check other marketplaces" });
+    fireEvent.click(manualSection.querySelector("summary")!);
+    for (const marketplace of ["eBay", "Whatnot", "Mercari"]) {
+      const link = within(manualSection).getByRole("link", { name: new RegExp(marketplace) });
+      expect(decodeURIComponent(link.getAttribute("href")!)).toContain("Pikachu");
+    }
+    const calls = vi.mocked(fetch).mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
+    expect(screen.queryByRole("region", { name: "Across marketplaces" })).toBeNull();
+    expect(vi.mocked(fetch).mock.calls.length).toBe(calls);
+    fireEvent.click(screen.getByRole("button", { name: "Search other marketplaces" }));
+    await screen.findByRole("region", { name: "Across marketplaces" });
+    expect(requests.at(-1)?.marketScope).toBe("cross");
+    expect(requests).toHaveLength(2);
+    const afterSearch = vi.mocked(fetch).mock.calls.length;
+    expect(screen.getByRole("region", { name: "Across marketplaces" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Single market results" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "中文" }));
+    expect(screen.getByRole("button", { name: "跨平台", pressed: true })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "跨平台比价" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "单一平台" }));
+    expect(screen.queryByRole("region", { name: "跨平台比价" })).toBeNull();
+    expect(vi.mocked(fetch).mock.calls.length).toBe(afterSearch);
+    fireEvent.click(screen.getByRole("button", { name: "跨平台" }));
+    expect(screen.getByRole("region", { name: "跨平台比价" })).toBeTruthy();
+    expect(vi.mocked(fetch).mock.calls.length).toBe(afterSearch);
+  });
+
   it("continues the standard six-card journey from an example through Edit and New search", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0.999);
     render(<ComparisonApp />);
@@ -364,6 +470,12 @@ describe("comparison condition controls", () => {
       await waitFor(() => expect(requests).toHaveLength(index + 1));
       expect(requests[index]).toMatchObject({ query: card.query, cardHint: { game: card.game } });
       await screen.findByRole("button", { name: "New search" });
+      const view = card.comparisonView === "cross" ? "Cross Market" : "Single Market";
+      fireEvent.click(screen.getByRole("button", { name: view }));
+      expect(screen.getByRole("button", { name: view, pressed: true })).toBeTruthy();
+      expect(Boolean(screen.queryByRole("button", { name: "Search other marketplaces" }))).toBe(card.comparisonView === "cross");
+      expect(requests[index].marketScope ?? "single").toBe("single");
+      expect(requests).toHaveLength(index + 1);
     }
   });
 
@@ -905,6 +1017,28 @@ describe("comparison condition controls", () => {
       ...reportFor(requests[0]),
       confirmedCard: exactCard,
     }), { headers: { "Content-Type": "application/json" } }));
+  });
+
+  it("opens saved cross-market reports in Cross and requires an explicit eBay-only refresh", async () => {
+    const request = buildStandardComparisonRequest(STANDARD_COMPARISON_FLOW_CARDS[0]);
+    request.marketScope = "cross";
+    const savedReport = { ...reportFor(request), confirmedCard: identityForQuery("Umbreon VMAX 215/203") };
+    const receiptId = "0123456789abcdef0123456789abcdef";
+    window.history.replaceState(null, "", `/?receipt=${receiptId}`);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).includes("/api/comparison-snapshots")) return Response.json({ snapshot: {
+        id: receiptId, report: savedReport, savedAt: "2026-07-31T10:00:00.000Z", expiresAt: "2026-08-30T10:00:00.000Z",
+      } });
+      throw new Error("No automatic acquisition expected");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<ComparisonApp />);
+    await screen.findByRole("region", { name: "Across marketplaces" });
+    expect(screen.getByRole("button", { name: "Cross Market", pressed: true })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
+    expect(screen.queryByRole("region", { name: "Single market results" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Search eBay" })).toBeTruthy();
+    expect(fetchMock.mock.calls.every(([input]) => String(input).includes("/api/comparison-snapshots"))).toBe(true);
   });
 
   it("resolves a result journey URL to the newest matching receipt without rerunning the pipeline", async () => {
@@ -1626,11 +1760,15 @@ describe("comparison condition controls", () => {
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
     const hero = screen.getByRole("article", { name: "Best-supported buy" });
     expect(hero.querySelector(":scope > div")?.className.split(" ")).toContain("grid-cols-[72px_minmax(0,1fr)]");
+    fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search other marketplaces" }));
+    await screen.findByRole("region", { name: "Across marketplaces" });
     const supplementaryPrices = screen.getByRole("region", { name: "Across marketplaces" });
     expect(screen.queryByRole("region", { name: "Marketplace asking prices" })).toBeNull();
-    expect(hero.compareDocumentPosition(supplementaryPrices) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("article", { name: "Best-supported buy" })).toBeNull();
     expect(supplementaryPrices.querySelector("details")?.open).toBe(false);
     expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[72px_minmax(0,1fr)]");
+    fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));
     const alternativeTitle = screen.getByRole("heading", { name: "Nami OP01-016 P4 SP alternate seller" });
@@ -1816,6 +1954,9 @@ describe("comparison condition controls", () => {
     expect(followUps.querySelector("details")?.open).toBe(false);
     fireEvent.click(within(followUps).getByText("Check other marketplaces"));
     expect(within(followUps).getByText("Market reference")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search other marketplaces" }));
+    await screen.findByRole("region", { name: "Across marketplaces" });
     const across = screen.getByRole("region", { name: "Across marketplaces" });
     expect(within(followUps).getByText("Japan manual check")).toBeTruthy();
     // The MANUAL CHECK label is the disclaimer; a "not checked" line repeating it
@@ -1834,7 +1975,7 @@ describe("comparison condition controls", () => {
     fireEvent.click(mercariLink);
     expect(trackEvent).toHaveBeenCalledWith("other_marketplace_clicked", { marketplace: "Mercari", game: "onePiece" });
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
-    expect(await screen.findByRole("heading", { name: "这次还没找到合适的" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "跨平台", pressed: true })).toBeTruthy();
     expect(screen.getByRole("region", { name: "去其他平台看看" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "手动搜索 Mercari" })).toBeTruthy();
     expect(screen.queryByText("Found listings, but none matched the selected SP print.")).toBeNull();

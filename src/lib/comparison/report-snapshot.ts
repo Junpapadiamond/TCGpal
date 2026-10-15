@@ -10,7 +10,7 @@ import {
 import { isCacheableRequest } from "./report-cache";
 
 const SNAPSHOT_SCOPE = "comparison-snapshot-v1";
-const SNAPSHOT_LATEST_SCOPE = "comparison-snapshot-latest-v1";
+const SNAPSHOT_LATEST_SCOPE = "comparison-snapshot-latest-v2";
 const SNAPSHOT_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 export const comparisonSnapshotIdSchema = z.string().regex(/^[a-f0-9]{32}$/);
@@ -27,6 +27,7 @@ export const comparisonSnapshotLookupSchema = z.object({
   confirmedCardId: z.string().trim().min(1).max(160),
   game: tcgGameSchema,
   desiredCondition: conditionClaimSchema,
+  marketScope: z.enum(["single", "cross"]).optional(),
 });
 
 const comparisonSnapshotPointerSchema = z.object({
@@ -68,6 +69,7 @@ export async function saveComparisonSnapshot(
       confirmedCardId,
       game: report.request.cardHint.game,
       desiredCondition: report.request.buyer.desiredCondition,
+      marketScope: report.request.marketScope ?? "single",
     });
     await setJsonCache(SNAPSHOT_LATEST_SCOPE, comparisonSnapshotLookupKey(lookup), { id }, {
       ttlSeconds: SNAPSHOT_TTL_SECONDS,
@@ -107,5 +109,5 @@ export async function getLatestComparisonSnapshot(
 }
 
 function comparisonSnapshotLookupKey(input: ComparisonSnapshotLookup) {
-  return JSON.stringify([input.confirmedCardId, input.game, input.desiredCondition]);
+  return JSON.stringify([input.confirmedCardId, input.game, input.desiredCondition, input.marketScope ?? "single"]);
 }

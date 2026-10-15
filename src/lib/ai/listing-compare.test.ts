@@ -150,6 +150,21 @@ function makeBarrier(parties: number) {
 }
 
 describe("listing comparison agent", () => {
+  it("does not call other marketplace agents unless cross-market acquisition is explicitly requested", async () => {
+    const searches = [vi.fn(async () => []), vi.fn(async () => []), vi.fn(async () => [])];
+    const agents: PlatformAgent[] = (["eBay", "Whatnot", "Mercari"] as const).map((marketplace, index) => ({
+      id: marketplace.toLowerCase(), marketplace, label: "Scope test", sourceMode: "third_party_provider",
+      requiredEnv: [], isConfigured: () => true, search: searches[index],
+    }));
+    const pure = { ...request, confirmedCardId: "swsh7-215", sourceListing: { ...request.sourceListing, title: "", description: "", url: "", price: null } };
+    await runListingComparison(pure, { fetcher, agents });
+    expect(searches[0]).toHaveBeenCalledTimes(1);
+    expect(searches[1]).not.toHaveBeenCalled();
+    expect(searches[2]).not.toHaveBeenCalled();
+    await runListingComparison({ ...pure, marketScope: "cross" }, { fetcher, agents });
+    expect(searches[1]).toHaveBeenCalledTimes(1);
+    expect(searches[2]).toHaveBeenCalledTimes(1);
+  });
   it("runs injected marketplace fixtures through real normalization without publishing them to the report cache", async () => {
     const agents: PlatformAgent[] = (["eBay", "Whatnot", "Mercari"] as const).map((marketplace) => ({
       id: marketplace.toLowerCase(), marketplace, label: "Isolated QA fixture", sourceMode: "third_party_provider",
@@ -157,7 +172,7 @@ describe("listing comparison agent", () => {
       search: async () => [{ ...demoListingSeeds[0], id: marketplace, marketplace, demo: false, shipping: null, buyerFee: null }],
     }));
     const pure = { ...request, confirmedCardId: "swsh7-215", sourceListing: { ...request.sourceListing, title: "", description: "", url: "", price: null } };
-    const report = await runListingComparison(pure, { fetcher, agents });
+    const report = await runListingComparison({ ...pure, marketScope: "cross" }, { fetcher, agents });
     expect(report.platforms.filter((platform) => platform.status === "complete")).toHaveLength(3);
     expect(new Set(report.candidates.map((listing) => listing.marketplace)).size).toBe(3);
     expect(report.rankedChoices).toHaveLength(0);

@@ -11,7 +11,7 @@ import { getConfiguredPlatformAgents } from "./platforms";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
-const COMPARISON_CACHE_REVISION = "ranking-v11-market-verdict-previews";
+const COMPARISON_CACHE_REVISION = "ranking-v12-explicit-market-scope";
 const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
@@ -25,6 +25,7 @@ export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: 
   return [
     "identity-v4",
     COMPARISON_CACHE_REVISION,
+    `scope:${request.marketScope ?? "single"}`,
     `recall:${process.env.EBAY_RECALL_PROBE_ENABLED !== "false"}`,
     ONE_PIECE_PRINT_METADATA_REVISION,
     ONE_PIECE_CATALOG_REVISION,

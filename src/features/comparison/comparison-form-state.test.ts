@@ -48,6 +48,7 @@ describe("comparison form search state", () => {
 
     expect(reset).toMatchObject({
       heroQuery: "",
+      includeCrossMarket: false,
       game: "pokemon",
       url: "",
       marketplace: "eBay",

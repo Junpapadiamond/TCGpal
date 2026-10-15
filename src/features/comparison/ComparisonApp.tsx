@@ -31,7 +31,7 @@ import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/compariso
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { onePiecePrintDisplayLabel } from "@/lib/external/one-piece-taxonomy";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
-import { tcgplayerSearchUrl } from "@/lib/comparison/marketplace-search";
+import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
 import { buildJapanSearchQuery } from "@/lib/comparison/japan-references";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
@@ -44,7 +44,8 @@ import {
 } from "./identity-filters";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
-import { CrossMarketPrices } from "./CrossMarketPrices";
+import { CrossMarketSearch } from "./CrossMarketSearch";
+import { MarketModeSwitch, type MarketMode } from "./MarketModeSwitch";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
 import { submitsOnEnter } from "@/features/comparison/search-submit";
 import { summarizeExclusions } from "@/features/comparison/exclusion-summary";
@@ -177,6 +178,8 @@ type JourneyStep = "search" | "confirmation" | "result";
 type JourneySnapshot = {
   form: ComparisonForm;
   report: ComparisonReport | null;
+  crossReport?: ComparisonReport | null;
+  crossFailed?: boolean;
   identityResult: CardIdentitySearchResponse | null;
   selectedIdentity: CardIdentityCandidate | null;
   pendingRequest: ComparisonRequest | null;
@@ -202,7 +205,7 @@ class ApiResponseError extends Error {
 }
 
 async function requestComparisonReport(request: ComparisonRequest, fallbackMessage: string, signal?: AbortSignal) {
-  const json = await postJsonWithRetry("/api/agent/listing-compare", request, fallbackMessage, signal);
+  const json = await postJsonWithRetry("/api/agent/listing-compare", request, fallbackMessage, signal, request.marketScope === "cross" ? 1 : 2);
   return comparisonReportSchema.parse(json);
 }
 
@@ -405,6 +408,9 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const { lang } = useLang();
   const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
+  const [crossFailed, setCrossFailed] = useState(false);
+  const [crossReport, setCrossReport] = useState<ComparisonReport | null>(null);
+  const [marketMode, setMarketMode] = useState<MarketMode>("single");
   const [identityResult, setIdentityResult] = useState<CardIdentitySearchResponse | null>(null);
   const [selectedIdentity, setSelectedIdentity] = useState<CardIdentityCandidate | null>(null);
   const [recentCarouselCards, setRecentCarouselCards] = useState<RecentCarouselCard[]>([]);
@@ -494,6 +500,9 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       requestGeneration.current += 1;
       form.reset(snapshot.form);
       setReport(snapshot.report);
+      setCrossReport(snapshot.crossReport ?? null);
+      setCrossFailed(snapshot.crossFailed ?? false);
+      setMarketMode(snapshot.crossReport ? "cross" : "single");
       setIdentityResult(snapshot.identityResult);
       setSelectedIdentity(snapshot.selectedIdentity);
       setPendingRequest(snapshot.pendingRequest);
@@ -620,7 +629,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
 
   function currentSnapshot(overrides: Partial<JourneySnapshot> = {}): JourneySnapshot {
     return {
-      form: form.getValues(), report, identityResult, selectedIdentity, pendingRequest,
+      form: form.getValues(), report, crossReport, crossFailed, identityResult, selectedIdentity, pendingRequest,
       journeyState: journeyState === "confirming" ? "confirming" : journeyState === "result" ? "result" : "idle",
       ...overrides,
     };
@@ -653,6 +662,9 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     preserveSearchBeforeSubmit(values);
     const operation = beginRequest();
     const request = buildRequest(values, confirmedCardId);
+    setCrossReport(null);
+    setCrossFailed(false);
+    setMarketMode(values.includeCrossMarket ? "cross" : "single");
     setResultSnapshot(null);
     setPendingRequest(request);
     setError(null);
@@ -754,14 +766,32 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     setJourneyState("comparing");
     trackEvent("comparison_started", { marketplace: request.sourceListing.marketplace });
     trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
-    const parsed = await requestComparisonReport(request, t.error.temporary, operation.controller.signal);
+    // Resolve eBay first. An eBay transport failure must not discard a paid
+    // result or trigger another paid run through the ordinary retry path.
+    const parsed = await requestComparisonReport({ ...request, marketScope: "single" }, t.error.temporary, operation.controller.signal);
+    if (!requestIsCurrent(operation)) return;
+    let additional: ComparisonReport | null = null;
+    let additionalFailed = false;
+    if (request.marketScope === "cross" && parsed.status !== "needs_confirmation") {
+      try {
+        additional = await requestComparisonReport(request, t.error.temporary, operation.controller.signal);
+        if (additional.status === "needs_confirmation" || (parsed.confirmedCard && additional.confirmedCard?.id !== parsed.confirmedCard.id)) throw new Error("Card identity changed");
+      } catch {
+        additional = null;
+        additionalFailed = true;
+      }
+    }
     if (!requestIsCurrent(operation)) return;
     setReport(parsed);
+    setCrossReport(additional);
+    setCrossFailed(additionalFailed);
     setPendingRequest(parsed.request);
     if (parsed.confirmedCard) rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
     setJourneyState("result");
     writeJourney("result", "push", currentSnapshot({
       report: parsed,
+      crossReport: additional,
+      crossFailed: additionalFailed,
       selectedIdentity: parsed.confirmedCard ?? identity,
       pendingRequest: parsed.request,
       journeyState: "result",
@@ -797,6 +827,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       }
       if (expectedReceiptId && snapshot.id !== expectedReceiptId) throw new Error(t.error.temporary);
       setReport(restoredReport);
+      setMarketMode(isCrossMarketReport(restoredReport) ? "cross" : "single");
       setPendingRequest(restoredReport.request);
       setSelectedIdentity(restoredReport.confirmedCard);
       form.setValue("heroQuery", restoredReport.request.query ?? restoredReport.request.cardHint.name);
@@ -932,12 +963,13 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
 
   // R5: a failed comparison keeps the exact request around so one tap retries
   // it — the buyer never re-types anything after a backend hiccup.
-  async function retryComparison() {
+  async function retryComparison(singleOnly = false) {
     if (!pendingRequest || loading) return;
     setError(null);
     try {
       if (pendingRequest.confirmedCardId) {
-        await runConfirmedComparison(pendingRequest, selectedIdentity);
+        await runConfirmedComparison(singleOnly ? { ...pendingRequest, marketScope: "single" } : pendingRequest, selectedIdentity);
+        if (singleOnly) setMarketMode("single");
       } else {
         await submitComparison(form.getValues());
       }
@@ -987,6 +1019,8 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     setResultSnapshot(null);
     setJourneyState("idle");
     setCompactSearchOpen(false);
+    setCrossReport(null);
+    setMarketMode("single");
     const reset = resetForNewCardSearch(form.getValues());
     form.reset(reset);
     refreshExamples();
@@ -1019,7 +1053,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   }
 
   function checkCardFromRail(card: RecentCarouselCard, source: "chase" | "recent") {
-    const values = resetForNewCardSearch(form.getValues());
+    const values = { ...resetForNewCardSearch(form.getValues()), includeCrossMarket: form.getValues("includeCrossMarket") };
     form.reset({
       ...values,
       game: card.game,
@@ -1084,6 +1118,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                 <span>{t.form.deliveryZip}</span>
                 <input {...form.register("postalCode")} inputMode="numeric" />
               </label>
+              <div className="sm:col-span-2 lg:col-span-full"><CrossMarketOption form={form} /></div>
               <button className="primary-button" type="submit" disabled={loading}>
                 {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : <IconCardSearch className="h-4 w-4" />}
                 {loading ? t.form.submitLoading : heroPreview?.cardNumber ? t.form.submitIdle : t.form.browseVersions}
@@ -1128,6 +1163,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
               <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
             )}
 
+            <CrossMarketOption form={form} />
             <SearchExamples examples={examples} onSelect={chooseSearchExample} onRefresh={refreshExamples} active={!heroQuery?.trim() && !loading} />
             <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
 
@@ -1417,7 +1453,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
           : pendingRequest?.confirmedCardId
             ? <ComparisonReplayLoading query={pendingRequest.query || pendingRequest.cardHint.name} />
             : <ListingSubmissionLoading />)}
-        {error && <ErrorNotice message={error} onRetry={pendingRequest ? retryComparison : undefined} />}
+        {error && <ErrorNotice message={error} onRetry={pendingRequest ? () => void retryComparison() : undefined} />}
         {journeyState === "confirming" && identityResult && (
           <IdentityConfirmation
             identities={identityResult.candidates}
@@ -1433,12 +1469,16 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
         {journeyState === "result" && report && report.status !== "needs_confirmation" && (
           <ComparisonResult
             report={report}
+            crossReport={crossReport}
+            crossFailed={crossFailed}
+            marketMode={marketMode}
+            onMarketModeChange={setMarketMode}
             preferredRole={preferredRole}
             feedbackSent={feedbackSent}
             onFeedback={sendFeedback}
             onCompareSuggestedPrint={compareSuggestedPrint}
             onRefineSearch={() => setCompactSearchOpen(true)}
-            onRetrySources={() => void retryComparison()}
+            onRetrySources={() => void retryComparison(true)}
             onPasteListing={startPasteListing}
             snapshot={resultSnapshot}
             inspectorEnabled={inspectorEnabled}
@@ -2055,6 +2095,16 @@ function ErrorNotice({ message, onRetry }: { message: string; onRetry?: () => vo
   );
 }
 
+function CrossMarketOption({ form }: { form: UseFormReturn<ComparisonForm> }) {
+  const { lang } = useLang();
+  return <label className="mt-2 inline-flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-md text-sm text-[#52635c]">
+    <input {...form.register("includeCrossMarket")} type="checkbox" aria-label={lang === "zh" ? "同时查询跨平台" : "Include cross-market search"}
+      aria-describedby="cross-market-option-hint" className="h-4 w-4 shrink-0 accent-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2f6f73]" />
+    <span className="font-semibold">{lang === "zh" ? "同时查询跨平台" : "Include cross-market search"}</span>
+    <span id="cross-market-option-hint" className="text-xs text-[#64736c]">Whatnot · Mercari · {lang === "zh" ? "使用额外查询额度" : "uses extra search credits"}</span>
+  </label>;
+}
+
 function DesiredConditionField({ form }: { form: UseFormReturn<ComparisonForm> }) {
   const t = useT();
   const value = useWatch({
@@ -2338,8 +2388,17 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
   );
 }
 
+function isCrossMarketReport(report: ComparisonReport) {
+  return report.request.marketScope === "cross" || report.candidates.some((listing) => listing.marketplace !== "eBay" && !listing.userSupplied)
+    || report.platforms.some((source) => source.marketplace !== "eBay" && source.status === "complete");
+}
+
 function ComparisonResult({
   report,
+  crossReport,
+  crossFailed,
+  marketMode,
+  onMarketModeChange,
   preferredRole,
   feedbackSent,
   onFeedback,
@@ -2351,6 +2410,10 @@ function ComparisonResult({
   inspectorEnabled,
 }: {
   report: ComparisonReport;
+  crossReport: ComparisonReport | null;
+  crossFailed: boolean;
+  marketMode: MarketMode;
+  onMarketModeChange: (mode: MarketMode) => void;
   preferredRole: LensRole;
   feedbackSent: boolean;
   onFeedback: (changedDecision: boolean) => void;
@@ -2576,6 +2639,7 @@ function ComparisonResult({
 
   return (
     <section id="comparison-result" tabIndex={-1} className="scroll-mt-24 space-y-4 outline-none">
+      <MarketModeSwitch mode={marketMode} onChange={onMarketModeChange} />
       {snapshot?.restored && (
         <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm text-[#6f5a22]">
           <p>
@@ -2594,6 +2658,11 @@ function ComparisonResult({
 
       {report.request.cardHint.game === "onePiece" && <GameBetaNotice />}
 
+      {isCrossMarketReport(report) && marketMode === "single" && <div className="mx-auto max-w-[860px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
+        <p className="text-sm text-[#52635c]">{lang === "zh" ? "这份保存的结果包含多个平台。可单独查询当前 eBay 商品。" : "This saved report includes multiple marketplaces. Search eBay for a separate current comparison."}</p>
+        <button type="button" className="primary-button mt-3" onClick={onRetrySources}>{lang === "zh" ? "查询 eBay" : "Search eBay"}</button>
+      </div>}
+      <div role="region" aria-label={lang === "zh" ? "单一平台结果" : "Single market results"} hidden={marketMode !== "single" || isCrossMarketReport(report)} className="space-y-4">
       {outcome === "next_moves" && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.nextMovesTitle}</h3>
@@ -2729,8 +2798,12 @@ function ComparisonResult({
           )}
 
           <BuyerSourceNotice report={report} hasComparableListings={eligibleCount > 0} />
-
-          <CrossMarketPrices candidates={report.candidates} platforms={report.platforms} card={report.confirmedCard} game={report.request.cardHint.game} />
+      </div>
+      </div>
+      <div className="mx-auto max-w-[860px] space-y-3">
+          <div hidden={marketMode !== "cross"}>
+            <CrossMarketSearch key={`${report.confirmedCard?.id ?? report.request.confirmedCardId}:${report.generatedAt}`} report={report} initialResult={crossReport ?? (isCrossMarketReport(report) ? report : null)} initialFailed={crossFailed} />
+          </div>
 
           <OtherMarketplaces report={report} />
 
@@ -3231,6 +3304,7 @@ function BuyerSourceNotice({ report, hasComparableListings }: { report: Comparis
 
 function OtherMarketplaces({ report }: { report: ComparisonReport }) {
   const t = useT();
+  const { lang } = useLang();
   const card = report.confirmedCard;
   if (!card) return null;
   const query = [card.name, card.cardNumber, card.variant, card.setName].filter(Boolean).join(" ");
@@ -3245,6 +3319,15 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
   // them may claim it is cheaper, faster, or safer — TCGlens has no evidence for
   // that and the unsupported-claim rule applies to our own copy too.
   const rows = [
+    ...(["eBay", "Whatnot", "Mercari"] as const).map((marketplace) => ({
+      marketplace,
+      label: lang === "zh" ? "自行搜索" : "Manual search",
+      detail: null,
+      note: lang === "zh" ? "带上这张卡的搜索词，直接到平台查看。不会使用 TCGlens 查询额度。" : "Open a prefilled search on the marketplace. No TCGlens search credits used.",
+      url: marketplace === "Whatnot" ? whatnotSearchUrl(query)
+        : marketplace === "Mercari" ? `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`
+        : `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`,
+    })),
     {
       marketplace: "TCGplayer" as const,
       label: t.result.marketReferenceLabel,
@@ -4116,6 +4199,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
         claimedCondition: row.claimedCondition,
       })),
     webDiscoveryMode: "off",
+    marketScope: values.includeCrossMarket ? "cross" : "single",
     confirmedCardId,
   };
 }

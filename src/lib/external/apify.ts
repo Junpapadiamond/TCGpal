@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { reserveApifyPilotRun } from "./apify-budget";
 import { checkApifyPricing } from "./apify-pricing";
+import { selectApifyAccountToken } from "./apify-accounts";
 import { listingSeedSchema, type ListingSeed } from "@/lib/schemas";
 import { titleConditionFloor } from "@/lib/comparison/ranking";
 
@@ -55,6 +56,8 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
     memoryMbytes: search.memoryMbytes ?? 256, maxResults: APIFY_MAX_RESULTS,
     maxChargeUsd: APIFY_MAX_CHARGE_USD[search.provider], fetcher: search.fetcher, signal: search.signal });
   search.signal?.throwIfAborted();
+  const token = await selectApifyAccountToken(search.token, APIFY_MAX_CHARGE_USD[search.provider], search.fetcher, search.signal);
+  search.signal?.throwIfAborted();
   await reserveApifyPilotRun(search.provider);
   const actorTimeoutSeconds = ACTOR_TIMEOUT_SECONDS[search.provider];
   const requestTimeoutMs = (actorTimeoutSeconds + 5) * 1000;
@@ -65,7 +68,7 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
   let response: Response;
   try {
     response = await search.fetcher(url, {
-      method: "POST", headers: { authorization: `Bearer ${search.token}`, "content-type": "application/json" },
+      method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       body: JSON.stringify(search.input), cache: "no-store", redirect: "error",
       signal: search.signal ? AbortSignal.any([search.signal, AbortSignal.timeout(requestTimeoutMs)]) : AbortSignal.timeout(requestTimeoutMs),
     });

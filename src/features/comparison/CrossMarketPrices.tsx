@@ -35,12 +35,12 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
     .filter((source) => source.configured && source.status !== "skipped")
     .map((source) => source.marketplace)])];
   const query = card ? [card.name, card.cardNumber, card.variant, card.setName].filter(Boolean).join(" ") : "";
-  return <section aria-label={zh ? "跨平台比价" : "Across marketplaces"} className="overflow-hidden rounded-xl border border-[#d6ded5] bg-[#fcfbf6]">
-    <div className="px-4 py-3 sm:px-5">
+  return <section aria-label={zh ? "跨平台比价" : "Across marketplaces"} className="space-y-4">
+    <div className="px-1">
       <h3 className="font-serif text-lg font-black text-[#24312f]">{zh ? "跨平台比价" : "Across marketplaces"}</h3>
       <p className="mt-1 text-xs leading-5 text-[#64736c]">{zh ? "查看各平台的商品图片、已知费用和判断。缺失费用会明确标出。" : "Compare listing pictures, known costs and verdicts across platforms. Missing charges stay explicit."}</p>
     </div>
-    <div className="divide-y divide-[#d6ded5] border-t border-[#d6ded5]">
+    <div className="space-y-4">
       {markets.map((marketplace) => {
         const source = platforms.find((platform) => platform.marketplace === marketplace);
         const rows = source?.status === "complete" ? candidates.filter((listing) => listing.marketplace === marketplace
@@ -58,7 +58,7 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
             : marketplace === "Mercari" ? `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}` : null
           : null;
         const attribution = sourceAttribution(marketplace, source, zh);
-        return <section key={marketplace} aria-label={zh ? `${marketplace} 标价` : `${marketplace} prices`} className="min-w-0 px-4 sm:px-5">
+        return <section key={marketplace} aria-label={zh ? `${marketplace} 标价` : `${marketplace} prices`} className={`min-w-0 rounded-xl bg-[#fcfbf6] px-4 sm:px-5 ${lead ? "border-2 border-[#2f6f73] shadow-[0_4px_8px_rgba(36,49,47,0.08)]" : "border border-[#d6ded5]"}`}>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-4">
             <h4 className="text-sm font-black text-[#2f6f73]">{marketplace}</h4>
             <p className="text-xs leading-5 text-[#64736c]">{status}{marketplace === "Stomping Grounds" && lead ? zh ? " · 库存待确认" : " · Stock unconfirmed" : ""}</p>

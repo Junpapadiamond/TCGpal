@@ -64,6 +64,7 @@ export function pickSearchExamples(
 export function applySearchExample(values: ComparisonForm, example: SearchExample): ComparisonForm {
   return {
     ...resetForNewCardSearch(values),
+    includeCrossMarket: values.includeCrossMarket,
     heroQuery: example.query,
     game: example.game,
     desiredCondition: example.desiredCondition ?? values.desiredCondition,

@@ -75,6 +75,7 @@ export function SearchExamples({ examples, onSelect, onRefresh, active = true }:
       className="search-examples"
       role="group"
       aria-label={t.form.searchExamples}
+      onTouchStart={() => setPaused(true)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}

@@ -69,6 +69,17 @@ describe("comparison report snapshots", () => {
     await expect(getComparisonSnapshot("../../secret")).resolves.toBeNull();
   });
 
+  it("isolates cross-market snapshots from the default latest eBay lookup", async () => {
+    const confirmedCardId = STANDARD_COMPARISON_FLOW_CARDS[0].expectedCardId;
+    const single = await saveComparisonSnapshot(report(), { confirmedCardId });
+    const crossReport = report();
+    crossReport.request.marketScope = "cross";
+    const cross = await saveComparisonSnapshot(crossReport, { confirmedCardId });
+    const lookup = { confirmedCardId, game: "pokemon" as const, desiredCondition: "Near Mint" as const };
+    expect((await getLatestComparisonSnapshot(lookup))?.id).toBe(single.id);
+    expect((await getLatestComparisonSnapshot({ ...lookup, marketScope: "cross" }))?.id).toBe(cross.id);
+  });
+
   it("indexes the newest matching receipt without mutating the previous snapshot", async () => {
     const confirmedCardId = STANDARD_COMPARISON_FLOW_CARDS[0].expectedCardId;
     const first = await saveComparisonSnapshot(report(), {

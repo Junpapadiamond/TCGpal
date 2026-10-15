@@ -18,6 +18,7 @@ export type StandardComparisonFlowCard = {
   cardNumber: string;
   expectedCardId: string;
   entryMode: StandardComparisonEntryMode;
+  comparisonView?: "single" | "cross";
   // The UI smoke may start through a search example, then continue through
   // the same explicit-query, confirmation, Edit, and New search contract.
   searchExampleId?: string;
@@ -70,6 +71,7 @@ export const STANDARD_COMPARISON_FLOW_CARDS: StandardComparisonFlowCard[] = [
     cardNumber: "OP01-024",
     expectedCardId: "OP01-024",
     entryMode: "edit_search",
+    comparisonView: "cross",
   },
   {
     label: "Pokemon new search: Charizard 4/102",
@@ -80,6 +82,7 @@ export const STANDARD_COMPARISON_FLOW_CARDS: StandardComparisonFlowCard[] = [
     cardNumber: "4/102",
     expectedCardId: "base1-4",
     entryMode: "new_search",
+    comparisonView: "single",
   },
   {
     label: "One Piece edit search: Roronoa Zoro OP01-001",

@@ -173,6 +173,8 @@ export const manualCandidateSchema = z.object({
 });
 
 export const comparisonRequestSchema = z.object({
+  // Omission means eBay only. Paid/additional sources require explicit intent.
+  marketScope: z.enum(["single", "cross"]).optional(),
   sourceListing: sourceListingSchema,
   buyer: buyerContextSchema,
   // The hero search box: one free-text string ("P-096 One Piece Japanese Promo").

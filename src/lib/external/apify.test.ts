@@ -4,16 +4,35 @@ import { clearLocalCache } from "@/lib/ops/cache";
 import { reserveApifyPilotRun } from "./apify-budget";
 import { checkApifyPricing } from "./apify-pricing";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
+import { getRedisClient } from "@/lib/ops/redis";
 
 vi.mock("./apify-budget", () => ({ reserveApifyPilotRun: vi.fn() }));
 vi.mock("./apify-pricing", () => ({ checkApifyPricing: vi.fn() }));
-vi.mock("@/lib/ops/redis", () => ({ isRedisConfigured: () => true, getRedisClient: () => null }));
+vi.mock("@/lib/ops/redis", () => ({ isRedisConfigured: () => true, getRedisClient: vi.fn(() => null) }));
 const parse = () => [{ ...demoListingSeeds[0], demo: false, observedAt: "2026-09-14T16:00:00.000Z" }];
 const base = { provider: "whatnot" as const, actor: "epicscrapers~whatnot-scraper", token: "test-secret", key: "test-card", input: { searchQueries: ["Pikachu 58/102"] }, parse };
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-14T16:00:00Z")); clearLocalCache(); vi.mocked(reserveApifyPilotRun).mockResolvedValue(undefined); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.restoreAllMocks(); vi.clearAllMocks(); });
 
 describe("paid source safeguards", () => {
+  it("selects funded pool credentials before exactly one paid start and keeps the original global reservation", async () => {
+    vi.stubEnv("APIFY_ACCOUNT_POOL_ENABLED", "1");
+    vi.stubEnv("APIFY_AUTHORIZED_TOKEN_POOL", JSON.stringify(["apify_api_exhausted", "apify_api_funded"]));
+    vi.mocked(getRedisClient).mockReturnValue({ get: vi.fn(async () => null), set: vi.fn(), eval: vi.fn(async () => 1) } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).endsWith("/users/me/limits")) return Response.json({ data: {
+        monthlyUsageCycle: { startAt: "2026-09-01T00:00:00Z", endAt: "2026-10-01T00:00:00Z" },
+        limits: { maxMonthlyUsageUsd: 5 }, current: { monthlyUsageUsd: new Headers(init?.headers).get("authorization")?.includes("exhausted") ? 5 : 0 },
+      } });
+      expect(new Headers(init?.headers).get("authorization")).toBe("Bearer apify_api_funded");
+      return Response.json([]);
+    });
+    try {
+      await expect(runApifySearch({ ...base, fetcher })).resolves.toHaveLength(1);
+      expect(fetcher.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+      expect(reserveApifyPilotRun).toHaveBeenCalledExactlyOnceWith("whatnot");
+    } finally { vi.mocked(getRedisClient).mockReturnValue(null); }
+  });
   it("does not consume a lifetime start or call the Actor when current pricing exceeds the cap", async () => {
     vi.mocked(checkApifyPricing).mockRejectedValueOnce(new Error("Current pricing exceeds the cap"));
     const fetcher = vi.fn();

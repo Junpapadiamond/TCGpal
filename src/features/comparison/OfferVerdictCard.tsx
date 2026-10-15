@@ -25,13 +25,13 @@ export function OfferVerdictCard({ listing, candidates, attribution, marketPrice
   const knownSeller = listing.seller.feedbackPercentage !== null && listing.seller.feedbackCount !== null;
   const preview = listing.imageKind === "listing_preview" || listing.imageKind === "catalog_reference";
   return <article aria-label={`${listing.marketplace} ${zh ? "判断" : "verdict"}: ${listing.title}`} className="min-w-0 py-4">
-    <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[72px_minmax(0,1fr)] sm:gap-4">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4">
       <ListingPhoto listing={listing} />
       <div className="min-w-0">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-          <p className="min-w-0 max-w-[48ch] flex-1 break-words text-sm font-bold leading-6 text-[#24312f]">{listing.title}</p>
-          <div className="text-right tabular-nums">
-            <p className="text-xl font-black text-[#24312f]">{money(total)}</p>
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-2">
+          <p className="min-w-0 max-w-[48ch] flex-1 break-words font-serif text-xl sm:text-2xl font-bold leading-tight text-[#24312f]">{listing.title}</p>
+          <div className="text-left tabular-nums sm:text-right">
+            <p className="font-mono text-3xl font-black text-[#24312f]">{money(total)}</p>
             <p className="text-[10px] font-semibold text-[#64736c]">{displayComplete
               ? listing.estimatedTax === null ? zh ? "税前总价" : "pre-tax total" : zh ? "预估到手价" : "est. landed"
               : itemOnly ? zh ? "商品价 · 总价待确认" : "item price · total unconfirmed" : zh ? "已知费用 · 总价待确认" : "known costs · total unconfirmed"}</p>
@@ -47,7 +47,7 @@ export function OfferVerdictCard({ listing, candidates, attribution, marketPrice
         ].filter(Boolean).join(" · ")}</p>}
       </div>
     </div>
-    <div className={`mt-3 rounded-md border px-3 py-2.5 ${verdict.tone === "positive" ? "border-[#c9d7ce] bg-[#e7efe8]" : verdict.tone === "review" ? "border-[#dfd6b6] bg-[#faf5e5]" : "border-[#d6ded5] bg-[#f1f3ee]"}`}>
+    <div className={`mt-4 rounded-lg border px-3 py-2.5 ${verdict.tone === "positive" ? "border-[#c9d7ce] bg-[#e7efe8]" : verdict.tone === "review" ? "border-[#dfd6b6] bg-[#faf5e5]" : "border-[#d6ded5] bg-[#f1f3ee]"}`}>
       <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm leading-5 text-[#24312f]"><span className="text-[10px] font-black uppercase tracking-wide text-[#64736c]">{zh ? "判断" : "Verdict"}</span><strong>{verdict.label}</strong></p>
       <p className="mt-1 text-xs leading-5 text-[#52635c]">{verdict.why}</p>
       <p className="mt-1 text-xs font-semibold leading-5 text-[#52635c]">{verdict.nextStep}</p>

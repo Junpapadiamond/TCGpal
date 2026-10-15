@@ -5,7 +5,7 @@
 1. **Source ingestion:** use official eBay Browse APIs for active-listing search; fetch exactly one user-pasted public HTTPS listing when the bounded adapter permits it; accept manual facts otherwise.
 2. **Identity:** reconcile title, set, collector number, and Pokémon or One Piece catalog candidates; use official eBay Catalog metadata only to resolve an ePID for the confirmed card.
 3. **Confirmation gate:** stop when the exact version is ambiguous.
-4. **Evidence gathering:** query official eBay active listings and optional PriceCharting references.
+4. **Evidence gathering:** default `marketScope` (omitted/`single`) queries only official eBay active-listing agents and optional references. An explicit `cross` request enables configured cross-market adapters; client view/language switches never acquire data. Full-report caches and latest snapshot pointers isolate scopes.
 5. **Normalization:** convert every candidate into one schema with source timestamp and confidence.
 6. **Rules:** enforce condition compatibility and complete comparable cost, then calculate seller trust, evidence completeness, eligibility, and independent lens rankings.
 7. **Synthesis:** build the initial summary deterministically.
@@ -121,3 +121,5 @@ PostHog receives explicit funnel events only. Autocapture, session replay, pagev
 Allowed properties are limited to marketplace, response status, demo mode, candidate count, choice role, confidence, duration bucket, and decision-change feedback.
 
 URLs, listing text, seller identifiers, and images are prohibited.
+
+The October 15 authorized account-pool test checks official Apify limits and atomically reserves conservative per-account charges before starting an Actor; authentication/rate/access failures do not advance accounts. It preserves the original counter; the explicit ten-account authorization extends the cumulative Whatnot ceiling to 1,846 with the existing October 22 expiry. See [the scoped search and account-pool decision](market-views-account-pool-2026-10-15.md).

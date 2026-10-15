@@ -17,7 +17,7 @@ import {
   parseEbayUrl,
   type EbaySourceListing,
 } from "@/lib/external/ebay";
-import { getConfiguredPlatformAgents, runPlatformFanout, type PlatformAgent } from "@/lib/comparison/platforms";
+import { getConfiguredPlatformAgents, getPlatformAgents, runPlatformFanout, type PlatformAgent } from "@/lib/comparison/platforms";
 import { buildRecallCoverage } from "@/lib/comparison/recall-probe";
 import { resolveCardCrosswalk, type CardCrosswalkEntry } from "@/lib/comparison/crosswalk";
 import { canonicalPrintIdentity } from "@/lib/comparison/print-fidelity";
@@ -116,6 +116,8 @@ export async function runListingComparison(
   const demoMode = false;
 
   const request = await applyQueryParserWithAi(comparisonRequestSchema.parse(rawRequest), trace);
+  const scopedAgents = (dependencies.agents ?? getPlatformAgents())
+    .filter((agent) => request.marketScope === "cross" || agent.marketplace === "eBay");
 
   const { source: sourceResult, universal } = await ingestSourceListing(request, fetcher, warnings, trace);
   const identities = (await identifyCards(request, sourceResult, fetcher, warnings, trace, dependencies.signal))
@@ -149,7 +151,7 @@ export async function runListingComparison(
       inspectListingId: null,
       identityContractVersion: 4,
       comparisonContractVersion: 5,
-      demoMode: getConfiguredPlatformAgents(dependencies.agents).length === 0,
+      demoMode: getConfiguredPlatformAgents(scopedAgents).length === 0,
       generatedAt,
     });
   }
@@ -256,7 +258,7 @@ export async function runListingComparison(
   // API credentials, so this scales to whatever platforms the operator has wired —
   // a failing one is isolated and never sinks the others.
   const fanout = await runPlatformFanout({
-    agents: dependencies.agents,
+    agents: scopedAgents,
     card: confirmedCard,
     buyer: request.buyer,
     fetcher,

@@ -62,6 +62,15 @@ describe("automatic search examples", () => {
     expect(labels()).not.toEqual(first);
   });
 
+  it("holds examples while the buyer swipes through the mobile row", () => {
+    render(<SearchExamples examples={examples} onSelect={vi.fn()} onRefresh={vi.fn()} />);
+    const first = labels();
+    fireEvent.touchStart(screen.getByRole("group", { name: "Search examples" }));
+    advance(6000);
+    expect(labels()).toEqual(first);
+    expect(screen.getByRole("button", { name: "Resume examples" })).toBeTruthy();
+  });
+
   it("allows the buyer to pause rotation and resume it", () => {
     render(<SearchExamples examples={examples} onSelect={vi.fn()} onRefresh={vi.fn()} />);
     const first = labels();

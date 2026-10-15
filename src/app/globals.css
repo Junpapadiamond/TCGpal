@@ -659,11 +659,23 @@ a {
 }
 
 @media (max-width: 639px) {
-  .search-examples { min-height: 11rem; }
+  .search-examples { min-height: 0; margin: 0.25rem 0 0.75rem; }
   .search-example-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 72px;
+    display: flex;
+    flex-wrap: nowrap;
+    min-height: 48px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding: 2px;
+  }
+  .search-example-list::-webkit-scrollbar { display: none; }
+  .search-example-list button {
+    flex: 0 0 auto;
+    max-width: none;
+    white-space: nowrap;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
   }
   .landing-search-row input { font-size: 1rem; padding-inline: 0.5rem; }
   .landing-search-row button { padding-inline: 0.85rem; font-size: 0.8rem; }

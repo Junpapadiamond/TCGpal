@@ -17,6 +17,7 @@ export type ComparisonForm = {
   // primary "one box, one click" entry point; the fields below stay available as
   // progressive disclosure for a buyer who wants to fill them in separately.
   heroQuery: string;
+  includeCrossMarket?: boolean;
   game: TcgGame;
   url: string;
   marketplace: Marketplace;
@@ -55,6 +56,7 @@ export const emptyLedgerRow: LedgerRow = {
 
 export const defaultComparisonFormValues: ComparisonForm = {
   heroQuery: "",
+  includeCrossMarket: false,
   game: "pokemon",
   url: "",
   marketplace: "eBay",
