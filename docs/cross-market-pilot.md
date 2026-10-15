@@ -2,7 +2,11 @@
 
 Decision/evidence date: **2026-09-14**. Engineering owner: Codex. Promotion/source-access owner: founder. Review date: **2026-09-21**.
 
-## Latest — October 3: merchant API recovery; paid limits preserved
+## Latest — October 15: single-account Whatnot API test passed; activation pending
+
+The founder authorized a single selected Apify account. Its bearer token authenticated; one bounded three-row Whatnot run succeeded in about seven seconds and settled at $0.00905. Two rows passed existing normalization, with prices, images, feedback counts and seller-stated condition; shipping and buyer fees remained unknown. The token is saved as a Vercel Production Secret. A fresh original-counter read is blocked by Vercel passkey reauthentication, so no provider switch, budget extension or counter reset has occurred. The website has not been verified using this new account. See the [single-account decision and evidence](frontier-research/apify-single-account-2026-10-15.md).
+
+## October 3: merchant API recovery; paid limits preserved
 
 The founder requested working cross-market offers and explicitly accepted alternative sources. A merchant-owned Shopify Catalog API returned repeated concrete Pokemon and One Piece variant offers without a subscription. Stomping Grounds integration and deployment verification are tracked in [the recovery review](cross-market-recovery-2026-10-03.md); merchant inventory maintenance and unknown checkout costs require review-only display. Whatnot's original counter and allowance remain; atomic reservation now prevents rejected traffic from inflating it. An expiring Whatnot-only cumulative extension is prepared but no higher allowance or new paid run has been approved. Mercari's access failure is unchanged. Historical rollout statements below describe their dated phase, not current activation.
 

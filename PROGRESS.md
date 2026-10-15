@@ -1,7 +1,7 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-10-11
+updated_at: 2026-10-15
 canonical_branch: origin/main
 last_verified_product_commit: deebff8
 working_branch: codex/cross-market-recovery (free-capacity recovery in progress; main held by another worktree)
@@ -12,11 +12,10 @@ max_lines: 300
 This is the compact handoff for new threads. It is an index, not a history log. Use stable section and workstream IDs to load only the context needed for the current task.
 <!-- progress:section id="BOOTSTRAP" -->
 ## BOOTSTRAP
-
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Current source incident (October 11): `deebff8` recovered both automatic Soldgraph sources on lenstcg.com; original Charizard returned Whatnot two / Mercari three at 17:39 UTC. Original rolling counter ceiling 80→90; account 87/100, auto top-up off. About eight application starts remain absent other traffic. Lasting free capacity/self-hosting remains unresolved; see WS-SOURCES.
+- Current source work (October 15): one authorized Apify account passed a bounded Whatnot test ($0.00905) and its token is saved as a Production Secret. Activation awaits Vercel passkey authentication and a fresh original-counter read; no provider switch or extension yet. October 11 Soldgraph recovery and remaining allowance are historical, not refreshed; see WS-SOURCES.
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -24,7 +23,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:section id="TASK-INDEX" -->
 ## TASK-INDEX
-
 | ID | Workstream | Size | State | Next action |
 |---|---|---:|---|---|
 | WS-IDENTITY | Exact-print selection and listing fidelity | Large refactor | OP16/OP17 155/169 release prints, 4742 total; live fallback `8a0eb9c` verified; target 660/90/0/0, catalog 4135/607/0/0 | Read `docs/one-piece-tcgplayer-alignment-2026-09-07.md`: 608-print census, 20 direct pages, 150 tested specific-label claims; no production promotion yet |
@@ -33,14 +31,13 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Per-market verdicts and source pictures live; EN/中文/mobile pass | Observe verdict usefulness and picture review; see WS-SOURCES |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Cross-market comparison and acquisition | Medium | `deebff8` READY; both automatic sources verified, about eight starts left; alternative Whatnot API 404 / Mercari chain fails review | Lasting capacity remains blocked on source repair/access-review evidence; retain original counters |
+| WS-SOURCES | Cross-market comparison and acquisition | Medium | Single-account Whatnot API test passed; Production Secret saved; website activation pending | Complete Vercel passkey check, read original counter, configure bounded renewal and verify website |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product e95ccfa pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
 <!-- progress:section id="GOALS" -->
 ## GOALS
 ### Big goals
-
 1. G-TRUST: Make the selected catalog image, marketplace listing, market anchor, and recommendation refer to the same exact print.
 2. G-AHA: Make the result feel like “this is exactly the buy list I need; no more searching or confirmation.”
 3. G-DEMAND: Prove collectors save time, trust the evidence, change or confirm a decision, and return for another card.
@@ -48,7 +45,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 5. G-BUSINESS: Test subscription or advertising only after repeat use and purchase authority are demonstrated.
 
 ### Small measurable gates
-
 - At least five sequential searches per session across Pokemon and One Piece, including Edit and New Search, without state leakage.
 - Human-adjudicated corpus of at least 30 real listings with zero known invariant violations and at least 90% expert agreement.
 - At least 8 of 10 pilot users complete a comparison within 60 seconds.
@@ -62,7 +58,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 [OP16/OP17 follow-up](docs/one-piece-op16-op17-2026-09-06.md) shipped `a461ed0` (Vercel READY; four live searches, distinct winners and anchors): all 155/169 official release prints, separate artwork results and caches. Live fallback `8a0eb9c` now preserves every returned artwork and reloads only the exact print; 1,442 tests + lint/typecheck/build, fresh EN/中文/mobile and five searches passed. [Audit](docs/one-piece-alignment-audit-2026-09-06-op17.md): 660/90/0/0 target, 4135/607/0/0 catalog. Historical [Phase 4](docs/one-piece-taxonomy-phase4-2026-09-06.md) provisional 8/13 and founder decisions remain open; no new curated artwork mappings approved.
 [TCGplayer review](docs/one-piece-tcgplayer-alignment-2026-09-07.md): 608-print census (607 catalog abstentions + EB02 example), 605 with priced candidates; 20 direct pages, three Zoro trophy pages lack market prices. A 150-print specific-label hypothesis yields 4285/457/0/0 with 677 passing probes; six Luffy/Nami/Koby rows are a subset. Human review pending; runtime unchanged. Lint/typecheck/build + 1,447 tests pass. 491 historical mappings remain in catalog, 404 without old conflicts; CDN 403 blocked fresh bulk image comparison. [Per-print queue](docs/one-piece-tcgplayer-review-queue-2026-09-07.md) preserves IDs; [earlier seller cases](docs/one-piece-ambiguity-review-2026-09-07.md) remain valid.
 ### Done
-
 - Canonical print identity survives selection, validation, caching, querying, ranking, and rendering. Match classes are exact/compatible/unknown/mismatch; confirmed mismatches cannot rank and unknowns cannot become Best Buy.
 - Sibling-substitution coverage: Nami SP and the eight bundled OP01-016 prints (selected P4 stays OP01-016_p4); One Piece manga, SP, wanted poster, gold/silver, super alternate, anniversary, tournament, promo, and reprint distinctions where explicitly reviewed. One Piece positive proof intersects evidence across every same-number sibling — shared release/class wording and internal `_pN/_rN` IDs cannot prove a print, and sibling/language/treatment conflicts veto acceptance. eBay ePID and TCGplayer product resolution abstain when identity cannot be proven; signed/serialized aliases normalize to strict facets, and textured/stamped searches abstain rather than show siblings.
 - Shared collector-number parsing owns zero-padding equivalence, boundary-safe matching, and conflicts across eBay, print fidelity, pasted/manual candidates, identity selection, crosswalk, and TCGCSV (Bubble Mew `232/91` accepts seller `232/091`; wrong numbers are high-confidence mismatches). Vintage Base Set crosswalks rank the most specific TCGCSV group and reject loose collisions.
@@ -76,7 +71,6 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - `9cde099` (2026-09-04): eight of the twelve 2026-08-14 buy-accuracy misses were the ordinary retail print abstaining on a title that named the original release and nothing else — a text gap, not a photo gap. A plain title now proves the base print (retail numbers only, after every veto, never an alt, never among promos); bare "Alt"/"AA" are class words; a two-print family is proven by the class word alone; marker ownership is by containment so nested release names ("Event Pack" inside "Cs 25-26 Event Pack") cannot veto a print's own listing; a competition print is proven by its full release name, not only "Nth Anniversary"; EB01/EB02 are tagged booster, not premium_collection; the eBay ladder gains a class-only rung. `src/lib/testing/one-piece-alignment.ts` walks every EB01–EB04, PRB, promo, and flagship print against its own and each sibling's seller-visible listing (`npm run review:one-piece-alignment` writes the abstention ledger): 547→656 accepted, 13→0 substitutions, 13→0 self-rejections of 746 (`docs/one-piece-alignment-audit-2026-09-05.md`). `794e385` widened the audit to all 4,571 prints and closed what it found: Treasure Rare is a detected class (its one substitution, OP16-011), and markers a card's own name or number contains are dropped (six starter-deck self-rejections — "Yamato" is both card and deck); both catalog-wide invariants now run in the suite in 3s. No TCGplayer ids promoted — 214 machine-clean ledger mappings await human review in `docs/one-piece-tcgplayer-mapping-review-2026-09-04.md`. Hermetic only: no eBay/TCGCSV credentials were available.
 
 ### What went wrong
-
 - Earlier matching treated name, collector number, or broad alternate-art labels as sufficient and could substitute a cheaper sibling artwork; TCGplayer group/product fallback could select an arbitrary parallel, and suffixes such as `_p2` are not universally manga. Live diagnostics on 2026-07-12 reproduced cross-facet false positives for Nami `OP01-016_p4`, Nami `EB03-053_p2`, Robin `EB03-055_p2`, and Zoro siblings; later market-floor hardening rejects implausibly cheap rows but does not repair the artwork-facet proof gap.
 - The demo-fixture identity fallback survived because every outage test used a name no fixture matched, so the leak only ever fired for Umbreon; outage tests now assert an empty candidate list for a name the fixtures *do* match. Separately, `exclusionPatterns` required the literal `extended art case`, so a bare `... 215/203 Extended Art` ranked as an eligible raw single — neither game has that print class, and the phrase only names aftermarket product.
 - The 15-minute report cache stored failures as results, so a single eBay timeout served an empty answer for the next fifteen minutes and made a supply problem look like an identity problem during the 2026-08-14 accuracy run. Recall (`best_buy` reached) and accuracy (the link is the confirmed print) diverge: the old instrument scored a wrong-artwork winner as a hit. Three defects on 2026-08-11 shared one shape: a bound that looked locally reasonable and silently discarded data. A 50-row clamp, a 100-card page, and a 14s retry budget each capped what the layer above had already asked for, without erroring. Two were found only by measuring production; the third was introduced while fixing the second. `printMatch === "exact"` is never returned by `print-fidelity.ts`; the strongest positive is `compatible`. The value exists in the type and schema but is unreachable, so any metric written against it scores zero.
@@ -175,6 +169,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-SOURCES" state="free-capacity-recovery-pending" tags="soldgraph,crawlora,apify,stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
+- October 15: fixed single-account Whatnot run `EkAA6VnXCtVOKaF6C` returned three records/two normalized rows in ~7 seconds; settled $0.00905. Production Secret saved; no provider switch, renewal or counter mutation. Vercel Redis Browser requires passkey reauthentication; fresh count and activation pending. No Mercari retry, token pool or automatic account cycling. Null shipping/fees retained. Full gate: 1,830 tests/five skips, lint/typecheck/metadata/build pass. [Decision, evidence and resume steps](docs/frontier-research/apify-single-account-2026-10-15.md).
 - October 11 limited recovery `deebff8` READY (`dpl_C1JeVey8poBa8tb1SNhEtY3Epm5e`): original counter ceiling 80→90, no reset/paid plan/new provider/Apify extension. Normal no-ZIP Charizard browser query returned Whatnot two / Mercari three, HTTP 200, non-demo; null costs and no cross-market winners retained. Account 85→87/100, auto top-up off, about eight application starts left. EN/中文 desktop + 390px mobile and console pass. Full gate 1,830 tests/five skips + lint/typecheck/metadata/build; lasting capacity unresolved. [Decision and receipt](docs/frontier-research/free-recovery-2026-10-11.md#limited-recovery-release-and-observed-result).
 - October 11 prepared-code release `bff6f57` reached READY (`dpl_D7gKsFFwr7oD9NBgwiZP5L98vVzz`), followed by documentation `97536ed` READY (`dpl_8WPAoHuFwZNCHPyKdRGReuoJA9Ue`). Full gate: 1,829 tests, five optional skips, lint/typecheck/metadata/webpack build pass. Production 14:41:14 UTC no-ZIP Charizard returns eBay 50/merchant three; both Soldgraph sources remain quota-paused. No source switch or authorization inferred. This is preparation, not restoration; the user's goal remains unfinished.
 - October 11 live recovery: founder completed Crawlora, Bright Data and RapidAPI registration; do not repeat signup approval. Whatnot RapidAPI $0/1,000 Basic subscribed but four bounded diagnostics returned 404; [provider issue #1](https://github.com/omkarcloud/whatnot-scraper/issues/1) submitted with subsequent explicit authorization, verified Open. Bright Data catalog has no Whatnot result. Crawlora discovery + one two-URL Bright Data call returned Charizard 199/165 title matches at $220/$373.99 with in-stock/US/timestamps in 37.236s, but its product page discloses built-in CAPTCHA/anti-bot bypass, so further acquisition/promotion stopped under the current source boundary. Three Crawlora calls/nine documented credits; two completed Bright Data jobs/three records, no card or paid tier. Direct Whatnot robots probe 403; no alternate transport. No production credential, provider switch or counter change; Apify extension remains unapproved. [Decision, evidence and next external dependencies](docs/frontier-research/free-recovery-2026-10-11.md).
