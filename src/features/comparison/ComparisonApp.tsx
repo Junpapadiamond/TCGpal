@@ -1129,15 +1129,15 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       ) : (
         <Header onLogoClick={startNewSearch} />
       )}
-      <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-6 sm:pt-8"}`}>
+      <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-4 sm:pt-5"}`}>
         {!compactMode && (
           <>
-        <section id="compare" className="landing-hero mx-auto max-w-[860px] pt-4 text-center sm:pt-9">
-          <h1 className="display-soft mx-auto max-w-[800px] font-serif text-[32px] font-semibold leading-[1.12] tracking-normal text-[#24312f] sm:text-[44px] lg:text-[52px]">
+        <section id="compare" className="landing-hero mx-auto max-w-[860px] pt-2 text-center sm:pt-3">
+          <h1 className="display-soft mx-auto max-w-[800px] font-serif text-[32px] font-semibold leading-[1.12] tracking-normal text-[#24312f] sm:text-[40px] lg:text-[44px]">
             {t.hero.title}
           </h1>
 
-          <form className="mt-7 text-left sm:mt-9" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
+          <form className="mt-5 text-left sm:mt-6" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
             <label className="block">
               <span className="sr-only">{t.form.heroSearchLabel}</span>
               <span className="landing-search-row">
@@ -1745,7 +1745,7 @@ function CardMarquee({
   // buyer has checked many unique prints.
   const durationSeconds = Math.max(46, items.length * 5.75);
   return (
-    <section className="card-marquee-wrap mt-8 sm:mt-10" aria-label={t.rail.ariaLabel} aria-describedby="card-rail-hint">
+    <section className="card-marquee-wrap mt-4 sm:mt-5" aria-label={t.rail.ariaLabel} aria-describedby="card-rail-hint">
       <p id="card-rail-hint" className="text-center text-sm text-[#64736c]">{t.rail.hint}</p>
       {/*
         Pausing is CSS-only (`.card-marquee:hover`). Driving it from React state
