@@ -24,4 +24,8 @@ The benefit is a reusable provider path for the missing marketplace. Two serious
 
 ## Release evidence
 
-Pending production configuration and end-to-end verification. Local success is not production recovery.
+- Code `891e22f` passed lint, typecheck, metadata validation, 1,875 tests (five skipped), and production webpack build. Graphify executable is unavailable in this Windows checkout, so graph regeneration could not run; source relationships were inspected directly.
+- First READY deployment `dpl_3qt6YuMA4cbUN1dQjnu7obryQSHR` established that the pre-existing production Anthropic credential was invalid (`fallbackReason=authentication`). The already configured local Intenext credential passed Bearer authentication and was securely copied to the existing production Secret without printing its value. No credentials pasted into chat were used.
+- Credential redeployment `dpl_A9woLdk4wMyLfMt4ATdDnXXsQhbx` reached READY with `lenstcg.com`. Deployed real-report Q&A returned `usedAi=true`, `model=claude-opus-4-8`, HTTP 200 in 17.9 seconds, correctly distinguishing item price from incomplete totals. This proves the explanation provider; the independently configured optional GPT search allocator was not migrated.
+- A real built-in-browser cross-market Giratina search displayed eBay 50 / Whatnot 2 / Mercari 3 / Stomping Grounds 3. Mercari displayed two review offers, excluding the custom-card row; shipping/fees remain unknown. One application reservation was consumed in addition to the Console run: at most eight approved starts remain absent other traffic. Receipt: `ee57e868c20a483585e6c0856d50b146`.
+- Follow-up: the deterministic missing-cost fallback also mislabeled an item price as comparable cost. English/Chinese regression cases now require item-only wording; fixed without changing ranking. Updated full suite: 1,877 passed / five skipped, lint/typecheck and production build green. Follow-up deployment pending.

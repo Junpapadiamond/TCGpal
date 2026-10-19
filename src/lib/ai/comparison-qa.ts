@@ -215,6 +215,19 @@ function localAnswer(
     });
   }
 
+  if (target && !target.costComplete) {
+    const missingCharges = [
+      target.shipping === null ? (zh ? "运费" : "shipping") : null,
+      target.buyerFee === null ? (zh ? "买家手续费" : "buyer fees") : null,
+    ].filter(Boolean).join(zh ? "和" : " and ");
+    return comparisonQuestionResponseSchema.parse({
+      answer: zh
+        ? `${target.marketplace}「${target.title}」的 ${money(target.price)} 仅为商品价，${missingCharges || "结账费用"}未知，无法计算可比较的税前总价，因此不能成为首选。先到平台确认完整费用，再比较。`
+        : `${target.marketplace} "${target.title}" is ${money(target.price)} item-only. ${missingCharges || "Checkout charges"} are unknown, so no comparable pre-tax total is available and it cannot win a lens. Confirm the complete charges on the marketplace before comparing totals.`,
+      cautions: target.exclusionReasons.slice(0, 3), usedAi: false,
+    });
+  }
+
   if (best && target && target.id !== best.id) {
     const exclusion = target.eligible
       ? ""

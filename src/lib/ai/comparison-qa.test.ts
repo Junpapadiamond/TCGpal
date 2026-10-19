@@ -80,6 +80,18 @@ const report = {
 } as ComparisonReport;
 
 describe("comparison question answering", () => {
+  it.each(["en", "zh"] as const)("keeps incomplete target prices item-only in the %s fallback", async (lang) => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const target = listing({ id: "incomplete", price: 725, preTaxTotal: 725, shipping: null, buyerFee: null, costComplete: false, eligible: false,
+      exclusionReasons: ["Shipping cost is unknown.", "Mandatory buyer fees are unknown."] });
+    const answer = await answerComparisonQuestion({ ...report, candidates: [...report.candidates, target] }, "Why not this one?", target.id, { lang });
+    expect(answer.usedAi).toBe(false);
+    expect(answer.answer).toContain("$725.00");
+    expect(answer.answer).toContain(lang === "zh" ? "仅为商品价" : "item-only");
+    expect(answer.answer).not.toContain("comparable cost is $725");
+    expect(answer.answer).not.toContain("highest");
+  });
+
   it("never sends incomplete checkout subtotals to the model as comparable totals", async () => {
     vi.stubEnv("AI_PROVIDER", "openai");
     vi.stubEnv("OPENAI_API_KEY", "test-key");
