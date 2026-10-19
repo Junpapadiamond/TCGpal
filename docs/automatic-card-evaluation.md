@@ -42,3 +42,13 @@ Owner: the deployed job executes and records evidence; the founder owns final ar
 - Baseline remains 79/80 plus 1/1 provisional agreement, six pending Ace observations, zero human gold. This is not artwork accuracy or exhaustive recall.
 
 Tests cover authentication, oversized/scope-expanded input, reservations, storage failure, migration-day spending, held-out isolation, per-game review limits, eBay-only acquisition, owner release and full-body timeout. Runtime gate and actual cloud verification evidence are recorded in `PROGRESS.md`. Graphify CLI is unavailable on this Windows host; no graph regeneration is claimed.
+
+## Cloud verification evidence
+
+Runtime `a7367ad` is READY as `dpl_DkY5Q5ArawWFtQACzj2LCNHrbMKE`. The unauthenticated production POST returns 401. [Cloud run 39341742152](https://github.com/Junpapadiamond/TCGpal/actions/runs/39341742152) completed successfully on October 19 at 23:28 UTC: frozen replay unchanged, Opus 4.8 returned six provisional hypotheses, Redis report persisted, and the compact artifact uploaded. The returned report has mode `verify` and an empty live-card list, accurately reflecting zero new acquisition. Fresh scheduled acquisition starts October 20 and has not yet occurred.
+
+The model suggestion that Holo/no damage keywords could imply NM is explicitly rejected: finish and absence of damage words are not a seller condition claim. Title-only free-shipping text also cannot replace verified provider shipping, and a legitimate starter reprint still cannot substitute for the selected original print. This is a successful execution test, not proof that all model suggestions are useful; none were promoted to labels or runtime rules.
+
+Full lint/typecheck/metadata/build gates passed, with 1,914 passing tests and five optional skips. [Offline CI run 39341512320](https://github.com/Junpapadiamond/TCGpal/actions/runs/39341512320) also passed.
+
+[Duplicate trigger 39341822954](https://github.com/Junpapadiamond/TCGpal/actions/runs/39341822954) returned the existing report with the same original timestamp and byte-identical JSON (SHA-256 comparison), demonstrating shared reservation/result reuse without a second model call. The Codex automation TOML remains PAUSED.
