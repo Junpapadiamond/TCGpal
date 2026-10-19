@@ -1,6 +1,7 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
 import { forbiddenAnswer } from "@/lib/ai/unsupported-claims";
+import { logOpsEvent } from "@/lib/ops/events";
 import { isTavilyConfigured, searchTavilyContext } from "@/lib/external/tavily";
 import {
   comparisonQuestionResponseSchema,
@@ -31,7 +32,7 @@ export async function answerComparisonQuestion(
       // Short report explanations must fit the existing 12-second deadline.
       reasoningEffort: "low",
       schemaName: "comparison_question_answer",
-      schema: comparisonQuestionResponseSchema.omit({ usedAi: true, model: true }),
+      schema: comparisonQuestionResponseSchema.pick({ answer: true, cautions: true }),
       system: [
         "You answer buyer questions about one TCGlens comparison report.",
         "Use only the supplied sanitized report facts. Never browse, infer hidden seller data, invent sold comps, predict grades, or call a seller a scam.",
@@ -50,13 +51,13 @@ export async function answerComparisonQuestion(
         report: sanitizeReportForQuestion(report, targetListingId, options.activeRole),
       },
     });
-    const parsed = comparisonQuestionResponseSchema.parse({ ...response.data, usedAi: true, model: response.model });
+    const parsed = comparisonQuestionResponseSchema.parse({ answer: response.data.answer, cautions: response.data.cautions, usedAi: true, model: response.model });
     if (forbiddenAnswer.some((pattern) => pattern.test(`${parsed.answer} ${parsed.cautions.join(" ")}`))) {
       throw new Error("Critic rejected an unsupported answer.");
     }
     return parsed;
-  } catch {
-    return local;
+  } catch (error) {
+    return withAiFallback(local, error);
   }
 }
 
@@ -99,7 +100,7 @@ async function answerWithWebContext(
       role: "critic",
       reasoningEffort: "low",
       schemaName: "comparison_question_answer_with_web_context",
-      schema: comparisonQuestionResponseSchema.omit({ usedAi: true, model: true, webContextChecked: true, webCitations: true }),
+      schema: comparisonQuestionResponseSchema.pick({ answer: true, cautions: true }),
       system: [
         "You answer buyer questions about one TCGlens comparison report with optional cited web context.",
         "Use report facts for rankings, prices, seller risk, and listing evidence. Web context is only for source legitimacy, translation, reference discovery, or card identity help.",
@@ -122,7 +123,8 @@ async function answerWithWebContext(
       },
     });
     const parsed = comparisonQuestionResponseSchema.parse({
-      ...response.data,
+      answer: response.data.answer,
+      cautions: response.data.cautions,
       usedAi: true,
       model: response.model,
       webContextChecked: true,
@@ -132,13 +134,31 @@ async function answerWithWebContext(
       throw new Error("Critic rejected an unsupported answer.");
     }
     return parsed;
-  } catch {
-    return comparisonQuestionResponseSchema.parse({
+  } catch (error) {
+    return withAiFallback(comparisonQuestionResponseSchema.parse({
       ...webFallback,
       webContextChecked: true,
       webCitations: citations,
-    });
+    }), error);
   }
+}
+
+// Emit only a fixed category: upstream errors can contain credentials, URLs,
+// request text or account details. Never put their messages in logs/responses.
+function withAiFallback(local: ComparisonQuestionResponse, error: unknown): ComparisonQuestionResponse {
+  const config = getAiConfig();
+  const message = error instanceof Error ? error.message : "";
+  const status = message.match(/^(?:OpenAI|Anthropic) (\d{3}):/)?.[1];
+  const fallbackReason: NonNullable<ComparisonQuestionResponse["fallbackReason"]> = !config.hasApiKey ? "not_configured"
+    : status === "401" || status === "403" ? "authentication"
+    : status === "429" ? "rate_limited"
+    : error instanceof Error && /AbortError|TimeoutError/.test(error.name) ? "timeout"
+    : message === "Critic rejected an unsupported answer." ? "unsupported_claim"
+    : /validation|response.*(?:empty|content|text)|JSON/i.test(message) ? "invalid_output"
+    : "provider_unavailable";
+  logOpsEvent({ event: "provider_failure", route: "listing-compare-explain", provider: config.provider,
+    status: "fallback", errorCode: fallbackReason, ...(status ? { httpStatus: Number(status) } : {}) });
+  return comparisonQuestionResponseSchema.parse({ ...local, usedAi: false, fallbackReason });
 }
 
 function localAnswer(

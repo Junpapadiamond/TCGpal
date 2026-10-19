@@ -1,10 +1,10 @@
 ---
 document: tcglens-progress
 schema_version: 1
-updated_at: 2026-10-15
+updated_at: 2026-10-19
 canonical_branch: origin/main
 last_verified_product_commit: 1c2ffcb
-working_branch: codex/market-mode-switch (1c2ffcb fast-forwarded to main, pushed, Vercel READY)
+working_branch: codex/accuracy-evaluation-qa (October 19 diagnostic and offline evaluation release)
 max_lines: 300
 ---
 
@@ -54,6 +54,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-IDENTITY" state="taxonomy-shipped-founder-review-pending" tags="selection,matching,ebay,tcgplayer,nami,robin,zoro,manga,special-print,mew,history,buy-accuracy" -->
 ## WS-IDENTITY - Exact-print accuracy
+- October 19: offline `npm run eval:cards` harness added with 32 synthetic cases, family-isolated splits, immutable-label baseline comparison and optional one-call AI failure triage. 31/32 expectation agreement, zero false identity accepts/unsafe eligible rows; ST→OP number conflict remains conservatively unknown/excluded. Real report imported as 55 pending observations, zero human gold: no population accuracy claim. [Commands, decision and baseline](docs/card-accuracy-evaluation-2026-10-19.md).
 - September 28: bounded eBay recall check deployed in live/shared receipts: one extra search, 10 summaries, 2s, no details/retries, original winners unchanged; `EBAY_RECALL_PROBE_ENABLED=false` disables it. Fixed 20-card run: 3 cheaper rule hits (human review pending), 4 inconclusive, 13 no-cheaper (one lacked a baseline); no population recall claim. [Decision, review queue and rollout](docs/ebay-recall-probe-2026-09-28.md), founder review October 5.
 [OP16/OP17 follow-up](docs/one-piece-op16-op17-2026-09-06.md) shipped `a461ed0` (Vercel READY; four live searches, distinct winners and anchors): all 155/169 official release prints, separate artwork results and caches. Live fallback `8a0eb9c` now preserves every returned artwork and reloads only the exact print; 1,442 tests + lint/typecheck/build, fresh EN/中文/mobile and five searches passed. [Audit](docs/one-piece-alignment-audit-2026-09-06-op17.md): 660/90/0/0 target, 4135/607/0/0 catalog. Historical [Phase 4](docs/one-piece-taxonomy-phase4-2026-09-06.md) provisional 8/13 and founder decisions remain open; no new curated artwork mappings approved.
 [TCGplayer review](docs/one-piece-tcgplayer-alignment-2026-09-07.md): 608-print census (607 catalog abstentions + EB02 example), 605 with priced candidates; 20 direct pages, three Zoro trophy pages lack market prices. A 150-print specific-label hypothesis yields 4285/457/0/0 with 677 passing probes; six Luffy/Nami/Koby rows are a subset. Human review pending; runtime unchanged. Lint/typecheck/build + 1,447 tests pass. 491 historical mappings remain in catalog, 404 without old conflicts; CDN 403 blocked fresh bulk image comparison. [Per-print queue](docs/one-piece-tcgplayer-review-queue-2026-09-07.md) preserves IDs; [earlier seller cases](docs/one-piece-ambiguity-review-2026-09-07.md) remain valid.
@@ -82,9 +83,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Review the seven-day production identity timeout and "try again" rate after the 2026-08-11 retry repair. If more than 5% of uncached Pokémon searches still hit the 18-second deadline, promote the lightweight local Pokémon identity index from a parked option to a separately evaluated workstream. pokemontcg.io was measurably unhealthy on 2026-08-11 (0/5 then 3/6 on `/v2/sets?pageSize=1`; successful full-page fetches averaged 6-10s), so the sample must span a healthy window before the rate means anything.
 - Historical 21/30 recall and human-reviewed 9/13 buy accuracy predate `9cde099`. Fresh production run on `a147d00`: 12 Best Buy + 1 price-review Inspect First from 13 requests; agent page review 8 matching / 2 clear misses / 3 unclear (61.5%, not human approval). The Ace title claims the selected alt while its photo differs; Chopper sells slab artwork without the card. Human queue: `docs/one-piece-buy-accuracy-2026-09-06.md`. Fresh TCGCSV sample retains all 14 product/group resolutions, including the six PRB/promo gains and one intentional null; no mapping rows promoted. ePID probe falls back to keywords and does not establish Catalog discrimination. See the Phase 4 report for exact sources, limitations and founder decisions.
 
-### Read first
-
-`docs/one-piece-op16-op17-2026-09-06.md` (latest coverage), `docs/one-piece-taxonomy-phase4-2026-09-06.md` (founder review), `docs/plan-one-piece-taxonomy-2026-09-05.md` (historical standalone handoff), `docs/one-piece-print-taxonomy.md`, `docs/one-piece-taxonomy-execution-2026-09-05.md`, `src/lib/schemas.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`
+**Read first:** `docs/one-piece-op16-op17-2026-09-06.md` (latest coverage), `docs/one-piece-taxonomy-phase4-2026-09-06.md` (founder review), `docs/plan-one-piece-taxonomy-2026-09-05.md` (historical standalone handoff), `docs/one-piece-print-taxonomy.md`, `docs/one-piece-taxonomy-execution-2026-09-05.md`, `src/lib/schemas.ts`, `src/lib/comparison/print-fidelity.ts`, `src/lib/comparison/ranking.ts`
 <!-- progress:end -->
 <!-- progress:workstream id="WS-METADATA" state="review-gated" tags="one-piece,research,audit,manga,promo,tournament,automation" -->
 ## WS-METADATA - One Piece research ledger
@@ -97,9 +96,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 
 - All 2,040 rows still require an explicit human review decision before broad publication, and many special prints still have unknown artwork/release semantics or shared external product mappings; heuristic image RMSE and release-token matching remain research evidence, not proof. No automatic safe promotion pipeline exists by design — promotion must update curated runtime metadata with tests and review, and the first cohort to publish is D-METADATA-COHORT in DECISIONS.
 
-### Read first
-
-`output/one-piece-exact-print-audit.json` (summary and blockers only), `scripts/research-one-piece-exact-prints.mjs`, `scripts/lib/one-piece-metadata-audit.mjs`, `src/lib/external/one-piece-print-metadata.ts`, `docs/card-identity-research-policy.md`, `.github/workflows/refresh-one-piece-metadata.yml`. Avoid loading the 5+ MB ledger; query a specific canonicalPrintId when needed.
+**Read first:** `output/one-piece-exact-print-audit.json` (summary and blockers only), `scripts/research-one-piece-exact-prints.mjs`, `scripts/lib/one-piece-metadata-audit.mjs`, `src/lib/external/one-piece-print-metadata.ts`, `docs/card-identity-research-policy.md`, `.github/workflows/refresh-one-piece-metadata.yml`. Avoid loading the 5+ MB ledger; query a specific canonicalPrintId when needed.
 <!-- progress:end -->
 <!-- progress:workstream id="WS-LAUNCH" state="instrumented-not-posted" tags="analytics,posthog,funnel,privacy,reddit,rednote,attribution" -->
 ## WS-LAUNCH - Launch instrumentation and attribution
@@ -118,9 +115,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - The PostHog insights in `docs/launch-metrics.md` are specified, not built. Every one needs the global `demo_mode is not true` / `channel is not internal` filters or founder testing inflates the whole funnel. `0b8d198` added a localStorage internal-device flag (`?s=internal` sticks, `?s=internal-off` clears) because remembering the tag on every test visit is why founder sessions kept landing as `direct` — it outranks referrer and campaign, so the founder clicking their own Reddit post still reads `internal`.
 - Two denominators exist on purpose (`/ app_opened` for channels, `/ comparison_completed` for product quality); mixing them makes a bad Reddit post read as a bad product, and nothing enforces that in the tool. RedNote retention is structurally understated by its in-app webview storage and must not be reported — for month one the honest unit is the session, not the user.
 
-### Read first
-
-`src/lib/analytics.ts`, `src/lib/analytics.test.ts`, `docs/launch-metrics.md`, `docs/launch-links.md`
+**Read first:** `src/lib/analytics.ts`, `src/lib/analytics.test.ts`, `docs/launch-metrics.md`, `docs/launch-links.md`
 <!-- progress:end -->
 <!-- progress:workstream id="WS-PILOT" state="blocked-on-accuracy" tags="demand,needs,taste,pricing,validation,buyer" -->
 ## WS-PILOT - Demand and buyer validation
@@ -140,6 +135,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
+- October 19: Why-not-pick is wired; production gateway returned primary/critic HTTP 500 and allocator/fallback 503. Founder chooses to keep the gateway. Q&A now returns a safe fallback category and logs it; attribution remains server-owned. Anthropic health rejects empty HTTP-200 responses. External gateway recovery remains unverified; see [diagnosis](docs/card-accuracy-evaluation-2026-10-19.md).
 ### Done
 - October 15 landing density: reduced hero typography/spacing, removed the desktop examples' reserved second row, and tightened the rail gap. Examples use one horizontally scrollable row at every width. At 1280×720 the card art starts at ~550px instead of ~756px; EN/中文 desktop and 390×844 mobile verified in the built-in browser, with no page overflow at 320/390/768/1024/1440px. Keyboard focus scrolls offscreen examples into view. Search/provider behavior is unchanged.
 - October 15: default eBay-only with explicit cross-market opt-in; homepage/Edit unchecked checkbox, result text tabs, mobile one-row example chips and additional query action; new search clears opt-in. Scope-separated caches/latest receipts, truthful failed paid-attempt states, independent eBay report and matching card styles. EN/中文/390px and sequential five-card smoke recorded in [decision](docs/market-views-account-pool-2026-10-15.md).
@@ -249,6 +245,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
+- October 19: lint/typecheck/metadata, 1,868 tests (five skipped) and production webpack build pass. Offline seed: 31/32 with one preserved classification discrepancy, no unsafe eligibility; 55 real observations pending human labels. Live Whatnot via Apify returns two; Mercari quota-paused. Production Q&A reproduces gateway failure; deployment of the diagnostics is pending. Graphify CLI unavailable; no UI/ranking changes. [Evidence](docs/card-accuracy-evaluation-2026-10-19.md).
 - October 15 compact landing: lint, typecheck, metadata audit, production build and 1,854 tests passed (130 files, five optional skips). EN/中文 desktop and mobile captures are local in `output/compact-landing/` in the `tcglens-compact-landing` worktree. Layout-only change; no provider calls or structural graph regeneration required.
 - October 11 limited free recovery: 59 focused and 1,830 full tests/five optional skips, lint/typecheck/metadata/build pass. `deebff8` production READY, real no-ZIP Charizard returns both providers; five cross-market candidates keep null charges/zero condition-photo evidence and cannot win. EN/中文 desktop + 390px mobile no overflow, console empty; scoped deployment warning/error/fatal scan empty. Original key/window retained; no structural graph update needed. Finite allowance remains a limitation.
 - October 3 verdict/image gate: lint/typecheck/metadata/webpack build + 1,807 tests (128 files, five skipped) pass. `e95ccfa` production READY (`dpl_8STzv571V2RTKEqwpLR4vcKqdXJc`). Blastoise: eBay 50, Whatnot three, Mercari three, merchant two. 15:22 UTC no-ZIP API returned 200 in 4.620s; all six previews load, retain zero photo evidence/null charges and cannot win. Built-in EN/中文 desktop + 390px production verdicts pass; image enlargement/zoom/Escape/focus return work, no overflow or console errors, scoped logs empty. See the verdict release for evidence and limits.

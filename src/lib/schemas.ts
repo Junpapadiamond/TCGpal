@@ -669,6 +669,7 @@ export const comparisonQuestionResponseSchema = z.object({
   cautions: z.array(z.string()).default([]),
   usedAi: z.boolean().default(false),
   model: z.string().trim().min(1).max(100).optional(),
+  fallbackReason: z.enum(["not_configured", "authentication", "rate_limited", "timeout", "provider_unavailable", "invalid_output", "unsupported_claim"]).optional(),
   webContextChecked: z.boolean().default(false),
   webCitations: z.array(webCitationSchema).default([]),
 });

@@ -1,0 +1,2910 @@
+{
+  "version": 1,
+  "id": "card-accuracy-seed-v1-2026-10-19",
+  "cases": [
+    {
+      "id": "sv4pt5-232-exact",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex 232/091 Paldean Fates English NM",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Name, collector number and required print marker identify this print."
+      }
+    },
+    {
+      "id": "sv4pt5-232-seller-wording",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex 232/91 Paldean Fates English NM",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Equivalent seller wording retains the same number and print."
+      }
+    },
+    {
+      "id": "sv4pt5-232-wrong-number",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex 205/165 English NM",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "reject",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "A contradictory collector number cannot match the selected print."
+      }
+    },
+    {
+      "id": "sv4pt5-232-missing-number",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex Paldean Fates English NM",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "abstain",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "No collector number; title alone does not prove the selected print."
+      }
+    },
+    {
+      "id": "sv4pt5-232-unknown-charges",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex 232/091 Paldean Fates English NM",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": null,
+        "buyerFee": null,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Identity remains supported; missing checkout charges prohibit recommendation."
+      }
+    },
+    {
+      "id": "sv4pt5-232-graded",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex 232/091 Paldean Fates English NM PSA 9",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": false,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct print identity does not make a graded card a raw single."
+      }
+    },
+    {
+      "id": "sv4pt5-232-novelty",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex 232/091 Paldean Fates English NM sticker",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct card reference on a sticker does not make it a card."
+      }
+    },
+    {
+      "id": "sv4pt5-232-implausible-price",
+      "family": "pokemon:232/91",
+      "game": "pokemon",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "sv4pt5-232",
+        "name": "Mew ex",
+        "setName": "Paldean Fates",
+        "setCode": "SV4PT5",
+        "cardNumber": "232/91",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Mew ex 232/091 Paldean Fates English NM",
+        "cardId": "sv4pt5-232",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 1,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Price below the exact-print market floor cannot win despite name/number proof."
+      }
+    },
+    {
+      "id": "swsh7-215-exact",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Umbreon VMAX 215/203 Evolving Skies English NM",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Name, collector number and required print marker identify this print."
+      }
+    },
+    {
+      "id": "swsh7-215-seller-wording",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Pokemon Umbreon VMAX 215/203 Alternate Full Art English NM",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Equivalent seller wording retains the same number and print."
+      }
+    },
+    {
+      "id": "swsh7-215-wrong-number",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Umbreon VMAX 214/203 Evolving Skies English NM",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "reject",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "A contradictory collector number cannot match the selected print."
+      }
+    },
+    {
+      "id": "swsh7-215-missing-number",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Umbreon VMAX Evolving Skies English NM",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "abstain",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "No collector number; title alone does not prove the selected print."
+      }
+    },
+    {
+      "id": "swsh7-215-unknown-charges",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Umbreon VMAX 215/203 Evolving Skies English NM",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": null,
+        "buyerFee": null,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Identity remains supported; missing checkout charges prohibit recommendation."
+      }
+    },
+    {
+      "id": "swsh7-215-graded",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Umbreon VMAX 215/203 Evolving Skies English NM PSA 9",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": false,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct print identity does not make a graded card a raw single."
+      }
+    },
+    {
+      "id": "swsh7-215-novelty",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Umbreon VMAX 215/203 Evolving Skies English NM sticker",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct card reference on a sticker does not make it a card."
+      }
+    },
+    {
+      "id": "swsh7-215-implausible-price",
+      "family": "pokemon:215/203",
+      "game": "pokemon",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "swsh7-215",
+        "name": "Umbreon VMAX",
+        "setName": "Evolving Skies",
+        "setCode": "SWSH7",
+        "cardNumber": "215/203",
+        "language": "English",
+        "imageUrl": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Synthetic evaluation identity"
+        ]
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Umbreon VMAX 215/203 Evolving Skies English NM",
+        "cardId": "swsh7-215",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 1,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Price below the exact-print market floor cannot win despite name/number proof."
+      }
+    },
+    {
+      "id": "ST01-001-exact",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey.D.Luffy ST01-001 Straw Hat Crew English NM",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Name, collector number and required print marker identify this print."
+      }
+    },
+    {
+      "id": "ST01-001-seller-wording",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey D Luffy ST01-001 Leader Straw Hat Crew English NM",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Equivalent seller wording retains the same number and print."
+      }
+    },
+    {
+      "id": "ST01-001-wrong-number",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey.D.Luffy OP01-003 Romance Dawn English NM",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "reject",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "A contradictory collector number cannot match the selected print."
+      }
+    },
+    {
+      "id": "ST01-001-missing-number",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey.D.Luffy Straw Hat Crew English NM",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "abstain",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "No collector number; title alone does not prove the selected print."
+      }
+    },
+    {
+      "id": "ST01-001-unknown-charges",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey.D.Luffy ST01-001 Straw Hat Crew English NM",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": null,
+        "buyerFee": null,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Identity remains supported; missing checkout charges prohibit recommendation."
+      }
+    },
+    {
+      "id": "ST01-001-graded",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey.D.Luffy ST01-001 Straw Hat Crew English NM PSA 9",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": false,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct print identity does not make a graded card a raw single."
+      }
+    },
+    {
+      "id": "ST01-001-novelty",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey.D.Luffy ST01-001 Straw Hat Crew English NM sticker",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct card reference on a sticker does not make it a card."
+      }
+    },
+    {
+      "id": "ST01-001-implausible-price",
+      "family": "onePiece:ST01-001",
+      "game": "onePiece",
+      "split": "tuning",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "ST01-001",
+        "name": "Monkey.D.Luffy",
+        "setName": "Straw Hat Crew",
+        "setCode": "ST-01",
+        "cardNumber": "ST01-001",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/ST01-001.png",
+        "rarity": "L",
+        "variant": null,
+        "artworkClass": null,
+        "treatments": [],
+        "releaseChannel": "unknown",
+        "releaseProvenance": "unknown",
+        "competitionTier": null,
+        "collectorAliases": [],
+        "exactMarkers": [],
+        "metadataRevision": null,
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": null,
+        "tcgplayerGroupId": null
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Monkey.D.Luffy ST01-001 Straw Hat Crew English NM",
+        "cardId": "ST01-001",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 1,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Price below the exact-print market floor cannot win despite name/number proof."
+      }
+    },
+    {
+      "id": "OP10-119_p2-exact",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law MANGA OP10-119 Royal Blood English NM",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Name, collector number and required print marker identify this print."
+      }
+    },
+    {
+      "id": "OP10-119_p2-seller-wording",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law (119) (Manga) OP10-119 Royal Blood Foil English NM",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": true
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Equivalent seller wording retains the same number and print."
+      }
+    },
+    {
+      "id": "OP10-119_p2-wrong-number",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law MANGA OP05-069 English NM",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "reject",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "A contradictory collector number cannot match the selected print."
+      }
+    },
+    {
+      "id": "OP10-119_p2-missing-number",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law Manga Royal Blood English NM",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "abstain",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "No collector number; title alone does not prove the selected print."
+      }
+    },
+    {
+      "id": "OP10-119_p2-unknown-charges",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law MANGA OP10-119 Royal Blood English NM",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": null,
+        "buyerFee": null,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Identity remains supported; missing checkout charges prohibit recommendation."
+      }
+    },
+    {
+      "id": "OP10-119_p2-graded",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law MANGA OP10-119 Royal Blood English NM PSA 9",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": false,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct print identity does not make a graded card a raw single."
+      }
+    },
+    {
+      "id": "OP10-119_p2-novelty",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law MANGA OP10-119 Royal Blood English NM sticker",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 100,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Correct card reference on a sticker does not make it a card."
+      }
+    },
+    {
+      "id": "OP10-119_p2-implausible-price",
+      "family": "onePiece:OP10-119",
+      "game": "onePiece",
+      "split": "held_out",
+      "labelStatus": "synthetic",
+      "card": {
+        "id": "OP10-119_p2",
+        "name": "Trafalgar Law",
+        "setName": "Royal Blood",
+        "setCode": "OP-10",
+        "cardNumber": "OP10-119",
+        "language": "EN",
+        "imageUrl": "https://en.onepiece-cardgame.com/images/cardlist/card/OP10-119_p2.png",
+        "rarity": "SEC",
+        "variant": "Manga Art",
+        "artworkClass": "manga",
+        "treatments": [],
+        "releaseChannel": "booster",
+        "releaseProvenance": "original_set",
+        "competitionTier": null,
+        "collectorAliases": [
+          "manga",
+          "manga art",
+          "manga rare",
+          "comic art"
+        ],
+        "exactMarkers": [
+          "manga",
+          "manga art",
+          "manga rare"
+        ],
+        "metadataRevision": "2026-09-05.taxonomy-anchor.1",
+        "confidence": "high",
+        "matchReasons": [
+          "Evaluation catalog identity"
+        ],
+        "marketLow": null,
+        "marketMid": null,
+        "marketHigh": null,
+        "tcgplayerProductId": 617173,
+        "tcgplayerGroupId": 23766
+      },
+      "listing": {
+        "id": "synthetic",
+        "marketplace": "eBay",
+        "url": null,
+        "title": "Trafalgar Law MANGA OP10-119 Royal Blood English NM",
+        "cardId": "OP10-119_p2",
+        "matchConfidence": "high",
+        "matchReasons": [
+          "Synthetic observed title"
+        ],
+        "matchAspectText": "",
+        "active": true,
+        "raw": true,
+        "currency": "USD",
+        "price": 1,
+        "shipping": 0,
+        "buyerFee": 0,
+        "claimedCondition": "Near Mint",
+        "listingLanguage": "English",
+        "imageUrl": null,
+        "imageUrls": [],
+        "imageKind": "unknown",
+        "seller": {
+          "feedbackPercentage": null,
+          "feedbackCount": null,
+          "returnsAccepted": null,
+          "topRated": null,
+          "buyerProtection": null,
+          "subRatings": null
+        },
+        "evidence": {
+          "photoCount": 0,
+          "frontBackExplicit": false,
+          "closeupsExplicit": false,
+          "surfaceExplicit": false,
+          "identityExplicit": false,
+          "substantiveConditionNotes": false,
+          "missing": []
+        },
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "demo": false,
+        "userSupplied": false,
+        "webDiscovered": false
+      },
+      "buyer": {
+        "country": "US",
+        "postalCode": "",
+        "taxRate": null,
+        "desiredCondition": "Near Mint"
+      },
+      "marketPrice": 100,
+      "expected": {
+        "identity": "accept",
+        "eligible": false
+      },
+      "evidence": {
+        "method": "synthetic",
+        "sourceUrl": null,
+        "observedAt": "2026-10-19T00:00:00.000Z",
+        "note": "Price below the exact-print market floor cannot win despite name/number proof."
+      }
+    }
+  ]
+}

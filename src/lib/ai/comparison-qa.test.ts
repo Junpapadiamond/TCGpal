@@ -80,6 +80,44 @@ const report = {
 } as ComparisonReport;
 
 describe("comparison question answering", () => {
+  it("reports an unavailable configuration without inventing an AI answer", async () => {
+    vi.stubEnv("AI_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const answer = await answerComparisonQuestion(report, "Why not this one?", "twelve");
+    expect(answer).toMatchObject({ usedAi: false, fallbackReason: "not_configured" });
+  });
+
+  it.each([
+    [401, "authentication"], [429, "rate_limited"], [500, "provider_unavailable"],
+  ])("reports safe fallback diagnostics for provider HTTP %s", async (status, reason) => {
+    vi.stubEnv("AI_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "test-key");
+    vi.stubEnv("OPENAI_WIRE_API", "chat");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("private upstream details", { status })));
+    const answer = await answerComparisonQuestion(report, "Why not this one?", "twelve");
+    expect(answer).toMatchObject({ usedAi: false, fallbackReason: reason });
+    expect(JSON.stringify(answer)).not.toContain("private upstream");
+  });
+
+  it("uses an actual model answer for a listing question and keeps attribution server-owned", async () => {
+    vi.stubEnv("AI_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "test-key");
+    vi.stubEnv("OPENAI_WIRE_API", "chat");
+    const fetchStub = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      answer: "The $12 listing has less seller evidence than the $8 recommendation.", cautions: [],
+      usedAi: false, fallbackReason: "authentication", model: "invented",
+    }) } }] })));
+    vi.stubGlobal("fetch", fetchStub);
+    const answer = await answerComparisonQuestion(report, "Why not this one?", "twelve", { lang: "zh" });
+    expect(answer.usedAi).toBe(true);
+    expect(answer.fallbackReason).toBeUndefined();
+    expect(answer.model).not.toBe("invented");
+    expect(answer.answer).toContain("$12");
+    const body = JSON.parse(fetchStub.mock.calls[0][1]!.body as string);
+    expect(body.messages[0].content).toContain("Simplified Chinese");
+    expect(body.messages[1].content).toContain("The $12 listing");
+  });
+
   it("explains exclusions even when no listing can win", async () => {
     vi.stubEnv("OPENAI_API_KEY", "");
     const answer = await answerComparisonQuestion({ ...report, rankedChoices: [], candidates: [listing({ eligible: false, exclusionReasons: ["Seller condition is not stated."] })] }, "Why were listings excluded?");

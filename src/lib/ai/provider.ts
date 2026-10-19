@@ -82,7 +82,7 @@ export async function probeAnthropicModel(config: AiConfig): Promise<AiProbeResu
   }
 
   try {
-    const response = await fetch(`${config.anthropicBaseUrl}/v1/messages`, {
+    const response = await fetchWithTimeout(`${config.anthropicBaseUrl}/v1/messages`, {
       method: "POST",
       headers: anthropicHeaders(),
       body: JSON.stringify({
@@ -106,6 +106,7 @@ export async function probeAnthropicModel(config: AiConfig): Promise<AiProbeResu
       };
     }
 
+    extractAnthropicText(await response.json());
     return { ok: true };
   } catch (error) {
     return {

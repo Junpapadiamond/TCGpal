@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createAiProvider } from "@/lib/ai/provider";
+import { createAiProvider, probeAnthropicModel } from "@/lib/ai/provider";
 import type { AiConfig } from "@/lib/ai/config";
 
 const config: AiConfig = {
@@ -20,6 +20,15 @@ describe("AI provider request timeout", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("does not report healthy when an Anthropic gateway returns HTTP 200 with no text", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      content: [{ type: "text", text: "" }], stop_reason: "end_turn", usage: { output_tokens: 0 },
+    }))));
+    expect(await probeAnthropicModel(config)).toMatchObject({ ok: false });
   });
 
   it("aborts a hanging model call instead of waiting forever", async () => {
