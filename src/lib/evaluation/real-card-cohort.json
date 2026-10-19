@@ -1,0 +1,17 @@
+{
+  "id": "real-cards-2026-10-19-v1",
+  "cards": [
+    { "id": "giratina-alt", "game": "pokemon", "query": "Giratina V 186/196", "name": "Giratina V", "setCode": "SWSH11", "cardNumber": "186/196", "confirmedCardId": "swsh11-186", "split": "tuning" },
+    { "id": "mew-bubble", "game": "pokemon", "query": "Mew ex 232/091", "name": "Mew ex", "setCode": "sv4pt5", "cardNumber": "232/091", "confirmedCardId": "sv4pt5-232", "split": "tuning" },
+    { "id": "charizard-base", "game": "pokemon", "query": "Charizard 4/102", "name": "Charizard", "setCode": "BS", "cardNumber": "4/102", "confirmedCardId": "base1-4", "split": "tuning" },
+    { "id": "nami-base", "game": "onePiece", "query": "Nami OP01-016", "name": "Nami", "setCode": "OP-01", "cardNumber": "OP01-016", "confirmedCardId": "OP01-016", "split": "tuning" },
+    { "id": "luffy-base", "game": "onePiece", "query": "Monkey.D.Luffy OP05-119", "name": "Monkey.D.Luffy", "setCode": "OP-05", "cardNumber": "OP05-119", "confirmedCardId": "OP05-119", "split": "tuning" },
+    { "id": "ace-alt", "game": "onePiece", "query": "Portgas.D.Ace OP02-013 alternate art", "name": "Portgas.D.Ace", "setCode": "OP-02", "cardNumber": "OP02-013", "confirmedCardId": "OP02-013_p1", "split": "tuning" },
+    { "id": "umbreon-alt", "game": "pokemon", "query": "Umbreon VMAX 215/203", "name": "Umbreon VMAX", "setCode": "SWSH7", "cardNumber": "215/203", "confirmedCardId": "swsh7-215", "split": "held_out" },
+    { "id": "rayquaza-alt", "game": "pokemon", "query": "Rayquaza VMAX 218/203", "name": "Rayquaza VMAX", "setCode": "SWSH7", "cardNumber": "218/203", "confirmedCardId": "swsh7-218", "split": "held_out" },
+    { "id": "blastoise-base", "game": "pokemon", "query": "Blastoise 2/102", "name": "Blastoise", "setCode": "BS", "cardNumber": "2/102", "confirmedCardId": "base1-2", "split": "held_out" },
+    { "id": "shanks-base", "game": "onePiece", "query": "Shanks OP09-001", "name": "Shanks", "setCode": "OP-09", "cardNumber": "OP09-001", "confirmedCardId": "OP09-001", "split": "held_out" },
+    { "id": "law-base", "game": "onePiece", "query": "Trafalgar Law OP05-069", "name": "Trafalgar Law", "setCode": "OP-05", "cardNumber": "OP05-069", "confirmedCardId": "OP05-069", "split": "held_out" },
+    { "id": "rosinante-base", "game": "onePiece", "query": "Donquixote Rosinante OP04-119", "name": "Donquixote Rosinante", "setCode": "OP-04", "cardNumber": "OP04-119", "confirmedCardId": "OP04-119", "split": "held_out" }
+  ]
+}

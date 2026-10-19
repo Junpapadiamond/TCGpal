@@ -1,0 +1,751 @@
+{
+  "version": 1,
+  "cohortId": "real-cards-2026-10-19-v1",
+  "startedAt": "2026-10-19T21:43:43.327Z",
+  "cards": [
+    {
+      "id": "giratina-alt",
+      "split": "tuning",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:29:12.364Z",
+      "durationMs": 1910,
+      "confirmedCardId": "swsh11-186",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:29:14.196Z",
+          "returnedCount": 10,
+          "newCount": 10,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 659.5,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "swsh11-186-18"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "swsh11-186-8"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "swsh11-186-18"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "swsh11-186-18"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "mew-bubble",
+      "split": "tuning",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:44:17.201Z",
+      "durationMs": 5111,
+      "confirmedCardId": "sv4pt5-232",
+      "candidateCount": 98,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:44:20.725Z",
+          "returnedCount": 10,
+          "newCount": 9,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 697.69,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "sv4pt5-232-66"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "sv4pt5-232-66"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "sv4pt5-232-2"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "sv4pt5-232-58"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "charizard-base",
+      "split": "tuning",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:44:52.682Z",
+      "durationMs": 2112,
+      "confirmedCardId": "base1-4",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:44:54.116Z",
+          "returnedCount": 10,
+          "newCount": 10,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 1063.65,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "base1-4-37"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "base1-4-37"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "base1-4-1"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "base1-4-1"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "nami-base",
+      "split": "tuning",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:45:25.815Z",
+      "durationMs": 2220,
+      "confirmedCardId": "OP01-016",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:45:27.293Z",
+          "returnedCount": 10,
+          "newCount": 7,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 2.99,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "OP01-016-13"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "OP01-016-13"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "OP01-016-13"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "OP01-016-13"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "luffy-base",
+      "split": "tuning",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:45:58.971Z",
+      "durationMs": 2320,
+      "confirmedCardId": "OP05-119",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:46:00.584Z",
+          "returnedCount": 10,
+          "newCount": 7,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 17,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "OP05-119-7"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "OP05-119-5"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "OP05-119-46"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "OP05-119-46"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "ace-alt",
+      "split": "tuning",
+      "status": "partial",
+      "observedAt": "2026-10-19T21:46:32.282Z",
+      "durationMs": 1830,
+      "confirmedCardId": "OP02-013_p1",
+      "candidateCount": 30,
+      "coverage": [],
+      "rankedChoices": [],
+      "outcome": "inspect_first"
+    },
+    {
+      "id": "umbreon-alt",
+      "split": "held_out",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:47:05.131Z",
+      "durationMs": 2733,
+      "confirmedCardId": "swsh7-215",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:47:07.001Z",
+          "returnedCount": 10,
+          "newCount": 10,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 1905.17,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "swsh7-215-3"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "swsh7-215-9"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "swsh7-215-6"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "swsh7-215-6"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "rayquaza-alt",
+      "split": "held_out",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:47:38.933Z",
+      "durationMs": 2216,
+      "confirmedCardId": "swsh7-218",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:47:40.568Z",
+          "returnedCount": 10,
+          "newCount": 9,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 1064.9,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "swsh7-218-25"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "swsh7-218-25"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "swsh7-218-6"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "swsh7-218-1"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "blastoise-base",
+      "split": "held_out",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:48:12.223Z",
+      "durationMs": 2546,
+      "confirmedCardId": "base1-2",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:48:14.127Z",
+          "returnedCount": 10,
+          "newCount": 10,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": 150,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "base1-2-25"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "base1-2-25"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "base1-2-42"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "base1-2-42"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "shanks-base",
+      "split": "held_out",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:48:45.866Z",
+      "durationMs": 2051,
+      "confirmedCardId": "OP09-001",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "cheaper_found",
+          "observedAt": "2026-10-19T21:48:47.148Z",
+          "returnedCount": 10,
+          "newCount": 9,
+          "comparableCount": 2,
+          "unresolvedCount": 1,
+          "baselineCheapestTotal": 1.49,
+          "listingCaseId": "OP09-001-51",
+          "probeTotal": 1.48
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "OP09-001-37"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "OP09-001-38"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "OP09-001-37"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "OP09-001-37"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "law-base",
+      "split": "held_out",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:49:18.930Z",
+      "durationMs": 2066,
+      "confirmedCardId": "OP05-069",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "cheaper_found",
+          "observedAt": "2026-10-19T21:49:20.325Z",
+          "returnedCount": 10,
+          "newCount": 6,
+          "comparableCount": 2,
+          "unresolvedCount": 1,
+          "baselineCheapestTotal": 1.75,
+          "listingCaseId": "OP05-069-51",
+          "probeTotal": 1.5
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "OP05-069-22"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "OP05-069-10"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "OP05-069-22"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "OP05-069-22"
+        }
+      ],
+      "outcome": "best_buy"
+    },
+    {
+      "id": "rosinante-base",
+      "split": "held_out",
+      "status": "complete",
+      "observedAt": "2026-10-19T21:49:51.854Z",
+      "durationMs": 2252,
+      "confirmedCardId": "OP04-119",
+      "candidateCount": 50,
+      "coverage": [
+        {
+          "status": "inconclusive",
+          "observedAt": "2026-10-19T21:49:53.523Z",
+          "returnedCount": 10,
+          "newCount": 5,
+          "comparableCount": 1,
+          "unresolvedCount": 1,
+          "baselineCheapestTotal": 4.44,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [
+        {
+          "role": "best_value",
+          "caseId": "OP04-119-20"
+        },
+        {
+          "role": "lowest_landed_cost",
+          "caseId": "OP04-119-17"
+        },
+        {
+          "role": "safest_listing",
+          "caseId": "OP04-119-20"
+        },
+        {
+          "role": "best_condition_evidence",
+          "caseId": "OP04-119-20"
+        }
+      ],
+      "outcome": "best_buy"
+    }
+  ],
+  "completedAt": "2026-10-19T21:49:54.036Z",
+  "followUps": [
+    {
+      "id": "ace-alt",
+      "split": "tuning",
+      "status": "partial",
+      "observedAt": "2026-10-19T21:46:32.282Z",
+      "durationMs": 193,
+      "confirmedCardId": "OP02-013_p1",
+      "candidateCount": 30,
+      "coverage": [
+        {
+          "status": "no_cheaper_found",
+          "observedAt": "2026-10-19T21:46:33.592Z",
+          "returnedCount": 10,
+          "newCount": 1,
+          "comparableCount": 0,
+          "unresolvedCount": 0,
+          "baselineCheapestTotal": null,
+          "listingCaseId": null,
+          "probeTotal": null
+        }
+      ],
+      "rankedChoices": [],
+      "outcome": "inspect_first",
+      "sources": [
+        {
+          "id": "ebay",
+          "status": "complete",
+          "count": 30
+        }
+      ]
+    }
+  ],
+  "warning": "Stress sample; 12 card families, not representative demand. Source failures and cached observation times retained. No marketplace page/stock/photo adjudication.",
+  "baseline": {
+    "datasetHash": "6da6caca13374ea5a1f9e15c874ea768aea4a1de9121e23ec368afe6112326ba",
+    "total": 86,
+    "scored": 80,
+    "agreement": 0.875,
+    "humanReviewed": {
+      "total": 0,
+      "accuracy": null
+    },
+    "agentReviewed": {
+      "total": 80,
+      "accuracy": 0.875
+    },
+    "falseAccepts": 9,
+    "unsafeEligible": 3,
+    "bySplit": {
+      "tuning": {
+        "total": 50,
+        "scored": 44,
+        "passed": 35
+      },
+      "held_out": {
+        "total": 36,
+        "scored": 36,
+        "passed": 35
+      }
+    },
+    "failures": [
+      {
+        "id": "base1-4-2",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      },
+      {
+        "id": "base1-4-24",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      },
+      {
+        "id": "base1-4-31",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      },
+      {
+        "id": "base1-4-37",
+        "expected": {
+          "identity": null,
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": true
+        }
+      },
+      {
+        "id": "base1-4-45",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      },
+      {
+        "id": "base1-4-50",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      },
+      {
+        "id": "OP01-016-13",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": true
+        }
+      },
+      {
+        "id": "OP01-016-45",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": true
+        }
+      },
+      {
+        "id": "OP01-016-51",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      },
+      {
+        "id": "base1-2-6",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      }
+    ]
+  },
+  "replay": {
+    "datasetHash": "6da6caca13374ea5a1f9e15c874ea768aea4a1de9121e23ec368afe6112326ba",
+    "total": 86,
+    "scored": 80,
+    "agreement": 0.9875,
+    "humanReviewed": {
+      "total": 0,
+      "accuracy": null
+    },
+    "agentReviewed": {
+      "total": 80,
+      "accuracy": 0.9875
+    },
+    "falseAccepts": 1,
+    "unsafeEligible": 0,
+    "bySplit": {
+      "tuning": {
+        "total": 50,
+        "scored": 44,
+        "passed": 44
+      },
+      "held_out": {
+        "total": 36,
+        "scored": 36,
+        "passed": 35
+      }
+    },
+    "failures": [
+      {
+        "id": "base1-2-6",
+        "expected": {
+          "identity": "reject",
+          "eligible": false
+        },
+        "actual": {
+          "identity": "accept",
+          "eligible": false
+        }
+      }
+    ],
+    "baseline": {
+      "regressions": [],
+      "recoveries": [
+        "base1-4-2",
+        "base1-4-24",
+        "base1-4-31",
+        "base1-4-37",
+        "base1-4-45",
+        "base1-4-50",
+        "OP01-016-13",
+        "OP01-016-45",
+        "OP01-016-51"
+      ]
+    }
+  },
+  "aiReview": {
+    "status": "provisional",
+    "model": "claude-opus-4-8",
+    "findings": [
+      {
+        "caseId": "base1-4-2",
+        "hypothesis": "Agent accepts Celebrations reprint (4/102) as Base Set match despite set mismatch. Title substring 'Celebrations: Classic Collection' not blocking identity acceptance.",
+        "nextTest": "Submit Charizard 4/102 with explicit 'Celebrations' in title but no 'Classic Collection' phrase; check if identity still accepts."
+      },
+      {
+        "caseId": "base1-4-24",
+        "hypothesis": "Future-dated title '2026 Pokémon 30th Anniversary' accepted despite temporal impossibility. Agent ignores anachronistic date signals in product metadata.",
+        "nextTest": "Submit same card number/name with '2030' or other future year in title; verify identity gate still accepts."
+      },
+      {
+        "caseId": "base1-4-37",
+        "hypothesis": "Graded card (PCG 7.5) passes both identity and eligibility despite expected reject/ineligible. Grading mention may bypass identity scrutiny or condition gates.",
+        "nextTest": "Submit non-graded Base Set 4/102 title with identical aspectText minus grading references; compare identity outcome."
+      },
+      {
+        "caseId": "OP01-016-13",
+        "hypothesis": "One Piece LD-01 deck reprint accepted as OP01-016 base. 'Learn Together Deck Set' in aspectText insufficient to reject identity match for starter-deck variants.",
+        "nextTest": "Submit OP01-016 title explicitly stating 'starter deck only' or 'LD-01 exclusive'; check if identity rejects or aspectText parsing fails."
+      },
+      {
+        "caseId": "OP01-016-45",
+        "hypothesis": "Title suffix '(LD01 Non-Foil)' accepted despite expected reject. Parenthetical set-code notation not parsed as blocking variant signal for One Piece cards.",
+        "nextTest": "Submit OP01-016 with '[LD01]' or 'from LD01' without parentheses; verify if alternate syntax triggers identity rejection."
+      },
+      {
+        "caseId": "base1-4-31",
+        "hypothesis": "AspectText '1999' year conflicts with 'Celebrations 25th Anniversary' title; agent prioritizes number/name match over temporal contradiction in Pokémon identity logic.",
+        "nextTest": "Submit Base Set 4/102 title with 'reprint' keyword and aspectText stating original 1999 attributes; check if explicit reprint mention forces reject."
+      }
+    ],
+    "selectedModel": "claude-opus-4-8"
+  },
+  "rejectedAdvice": "The model called 2026 temporally impossible. That is unsupported for this observation date and was rejected; release words, not arbitrary years, drive the fix.",
+  "priceTriage": {
+    "status": "provisional",
+    "model": "claude-opus-4-8",
+    "findings": [
+      {
+        "caseId": "historical-op-luffy-op05-119",
+        "proposal": "Price-sort probe capped at $5.02 vs $38.98 baseline; test if probe limit=10 truncated valid inventory. Historical flag indicates snapshot, not live.",
+        "nextTest": "Re-run with probeLimit=50 on same snapshot timestamp; measure new total and row overlap with baseline to isolate truncation vs. availability shift."
+      }
+    ]
+  },
+  "rejectedPriceAdvice": "The model suggested probeLimit=50; this violates the existing ten-row probe boundary, and a past timestamp cannot be fetched again. Rejected; no retrieval budget or ranking promotion change.",
+  "priceReviewAudit": "An initial post-replay price-triage call received historical Law/Shanks records before the family-split check was added. Discarded. Final triage sees Luffy tuning only. No identity changes followed this call; the held-out identity replay predates it."
+}

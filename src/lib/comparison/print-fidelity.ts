@@ -396,6 +396,19 @@ function classifyPokemonPrintIdentity(
       : result("unknown", "low", "pokemon_listing_missing_full_collector_number");
   }
 
+  // Some commemorative releases retain the original printed number. An exact
+  // 4/102 is therefore not proof of Base Set when the seller names Celebrations.
+  // Explicit release claims veto even conflicting original-set item specifics.
+  const selectedRelease = `${card.setName} ${card.setCode} ${card.variant ?? ""}`;
+  for (const marker of [/\bcelebrations\b/i, /\bclassic\s+collection\b/i, /\b\d+(?:st|nd|rd|th)\s+anniversary\b/i]) {
+    const claim = matchText.match(marker)?.[0];
+    if (!claim) continue;
+    const isCelebrationAlias = /^(?:25th\s+anniversary|classic\s+collection)$/i.test(claim) && /celebrations/i.test(selectedRelease);
+    if (!normalizePhrase(selectedRelease).includes(normalizePhrase(claim)) && !isCelebrationAlias) {
+      return result("mismatch", "high", "pokemon_listing_names_different_release");
+    }
+  }
+
   const genericNameTokens = new Set(["card", "pokemon", "v", "vmax", "vstar", "ex", "gx"]);
   const meaningfulNameTokens = card.name
     .toLowerCase()

@@ -5,7 +5,7 @@ import { createJiti } from "jiti";
 
 const args = process.argv.slice(2);
 if (args.includes("--help")) {
-  console.log("npm run eval:cards -- [--split tuning|held_out|all] [--dataset file.json] [--import-report file.json] [--baseline result.json] [--ai]\nOutputs are local in output/accuracy-eval. Default: offline tuning split, no network. --ai makes at most one existing-provider call for up to 12 review cases. Import creates pending labels, never gold.");
+  console.log("npm run eval:cards -- [--split tuning|held_out|all] [--dataset file.json] [--import-report file.json] [--baseline result.json] [--ai] [--models model1,model2]\nOutputs are local in output/accuracy-eval. Default: offline tuning split, no network. --ai makes at most one existing-provider call for up to 12 tuning review cases. Model routing uses local availability history, never changes provider credentials, never uses Haiku. Import creates pending labels, never gold.");
   process.exit(0);
 }
 function option(name, fallback) {
@@ -16,10 +16,10 @@ function option(name, fallback) {
 }
 const split = option("--split", "tuning");
 if (!["tuning", "held_out", "all"].includes(split)) throw new Error("Invalid split");
-const known = new Set(["--split", "--dataset", "--import-report", "--baseline", "--ai"]);
+const known = new Set(["--split", "--dataset", "--import-report", "--baseline", "--ai", "--models"]);
 for (const arg of args.filter(a => a.startsWith("--"))) if (!known.has(arg)) throw new Error(`Unknown option ${arg}`);
 const jiti = createJiti(import.meta.url, { alias: { "@/": `${process.cwd()}/src/` } });
-const { evaluateAccuracy, datasetFromReport, triageFailures } = await jiti.import("../src/lib/evaluation/card-accuracy.ts");
+const { evaluateAccuracy, datasetFromReport } = await jiti.import("../src/lib/evaluation/card-accuracy.ts");
 const readJson = file => {
   if (fs.statSync(file).size > 10 * 1024 * 1024) throw new Error("Input exceeds 10 MiB");
   return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -51,7 +51,16 @@ if (args.includes("--ai")) {
   nextEnv.loadEnvConfig(process.cwd());
   const { getAiConfig } = await jiti.import("../src/lib/ai/config.ts");
   const { createAiProvider } = await jiti.import("../src/lib/ai/provider.ts");
-  triage = await triageFailures(result, createAiProvider(getAiConfig()));
+  const { evaluationHistorySchema, reviewWithModels } = await jiti.import("../src/lib/evaluation/model-routing.ts");
+  const config = getAiConfig();
+  const models = option("--models", config.provider === "anthropic" ? config.anthropicModel : config.primaryModel).split(",").map(s => s.trim());
+  if (models.some(m => config.provider === "anthropic" ? !m.startsWith("claude-") : !m.startsWith("gpt-"))) throw new Error("Models must use the configured provider and credentials.");
+  const historyFile = path.resolve("output/accuracy-eval/model-history.json");
+  const history = fs.existsSync(historyFile) ? evaluationHistorySchema.parse(readJson(historyFile)) : [];
+  const reviewed = await reviewWithModels(result, models, history, model => createAiProvider({ ...config,
+    anthropicModel: model, primaryModel: model, cheapModel: model }));
+  triage = { ...reviewed.triage, selectedModel: reviewed.selectedModel };
+  fs.writeFileSync(historyFile, JSON.stringify(reviewed.history, null, 2));
 }
 const payload = { ...result, generatedAt: new Date().toISOString(), commit, baseline, triage };
 fs.writeFileSync(path.join(out, "result.json"), JSON.stringify(payload, null, 2));
@@ -60,6 +69,7 @@ const lines = ["# Card accuracy evaluation", "", `Dataset: ${result.datasetId}; 
   "This replays listing identity and eligibility. It does not measure search coverage, live availability, or population buy accuracy.", "",
   `- Cases: ${result.total}; labeled: ${result.scored}; expectation agreement: ${pct(result.accuracy)}.`,
   `- Human-reviewed cases: ${result.humanReviewed.total}; agreement: ${pct(result.humanReviewed.accuracy)}.`,
+  `- Agent-reviewed cases (provisional, not human gold): ${result.agentReviewed.total}; agreement: ${pct(result.agentReviewed.accuracy)}.`,
   `- False identity accepts: ${result.falseAccepts}; false rejects/abstentions: ${result.falseRejects}; unsafe eligible: ${result.unsafeEligible}.`,
   `- Review queue: ${result.reviewQueue.length}; AI triage: ${triage.status}.`, "",
   "## Review queue", "", ...result.reviewQueue.map(r => `- ${r.id}: ${r.labelStatus}; expected ${JSON.stringify(r.expected)}; observed ${JSON.stringify(r.actual)}. ${r.reasons.join("; ")}`), "",
