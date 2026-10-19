@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { evaluateAccuracy } from "./card-accuracy";
 import real from "./real-card-dataset.json";
+import followups from "./real-card-followups.json";
 import { isGradedListing } from "@/lib/comparison/graded-listing";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
 import { cardIdentityCandidateSchema } from "@/lib/schemas";
 
 describe("real provider failures from October 19", () => {
+  it("rejects the Demo Deck replacement winner found during production verification", () => {
+    expect(evaluateAccuracy(followups, "tuning").failures).toEqual([]);
+  });
   it("rejects reviewed release conflicts and the graded default winner", () => {
     const result = evaluateAccuracy(real, "tuning");
     expect(result.failures.map(r => ({ id: r.id, actual: r.actual }))).toEqual([]);

@@ -212,6 +212,7 @@ export const releaseClaimPatterns: { pattern: RegExp; aliases: string[]; kind?: 
   // Dawn. A shared printed number does not prove release/finish equivalence.
   { pattern: /\blearn\s+together(?:\s+deck(?:\s+set)?)?\b/i, aliases: ["learntogether"] },
   { pattern: /\bLD[\s-]*0?1\b/i, aliases: ["learntogether"] },
+  { pattern: /\bdemo\s+deck(?:\s+cards?)?\b/i, aliases: ["demodeck"] },
   { pattern: /\b\d+(?:st|nd|rd|th)\s+anniversary\b/i, aliases: ["anniversary"] },
   { pattern: /\bmagazine\s+promo(?:tion)?\b/i, aliases: ["magazine"] },
   { pattern: /\bpromo(?:tion)?\s+cards?\b/i, aliases: ["promo", "promotion"] },
