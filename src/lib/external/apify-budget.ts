@@ -10,6 +10,27 @@ const maxApprovedRuns = 10_000;
 const approvalError = "Paid source paused: pilot budget approval is incomplete or invalid.";
 const expiredError = "Paid source paused: pilot budget approval has expired.";
 
+// October 19 approval: ten starts / $0.50 total. The successful Console
+// verification consumed one start; at most nine application starts remain.
+// Keep this ledger permanently and also increment the original lifetime ledger.
+const mercariRenewalKey = "tcglens:apify-pilot:2026-10-19:mercari-reserved-runs";
+const mercariRenewalExpiry = Date.parse("2026-10-22T00:00:00Z");
+const reserveMercariScript = `
+local limit = tonumber(ARGV[1])
+local now = redis.call('TIME')
+if tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000) >= tonumber(ARGV[2]) then return -2 end
+local counts = {}
+for i = 1, 2 do
+  local raw = redis.call('GET', KEYS[i])
+  if raw and raw ~= '0' and not string.match(raw, '^[1-9][0-9]*$') then return -1 end
+  counts[i] = tonumber(raw or '0')
+  if not counts[i] or counts[i] >= 9007199254740991 then return -1 end
+end
+if counts[2] >= limit then return 0 end
+redis.call('INCR', KEYS[1])
+return redis.call('INCR', KEYS[2])
+`;
+
 // Checking before INCR in one Redis operation prevents rejected requests from
 // inflating the lifetime count. Redis time also closes the check/reserve race at
 // the approval deadline. No expiry, reset, refund, or local fallback is allowed.
@@ -53,12 +74,18 @@ function approvedBudget(provider?: "whatnot" | "mercari") {
 }
 
 export async function reserveApifyPilotRun(provider?: "whatnot" | "mercari"): Promise<void> {
-  const { limit, expiresAt } = approvedBudget(provider);
+  const mercariApproval = provider === "mercari" ? process.env.MERCARI_APIFY_APPROVED_RUNS?.trim() : undefined;
+  if (mercariApproval && !/^[1-9]$/.test(mercariApproval)) throw new Error(approvalError);
+  const { limit, expiresAt } = mercariApproval
+    ? { limit: Number(mercariApproval), expiresAt: mercariRenewalExpiry }
+    : approvedBudget(provider);
+  if (expiresAt && expiresAt <= Date.now()) throw new Error(expiredError);
   const redis = getRedisClient();
   if (!redis) throw new Error("Paid source paused: shared pilot counter is not configured.");
   let count: unknown;
   try {
-    count = await redis.eval(reserveScript, [budgetKey], [limit, expiresAt]);
+    count = await redis.eval(mercariApproval ? reserveMercariScript : reserveScript,
+      mercariApproval ? [budgetKey, mercariRenewalKey] : [budgetKey], [limit, expiresAt]);
   } catch {
     // A lost response may still have incremented the counter. Do not retry or
     // refund the reservation: over-counting is preferable to overspending.

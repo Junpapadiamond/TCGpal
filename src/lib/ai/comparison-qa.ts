@@ -29,7 +29,9 @@ export async function answerComparisonQuestion(
   try {
     const response = await provider.completeJson({
       role: "critic",
-      // Short report explanations must fit the existing 12-second deadline.
+      // Buyer-triggered Q&A can wait longer for a stronger model. Comparison
+      // acquisition/narrative still retain the provider's 12-second default.
+      timeoutMs: 30000,
       reasoningEffort: "low",
       schemaName: "comparison_question_answer",
       schema: comparisonQuestionResponseSchema.pick({ answer: true, cautions: true }),
@@ -42,6 +44,8 @@ export async function answerComparisonQuestion(
         "Do not introduce sold comps, sold-history, or sold-transaction language; this report is active-listing and reference-price evidence only.",
         "Do not mention internal listing ids. Refer to listings by marketplace, title, price, and human risk labels.",
         "If the report does not contain enough evidence, say what is missing.",
+        "price is item-only. If costComplete is false, no comparable pre-tax or checkout total exists: never label price as a total. Unknown seller fields mean unverified, not bad seller history. Only eligible=false means excluded; losing a lens does not mean excluded.",
+        "marketMid is the aggregate NM item-price reference, not a listed median or a condition-adjusted value. Do not invent additional risks or reasons beyond the supplied evidence.",
         "Keep the answer under 120 words and mention the concrete score/price evidence that matters.",
         "Do not repeat generic buying cautions unless they directly answer the question.",
       ].join("\n"),
@@ -455,8 +459,8 @@ function sanitizeListingForQuestion(listing: NormalizedListing, recommendationLi
     evidence: listing.evidence,
     seller: listing.seller,
     estimatedTax: listing.estimatedTax,
-    estimatedLandedCost: listing.estimatedLandedCost,
-    preTaxTotal: listing.preTaxTotal,
+    estimatedLandedCost: listing.costComplete ? listing.estimatedLandedCost : null,
+    preTaxTotal: listing.costComplete ? listing.preTaxTotal : null,
     claimedCondition: listing.claimedCondition,
     listingLanguage: listing.listingLanguage,
     costComplete: listing.costComplete,

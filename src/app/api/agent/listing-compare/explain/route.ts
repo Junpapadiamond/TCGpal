@@ -6,7 +6,8 @@ import { rateLimitHeaders, rateLimitRequest } from "@/lib/ops/rate-limit";
 import { captureOperationalException } from "@/lib/ops/sentry";
 import { comparisonQuestionRequestSchema } from "@/lib/schemas";
 
-export const maxDuration = 20;
+// Leave headroom around the buyer-triggered 30-second model request.
+export const maxDuration = 45;
 
 export async function POST(request: Request) {
   const route = "listing-compare-explain";

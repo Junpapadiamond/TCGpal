@@ -61,7 +61,7 @@ export async function searchMercariListings(card: CardIdentityCandidate, fetcher
   if (!hasMercariCredentials()) throw new Error("Mercari provider token is required.");
   const search = (query ?? `${card.name} ${card.cardNumber}`).trim().slice(0, 250);
   return runApifySearch({
-    provider: "mercari", actor: "getascraper~mercari-us-scraper", build: "0.3.2", memoryMbytes: 2048, token: process.env.MERCARI_APIFY_TOKEN!,
+    provider: "mercari", actor: "getascraper~mercari-us-scraper", build: "0.3.3", memoryMbytes: 2048, token: process.env.MERCARI_APIFY_TOKEN!,
     key: JSON.stringify([card.id, card.language, search]), fetcher, signal,
     input: { startUrls: [], keyword: search, sort: "relevance", status: ["on_sale"], limit: APIFY_MAX_RESULTS,
       proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"], apifyProxyCountry: "US" } },

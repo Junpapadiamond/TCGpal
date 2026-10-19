@@ -10,6 +10,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-10-03T12:00:00Z"));
   vi.stubEnv("APIFY_PILOT_APPROVED_MAX_RUNS", "");
   vi.stubEnv("APIFY_PILOT_APPROVAL_EXPIRES_AT", "");
+  vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", "");
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.resetAllMocks(); });
 
@@ -36,6 +37,37 @@ function approve(maxRuns = "25", expiresAt = "2026-10-04T00:00:00Z") {
 }
 
 describe("shared Apify pilot spending ceiling", () => {
+  it("reserves the separately approved Mercari remainder atomically without resetting the original counter", async () => {
+    vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", "9");
+    let original = 181;
+    let mercari = 0;
+    const evaluate = vi.fn(async (script: string, keys: string[], args: number[]) => {
+      expect(keys).toEqual([originalKey, "tcglens:apify-pilot:2026-10-19:mercari-reserved-runs"]);
+      expect(args).toEqual([9, Date.parse("2026-10-22T00:00:00Z")]);
+      expect(script).toContain("redis.call('INCR', KEYS[1])");
+      expect(script).not.toMatch(/redis.call\('(SET|DEL|EXPIRE)'/);
+      if (Date.now() >= args[1]) return -2;
+      if (mercari >= args[0]) return 0;
+      original += 1;
+      return ++mercari;
+    });
+    vi.mocked(getRedisClient).mockReturnValue({ eval: evaluate } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
+    const attempts = await Promise.allSettled(Array.from({ length: 12 }, () => reserveApifyPilotRun("mercari")));
+    expect(attempts.filter((r) => r.status === "fulfilled")).toHaveLength(9);
+    expect(original).toBe(190);
+    expect(mercari).toBe(9);
+    vi.setSystemTime(new Date("2026-10-22T00:00:00Z"));
+    await expect(reserveApifyPilotRun("mercari")).rejects.toThrow(/expired/);
+    expect(original).toBe(190);
+  });
+
+  it.each(["0", "10", "09", "1.5", "invalid"])("rejects unapproved Mercari allowance %s", async (value) => {
+    vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", value);
+    const counter = sharedCounter(181);
+    await expect(reserveApifyPilotRun("mercari")).rejects.toThrow(/approval/);
+    expect(counter.evaluate).not.toHaveBeenCalled();
+  });
+
   it("allows at most 20 starts concurrently and never increments exhausted traffic", async () => {
     const counter = sharedCounter();
     const attempts = await Promise.allSettled(Array.from({ length: 25 }, () => reserveApifyPilotRun()));
