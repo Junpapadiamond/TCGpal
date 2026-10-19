@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-10-19
 canonical_branch: origin/main
-last_verified_product_commit: 891e22f
+last_verified_product_commit: e740a0f
 working_branch: codex/accuracy-evaluation-qa (October 19 diagnostic and offline evaluation release)
 max_lines: 300
 ---
@@ -247,6 +247,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
+- October 19 recovery: `e740a0f` READY (`dpl_H5UavZTCq3WY4KTXKubAfukLkSin`); Opus 4.8 explanation and Mercari Apify verified live. One invalid model output still degraded visibly. Offline Opus triage succeeded after bounded deadline/conciseness fixes; final local lint/typecheck/metadata/build and 1,878 tests pass (five skipped). See [recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md). No source quota was reset; no chat-pasted credentials were retained.
 - October 19: lint/typecheck/metadata, 1,868 tests (five skipped) and production webpack build pass. Offline seed: 31/32 with one preserved classification discrepancy, no unsafe eligibility; 55 real observations pending human labels. Live Whatnot via Apify returns two; Mercari quota-paused. Application d76c209 is READY (dpl_ExX7LACgb853TDGadmVudGwY7rog); deployed Q&A returns usedAi=false / provider_unavailable. Browser top-pick click returns its labeled rule fallback. Graphify CLI unavailable; no UI/ranking changes. [Evidence](docs/card-accuracy-evaluation-2026-10-19.md).
 - October 15 compact landing: lint, typecheck, metadata audit, production build and 1,854 tests passed (130 files, five optional skips). EN/中文 desktop and mobile captures are local in `output/compact-landing/` in the `tcglens-compact-landing` worktree. Layout-only change; no provider calls or structural graph regeneration required.
 - October 11 limited free recovery: 59 focused and 1,830 full tests/five optional skips, lint/typecheck/metadata/build pass. `deebff8` production READY, real no-ZIP Charizard returns both providers; five cross-market candidates keep null charges/zero condition-photo evidence and cannot win. EN/中文 desktop + 390px mobile no overflow, console empty; scoped deployment warning/error/fatal scan empty. Original key/window retained; no structural graph update needed. Finite allowance remains a limitation.

@@ -50,6 +50,18 @@ describe("card accuracy evaluation", () => {
     expect(JSON.stringify(result)).toBe(before);
   });
 
+  it("allows an offline review model to take twenty seconds without changing scores", async () => {
+    const wrong = { ...dataset, cases: [{ ...dataset.cases[0], expected: { identity: "reject", eligible: false } }] };
+    const result = evaluateAccuracy(wrong, "all");
+    const before = JSON.stringify(result);
+    const provider = { completeJson: async (input: { timeoutMs: number }) => {
+      if (input.timeoutMs < 20000) throw new Error("Simulated model exceeded request deadline");
+      return { data: { findings: [{ caseId: result.failures[0].id, hypothesis: "Review the number conflict.", nextTest: "Compare a matched and a mismatched number." }] }, model: "strong-review-model", provider: "test" };
+    } };
+    expect((await triageFailures(result, provider as never)).status).toBe("provisional");
+    expect(JSON.stringify(result)).toBe(before);
+  });
+
   it("keeps pending rows out of scored denominators even when current rules accept them", () => {
     const rows = [dataset.cases[0], { ...dataset.cases[1], labelStatus: "pending", expected: null }];
     const result = evaluateAccuracy({ ...dataset, cases: rows }, "tuning");
