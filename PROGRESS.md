@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-10-19
 canonical_branch: origin/main
-last_verified_product_commit: 1c2ffcb
+last_verified_product_commit: d76c209
 working_branch: codex/accuracy-evaluation-qa (October 19 diagnostic and offline evaluation release)
 max_lines: 300
 ---
@@ -245,7 +245,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
-- October 19: lint/typecheck/metadata, 1,868 tests (five skipped) and production webpack build pass. Offline seed: 31/32 with one preserved classification discrepancy, no unsafe eligibility; 55 real observations pending human labels. Live Whatnot via Apify returns two; Mercari quota-paused. Production Q&A reproduces gateway failure; deployment of the diagnostics is pending. Graphify CLI unavailable; no UI/ranking changes. [Evidence](docs/card-accuracy-evaluation-2026-10-19.md).
+- October 19: lint/typecheck/metadata, 1,868 tests (five skipped) and production webpack build pass. Offline seed: 31/32 with one preserved classification discrepancy, no unsafe eligibility; 55 real observations pending human labels. Live Whatnot via Apify returns two; Mercari quota-paused. Application d76c209 is READY (dpl_ExX7LACgb853TDGadmVudGwY7rog); deployed Q&A returns usedAi=false / provider_unavailable. Browser top-pick click returns its labeled rule fallback. Graphify CLI unavailable; no UI/ranking changes. [Evidence](docs/card-accuracy-evaluation-2026-10-19.md).
 - October 15 compact landing: lint, typecheck, metadata audit, production build and 1,854 tests passed (130 files, five optional skips). EN/中文 desktop and mobile captures are local in `output/compact-landing/` in the `tcglens-compact-landing` worktree. Layout-only change; no provider calls or structural graph regeneration required.
 - October 11 limited free recovery: 59 focused and 1,830 full tests/five optional skips, lint/typecheck/metadata/build pass. `deebff8` production READY, real no-ZIP Charizard returns both providers; five cross-market candidates keep null charges/zero condition-photo evidence and cannot win. EN/中文 desktop + 390px mobile no overflow, console empty; scoped deployment warning/error/fatal scan empty. Original key/window retained; no structural graph update needed. Finite allowance remains a limitation.
 - October 3 verdict/image gate: lint/typecheck/metadata/webpack build + 1,807 tests (128 files, five skipped) pass. `e95ccfa` production READY (`dpl_8STzv571V2RTKEqwpLR4vcKqdXJc`). Blastoise: eBay 50, Whatnot three, Mercari three, merchant two. 15:22 UTC no-ZIP API returned 200 in 4.620s; all six previews load, retain zero photo evidence/null charges and cannot win. Built-in EN/中文 desktop + 390px production verdicts pass; image enlargement/zoom/Escape/focus return work, no overflow or console errors, scoped logs empty. See the verdict release for evidence and limits.
