@@ -13,6 +13,7 @@
     "eval:real": "node scripts/evaluate-card-accuracy.mjs --dataset src/lib/evaluation/real-card-dataset.json",
     "eval:collect": "node scripts/collect-card-benchmark.mjs",
     "eval:recall": "node scripts/evaluate-price-recall.mjs",
+    "eval:auto": "node scripts/run-card-evaluation.mjs",
     "frontier:firecrawl:evaluate": "node scripts/frontier-research/firecrawl/evaluate.mjs",
     "lint": "eslint",
     "measure:buy-accuracy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/measure-one-piece-buy-accuracy.mjs",

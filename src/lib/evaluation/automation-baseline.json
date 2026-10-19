@@ -1,0 +1,715 @@
+{
+  "version": 1,
+  "reviewedAt": "2026-10-19",
+  "note": "Frozen post-fix baseline. Base Set 2 remains a known defect, not a pass. Never regenerate automatically.",
+  "datasets": [
+    {
+      "path": "src/lib/evaluation/real-card-dataset.json",
+      "datasetHash": "6da6caca13374ea5a1f9e15c874ea768aea4a1de9121e23ec368afe6112326ba",
+      "rows": [
+        {
+          "id": "swsh11-186-1",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh11-186-2",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "swsh11-186-7",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh11-186-8",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "swsh11-186-14",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh11-186-18",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "swsh11-186-29",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh11-186-49",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-1",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-2",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "sv4pt5-232-3",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-5",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-6",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-11",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-14",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-24",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-44",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "sv4pt5-232-46",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-1",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "base1-4-2",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-12",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-17",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-24",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-31",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-37",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-45",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-4-50",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-1",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-2",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-3",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-13",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-18",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP01-016-24",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-29",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-45",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP01-016-51",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-119-1",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP05-119-5",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP05-119-6",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-119-8",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-119-10",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-119-12",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-119-15",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-119-29",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-215-1",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-215-2",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "swsh7-215-4",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-215-5",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-215-6",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "swsh7-215-7",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-218-1",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "swsh7-218-2",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-218-3",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-218-4",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "swsh7-218-7",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "swsh7-218-8",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-2-1",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-2-2",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-2-3",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-2-4",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-2-6",
+          "pass": false,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "base1-2-8",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP09-001-1",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP09-001-2",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP09-001-4",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP09-001-5",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP09-001-7",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP09-001-8",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-069-1",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-069-2",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-069-4",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP05-069-6",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP05-069-7",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP05-069-8",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP04-119-2",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP04-119-3",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP04-119-4",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP04-119-6",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP04-119-7",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP04-119-8",
+          "pass": true,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        },
+        {
+          "id": "OP02-013_p1-1",
+          "pass": null,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP02-013_p1-2",
+          "pass": null,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP02-013_p1-3",
+          "pass": null,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP02-013_p1-4",
+          "pass": null,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP02-013_p1-5",
+          "pass": null,
+          "actual": {
+            "identity": "accept",
+            "eligible": false
+          }
+        },
+        {
+          "id": "OP02-013_p1-6",
+          "pass": null,
+          "actual": {
+            "identity": "accept",
+            "eligible": true
+          }
+        }
+      ]
+    },
+    {
+      "path": "src/lib/evaluation/real-card-followups.json",
+      "datasetHash": "8646688cb4f14c500ff541782c20955e9dd38c5a29f7171a56fb91f952e4fac3",
+      "rows": [
+        {
+          "id": "OP01-016-35",
+          "pass": true,
+          "actual": {
+            "identity": "reject",
+            "eligible": false
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -140,6 +140,8 @@ Until all five gates pass, frontier outputs remain research evidence and may not
 
 ## Agent and Rules Boundary
 
+- October 19 founder-requested recurring card evaluation is authorized through the separate local evaluation harness: one daily batch of at most two eBay-only public comparisons (one Pokémon and one One Piece, rotating the fixed 12-card cohort), no automatic request retry, and at most one existing-provider strong-model review of tuning evidence. Each comparison retains the existing bounded recall probe. Reserve the whole allowance before work in the ignored local journal; never reset a day or automatically clear a crash lock. No scheduled Apify, Soldgraph, marketplace browser acquisition, or Frontier crawling. New observations remain pending; held-out rows stay out of optimization prompts; labels and runtime changes still require reviewed evidence and tests. Offline GitHub checks may replay frozen datasets on pushes/PRs without provider credentials. See `docs/automatic-card-evaluation.md`.
+
 The AI layer may:
 
 - Reconcile ambiguous structured evidence.
