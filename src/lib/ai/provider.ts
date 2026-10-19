@@ -48,7 +48,28 @@ async function fetchWithTimeout(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    // Keep the deadline active through body consumption, not just response headers.
+    // The resulting Response is buffered and safe for the existing JSON parsers.
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    const reader = response.body?.getReader();
+    if (reader) {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          size += value.byteLength;
+          if (size > 1024 * 1024) { controller.abort(); throw new Error("AI response body exceeds limit"); }
+          chunks.push(value);
+        }
+      } finally { reader.releaseLock(); }
+    }
+    const body = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
+    return new Response([204, 205, 304].includes(response.status) ? null : body,
+      { status: response.status, statusText: response.statusText, headers: response.headers });
   } finally {
     clearTimeout(timeout);
   }
@@ -275,7 +296,9 @@ class AnthropicMessagesProvider implements AiProvider {
       throw new Error(`Anthropic ${response.status}: ${message.slice(0, 500)}`);
     }
 
-    const text = extractAnthropicText((await response.json()) as unknown);
+    const payload = await response.json();
+    if (payload?.stop_reason === "max_tokens") throw new Error("AI output truncated at provider token limit");
+    const text = extractAnthropicText(payload as unknown);
     const parsed = schema.safeParse(parseJsonObject(text));
 
     if (!parsed.success) {

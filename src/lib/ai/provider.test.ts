@@ -17,6 +17,19 @@ const config: AiConfig = {
 };
 
 describe("AI provider request timeout", () => {
+  it("keeps the deadline active while reading the response body", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => new Response(new ReadableStream({
+      start(controller) { init.signal?.addEventListener("abort", () => controller.error(new DOMException("aborted", "AbortError"))); },
+    }))));
+    const promise = createAiProvider(config).completeJson({ role: "primary", schemaName: "test",
+      schema: z.object({ summary: z.string() }), system: "s", user: {}, timeoutMs: 50 });
+    let failure = "";
+    const settled = promise.catch(e => { failure = e.name; });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(failure).toBe("AbortError");
+    await settled;
+  });
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();

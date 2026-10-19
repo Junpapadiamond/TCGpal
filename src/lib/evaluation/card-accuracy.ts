@@ -6,6 +6,7 @@ import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
 import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 import { buyerContextSchema, cardIdentityCandidateSchema, comparisonReportSchema, listingSeedSchema } from "@/lib/schemas";
 import type { AiProvider } from "@/lib/ai/provider";
+import { safeAiFailure } from "@/lib/ai/failure-diagnostics";
 
 // A missing-cost observation can prove ineligibility without proving artwork.
 const expectedSchema = z.object({ identity: z.enum(["accept", "abstain", "reject"]).nullable(), eligible: z.boolean().nullable() })
@@ -100,7 +101,7 @@ export async function triageFailures(result: AccuracyResult, provider: AiProvide
     const allowed = new Set(queue.map(r => r.id));
     if (parsed.findings.some(r => !allowed.has(r.caseId)) || new Set(parsed.findings.map(r => r.caseId)).size !== parsed.findings.length) return { status: "rejected", findings: [] };
     return { status: "provisional", model: response.model, findings: parsed.findings };
-  } catch { return { status: "unavailable", findings: [] }; }
+  } catch (error) { return { status: "unavailable", findings: [], diagnostic: safeAiFailure(error) }; }
 }
 
 // Report import is local only. Labels remain pending even if production accepted
