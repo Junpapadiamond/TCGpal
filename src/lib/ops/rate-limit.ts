@@ -104,6 +104,7 @@ export function getRateLimitIdentity(request: Request) {
 }
 
 export function getRateLimitRule(route: OpsRoute): RateLimitRule {
+  if (route === "seller-feedback") return { max: 10, windowMs: 60_000 };
   if (route === "mcp") {
     return {
       max: readPositiveInt("RATE_LIMIT_MCP_MAX", DEFAULT_MCP_LIMIT),

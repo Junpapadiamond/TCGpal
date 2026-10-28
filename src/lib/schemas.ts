@@ -59,6 +59,30 @@ export const sellerSubRatingsSchema = z.object({
   communication: z.number().min(0).max(5).nullable().default(null),
 });
 
+// On-demand evidence is deliberately separate from sellerTrustSignalsSchema:
+// these period-specific counts never become a ranking input or receipt snapshot.
+export const sellerFeedbackRequestSchema = z.object({
+  listingUrl: z.string().max(2048).url().refine((value) => {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password && !url.port
+      && ["ebay.com", "www.ebay.com", "m.ebay.com"].includes(url.hostname)
+      && /^\/itm\/(?:[^/]+\/)?\d{9,15}\/?$/.test(url.pathname);
+  }, "An eBay item URL is required."),
+}).strict();
+
+export const sellerFeedbackResponseSchema = z.object({
+  status: z.enum(["complete", "no_data", "unavailable", "disabled"]),
+  source: z.literal("eBay Feedback API"),
+  observedAt: z.iso.datetime(),
+  periods: z.array(z.object({
+    days: z.union([z.literal(30), z.literal(365)]),
+    positive: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    neutral: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    negative: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  })).max(2),
+});
+export type SellerFeedbackResponse = z.infer<typeof sellerFeedbackResponseSchema>;
+
 export const sellerTrustSignalsSchema = z.object({
   feedbackPercentage: z.number().min(0).max(100).nullable().default(null),
   feedbackCount: z.number().int().min(0).nullable().default(null),

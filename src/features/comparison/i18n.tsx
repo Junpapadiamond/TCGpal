@@ -37,6 +37,18 @@ export function localizeVariantLabel(lang: Lang, variant: string) {
 // English is the source dictionary; `Dict = typeof en` forces the Chinese
 // dictionary to cover every key (and matching function signatures) at compile time.
 export const en = {
+  sellerFeedback: {
+    title: "Seller feedback",
+    loading: "Checking eBay seller feedback…",
+    counts: (positive: number, neutral: number, negative: number) => `${positive} positive · ${neutral} neutral · ${negative} negative`,
+    period: (days: number) => `Past ${days} days`,
+    disclaimer: "Feedback received as a seller across their sales, not this card. These eBay-reported counts are not independently verified and are not scored by TCGlens.",
+    empty: "No usable seller feedback was returned. Missing data is not a negative signal.",
+    unavailable: "Seller feedback is unavailable right now. The comparison is unchanged.",
+    disabled: "Seller feedback checks are currently paused.",
+    checked: "Checked",
+    retry: "Retry feedback check",
+  },
   langName: { en: "EN", zh: "中文" },
   toggleAria: "Switch language",
   header: {
@@ -550,6 +562,18 @@ export const en = {
 export type Dict = typeof en;
 
 export const zh: Dict = {
+  sellerFeedback: {
+    title: "卖家评价",
+    loading: "正在查询 eBay 卖家评价…",
+    counts: (positive: number, neutral: number, negative: number) => `${positive} 条好评 · ${neutral} 条中评 · ${negative} 条差评`,
+    period: (days: number) => `过去 ${days} 天`,
+    disclaimer: "这是该用户作为卖家在各笔交易中收到的评价，并非针对这张卡。数据由 eBay 提供，TCGlens 未独立验证，也不用于评分。",
+    empty: "未返回可用的卖家评价。缺少数据不代表负面信号。",
+    unavailable: "暂时无法获取卖家评价，本次比较结果不受影响。",
+    disabled: "卖家评价查询目前已暂停。",
+    checked: "查询时间",
+    retry: "重新查询评价",
+  },
   langName: { en: "EN", zh: "中文" },
   toggleAria: "切换语言",
   header: {

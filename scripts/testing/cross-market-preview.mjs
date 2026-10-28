@@ -34,6 +34,8 @@ const { parseMercariListings } = await jiti.import(path.join(root, "src/lib/exte
 const { parseStompingGroundsListings } = await jiti.import(path.join(root, "src/lib/external/stomping-grounds.ts"));
 const { parseSoldgraphListings } = await jiti.import(path.join(root, "src/lib/external/soldgraph.ts"));
 const soldgraphQA = process.env.TCGLENS_QA_PROVIDER === "soldgraph";
+const feedbackQA = process.env.TCGLENS_QA_PROVIDER === "ebay-feedback";
+const { getEbaySellerFeedback } = await jiti.import(path.join(root, "src/lib/external/ebay-feedback.ts"));
 // Exercise real parsers and ranking through explicit trusted dependency injection.
 // Never invoke paid run/start or Redis paths; never mutate the default registry.
 const fixtureAgents = [ebayPlatformAgent, {
@@ -57,7 +59,7 @@ function fixtureFetcher(request = {}) {
   const title = `${chosen?.name ?? request.cardHint?.name ?? "Pikachu"} ${number} base print Near Mint English`;
   const item = { itemId: "qa-1", title, itemWebUrl: "https://www.ebay.com/itm/123456789012", condition: "Ungraded",
     conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }], localizedAspects: [{ name: "Language", value: "English" }],
-    seller: { feedbackPercentage: "99.8", feedbackScore: 1600 }, price: { value: "100", currency: "USD" },
+    seller: { username: "synthetic-qa-seller", feedbackPercentage: "99.8", feedbackScore: 1600 }, price: { value: "100", currency: "USD" },
     shippingOptions: [{ shippingCost: { value: "10", currency: "USD" } }] };
   return async (input) => {
     const url = new URL(String(input));
@@ -84,6 +86,11 @@ function fixtureFetcher(request = {}) {
       return Response.json({ data: [], count: 0, totalCount: 0 });
     }
     if (url.hostname === "api.ebay.com") {
+      if (url.pathname.includes("/feedback_rating_summary")) return Response.json({ feedbackRatingSummary: [{ ratingType: "OVERALL_EXPERIENCE", ratingSummaryByRatingType: [30, 365].map(days => ({
+        userRoleType: "SELLER", period: { unit: "DAY", value: days }, feedbackRatingValueDistribution: [
+          { value: "POSITIVE", count: days === 30 ? 17 : 160 }, { value: "NEUTRAL", count: 2 }, { value: "NEGATIVE", count: 1 },
+        ],
+      })) }] });
       if (url.pathname.includes("/oauth2/token")) return Response.json({ access_token: "qa", expires_in: 3600 });
       if (url.pathname.includes("/commerce/catalog/")) return Response.json({ productSummaries: [] });
       if (url.pathname.includes("/item_summary/search")) return Response.json({ itemSummaries: url.searchParams.get("sort") === "price" ? [
@@ -111,11 +118,16 @@ const server = http.createServer(async (req, res) => {
     for await (const chunk of req) chunks.push(chunk);
     const body = Buffer.concat(chunks);
     const pathname = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
+    if (feedbackQA && pathname === "/api/agent/seller-feedback" && req.method === "POST") {
+      const value = await getEbaySellerFeedback(JSON.parse(body.toString()).listingUrl, fixtureFetcher());
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify(value)); return;
+    }
     if (["/api/agent/card-identity", "/api/agent/listing-compare"].includes(pathname) && req.method === "POST") {
       const input = JSON.parse(body.toString());
       const value = pathname.endsWith("card-identity")
         ? await resolveCardIdentity(input, { fetcher: fixtureFetcher(input) })
-        : await runListingComparison(input, { fetcher: fixtureFetcher(input), agents: fixtureAgents });
+        : await runListingComparison(input, { fetcher: fixtureFetcher(input), agents: feedbackQA ? [ebayPlatformAgent] : fixtureAgents });
       // QA renders an unmistakably synthetic local preview after exercising
       // the provider's real CDN validation. Never substitute runtime inventory.
       if (soldgraphQA && value.candidates) {

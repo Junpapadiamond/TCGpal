@@ -44,6 +44,7 @@ import {
 } from "./identity-filters";
 import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
+import { SellerFeedback } from "./SellerFeedback";
 import { CrossMarketSearch } from "./CrossMarketSearch";
 import { MarketModeSwitch, type MarketMode } from "./MarketModeSwitch";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
@@ -2866,6 +2867,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
           )}
         </div>
       </div>
+      <SellerFeedback listing={listing} />
     </article>
   );
 }
@@ -3651,6 +3653,7 @@ function RecommendedBuyHero({
             )}
           </div>
         </div>
+        <SellerFeedback listing={listing} />
         {shareFeedback && (
           <div aria-live="polite" className="mt-2 text-right text-xs font-bold text-[#2f6f73]">
             {shareFeedback.kind === "failed" ? (

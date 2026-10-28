@@ -233,6 +233,19 @@ export async function getEbayListingByUrl(
   return toSourceListing(ebayItemSchema.parse(await response.json()), url);
 }
 
+// Internal acquisition seam: never include the username in public listing data.
+// The feedback adapter supplies a body-bounded fetcher and an overall deadline.
+export async function getEbaySellerForFeedback(url: string, fetcher: typeof fetch): Promise<string | null> {
+  const parsed = parseEbayUrl(url);
+  if (!parsed.supported || !parsed.itemId) throw new Error("An eBay item URL is required.");
+  const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item/get_item_by_legacy_id`);
+  endpoint.searchParams.set("legacy_item_id", parsed.itemId);
+  const response = await fetchEbayAuthed(endpoint, { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" }, fetcher);
+  if (!response.ok) throw new Error("eBay seller lookup unavailable.");
+  const item = z.object({ seller: z.object({ username: z.string().max(256).optional() }).optional() }).parse(await response.json());
+  return item.seller?.username?.trim() || null;
+}
+
 export async function searchEbayAlternatives(
   card: CardIdentityCandidate,
   buyer: BuyerContext,

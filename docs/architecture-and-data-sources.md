@@ -30,6 +30,7 @@ Deep links call `buildAgentSearchUrl()` and reopen the existing website identity
 | Source | v1 use | Automated | Notes |
 |---|---|---:|---|
 | eBay Browse API | Active listings, shipping, seller and return signals, images | Yes | Requires server credentials |
+| eBay Feedback API | Seller-wide positive/neutral/negative counts for 30/365 days | Only when the buyer opens Seller feedback | Independent read-only application token; exact SELLER-role periods only. Not ranking evidence or card-condition proof. Missing data stays neutral. [Evaluation and boundaries](ebay-api-update-2026-10-28.md#implemented-on-demand-feedback) |
 | eBay Catalog API | Product identity metadata/ePID and localized aspects for confirmed cards | Optional; requires access grant | Not seller inventory; only guides Browse ePID search. October 28 local keyset denied; keyword fallback remains. See [compatibility audit](ebay-api-update-2026-10-28.md) |
 | Pokémon TCG API | Catalog identity and card images | Yes | Optional key |
 | One Piece catalog | Catalog identity and card images | Yes | Bundled catalog + adapter |

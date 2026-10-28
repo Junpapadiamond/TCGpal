@@ -75,3 +75,32 @@ Owner: founder for source/ranking promotion, implementation agent for the bounde
 ## Verification scope
 
 Documentation-only outcome. Validate Markdown whitespace, local paths, external source URLs and paired progress section markers. No runtime edits, dependency installation, application gate, UI screenshots or Graphify regeneration are required for this audit. The live evidence above is compatibility/access evidence only, not an end-to-end product test.
+
+## Implemented on-demand feedback
+
+The founder subsequently asked to wire in the useful new features. The original item-as-described proposal **failed its coverage gate** and was redesigned: an optional seller-wide overall-feedback display, acquired only when opened. It does not change Safest, other scores, comparison latency, receipt schemas or provider inventory. Buyer login is unnecessary. Catalog access remains unresolved.
+
+### Evidence and decision
+
+On October 28, two fixed official searches (`Charizard 4/102`, `Nami OP01-016`, limit 10) supplied five distinct sellers each. The first category pair returned no usable item-as-described or communication metrics in 10/10 cases. A second pair found overall-feedback rows in 10/10 and no on-time-delivery rows in 10/10. A final pass retained sanitized distributions: complete explicit SELLER-role buckets for both 30 and 365 days in 10/10; nonzero totals in 9/10 and 10/10 respectively. These are coverage observations, not seller-quality judgments or representative marketplace estimates. Three passes used 62 bounded requests total (including OAuth and repeated search), no pagination or retries. Identifiers/raw captures stayed in temporary process memory and were not committed.
+
+The final ten summary calls took 436–857 ms (nearest-rank sample p95 857 ms), excluding lookup/token costs; this does not pass or substitute for the original two-call critical-path latency gate. The redesigned feature is off the comparison critical path. The integrated adapter's separate live check at 17:36 UTC completed in 993 ms and preserved actual zero counts for the 30-day window and 40 positive/zero neutral/zero negative for 365 days. That is one end-to-end observation, not a latency guarantee.
+
+Strongest case: bounded recent-period counts give buyers inspectable context beyond a lifetime percentage. Objections remain quota/availability cost and confusion between seller-wide history and this card's condition; explicit opening, neutral missing states, source/time labels and the no-scoring disclaimer address those within this small release. Official read-only application access and current specification support the method; no broader collection rights or retention policy were inferred.
+
+Decision: promote this display-only adapter under the explicit AGENTS.md boundary. Success criteria: correct complete seller-role distributions, no ranking influence, no acquisition until opened, no identifier leakage, bounded failure, and EN/中文/mobile usability. Kill criteria: grant failures, unsupported response semantics, quota pressure or misleading interpretation; disable with `EBAY_FEEDBACK_ENABLED=false`. Owner: implementation agent for correctness; founder for usefulness/source-access review on October 30, 2026. No follow-up automation is scheduled. Detailed ratings, bulk Browse access, account/transaction APIs and scoring changes remain outside this release.
+
+### Runtime contract
+
+- `POST /api/agent/seller-feedback` accepts only a strict `{ listingUrl }` for a public HTTPS US eBay item. The server obtains the seller privately from the official Browse legacy-item lookup; client-provided seller identifiers are rejected.
+- `src/lib/external/ebay-feedback.ts` requests only `ratingType:OVERALL_EXPERIENCE`, using a separate `commerce.feedback.readonly` token cache. One five-second deadline covers Browse, OAuth, Feedback and bodies; each response is capped at 1 MB. No HTML, redirects, pagination or feedback retries. Browse retains its existing bounded 401 refresh.
+- Only exact 30/365 DAY rows with `userRoleType:SELLER` and one explicit count for each POSITIVE/NEUTRAL/NEGATIVE bucket are published. Combined/buyer rows, missing buckets and duplicate periods cannot become a score or fabricated zero. Explicit zeros remain valid. The periods overlap and are never added together.
+- Responses expose status, source, observation time and counts only. Ten requests/minute per hashed client; canonical item IDs are hashed by the cache interface. Fifteen-minute success/no-data cache, 30-second unavailable cache, coalesced concurrent reads; the kill switch bypasses warm caches. No usernames, comments, raw payloads or provider errors enter responses, cache or operational events.
+- The selected eBay recommendation/inspect-first card has a keyboard-operable disclosure. Language switches and reopening reuse loaded data; selecting a different listing clears the previous result. Failure/no-data states are neutral and only explicit retry reacquires. This data is not added to comparison reports, snapshots, MCP projections or analytics.
+- Local fixture QA: `TCGLENS_QA_PROVIDER=ebay-feedback TCGLENS_QA_PORT=4318 TCGLENS_QA_UPSTREAM_PORT=3018 node scripts/testing/cross-market-preview.mjs`, with Next on 3018. The visible synthetic-data banner is mandatory; these are not live inventory claims.
+
+### Release verification
+
+- Red/green adapter, route and disclosure tests cover acquisition-on-open, scoped OAuth isolation, seller-role/window selection, missing/zero/malformed data, duplicate periods, body size/stall deadlines, privacy, cache/coalescing, rate limit and kill switch. Twenty-one focused tests passed.
+- Full gate: `npm run lint`, `npm run typecheck`, `npm run test -- --maxWorkers=4` (1,935 passed, five optional skips), and `npm run build` passed. No dependency or plugin-contract changes.
+- Built-in browser: English and 中文 desktop (1280px), 中文 mobile (390px), keyboard opening/tab focus, wrapped text, no console warnings/errors. Synthetic QA images are `ebay-feedback-en.jpg`, `ebay-feedback-zh.jpg`, `ebay-feedback-mobile.jpg` in the October 28 local visualization directory. Search/confirmation/Edit/New Search behavior is unchanged; the full hermetic suite includes the existing sequential product-flow contract.
