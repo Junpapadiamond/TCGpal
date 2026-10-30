@@ -1,34 +1,29 @@
-# UI simplicity review — October 29, 2026
+# UI simplicity release review — October 30, 2026
 
-Status: local implementation; build and visual release gates blocked by the execution environment. This is a source review with two captured production baselines, not a completed visual acceptance report.
+The founder requested less secondary labeling and explanatory copy, with hierarchy and controls carrying more meaning. AGENTS.md now applies this rule to both languages while preserving decision-critical facts and accessible names.
 
-The founder requested less secondary labeling and explanatory copy, with hierarchy and controls carrying more of the meaning. AGENTS.md now makes this a bilingual UI rule while preserving decision-critical facts and accessible names.
+Implementation commit: `a8eeba7535b1215b553bda3bca99ed33467954c2`, based on the current production commit `eaffc27`. The on-demand eBay Seller Feedback component and its source boundary are preserved.
 
 ## Surface review
 
-| Step | Surface | Finding and local change | Verification state |
-|---|---|---|---|
-| 1 | Search | Removed the card-rail instruction; the card buttons retain their hover CTA and accessible action names. The empty search no longer repeats the selected game above its selector. | Production baseline captured; local component tests pass; new layout needs browser verification. |
-| 2 | Loading and print selection | A spinner and one heading replace the loading eyebrow/paragraph. Removed the duplicate confirmation eyebrow and instruction; empty/error recovery copy remains. | Source and component review; browser capture blocked. |
-| 3 | Recommended listing and Q&A | One lens badge replaces stacked pick/lens badges. Removed the Next step / Why it stands out / What to know / Alternative prefixes and the Q&A preamble. Concrete action, rationale, caution and alternative facts remain. | Production baseline captured; local component tests pass; new layout needs browser verification. |
-| 4 | Cross-market view | Removed the section instruction, the repeated empty-result explanation and the Verdict prefix. Shortened the opt-in text while retaining connected platforms and extra-credit disclosure. | Component tests cover verdicts, missing charges, source status and opt-in behavior; browser capture blocked. |
-| 5 | Shared receipt | Removed the saved/confirmed eyebrows and sharing instruction. Moved the existing stale-price/availability caveat to the header, showing it once. | Receipt tests pass; browser capture blocked. |
-| 6 | Method and unavailable receipt | Removed decorative eyebrows; kept descriptive headings, method explanations and recovery actions. | Method render test passes; browser capture blocked. |
+| Surface | Change | Evidence |
+|---|---|---|
+| Search | Removed the card-rail instruction and redundant empty-query game label. | English/Chinese desktop and 390px mobile inspected. |
+| Loading and print selection | One loading heading and spinner; removed duplicate confirmation labels. Recovery instructions remain. | Live explicit-card loading observed; component tests cover confirmation and recovery. |
+| Recommendation and Q&A | One lens badge; removed generic prefixes and the Q&A preamble. Actual rationale, cautions and alternatives remain. | One eBay-only Mew ex 232/91 comparison completed; English/Chinese desktop and English mobile captured; Q&A opened without making a model request. |
+| Cross-market | Removed repeated introductions and Verdict prefix; shortened opt-in copy. | Switching views showed the explicit search button and extra-credit disclosure without starting cross-market acquisition. Offer/verdict component tests pass. |
+| Saved receipt | Removed decorative labels and repeated sharing instructions; stale-price caveat appears once. | Receipt component tests pass. The older receipt was unavailable in preview, so successful receipt rendering was not visually verified; unavailable state and return-to-search were checked. |
+| Method | Removed decorative eyebrow. | English page rendered and inspected. |
 
-Photo-gallery qualifiers, source/recall evidence, manual-source labels, cost and tax assumptions, form labels, source errors and developer-only diagnostics were reviewed and retained. No provider, ranking, eligibility, cache, API or acquisition behavior changed. Existing cream/teal/gold styles and semantic controls remain.
+Photo qualifiers, source/recall evidence, cost and tax assumptions, confidence, field labels, source errors and collapsed diagnostics remain. No ranking, eligibility, acquisition, API, dependency or project configuration changed.
 
-## Captured baselines
+## Release validation
 
-Pre-change production search and result screenshots were inspected locally. Screenshot export was excluded from this release.
-
-## Validation
-
-- ESLint and TypeScript: passed through installed CLI equivalents; npm is absent from PATH.
-- Focused UI suite: 85 tests passed.
-- Full suite: 140 files passed, 5 skipped; 1,914 tests passed, 5 skipped (`vitest run --maxWorkers=2`, 110.15 seconds). This includes the six-card journey across both games and Edit/New Search transitions. An initial run found the obsolete Q&A copy assertion (updated) and one six-card timeout under concurrent build load; the successful rerun used two workers without weakening timeouts.
-- Metadata audit and `git diff --check`: passed; review image links and the WS-UX section marker checked.
-- Built-in browser: existing production search and saved result captured and inspected. The local Next dev server and isolated QA proxy started, but local browser requests timed out; a local fetch reported EACCES. No changed English/Chinese desktop or mobile screenshot is claimed. Both task-owned servers were stopped.
-- Production build: blocked by fonts.googleapis.com DNS failures and EPERM creating .next/server/app/api. No font/config change or access workaround was introduced.
-- React review: no new state, effects, fetches or dependencies; accessible action labels, headings, alerts, disclosures and source facts remain. The identity-loading spinner now respects reduced motion.
-- Graph navigation used the existing AST graph because Graphify is unavailable here. Presentation/copy edits did not add modules or domain relationships.
-- Release gate is incomplete. No merge, push or deployment was performed. Resume by verifying the changed screens in English and Chinese at desktop and mobile widths, then run the build in an environment with the required access.
+- Local baseline: ESLint, typecheck, metadata audit and 1,914 tests passed (5 skipped).
+- Latest-production merge: cloud lint and typecheck passed.
+- Hermetic cloud suite: 143 test files passed, 5 skipped; **1,935 tests passed, 5 skipped**, in 76.05 seconds. Includes the six-card journey, both games, Edit/New Search transitions and the new seller-feedback tests.
+- Vercel excludes `output/`, including two tracked test inputs. The verification build restores only the metadata and audit JSON from the exact tested Git SHA. Tests run with a clean environment via `env -i PATH="$PATH"`, without provider credentials or Vercel cache settings. An earlier environment-inheriting run was rejected as a release result; production configuration was not changed.
+- Production-mode Next.js build passed on deployment `dpl_i4tQa2DqvwFzp4FnDQCmX8is1JrP`. The hermetic test/build verification runs on `dpl_BYtfLAo91NSJSLdKip12kT1i3Cuh`.
+- Preview checked through the existing authenticated Chrome session. No protection settings changed and no share link was created. No paid cross-market search, seller-feedback fetch or Q&A model request was initiated during UI QA.
+- Screenshots remain local in this review directory: `after-result-en-desktop.png`, `after-result-zh-desktop.png`, `after-result-en-mobile.png`, search, cross-market, method and unavailable-receipt views. Screenshot export to GitHub was excluded after automatic review rejected unverified screenshot uploads.
+- Graph regeneration is unnecessary for these presentation/copy changes. The original local dev/build environment restrictions are superseded by the cloud build and browser evidence above.

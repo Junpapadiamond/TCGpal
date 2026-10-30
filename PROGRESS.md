@@ -3,8 +3,8 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-10-30
 canonical_branch: origin/main
-last_verified_product_commit: e740a0f
-working_branch: codex/ebay-api-update (October 28 on-demand seller feedback)
+last_verified_product_commit: a8eeba7
+working_branch: main (October 30 UI simplicity release)
 max_lines: 300
 ---
 
@@ -131,7 +131,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
-- October 29 local UI cleanup: founder preference added to AGENTS.md; redundant eyebrows, labels and explanatory copy removed across search, confirmation, results, cross-market, receipts and method. Decision-critical facts remain. Lint/types and 1914 tests pass (5 skipped). Build/browser release gates are environment-blocked; not merged or deployed. [Review and captured baselines](docs/ui-simplicity-2026-10-29/review.md).
+- October 30 UI cleanup verified on latest production: AGENTS.md now requires UI-led, concise bilingual copy. Removed redundant labels across search, confirmation, results, cross-market, receipts and method; eBay seller feedback preserved. Cloud lint/types/build and 1,935 tests pass (5 skipped); English/中文 desktop and 390px mobile checked. [Release evidence and visual scope](docs/ui-simplicity-2026-10-29/review.md).
 - October 19 follow-up: founder rejected Haiku. Intenext Opus 4.8 is production-verified: `usedAi=true` in 17.9s and browser badge “AI 解读 · claude-opus-4-8”. Old production credential was invalid and securely replaced using the verified existing local credential. Q&A hides incomplete totals and permits 30 seconds (45-second route); optional GPT search allocator remains separate. [Recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md).
 - October 19: Why-not-pick is wired; production gateway returned primary/critic HTTP 500 and allocator/fallback 503. Founder chooses to keep the gateway. Q&A now returns a safe fallback category and logs it; attribution remains server-owned. Anthropic health rejects empty HTTP-200 responses. External gateway recovery remains unverified; see [diagnosis](docs/card-accuracy-evaluation-2026-10-19.md).
 ### Done
