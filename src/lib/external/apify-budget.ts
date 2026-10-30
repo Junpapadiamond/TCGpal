@@ -1,7 +1,7 @@
 import { getRedisClient } from "@/lib/ops/redis";
 
 // Both marketplace Actors share the original lifetime allowance: 20 starts at
-// $0.03/Whatnot or $0.05/Mercari. A separately approved, expiring cumulative
+// $0.03/Whatnot or $0.05/Mercari. A separately approved cumulative
 // ceiling can extend Whatnot only. Never reset this key on renewal, a new day,
 // deploy or process. Separate approved Console tests are not application starts.
 export const APIFY_PILOT_MAX_RUNS = 20;
@@ -13,12 +13,16 @@ const expiredError = "Paid source paused: pilot budget approval has expired.";
 // October 19 approval: ten starts / $0.50 total. The successful Console
 // verification consumed one start; at most nine application starts remain.
 // Keep this ledger permanently and also increment the original lifetime ledger.
+// October 29 removes the deadline only when explicitly enabled; no extra allowance.
 const mercariRenewalKey = "tcglens:apify-pilot:2026-10-19:mercari-reserved-runs";
 const mercariRenewalExpiry = Date.parse("2026-10-22T00:00:00Z");
 const reserveMercariScript = `
 local limit = tonumber(ARGV[1])
-local now = redis.call('TIME')
-if tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000) >= tonumber(ARGV[2]) then return -2 end
+local expiresAt = tonumber(ARGV[2])
+if expiresAt > 0 then
+  local now = redis.call('TIME')
+  if tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000) >= expiresAt then return -2 end
+end
 local counts = {}
 for i = 1, 2 do
   local raw = redis.call('GET', KEYS[i])
@@ -66,18 +70,19 @@ function approvedBudget(provider?: "whatnot" | "mercari") {
     || !Number.isFinite(expiresAt)) throw new Error(approvalError);
   const canonicalDeadline = new Date(expiresAt).toISOString();
   if (deadline !== canonicalDeadline && deadline !== canonicalDeadline.replace(".000Z", "Z")) throw new Error(approvalError);
-  if (expiresAt <= Date.now()) throw new Error(expiredError);
+  const noExpiry = process.env.APIFY_PILOT_APPROVAL_NO_EXPIRY === "1";
+  if (!noExpiry && expiresAt <= Date.now()) throw new Error(expiredError);
 
   // The failed Mercari transport needs its own review and authorization. Merely
   // configuring a Whatnot renewal must never enlarge Mercari's allowance.
-  return provider === "whatnot" ? { limit, expiresAt } : { limit: APIFY_PILOT_MAX_RUNS, expiresAt: 0 };
+  return provider === "whatnot" ? { limit, expiresAt: noExpiry ? 0 : expiresAt } : { limit: APIFY_PILOT_MAX_RUNS, expiresAt: 0 };
 }
 
 export async function reserveApifyPilotRun(provider?: "whatnot" | "mercari"): Promise<void> {
   const mercariApproval = provider === "mercari" ? process.env.MERCARI_APIFY_APPROVED_RUNS?.trim() : undefined;
   if (mercariApproval && !/^[1-9]$/.test(mercariApproval)) throw new Error(approvalError);
   const { limit, expiresAt } = mercariApproval
-    ? { limit: Number(mercariApproval), expiresAt: mercariRenewalExpiry }
+    ? { limit: Number(mercariApproval), expiresAt: process.env.APIFY_PILOT_APPROVAL_NO_EXPIRY === "1" ? 0 : mercariRenewalExpiry }
     : approvedBudget(provider);
   if (expiresAt && expiresAt <= Date.now()) throw new Error(expiredError);
   const redis = getRedisClient();

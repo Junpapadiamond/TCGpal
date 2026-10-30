@@ -10,6 +10,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-10-03T12:00:00Z"));
   vi.stubEnv("APIFY_PILOT_APPROVED_MAX_RUNS", "");
   vi.stubEnv("APIFY_PILOT_APPROVAL_EXPIRES_AT", "");
+  vi.stubEnv("APIFY_PILOT_APPROVAL_NO_EXPIRY", "");
   vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", "");
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.resetAllMocks(); });
@@ -37,6 +38,60 @@ function approve(maxRuns = "25", expiresAt = "2026-10-04T00:00:00Z") {
 }
 
 describe("shared Apify pilot spending ceiling", () => {
+  it("removes only the approved Whatnot deadline while preserving the cumulative ceiling", async () => {
+    approve("1846", "2026-10-22T00:00:00Z");
+    vi.stubEnv("APIFY_PILOT_APPROVAL_NO_EXPIRY", "1");
+    vi.setSystemTime(new Date("2030-01-01T00:00:00Z"));
+    const counter = sharedCounter(1845);
+    await expect(reserveApifyPilotRun("whatnot")).resolves.toBeUndefined();
+    expect(counter.evaluate).toHaveBeenCalledWith(expect.any(String), [originalKey], [1846, 0]);
+    await expect(reserveApifyPilotRun("whatnot")).rejects.toThrow(/budget reached/);
+    expect(counter.count()).toBe(1846);
+  });
+
+  it("preserves both Mercari ledgers and its nine-start ceiling without a deadline", async () => {
+    vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", "9");
+    vi.stubEnv("APIFY_PILOT_APPROVAL_NO_EXPIRY", "1");
+    vi.setSystemTime(new Date("2030-01-01T00:00:00Z"));
+    let original = 190;
+    let mercari = 8;
+    const evaluate = vi.fn(async (script: string, keys: string[], args: number[]) => {
+      expect(keys).toEqual([originalKey, "tcglens:apify-pilot:2026-10-19:mercari-reserved-runs"]);
+      expect(args).toEqual([9, 0]);
+      expect(script).toContain("if expiresAt > 0 then");
+      expect(script).not.toMatch(/redis.call\('(SET|DEL|EXPIRE)'/);
+      if (mercari >= args[0]) return 0;
+      original += 1;
+      return ++mercari;
+    });
+    vi.mocked(getRedisClient).mockReturnValue({ eval: evaluate } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
+    await expect(reserveApifyPilotRun("mercari")).resolves.toBeUndefined();
+    await expect(reserveApifyPilotRun("mercari")).rejects.toThrow(/budget reached/);
+    expect(original).toBe(191);
+    expect(mercari).toBe(9);
+  });
+
+  it("does not grant a larger allowance or accept incomplete approval through the no-expiry flag", async () => {
+    vi.stubEnv("APIFY_PILOT_APPROVAL_NO_EXPIRY", "1");
+    const counter = sharedCounter(20);
+    await expect(reserveApifyPilotRun("mercari")).rejects.toThrow(/budget reached/);
+    await expect(reserveApifyPilotRun("whatnot")).rejects.toThrow(/budget reached/);
+    approve("1846", "");
+    await expect(reserveApifyPilotRun("whatnot")).rejects.toThrow(/incomplete or invalid/);
+    expect(counter.count()).toBe(20);
+  });
+
+  it.each(["", "0", "true", "yes"])("keeps expiry unless explicitly enabled with 1 (%s)", async (flag) => {
+    approve("1846", "2026-10-22T00:00:00Z");
+    vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", "9");
+    vi.stubEnv("APIFY_PILOT_APPROVAL_NO_EXPIRY", flag);
+    vi.setSystemTime(new Date("2026-10-29T12:00:00Z"));
+    const counter = sharedCounter(190);
+    await expect(reserveApifyPilotRun("whatnot")).rejects.toThrow(/expired/);
+    await expect(reserveApifyPilotRun("mercari")).rejects.toThrow(/expired/);
+    expect(counter.evaluate).not.toHaveBeenCalled();
+  });
+
   it("reserves the separately approved Mercari remainder atomically without resetting the original counter", async () => {
     vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", "9");
     let original = 181;
