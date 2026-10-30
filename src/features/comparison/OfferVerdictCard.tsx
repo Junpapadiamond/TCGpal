@@ -48,7 +48,7 @@ export function OfferVerdictCard({ listing, candidates, attribution, marketPrice
       </div>
     </div>
     <div className={`mt-4 rounded-lg border px-3 py-2.5 ${verdict.tone === "positive" ? "border-[#c9d7ce] bg-[#e7efe8]" : verdict.tone === "review" ? "border-[#dfd6b6] bg-[#faf5e5]" : "border-[#d6ded5] bg-[#f1f3ee]"}`}>
-      <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm leading-5 text-[#24312f]"><span className="text-[10px] font-black uppercase tracking-wide text-[#64736c]">{zh ? "判断" : "Verdict"}</span><strong>{verdict.label}</strong></p>
+      <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm leading-5 text-[#24312f]"><strong>{verdict.label}</strong></p>
       <p className="mt-1 text-xs leading-5 text-[#52635c]">{verdict.why}</p>
       <p className="mt-1 text-xs font-semibold leading-5 text-[#52635c]">{verdict.nextStep}</p>
     </div>

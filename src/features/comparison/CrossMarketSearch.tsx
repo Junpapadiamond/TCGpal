@@ -43,10 +43,10 @@ export function CrossMarketSearch({ report, initialResult, initialFailed = false
 
   if (result) return <CrossMarketPrices candidates={result.candidates} platforms={result.platforms} card={result.confirmedCard} game={result.request.cardHint.game} />;
   return <section aria-label={zh ? "按需跨平台查询" : "On-demand cross-market search"} className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-6">
-    <h2 className="font-serif text-xl font-bold text-[#24312f]">{zh ? "想再看看其他平台？" : "Want to check other marketplaces?"}</h2>
+    <h2 className="font-serif text-xl font-bold text-[#24312f]">{zh ? "其他平台" : "Other marketplaces"}</h2>
     {!failed && <p className="mt-2 max-w-prose text-sm leading-6 text-[#64736c]">{zh
-      ? "当前只查询了 eBay。点击后才会查询 Whatnot、Mercari 等已连接来源，消耗一次额外查询额度。查过后切换视图不会重复查询。"
-      : "Your first search checks eBay only. Start an additional search to check connected sources such as Whatnot and Mercari. This uses provider credits; switching views afterward reuses the results."}</p>}
+      ? "Whatnot · Mercari 等已连接来源 · 使用额外查询额度"
+      : "Whatnot · Mercari and other connected sources · Uses extra search credits"}</p>}
     <button type="button" disabled={loading} onClick={() => void search()} className="primary-button mt-4">
       {loading ? <IconSpinner className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <IconCardSearch className="h-4 w-4" />}
       {loading ? zh ? "正在查询其他平台…" : "Searching other marketplaces…" : zh ? "查询其他平台" : "Search other marketplaces"}

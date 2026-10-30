@@ -12,7 +12,6 @@ import {
   IconCheck,
   IconLink,
   IconPhotoProof,
-  IconReceipt,
   IconSeal,
   IconTag,
 } from "@/features/comparison/icons";
@@ -51,14 +50,11 @@ const copy = {
     home: "TCGlens home",
     method: "Method",
     receipt: "Decision receipt",
-    saved: "Saved comparison",
-    immutable: "This receipt preserves the evidence and recommendation from this check.",
     checked: "Checked",
     expires: "Available until",
     recheck: "Re-check live",
     copy: "Copy receipt",
     copied: "Link copied",
-    confirmed: "Confirmed card",
     identity: "Exact card",
     requested: "Requested condition",
     ourPick: "Our pick",
@@ -100,7 +96,6 @@ const copy = {
     warnings: "Warnings",
     exclusions: "Why others were excluded",
     oldReceipt: "Prices and availability may have changed. Re-checking creates a new receipt; this one does not change.",
-    shareNote: "Share this receipt when you want another collector to audit the same evidence.",
     newSearch: "Check another card",
     auditSources: "Sources",
     auditAssumptions: "Assumptions",
@@ -124,14 +119,11 @@ const copy = {
     home: "TCGlens 首页",
     method: "怎么比价",
     receipt: "比价记录",
-    saved: "已保存的比价",
-    immutable: "这里保存的是当时的价格、商品信息和推荐。重新查询不会覆盖这份记录。",
     checked: "查询时间",
     expires: "记录保留至",
     recheck: "重新查在售商品",
     copy: "复制链接",
     copied: "链接已复制",
-    confirmed: "已确认卡片",
     identity: "具体版本",
     requested: "最低品相要求（按卖家标注）",
     ourPick: "首选",
@@ -173,7 +165,6 @@ const copy = {
     warnings: "提醒",
     exclusions: "其他商品为什么被排除",
     oldReceipt: "价格和库存可能有变化。重新查会得到最新结果，这份记录仍保留。",
-    shareNote: "想找卡友一起看看？把这份记录发过去，对方看到的就是这次的结果。",
     newSearch: "再查一张卡",
     auditSources: "来源",
     auditAssumptions: "怎么算的",
@@ -281,9 +272,8 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
       <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="flex flex-col gap-4 border-b border-[#c9d7ce] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="eyebrow"><IconReceipt className="h-4 w-4" />{text.saved}</p>
-            <h1 className="mt-2 font-serif text-3xl font-black tracking-[-0.03em] sm:text-4xl">{text.receipt}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64736c]">{text.immutable}</p>
+            <h1 className="font-serif text-3xl font-black tracking-[-0.03em] sm:text-4xl">{text.receipt}</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64736c]">{text.oldReceipt}</p>
             <p className="mt-2 font-mono text-xs font-bold text-[#64736c]">
               {text.checked} {checkedAt} · {text.expires} {expiresAt}
             </p>
@@ -308,8 +298,7 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
               )}
             </div>
             <div>
-              <p className="eyebrow"><IconCardCheck className="h-4 w-4" />{text.confirmed}</p>
-              <h2 id="confirmed-card-heading" className="mt-2 font-serif text-3xl font-black tracking-[-0.025em]">{model.card.name}</h2>
+              <h2 id="confirmed-card-heading" className="font-serif text-3xl font-black tracking-[-0.025em]">{model.card.name}</h2>
               <p className="mt-2 text-sm font-bold text-[#52635c]">
                 {model.card.setName} · {model.card.setCode} · #{model.card.cardNumber} · {model.card.language}
               </p>
@@ -373,7 +362,6 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
             <div>
               <h2 className="font-serif text-xl font-black text-[#6f5a22]">{text.uncertainty}</h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-[#6f5a22]">{text.sellerClaim}</p>
-              <p className="mt-2 text-xs font-bold leading-5 text-[#8d6032]">{text.oldReceipt}</p>
             </div>
           </div>
         </section>
@@ -410,7 +398,6 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
         </section>
 
         <footer className="mt-8 flex flex-col gap-3 border-t border-[#c9d7ce] py-6 text-sm text-[#64736c] sm:flex-row sm:items-center sm:justify-between">
-          <p>{text.shareNote}</p>
           <div className="flex gap-4 font-black text-[#2f6f73]"><Link href="/">{text.newSearch}</Link><Link href="/method">{text.method}</Link></div>
         </footer>
       </div>

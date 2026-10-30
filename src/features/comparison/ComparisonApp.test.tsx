@@ -530,7 +530,7 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     const rail = screen.getByRole("region", { name: "Cards you can check" });
-    expect(within(rail).getByText("Click a card to compare")).toBeTruthy();
+    expect(within(rail).queryByText("Click a card to compare")).toBeNull();
     await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
     const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
     expect(accessibleCards.every((button) => button.getAttribute("data-rail-source") === "chase")).toBe(true);

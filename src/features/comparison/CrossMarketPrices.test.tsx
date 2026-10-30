@@ -37,7 +37,7 @@ describe("three-marketplace asking prices", () => {
     ]);
     for (const marketplace of ["eBay", "Whatnot", "Mercari"]) {
       const region = screen.getByRole("region", { name: `${marketplace} prices` });
-      expect(within(region).getByText("Verdict")).toBeTruthy();
+      expect(within(region).queryByText("Verdict")).toBeNull();
       expect(within(region).getByText("Card-match confidence: high")).toBeTruthy();
       expect(within(region).getByRole("link", { name: /View listing/ }).closest("details")).toBeNull();
     }

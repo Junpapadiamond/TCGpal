@@ -14,7 +14,7 @@ describe("comparison evidence questions", () => {
     render(<LanguageProvider><ComparisonQuestionBox {...props} onAsk={onAsk} /></LanguageProvider>);
     fireEvent.click(screen.getByRole("button", { name: "What is missing?" }));
     expect(onAsk).toHaveBeenCalledWith("What is missing?", "report");
-    expect(screen.getByText(/Answers use this report/)).toBeTruthy();
+    expect(screen.queryByText(/Answers use this report/)).toBeNull();
   });
   it("labels rule-based answers without implying a model was used", () => {
     render(<LanguageProvider><ComparisonQuestionBox {...props} answer={{ answer: "Condition unknown.", cautions: [], usedAi: false, webContextChecked: false, webCitations: [] }} /></LanguageProvider>);

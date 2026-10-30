@@ -6,7 +6,6 @@ import { useState } from "react";
 
 const copy = {
   en: {
-    eyebrow: "Method & evidence contract",
     title: "How TCGlens compares listings",
     intro: "TCGlens helps a buyer who already knows the card decide which active raw-single listing is best supported — or whether the available evidence is too weak to recommend one.",
     back: "Compare a card",
@@ -23,7 +22,6 @@ const copy = {
     ],
   },
   zh: {
-    eyebrow: "怎么比价",
     title: "这条为什么值得先看？",
     intro: "想收的卡已经选好了，剩下就是挑哪条。TCGlens 帮你核对版本，把卡价、运费和卖家信息放一起比。信息不够时，会告诉你还缺什么。",
     back: "去查卡价",
@@ -61,8 +59,7 @@ export function MethodPageClient() {
       </header>
       <div className="mx-auto max-w-[1040px] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <section className="max-w-3xl">
-          <p className="eyebrow">{t.eyebrow}</p>
-          <h1 className="mt-3 font-serif text-4xl font-black leading-tight text-[#2f6f73] sm:text-5xl">{t.title}</h1>
+          <h1 className="font-serif text-4xl font-black leading-tight text-[#2f6f73] sm:text-5xl">{t.title}</h1>
           <p className="mt-5 text-lg leading-8 text-[#52635c]">{t.intro}</p>
         </section>
         <div className="mt-10 grid gap-4 lg:grid-cols-2">

@@ -38,7 +38,6 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
   return <section aria-label={zh ? "跨平台比价" : "Across marketplaces"} className="space-y-4">
     <div className="px-1">
       <h3 className="font-serif text-lg font-black text-[#24312f]">{zh ? "跨平台比价" : "Across marketplaces"}</h3>
-      <p className="mt-1 text-xs leading-5 text-[#64736c]">{zh ? "查看各平台的商品图片、已知费用和判断。缺失费用会明确标出。" : "Compare listing pictures, known costs and verdicts across platforms. Missing charges stay explicit."}</p>
     </div>
     <div className="space-y-4">
       {markets.map((marketplace) => {
@@ -64,7 +63,6 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
             <p className="text-xs leading-5 text-[#64736c]">{status}{marketplace === "Stomping Grounds" && lead ? zh ? " · 库存待确认" : " · Stock unconfirmed" : ""}</p>
           </div>
           {!lead ? <div className="pb-4">
-            <p className="mt-2 text-xs leading-5 text-[#64736c]">{zh ? "没有可核实的商品，暂时无法给出购买判断。" : "No observed matching offer is available for a buying verdict."}</p>
             {manualUrl && <a href={manualUrl} target="_blank" rel="noopener noreferrer"
               onClick={() => trackEvent("other_marketplace_clicked", { marketplace, game })}
               className="inline-flex min-h-11 items-center text-xs font-bold text-[#2f6f73] underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73]">

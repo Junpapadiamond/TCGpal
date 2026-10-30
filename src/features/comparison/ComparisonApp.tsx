@@ -1166,7 +1166,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
 
             <CrossMarketOption form={form} />
             <SearchExamples examples={examples} onSelect={chooseSearchExample} onRefresh={refreshExamples} active={!heroQuery?.trim() && !loading} />
-            <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />
+            {heroPreview && <ParsedPreview preview={heroPreview} game={game} lang={lang} t={t} />}
 
             <div className="landing-control-row">
               <fieldset>
@@ -1746,8 +1746,7 @@ function CardMarquee({
   // buyer has checked many unique prints.
   const durationSeconds = Math.max(46, items.length * 5.75);
   return (
-    <section className="card-marquee-wrap mt-4 sm:mt-5" aria-label={t.rail.ariaLabel} aria-describedby="card-rail-hint">
-      <p id="card-rail-hint" className="text-center text-sm text-[#64736c]">{t.rail.hint}</p>
+    <section className="card-marquee-wrap mt-4 sm:mt-5" aria-label={t.rail.ariaLabel}>
       {/*
         Pausing is CSS-only (`.card-marquee:hover`). Driving it from React state
         put a re-render between "pointer entered" and "motion stopped", and in
@@ -1927,9 +1926,7 @@ function IdentityLoading({ query }: { query: string }) {
   return (
     <section id="comparison-result" tabIndex={-1} className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 outline-none sm:p-7" aria-live="polite" aria-busy="true">
       <div className="max-w-2xl">
-        <p className="eyebrow"><IconSpinner className="h-4 w-4 animate-spin" />{t.identity.findingEyebrow}</p>
-        <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{t.identity.findingHeading(label)}</h2>
-        <p className="mt-2 leading-7 text-[#64736c]">{t.identity.findingDesc}</p>
+        <h2 className="flex items-center gap-3 font-serif text-3xl font-bold text-[#2f6f73]"><IconSpinner className="h-5 w-5 shrink-0 animate-spin motion-reduce:animate-none" />{t.identity.findingHeading(label)}</h2>
       </div>
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }, (_, index) => (
@@ -1954,7 +1951,6 @@ function ComparisonLoading({ identity }: { identity: CardIdentityCandidate }) {
             <IconSpinner className="h-5 w-5 animate-spin text-[#2f6f73]" />
             <div>
               <h2 className="font-serif text-xl font-bold text-[#2f6f73]">{t.loading.comparing(identity.name)}</h2>
-              <p className="mt-1 text-sm text-[#64736c]">{t.loading.steps}</p>
             </div>
           </div>
           <ul className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -2188,16 +2184,10 @@ function IdentityConfirmation({
   return (
     <section id="comparison-result" tabIndex={-1} className="mt-6 scroll-mt-6 rounded-md border border-[#d6ded5] bg-[#fcfbf6] p-5 outline-none sm:p-7">
       <div className="max-w-2xl">
-        <p className="eyebrow">
-          <IconSeal className="h-4 w-4" />
-          {identities.length === 0
-            ? (lookupUnavailable ? t.identity.lookupUnavailableEyebrow : t.identity.noMatchEyebrow)
-            : t.identity.eyebrow}
-        </p>
-        <h2 className="mt-2 font-serif text-3xl font-bold text-[#2f6f73]">{heading}</h2>
-        <p className="mt-2 leading-7 text-[#64736c]">
-          {identities.length === 0 ? (lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch) : t.identity.desc}
-        </p>
+        <h2 className="font-serif text-3xl font-bold text-[#2f6f73]">{heading}</h2>
+        {identities.length === 0 && <p className="mt-2 leading-7 text-[#64736c]">
+          {lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch}
+        </p>}
       </div>
       {showFilters && (
         <div className="mt-5 flex flex-wrap items-end gap-3 rounded-lg border border-[#d6ded5] bg-[#f7f9f5] p-3">
@@ -2908,7 +2898,6 @@ export function ComparisonQuestionBox({
           {t.result.askClose}
         </button>
       </div>
-      <p className="mt-2 text-xs leading-5 text-[#64736c]">{zh ? "按这次查到的信息回答，引用外部资料时会注明来源。" : "Answers use this report. Outside references are labeled separately."}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {suggestions.map((suggestion) => <button key={suggestion} type="button" disabled={loading}
           className="min-h-11 rounded-md border border-[#c9d7ce] px-3 py-2 text-xs font-bold text-[#2f6f73] hover:bg-[#e7efe8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] disabled:opacity-50"
@@ -3549,9 +3538,6 @@ function RecommendedBuyHero({
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-[#2f6f73] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#fcfbf6]">
-              {t.result.ourPick}
-            </span>
             <span className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
               {roleToggleLabel(choice.role, t)}
             </span>
@@ -3608,23 +3594,17 @@ function RecommendedBuyHero({
                 : "border-[#dcb9a4] bg-[#f9efe7] text-[#9a4a2c]"
           }`}
         >
-          <span className="text-xs font-black uppercase tracking-[0.08em]">{t.result.actionLabel}</span>
           <strong className="font-black">{verdict.action.label}</strong>
           <span className="basis-full font-semibold sm:basis-auto">{verdict.action.note}</span>
         </p>
         <div className="mt-3 space-y-2 text-sm leading-6 text-[#52635c]">
           <p>
-            <span className="mr-2 text-xs font-black uppercase tracking-[0.08em] text-[#2f6f73]">{t.result.whyItStandsOut}</span>
             {verdict.why}
           </p>
           <p className="border-l-2 border-[#d8a03a] pl-3">
-            <span className="mr-2 text-xs font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.whatToKnow}</span>
             {verdict.catch}
           </p>
           <p className="border-t border-[#e4ebe3] pt-2 text-xs leading-5 text-[#64736c]">
-            <span className="mr-2 font-black uppercase tracking-[0.08em]">
-              {verdict.whyNotCheapest ? t.result.cheaperOption : t.result.nextBestOption}
-            </span>
             {verdict.whyNotCheapest ?? verdict.alternative ?? t.result.noAlternative}
           </p>
         </div>

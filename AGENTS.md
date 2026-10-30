@@ -190,6 +190,9 @@ Retained `listing-risk` and `raw-vs-slab` modules are reusable deterministic uti
 - Use Zod at every public API boundary.
 - Use React Hook Form for form state.
 - Preserve the current cream/teal/gold TCGlens visual system.
+- Let the UI carry the explanation: use layout, hierarchy, control states and direct action labels before adding prose. Avoid decorative eyebrows, redundant secondary labels, stacked badges and captions that repeat a heading or explain an obvious interaction.
+- Give each fact one clear home. Keep supporting copy short and only when it changes a buying decision or helps recovery; put optional detail in an accessible disclosure. Apply this equally to English and Chinese.
+- Simplicity must preserve meaning and accessibility: retain field labels, accessible control names, errors, source/freshness/confidence signals, seller-claim qualifiers and unknown-cost or identity warnings. Never rely on color or an unlabeled icon alone to communicate these facts.
 - Use real card images from allowed sources.
 - Never commit API keys; `.env.example` contains placeholders only.
 - Keep demo fixtures unmistakably labeled.
