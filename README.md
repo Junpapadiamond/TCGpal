@@ -167,6 +167,20 @@ npm run build
 
 Documentation-only changes use document checks instead of the application gate. Validate `plugins/tcglens` separately when plugin files or exposed contracts change.
 
+## Deployment
+
+Run the release gate above in a complete checkout before pushing to `main`.
+Vercel uses `npm run build`, as declared in `vercel.json`. Do not override it
+with tests or downloads of missing research files: the deployment deliberately
+excludes test inputs and development tools.
+
+`.vercelignore` allowlists application source, public assets, the lockfile and
+build configuration for both Git and CLI deployments. Reports, screenshots,
+research output, local environment files and caches remain outside the upload.
+Keep the tracked `output/one-piece-exact-print-{metadata,audit}.json` files in the
+repository: the full test suite still requires them. If a new runtime file lives
+outside `src/` or `public/`, add it explicitly to the deployment allowlist.
+
 ## Product boundaries
 
 No marketplace crawling, sold-history claims, image grading, auth, payments, saved collections, monitoring, or investment promises. External models may interpret an image into possible identity fields, but TCGlens does not accept image input, grade images, or predict condition. Seller condition labels remain claims; unknown shipping and unknown condition remain unknown.
