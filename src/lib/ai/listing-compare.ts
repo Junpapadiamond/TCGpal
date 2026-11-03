@@ -212,31 +212,36 @@ export async function runListingComparison(
     }))
     : Promise.resolve({ results: [], warnings: [] });
 
-  // R1: resolve the crosswalk once (module-cached 6h) so every connector gets
-  // its platform-native identifier; the TCGplayer agent reuses this entry.
-  let crosswalk: CardCrosswalkEntry | null = null;
-  try {
-    crosswalk = await resolveCardCrosswalk(confirmedCard, fetcher, now, request.buyer);
-  } catch {
-    /* the eBay leg still works from the card fields */
-  }
-  const ebayCrosswalkSummary = crosswalk?.ebayProduct
-    ? `eBay ePID ${crosswalk.ebayProduct.epid}`
-    : "eBay keyword template";
-  const tcgplayerCrosswalkSummary = crosswalk?.tcgplayerProductId
-    ? `TCGplayer product #${crosswalk.tcgplayerProductId}`
-    : "no TCGplayer product match";
-  trace.push({
-    step: "card_crosswalk",
-    actor: "Catalog crosswalk",
-    summary: `Mapped ${confirmedCard.id} → ${ebayCrosswalkSummary}; ${tcgplayerCrosswalkSummary}.`,
-    status: crosswalk?.tcgplayerProductId || crosswalk?.ebayProduct ? "complete" : "fallback",
-  });
+  // Mapping only prepares eBay and the reference anchor. Start other sources
+  // alongside it, retaining the same confirmed-card query and final gates.
+  const searchCard = confirmedCard;
+  const crosswalkStarted = Date.now();
+  const crosswalkPromise = resolveCardCrosswalk(searchCard, fetcher, now, request.buyer)
+    .catch(() => null)
+    .then(crosswalk => {
+      logOpsEvent({
+        event: "stage_completed", stage: "catalog_crosswalk", requestId: opsContext?.requestId,
+        route: opsContext?.route, durationMs: Date.now() - crosswalkStarted, status: crosswalk ? "complete" : "fallback",
+      });
+      const ebayCrosswalkSummary = crosswalk?.ebayProduct
+        ? `eBay ePID ${crosswalk.ebayProduct.epid}`
+        : "eBay keyword template";
+      const tcgplayerCrosswalkSummary = crosswalk?.tcgplayerProductId
+        ? `TCGplayer product #${crosswalk.tcgplayerProductId}`
+        : "no TCGplayer product match";
+      trace.push({
+        step: "card_crosswalk",
+        actor: "Catalog crosswalk",
+        summary: `Mapped ${searchCard.id} → ${ebayCrosswalkSummary}; ${tcgplayerCrosswalkSummary}.`,
+        status: crosswalk?.tcgplayerProductId || crosswalk?.ebayProduct ? "complete" : "fallback",
+      });
+      return crosswalk;
+    });
 
   // R3: the daily-feed market anchor resolves in parallel with the fan-out.
-  const anchorPromise: Promise<TcgplayerSearchResult | null> = crosswalk?.tcgplayerProduct
-    ? searchTcgplayerListings(confirmedCard, crosswalk.tcgplayerProduct, fetcher).catch(() => null)
-    : Promise.resolve(null);
+  const anchorPromise: Promise<TcgplayerSearchResult | null> = crosswalkPromise.then(crosswalk => crosswalk?.tcgplayerProduct
+    ? searchTcgplayerListings(searchCard, crosswalk.tcgplayerProduct, fetcher).catch(() => null)
+    : null);
 
   // PriceCharting only needs the confirmed card, so it overlaps with the
   // marketplace fan-out — the round trip stays off the critical path.
@@ -273,9 +278,9 @@ export async function runListingComparison(
     fetcher,
     signal: dependencies.signal,
     plan: {
-      query: crosswalk?.ebayQueryTemplate,
-      ebayProduct: crosswalk?.ebayProduct ?? null,
+      query: [confirmedCard.name, confirmedCard.cardNumber || confirmedCard.setName].filter(Boolean).join(" ").trim(),
     },
+    ebayPlan: crosswalkPromise.then(crosswalk => ({ query: crosswalk?.ebayQueryTemplate, ebayProduct: crosswalk?.ebayProduct ?? null })),
     opsContext,
     ebayCacheKey: cacheable ? comparisonCacheKey({ ...request, marketScope: "single" }, confirmedCard.id) : undefined,
   });
@@ -297,7 +302,7 @@ export async function runListingComparison(
 
   // R3: prefer the daily TCGplayer feed (explicit as-of timestamp) as the
   // market anchor; the inline catalog price stays as the fallback anchor.
-  const tcgplayerData = await anchorPromise;
+  const [crosswalk, tcgplayerData] = await Promise.all([crosswalkPromise, anchorPromise]);
   confirmedCard = applyMarketAnchor(confirmedCard, crosswalk, tcgplayerData);
   if (confirmedCard.marketSource === "tcgcsv" && isTcgcsvStale(confirmedCard.marketAsOf ?? null, now())) {
     warnings.push(`TCGplayer prices are more than 48 hours old (as of ${formatAnchorDate(confirmedCard.marketAsOf)}). Treat the market reference with extra care.`);

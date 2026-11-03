@@ -213,6 +213,9 @@ export type RunPlatformFanoutInput = {
   buyer: BuyerContext;
   fetcher: typeof fetch;
   plan?: PlatformSearchPlan;
+  // Only eBay needs catalog/ePID resolution before acquisition. Review-only
+  // marketplaces can start immediately from the confirmed card's query.
+  ebayPlan?: Promise<PlatformSearchPlan>;
   agents?: PlatformAgent[];
   signal?: AbortSignal;
   // Only the orchestrator's pure-card path supplies this buyer/print-scoped key.
@@ -320,6 +323,7 @@ export async function runPlatformFanout({
   buyer,
   fetcher,
   plan,
+  ebayPlan,
   agents = getPlatformAgents(),
   signal,
   ebayCacheKey,
@@ -350,7 +354,8 @@ export async function runPlatformFanout({
             cachedAt: cached.capturedAt, durationMs: Date.now() - startedAt };
         }
         const attempts: SearchAttempt[] = [];
-        const input = { card, buyer, fetcher, plan, signal, onSearchAttempt: (attempt: SearchAttempt) => attempts.push(attempt) };
+        const resolvedPlan = agent.id === "ebay" && ebayPlan ? await ebayPlan : plan;
+        const input = { card, buyer, fetcher, plan: resolvedPlan, signal, onSearchAttempt: (attempt: SearchAttempt) => attempts.push(attempt) };
         const seeds = await searchPlatformWithTimeout(agent, input);
         let recallObservation: RecallObservation | undefined;
         if (agent.recallProbe) {

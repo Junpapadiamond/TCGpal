@@ -24,6 +24,7 @@ export type OperationalEventName =
   | "cache_lookup"
   | "provider_failure"
   | "rate_limited"
+  | "stage_completed"
   | "source_outcome";
 
 export type OperationalEvent = {
@@ -39,6 +40,7 @@ export type OperationalEvent = {
   configured?: boolean;
   count?: number;
   durationMs?: number;
+  stage?: "catalog_crosswalk" | "provider_cache" | "pricing" | "account_allowance" | "pilot_allowance" | "actor_request" | "provider_decode";
   httpStatus?: number;
   cacheBackend?: "redis" | "vercel-runtime" | "memory";
   rateLimitBackend?: "redis" | "memory";

@@ -4,7 +4,7 @@ schema_version: 1
 updated_at: 2026-11-02
 canonical_branch: origin/main
 last_verified_product_commit: 470efdf
-working_branch: codex/performance-images (isolated Windows worktree)
+working_branch: codex/cross-market-latency (isolated Windows worktree)
 max_lines: 300
 ---
 
@@ -31,7 +31,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Early eBay results and three visual signals READY; live EN/中文/mobile verified | Observe buyer comprehension; see November 2 repair record |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Marketplace compatibility and acquisition | Medium | October 29: no-expiry flag deployed; Whatnot returned 3 rows; Mercari source failed; finite caps unchanged | Diagnose the existing Mercari Actor run without an acquisition retry; optional eBay Catalog grant unresolved |
+| WS-SOURCES | Marketplace compatibility and acquisition | Medium | November 2: Mercari job dominates 56.7-second cross request; independent acquisition now overlaps catalog mapping | Verify release; provider fast-path and remaining Mercari allowance unresolved; see latency record |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product e95ccfa pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -165,7 +165,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-SOURCES" state="free-capacity-recovery-pending" tags="soldgraph,crawlora,apify,stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
-- October 29: `015a82d` READY with Production `APIFY_PILOT_APPROVAL_NO_EXPIRY=1`; indefinite duration only, original 1,846 shared / nine Mercari application ceilings and counters retained. One browser cross search: Whatnot 3, Mercari fallback/0, eBay 50, merchant 3; HTTP 200 in 90.3 seconds. Mercari's logged code is generic `PLATFORM_SEARCH_FAILED`; exact upstream error and remaining balances are unverified. No retry or new credentials. Full gate: 1,942 tests/five skips, lint/typecheck/metadata/build. [Decision and live evidence](docs/apify-no-expiry-2026-10-29.md).
+- November 2: existing Law cross request took 56,748 ms, almost all inside Mercari build 0.3.3 (403 retries plus fallback/scroll waits); Whatnot jobs took 1–6 seconds. Independent sources now overlap catalog mapping; per-stage timings added. Production gain unquantified and Mercari acquisition latency remains unresolved. Console shows one manual plus nine API starts; durable remaining balance unverified. October 29 no-expiry approval retains original 1,846 shared / nine Mercari ceilings. [Diagnosis and release](docs/cross-market-latency-2026-11-02.md); [prior approval](docs/apify-no-expiry-2026-10-29.md).
 - October 28 eBay update `eaffc27`: pushed to main, Vercel `dpl_HLrmQauKGXDQDj1NH57Ns7MpXNts` READY. October 29 17:40 UTC lenstcg.com feedback POST returned 200/complete with both seller-role periods (2,880ms). Independent read-only OAuth, strict Zod, bounded acquisition, cache/rate limit and kill switch; no scoring or receipt changes. Detailed rating coverage failed 0/10; overall counts complete 10/10. Full gate 1,935 tests/five skips + lint/typecheck/build; EN/中文 desktop and 390px mobile, keyboard and console pass. Catalog grant still denied. [Audit and rollout](docs/ebay-api-update-2026-10-28.md).
 - October 19: founder approved 10 Mercari starts/$0.50 until October 22 UTC. Console run succeeded (33 seconds, 3 rows, ~$0.04835); build 0.3.3 production browser verification also returned three. Custom card excluded, LP not promoted to NM, unknown costs preserved. Permanent application ledger ceiling is nine (Console consumed one); one application reservation used. [Evidence](docs/gateway-mercari-recovery-2026-10-19.md).
 - October 15 account pool: all 10 supplied tokens passed official read-only limits checks; Production sensitive pool + explicit flag saved. Atomic conservative reservations retain uncertain run costs and advance only for insufficient allowance. Explicit ten-$5-account authorization extends cumulative ceiling to 1,846, original counter/October 22 expiry retained; prior count 181. Mercari Secret updated, but exhausted Soldgraph and prior Apify 403 remain blockers. No blocked transport or proxy enabled. [Decision](docs/market-views-account-pool-2026-10-15.md).

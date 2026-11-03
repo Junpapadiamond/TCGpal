@@ -11,6 +11,7 @@ import {
 import { cardIdentityCandidateSchema, comparisonReportSchema, comparisonRequestSchema, type ComparisonRequest } from "@/lib/schemas";
 import { clearComparisonCache } from "@/lib/comparison/report-cache";
 import { clearCrosswalkCache } from "@/lib/comparison/crosswalk";
+import * as crosswalkModule from "@/lib/comparison/crosswalk";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 import type { PlatformAgent } from "@/lib/comparison/platforms";
 
@@ -150,6 +151,30 @@ function makeBarrier(parties: number) {
 }
 
 describe("listing comparison agent", () => {
+  it("starts cross-market acquisition before catalog mapping finishes while eBay keeps its resolved plan", async () => {
+    let finishMapping!: (value: Awaited<ReturnType<typeof crosswalkModule.resolveCardCrosswalk>>) => void;
+    const mapping = vi.spyOn(crosswalkModule, "resolveCardCrosswalk").mockImplementation(() => new Promise(resolve => { finishMapping = resolve; }));
+    const ebaySearch = vi.fn(async () => []);
+    const whatnotSearch = vi.fn(async () => []);
+    const agents: PlatformAgent[] = ([
+      { id: "ebay", marketplace: "eBay", search: ebaySearch },
+      { id: "whatnot", marketplace: "Whatnot", search: whatnotSearch },
+    ] as const).map(agent => ({ ...agent, label: "Timing fixture", sourceMode: "third_party_provider", requiredEnv: [], isConfigured: () => true }));
+    const pending = runListingComparison(comparisonRequestSchema.parse({ ...request, confirmedCardId: "swsh7-215", marketScope: "cross", sourceListing: { marketplace: "Other" } }), { fetcher, agents });
+    try {
+      await vi.waitFor(() => expect(whatnotSearch).toHaveBeenCalledOnce(), { timeout: 500 });
+      expect(ebaySearch).not.toHaveBeenCalled();
+    } finally {
+      finishMapping({ canonicalCardId: "swsh7-215", ebayQueryTemplate: "resolved eBay query", ebayProduct: null,
+        tcgplayerProductId: null, tcgplayerGroupId: null, tcgplayerUrl: null, tcgplayerProduct: null });
+      await pending;
+      mapping.mockRestore();
+    }
+    expect(ebaySearch).toHaveBeenCalledOnce();
+    expect(ebaySearch.mock.calls[0]).toMatchObject([{ plan: { query: "resolved eBay query" } }]);
+    expect(whatnotSearch.mock.calls[0]).toMatchObject([{ plan: { query: "Umbreon VMAX 215/203" } }]);
+  });
+
   it("does not call other marketplace agents unless cross-market acquisition is explicitly requested", async () => {
     const searches = [vi.fn(async () => []), vi.fn(async () => []), vi.fn(async () => [])];
     const agents: PlatformAgent[] = (["eBay", "Whatnot", "Mercari"] as const).map((marketplace, index) => ({

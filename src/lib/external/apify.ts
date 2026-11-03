@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getJsonCache, setJsonCache } from "@/lib/ops/cache";
+import { logOpsEvent, type OperationalEvent } from "@/lib/ops/events";
 import { reserveApifyPilotRun } from "./apify-budget";
 import { checkApifyPricing } from "./apify-pricing";
 import { selectApifyAccountToken } from "./apify-accounts";
@@ -42,40 +43,52 @@ export async function runApifySearch(search: Search): Promise<ListingSeed[]> {
 }
 
 async function load(search: Search, key: string): Promise<ListingSeed[]> {
-  const cached = await getJsonCache("marketplace-provider", key, { validate: (value) => {
+  const cached = await measureProviderStage(search, "provider_cache", () => getJsonCache("marketplace-provider", key, { validate: (value) => {
     const parsed = cacheSchema.safeParse(value);
     if (!parsed.success) return null;
     try {
       for (const seed of parsed.data) observationTime(seed.observedAt, new Date());
       return parsed.data;
     } catch { return null; }
-  } });
+  } }));
   if (cached) return cached;
   search.signal?.throwIfAborted();
-  await checkApifyPricing({ actor: search.actor, provider: search.provider,
+  await measureProviderStage(search, "pricing", () => checkApifyPricing({ actor: search.actor, provider: search.provider,
     memoryMbytes: search.memoryMbytes ?? 256, maxResults: APIFY_MAX_RESULTS,
-    maxChargeUsd: APIFY_MAX_CHARGE_USD[search.provider], fetcher: search.fetcher, signal: search.signal });
+    maxChargeUsd: APIFY_MAX_CHARGE_USD[search.provider], fetcher: search.fetcher, signal: search.signal }));
   search.signal?.throwIfAborted();
-  const token = await selectApifyAccountToken(search.token, APIFY_MAX_CHARGE_USD[search.provider], search.fetcher, search.signal);
+  const token = await measureProviderStage(search, "account_allowance", () => selectApifyAccountToken(search.token, APIFY_MAX_CHARGE_USD[search.provider], search.fetcher, search.signal));
   search.signal?.throwIfAborted();
-  await reserveApifyPilotRun(search.provider);
+  await measureProviderStage(search, "pilot_allowance", () => reserveApifyPilotRun(search.provider));
   const actorTimeoutSeconds = ACTOR_TIMEOUT_SECONDS[search.provider];
   const requestTimeoutMs = (actorTimeoutSeconds + 5) * 1000;
   const url = new URL(`https://api.apify.com/v2/acts/${search.actor}/run-sync-get-dataset-items`);
   url.search = new URLSearchParams({ timeout: String(actorTimeoutSeconds), maxItems: String(APIFY_MAX_RESULTS), maxTotalChargeUsd: String(APIFY_MAX_CHARGE_USD[search.provider]), restartOnError: "false", clean: "true" }).toString();
   if (search.build) url.searchParams.set("build", search.build);
   if (search.memoryMbytes) url.searchParams.set("memory", String(search.memoryMbytes));
-  let response: Response;
-  try {
-    response = await search.fetcher(url, {
-      method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify(search.input), cache: "no-store", redirect: "error",
-      signal: search.signal ? AbortSignal.any([search.signal, AbortSignal.timeout(requestTimeoutMs)]) : AbortSignal.timeout(requestTimeoutMs),
-    });
-  } catch {
-    throw new Error("Provider request failed or timed out; no inventory was inferred.");
-  }
-  if (!response.ok) throw new Error(`Provider returned HTTP ${response.status}; no inventory was inferred.`);
+  const response = await measureProviderStage(search, "actor_request", async () => {
+    let result: Response;
+    try {
+      result = await search.fetcher(url, {
+        method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify(search.input), cache: "no-store", redirect: "error",
+        signal: search.signal ? AbortSignal.any([search.signal, AbortSignal.timeout(requestTimeoutMs)]) : AbortSignal.timeout(requestTimeoutMs),
+      });
+    } catch {
+      throw new Error("Provider request failed or timed out; no inventory was inferred.");
+    }
+    if (!result.ok) {
+      await result.body?.cancel();
+      throw new Error(`Provider returned HTTP ${result.status}; no inventory was inferred.`);
+    }
+    return result;
+  });
+  const seeds = await measureProviderStage(search, "provider_decode", () => decodeProviderResponse(response, search));
+  await setJsonCache("marketplace-provider", key, seeds, { ttlSeconds: seeds.length ? 900 : 60 });
+  return seeds;
+}
+
+async function decodeProviderResponse(response: Response, search: Search): Promise<ListingSeed[]> {
   // Bound the response independently of actor-side limits. Do not retain raw
   // seller profiles or description payloads in caches, logs, or shared reports.
   const reader = response.body?.getReader();
@@ -94,9 +107,21 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
   const text = Buffer.concat(chunks).toString("utf8");
   let payload: unknown;
   try { payload = JSON.parse(text); } catch { throw new Error("Provider returned invalid JSON."); }
-  const seeds = cacheSchema.parse(search.parse(payload, new Date()));
-  await setJsonCache("marketplace-provider", key, seeds, { ttlSeconds: seeds.length ? 900 : 60 });
-  return seeds;
+  return cacheSchema.parse(search.parse(payload, new Date()));
+}
+
+async function measureProviderStage<T>(search: Search, stage: Exclude<NonNullable<OperationalEvent["stage"]>, "catalog_crosswalk">, operation: () => Promise<T>): Promise<T> {
+  const started = Date.now();
+  try {
+    const value = await operation();
+    logOpsEvent({ event: "stage_completed", provider: `apify-${search.provider}`, stage, status: "complete", durationMs: Date.now() - started });
+    return value;
+  } catch (error) {
+    // Timings and fixed stage labels only: no tokens, search text, seller data,
+    // raw provider payloads or exception messages enter operational logs.
+    logOpsEvent({ event: "stage_completed", provider: `apify-${search.provider}`, stage, status: "failed", durationMs: Date.now() - started });
+    throw error;
+  }
 }
 
 export function providerRows(payload: unknown): unknown[] {

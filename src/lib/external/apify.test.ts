@@ -5,9 +5,11 @@ import { reserveApifyPilotRun } from "./apify-budget";
 import { checkApifyPricing } from "./apify-pricing";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 import { getRedisClient } from "@/lib/ops/redis";
+import { logOpsEvent } from "@/lib/ops/events";
 
 vi.mock("./apify-budget", () => ({ reserveApifyPilotRun: vi.fn() }));
 vi.mock("./apify-pricing", () => ({ checkApifyPricing: vi.fn() }));
+vi.mock("@/lib/ops/events", async importOriginal => ({ ...await importOriginal<typeof import("@/lib/ops/events")>(), logOpsEvent: vi.fn() }));
 vi.mock("@/lib/ops/redis", () => ({ isRedisConfigured: () => true, getRedisClient: vi.fn(() => null) }));
 const parse = () => [{ ...demoListingSeeds[0], demo: false, observedAt: "2026-09-14T16:00:00.000Z" }];
 const base = { provider: "whatnot" as const, actor: "epicscrapers~whatnot-scraper", token: "test-secret", key: "test-card", input: { searchQueries: ["Pikachu 58/102"] }, parse };
@@ -15,6 +17,18 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-14T16:
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.restoreAllMocks(); vi.clearAllMocks(); });
 
 describe("paid source safeguards", () => {
+  it("records pricing and Actor wait separately without logging credentials, queries or upstream errors", async () => {
+    vi.mocked(checkApifyPricing).mockImplementationOnce(async () => { await new Promise(resolve => setTimeout(resolve, 250)); return 0.01; });
+    const fetcher = vi.fn(async () => { await new Promise(resolve => setTimeout(resolve, 1200)); return new Response("private upstream details", { status: 403 }); });
+    const pending = runApifySearch({ ...base, fetcher }).catch(error => error);
+    await vi.advanceTimersByTimeAsync(1450);
+    expect(await pending).toBeInstanceOf(Error);
+    expect(logOpsEvent).toHaveBeenCalledWith(expect.objectContaining({ stage: "pricing", durationMs: 250, status: "complete" }));
+    expect(logOpsEvent).toHaveBeenCalledWith(expect.objectContaining({ stage: "actor_request", durationMs: 1200, status: "failed" }));
+    expect(JSON.stringify(vi.mocked(logOpsEvent).mock.calls)).not.toMatch(/test-secret|Pikachu|private upstream/);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
   it("selects funded pool credentials before exactly one paid start and keeps the original global reservation", async () => {
     vi.stubEnv("APIFY_ACCOUNT_POOL_ENABLED", "1");
     vi.stubEnv("APIFY_AUTHORIZED_TOKEN_POOL", JSON.stringify(["apify_api_exhausted", "apify_api_funded"]));
