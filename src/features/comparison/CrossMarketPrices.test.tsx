@@ -39,6 +39,8 @@ describe("three-marketplace asking prices", () => {
       const region = screen.getByRole("region", { name: `${marketplace} prices` });
       expect(within(region).queryByText("Verdict")).toBeNull();
       expect(within(region).getByText("Card-match confidence: high")).toBeTruthy();
+      expect(within(region).getAllByRole("term").map(node => node.textContent)).toEqual(["Condition", "Seller record", "Price vs market"]);
+      expect(within(region).getByText("Card-match confidence: high").closest("details")?.open).toBe(false);
       expect(within(region).getByRole("link", { name: /View listing/ }).closest("details")).toBeNull();
     }
     expect(screen.getByRole("button", { name: "Inspect listing preview: Whatnot lead" })).toBeTruthy();
@@ -174,7 +176,7 @@ describe("three-marketplace asking prices", () => {
     openOffers();
     for (const price of ["$95.00", "$80.00", "$85.00"]) expect(screen.getByText(price)).toBeTruthy();
     expect(screen.getByText(/Version needs checking/)).toBeTruthy();
-    expect(screen.getByText(/Condition not stated/)).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Mercari prices" })).getByText("Unknown")).toBeTruthy();
     expect(screen.getByText(/Shipping: unknown/)).toBeTruthy();
     expect(screen.queryByText(/Recommended buy/)).toBeNull();
     expect(screen.getAllByRole("link", { name: /View listing/ })).toHaveLength(3);

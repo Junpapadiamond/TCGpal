@@ -62,9 +62,11 @@ button:disabled {
   opacity: 0.62;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 /*

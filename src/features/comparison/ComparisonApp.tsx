@@ -27,7 +27,8 @@ import { SearchExamples, useSearchExamples } from "./SearchExamples";
 import { applySearchExample, type SearchExample } from "./search-examples";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
-import { deriveMarketRead, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
+import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
+import { ListingSignals } from "./ListingSignals";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { onePiecePrintDisplayLabel } from "@/lib/external/one-piece-taxonomy";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
@@ -2870,7 +2871,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
           <h2 className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.inspectFirstTitle}</h2>
           <h3 className="mt-2 font-serif text-xl font-black text-[#24312f]">{listing.title}</h3>
           <p className="mt-2 text-sm leading-6 text-[#64736c]">{requiresMarketPriceReview(listing) ? t.result.inspectPriceBody : t.result.inspectFirstBody}</p>
-          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
+          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
         </div>
         <div className="col-span-2 sm:col-span-1 sm:text-right">
           <p className="font-mono text-2xl font-black text-[#24312f]">{formatMoney(listing.estimatedLandedCost ?? listing.preTaxTotal)}</p>
@@ -2882,6 +2883,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
           )}
         </div>
       </div>
+      <ListingSignals listing={listing} marketPrice={confirmedCard?.marketMid ?? null} />
       <SellerFeedback listing={listing} />
     </article>
   );
@@ -3419,70 +3421,6 @@ function marketFreshnessText(card: CardIdentityCandidate, generatedAt: string, t
   return `${t.result.marketAsOf(label)}${stale ? ` · ${t.result.marketStale}` : ""}`;
 }
 
-function MarketDeltaBadge({
-  listing,
-  marketPrice,
-  compact = false,
-}: {
-  listing: NormalizedListing;
-  marketPrice: number | null;
-  compact?: boolean;
-}) {
-  const t = useT();
-  const read = deriveMarketRead(listing, marketPrice);
-  if (!read) {
-    // A missing catalog crosswalk is a real source state, not a zero delta. Keep
-    // it visible beside the price so the buyer knows why no under/above read is
-    // present and can distinguish it from a bug or a hidden calculation.
-    if (marketPrice === null && !listing.demo && listing.costComplete) {
-      return (
-        <span className="inline-flex items-center rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-2.5 py-1 text-sm font-black text-[#64736c]">
-          {t.card.marketReferenceUnavailable}
-        </span>
-      );
-    }
-    return null;
-  }
-  const { delta: marketDelta, conditionMatched } = read;
-  const nearMarket = Math.abs(marketDelta) < 0.005;
-  const pct = Math.max(1, Math.round(Math.abs(marketDelta) * 100));
-  // A played copy is compared against a condition-blind (effectively NM) anchor,
-  // so the number is a reference point rather than a bargain verdict: it says so
-  // in the label, carries the caveat in its title, and stays visually neutral
-  // instead of borrowing the green "under market" tone that reads as a deal.
-  const label = conditionMatched
-    ? nearMarket ? t.card.nearMarket : marketDelta < 0 ? t.card.underMarket(pct) : t.card.aboveMarket(pct)
-    : nearMarket ? t.card.nearNmReference : marketDelta < 0 ? t.card.underNmReference(pct) : t.card.aboveNmReference(pct);
-  const prefix = nearMarket ? "≈" : marketDelta < 0 ? "▼" : "▲";
-  const neutral = nearMarket || !conditionMatched;
-  const tone = neutral
-    ? "border-[#d6ded5] bg-[#f7f9f5] text-[#64736c]"
-    : marketDelta < 0
-      ? "border-[#c9d7ce] bg-[#dcecdf] text-[#2f6f73]"
-      : "border-[#e5b8a3] bg-[#fcefe8] text-[#9a4a2c]";
-  const title = conditionMatched ? undefined : t.card.nmReferenceHint;
-
-  if (compact) {
-    return (
-      <span
-        title={title}
-        className={`text-xs font-black ${neutral ? "text-[#64736c]" : marketDelta < 0 ? "text-[#2f6f73]" : "text-[#9a4a2c]"}`}
-      >
-        {prefix} {label}
-      </span>
-    );
-  }
-
-  return (
-    <span title={title} className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-sm font-black ${tone}`}>
-      {prefix} {label}
-    </span>
-  );
-}
-
-// Compact segmented control: label-only pills, one row, hints on hover/focus
-// via title. The full lens descriptions live at the settings stage; the result
-// page keeps lenses one tap away without a panel competing with the verdict.
 function LensControls({
   choices,
   selectedRole,
@@ -3578,11 +3516,7 @@ function RecommendedBuyHero({
           <h2 className="mt-2 font-serif text-xl font-bold leading-tight text-[#24312f] sm:text-2xl">
             {listing.title}
           </h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-[#52635c]">
-            {t.result.sellerClaimedCondition(t.conditions[listing.claimedCondition])}
-          </p>
-          <p className="mt-1 text-xs font-black text-[#2f6f73]">{t.result.confidenceLabel(choice.confidence)}</p>
-          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} />
+          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
         </div>
 
         <div className="col-span-2 grid gap-3 sm:col-span-1 sm:col-start-2 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
@@ -3597,19 +3531,11 @@ function RecommendedBuyHero({
               )}
             </p>
           </div>
-          <div className="grid gap-1.5 lg:justify-items-end">
-            <MarketDeltaBadge listing={listing} marketPrice={marketPrice} />
-            {/* Always available, unlike the market badge: it needs no external
-                anchor, so it still answers "is this expensive?" for the cards
-                TCGCSV does not cover. */}
-            {verdict.pricePosition && (
-              <p className="text-xs font-bold text-[#52635c]">{verdict.pricePosition}</p>
-            )}
-          </div>
         </div>
       </div>
 
-      <div className="mt-4 border-t border-[#e4ebe3] pt-4">
+      <ListingSignals listing={listing} marketPrice={marketPrice} />
+      <div className="mt-3">
         <p
           className={`flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border px-3 py-2.5 text-sm leading-6 ${
             verdict.action.kind === "buy"
@@ -3620,9 +3546,11 @@ function RecommendedBuyHero({
           }`}
         >
           <strong className="font-black">{verdict.action.label}</strong>
-          <span className="basis-full font-semibold sm:basis-auto">{verdict.action.note}</span>
         </p>
-        <div className="mt-3 space-y-2 text-sm leading-6 text-[#52635c]">
+        <details className="group/evidence mt-1 text-sm leading-6 text-[#52635c]">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-xs font-semibold text-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">{lang === "zh" ? "查看依据" : "Details"}<IconChevronDown className="h-3.5 w-3.5 group-open/evidence:rotate-180" /></summary>
+          <p className="font-semibold">{verdict.action.note}</p>
+          <p className="mt-1 text-xs">{t.result.confidenceLabel(choice.confidence)}</p>
           <p>
             {verdict.why}
           </p>
@@ -3632,7 +3560,8 @@ function RecommendedBuyHero({
           <p className="border-t border-[#e4ebe3] pt-2 text-xs leading-5 text-[#64736c]">
             {verdict.whyNotCheapest ?? verdict.alternative ?? t.result.noAlternative}
           </p>
-        </div>
+          {verdict.pricePosition && <p className="text-xs">{verdict.pricePosition}</p>}
+        </details>
         <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
             <button className="secondary-button min-h-11 px-3 py-2 text-xs" type="button" onClick={onShare}>
@@ -3722,6 +3651,16 @@ export function PrintIdentitySummary({
       </span>
     );
   }
+
+  if (compact) return <details className="mt-2 text-xs leading-5 text-[#52635c]">
+    <summary className="w-fit cursor-pointer font-semibold text-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73]">
+      {listing.printMatch === "exact" ? t.result.printConfirmedShort : lang === "zh" ? "版本待核对" : "Check print"}
+    </summary>
+    <p>{metadata}</p>
+    {reasons.length > 0 && <ul aria-label={t.result.printCheck} className="mt-1 list-disc pl-4">
+      {reasons.map(reason => <li key={reason}>{t.result.printReason(reason)}</li>)}
+    </ul>}
+  </details>;
 
   return (
     <div className={`${compact ? "mt-1.5" : "mt-3"} rounded-md border border-[#d6ded5] bg-[#f7f9f5] px-3 py-2 text-xs leading-5 text-[#52635c]`}>
@@ -3933,8 +3872,6 @@ function CompactCandidateRow({
             <h3 className="min-w-0 break-words text-sm font-bold leading-snug text-[#24312f]">{listing.title}</h3>
           </div>
           <p className="mt-0.5 truncate text-xs font-semibold leading-5 text-[#64736c]">
-            {t.conditions[listing.claimedCondition]} · {t.card.photos(listing.evidence.photoCount)}
-            {" · "}
             <button
               aria-label={t.candidate.askAbout(listing.title)}
               className="inline-flex min-h-11 items-center underline decoration-[#9fb3a8] underline-offset-2 hover:text-[#2f6f73]"
@@ -3951,7 +3888,6 @@ function CompactCandidateRow({
           <p className="font-mono text-base font-black leading-tight text-[#24312f]">{formatMoney(total)}</p>
           <p className="text-[10px] font-black uppercase tracking-[0.06em] text-[#7a8982]">{totalLabel}</p>
         </div>
-        <MarketDeltaBadge listing={listing} marketPrice={marketPrice} compact />
         {listing.url ? (
           <a
             className="inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-[#c9d7ce] px-3 text-xs font-black text-[#2f6f73] transition hover:border-[#2f6f73] hover:bg-[#e7efe8] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
@@ -3966,6 +3902,7 @@ function CompactCandidateRow({
           <span className="text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
         )}
       </div>
+      <ListingSignals listing={listing} marketPrice={marketPrice} />
     </article>
   );
 }

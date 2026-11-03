@@ -1283,12 +1283,14 @@ describe("comparison condition controls", () => {
     const hero = screen.getByRole("article", { name: "Best-supported buy" });
     expect(within(hero).getByText("Live eBay listing")).toBeTruthy();
     expect(within(hero).getByText(/Observed/)).toBeTruthy();
-    expect(within(hero).getByText("Seller-claimed condition: Near Mint")).toBeTruthy();
-    expect(within(hero).getByText(/Item price/)).toBeTruthy();
+    expect(within(hero).getAllByRole("term").map(node => node.textContent)).toEqual(["Condition", "Seller record", "Price vs market"]);
+    expect(within(hero).getByText("Seller claim")).toBeTruthy();
+    expect(within(hero).getByText(/Item price \$/)).toBeTruthy();
     expect(within(hero).getByText(/Shipping/)).toBeTruthy();
     expect(within(hero).getByText(/Tax not estimated/)).toBeTruthy();
-    expect(within(hero).getByText(/item 39% under reference/)).toBeTruthy();
+    expect(within(hero).getByText("−39%")).toBeTruthy();
     expect(within(hero).getByText("High confidence")).toBeTruthy();
+    expect(within(hero).getByText("High confidence").closest("details")?.open).toBe(false);
     expect(screen.getByText("Reference prices can lag behind the live market.")).toBeTruthy();
     expect(screen.queryByText("How we checked: sources, reference pricing, and the validation trace")).toBeNull();
     expect(screen.queryByText("Check the math behind these labels")).toBeNull();

@@ -1,5 +1,17 @@
 # TCGlens search-entry design QA
 
+## Listing signals and catalog repair — 2026-11-02
+
+- Result: no blocking findings remain in the checked states. This is a presentation change, not a new condition/identity prediction or ranking model.
+- Audit: the live eBay result repeated condition, confidence, price-position and recommendation prose. Cross-market offers repeated the same facts in different sentences. Both are now served by three shared tiles: Condition, Seller record, Price vs market. Longer reasoning and confidence remain under Details; costs, source/time and decision-changing warnings remain visible.
+- Selected target: founder's option one, corrected to the exact three-signal order and existing clickable photographs. `output/qa/performance-2026-11-02/selected-signal-design.png` was inspected together with the implementation capture in the same comparison input. The concept is illustrative; actual listing titles, prices, original thumbnail sizing and existing actions are retained, so no pixel-perfect match is claimed. No generated image is used in production.
+- Visual evidence: `output/qa/performance-2026-11-02/` contains `signals-ebay-en.jpg`, `signals-ebay-zh.jpg`, `signals-cross-en.jpg`, `signals-cross-zh.jpg` (1440 × 1024), `signals-ebay-mobile.jpg`, `signals-cross-mobile.jpg` (390 × 844), and `signals-narrow-zh.jpg` (320 × 844). These captures use a visibly labeled synthetic provider harness, not live marketplace facts. Document scroll width equals client width at 390 and 320 px.
+- [Resolved P2] The unlayered global anchor reset defeated the primary button's light text color. Moved it into Tailwind's base layer; the actual button now uses `#fcfbf6` on `#2f6f73`. Re-captured after the fix.
+- Semantics: condition remains a seller claim, the segmented bar represents evidence completeness, seller record uses the existing score, and the market ruler uses the existing item-price delta. Missing data has no filled meter; no seller ratings means Unverified. Played-condition references stay neutral and labeled NM reference. Unknown shipping/fees still prevent a comparable winner.
+- Interaction: eBay photo and cross-market provider preview open, zoom and close; Escape restores focus to the original image button. Details opens by keyboard. View/language switching does not acquire listings. Existing share, lens and feedback controls remain available. No extra motion or icon dependency was added.
+- Gate: five new signal regressions; full 1,966 passing tests, five optional live skips; lint, typecheck and webpack production build pass. Graphify CLI is unavailable on this host; no regeneration claimed. The original dirty checkout remains untouched.
+- Live performance/catalog verification was on product `423ba15`: five sequential searches with both games and Edit/New transitions passed; all four Ascended Heroes Pikachu artworks and symbols loaded. See [release record](docs/performance-images-2026-11-02.md) for measured durations and final UI deployment evidence.
+
 ## Animated search examples — 2026-10-03
 
 - Six curated suggestions rotate every three seconds with a 280ms fade/5px upward entrance and a 35ms stagger. Automatic changes stay within the examples component; they do not modify the search field or call providers.

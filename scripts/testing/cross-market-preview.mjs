@@ -58,6 +58,8 @@ function fixtureFetcher(request = {}) {
   const number = request.cardHint?.cardNumber || (chosen?.set?.printedTotal ? `${chosen.number}/${chosen.set.printedTotal}` : chosen?.number || request.confirmedCardId?.split("_")[0] || "58/102");
   const title = `${chosen?.name ?? request.cardHint?.name ?? "Pikachu"} ${number} base print Near Mint English`;
   const item = { itemId: "qa-1", title, itemWebUrl: "https://www.ebay.com/itm/123456789012", condition: "Ungraded",
+    // Catalog art stands in for a clickable photo only in this labeled QA harness.
+    image: { imageUrl: chosen?.images?.small ?? "https://images.pokemontcg.io/base1/58.png" },
     conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }], localizedAspects: [{ name: "Language", value: "English" }],
     seller: { username: "synthetic-qa-seller", feedbackPercentage: "99.8", feedbackScore: 1600 }, price: { value: "100", currency: "USD" },
     shippingOptions: [{ shippingCost: { value: "10", currency: "USD" } }] };
