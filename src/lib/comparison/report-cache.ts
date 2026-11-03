@@ -2,6 +2,7 @@ import { clearLocalCache, getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { comparisonReportSchema, type ComparisonReport, type ComparisonRequest } from "@/lib/schemas";
 import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-print-metadata";
 import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-revision";
+import { POKEMON_CATALOG_SNAPSHOT_REVISION } from "@/lib/external/pokemon-catalog-snapshot";
 import { getConfiguredPlatformAgents } from "./platforms";
 
 // R7: pure card searches (no user-supplied listing facts) are cacheable — the
@@ -25,12 +26,15 @@ export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: 
   return [
     "identity-v4",
     COMPARISON_CACHE_REVISION,
+    POKEMON_CATALOG_SNAPSHOT_REVISION,
+    "image-urls-v2",
     `scope:${request.marketScope ?? "single"}`,
     `recall:${process.env.EBAY_RECALL_PROBE_ENABLED !== "false"}`,
     ONE_PIECE_PRINT_METADATA_REVISION,
     ONE_PIECE_CATALOG_REVISION,
     `sources:${sources || "none"}`,
     confirmedCardId,
+    request.cardHint?.game ?? "pokemon",
     request.buyer.desiredCondition,
     request.buyer.postalCode,
     request.buyer.taxRate ?? "no-tax",
@@ -77,7 +81,7 @@ export async function setCachedComparison(key: string, report: ComparisonReport,
   const soldgraphMarkets = new Set(report.platforms.filter(platform => platform.label.includes("Soldgraph")).map(platform => platform.marketplace));
   let ttlSeconds = CACHE_TTL_SECONDS;
   for (const listing of report.candidates) {
-    if (!soldgraphMarkets.has(listing.marketplace)) continue;
+    if (listing.marketplace !== "eBay" && !soldgraphMarkets.has(listing.marketplace)) continue;
     const remaining = Math.floor((Date.parse(listing.observedAt) + CACHE_TTL_MS - now.getTime()) / 1000);
     if (!Number.isFinite(remaining) || remaining <= 0) return;
     ttlSeconds = Math.min(ttlSeconds, remaining);

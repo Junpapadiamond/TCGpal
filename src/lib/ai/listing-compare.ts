@@ -34,7 +34,7 @@ import {
   setCachedComparison,
 } from "@/lib/comparison/report-cache";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
-import { abortableDelay } from "@/lib/ops/abort";
+import { abortableDelay, createLinkedAbortSignal } from "@/lib/ops/abort";
 import {
   isTcgcsvStale,
   searchTcgplayerListings,
@@ -115,7 +115,17 @@ export async function runListingComparison(
   const trace: ComparisonTrace[] = [];
   const demoMode = false;
 
-  const request = await applyQueryParserWithAi(comparisonRequestSchema.parse(rawRequest), trace);
+  const parsedInput = comparisonRequestSchema.parse(rawRequest);
+  const cacheable = dependencies.agents === undefined && isCacheableRequest(parsedInput);
+  if (cacheable && parsedInput.confirmedCardId) {
+    const cached = await getCachedComparison(comparisonCacheKey(parsedInput, parsedInput.confirmedCardId), now());
+    if (cached?.confirmedCard?.id === parsedInput.confirmedCardId) {
+      logOpsEvent({ event: "cache_lookup", requestId: opsContext?.requestId, route: opsContext?.route, status: "hit" });
+      return { ...cached, trace: [...cached.trace, { step: "cache", actor: "Comparison cache",
+        summary: "Reused the server-verified report within its 15-minute freshness window without reacquiring card identity.", status: "complete" as const }] };
+    }
+  }
+  const request = await applyQueryParserWithAi(parsedInput, trace);
   const scopedAgents = (dependencies.agents ?? getPlatformAgents())
     .filter((agent) => request.marketScope === "cross" || agent.marketplace === "eBay");
 
@@ -166,10 +176,9 @@ export async function runListingComparison(
 
   // R7: pure card searches are served from a 15-minute cache keyed by
   // card + condition + delivery context.
-  const cacheable = dependencies.agents === undefined && isCacheableRequest(request);
   const cacheKey = comparisonCacheKey(request, confirmedCard.id);
   if (cacheable) {
-    const cached = await getCachedComparison(cacheKey, now());
+    const cached = request.confirmedCardId ? null : await getCachedComparison(cacheKey, now());
     if (cached) {
       logOpsEvent({
         event: "cache_lookup",
@@ -268,6 +277,7 @@ export async function runListingComparison(
       ebayProduct: crosswalk?.ebayProduct ?? null,
     },
     opsContext,
+    ebayCacheKey: cacheable ? comparisonCacheKey({ ...request, marketScope: "single" }, confirmedCard.id) : undefined,
   });
   seeds.push(...fanout.seeds);
   warnings.push(...fanout.warnings);
@@ -735,14 +745,15 @@ async function identifyCards(
   }
 
   const localMatches = rankLocalIdentities(request, source);
-  let confirmedSnapshotCard: PokemonTcgCard | null = null;
+  const identityStartedAt = Date.now();
+  const confirmedSnapshotCard = request.confirmedCardId ? getPokemonCardFromSnapshot(request.confirmedCardId) : null;
 
   if (request.confirmedCardId) {
     try {
       const card = await getPokemonCard({
         id: request.confirmedCardId,
         fetcher,
-        timeoutMs: 15000,
+        timeoutMs: confirmedSnapshotCard ? 1500 : 15000,
         signal,
       });
       const match = evaluateIdentity(card, request, source);
@@ -754,14 +765,30 @@ async function identifyCards(
       });
       return [toIdentityCandidate(card, request, match)];
     } catch (error) {
+      if (signal?.aborted) throw signal.reason ?? error;
       warnings.push(`Confirmed Pokémon card lookup unavailable: ${errorMessage(error)}`);
-      confirmedSnapshotCard = getPokemonCardFromSnapshot(request.confirmedCardId);
+      if (confirmedSnapshotCard && (Date.now() - identityStartedAt >= 1500 || (error instanceof Error && error.name === "TimeoutError"))) {
+        warnings.push(snapshotFallbackWarning());
+        trace.push({ step: "card_identification", actor: "Bundled Pokémon catalog snapshot",
+          summary: "Recovered the exact user-confirmed card ID from the source-dated catalog; no name search or sibling substitution.", status: "fallback" });
+        return [toIdentityCandidate(confirmedSnapshotCard, request, evaluateIdentity(confirmedSnapshotCard, request, source))];
+      }
     }
   }
 
   // The Pokémon TCG catalog is queryable without a key (the key only raises rate
   // limits), so resolve real card identities whenever we have a usable query.
   if (searchName.length >= 2) {
+    const snapshotResult = searchPokemonCatalogSnapshot({
+      query: searchName, cardNumber: request.cardHint.cardNumber,
+      setHint: request.cardHint.setCode, pageSize: request.cardHint.cardNumber ? 12 : 250,
+    });
+    const requested = collectorNumberParts(request.cardHint.cardNumber);
+    const hasSnapshotMatch = snapshotResult.cards.some(card => classifyPokemonName(searchName, card.name) !== "unrelated"
+      && (!requested.number || collectorNumbersEquivalent(request.cardHint.cardNumber, formatCollectorNumber(card.number ?? "", card.set))));
+    // Give live data a short head start when a real, dated catalog can recover
+    // this query. Unknown cards keep the full lookup budget for newer releases.
+    const catalogDeadline = createLinkedAbortSignal(signal, hasSnapshotMatch ? Math.max(1, 1500 - (Date.now() - identityStartedAt)) : CATALOG_RETRY_BUDGET_MS);
     // pokemontcg.io's first (uncached) response can take 5-8s because it carries
     // pricing payloads. Retry with backoff, but keep each attempt bounded so
     // identity selection cannot inherit the comparison route's much larger time
@@ -791,10 +818,14 @@ async function identifyCards(
         // uses. At 8s a degraded catalog returned nothing rather than late:
         // measured 2026-08-10, a full "Pikachu" page averaged 7.3s.
         timeoutMs: 15000,
-        signal,
+        signal: catalogDeadline.signal,
       },
       warnings,
-    );
+    ).catch(error => {
+      if (signal?.aborted) throw signal.reason ?? error;
+      warnings.push(`Pokémon catalog lookup unavailable: ${errorMessage(error)}`);
+      return null;
+    }).finally(catalogDeadline.cleanup);
 
     if (!result) {
       result = confirmedSnapshotCard
@@ -806,12 +837,7 @@ async function identifyCards(
           count: 1,
           totalCount: 1,
         }
-        : searchPokemonCatalogSnapshot({
-          query: searchName,
-          cardNumber: request.cardHint.cardNumber,
-          setHint: request.cardHint.setCode,
-          pageSize: request.cardHint.cardNumber ? 12 : 250,
-        });
+        : snapshotResult;
       if (result.cards.length > 0) warnings.push(snapshotFallbackWarning());
     }
 

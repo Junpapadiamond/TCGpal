@@ -10,6 +10,7 @@ import {
   type PlatformSeed,
 } from "@/lib/comparison/platforms";
 import type { BuyerContext, CardIdentityCandidate, Marketplace } from "@/lib/schemas";
+import { clearLocalCache } from "@/lib/ops/cache";
 
 describe("recall probe failure isolation", () => {
   it("preserves primary rows when the optional diagnostic probe fails", async () => {
@@ -42,7 +43,41 @@ const fetcher = (async () => {
   throw new Error("agents are mocked; no network");
 }) as unknown as typeof fetch;
 
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => { vi.unstubAllEnvs(); clearLocalCache(); });
+
+describe("primary search reuse", () => {
+  it("reuses eBay evidence and recall on a cross-market expansion without refreshing observation times", async () => {
+    const rows = [seed("cached-ebay", "eBay")];
+    const search = vi.fn(async () => rows);
+    const recallProbe = vi.fn(async () => ({ marketplace: "eBay" as const, attempts: [], query: null,
+      status: "disabled" as const, observedAt: rows[0].observedAt, returnedCount: 0, seeds: [] }));
+    const ebay = mockAgent({ id: "ebay", marketplace: "eBay", search, recallProbe });
+    const whatnot = mockAgent({ id: "whatnot", marketplace: "Whatnot", search: vi.fn(async () => []) });
+    const input = { card, buyer, fetcher, ebayCacheKey: "same-print-and-buyer" };
+    await runPlatformFanout({ ...input, agents: [ebay] });
+    const result = await runPlatformFanout({ ...input, agents: [ebay, whatnot] });
+    expect(search).toHaveBeenCalledOnce();
+    expect(recallProbe).toHaveBeenCalledOnce();
+    expect(whatnot.search).toHaveBeenCalledOnce();
+    expect(result.seeds[0].observedAt).toBe(rows[0].observedAt);
+    expect(result.recallObservations[0].observedAt).toBe(rows[0].observedAt);
+    await runPlatformFanout({ ...input, ebayCacheKey: "different-buyer", agents: [ebay] });
+    expect(search).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not cache provider failures or evaluation runs without a cache key", async () => {
+    const search = vi.fn(async (): Promise<PlatformSeed[]> => { throw new Error("Unavailable"); });
+    const agent = mockAgent({ id: "ebay", marketplace: "eBay", search });
+    const input = { card, buyer, fetcher, agents: [agent], ebayCacheKey: "failed-primary" };
+    await runPlatformFanout(input);
+    await runPlatformFanout(input);
+    expect(search).toHaveBeenCalledTimes(2);
+    search.mockImplementation(async () => []);
+    await runPlatformFanout({ ...input, ebayCacheKey: undefined });
+    await runPlatformFanout({ ...input, ebayCacheKey: undefined });
+    expect(search).toHaveBeenCalledTimes(4);
+  });
+});
 
 function seed(id: string, marketplace: Marketplace): PlatformSeed {
   return {
@@ -165,6 +200,15 @@ describe("platform fan-out", () => {
   it("times out a hung agent so it cannot stall the fan-out", async () => {
     const agent = mockAgent({ id: "hung", marketplace: "eBay", search: () => new Promise<PlatformSeed[]>(() => {}) });
     await expect(searchPlatformWithTimeout(agent, { card, buyer, fetcher }, 10)).rejects.toThrow(/timed out/);
+  });
+
+  it("cancels a hung adapter immediately when the buyer leaves", async () => {
+    const controller = new AbortController();
+    const agent = mockAgent({ id: "hung", marketplace: "eBay", search: () => new Promise<PlatformSeed[]>(() => {}) });
+    const pending = searchPlatformWithTimeout(agent, { card, buyer, fetcher, signal: controller.signal }, 30);
+    const assertion = expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    controller.abort();
+    await assertion;
   });
 
   it("builds the same result/trace shape for success and failure (shared builder)", () => {

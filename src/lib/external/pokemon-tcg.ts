@@ -215,21 +215,25 @@ export async function getPokemonCard({
   // more. A 404 is an answer and is never re-asked.
   const url = new URL(`${POKEMON_TCG_API_BASE_URL}/cards/${encodeURIComponent(normalizedId)}`);
   let lastStatus = 0;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const linked = createLinkedAbortSignal(signal, timeoutMs);
-    const response = await fetcher(url, {
-      headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
-      next: { revalidate: 3600 },
-      signal: linked.signal,
-    } as RequestInit & { next: { revalidate: number } }).finally(linked.cleanup);
+  const linked = createLinkedAbortSignal(signal, timeoutMs);
+  try {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      linked.signal.throwIfAborted();
+      const response = await fetcher(url, {
+        headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
+        next: { revalidate: 3600 },
+        signal: linked.signal,
+      } as RequestInit & { next: { revalidate: number } });
 
-    if (response.ok) return pokemonTcgCardResponseSchema.parse(await response.json()).data;
-
-    lastStatus = response.status;
-    if (response.status < 500 || signal?.aborted) break;
+      if (response.ok) return pokemonTcgCardResponseSchema.parse(await response.json()).data;
+      lastStatus = response.status;
+      await response.body?.cancel();
+      if (response.status < 500 || linked.signal.aborted) break;
+    }
+    throw new Error(`Pokemon TCG API card lookup failed with ${lastStatus}.`);
+  } finally {
+    linked.cleanup();
   }
-
-  throw new Error(`Pokemon TCG API card lookup failed with ${lastStatus}.`);
 }
 
 export async function browsePokemonCards({
@@ -291,18 +295,22 @@ async function fetchPokemonCards({
   url.searchParams.set("select", "id,name,subtypes,number,rarity,set,images,tcgplayer");
 
   const linked = createLinkedAbortSignal(signal, timeoutMs);
-
-  const response = await fetcher(url, {
-    headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
-    next: { revalidate: 3600 },
-    signal: linked.signal,
-  } as RequestInit & { next: { revalidate: number } }).finally(linked.cleanup);
-
-  if (!response.ok) {
-    throw new PokemonTcgRequestError(response.status);
+  let json: z.infer<typeof pokemonTcgSearchResponseSchema>;
+  try {
+    linked.signal.throwIfAborted();
+    const response = await fetcher(url, {
+      headers: apiKey ? { "X-Api-Key": apiKey } : undefined,
+      next: { revalidate: 3600 },
+      signal: linked.signal,
+    } as RequestInit & { next: { revalidate: number } });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new PokemonTcgRequestError(response.status);
+    }
+    json = pokemonTcgSearchResponseSchema.parse(await response.json());
+  } finally {
+    linked.cleanup();
   }
-
-  const json = pokemonTcgSearchResponseSchema.parse(await response.json());
 
   const cards = !query || query.includes(":")
     ? json.data

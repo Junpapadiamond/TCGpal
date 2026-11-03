@@ -16,12 +16,18 @@ for (const filename of readdirSync(join(sourceRoot, "cards", "en")).filter((name
   if (!set) throw new Error(`Missing set metadata for ${setId}.`);
   const sourceCards = JSON.parse(readFileSync(join(sourceRoot, "cards", "en", filename), "utf8"));
   for (const card of sourceCards) {
+    const legacyStem = `https://images.pokemontcg.io/${set.id}/${card.number}`;
+    // Compact only URLs that actually match the old CDN convention. Newer
+    // releases use provider-supplied Scrydex URLs; never invent their paths.
+    const legacyImages = card.images?.small === `${legacyStem}.png`
+      && card.images?.large === `${legacyStem}_hires.png`;
     cards.push({
       i: card.id,
       n: card.name,
       u: card.subtypes,
       d: card.number,
       r: card.rarity,
+      ...(!legacyImages ? { m: card.images ?? {} } : {}),
       s: {
         i: set.id,
         n: set.name,
@@ -29,6 +35,8 @@ for (const filename of readdirSync(join(sourceRoot, "cards", "en")).filter((name
         t: set.printedTotal,
         p: set.ptcgoCode,
         d: set.releaseDate,
+        ...(set.images?.symbol !== `https://images.pokemontcg.io/${set.id}/symbol.png`
+          ? { y: set.images?.symbol ?? null } : {}),
       },
     });
   }

@@ -147,7 +147,10 @@ describe("comparison report cache", () => {
 
   it("keys by card, condition, and delivery context", () => {
     const key = comparisonCacheKey(pureSearch, "swsh7-215");
-    expect(key).toBe(`identity-v4|ranking-v14-demo-release-conflict|scope:single|recall:true|${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}|sources:none|swsh7-215|Near Mint|10001|0.08`);
+    expect(key).toContain(`${ONE_PIECE_PRINT_METADATA_REVISION}|${ONE_PIECE_CATALOG_REVISION}`);
+    expect(key).not.toBe(comparisonCacheKey(pureSearch, "swsh7-214"));
+    expect(key).not.toBe(comparisonCacheKey({ ...pureSearch, buyer: { ...pureSearch.buyer, postalCode: "90210" } }, "swsh7-215"));
+    expect(key).not.toBe(comparisonCacheKey({ ...pureSearch, buyer: { ...pureSearch.buyer, desiredCondition: "Lightly Played" } }, "swsh7-215"));
   });
 
   it("separates reports when the recall probe is switched off", () => {
@@ -192,6 +195,14 @@ describe("comparison report cache", () => {
     await expect(first).resolves.toEqual(reportStub());
     await expect(second).resolves.toEqual(reportStub());
     expect(producer).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not give reused eBay observations a second freshness window", async () => {
+    const listing = normalizeListing({ listing: { ...demoListingSeeds[0], marketplace: "eBay", demo: false,
+      observedAt: "2026-07-03T10:00:00Z" }, buyer: pureSearch.buyer, confirmedCard: demoIdentities[0] });
+    await setCachedComparison("expanded-ebay", reportStub({ candidates: [listing], platforms: [platformStub()] }), new Date("2026-07-03T10:10:00Z"));
+    expect(await getCachedComparison("expanded-ebay", new Date("2026-07-03T10:14:59Z"))).not.toBeNull();
+    expect(await getCachedComparison("expanded-ebay", new Date("2026-07-03T10:15:00Z"))).toBeNull();
   });
 
   it("writes reports through the shared hashed cache adapter", async () => {

@@ -7,6 +7,8 @@ import {
 import type { RecallObservation } from "./recall-probe";
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { captureOperationalException } from "@/lib/ops/sentry";
+import { getJsonCache, setJsonCache } from "@/lib/ops/cache";
+import { ebaySearchSnapshotSchema } from "@/lib/schemas";
 import { isMercariDirectEnabled, searchMercariDirect } from "@/lib/external/mercari-direct";
 import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
 import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
@@ -213,6 +215,8 @@ export type RunPlatformFanoutInput = {
   plan?: PlatformSearchPlan;
   agents?: PlatformAgent[];
   signal?: AbortSignal;
+  // Only the orchestrator's pure-card path supplies this buyer/print-scoped key.
+  ebayCacheKey?: string;
   opsContext?: {
     requestId?: string;
     route?: OpsRoute;
@@ -227,6 +231,8 @@ export type PlatformOutcome = {
   seeds?: PlatformSeed[];
   error?: string;
   recallObservation?: RecallObservation;
+  durationMs?: number;
+  cachedAt?: string;
 };
 
 // Per-agent search timeout. The fan-out owns this rather than trusting every
@@ -239,7 +245,14 @@ export async function searchPlatformWithTimeout(
   input: PlatformSearchInput,
   timeoutMs = agent.searchTimeoutMs ?? PLATFORM_SEARCH_TIMEOUT_MS,
 ): Promise<PlatformSeed[]> {
+  input.signal?.throwIfAborted();
   const controller = new AbortController();
+  const signal = input.signal ? AbortSignal.any([input.signal, controller.signal]) : controller.signal;
+  let onAbort: () => void;
+  const cancelled = new Promise<never>((_, reject) => {
+    onAbort = () => reject(signal.reason);
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(
@@ -248,10 +261,17 @@ export async function searchPlatformWithTimeout(
     );
   });
   try {
-    const signal = input.signal ? AbortSignal.any([input.signal, controller.signal]) : controller.signal;
-    return await Promise.race([agent.search({ ...input, signal }), timeout]);
+    // Carry cancellation even through adapters that create their own fetch
+    // deadline. No new requests may start after this platform budget ends.
+    const fetcher: typeof fetch = async (resource, init) => {
+      signal.throwIfAborted();
+      return input.fetcher(resource, { ...init,
+        signal: init?.signal ? AbortSignal.any([signal, init.signal]) : signal });
+    };
+    return await Promise.race([agent.search({ ...input, fetcher, signal }), timeout, cancelled]);
   } finally {
     clearTimeout(timer!);
+    signal.removeEventListener("abort", onAbort!);
     controller.abort();
   }
 }
@@ -302,6 +322,7 @@ export async function runPlatformFanout({
   plan,
   agents = getPlatformAgents(),
   signal,
+  ebayCacheKey,
   opsContext,
 }: RunPlatformFanoutInput): Promise<PlatformFanout> {
   const seeds: PlatformSeed[] = [];
@@ -313,7 +334,21 @@ export async function runPlatformFanout({
 
   const settled = await Promise.all(
     configured.map(async (agent): Promise<PlatformOutcome> => {
+      const startedAt = Date.now();
+      const sourceCacheKey = agent.id === "ebay" ? ebayCacheKey : undefined;
       try {
+        if (sourceCacheKey) {
+          const cached = await getJsonCache("ebay-search-v1", sourceCacheKey, {
+            validate(value) {
+              const parsed = ebaySearchSnapshotSchema.safeParse(value);
+              if (!parsed.success) return null;
+              const age = Date.now() - Date.parse(parsed.data.capturedAt);
+              return age >= 0 && age < 15 * 60_000 ? parsed.data : null;
+            },
+          });
+          if (cached) return { agent, seeds: cached.seeds, recallObservation: cached.recallObservation,
+            cachedAt: cached.capturedAt, durationMs: Date.now() - startedAt };
+        }
         const attempts: SearchAttempt[] = [];
         const input = { card, buyer, fetcher, plan, signal, onSearchAttempt: (attempt: SearchAttempt) => attempts.push(attempt) };
         const seeds = await searchPlatformWithTimeout(agent, input);
@@ -325,15 +360,21 @@ export async function runPlatformFanout({
             recallObservation = { marketplace: agent.marketplace, attempts, query: null, status: "failed", observedAt: new Date().toISOString(), returnedCount: 0, seeds: [] };
           }
         }
-        return { agent, seeds, recallObservation };
+        if (sourceCacheKey && !signal?.aborted) {
+          const snapshot = ebaySearchSnapshotSchema.safeParse({ seeds, recallObservation, capturedAt: new Date(startedAt).toISOString() });
+          const ttlSeconds = Math.floor((startedAt + 15 * 60_000 - Date.now()) / 1000);
+          if (snapshot.success && ttlSeconds > 0) await setJsonCache("ebay-search-v1", sourceCacheKey, snapshot.data, { ttlSeconds });
+        }
+        return { agent, seeds, recallObservation, durationMs: Date.now() - startedAt };
       } catch (error) {
-        return { agent, error: error instanceof Error ? error.message : "Unknown marketplace error." };
+        return { agent, error: error instanceof Error ? error.message : "Unknown marketplace error.", durationMs: Date.now() - startedAt };
       }
     }),
   );
 
   for (const outcome of settled) {
     const summary = summarizePlatformOutcome(outcome);
+    if (outcome.cachedAt) summary.trace.summary += ` Reused source evidence captured ${outcome.cachedAt} within the 15-minute freshness window; original observation times retained.`;
     seeds.push(...summary.seeds);
     traces.push(summary.trace);
     results.push(summary.result);
@@ -345,6 +386,7 @@ export async function runPlatformFanout({
       requestId: opsContext?.requestId,
       route: opsContext?.route,
       provider: outcome.agent.id,
+      durationMs: outcome.durationMs,
       platformId: outcome.agent.id,
       marketplace: outcome.agent.marketplace,
       sourceMode: outcome.agent.sourceMode,

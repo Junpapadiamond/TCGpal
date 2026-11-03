@@ -3,7 +3,7 @@ import { collectorNumberParts } from "@/lib/comparison/collector-number";
 import { classifyPokemonName } from "@/lib/external/pokemon-name-match";
 import type { PokemonTcgCard, PokemonTcgSearchResult } from "@/lib/external/pokemon-tcg";
 
-type SnapshotCard = (typeof snapshot.cards)[number];
+type SnapshotCard = (typeof snapshot.cards)[number] & { m?: { small?: string; large?: string }; s: { y?: string | null } };
 
 export const POKEMON_CATALOG_SNAPSHOT_REVISION = snapshot.revision;
 export const POKEMON_CATALOG_SNAPSHOT_UPDATED_AT = snapshot.sourceUpdatedAt;
@@ -78,9 +78,9 @@ function expandCard(card: SnapshotCard): PokemonTcgCard {
       printedTotal: card.s.t,
       ptcgoCode: card.s.p,
       releaseDate: card.s.d,
-      images: { symbol: `https://images.pokemontcg.io/${card.s.i}/symbol.png` },
+      images: { symbol: card.s.y === undefined ? `https://images.pokemontcg.io/${card.s.i}/symbol.png` : card.s.y ?? undefined },
     },
-    images: { small: `${imageStem}.png`, large: `${imageStem}_hires.png` },
+    images: card.m ?? { small: `${imageStem}.png`, large: `${imageStem}_hires.png` },
   };
 }
 

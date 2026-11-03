@@ -410,6 +410,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const form = useForm<ComparisonForm>({ defaultValues: defaultComparisonFormValues });
   const [report, setReport] = useState<ComparisonReport | null>(null);
   const [crossFailed, setCrossFailed] = useState(false);
+  const [crossPending, setCrossPending] = useState(false);
   const [crossReport, setCrossReport] = useState<ComparisonReport | null>(null);
   const [marketMode, setMarketMode] = useState<MarketMode>("single");
   const [identityResult, setIdentityResult] = useState<CardIdentitySearchResponse | null>(null);
@@ -499,6 +500,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       if (!snapshot) return;
       activeRequest.current?.abort();
       requestGeneration.current += 1;
+      setCrossPending(false);
       form.reset(snapshot.form);
       setReport(snapshot.report);
       setCrossReport(snapshot.crossReport ?? null);
@@ -601,6 +603,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
 
   function beginRequest() {
     activeRequest.current?.abort();
+    setCrossPending(false);
     const controller = new AbortController();
     activeRequest.current = controller;
     return { generation: ++requestGeneration.current, controller };
@@ -641,6 +644,8 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     writeJourney("search", currentStep === "search" || currentStep == null ? "replace" : "push", currentSnapshot({
       form: values,
       report: null,
+      crossReport: null,
+      crossFailed: false,
       identityResult: null,
       selectedIdentity: null,
       pendingRequest: null,
@@ -771,9 +776,31 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     // result or trigger another paid run through the ordinary retry path.
     const parsed = await requestComparisonReport({ ...request, marketScope: "single" }, t.error.temporary, operation.controller.signal);
     if (!requestIsCurrent(operation)) return;
+    const wantsAdditional = request.marketScope === "cross" && parsed.status !== "needs_confirmation";
+    // Publish the completed primary report before waiting on optional providers.
+    // The paid request still starts once, only after the eBay transport succeeds.
+    setReport(parsed);
+    setCrossReport(null);
+    setCrossFailed(false);
+    setCrossPending(wantsAdditional);
+    setPendingRequest(parsed.request);
+    setJourneyState("result");
+    writeJourney("result", "push", currentSnapshot({ report: parsed, crossReport: null, crossFailed: wantsAdditional,
+      selectedIdentity: parsed.confirmedCard ?? identity, pendingRequest: parsed.request, journeyState: "result" }));
+    focusComparisonTarget();
+    const primaryDuration = readTimestamp() - startedAt;
+    if (parsed.confirmedCard) rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
+    trackEvent("comparison_completed", {
+      marketplace: request.sourceListing.marketplace,
+      status: parsed.status,
+      result_state: parsed.outcome,
+      demo_mode: parsed.demoMode,
+      candidate_count: parsed.candidates.length,
+      duration_bucket: primaryDuration < 5000 ? "under_5s" : primaryDuration < 15000 ? "5_to_15s" : "over_15s",
+    });
     let additional: ComparisonReport | null = null;
     let additionalFailed = false;
-    if (request.marketScope === "cross" && parsed.status !== "needs_confirmation") {
+    if (wantsAdditional) {
       try {
         additional = await requestComparisonReport(request, t.error.temporary, operation.controller.signal);
         if (additional.status === "needs_confirmation" || (parsed.confirmedCard && additional.confirmedCard?.id !== parsed.confirmedCard.id)) throw new Error("Card identity changed");
@@ -783,13 +810,13 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       }
     }
     if (!requestIsCurrent(operation)) return;
+    setCrossPending(false);
     setReport(parsed);
     setCrossReport(additional);
     setCrossFailed(additionalFailed);
     setPendingRequest(parsed.request);
-    if (parsed.confirmedCard) rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
     setJourneyState("result");
-    writeJourney("result", "push", currentSnapshot({
+    writeJourney("result", "replace", currentSnapshot({
       report: parsed,
       crossReport: additional,
       crossFailed: additionalFailed,
@@ -797,16 +824,6 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       pendingRequest: parsed.request,
       journeyState: "result",
     }));
-    const duration = readTimestamp() - startedAt;
-    trackEvent("comparison_completed", {
-      marketplace: request.sourceListing.marketplace,
-      status: parsed.status,
-      result_state: parsed.outcome,
-      demo_mode: parsed.demoMode,
-      candidate_count: parsed.candidates.length,
-      duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
-    });
-    focusComparisonTarget();
   }
 
   // ChatGPT/Codex and other trusted interfaces can hand the buyer directly into
@@ -1021,12 +1038,14 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     setJourneyState("idle");
     setCompactSearchOpen(false);
     setCrossReport(null);
+    setCrossPending(false);
+    setCrossFailed(false);
     setMarketMode("single");
     const reset = resetForNewCardSearch(form.getValues());
     form.reset(reset);
     refreshExamples();
     writeJourney("search", "push", currentSnapshot({
-      form: reset, report: null, identityResult: null, selectedIdentity: null, pendingRequest: null, journeyState: "idle",
+      form: reset, report: null, crossReport: null, crossFailed: false, identityResult: null, selectedIdentity: null, pendingRequest: null, journeyState: "idle",
     }));
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[name="heroQuery"]')?.focus();
@@ -1472,6 +1491,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
             report={report}
             crossReport={crossReport}
             crossFailed={crossFailed}
+            crossPending={crossPending}
             marketMode={marketMode}
             onMarketModeChange={setMarketMode}
             preferredRole={preferredRole}
@@ -2388,6 +2408,7 @@ function ComparisonResult({
   report,
   crossReport,
   crossFailed,
+  crossPending,
   marketMode,
   onMarketModeChange,
   preferredRole,
@@ -2403,6 +2424,7 @@ function ComparisonResult({
   report: ComparisonReport;
   crossReport: ComparisonReport | null;
   crossFailed: boolean;
+  crossPending: boolean;
   marketMode: MarketMode;
   onMarketModeChange: (mode: MarketMode) => void;
   preferredRole: LensRole;
@@ -2631,6 +2653,9 @@ function ComparisonResult({
   return (
     <section id="comparison-result" tabIndex={-1} className="scroll-mt-24 space-y-4 outline-none">
       <MarketModeSwitch mode={marketMode} onChange={onMarketModeChange} />
+      {crossPending && <p role="status" className="mx-auto max-w-[860px] text-sm text-[#52635c]">{lang === "zh"
+        ? "eBay 结果已就绪。其他平台仍在查询，可先查看下方结果。"
+        : "eBay results are ready below. Other marketplaces are still searching."}</p>}
       {snapshot?.restored && (
         <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm text-[#6f5a22]">
           <p>
@@ -2653,7 +2678,7 @@ function ComparisonResult({
         <p className="text-sm text-[#52635c]">{lang === "zh" ? "这份保存的结果包含多个平台。可单独查询当前 eBay 商品。" : "This saved report includes multiple marketplaces. Search eBay for a separate current comparison."}</p>
         <button type="button" className="primary-button mt-3" onClick={onRetrySources}>{lang === "zh" ? "查询 eBay" : "Search eBay"}</button>
       </div>}
-      <div role="region" aria-label={lang === "zh" ? "单一平台结果" : "Single market results"} hidden={marketMode !== "single" || isCrossMarketReport(report)} className="space-y-4">
+      <div role="region" aria-label={lang === "zh" ? "单一平台结果" : "Single market results"} hidden={(marketMode !== "single" && !crossPending) || isCrossMarketReport(report)} className="space-y-4">
       {outcome === "next_moves" && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.nextMovesTitle}</h3>
@@ -2793,7 +2818,7 @@ function ComparisonResult({
       </div>
       <div className="mx-auto max-w-[860px] space-y-3">
           <div hidden={marketMode !== "cross"}>
-            <CrossMarketSearch key={`${report.confirmedCard?.id ?? report.request.confirmedCardId}:${report.generatedAt}`} report={report} initialResult={crossReport ?? (isCrossMarketReport(report) ? report : null)} initialFailed={crossFailed} />
+            <CrossMarketSearch key={`${report.confirmedCard?.id ?? report.request.confirmedCardId}:${report.generatedAt}:${crossPending}`} report={report} initialResult={crossReport ?? (isCrossMarketReport(report) ? report : null)} initialFailed={crossFailed} initialPending={crossPending} />
           </div>
 
           <OtherMarketplaces report={report} />

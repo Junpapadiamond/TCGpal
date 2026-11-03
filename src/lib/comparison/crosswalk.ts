@@ -61,19 +61,15 @@ export async function resolveCardCrosswalk(
     tcgplayerProduct: null,
   };
 
-  try {
-    entry = {
-      ...entry,
-      ebayProduct: await resolveEbayProductForCard(card, buyer, fetcher),
-    };
-  } catch {
-    // eBay Catalog metadata improves precision when available, but the Browse
-    // keyword path remains the deterministic fallback and must not hard-fail.
-  }
-
-  try {
-    const products = await resolveTcgplayerProductVariants(card, fetcher);
-    const product = selectExactTcgplayerProduct(card, products);
+  // These providers use the same confirmed identity but do not depend on each
+  // other. A slow or failed Catalog call must not delay the TCGplayer lookup.
+  const [ebay, tcgplayer] = await Promise.allSettled([
+    resolveEbayProductForCard(card, buyer, fetcher),
+    resolveTcgplayerProductVariants(card, fetcher),
+  ]);
+  if (ebay.status === "fulfilled") entry.ebayProduct = ebay.value;
+  if (tcgplayer.status === "fulfilled") {
+    const product = selectExactTcgplayerProduct(card, tcgplayer.value);
     if (product) {
       entry = {
         ...entry,
@@ -83,7 +79,7 @@ export async function resolveCardCrosswalk(
         tcgplayerProduct: product,
       };
     }
-  } catch {
+  } else {
     // Feed hiccups must not break the crosswalk: the eBay leg stays valid and
     // the TCGplayer leg is retried on the next uncached resolution.
     return entry;

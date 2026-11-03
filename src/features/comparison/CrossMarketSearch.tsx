@@ -6,17 +6,18 @@ import { CrossMarketPrices } from "./CrossMarketPrices";
 import { useLang } from "./i18n";
 import { IconCardSearch, IconSpinner } from "./icons";
 
-export function CrossMarketSearch({ report, initialResult, initialFailed = false }: { report: ComparisonReport; initialResult?: ComparisonReport | null; initialFailed?: boolean }) {
+export function CrossMarketSearch({ report, initialResult, initialFailed = false, initialPending = false }: { report: ComparisonReport; initialResult?: ComparisonReport | null; initialFailed?: boolean; initialPending?: boolean }) {
   const { lang } = useLang();
   const zh = lang === "zh";
   const [result, setResult] = useState<ComparisonReport | null>(initialResult ?? (report.request.marketScope === "cross" ? report : null));
-  const [loading, setLoading] = useState(false);
+  const [searching, setLoading] = useState(false);
+  const loading = initialPending || searching;
   const [failed, setFailed] = useState(initialFailed);
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
 
   async function search() {
-    if (active.current || result) return;
+    if (active.current || result || initialPending) return;
     const controller = new AbortController();
     active.current = controller;
     setLoading(true);

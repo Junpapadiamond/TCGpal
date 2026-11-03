@@ -119,6 +119,12 @@ export const STANDARD_COMPARISON_FLOW_CARDS: StandardComparisonFlowCard[] = [
   },
 ];
 
+// Companion to the sequential journey: the UI must publish the primary result
+// while this opted-in expansion is pending, prevent a second paid request, and
+// discard a late expansion after Edit/New search. Inject delayed fetchers in
+// ComparisonApp.test.tsx; never make this contract depend on live marketplaces.
+export const STANDARD_PENDING_CROSS_MARKET_CARD = STANDARD_COMPARISON_FLOW_CARDS[4];
+
 export function assertStandardComparisonFlowPlan(cards: StandardComparisonFlowCard[]) {
   if (cards.length < 5) {
     throw new Error("Standard comparison flow must search at least five cards in one session.");

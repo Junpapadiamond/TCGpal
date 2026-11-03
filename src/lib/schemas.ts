@@ -808,6 +808,21 @@ export const listingSeedSchema = normalizedListingSchema.omit({
   riskLabel: true, trustNotes: true, eligible: true, eligibilityIssues: true, exclusionReasons: true,
   printMatch: true, printMatchConfidence: true, printMatchReasons: true, printPriceGuard: true,
 });
+// Internal source cache: retain raw evidence and the separately bounded probe,
+// never precomputed winners. Expanding to cross-market still reruns ranking.
+export const ebaySearchSnapshotSchema = z.object({
+  seeds: z.array(listingSeedSchema).max(50),
+  capturedAt: z.string().datetime(),
+  recallObservation: z.object({
+    marketplace: z.literal("eBay"),
+    attempts: z.array(searchAttemptSchema),
+    query: searchAttemptSchema.pick({ kind: true, value: true }).nullable(),
+    status: z.enum(["complete", "failed", "disabled"]),
+    observedAt: z.string(),
+    returnedCount: z.number().int().nonnegative(),
+    seeds: z.array(listingSeedSchema).max(10),
+  }).optional(),
+});
 export type SellerTrustSignals = z.infer<typeof sellerTrustSignalsSchema>;
 export type ListingEvidence = z.infer<typeof listingEvidenceSchema>;
 export type SourceListing = z.infer<typeof sourceListingSchema>;

@@ -19,7 +19,7 @@ import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
 import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
-import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
+import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS, STANDARD_PENDING_CROSS_MARKET_CARD } from "@/lib/testing/standard-comparison-flow";
 import { markResultShown, trackEvent } from "@/lib/analytics";
 import { SEARCH_EXAMPLES } from "./search-examples";
 
@@ -374,6 +374,61 @@ describe("comparison condition controls", () => {
     fireEvent.keyDown(query, { key: "Enter" });
     await screen.findByText("Invalid request");
     expect(scopes).toEqual(["single"]);
+  });
+
+  it("shows eBay while an opted-in cross-market request is pending and prevents a duplicate paid search", async () => {
+    const originalFetch = fetch;
+    let finish!: () => void;
+    const stalled = new Promise<void>(resolve => { finish = resolve; });
+    let paidCalls = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/listing-compare") && JSON.parse(String(init?.body)).marketScope === "cross") {
+        paidCalls += 1;
+        await stalled;
+      }
+      return originalFetch(input, init);
+    }));
+    render(<ComparisonApp />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include cross-market search" }));
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: STANDARD_PENDING_CROSS_MARKET_CARD.query } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    try {
+      await screen.findByRole("button", { name: "Single Market" });
+      fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
+      expect(screen.getByRole("region", { name: "Single market results" })).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
+      expect((screen.getByRole("button", { name: "Searching other marketplaces…" }) as HTMLButtonElement).disabled).toBe(true);
+      expect(paidCalls).toBe(1);
+    } finally { finish(); }
+    await screen.findByRole("region", { name: "Across marketplaces" });
+    expect(paidCalls).toBe(1);
+  });
+
+  it("discards a late cross-market result after New search", async () => {
+    const originalFetch = fetch;
+    let finish!: () => void;
+    let paidSignal: AbortSignal | null | undefined;
+    const stalled = new Promise<void>(resolve => { finish = resolve; });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/agent/listing-compare") && JSON.parse(String(init?.body)).marketScope === "cross") {
+        paidSignal = init?.signal;
+        await stalled;
+      }
+      return originalFetch(input, init);
+    }));
+    render(<ComparisonApp />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include cross-market search" }));
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: STANDARD_PENDING_CROSS_MARKET_CARD.query } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await screen.findByRole("button", { name: "Single Market" });
+    fireEvent.click(screen.getByRole("button", { name: "New search" }));
+    expect(paidSignal?.aborted).toBe(true);
+    await act(async () => { finish(); await stalled; });
+    expect(screen.getByRole("textbox", { name: "Search for a card" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Across marketplaces" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Searching other marketplaces…" })).toBeNull();
   });
 
   it("preserves eBay and shows the failed paid attempt without automatically retrying", async () => {

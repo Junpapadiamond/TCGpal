@@ -1,5 +1,6 @@
 import { resolveCardIdentity } from "@/lib/ai/card-identity";
 import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-revision";
+import { POKEMON_CATALOG_SNAPSHOT_REVISION } from "@/lib/external/pokemon-catalog-snapshot";
 import { clearLocalCache, getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { createAbortError, createLinkedAbortSignal } from "@/lib/ops/abort";
 import {
@@ -46,7 +47,7 @@ export async function resolveCardIdentityRuntime(
   const input = cardIdentitySearchRequestSchema.parse(rawInput);
   const now = options.now ?? (() => new Date());
   const resolver = options.resolver ?? resolveCardIdentity;
-  const key = JSON.stringify(input);
+  const key = JSON.stringify([POKEMON_CATALOG_SNAPSHOT_REVISION, "image-urls-v2", input]);
   const cached = await getJsonCache(CACHE_SCOPE, key, {
     now: now(),
     validate: parseCachedIdentity,
