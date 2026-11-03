@@ -10,6 +10,7 @@ final result: passed
 - Browser interaction checks: photo open/zoom/close, view/language switching, marketplace expansion and visible unknown charges. 390px EN/中文 and 320px 中文 checked; narrow document has no horizontal overflow. The mobile reference strip was separately inspected below the listing cards.
 - Independent density and proportion agents passed the final screenshots. No P0/P1/P2 issue remains in checked states. P3: long timestamps can wrap on narrow screens; do not reduce mobile helper type further.
 - TDD reference-disclosure regression, 93 focused tests, lint, typecheck, 1,971 full tests / five optional live skips and production build pass. Screenshots use conspicuous synthetic QA facts. No live/paid source behavior changed.
+- Production `99ce07c` is READY on lenstcg.com. Saved real Pikachu results passed EN/中文 desktop and 390px 中文 display, gallery next/zoom/close and visible 92×28px TCGplayer checks; console warning/error logs empty. Cross-market QA used isolated synthetic data, not new paid acquisition.
 - Evidence and decision boundaries: [compact A release](docs/compact-results-a-2026-11-03.md). The older section below records historical QA, not the founder's acceptance of the previous scale.
 
 ## Quiet results, selected Option 1 — 2026-11-02

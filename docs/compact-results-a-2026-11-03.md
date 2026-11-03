@@ -32,4 +32,6 @@ Smallest test: same synthetic facts in EN/中文 at 1440×900, 390×844 and 320�
 
 ## Production
 
-Local release gate passed. Production deployment and visible checks are pending the main push.
+Product commit `99ce07cefdf75868b5d6534b9462df253574cb5d` was fast-forwarded to main and pushed. Vercel `dpl_FtM7xy8ZBNHi831uuN9hiX1WbRhs` reached READY and assigned `lenstcg.com`.
+
+The production saved Pikachu 25/165 comparison was opened in the built-in browser with its saved-data caution retained. English/中文 desktop and 390px 中文 mobile displayed the new independent frame, compact signals and real seller image. The TCGplayer SVG loaded and measured 92×28px; its reference is outside the collapsed manual links. Gallery next-photo, zoom and close worked. Production browser warning/error logs were empty, and the mobile document scroll/client widths were both 375px. Captures are `live-en.png`, `live-zh.png`, `live-mobile-zh.png` and `live-reference-mobile.png` in the evidence directory. This validates display of saved real data, not a fresh marketplace acquisition; cross-market layout was verified with the isolated fixture harness.

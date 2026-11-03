@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-11-03
 canonical_branch: origin/main
-last_verified_product_commit: b420109
+last_verified_product_commit: 99ce07c
 working_branch: codex/quiet-results-design (isolated Windows worktree)
 max_lines: 300
 ---
@@ -29,7 +29,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Founder selected compact A; frames, smaller scale and TCGplayer visibility locally verified; full gate green | Verify READY and live display; see compact A release |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Compact A 99ce07c READY; full gate and EN/中文/mobile display pass; TCGplayer visible | Observe founder/buyer feedback; see compact A release |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Marketplace compatibility and acquisition | Medium | November 2: 1284f55 READY; independent acquisition overlaps catalog mapping; provider stages measured | Mercari pilot allowance blocks new starts; historical 18–90-second job latency unresolved; see latency record |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
@@ -131,7 +131,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
-- November 3: Option 1 `b420109` reached READY, then founder selected compact A after review: independent listing frames, 22/34/24px hierarchy and visible TCGplayer reference with SVG sizing fixed. Full gate (1,971 tests) and EN/中文/mobile QA pass; deployment pending. [Compact A release](docs/compact-results-a-2026-11-03.md). Prior [speed/image verification](docs/performance-images-2026-11-02.md) unchanged.
+- November 3: compact A `99ce07c` READY (`dpl_FtM7xy8ZBNHi831uuN9hiX1WbRhs`): independent listing frames, 22/34/24px hierarchy and visible TCGplayer reference with SVG sizing fixed. Full gate (1,971 tests), synthetic cross-market QA and real saved-result EN/中文/mobile display pass. [Compact A release](docs/compact-results-a-2026-11-03.md). Prior [speed/image verification](docs/performance-images-2026-11-02.md) unchanged.
 - October 30 UI cleanup verified on latest production: AGENTS.md now requires UI-led, concise bilingual copy. Removed redundant labels across search, confirmation, results, cross-market, receipts and method; eBay seller feedback preserved. Cloud lint/types/build and 1,935 tests pass (5 skipped); English/中文 desktop and 390px mobile checked. [Release evidence and visual scope](docs/ui-simplicity-2026-10-29/review.md).
 - October 19 follow-up: founder rejected Haiku. Intenext Opus 4.8 is production-verified: `usedAi=true` in 17.9s and browser badge “AI 解读 · claude-opus-4-8”. Old production credential was invalid and securely replaced using the verified existing local credential. Q&A hides incomplete totals and permits 30 seconds (45-second route); optional GPT search allocator remains separate. [Recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md).
 - October 19: Why-not-pick is wired; production gateway returned primary/critic HTTP 500 and allocator/fallback 503. Founder chooses to keep the gateway. Q&A now returns a safe fallback category and logs it; attribution remains server-owned. Anthropic health rejects empty HTTP-200 responses. External gateway recovery remains unverified; see [diagnosis](docs/card-accuracy-evaluation-2026-10-19.md).
