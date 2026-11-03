@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-11-03
 canonical_branch: origin/main
-last_verified_product_commit: 99ce07c
+last_verified_product_commit: 07e08f5
 working_branch: codex/listing-trust-repair (isolated Windows worktree)
 max_lines: 300
 ---
@@ -29,9 +29,9 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Trust repair: merchandise exclusion, high-value review, 48h anchor gate and compact picker implemented | Complete release verification; see November 3 trust repair |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Trust repair 07e08f5 READY; real rug excluded, Charizard inspect-only, five-card and bilingual/mobile QA passed | Share-image PNG regression and full gate passed; follow-up ready to deploy; policy review November 10 |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Marketplace compatibility and acquisition | Medium | November 2: 1284f55 READY; independent acquisition overlaps catalog mapping; provider stages measured | Mercari pilot allowance blocks new starts; historical 18–90-second job latency unresolved; see latency record |
+| WS-SOURCES | Marketplace compatibility and acquisition | Medium | November 3: real cross 4,935ms; single view 110ms using eBay source cache, no duplicate acquisition | Whatnot 4,751ms is current wait; Mercari pilot allowance blocks starts; caps unchanged |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product e95ccfa pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -246,7 +246,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
-- November 2 latency follow-up `1284f55` READY: lint/typecheck/build + 1,968 tests (five skips). Live cross request 4,399 ms: Whatnot job 4,113 ms; Mercari stopped at pilot allowance before starting; warm mapping 2 ms. This is not a successful-Mercari speedup. Five sequential live searches plus EN/中文 desktop/mobile verified. [Latency release](docs/cross-market-latency-2026-11-02.md); [earlier artwork/UI evidence](docs/performance-images-2026-11-02.md).
+- November 3 trust repair `07e08f5` READY (`dpl_343321KoUc8z88ZtzQf8qJxV44Be`): full gate 1,990 tests/five skips; actual Giratina rug excluded, Charizard NM 50/47/3 review-only and zero buy lenses; stale price disabled. Cross 4,935ms + cached single 110ms; Mercari still allowance-blocked. Five sequential synthetic UI searches, real EN/中文/390px, photos and explanation verified. OG live check caught a flex-layout error; PNG render regression/fix passed full gate with 1,991 tests/five skips; follow-up ready to deploy. [Trust repair](docs/listing-trust-repair-2026-11-03.md); [prior latency evidence](docs/cross-market-latency-2026-11-02.md).
 - October 19 recovery: `e740a0f` READY (`dpl_H5UavZTCq3WY4KTXKubAfukLkSin`); Opus 4.8 explanation and Mercari Apify verified live. One invalid model output still degraded visibly. Offline Opus triage succeeded after bounded deadline/conciseness fixes; final local lint/typecheck/metadata/build and 1,878 tests pass (five skipped). See [recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md). No source quota was reset; no chat-pasted credentials were retained.
 - October 19: lint/typecheck/metadata, 1,868 tests (five skipped) and production webpack build pass. Offline seed: 31/32 with one preserved classification discrepancy, no unsafe eligibility; 55 real observations pending human labels. Live Whatnot via Apify returns two; Mercari quota-paused. Application d76c209 is READY (dpl_ExX7LACgb853TDGadmVudGwY7rog); deployed Q&A returns usedAi=false / provider_unavailable. Browser top-pick click returns its labeled rule fallback. Graphify CLI unavailable; no UI/ranking changes. [Evidence](docs/card-accuracy-evaluation-2026-10-19.md).
 - October 15 compact landing: lint, typecheck, metadata audit, production build and 1,854 tests passed (130 files, five optional skips). EN/中文 desktop and mobile captures are local in `output/compact-landing/` in the `tcglens-compact-landing` worktree. Layout-only change; no provider calls or structural graph regeneration required.

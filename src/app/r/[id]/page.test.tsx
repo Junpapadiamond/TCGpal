@@ -7,6 +7,7 @@ import { saveComparisonSnapshot } from "@/lib/comparison/report-snapshot";
 import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
 import type { ComparisonReport } from "@/lib/schemas";
 import ReceiptPage, { generateMetadata } from "./page";
+import ReceiptOpenGraphImage from "./opengraph-image";
 
 const receiptId = "0123456789abcdef0123456789abcdef";
 
@@ -57,6 +58,13 @@ function report(): ComparisonReport {
 
 describe("receipt page", () => {
   beforeEach(() => clearLocalCache());
+
+  it("renders a real PNG share preview including the report counts", async () => {
+    await saveComparisonSnapshot(report(), { id: receiptId, now: new Date() });
+    const response = await ReceiptOpenGraphImage({ params: Promise.resolve({ id: receiptId }) });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    expect([...bytes.slice(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+  });
 
   it("server-renders the exact card, two-listing decision, evidence boundaries, and re-check", async () => {
     await saveComparisonSnapshot(report(), { id: receiptId, now: new Date() });
