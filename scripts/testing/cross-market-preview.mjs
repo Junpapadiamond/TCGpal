@@ -150,7 +150,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify({ snapshot: null, durable: false })); return;
     }
     const response = await fetch(`http://127.0.0.1:${upstreamPort}${req.url}`, { method: req.method, body: body.length ? body : undefined,
-      headers: { ...(req.headers["content-type"] ? { "content-type": req.headers["content-type"] } : {}) } });
+      headers: Object.fromEntries(["content-type", "accept", "rsc", "next-router-state-tree", "next-router-prefetch", "next-router-segment-prefetch", "next-url"].filter(key => typeof req.headers[key] === "string").map(key => [key, req.headers[key]])) });
     const headers = Object.fromEntries(response.headers);
     delete headers["content-encoding"]; delete headers["content-length"]; delete headers["transfer-encoding"];
     if (headers["content-type"]?.includes("text/html")) {

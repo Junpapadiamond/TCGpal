@@ -21,7 +21,33 @@ const storeSource: ComparisonPlatformResult = {
 const openOffers = () => document.querySelectorAll("summary").forEach((summary) => fireEvent.click(summary));
 
 describe("three-marketplace asking prices", () => {
-  it("shows a visible verdict and source preview on each market before opening other offers", () => {
+  it.each(["en", "zh"] as const)("identifies the actual missing charge in a collapsed %s offer", lang => {
+    setLanguage(lang);
+    renderPrices([listingFixture({ marketplace: "Mercari", shipping: 5, buyerFee: null, costComplete: false, eligible: false })]);
+    const row = screen.getByRole("region", { name: lang === "zh" ? "Mercari 标价" : "Mercari prices" }).querySelector("summary")!;
+    expect(row.textContent).toContain(lang === "zh" ? "买家手续费待确认" : "Buyer fees unknown");
+    expect(row.textContent).not.toContain(lang === "zh" ? "运费待确认" : "Shipping unknown");
+  });
+
+  it("keeps real platform marks and missing-cost warnings visible in compact source rows", () => {
+    renderPrices([listingFixture({ marketplace: "Whatnot", title: "Whatnot lead", shipping: null, buyerFee: null, costComplete: false, eligible: false })],
+      platforms.map(source => source.marketplace === "Mercari" ? { ...source, status: "fallback", count: 0 } : source));
+    const whatnot = screen.getByRole("region", { name: "Whatnot prices" });
+    const disclosure = whatnot.querySelector("details");
+    const summary = disclosure?.querySelector("summary");
+    expect(summary?.textContent).toMatch(/shipping.*fees.*unknown/i);
+    expect(disclosure?.open).toBe(false);
+    expect(summary?.querySelector("img")?.getAttribute("src")).toContain("marketplace-whatnot.png");
+    const mercari = screen.getByRole("region", { name: "Mercari prices" });
+    expect(mercari.querySelector("img")?.getAttribute("src")).toContain("marketplace-mercari.png");
+    expect(within(mercari).getByText("Temporarily unavailable")).toBeTruthy();
+    fireEvent.click(summary!);
+    expect(disclosure?.open).toBe(true);
+    expect(within(whatnot).getAllByRole("term").map(node => node.textContent)).toEqual(["Condition", "Seller record", "Price vs market"]);
+    expect(within(whatnot).getByRole("link", { name: /View listing/ })).toBeTruthy();
+  });
+
+  it("keeps the primary offer open and exposes secondary evidence on demand", () => {
     renderPrices([
       listingFixture({ id: "ebay-visible", marketplace: "eBay", title: "eBay lead", price: 100, shipping: 5, preTaxTotal: 105 }),
       listingFixture({ id: "whatnot-visible", marketplace: "Whatnot", title: "Whatnot lead", price: 90,
@@ -37,11 +63,12 @@ describe("three-marketplace asking prices", () => {
     ]);
     for (const marketplace of ["eBay", "Whatnot", "Mercari"]) {
       const region = screen.getByRole("region", { name: `${marketplace} prices` });
+      if (marketplace !== "eBay") fireEvent.click(region.querySelector("summary")!);
       expect(within(region).queryByText("Verdict")).toBeNull();
       expect(within(region).getByText("Card-match confidence: high")).toBeTruthy();
       expect(within(region).getAllByRole("term").map(node => node.textContent)).toEqual(["Condition", "Seller record", "Price vs market"]);
       expect(within(region).getByText("Card-match confidence: high").closest("details")?.open).toBe(false);
-      expect(within(region).getByRole("link", { name: /View listing/ }).closest("details")).toBeNull();
+      expect(within(region).getByRole("link", { name: /View listing/ }).closest("details")?.open ?? true).toBe(true);
     }
     expect(screen.getByRole("button", { name: "Inspect listing preview: Whatnot lead" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Inspect listing preview: Mercari lead" })).toBeTruthy();
@@ -59,7 +86,7 @@ describe("three-marketplace asking prices", () => {
         eligibilityIssues: [{ code: "shipping_unknown", category: "cost", disposition: "exclude", message: "Unknown shipping" }] }),
     ]);
     const source = screen.getByRole("region", { name: "Mercari prices" });
-    expect(within(source).getByText("NM card worth checking").closest("details")).toBeNull();
+    expect(within(source).getByText("NM card worth checking").closest("details")).toBe(source.querySelector("details"));
     expect(within(source).getByText("Unusual cheap card").closest("details")).not.toBeNull();
     expect(within(source).getByText("Other 1 offer")).toBeTruthy();
   });

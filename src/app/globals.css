@@ -45,11 +45,13 @@ body::after {
   pointer-events: none;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 button,
@@ -1071,3 +1073,14 @@ button:disabled {
     display: none;
   }
 }
+
+/* The selected results direction is a quiet canvas; the landing keeps its print finish. */
+.comparison-workspace {
+  font-family: var(--font-interface), -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+.comparison-workspace .font-serif {
+  font-family: inherit;
+  font-variation-settings: normal;
+  text-shadow: none;
+}
+body:has(.comparison-workspace)::after { display: none; }

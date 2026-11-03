@@ -17,9 +17,10 @@ import { useLang, useT } from "./i18n";
 
 type ListingPhotoProps = {
   listing: Pick<NormalizedListing, "imageUrl" | "imageUrls" | "marketplace" | "title"> & Partial<Pick<NormalizedListing, "imageKind">>;
+  size?: "compact" | "lead";
 };
 
-export function ListingPhoto({ listing }: ListingPhotoProps) {
+export function ListingPhoto({ listing, size = "compact" }: ListingPhotoProps) {
   const t = useT();
   const zh = useLang().lang === "zh";
   const preview = listing.imageKind === "listing_preview" || listing.imageKind === "catalog_reference";
@@ -35,7 +36,7 @@ export function ListingPhoto({ listing }: ListingPhotoProps) {
   const closeGallery = useCallback(() => setGalleryOpen(false), []);
 
   return (
-    <figure className="w-[64px] min-w-0 lg:w-[72px]">
+    <figure className={size === "lead" ? "w-[88px] min-w-0 sm:w-[144px]" : "w-[64px] min-w-0 lg:w-[72px]"}>
       {photos.length > 0 && failedUrl !== photos[0] ? (
         <button
           ref={openerRef}
@@ -51,7 +52,7 @@ export function ListingPhoto({ listing }: ListingPhotoProps) {
             loading="eager"
             unoptimized={preview}
             onError={() => setFailedUrl(photos[0])}
-            sizes="72px"
+            sizes={size === "lead" ? "(min-width: 640px) 144px, 88px" : "72px"}
             className="object-contain transition duration-200 group-hover:scale-[1.03]"
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#24312f]/78 px-1 py-1 text-[9px] font-black">

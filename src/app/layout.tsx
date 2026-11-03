@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, IBM_Plex_Mono, Noto_Serif_SC } from "next/font/google";
+import { Fraunces, Geist, IBM_Plex_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
+
+const geist = Geist({ variable: "--font-interface", subsets: ["latin"], display: "swap", preload: false });
 
 // Display serif for headings: Fraunces with its optical-size, softness, and
 // wonk axes loaded so CSS can tune the print personality per size.
@@ -65,7 +67,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${plexMono.variable} ${notoSerifSC.variable} h-full antialiased`}
+      className={`${geist.variable} ${fraunces.variable} ${plexMono.variable} ${notoSerifSC.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

@@ -1816,7 +1816,7 @@ describe("comparison condition controls", () => {
     expect(screen.getAllByText("Awakening Of The New Era · OP01-016 · SP CARD · SP artwork · Awakening Of The New Era").length).toBeGreaterThan(0);
     expect(screen.getAllByText("The listing evidence uniquely identifies the selected print.").length).toBeGreaterThan(0);
     const hero = screen.getByRole("article", { name: "Best-supported buy" });
-    expect(hero.querySelector(":scope > div")?.className.split(" ")).toContain("grid-cols-[72px_minmax(0,1fr)]");
+    expect(within(hero).getByRole("button", { name: "Inspect 3 seller photos: Nami OP01-016 SP Special Art" })).toBe(openGallery);
     fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
     fireEvent.click(screen.getByRole("button", { name: "Search other marketplaces" }));
     await screen.findByRole("region", { name: "Across marketplaces" });
@@ -1824,7 +1824,6 @@ describe("comparison condition controls", () => {
     expect(screen.queryByRole("region", { name: "Marketplace asking prices" })).toBeNull();
     expect(screen.queryByRole("article", { name: "Best-supported buy" })).toBeNull();
     expect(supplementaryPrices.querySelector("details")?.open).toBe(false);
-    expect(hero.querySelector(":scope > div")?.className).toContain("sm:grid-cols-[72px_minmax(0,1fr)]");
     fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
 
     fireEvent.click(screen.getByText("Compare 1 other eligible listing"));

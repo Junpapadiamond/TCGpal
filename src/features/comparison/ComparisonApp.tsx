@@ -28,6 +28,7 @@ import { applySearchExample, type SearchExample } from "./search-examples";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
 import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
+import { MarketplaceBrand } from "./MarketplaceBrand";
 import { ListingSignals } from "./ListingSignals";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { onePiecePrintDisplayLabel } from "@/lib/external/one-piece-taxonomy";
@@ -1088,7 +1089,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f7f3] text-[#24312f]">
+    <main className={`min-h-screen text-[#24312f] ${compactMode ? "comparison-workspace bg-[#fafbf8]" : "bg-[#f4f7f3]"}`}>
       {compactMode ? (
         <ResultsHeader
           query={headerQuery}
@@ -1150,7 +1151,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       ) : (
         <Header onLogoClick={startNewSearch} />
       )}
-      <div className={`mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8 ${compactMode ? "pb-14 pt-5" : "pb-24 pt-4 sm:pt-5"}`}>
+      <div className={`mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-12 ${compactMode ? "pb-14 pt-5 sm:pt-7" : "pb-24 pt-4 sm:pt-5"}`}>
         {!compactMode && (
           <>
         <section id="compare" className="landing-hero mx-auto max-w-[860px] pt-2 text-center sm:pt-3">
@@ -1608,18 +1609,18 @@ function ResultsHeader({
   const condensed = useCondensedHeader() && !editOpen;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fcfbf6]/95 shadow-[0_1px_10px_rgba(36,49,47,0.04)] backdrop-blur">
-      <div className={`relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-2 px-4 sm:gap-3 sm:px-6 sm:py-2.5 lg:flex-nowrap lg:px-8 ${condensed ? "py-1.5" : "py-2.5"}`}>
+    <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fafbf8]/95 backdrop-blur">
+      <div className={`relative mx-auto flex max-w-[1440px] flex-wrap items-center gap-3 px-4 sm:gap-6 sm:px-8 sm:py-4 lg:flex-nowrap lg:px-12 ${condensed ? "py-1.5" : "py-2.5"}`}>
         <button
           className={`shrink-0 sm:block ${condensed ? "hidden" : "block"}`}
           type="button"
           onClick={onNewSearch}
           aria-label={t.header.home}
         >
-          <Image src="/lens-logo-horizontal.svg" alt="TCGlens" width={105} height={30} priority />
+          <Image src="/lens-logo-horizontal.svg" alt="TCGlens" width={140} height={40} className="w-[96px] sm:w-[160px]" priority />
         </button>
         <button
-          className={`flex min-w-0 items-center gap-2 rounded-lg border border-[#d6ded5] bg-[#f4f3ec] px-3 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 sm:py-2 lg:max-w-[610px] ${condensed ? "order-none flex-1 basis-0 py-1" : "order-3 basis-full py-2"}`}
+          className={`flex min-w-0 items-center gap-2 rounded-lg border border-[#d6ded5] bg-transparent px-4 text-left transition hover:border-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/20 sm:order-none sm:basis-auto sm:flex-1 sm:py-2 lg:max-w-[680px] ${condensed ? "order-none flex-1 basis-0 py-1" : "order-3 basis-full py-2"}`}
           type="button"
           aria-expanded={editOpen}
           aria-controls="results-edit-panel"
@@ -1627,7 +1628,7 @@ function ResultsHeader({
         >
           <IconCardSearch className="h-4 w-4 shrink-0 text-[#2f6f73]" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-black leading-5 text-[#24312f]">{query}</span>
+            <span className="block truncate text-sm font-semibold sm:text-base leading-5 text-[#24312f]">{query}</span>
             {context && (
               <span className={`mt-0.5 truncate text-xs font-bold leading-4 text-[#64736c] sm:block ${condensed ? "hidden" : "block"}`}>
                 {context}
@@ -2654,11 +2655,11 @@ function ComparisonResult({
   return (
     <section id="comparison-result" tabIndex={-1} className="scroll-mt-24 space-y-4 outline-none">
       <MarketModeSwitch mode={marketMode} onChange={onMarketModeChange} />
-      {crossPending && <p role="status" className="mx-auto max-w-[860px] text-sm text-[#52635c]">{lang === "zh"
+      {crossPending && <p role="status" className="mx-auto max-w-[1320px] text-sm text-[#52635c]">{lang === "zh"
         ? "eBay 结果已就绪。其他平台仍在查询，可先查看下方结果。"
         : "eBay results are ready below. Other marketplaces are still searching."}</p>}
       {snapshot?.restored && (
-        <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm text-[#6f5a22]">
+        <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm text-[#6f5a22]">
           <p>
             <strong>{t.result.savedSnapshot}{lang === "zh" ? "。" : "."}</strong>{" "}
             {t.result.savedSnapshotBody(new Date(snapshot.savedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}
@@ -2675,7 +2676,7 @@ function ComparisonResult({
 
       {report.request.cardHint.game === "onePiece" && <GameBetaNotice />}
 
-      {isCrossMarketReport(report) && marketMode === "single" && <div className="mx-auto max-w-[860px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
+      {isCrossMarketReport(report) && marketMode === "single" && <div className="mx-auto max-w-[1320px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
         <p className="text-sm text-[#52635c]">{lang === "zh" ? "这份保存的结果包含多个平台。可单独查询当前 eBay 商品。" : "This saved report includes multiple marketplaces. Search eBay for a separate current comparison."}</p>
         <button type="button" className="primary-button mt-3" onClick={onRetrySources}>{lang === "zh" ? "查询 eBay" : "Search eBay"}</button>
       </div>}
@@ -2706,13 +2707,13 @@ function ComparisonResult({
       {outcome === "inspect_first" && inspectListing && (
         <>
           <InspectFirstHero listing={inspectListing} confirmedCard={report.confirmedCard} />
-          <div className="mx-auto max-w-[860px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4 text-[#4a5a54]">
+          <div className="mx-auto max-w-[1320px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4 text-[#4a5a54]">
             <SearchAccounting candidates={report.candidates} />
           </div>
         </>
       )}
 
-      <div className="mx-auto max-w-[860px] space-y-3">
+      <div className="mx-auto max-w-[1320px] space-y-3">
           {selectedListing && selectedChoice && (
             <RecommendedBuyHero
               listing={selectedListing}
@@ -2817,7 +2818,7 @@ function ComparisonResult({
           <BuyerSourceNotice report={report} hasComparableListings={eligibleCount > 0} />
       </div>
       </div>
-      <div className="mx-auto max-w-[860px] space-y-3">
+      <div className="mx-auto max-w-[1320px] space-y-3">
           <div hidden={marketMode !== "cross"}>
             <CrossMarketSearch key={`${report.confirmedCard?.id ?? report.request.confirmedCardId}:${report.generatedAt}:${crossPending}`} report={report} initialResult={crossReport ?? (isCrossMarketReport(report) ? report : null)} initialFailed={crossFailed} initialPending={crossPending} />
           </div>
@@ -2862,7 +2863,7 @@ function ComparisonResult({
 function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListing; confirmedCard: CardIdentityCandidate | null }) {
   const t = useT();
   return (
-    <article className="mx-auto max-w-[860px] rounded-xl border-2 border-[#d7a84e] bg-[#fffaf0] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.06)] sm:p-5">
+    <article className="mx-auto max-w-[1320px] border-b border-[#dde3dc] py-6 sm:py-8">
       <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center">
         <div>
           <ListingPhoto listing={listing} />
@@ -3271,37 +3272,10 @@ function formatObservedAt(value: string, lang: Lang) {
   });
 }
 
-/**
- * Brand marks, sized to a shared 24px cap. `wordmark` says the asset already
- * spells the name, so the text label goes to screen readers only — a lockup
- * printed next to the same word set in our own type reads as a mistake.
- */
-const marketplaceAssets: Partial<Record<Marketplace, { src: string; width: number; height: number; wordmark: boolean }>> = {
-  eBay: { src: "/marketplace-ebay.png", width: 55, height: 23, wordmark: true },
-  TCGplayer: { src: "/marketplace-tcgplayer.svg", width: 92, height: 28, wordmark: true },
-  SNKRDUNK: { src: "/marketplace-snkrdunk.png", width: 116, height: 18, wordmark: true },
-  Whatnot: { src: "/marketplace-whatnot.png", width: 116, height: 18, wordmark: true },
-  // Mercari's mark is the badge alone, so the name still has to be printed.
-  Mercari: { src: "/marketplace-mercari.png", width: 28, height: 28, wordmark: false },
-};
-
-function MarketplaceBrand({ marketplace }: { marketplace: Marketplace }) {
-  const t = useT();
-  const asset = marketplaceAssets[marketplace] ?? null;
-  const assetIncludesName = asset?.wordmark ?? false;
-
-  return (
-    <span className="inline-flex min-h-6 items-center gap-2 font-black text-[#24312f]">
-      {asset && <Image src={asset.src} alt="" width={asset.width} height={asset.height} className="max-h-6 w-auto object-contain" />}
-      <span className={assetIncludesName ? "sr-only" : undefined}>{t.marketplaces[marketplace] ?? marketplace}</span>
-    </span>
-  );
-}
-
 function GameBetaNotice() {
   const t = useT();
   return (
-    <div className="mx-auto flex max-w-[860px] flex-wrap items-center gap-2 rounded-md border border-[#e2c879] bg-[#fff8dc] px-4 py-2 text-xs font-semibold text-[#6f5a22]">
+    <div className="mx-auto flex max-w-[1320px] flex-wrap items-center gap-2 rounded-md border border-[#e2c879] bg-[#fff8dc] px-4 py-2 text-xs font-semibold text-[#6f5a22]">
       <strong>{t.form.onePieceBetaLabel}</strong>
       <span>{t.form.onePieceBetaNote}</span>
     </div>
@@ -3491,17 +3465,17 @@ function RecommendedBuyHero({
     <article
       aria-live="polite"
       aria-label={t.result.bestSupportedBuy}
-      className="rounded-xl border-2 border-[#2f6f73] bg-[#fcfbf6] p-4 shadow-[0_4px_8px_rgba(36,49,47,0.08)] sm:p-5"
+      className="py-6 sm:py-8"
       title={`${verdict.why} ${verdict.catch}`}
     >
-      <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-4 sm:grid-cols-[72px_minmax(0,1fr)] lg:grid-cols-[72px_minmax(0,1fr)_auto] lg:items-center">
+      <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-x-4 gap-y-5 sm:grid-cols-[144px_minmax(0,1fr)] sm:gap-x-7 lg:grid-cols-[144px_minmax(0,1fr)_auto] lg:items-center">
         <div>
-          <ListingPhoto listing={listing} />
+          <ListingPhoto listing={listing} size="lead" />
         </div>
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md border border-[#c9d7ce] bg-[#e7efe8] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-[#2f6f73]">
+            <span className="text-xs font-medium text-[#2f6f73]">
               {roleToggleLabel(choice.role, t)}
             </span>
             {listing.demo && <span className="rounded border border-[#e2c879] bg-[#fff8dc] px-1.5 py-0.5 text-[10px] font-black uppercase text-[#6f5a22]">{t.candidate.demo}</span>}
@@ -3513,41 +3487,55 @@ function RecommendedBuyHero({
             {listing.marketplace === "eBay" && !listing.userSupplied && !listing.demo && <span>{t.result.liveEbayListing}</span>}
             <span>{t.candidate.observed(formatObservedAt(listing.observedAt, lang))}</span>
           </div>
-          <h2 className="mt-2 font-serif text-xl font-bold leading-tight text-[#24312f] sm:text-2xl">
+          <h2 className="mt-2 text-lg font-semibold leading-snug tracking-[-0.025em] text-[#24312f] sm:text-[28px]">
             {listing.title}
           </h2>
-          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
-        </div>
-
-        <div className="col-span-2 grid gap-3 sm:col-span-1 sm:col-start-2 lg:col-start-auto lg:min-w-[178px] lg:justify-items-end lg:text-right">
-          <div>
-            <p className="font-mono text-3xl font-black leading-none text-[#24312f]">{formatMoney(total)}</p>
-            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#7a8982]">{totalLabel}</p>
-            <p className="mt-2 max-w-[230px] text-xs font-semibold leading-5 text-[#64736c] lg:text-right">
+            <p className="mt-3 text-xs leading-5 text-[#64716a] sm:text-sm sm:leading-6">
               {t.result.priceFacts(
                 formatMoney(listing.price),
                 listing.shipping === null ? t.card.shippingUnknown : listing.shipping === 0 ? t.card.freeShipping : formatMoney(listing.shipping),
                 listing.estimatedTax === null ? null : formatMoney(listing.estimatedTax),
               )}
             </p>
+          <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
+        </div>
+
+        <div className="col-span-2 flex items-center justify-between gap-5 sm:col-span-1 sm:col-start-2 lg:col-start-auto lg:min-w-[210px] lg:flex-col lg:items-end lg:border-l lg:border-[#dde3dc] lg:pl-8 lg:text-right">
+          <div>
+            <p className="text-[32px] font-semibold leading-none tracking-[-0.045em] text-[#155e63] sm:text-[48px]">{formatMoney(total)}</p>
+            <p className="mt-2 text-xs text-[#64716a] sm:text-sm">{totalLabel}</p>
+
+            <p
+              className={`mt-2 text-xs font-medium leading-5 ${
+                verdict.action.kind === "buy"
+                  ? "text-[#20676a]"
+                  : verdict.action.kind === "wait"
+                    ? "text-[#896419]"
+                    : "text-[#9a4a2c]"
+              }`}
+            >
+              <strong className="font-medium">{verdict.action.label}</strong>
+            </p>
           </div>
+          {listing.url ? (
+            <a
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-3 whitespace-nowrap rounded-md bg-[#155e63] px-5 text-xs font-semibold text-[#fcfbf6] sm:min-h-12 sm:min-w-40 sm:text-sm transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+              href={listing.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode, time_to_open_bucket: timeToOpenBucket() })}
+            >
+              {t.result.reviewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <span className="inline-flex min-h-11 items-center text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
+          )}
         </div>
       </div>
 
       <ListingSignals listing={listing} marketPrice={marketPrice} />
-      <div className="mt-3">
-        <p
-          className={`flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border px-3 py-2.5 text-sm leading-6 ${
-            verdict.action.kind === "buy"
-              ? "border-[#c9d7ce] bg-[#e7efe8] text-[#24585c]"
-              : verdict.action.kind === "wait"
-                ? "border-[#e2c879] bg-[#fff8dc] text-[#6f5a22]"
-                : "border-[#dcb9a4] bg-[#f9efe7] text-[#9a4a2c]"
-          }`}
-        >
-          <strong className="font-black">{verdict.action.label}</strong>
-        </p>
-        <details className="group/evidence mt-1 text-sm leading-6 text-[#52635c]">
+      <div className="mt-3 flex flex-wrap items-start gap-x-4">
+        <details className="group/evidence min-w-20 flex-1 open:basis-full text-sm leading-6 text-[#52635c]">
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-xs font-semibold text-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">{lang === "zh" ? "查看依据" : "Details"}<IconChevronDown className="h-3.5 w-3.5 group-open/evidence:rotate-180" /></summary>
           <p className="font-semibold">{verdict.action.note}</p>
           <p className="mt-1 text-xs">{t.result.confidenceLabel(choice.confidence)}</p>
@@ -3562,32 +3550,20 @@ function RecommendedBuyHero({
           </p>
           {verdict.pricePosition && <p className="text-xs">{verdict.pricePosition}</p>}
         </details>
-        <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
-            <button className="secondary-button min-h-11 px-3 py-2 text-xs" type="button" onClick={onShare}>
+            <button className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-[#52635c] hover:text-[#155e63]" type="button" onClick={onShare}>
               <IconReceipt className="h-4 w-4" />
               {t.result.shareResult}
             </button>
-            <button className="secondary-button min-h-11 px-3 py-2 text-xs" type="button" onClick={() => onAsk(listing)}>
+            <button className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-[#52635c] hover:text-[#155e63]" type="button" onClick={() => onAsk(listing)}>
               <IconInfo className="h-4 w-4" />
               {t.result.askWhyThis}
             </button>
-            {listing.url ? (
-              <a
-                className="inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#2f6f73] px-4 text-xs font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
-                href={listing.url}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => trackEvent("choice_opened", { choice_role: choice.role, marketplace: listing.marketplace, demo_mode: demoMode, time_to_open_bucket: timeToOpenBucket() })}
-              >
-                {t.result.reviewListing} <IconArrowUpRight className="h-3.5 w-3.5" />
-              </a>
-            ) : (
-              <span className="inline-flex min-h-11 items-center text-xs font-bold text-[#7a8982]">{t.card.userSupplied}</span>
-            )}
+
           </div>
         </div>
-        <SellerFeedback listing={listing} />
+        <div className="w-full"><SellerFeedback listing={listing} /></div>
         {shareFeedback && (
           <div aria-live="polite" className="mt-2 text-right text-xs font-bold text-[#2f6f73]">
             {shareFeedback.kind === "failed" ? (
