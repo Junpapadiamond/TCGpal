@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-11-02
 canonical_branch: origin/main
-last_verified_product_commit: 423ba15
+last_verified_product_commit: 470efdf
 working_branch: codex/performance-images (isolated Windows worktree)
 max_lines: 300
 ---
@@ -29,7 +29,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Early eBay results deployed; three visual signals pass local gate | Verify UI deployment; see November 2 repair record |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | Early eBay results and three visual signals READY; live EN/中文/mobile verified | Observe buyer comprehension; see November 2 repair record |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Marketplace compatibility and acquisition | Medium | October 29: no-expiry flag deployed; Whatnot returned 3 rows; Mercari source failed; finite caps unchanged | Diagnose the existing Mercari Actor run without an acquisition retry; optional eBay Catalog grant unresolved |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
@@ -131,7 +131,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
-- November 2: `423ba15` READY; early eBay display, cache reuse, cancellation/history guards and image-source repair verified. Founder-selected Condition / Seller record / Price vs market tiles implemented across eBay/cross-market; clickable photos retained; full gate and EN/中文/mobile QA pass. [Repair and checks](docs/performance-images-2026-11-02.md).
+- November 2: `423ba15` performance + `470efdf` UI READY; early eBay display, cache reuse, cancellation/history guards and image-source repair verified. Founder-selected Condition / Seller record / Price vs market tiles across eBay/cross-market; clickable photos retained; full gate and live EN/中文/mobile QA pass. [Repair and checks](docs/performance-images-2026-11-02.md).
 - October 30 UI cleanup verified on latest production: AGENTS.md now requires UI-led, concise bilingual copy. Removed redundant labels across search, confirmation, results, cross-market, receipts and method; eBay seller feedback preserved. Cloud lint/types/build and 1,935 tests pass (5 skipped); English/中文 desktop and 390px mobile checked. [Release evidence and visual scope](docs/ui-simplicity-2026-10-29/review.md).
 - October 19 follow-up: founder rejected Haiku. Intenext Opus 4.8 is production-verified: `usedAi=true` in 17.9s and browser badge “AI 解读 · claude-opus-4-8”. Old production credential was invalid and securely replaced using the verified existing local credential. Q&A hides incomplete totals and permits 30 seconds (45-second route); optional GPT search allocator remains separate. [Recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md).
 - October 19: Why-not-pick is wired; production gateway returned primary/critic HTTP 500 and allocator/fallback 503. Founder chooses to keep the gateway. Q&A now returns a safe fallback category and logs it; attribution remains server-owned. Anthropic health rejects empty HTTP-200 responses. External gateway recovery remains unverified; see [diagnosis](docs/card-accuracy-evaluation-2026-10-19.md).
@@ -246,7 +246,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
-- November 2 repair + UI: lint/typecheck/build and 1,966 tests pass (five optional skips); all 20,635 catalog image URLs match source. `423ba15` production: identity 1,028 ms, compare 2,627 ms, cached repeat 121 ms; five live searches passed. Three-signal EN/中文 desktop, 390/320px and photo interaction QA passed locally. [Release record](docs/performance-images-2026-11-02.md).
+- November 2 repair + UI `470efdf` READY: lint/typecheck/build, 1,966 tests pass (five skips); 20,635 catalog image URLs match source. Production: identity 1,028 ms, fresh comparisons 2,453–2,627 ms, cached repeats 121–124 ms; five live searches and EN/中文 desktop/mobile passed. Cross UI/unknown states verified by labeled local fixtures; no new paid acquisition. [Release record](docs/performance-images-2026-11-02.md).
 - October 19 recovery: `e740a0f` READY (`dpl_H5UavZTCq3WY4KTXKubAfukLkSin`); Opus 4.8 explanation and Mercari Apify verified live. One invalid model output still degraded visibly. Offline Opus triage succeeded after bounded deadline/conciseness fixes; final local lint/typecheck/metadata/build and 1,878 tests pass (five skipped). See [recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md). No source quota was reset; no chat-pasted credentials were retained.
 - October 19: lint/typecheck/metadata, 1,868 tests (five skipped) and production webpack build pass. Offline seed: 31/32 with one preserved classification discrepancy, no unsafe eligibility; 55 real observations pending human labels. Live Whatnot via Apify returns two; Mercari quota-paused. Application d76c209 is READY (dpl_ExX7LACgb853TDGadmVudGwY7rog); deployed Q&A returns usedAi=false / provider_unavailable. Browser top-pick click returns its labeled rule fallback. Graphify CLI unavailable; no UI/ranking changes. [Evidence](docs/card-accuracy-evaluation-2026-10-19.md).
 - October 15 compact landing: lint, typecheck, metadata audit, production build and 1,854 tests passed (130 files, five optional skips). EN/中文 desktop and mobile captures are local in `output/compact-landing/` in the `tcglens-compact-landing` worktree. Layout-only change; no provider calls or structural graph regeneration required.

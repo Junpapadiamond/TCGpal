@@ -11,6 +11,7 @@
 - Interaction: eBay photo and cross-market provider preview open, zoom and close; Escape restores focus to the original image button. Details opens by keyboard. View/language switching does not acquire listings. Existing share, lens and feedback controls remain available. No extra motion or icon dependency was added.
 - Gate: five new signal regressions; full 1,966 passing tests, five optional live skips; lint, typecheck and webpack production build pass. Graphify CLI is unavailable on this host; no regeneration claimed. The original dirty checkout remains untouched.
 - Live performance/catalog verification was on product `423ba15`: five sequential searches with both games and Edit/New transitions passed; all four Ascended Heroes Pikachu artworks and symbols loaded. See [release record](docs/performance-images-2026-11-02.md) for measured durations and final UI deployment evidence.
+- Final production UI `470efdf` is READY at `lenstcg.com`. Real Pikachu offers, photo navigation/zoom/Escape, keyboard Details and saved-receipt refresh passed. `live-signals-en.jpg`, `live-signals-zh.jpg` (1440 × 1024) and `live-signals-mobile-en.jpg`, `live-signals-mobile-zh.jpg` (390 × 844) show the deployed result. No mobile overflow or browser warning/error was observed. Cross-market visual/unknown states were verified locally with injected providers; no additional paid acquisition was made.
 
 ## Animated search examples — 2026-10-03
 
