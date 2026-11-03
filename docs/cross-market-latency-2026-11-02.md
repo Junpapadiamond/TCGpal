@@ -42,3 +42,15 @@ TDD reproduced the dependency and absent timing telemetry before implementation.
 Full gate: lint, typecheck, metadata audit and webpack production build passed; 1,968 tests passed and five optional live tests skipped. An initial run alongside lint/typecheck exceeded two existing UI tests' five-second deadlines; the unchanged tests and full suite passed with four workers. Local development uses webpack because Turbopack rejects this isolated worktree's external node_modules junction.
 
 Graphify is unavailable on this Windows host, including the documented macOS executable path; source navigation was used and no graph regeneration is claimed. Changes are isolated from the original dirty checkout.
+
+## Deployed evidence
+
+Runtime `1284f55` fast-forwarded to main and pushed; Vercel `dpl_GeJv2dAVeEHsQoTbqGuXq4KJCuVh` reached READY and is aliased to `lenstcg.com`.
+
+One bounded production Pikachu 58/102 cross check completed in **4,399 ms** at `2026-11-03T01:25:20Z`, request `1f530340-ad8e-42ed-ac70-46f43543a8ba`. This is not a before/after successful-Mercari benchmark: Mercari stopped at the existing pilot allowance gate in 146 ms and no Mercari Actor was started. The page retained its unavailable state. Whatnot returned three raw candidates in 4,264 ms (4,113 ms Actor wait; 19 ms cache, 57 ms pricing, 59 ms account allowance, 5 ms pilot reservation, 3 ms decode); all three were excluded from the matching-offer display by the existing gates. Merchant returned seven candidates in 723 ms; eBay reused 50 candidates in 20 ms. One Whatnot start used the existing capped authorization, with no automatic retry or allowance increase.
+
+Catalog mapping took 504 ms in the primary request and only 2 ms in the subsequent warm cross request. The new overlap is therefore meaningful for cold mapping dependencies, but cannot explain a large speedup in this warm check. The dominant historical Mercari delay remains unresolved.
+
+Built-in browser captures verified English and Chinese desktop plus 390 px Chinese mobile, without horizontal overflow; source unavailability and unknown charges remain visible. Local captures are in `output/qa/cross-market-latency-2026-11-02/live-cross-{en,zh,mobile-zh}.png` and are not committed. The local fixture harness also exercised Pikachu cross results and Luffy exact-version confirmation; its proxy caused a navigation reload later, so it is not evidence of a completed five-search session.
+
+The deployed built-in browser completed five sequential searches in one session: Pikachu 58/102 (the sole cross acquisition) → Edit Luffy OP01-024/base → New Charizard 4/102 → Edit Zoro OP01-001/base → New Umbreon VMAX 215/203. Later searches were eBay-only, both One Piece choices retained their selected artwork, and browser warning/error logs were empty. Development servers were stopped after verification.
