@@ -1,5 +1,17 @@
 # TCGlens search-entry design QA
 
+## Compact result cards, selected A — 2026-11-03
+
+final result: passed
+
+- Target: founder-selected A from the November 2 proportion/density review, refining the earlier Option 1 with explicit listing frames and smaller type. The written selection supersedes that mock's open unframed layout.
+- Latest EN/中文 desktop captures and mobile captures were opened and inspected. Content width is 1120px; the primary cross-market card measures 366px tall. Its title/price/signals are 22/34/24px, photo 112px wide, and all three secondary marketplace cards plus TCGplayer reference fit the 1440×900 viewport. The 320px height proposal was allowed to grow to preserve full image proportions and 44px controls.
+- One frame per listing; internal signals retain fine separators. Real Whatnot/Mercari/eBay marks remain, and TCGplayer renders at 92×28 instead of 0×0. No redundant Other marketplaces heading. NM item-reference/freshness is visible outside manual disclosures.
+- Browser interaction checks: photo open/zoom/close, view/language switching, marketplace expansion and visible unknown charges. 390px EN/中文 and 320px 中文 checked; narrow document has no horizontal overflow. The mobile reference strip was separately inspected below the listing cards.
+- Independent density and proportion agents passed the final screenshots. No P0/P1/P2 issue remains in checked states. P3: long timestamps can wrap on narrow screens; do not reduce mobile helper type further.
+- TDD reference-disclosure regression, 93 focused tests, lint, typecheck, 1,971 full tests / five optional live skips and production build pass. Screenshots use conspicuous synthetic QA facts. No live/paid source behavior changed.
+- Evidence and decision boundaries: [compact A release](docs/compact-results-a-2026-11-03.md). The older section below records historical QA, not the founder's acceptance of the previous scale.
+
 ## Quiet results, selected Option 1 — 2026-11-02
 
 final result: passed

@@ -15,10 +15,13 @@ export function MarketplaceBrand({ marketplace }: { marketplace: Marketplace }) 
   const t = useT();
   const asset = assets[marketplace];
   return <span className="inline-flex min-h-7 items-center gap-2.5 font-semibold text-[#24312f]">
-    {asset && <span className={marketplace === "Mercari" ? "relative inline-flex h-7 w-28 overflow-hidden" : "inline-flex"}>
+    {asset && <span
+      className={marketplace === "Mercari" ? "relative inline-flex h-7 w-28 shrink-0 overflow-hidden" : "inline-flex shrink-0"}
+      style={marketplace === "Mercari" ? undefined : { width: asset.width, height: asset.height }}
+    >
       {marketplace === "Mercari"
         ? <Image src={asset.src} alt="" fill sizes="112px" className="scale-[1.4] object-cover mix-blend-multiply" />
-        : <Image src={asset.src} alt="" width={asset.width} height={asset.height} className="max-h-6 w-auto object-contain" />}
+        : <Image src={asset.src} alt="" width={asset.width} height={asset.height} className="h-full w-full object-contain" />}
     </span>}
     <span className={asset?.wordmark ? "sr-only" : undefined}>{t.marketplaces[marketplace] ?? marketplace}</span>
   </span>;

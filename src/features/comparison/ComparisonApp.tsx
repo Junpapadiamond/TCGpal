@@ -1089,7 +1089,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   }
 
   return (
-    <main className={`min-h-screen text-[#24312f] ${compactMode ? "comparison-workspace bg-[#fafbf8]" : "bg-[#f4f7f3]"}`}>
+    <main className={`min-h-screen text-[#24312f] ${compactMode ? "comparison-workspace bg-[#f4f6f1]" : "bg-[#f4f7f3]"}`}>
       {compactMode ? (
         <ResultsHeader
           query={headerQuery}
@@ -1151,7 +1151,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       ) : (
         <Header onLogoClick={startNewSearch} />
       )}
-      <div className={`mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-12 ${compactMode ? "pb-14 pt-5 sm:pt-7" : "pb-24 pt-4 sm:pt-5"}`}>
+      <div className={`mx-auto px-4 sm:px-6 ${compactMode ? "max-w-[1168px] pb-14 pt-4" : "max-w-[1440px] pb-24 pt-4 sm:pt-5 lg:px-12"}`}>
         {!compactMode && (
           <>
         <section id="compare" className="landing-hero mx-auto max-w-[860px] pt-2 text-center sm:pt-3">
@@ -1610,7 +1610,7 @@ function ResultsHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#d6ded5] bg-[#fafbf8]/95 backdrop-blur">
-      <div className={`relative mx-auto flex max-w-[1440px] flex-wrap items-center gap-3 px-4 sm:gap-6 sm:px-8 sm:py-4 lg:flex-nowrap lg:px-12 ${condensed ? "py-1.5" : "py-2.5"}`}>
+      <div className={`relative mx-auto flex max-w-[1168px] flex-wrap items-center gap-3 px-4 sm:gap-5 sm:px-6 sm:py-3 lg:flex-nowrap ${condensed ? "py-1.5" : "py-2.5"}`}>
         <button
           className={`shrink-0 sm:block ${condensed ? "hidden" : "block"}`}
           type="button"
@@ -2863,7 +2863,7 @@ function ComparisonResult({
 function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListing; confirmedCard: CardIdentityCandidate | null }) {
   const t = useT();
   return (
-    <article className="mx-auto max-w-[1320px] border-b border-[#dde3dc] py-6 sm:py-8">
+    <article className="listing-card mx-auto max-w-[1320px] border-[#ddcfad] p-4 sm:px-5">
       <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center">
         <div>
           <ListingPhoto listing={listing} />
@@ -3321,19 +3321,6 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
         : `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`,
     })),
     {
-      marketplace: "TCGplayer" as const,
-      label: t.result.marketReferenceLabel,
-      detail: typeof card.marketMid === "number"
-        ? `${formatMoney(card.marketMid)} · ${marketFreshnessText(card, report.generatedAt, t)}`
-        : t.result.marketReferenceUnavailable,
-      note: t.result.tcgplayerAbout,
-      // When the crosswalk resolved a product we link to it. When it did not,
-      // the row showed "unavailable" with nothing to click, which is exactly
-      // where a US buyer most wants to look themselves, so it degrades to a
-      // game-scoped search.
-      url: tcgplayerUrl ?? tcgplayerSearchUrl(report.request.cardHint.game, query),
-    },
-    {
       marketplace: "SNKRDUNK" as const,
       label: t.result.japanManualCheck,
       detail: null,
@@ -3348,10 +3335,22 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
   ];
 
   return (
-    <section className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]" aria-label={t.result.otherMarketplacesTitle}>
-      <details className="group/manual">
+    <section aria-label={t.result.otherMarketplacesTitle}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-[#d6ded5] bg-[#f9faf6] px-4 py-2">
+        <MarketplaceBrand marketplace="TCGplayer" />
+        <span className="text-xs text-[#64736c]">{lang === "zh" ? "NM 单卡参考价" : "NM item reference"}</span>
+        <span className="text-sm font-semibold tabular-nums text-[#24312f]">{typeof card.marketMid === "number" ? formatMoney(card.marketMid) : t.result.marketReferenceUnavailable}</span>
+        <span className="text-xs text-[#64736c]">{marketFreshnessText(card, report.generatedAt, t)}</span>
+        <a className="ml-auto inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-[#2f6f73] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73]"
+          href={tcgplayerUrl ?? tcgplayerSearchUrl(report.request.cardHint.game, query)} target="_blank" rel="noopener noreferrer"
+          aria-label={t.result.openMarketplace("TCGplayer")}
+          onClick={() => trackEvent("other_marketplace_clicked", { marketplace: "TCGplayer", game: report.request.cardHint.game })}>
+          {lang === "zh" ? "查看" : "View"}<IconExternal className="h-3.5 w-3.5" />
+        </a>
+      </div>
+      <details className="group/manual mt-2 rounded-xl border border-[#d6ded5] bg-[#fcfbf6]">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">
-        <span>{t.result.otherMarketplacesTitle}</span>
+        <span>{lang === "zh" ? "自行搜索链接" : "Manual search links"}</span>
         <IconChevronDown className="h-4 w-4 shrink-0 group-open/manual:rotate-180" />
       </summary>
       <div className="divide-y divide-[#e4ebe3] border-t border-[#d6ded5]">
@@ -3465,10 +3464,10 @@ function RecommendedBuyHero({
     <article
       aria-live="polite"
       aria-label={t.result.bestSupportedBuy}
-      className="py-6 sm:py-8"
+      className="listing-card p-4 sm:px-5"
       title={`${verdict.why} ${verdict.catch}`}
     >
-      <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-x-4 gap-y-5 sm:grid-cols-[144px_minmax(0,1fr)] sm:gap-x-7 lg:grid-cols-[144px_minmax(0,1fr)_auto] lg:items-center">
+      <div className="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-4 sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-x-5 lg:grid-cols-[112px_minmax(0,1fr)_auto] lg:items-center">
         <div>
           <ListingPhoto listing={listing} size="lead" />
         </div>
@@ -3487,10 +3486,10 @@ function RecommendedBuyHero({
             {listing.marketplace === "eBay" && !listing.userSupplied && !listing.demo && <span>{t.result.liveEbayListing}</span>}
             <span>{t.candidate.observed(formatObservedAt(listing.observedAt, lang))}</span>
           </div>
-          <h2 className="mt-2 text-lg font-semibold leading-snug tracking-[-0.025em] text-[#24312f] sm:text-[28px]">
+          <h2 className="mt-1.5 text-base font-semibold leading-snug tracking-[-0.025em] text-[#24312f] sm:text-[22px]">
             {listing.title}
           </h2>
-            <p className="mt-3 text-xs leading-5 text-[#64716a] sm:text-sm sm:leading-6">
+            <p className="mt-2 text-xs leading-5 text-[#64716a]">
               {t.result.priceFacts(
                 formatMoney(listing.price),
                 listing.shipping === null ? t.card.shippingUnknown : listing.shipping === 0 ? t.card.freeShipping : formatMoney(listing.shipping),
@@ -3500,10 +3499,10 @@ function RecommendedBuyHero({
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
         </div>
 
-        <div className="col-span-2 flex items-center justify-between gap-5 sm:col-span-1 sm:col-start-2 lg:col-start-auto lg:min-w-[210px] lg:flex-col lg:items-end lg:border-l lg:border-[#dde3dc] lg:pl-8 lg:text-right">
+        <div className="col-span-2 flex items-center justify-between gap-4 sm:col-span-1 sm:col-start-2 lg:col-start-auto lg:min-w-[172px] lg:flex-col lg:items-end lg:border-l lg:border-[#dde3dc] lg:pl-5 lg:text-right">
           <div>
-            <p className="text-[32px] font-semibold leading-none tracking-[-0.045em] text-[#155e63] sm:text-[48px]">{formatMoney(total)}</p>
-            <p className="mt-2 text-xs text-[#64716a] sm:text-sm">{totalLabel}</p>
+            <p className="text-[28px] font-semibold leading-none tracking-[-0.045em] text-[#155e63] sm:text-[34px]">{formatMoney(total)}</p>
+            <p className="mt-1 text-xs text-[#64716a]">{totalLabel}</p>
 
             <p
               className={`mt-2 text-xs font-medium leading-5 ${
@@ -3519,7 +3518,7 @@ function RecommendedBuyHero({
           </div>
           {listing.url ? (
             <a
-              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-3 whitespace-nowrap rounded-md bg-[#155e63] px-5 text-xs font-semibold text-[#fcfbf6] sm:min-h-12 sm:min-w-40 sm:text-sm transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#155e63] px-4 text-xs font-semibold text-[#fcfbf6] sm:min-w-36 sm:text-sm transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
               href={listing.url}
               target="_blank"
               rel="noreferrer"
@@ -3534,7 +3533,7 @@ function RecommendedBuyHero({
       </div>
 
       <ListingSignals listing={listing} marketPrice={marketPrice} />
-      <div className="mt-3 flex flex-wrap items-start gap-x-4">
+      <div className="flex flex-wrap items-start gap-x-4">
         <details className="group/evidence min-w-20 flex-1 open:basis-full text-sm leading-6 text-[#52635c]">
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-xs font-semibold text-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">{lang === "zh" ? "查看依据" : "Details"}<IconChevronDown className="h-3.5 w-3.5 group-open/evidence:rotate-180" /></summary>
           <p className="font-semibold">{verdict.action.note}</p>
@@ -3549,6 +3548,7 @@ function RecommendedBuyHero({
             {verdict.whyNotCheapest ?? verdict.alternative ?? t.result.noAlternative}
           </p>
           {verdict.pricePosition && <p className="text-xs">{verdict.pricePosition}</p>}
+          <SellerFeedback listing={listing} />
         </details>
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
@@ -3563,7 +3563,6 @@ function RecommendedBuyHero({
 
           </div>
         </div>
-        <div className="w-full"><SellerFeedback listing={listing} /></div>
         {shareFeedback && (
           <div aria-live="polite" className="mt-2 text-right text-xs font-bold text-[#2f6f73]">
             {shareFeedback.kind === "failed" ? (
@@ -3835,7 +3834,7 @@ function CompactCandidateRow({
     : listing.estimatedTax === null ? t.card.preTaxTotal : t.card.estLanded;
 
   return (
-    <article className="border-b border-[#d6ded5] px-4 py-2 transition-colors last:border-b-0 hover:bg-[#f7f9f5]">
+    <article className="listing-card m-3 p-4 transition-colors hover:border-[#a9bdb3]">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <div className="shrink-0">
           <ListingPhoto listing={listing} />

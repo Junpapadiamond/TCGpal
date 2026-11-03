@@ -44,8 +44,7 @@ export function CrossMarketSearch({ report, initialResult, initialFailed = false
 
   if (result) return <CrossMarketPrices candidates={result.candidates} platforms={result.platforms} card={result.confirmedCard} game={result.request.cardHint.game} />;
   return <section aria-label={zh ? "按需跨平台查询" : "On-demand cross-market search"} className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-6">
-    <h2 className="font-serif text-xl font-bold text-[#24312f]">{zh ? "其他平台" : "Other marketplaces"}</h2>
-    {!failed && <p className="mt-2 max-w-prose text-sm leading-6 text-[#64736c]">{zh
+    {!failed && <p className="max-w-prose text-sm leading-6 text-[#64736c]">{zh
       ? "Whatnot · Mercari 等已连接来源 · 使用额外查询额度"
       : "Whatnot · Mercari and other connected sources · Uses extra search credits"}</p>}
     <button type="button" disabled={loading} onClick={() => void search()} className="primary-button mt-4">

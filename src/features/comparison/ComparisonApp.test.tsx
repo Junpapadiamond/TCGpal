@@ -2008,8 +2008,11 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("One Piece coverage is in beta and may be less stable.")).toBeTruthy();
     const followUps = screen.getByRole("region", { name: "Check other marketplaces" });
     expect(followUps.querySelector("details")?.open).toBe(false);
-    fireEvent.click(within(followUps).getByText("Check other marketplaces"));
-    expect(within(followUps).getByText("Market reference")).toBeTruthy();
+    const referenceLink = within(followUps).getByRole("link", { name: /TCGplayer/ });
+    expect(referenceLink.closest("details")).toBeNull();
+    expect(within(followUps).getByText("NM item reference")).toBeTruthy();
+    expect(followUps.querySelector('img[src="/marketplace-tcgplayer.svg"]')).toBeTruthy();
+    fireEvent.click(within(followUps).getByText("Manual search links"));
     fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
     fireEvent.click(screen.getByRole("button", { name: "Search other marketplaces" }));
     await screen.findByRole("region", { name: "Across marketplaces" });

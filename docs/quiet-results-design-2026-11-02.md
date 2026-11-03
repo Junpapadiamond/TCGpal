@@ -29,4 +29,4 @@ Smallest test: render the selected layout with isolated synthetic provider facts
 
 ## Production
 
-Local gate is green. Deployment ID, final commit and visible production checks will be added after Vercel reaches READY.
+Commit `b42010982a12656a5430599800e54eeb9c417b9d` reached READY as `dpl_7jsZiR56tJW8JBZymkKTA6KeVrXR`; the production saved-result display was inspected on lenstcg.com. The founder then found the layout oversized and listing boundaries too weak. The follow-up is [compact direction A](compact-results-a-2026-11-03.md), including a subsequently confirmed TCGplayer SVG sizing bug. Historical local QA above does not imply acceptance of those visual choices.

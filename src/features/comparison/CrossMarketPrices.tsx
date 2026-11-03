@@ -42,7 +42,7 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
     <div className="sr-only">
       <h3>{zh ? "跨平台比价" : "Across marketplaces"}</h3>
     </div>
-    <div className="divide-y divide-[#dde3dc]">
+    <div className="space-y-3">
       {markets.map((marketplace) => {
         const source = platforms.find((platform) => platform.marketplace === marketplace);
         const rows = source?.status === "complete" ? candidates.filter((listing) => listing.marketplace === marketplace
@@ -71,7 +71,7 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
           marketplace === "Stomping Grounds" ? zh ? "库存待确认" : "Stock unconfirmed" : null,
         ].filter(Boolean).join(" · ") : "";
         const offer = lead ? <>
-            <OfferVerdictCard listing={lead} candidates={candidates} attribution={attribution} marketPrice={card?.marketMid ?? null} sourceStatus={marketplace === "eBay" ? status : undefined} />
+            <OfferVerdictCard listing={lead} candidates={candidates} attribution={attribution} marketPrice={card?.marketMid ?? null} sourceStatus={marketplace === "eBay" ? status : undefined} embedded={marketplace !== "eBay"} />
             {marketplace === "Stomping Grounds" && <p className="pb-3 text-xs leading-5 text-[#806521]">{zh
               ? "商店显示有货，但提醒维护期间库存可能不准确。请到商店确认是否有货。"
               : "Store reports stock, but warns inventory may be inaccurate during maintenance. Confirm availability at the store."}</p>}
@@ -83,26 +83,26 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
                 {zh ? `其他 ${others.length} 条商品` : `Other ${others.length} ${others.length === 1 ? "offer" : "offers"}`}
                 <IconChevronDown className="h-4 w-4 shrink-0 group-open/source:rotate-180" />
               </summary>
-              <ul className="divide-y divide-[#e0e5dc] border-t border-[#e0e5dc]">
+              <ul className="space-y-3 border-t border-[#e0e5dc] py-3">
                 {others.map((listing) => <li key={listing.id}><OfferVerdictCard listing={listing} candidates={candidates} attribution={attribution} marketPrice={card?.marketMid ?? null} /></li>)}
               </ul>
             </details>}
         </> : null;
-        return <section key={marketplace} aria-label={zh ? `${marketplace} 标价` : `${marketplace} prices`} className="min-w-0">
-          {marketplace === "Whatnot" && <h3 className="pt-6 text-lg font-semibold tracking-tight text-[#24312f]">{zh ? "其他平台对比" : "Other marketplaces"}</h3>}
+        return <div key={marketplace}>
+          <section aria-label={zh ? `${marketplace} 标价` : `${marketplace} prices`} className={`min-w-0 ${marketplace === "eBay" && lead ? "space-y-3" : "listing-card px-4 sm:px-5"}`}>
           {lead && marketplace !== "eBay" ? <details className="group/market">
-            <summary className="grid min-h-20 cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] sm:grid-cols-[200px_minmax(0,1fr)_24px] [&::-webkit-details-marker]:hidden">
+            <summary className="grid min-h-[72px] cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] sm:grid-cols-[140px_minmax(0,1fr)_24px] [&::-webkit-details-marker]:hidden">
               <MarketplaceBrand marketplace={marketplace} />
-              <span className="order-3 col-span-2 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1 sm:order-none sm:col-span-1 sm:border-l sm:border-[#dde3dc] sm:pl-7">
+              <span className="order-3 col-span-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 sm:order-none sm:col-span-1 sm:border-l sm:border-[#dde3dc] sm:pl-5">
                 <span className="text-base font-semibold text-[#155e63] sm:text-xl">{zh ? "商品价" : "Item"} {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(lead.price)}</span>
                 <span className="text-xs text-[#64716a] sm:text-sm">{lead.claimedCondition === "Unknown" ? zh ? "品相未知" : "Condition unknown" : `${t.conditions[lead.claimedCondition]} · ${zh ? "卖家标注" : "seller claim"}`}</span>
-                {warnings && <span className="text-xs leading-5 text-[#896419] sm:text-sm">{warnings}</span>}
+                {warnings && <span className="text-xs leading-5 text-[#896419]">{warnings}</span>}
               </span>
               <IconChevronDown className="h-4 w-4 justify-self-end text-[#20676a] group-open/market:rotate-180" />
             </summary>
             <div className="border-t border-[#e7ebe5] pb-3">{offer}</div>
           </details> : <>
-            {!lead && <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-5 sm:min-h-20">
+            {!lead && <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-3 sm:min-h-[72px]">
               <h4 className="text-sm"><MarketplaceBrand marketplace={marketplace} /></h4>
               <p className="min-w-0 flex-1 text-xs leading-5 text-[#64716a] sm:ml-8">{status}</p>
               {!lead && manualUrl && <a href={manualUrl} target="_blank" rel="noopener noreferrer"
@@ -113,7 +113,8 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
             </div>}
             {offer}
           </>}
-        </section>;
+          </section>
+        </div>;
       })}
     </div>
   </section>;

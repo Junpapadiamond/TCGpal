@@ -11,7 +11,7 @@ export function MarketModeSwitch({ mode, onChange }: { mode: MarketMode; onChang
         const label = value === "single" ? zh ? "单一平台" : "Single Market" : zh ? "跨平台" : "Cross Market";
         return <button key={value} type="button" aria-label={label} aria-pressed={mode === value}
           onClick={() => onChange(value)}
-          className={`-mb-px inline-flex min-h-12 items-center gap-2 border-b-2 px-1 text-sm sm:text-lg transition-colors focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] ${mode === value ? "border-[#2f6f73] font-bold text-[#24585c]" : "border-transparent font-medium text-[#64736c] hover:border-[#b7c6bd] hover:text-[#24312f]"}`}>
+          className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-1 text-sm transition-colors focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73] ${mode === value ? "border-[#2f6f73] font-bold text-[#24585c]" : "border-transparent font-medium text-[#64736c] hover:border-[#b7c6bd] hover:text-[#24312f]"}`}>
           {label}
         </button>;
       })}

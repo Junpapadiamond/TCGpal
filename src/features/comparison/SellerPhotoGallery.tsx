@@ -36,7 +36,7 @@ export function ListingPhoto({ listing, size = "compact" }: ListingPhotoProps) {
   const closeGallery = useCallback(() => setGalleryOpen(false), []);
 
   return (
-    <figure className={size === "lead" ? "w-[88px] min-w-0 sm:w-[144px]" : "w-[64px] min-w-0 lg:w-[72px]"}>
+    <figure className={size === "lead" ? "w-[80px] min-w-0 sm:w-[112px]" : "w-[64px] min-w-0 lg:w-[72px]"}>
       {photos.length > 0 && failedUrl !== photos[0] ? (
         <button
           ref={openerRef}
@@ -52,7 +52,7 @@ export function ListingPhoto({ listing, size = "compact" }: ListingPhotoProps) {
             loading="eager"
             unoptimized={preview}
             onError={() => setFailedUrl(photos[0])}
-            sizes={size === "lead" ? "(min-width: 640px) 144px, 88px" : "72px"}
+            sizes={size === "lead" ? "(min-width: 640px) 112px, 80px" : "72px"}
             className="object-contain transition duration-200 group-hover:scale-[1.03]"
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#24312f]/78 px-1 py-1 text-[9px] font-black">
