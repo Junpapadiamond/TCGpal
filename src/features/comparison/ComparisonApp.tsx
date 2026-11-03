@@ -1695,18 +1695,27 @@ function CardMarquee({
   const { lang } = useLang();
   const rail = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
+  const [paused, setPaused] = useState(false);
   if (!items.length) return null;
-  return <section className="card-marquee-wrap mt-4 sm:mt-5" aria-label={t.rail.ariaLabel}>
+  return <section className="card-marquee-wrap mt-4 sm:mt-5" aria-label={t.rail.ariaLabel} data-paused={paused}>
     <div className="flex justify-end gap-1">
-      {([-1, 1] as const).map(direction => <button key={direction} type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-md text-[#2f6f73] hover:bg-[#e9eee6] focus-visible:outline-2 focus-visible:outline-[#2f6f73]"
+      {reducedMotion ? ([-1, 1] as const).map(direction => <button key={direction} type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-md text-[#2f6f73] hover:bg-[#e9eee6] focus-visible:outline-2 focus-visible:outline-[#2f6f73]"
         aria-label={direction < 0 ? lang === "zh" ? "上一组卡片" : "Previous cards" : lang === "zh" ? "下一组卡片" : "Next cards"}
-        onClick={() => rail.current?.scrollBy({ left: direction * 444, behavior: reducedMotion ? "auto" : "smooth" })}>
+        onClick={() => rail.current?.scrollBy({ left: direction * 444, behavior: "auto" })}>
         <IconChevronDown className={`h-4 w-4 ${direction < 0 ? "rotate-90" : "-rotate-90"}`} />
-      </button>)}
+      </button>) : <button type="button" className="inline-flex h-11 items-center gap-2 rounded-md px-3 text-xs font-semibold text-[#64736c] hover:bg-[#e9eee6] focus-visible:outline-2 focus-visible:outline-[#2f6f73]"
+        aria-label={paused ? lang === "zh" ? "继续卡片滚动" : "Resume card scrolling" : lang === "zh" ? "暂停卡片滚动" : "Pause card scrolling"}
+        aria-pressed={paused} onClick={() => setPaused(current => !current)}>
+        <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor">
+          {paused ? <path d="M4 2.5v11L13 8Z" /> : <path d="M4 3h3v10H4zm5 0h3v10H9z" />}
+        </svg>
+        {paused ? lang === "zh" ? "继续" : "Resume" : lang === "zh" ? "暂停" : "Pause"}
+      </button>}
     </div>
     <div className="card-marquee" ref={rail}>
-      <div className="card-marquee-track">
+      <div className="card-marquee-track" style={{ animationDuration: `${Math.max(46, items.length * 5.75)}s` }}>
         {items.map(item => <CardMarqueeItem key={item.card.id} item={item} source={item.source} onCheck={onCheck} />)}
+        {!reducedMotion && items.map(item => <CardMarqueeItem key={`${item.card.id}-clone`} item={item} source={item.source} onCheck={onCheck} clone />)}
       </div>
     </div>
   </section>;
@@ -1716,10 +1725,12 @@ function CardMarqueeItem({
   item,
   source,
   onCheck,
+  clone = false,
 }: {
   item: RailItem;
   source: "chase" | "recent";
   onCheck: (card: RecentCarouselCard, source: "chase" | "recent") => void;
+  clone?: boolean;
 }) {
   const t = useT();
   const { card } = item;
@@ -1728,6 +1739,9 @@ function CardMarqueeItem({
       type="button"
       className="card-marquee-card"
       data-rail-source={source}
+      data-clone={clone ? "true" : undefined}
+      tabIndex={clone ? -1 : undefined}
+      aria-hidden={clone ? true : undefined}
       aria-label={t.rail.checkCard(card.name, card.setName, card.cardNumber)}
       onClick={() => onCheck(card, source)}
     >

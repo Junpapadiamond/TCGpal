@@ -774,19 +774,53 @@ button:disabled {
 
 .landing-link-button:hover { color: #24585c; }
 
-/* The card rail is a working entrance. The second half is an inert duplicate
-   that makes the -50% translation loop seamlessly. */
+/* Equal-width halves keep the loop seamless. The second half remains clickable
+   but is excluded from keyboard navigation and screen readers. */
 .card-marquee {
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
+  position: relative;
+  /* Unlike hidden, clip discards keyboard scrolling when motion resumes, so
+     a stale scroll offset cannot combine with the animated translation. */
+  overflow: clip;
   padding: 1rem 0 1.5rem;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 
 .card-marquee-track {
   display: flex;
   width: max-content;
   align-items: flex-start;
+  animation: card-marquee 46s linear infinite;
+  will-change: transform;
+}
+
+/* Freeze in the same style update as the card's hover/press state, without a
+   React render or a timer between pointer-down and the exact card's click. */
+@media (hover: hover) and (pointer: fine) {
+  .card-marquee:hover .card-marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+.card-marquee:focus-within .card-marquee-track,
+.card-marquee:active .card-marquee-track,
+.card-marquee-wrap[data-paused="true"] .card-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Keyboard users need access to every original card, even when its animated
+   position is outside the viewport. Focus switches to a normal scroll strip. */
+.card-marquee:has(:focus-visible) {
+  overflow-x: auto;
+  mask-image: none;
+}
+
+.card-marquee:has(:focus-visible) .card-marquee-track {
+  animation: none;
+  transform: none;
+}
+
+.card-marquee:has(:focus-visible) [data-clone="true"] {
+  display: none;
 }
 
 .card-marquee-card {

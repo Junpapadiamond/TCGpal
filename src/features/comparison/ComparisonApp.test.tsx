@@ -547,6 +547,10 @@ describe("comparison condition controls", () => {
     render(<ComparisonApp />);
 
     expect(screen.getByRole("heading", { name: "Find the best listing for your exact card." })).toBeTruthy();
+    const reducedMotionRail = screen.getByRole("region", { name: "Cards you can check" });
+    expect(within(reducedMotionRail).queryByRole("button", { name: "Pause card scrolling" })).toBeNull();
+    expect(within(reducedMotionRail).getByRole("button", { name: "Next cards" })).toBeTruthy();
+    expect(reducedMotionRail.querySelector('[data-clone="true"]')).toBeNull();
     expect(screen.queryByText("Live raw singles—or a clear pass.")).toBeNull();
     expect(screen.getByText("Pokémon & One Piece · raw singles · U.S. listings")).toBeTruthy();
 
@@ -590,13 +594,33 @@ describe("comparison condition controls", () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
-  it("keeps one stationary clickable copy of each example card", async () => {
+  it("loops the rail without duplicate keyboard targets and lets the buyer pause it", async () => {
     render(<ComparisonApp />);
     const rail = screen.getByRole("region", { name: "Cards you can check" });
     await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
-    expect(rail.querySelectorAll('button[data-clone="true"]')).toHaveLength(0);
-    expect(rail.querySelectorAll("img")).toHaveLength(DEFAULT_MARQUEE_CARDS.length);
-    expect(rail.querySelector('[style*="--card-marquee-duration"]')).toBeNull();
+    const clones = [...rail.querySelectorAll<HTMLButtonElement>('button[data-clone="true"]')];
+    expect(clones).toHaveLength(DEFAULT_MARQUEE_CARDS.length);
+    expect(clones.every(button => button.tabIndex === -1 && button.getAttribute("aria-hidden") === "true")).toBe(true);
+    fireEvent.click(within(rail).getByRole("button", { name: "Pause card scrolling" }));
+    expect(within(rail).getByRole("button", { name: "Resume card scrolling" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(within(rail).getByRole("button", { name: "Resume card scrolling" }));
+    expect(within(rail).getByRole("button", { name: "Pause card scrolling" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("opens the same exact card from the second pass of the moving rail", async () => {
+    render(<ComparisonApp />);
+    const rail = screen.getByRole("region", { name: "Cards you can check" });
+    const clone = await waitFor(() => {
+      const card = rail.querySelector<HTMLButtonElement>('button[data-clone="true"][aria-label="Check Umbreon VMAX, Evolving Skies 215/203"]');
+      expect(card).not.toBeNull();
+      return card!;
+    });
+    fireEvent.pointerDown(clone, { pointerType: "touch" });
+    fireEvent.pointerUp(clone, { pointerType: "touch" });
+    fireEvent.click(clone);
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]?.query).toBe("Umbreon VMAX 215/203");
+    expect(requests[0]?.cardHint).toMatchObject({ name: "Umbreon VMAX", cardNumber: "215/203", setCode: "SWSH7" });
   });
 
   it("shows a card the buyer checked once, as history, not twice alongside its curated twin", async () => {
