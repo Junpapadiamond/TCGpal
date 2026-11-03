@@ -130,7 +130,7 @@ describe("standard multi-card comparison flow", () => {
     expect(result.cards.every((card) => card.confirmedCardId)).toBe(true);
     expect(result.cards
       .filter((card) => card.rankedChoiceCount === 0)
-      .map((card) => card.label)).toEqual([]);
+      .map((card) => card.label)).toEqual(["Pokemon new search: Charizard 4/102"]); // edition is not resolved by the catalog id
     expect(result.cards.every((card) => card.sourceResultCount > 0)).toBe(true);
     // The SP step must confirm the exact special print, not the base art.
     expect(result.cards[5]?.confirmedCardId).toBe("OP01-016_p4");

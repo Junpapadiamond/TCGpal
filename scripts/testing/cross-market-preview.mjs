@@ -26,7 +26,7 @@ for (const key of Object.keys(process.env)) {
 }
 const { resolveCardIdentity } = await jiti.import(path.join(root, "src/lib/ai/card-identity.ts"));
 const { runListingComparison } = await jiti.import(path.join(root, "src/lib/ai/listing-compare.ts"));
-const { getPokemonCardFromSnapshot } = await jiti.import(path.join(root, "src/lib/external/pokemon-catalog-snapshot.ts"));
+const { getPokemonCardFromSnapshot, searchPokemonCatalogSnapshot } = await jiti.import(path.join(root, "src/lib/external/pokemon-catalog-snapshot.ts"));
 const { findOnePieceCatalogVariant } = await jiti.import(path.join(root, "src/lib/external/one-piece-catalog.ts"));
 const { ebayPlatformAgent } = await jiti.import(path.join(root, "src/lib/comparison/platforms.ts"));
 const { parseWhatnotListings } = await jiti.import(path.join(root, "src/lib/external/whatnot.ts"));
@@ -35,6 +35,7 @@ const { parseStompingGroundsListings } = await jiti.import(path.join(root, "src/
 const { parseSoldgraphListings } = await jiti.import(path.join(root, "src/lib/external/soldgraph.ts"));
 const soldgraphQA = process.env.TCGLENS_QA_PROVIDER === "soldgraph";
 const feedbackQA = process.env.TCGLENS_QA_PROVIDER === "ebay-feedback";
+const trustQA = process.env.TCGLENS_QA_PROVIDER === "trust";
 const { getEbaySellerFeedback } = await jiti.import(path.join(root, "src/lib/external/ebay-feedback.ts"));
 // Exercise real parsers and ranking through explicit trusted dependency injection.
 // Never invoke paid run/start or Redis paths; never mutate the default registry.
@@ -63,6 +64,13 @@ function fixtureFetcher(request = {}) {
     conditionDescriptors: [{ name: "Card Condition", values: [{ content: "Near Mint" }] }], localizedAspects: [{ name: "Language", value: "English" }],
     seller: { username: "synthetic-qa-seller", feedbackPercentage: "99.8", feedbackScore: 1600 }, price: { value: "100", currency: "USD" },
     shippingOptions: [{ shippingCost: { value: "10", currency: "USD" } }] };
+  if (trustQA && /Charizard|Giratina/i.test(title)) {
+    item.price.value = "799.99";
+    item.seller.feedbackScore = 18;
+    item.returnTerms = { returnsAccepted: false };
+    item.additionalImages = Array.from({ length: 7 }, () => item.image);
+  }
+  const rug = { ...item, itemId: "qa-rug", title: `${chosen?.name ?? "Pikachu"} ${number} Rug`, price: { value: "50", currency: "USD" }, localizedAspects: [{ name: "Type", value: "Area Rug" }] };
   return async (input) => {
     const url = new URL(String(input));
     if (url.hostname === "api.soldgraph.com") {
@@ -77,7 +85,7 @@ function fixtureFetcher(request = {}) {
     }
     if (url.hostname === "singles.stompinggroundstcg.com") return Response.json({ jsonrpc: "2.0", id: 1, result: { structuredContent: { products: [{
       id: "gid://shopify/Product/123", title, url: "https://singles.stompinggroundstcg.com/products/qa-fixture", description: { html: "<p>SYNTHETIC QA FACTS ONLY</p>" }, tags: [],
-      variants: [{ id: "gid://shopify/ProductVariant/456", title: "Near Mint", price: { amount: 9200, currency: "USD" }, availability: { available: true }, requires: { shipping: true }, options: [{ name: "Condition", label: "Near Mint" }] }],
+      variants: [{ id: "gid://shopify/ProductVariant/456", title: trustQA ? "Damaged" : "Near Mint", price: { amount: 9200, currency: "USD" }, availability: { available: true }, requires: { shipping: true }, options: [{ name: "Condition", label: trustQA ? "Damaged" : "Near Mint" }] }],
     }] } } });
     if (url.hostname === "api.pokemontcg.io") {
       if (url.pathname.startsWith("/v2/cards/")) {
@@ -85,7 +93,8 @@ function fixtureFetcher(request = {}) {
         return card ? Response.json({ data: { ...card, tcgplayer: { prices: { holofoil: { market: 100 } } } } }) : Response.json({}, { status: 404 });
       }
       // Exercise the exact-number recovery path, including Pikachu 58/102.
-      return Response.json({ data: [], count: 0, totalCount: 0 });
+      const cards = trustQA ? searchPokemonCatalogSnapshot({ query: request.cardHint?.name || request.query || "", cardNumber: request.cardHint?.cardNumber || "" }).cards : [];
+      return Response.json({ data: cards, count: cards.length, totalCount: cards.length });
     }
     if (url.hostname === "api.ebay.com") {
       if (url.pathname.includes("/feedback_rating_summary")) return Response.json({ feedbackRatingSummary: [{ ratingType: "OVERALL_EXPERIENCE", ratingSummaryByRatingType: [30, 365].map(days => ({
@@ -99,12 +108,12 @@ function fixtureFetcher(request = {}) {
         { ...item, itemId: "qa-probe", price: { value: "85", currency: "USD" }, shippingOptions: [{ shippingCost: { value: "5", currency: "USD" } }] },
         { ...item, itemId: "qa-proxy", title: `${title} gold metal replica`, price: { value: "1", currency: "USD" } },
         { ...item, itemId: "qa-unknown", title: title.replace("Near Mint", ""), conditionDescriptors: [], price: { value: "70", currency: "USD" }, shippingOptions: [] },
-      ] : [item] });
-      if (url.pathname.includes("/buy/browse/v1/item/")) return Response.json(item);
+      ] : trustQA ? [item, rug] : [item] });
+      if (url.pathname.includes("/buy/browse/v1/item/")) return Response.json(url.pathname.includes("qa-rug") ? rug : item);
     }
     if (url.hostname === "api.apify.com") {
-      if (url.pathname.includes("whatnot-scraper")) return Response.json([{ type: "listing", id: "qa-whatnot", title,
-        subtitle: "Near Mint ∙ English", publicStatus: "PUBLISHED", transactionType: "BUY_NOW", quantity: 1,
+      if (url.pathname.includes("whatnot-scraper")) return Response.json([{ type: "listing", id: "qa-whatnot", title: trustQA ? title.replace("Near Mint", "Lightly Played") : title,
+        subtitle: trustQA ? "Lightly Played ∙ English" : "Near Mint ∙ English", publicStatus: "PUBLISHED", transactionType: "BUY_NOW", quantity: 1,
         price: { amountSafe: 90, currency: "USD" }, scrapedAt: new Date().toISOString() }]);
       if (url.pathname.includes("mercari-us-scraper")) return Response.json([{ type: "listing", listing_id: "m123456", url: "https://www.mercari.com/us/item/m123456/", title,
         listing_status: "active", currency: "USD", price: 85, shipping_payer: "buyer", shipping_fee: 5.25,
@@ -127,6 +136,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (["/api/agent/card-identity", "/api/agent/listing-compare"].includes(pathname) && req.method === "POST") {
       const input = JSON.parse(body.toString());
+      console.log("QA request", pathname, input.query, input.marketScope ?? "single");
       const value = pathname.endsWith("card-identity")
         ? await resolveCardIdentity(input, { fetcher: fixtureFetcher(input) })
         : await runListingComparison(input, { fetcher: fixtureFetcher(input), agents: feedbackQA ? [ebayPlatformAgent] : fixtureAgents });
@@ -139,6 +149,7 @@ const server = http.createServer(async (req, res) => {
       }
       res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify(value));
+      console.log("QA complete", pathname, value.status);
       return;
     }
     if (pathname === "/__qa__/preview.svg") {

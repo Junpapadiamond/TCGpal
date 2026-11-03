@@ -1,3 +1,5 @@
+import { usableMarketPrice } from "@/lib/comparison/market-reference";
+import { requiresHighValueReview } from "@/lib/comparison/recommendation-policy";
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
 import { forbiddenAnswer } from "@/lib/ai/unsupported-claims";
@@ -5,6 +7,7 @@ import { logOpsEvent } from "@/lib/ops/events";
 import { isTavilyConfigured, searchTavilyContext } from "@/lib/external/tavily";
 import {
   comparisonQuestionResponseSchema,
+  requiresRecommendationReview,
   type ComparisonQuestionResponse,
   type ComparisonReport,
   type NormalizedListing,
@@ -18,11 +21,16 @@ export async function answerComparisonQuestion(
   targetListingId?: string,
   options: { webContext?: "auto" | "off" | "force"; activeRole?: RankedChoice["role"]; lang?: "en" | "zh" } = {},
 ): Promise<ComparisonQuestionResponse> {
-  const local = localAnswer(report, question, targetListingId, options.activeRole, options.lang);
+  const effectiveTarget = targetListingId ?? findQuestionTarget(report, question)?.id
+    ?? (report.rankedChoices.length === 0 ? report.inspectListingId ?? undefined : undefined);
+  const local = localAnswer(report, question, effectiveTarget, options.activeRole, options.lang);
   const webMode = options.webContext ?? "off";
   if (shouldUseWebContext(question, webMode)) {
     return answerWithWebContext(report, question, targetListingId, local, options.lang);
   }
+
+  const target = report.candidates.find(listing => listing.id === effectiveTarget);
+  if (report.rankedChoices.length === 0 || (target && (!target.eligible || requiresRecommendationReview(target)))) return local;
 
   const provider = createAiProvider(getAiConfig());
 
@@ -44,6 +52,7 @@ export async function answerComparisonQuestion(
         "Do not introduce sold comps, sold-history, or sold-transaction language; this report is active-listing and reference-price evidence only.",
         "Do not mention internal listing ids. Refer to listings by marketplace, title, price, and human risk labels.",
         "If the report does not contain enough evidence, say what is missing.",
+        "Only the report's rankedChoices can support a buy recommendation. recommendationAllowed=false is a hard review boundary, not a weak preference. Never promote a review-only offer or use a missing/stale market price as a discount.",
         "price is item-only. If costComplete is false, no comparable pre-tax or checkout total exists: never label price as a total. Unknown seller fields mean unverified, not bad seller history. Only eligible=false means excluded; losing a lens does not mean excluded.",
         "marketMid is the aggregate NM item-price reference, not a listed median or a condition-adjusted value. Do not invent additional risks or reasons beyond the supplied evidence.",
         "Keep the answer under 120 words and mention the concrete score/price evidence that matters.",
@@ -181,6 +190,20 @@ function localAnswer(
   const target = targetListingId ? listingById.get(targetListingId) ?? null : findQuestionTarget(report, question);
   const lens = lensLabel(lensChoice?.role ?? activeRole);
   const zh = lang === "zh";
+
+  if (target && requiresHighValueReview(target)) {
+    return comparisonQuestionResponseSchema.parse({
+      answer: zh
+        ? `目前不能推荐这笔高金额购买。${money(target.price)} 仅为商品价，${target.costComplete ? "已知运费和手续费单列" : "运费或买家手续费尚未确认，总价未知"}：卖家记录为 ${target.seller.feedbackCount ?? "未知"} 条评价，可供查看的实物照片 ${target.evidence.photoCount} 张。${target.seller.returnsAccepted === false ? "卖家不接受退货。" : ""}卖家记录或实拍资料未达到推荐门槛；这不代表卖家不可信。先核实记录、版本及正反面细节。`
+        : `We cannot recommend this high-value purchase on the current evidence. ${money(target.price)} is item-only${target.costComplete ? "; shipping and fees are separate" : "; shipping or buyer fees are unknown, so the total is unconfirmed"}: ${target.seller.feedbackCount ?? "unknown"} seller ratings and ${target.evidence.photoCount} item-specific photos.${target.seller.returnsAccepted === false ? " The seller does not accept returns." : ""} Seller history or photo evidence is below the recommendation threshold; this is not a finding that the seller is unsafe. Check the history, edition, front and back details.`,
+      cautions: [], usedAi: false,
+    });
+  }
+  if (target?.eligibilityIssues.some(issue => issue.code === "catalog_edition_unresolved")) {
+    return comparisonQuestionResponseSchema.parse({ answer: zh
+      ? "卡名和编号相符，但当前目录没有区分 Unlimited、Shadowless 和 1st Edition。需要先确认版次，不能据此推荐购买或计算市场价差。"
+      : "The name and number match, but the catalog does not distinguish Unlimited, Shadowless and 1st Edition. Verify the edition first; this report cannot recommend a buy or calculate a market discount for it.", cautions: [], usedAi: false });
+  }
 
   if (/exclud|filtered|排除|筛掉|篩掉/i.test(question) && !targetListingId) {
     const excluded = report.candidates.filter((listing) => !listing.eligible);
@@ -406,7 +429,7 @@ function formatRiskLabel(label: NormalizedListing["riskLabel"]) {
   }
 }
 
-function sanitizeReportForQuestion(
+export function sanitizeReportForQuestion(
   report: ComparisonReport,
   targetListingId?: string,
   activeRole: RankedChoice["role"] = "best_value",
@@ -432,7 +455,7 @@ function sanitizeReportForQuestion(
         setCode: report.confirmedCard.setCode,
         cardNumber: report.confirmedCard.cardNumber,
         variant: report.confirmedCard.variant ?? null,
-        marketMid: report.confirmedCard.marketMid ?? null,
+        marketMid: usableMarketPrice(report.confirmedCard),
         marketSource: report.confirmedCard.marketSource ?? null,
         marketAsOf: report.confirmedCard.marketAsOf ?? null,
       }
@@ -484,6 +507,7 @@ function sanitizeListingForQuestion(listing: NormalizedListing, recommendationLi
     valueScore: listing.valueScore,
     riskLabel: formatRiskLabel(listing.riskLabel),
     eligible: listing.eligible,
+    recommendationAllowed: listing.eligible && !requiresRecommendationReview(listing),
     exclusionReasons: listing.exclusionReasons,
     trustNotes: listing.trustNotes,
   };

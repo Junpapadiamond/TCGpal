@@ -1,6 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { answerComparisonQuestion } from "@/lib/ai/comparison-qa";
+import { answerComparisonQuestion, sanitizeReportForQuestion } from "@/lib/ai/comparison-qa";
 import type { ComparisonReport, NormalizedListing } from "@/lib/schemas";
+
+it("keeps a high-value review decision deterministic even when an AI provider is available", async () => {
+  vi.stubEnv("OPENAI_API_KEY", "test-only");
+  const fetcher = vi.fn(async () => { throw new Error("No model call expected"); });
+  vi.stubGlobal("fetch", fetcher);
+  const row = listing({ price: 799.99, preTaxTotal: 799.99,
+    seller: { feedbackPercentage: 100, feedbackCount: 18, returnsAccepted: false, topRated: false, buyerProtection: true, subRatings: null } });
+  const answer = await answerComparisonQuestion({ ...report, candidates: [row], rankedChoices: [], inspectListingId: row.id, outcome: "inspect_first" }, "Should I buy this?", row.id);
+  expect(answer.usedAi).toBe(false);
+  expect(answer.answer).toMatch(/cannot recommend|not enough/i);
+  expect(answer.answer).toContain("18");
+  expect(fetcher).not.toHaveBeenCalled();
+});
 
 function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
   return {
@@ -92,18 +105,10 @@ describe("comparison question answering", () => {
     expect(answer.answer).not.toContain("highest");
   });
 
-  it("never sends incomplete checkout subtotals to the model as comparable totals", async () => {
-    vi.stubEnv("AI_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "test-key");
-    vi.stubEnv("OPENAI_WIRE_API", "chat");
-    const fetchStub = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ choices: [{ message: { content: JSON.stringify({ answer: "Shipping and buyer fees are unknown.", cautions: [] }) } }] }));
-    vi.stubGlobal("fetch", fetchStub);
+  it("never sends incomplete checkout subtotals to the model as comparable totals", () => {
     const incomplete = listing({ id: "incomplete", price: 725, preTaxTotal: 725, shipping: null, buyerFee: null, costComplete: false, eligible: false });
-    await answerComparisonQuestion({ ...report, candidates: [...report.candidates, incomplete] }, "Why not this one?", incomplete.id);
-    const body = JSON.parse(String(fetchStub.mock.calls[0][1]?.body));
-    const facts = JSON.parse(body.messages[1].content.split("Input:\n\n")[1]).report.targetListing;
-    expect(facts).toMatchObject({ price: 725, preTaxTotal: null, estimatedLandedCost: null, costComplete: false });
-    expect(body.messages[0].content).toContain("item-only");
+    const facts = sanitizeReportForQuestion({ ...report, candidates: [...report.candidates, incomplete] }, incomplete.id).targetListing;
+    expect(facts).toMatchObject({ price: 725, preTaxTotal: null, estimatedLandedCost: null, costComplete: false, recommendationAllowed: false });
   });
 
   it("reports an unavailable configuration without inventing an AI answer", async () => {

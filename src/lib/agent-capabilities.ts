@@ -26,7 +26,7 @@ export function getAgentCapabilities(): AgentCapabilities {
     maxDiscoveryResults: 5,
     identityContractVersion: 1,
     discoveryContractVersion: 1,
-    comparisonContractVersion: 5,
+    comparisonContractVersion: 6,
     handoffContractVersion: 1,
     sourceAccess: {
       live,

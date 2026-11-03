@@ -14,6 +14,7 @@ function report(): ComparisonReport {
   request.buyer.taxRate = 0.08875;
   return {
     status: "complete",
+    comparisonContractVersion: 6,
     request,
     identityCandidates: [],
     confirmedCard: null,

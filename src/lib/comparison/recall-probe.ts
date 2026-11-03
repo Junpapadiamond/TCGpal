@@ -1,5 +1,5 @@
 import { deriveVariantIntent, isOnePieceCardKey, normalizeListing, rankListings } from "./ranking";
-import { recallCoverageSchema, requiresMarketPriceReview, type BuyerContext, type CardIdentityCandidate, type ListingSeed, type Marketplace, type NormalizedListing, type SearchAttempt } from "@/lib/schemas";
+import { recallCoverageSchema, requiresRecommendationReview, type BuyerContext, type CardIdentityCandidate, type ListingSeed, type Marketplace, type NormalizedListing, type SearchAttempt } from "@/lib/schemas";
 
 export type RecallObservation = {
   marketplace: Marketplace;
@@ -32,7 +32,7 @@ export function buildRecallCoverage({ card, buyer, baseline, observation }: {
   };
   const current = cheapest(baseline);
   const found = cheapest(rows);
-  const comparable = rows.filter(row => row.eligible && row.costComplete && !requiresMarketPriceReview(row));
+  const comparable = rows.filter(row => row.eligible && row.costComplete && !requiresRecommendationReview(row));
   const recoverable = new Set(["condition_unstated", "shipping_unknown", "buyer_fee_unknown", "identity_unverified"]);
   const unresolved = rows.filter(row => {
     const exclusions = row.eligibilityIssues.filter(issue => issue.disposition === "exclude");
@@ -49,7 +49,7 @@ export function buildRecallCoverage({ card, buyer, baseline, observation }: {
     baselineCheapestTotal: current?.preTaxTotal ?? null,
     listing: status === "cheaper_found" || status === "additional_match" ? found : null,
     // Item price is the only honest ordering when excluded rows have unknown charges.
-    excluded: rows.filter(row => !row.eligible || requiresMarketPriceReview(row))
+    excluded: rows.filter(row => !row.eligible || requiresRecommendationReview(row))
       .sort((a, b) => a.price - b.price || a.id.localeCompare(b.id)).slice(0, 3),
   });
 }

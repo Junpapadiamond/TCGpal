@@ -1,3 +1,5 @@
+import { hasUnresolvedCatalogEdition, marketReferenceState, usableMarketPrice } from "@/lib/comparison/market-reference";
+import { requiresHighValueReview } from "@/lib/comparison/recommendation-policy";
 import { createAiProvider } from "@/lib/ai/provider";
 import { getAiConfig } from "@/lib/ai/config";
 import { demoIdentities, type DemoListingSeed } from "@/lib/comparison/fixtures";
@@ -36,7 +38,6 @@ import {
 import { logOpsEvent, type OpsRoute } from "@/lib/ops/events";
 import { abortableDelay, createLinkedAbortSignal } from "@/lib/ops/abort";
 import {
-  isTcgcsvStale,
   searchTcgplayerListings,
   type TcgplayerSearchResult,
 } from "@/lib/external/tcgcsv";
@@ -73,6 +74,7 @@ import {
   comparisonNarrativeSchema,
   comparisonReportSchema,
   requiresMarketPriceReview,
+  requiresRecommendationReview,
   comparisonRequestSchema,
   type CardHint,
   type CardIdentityCandidate,
@@ -160,7 +162,7 @@ export async function runListingComparison(
       outcome: "next_moves",
       inspectListingId: null,
       identityContractVersion: 4,
-      comparisonContractVersion: 5,
+      comparisonContractVersion: 6,
       demoMode: getConfiguredPlatformAgents(scopedAgents).length === 0,
       generatedAt,
     });
@@ -303,9 +305,9 @@ export async function runListingComparison(
   // R3: prefer the daily TCGplayer feed (explicit as-of timestamp) as the
   // market anchor; the inline catalog price stays as the fallback anchor.
   const [crosswalk, tcgplayerData] = await Promise.all([crosswalkPromise, anchorPromise]);
-  confirmedCard = applyMarketAnchor(confirmedCard, crosswalk, tcgplayerData);
-  if (confirmedCard.marketSource === "tcgcsv" && isTcgcsvStale(confirmedCard.marketAsOf ?? null, now())) {
-    warnings.push(`TCGplayer prices are more than 48 hours old (as of ${formatAnchorDate(confirmedCard.marketAsOf)}). Treat the market reference with extra care.`);
+  confirmedCard = applyMarketAnchor(confirmedCard, crosswalk, tcgplayerData, now());
+  if (confirmedCard.marketMid != null && marketReferenceState(confirmedCard, now()) !== "fresh") {
+    warnings.push(`Market reference is stale or its date is unverified (as of ${formatAnchorDate(confirmedCard.marketAsOf)}). It is not used for price scoring, discounts or market-floor exclusions.`);
   }
 
   if (fanout.seeds.length === 0 && seeds.length === 0) {
@@ -324,7 +326,7 @@ export async function runListingComparison(
 
   // Demo fixtures are never scored against the market anchor: their prices are
   // fabricated, so any market-derived score would be a fake vs-market read.
-  const marketAnchor = demoMode ? null : confirmedCard.marketMid ?? null;
+  const marketAnchor = demoMode ? null : usableMarketPrice(confirmedCard, now());
   // Keep the ranked listings on the confirmed side of the variant line: the same
   // One Piece card number spans base, alternate arts, and SP / manga / treasure
   // special prints at very different prices, so the gate needs the exact class,
@@ -340,13 +342,14 @@ export async function runListingComparison(
     variantIntent,
     cardLanguage: confirmedCard.language,
     confirmedCard: demoMode ? null : confirmedCard,
+    now: now(),
   })));
   const rankedChoices = rankListings(normalized, { marketPrice: marketAnchor });
   const searchCoverage = fanout.recallObservations.map(observation => buildRecallCoverage({
     card: confirmedCard, buyer: request.buyer, baseline: normalized, observation,
   }));
   const inspectLead = normalized
-    .filter((listing) => (listing.printMatch === "unknown" || (listing.eligible && requiresMarketPriceReview(listing)))
+    .filter((listing) => (listing.printMatch === "unknown" || (listing.eligible && requiresRecommendationReview(listing)))
       && listing.printPriceGuard !== "exclude"
       && listing.active
       && listing.raw
@@ -401,7 +404,7 @@ export async function runListingComparison(
     outcome,
     inspectListingId: outcome === "inspect_first" ? inspectLead?.id ?? null : null,
     identityContractVersion: 4,
-    comparisonContractVersion: 5,
+    comparisonContractVersion: 6,
     demoMode,
     generatedAt,
   });
@@ -444,6 +447,11 @@ function buildAbstention(
   listings: NormalizedListing[],
   variantIntent: VariantIntent | null,
 ): ComparisonAbstention {
+  if (listings.some(listing => listing.eligibilityIssues.some(issue => issue.code === "catalog_edition_unresolved"))) {
+    return { reason: "The catalog does not distinguish Unlimited, Shadowless and 1st Edition. Verify the edition before comparing prices or choosing a buy.", foundCount: listings.length, variantExcludedCount: 0, suggestedCardId: null, suggestedLabel: null };
+  }
+  const evidenceReviews = listings.filter(listing => listing.eligible && requiresHighValueReview(listing));
+  if (evidenceReviews.length) return { reason: "High-value offers need more seller history or item-specific photo evidence before a recommendation.", foundCount: listings.length, variantExcludedCount: 0, suggestedCardId: null, suggestedLabel: null };
   const priceReviews = listings.filter((listing) => listing.eligible && requiresMarketPriceReview(listing));
   if (priceReviews.length > 0) {
     return { reason: `${priceReviews.length} exact-print listing(s) need price review against the NM market reference before a buy recommendation.`,
@@ -490,9 +498,11 @@ function applyMarketAnchor(
   card: CardIdentityCandidate,
   crosswalk: CardCrosswalkEntry | null,
   tcgplayer: TcgplayerSearchResult | null,
+  now = new Date(),
 ): CardIdentityCandidate {
   const tcgplayerProductId = crosswalk?.tcgplayerProductId ?? null;
-  if (tcgplayer?.anchor && tcgplayer.anchor.mid !== null) {
+  if (tcgplayer?.anchor && tcgplayer.anchor.mid !== null
+    && (usableMarketPrice({ marketMid: tcgplayer.anchor.mid, marketAsOf: tcgplayer.asOf }, now) !== null || usableMarketPrice(card, now) === null)) {
     return {
       ...card,
       marketLow: tcgplayer.anchor.low,
@@ -1260,15 +1270,15 @@ function buildMarketReference(card: CardIdentityCandidate, observedAt: string): 
   const freshness = card.marketSource === "tcgcsv"
     ? `TCGplayer prices as of ${formatAnchorDate(card.marketAsOf)} (daily feed).`
     : "Inline catalog price from the card catalog (approximate freshness).";
-  const stale = card.marketSource === "tcgcsv" && isTcgcsvStale(card.marketAsOf ?? null)
-    ? " Warning: this feed is more than 48 hours old."
+  const stale = marketReferenceState(card, new Date(observedAt)) !== "fresh"
+    ? " Historical reference only: freshness is unverified or older than 48 hours; excluded from price comparisons."
     : "";
   return {
     label: "TCGplayer market price",
-    status: "used",
+    status: stale ? "unavailable" : "used",
     observedAt,
     url: card.marketUrl ?? null,
-    note: `${freshness}${stale} A fair-price reference for this exact version — not a guaranteed sale.`,
+    note: `${freshness}${stale} Aggregate catalog reference; edition and condition must match before comparison.`,
     rawLow: card.marketLow ?? null,
     rawMid: card.marketMid,
     rawHigh: card.marketHigh ?? null,
@@ -1367,7 +1377,11 @@ function localNarrative(
 ) {
   const eligible = listings.filter((listing) => listing.eligible);
   return comparisonNarrativeSchema.parse({
-    summary: eligible.length && choices.length === 0 && eligible.some(requiresMarketPriceReview)
+    summary: eligible.length && choices.length === 0 && hasUnresolvedCatalogEdition(card)
+      ? `TCGlens found offers for ${card.name}, but the catalog edition is unresolved. Verify Unlimited, Shadowless or 1st Edition before a recommendation.`
+      : eligible.length && choices.length === 0 && eligible.some(requiresHighValueReview)
+      ? `TCGlens found high-value offers for ${card.name}, but the seller history or photo evidence is insufficient for a recommendation.`
+      : eligible.length && choices.length === 0 && eligible.some(requiresMarketPriceReview)
       ? `TCGlens found exact-print listings for ${card.name}, but their item prices need review against the NM market reference before a buy recommendation.`
       : eligible.length
       ? `TCGlens found ${eligible.length} eligible ${card.name} listings and separated price, seller safety, and condition evidence instead of collapsing them into one magic answer.`

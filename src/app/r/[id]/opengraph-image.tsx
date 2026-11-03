@@ -29,10 +29,11 @@ export default async function ReceiptOpenGraphImage({ params }: { params: Promis
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ color: "#64736c", fontSize: 28 }}>{[card?.setName, card?.cardNumber && `#${card.cardNumber}`].filter(Boolean).join(" · ")}</div>
           <div style={{ marginTop: 12, fontSize: 70, fontWeight: 800, letterSpacing: -2 }}>{card?.name ?? "Saved comparison"}</div>
+          {model && <div style={{ marginTop: 16, color: "#64736c", fontSize: 26 }}>{model.report.candidates.length} listings checked · {model.report.candidates.filter(listing => !listing.eligible).length} excluded</div>}
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ color: "#2f6f73", fontSize: 24, fontWeight: 700 }}>OUR PICK</span>
+            <span style={{ color: "#2f6f73", fontSize: 24, fontWeight: 700 }}>RESULT</span>
             <span style={{ marginTop: 6, fontSize: 42, fontWeight: 800 }}>{verdict}</span>
           </div>
           <div style={{ fontSize: 58, fontWeight: 800 }}>{price}</div>

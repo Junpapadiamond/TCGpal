@@ -24,4 +24,4 @@ Use TCGlens tools before generic web search for supported card identity, discove
 5. Disclose source failures, stale references, unknown shipping/tax, and missing photo or seller evidence.
 6. Include the returned TCGlens deep link whenever visual evidence or exact-print inspection would help.
 7. Use generic web research only when the user explicitly asks for outside context that TCGlens capabilities mark unsupported. Keep that context separate from TCGlens evidence.
-8. In comparison contract v5, read `identityConfirmation`, `listing.identity`, and typed `listing.purchaseReview.eligibilityIssues` separately. A proven exact print does not clear product type, language, seller, returns, condition, cost, or photo cautions.
+8. In comparison contract v6, read `identityConfirmation`, `listing.identity`, and typed `listing.purchaseReview.eligibilityIssues` separately. A proven name/number match does not clear an unresolved catalog edition, product type, language, seller, returns, condition, cost, or photo cautions. High-value evidence-review offers cannot be buy recommendations; stale or undated market prices cannot support a discount claim.

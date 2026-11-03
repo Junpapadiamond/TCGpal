@@ -23,7 +23,7 @@ describe("comparison evidence questions", () => {
   it("attributes AI answers and offers Chinese prompts", () => {
     setLanguage("zh");
     render(<LanguageProvider><ComparisonQuestionBox {...props} answer={{ answer: "品相未知。", cautions: [], usedAi: true, model: "test-model", webContextChecked: false, webCitations: [] }} /></LanguageProvider>);
-    expect(screen.getByText("AI 解读 · test-model")).toBeTruthy();
+    expect(screen.getByText("AI 解读")).toBeTruthy();
     expect(screen.getByRole("button", { name: "还缺哪些信息？" })).toBeTruthy();
   });
 });

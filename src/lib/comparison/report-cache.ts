@@ -12,7 +12,7 @@ import { getConfiguredPlatformAgents } from "./platforms";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
-const COMPARISON_CACHE_REVISION = "ranking-v14-demo-release-conflict";
+const COMPARISON_CACHE_REVISION = "ranking-v15-trust-freshness";
 const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
@@ -57,7 +57,7 @@ export async function getCachedComparison(key: string, now: Date = new Date()): 
     now,
     validate(value) {
       const parsed = comparisonReportSchema.safeParse(value);
-      return parsed.success && parsed.data.identityContractVersion === 4 ? parsed.data : null;
+      return parsed.success && parsed.data.identityContractVersion === 4 && parsed.data.comparisonContractVersion === 6 ? parsed.data : null;
     },
   });
 }

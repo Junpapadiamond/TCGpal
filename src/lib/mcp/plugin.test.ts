@@ -28,7 +28,7 @@ describe("TCGlens Work plugin", () => {
     expect(skill).toContain("tcglens_discover_cards");
     expect(skill).toContain("tcglens_compare_card");
     expect(skill).toContain("seller’s claim");
-    expect(skill).toContain("comparison contract v5");
+    expect(skill).toContain("comparison contract v6");
     expect(skill).toContain("Never predict a grade");
   });
 });

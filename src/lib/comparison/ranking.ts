@@ -2,7 +2,7 @@ import { altArtTitlePattern, specificVariantMarkers, withoutJapaneseAnniversaryR
 export { printClass as deriveVariantIntent, variantIntentLabel, type PrintClass as VariantIntent } from "@/lib/external/one-piece-taxonomy";
 import {
   normalizedListingSchema,
-  requiresMarketPriceReview,
+  requiresRecommendationReview,
   rankedChoiceSchema,
   type BuyerContext,
   type CardIdentityCandidate,
@@ -21,63 +21,13 @@ import {
   PRINT_IDENTITY_EXCLUDE_RATIO,
   type PrintFidelityAssessment,
 } from "@/lib/comparison/print-fidelity";
+import { isExcludedProduct } from "./product-type";
+export { isExcludedProduct } from "./product-type";
 import { isGradedListing } from "@/lib/comparison/graded-listing";
+import { hasUnresolvedCatalogEdition, usableMarketPrice } from "./market-reference";
+import { requiresHighValueReview } from "./recommendation-policy";
 
-const exclusionPatterns = [
-  /\bsealed\b/i,
-  // "Booster" on its own is a set name, not a sealed product: every One Piece
-  // "Extra Booster: <set>" single carries it, so a bare word filter dropped the
-  // raw singles this list exists to protect. Sealed product names its container.
-  /\bbooster[\s-]*(?:box(?:es)?|packs?|cases?|bundles?)\b/i,
-  /\blot\b/i,
-  /\bproxy\b/i,
-  /\breprint\b/i,
-  /\bcustom\b/i,
-  /\bdigital\b/i,
-  // Novelty / replica items that carry the exact card name + number but are not
-  // the real raw single (the dominant noise in cheap eBay search results).
-  /\bgold\s+metal\b/i,
-  /\bmetal\s+card\b/i,
-  /\bsticker\b/i,
-  /\bdecal\b/i,
-  /\bcredit\s+card\b/i,
-  /\bdiy\b/i,
-  /\bfor\s+display\b/i,
-  /\breplica\b/i,
-  /\bacrylic\b/i,
-  /\bfan[\s-]?made\b/i,
-  // Sellers list unofficial cards as "fan art" far more often than "fan made",
-  // and the phrase is never a real print class in either game.
-  /\bfan[\s-]?art\b/i,
-  /\baltered\b/i,
-  /\bmagnet\b/i,
-  /\bkeychain\b/i,
-  /\bplush\b/i,
-  /\bnon[\s-]?textured\b/i,
-  // "Extended art" is a Magic print class. Neither Pokémon nor One Piece has
-  // one, so on eBay the phrase only ever names an aftermarket item — a display
-  // case, an acrylic stand, a DIY/custom card, or an art print — carrying the
-  // real card's name and collector number. Requiring the exact phrase
-  // "extended art case" let every other phrasing ("... Extended Art Display
-  // Case", a bare "... 215/203 Extended Art") through as a raw single. The real
-  // print classes sellers do use — "alternate art", "full art", "art rare",
-  // "special art" — are matched by altArtTitlePattern and unaffected.
-  /\bextended[\s-]*art(?:work)?\b/i,
-  /\bart\s+case\b/i,
-  /\bmagnetic\s+(?:case|holder)\b/i,
-  /\bwall\s+art\b/i,
-  /\bposter\s+print\b/i,
-  /\bplaymat\b/i,
-  /\bdisplay\s+case\b/i,
-  /\bcard\s+set\b/i,
-  /\b\d+\s*(?:pcs|cards?)\b/i,
-  // A playset is four copies priced as one line, so it clears the market floor on
-  // price-per-card and then gets compared against a single-card anchor. Both
-  // spellings and both count orders appear on eBay.
-  /\bplay\s?sets?\b/i,
-  /\(\s*x\s*\d+\s*\)/i,
-  /\bx\s?\d+\s*$/i,
-];
+
 
 // One Piece card keys ("OP01-016", "EB01-001_p2", "ST01-004", promo "P-096") are the
 // only catalog whose numbers span multiple prints, so they alone get variant handling.
@@ -340,6 +290,7 @@ export function calculateEvidenceCompletenessScore(evidence: ListingEvidence) {
   return Math.min(100, score);
 }
 
+
 export function normalizeListing(input: {
   listing: ListingSeed;
   buyer: BuyerContext;
@@ -347,6 +298,7 @@ export function normalizeListing(input: {
   variantIntent?: VariantIntent | null;
   cardLanguage?: string | null;
   confirmedCard?: CardIdentityCandidate | null;
+  now?: Date;
 }) {
   const { listing, buyer } = input;
   const buyerFee = listing.buyerFee === undefined ? 0 : listing.buyerFee;
@@ -362,7 +314,9 @@ export function normalizeListing(input: {
   const evidenceCompletenessScore = calculateEvidenceCompletenessScore(listing.evidence);
   const conditionCompatibilityScore = calculateConditionCompatibilityScore(listing.claimedCondition, buyer.desiredCondition);
   const safetyScore = Math.round((sellerTrustScore * SAFETY_WEIGHTS.seller) + (evidenceCompletenessScore * SAFETY_WEIGHTS.evidence));
-  const marketPrice = input.marketPrice ?? null;
+  const marketPrice = input.marketPrice === null ? null : input.confirmedCard
+    ? usableMarketPrice(input.confirmedCard, input.now) === null ? null : input.marketPrice ?? input.confirmedCard.marketMid ?? null
+    : input.marketPrice ?? null;
   const raw = listing.raw && !isGradedListing(listing.title);
   const matchText = [listing.title, listing.matchAspectText].filter(Boolean).join(" ").trim();
   const printAssessment = input.confirmedCard
@@ -404,6 +358,13 @@ export function normalizeListing(input: {
     printAssessment,
     Boolean(input.confirmedCard),
   );
+  if (input.confirmedCard && hasUnresolvedCatalogEdition(input.confirmedCard)) {
+    eligibilityIssues.push({ code: "catalog_edition_unresolved", category: "identity", disposition: "review", message: "The catalog does not distinguish Unlimited, Shadowless and First Edition. Verify the edition before a recommendation." });
+  }
+  if (requiresHighValueReview({ ...listing, imageKind: listing.imageKind ?? "unknown", buyerFee, sellerTrustScore, evidenceCompletenessScore })) {
+    eligibilityIssues.push({ code: "high_value_evidence_review", category: "evidence", disposition: "review",
+      message: "High-value offer needs more seller history or item-specific photo evidence before a recommendation. This is an evidence limit, not a finding that the seller is unsafe." });
+  }
   // A review ceiling is not print evidence or an exclusion. Only the selected
   // One Piece print's own TCGCSV NM reference can activate it; small-dollar
   // singles, checkout charges and played-condition copies cannot manufacture it.
@@ -494,14 +455,14 @@ function formatRating(value: number | null) {
 // copy from borrowing an NM aggregate reference while keeping Best Value honest.
 export function finalizeListingScores(listings: NormalizedListing[]) {
   const field = listings.filter((listing) =>
-    listing.eligible && listing.costComplete && !listing.marketComparable
+    listing.eligible && listing.costComplete && !listing.marketComparable && !requiresRecommendationReview(listing)
   );
   const costs = field.map(comparableCost);
   const min = costs.length > 0 ? Math.min(...costs) : null;
   const max = costs.length > 0 ? Math.max(...costs) : null;
 
   return listings.map((listing) => {
-    if (!listing.eligible || !listing.costComplete || listing.marketComparable || min === null || max === null) {
+    if (!listing.eligible || !listing.costComplete || listing.marketComparable || requiresRecommendationReview(listing) || min === null || max === null) {
       return listing;
     }
     const priceScore = max === min
@@ -521,7 +482,7 @@ export function rankListings(
   listings: NormalizedListing[],
   context: { marketPrice?: number | null } = {},
 ): RankedChoice[] {
-  const eligible = finalizeListingScores(listings).filter((listing) => listing.eligible && !requiresMarketPriceReview(listing));
+  const eligible = finalizeListingScores(listings).filter((listing) => listing.eligible && !requiresRecommendationReview(listing) && !isExcludedProduct(listing));
   if (!eligible.length) return [];
 
   const marketPrice = context.marketPrice ?? null;
@@ -656,7 +617,7 @@ function getEligibilityIssues(
   const issues: EligibilityIssue[] = [];
   const add = (issue: EligibilityIssue) => issues.push(issue);
   if (!listing.raw) add({ code: "not_raw_single", category: "product", disposition: "exclude", message: "Listing is not a raw single card." });
-  if (isGradedListing(listing.title) || exclusionPatterns.some((pattern) => pattern.test(listing.title))) {
+  if (isExcludedProduct(listing)) {
     add({ code: "excluded_product_type", category: "product", disposition: "exclude", message: "Title suggests a slab, lot, sealed item, proxy, or other excluded product." });
   }
   if (buyer.desiredCondition !== "Unknown") {

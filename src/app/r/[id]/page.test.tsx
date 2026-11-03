@@ -28,6 +28,7 @@ function report(): ComparisonReport {
   }));
   return {
     status: "complete",
+    comparisonContractVersion: 6,
     request,
     identityCandidates: [card],
     confirmedCard: card,

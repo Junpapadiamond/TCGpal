@@ -21,6 +21,22 @@ const storeSource: ComparisonPlatformResult = {
 const openOffers = () => document.querySelectorAll("summary").forEach((summary) => fireEvent.click(summary));
 
 describe("three-marketplace asking prices", () => {
+  it("keeps condition mismatches in a separate closed group, never a marketplace lead", () => {
+    renderPrices([listingFixture({ id: "damaged", title: "Damaged copy", marketplace: "Whatnot", price: 200,
+      claimedCondition: "Damaged", conditionCompatibilityScore: 0, eligible: false,
+      eligibilityIssues: [{ code: "condition_below_requested", category: "condition", disposition: "exclude", message: "Below Near Mint" }] })]);
+    const region = screen.getByRole("region", { name: "Whatnot prices" });
+    const folded = within(region).getByText("1 condition mismatch").closest("details");
+    expect(folded?.open).toBe(false);
+    expect(region.querySelector("summary")?.textContent).not.toContain("$200");
+    expect(within(region).getByText("No offers match your condition")).toBeTruthy();
+    fireEvent.click(folded!.querySelector("summary")!);
+    expect(within(region).getByRole("heading", { name: "Damaged copy" })).toBeTruthy();
+  });
+  it("rejects merchandise even when an old payload forgot the exclusion issue", () => {
+    renderPrices([listingFixture({ title: "Giratina V 186/196 Rug", marketplace: "Whatnot", eligible: true })]);
+    expect(screen.queryByText("Giratina V 186/196 Rug")).toBeNull();
+  });
   it.each(["en", "zh"] as const)("identifies the actual missing charge in a collapsed %s offer", lang => {
     setLanguage(lang);
     renderPrices([listingFixture({ marketplace: "Mercari", shipping: 5, buyerFee: null, costComplete: false, eligible: false })]);
@@ -88,7 +104,7 @@ describe("three-marketplace asking prices", () => {
     const source = screen.getByRole("region", { name: "Mercari prices" });
     expect(within(source).getByText("NM card worth checking").closest("details")).toBe(source.querySelector("details"));
     expect(within(source).getByText("Unusual cheap card").closest("details")).not.toBeNull();
-    expect(within(source).getByText("Other 1 offer")).toBeTruthy();
+    expect(within(source).getByText("Show 1 more listing")).toBeTruthy();
   });
 
   it("does not show a complete-total label when a stale payload flag contradicts unknown charges", () => {
@@ -181,14 +197,14 @@ describe("three-marketplace asking prices", () => {
 
   it("keeps other offers collapsed while the primary verdict stays visible", () => {
     renderPrices([listingFixture({ id: "primary", title: "Primary listing", price: 95 }), listingFixture({ id: "other", title: "Other listing", price: 100 })]);
-    const disclosure = screen.getByText("Other 1 offer").closest("details") as HTMLDetailsElement;
+    const disclosure = screen.getByText("Show 1 more listing").closest("details") as HTMLDetailsElement;
     expect(disclosure.open).toBe(false);
     expect(screen.getByText("Primary listing").closest("details")).toBeNull();
     expect(screen.getByText("Other listing").closest("details")).toBe(disclosure);
-    fireEvent.click(screen.getByText("Other 1 offer"));
+    fireEvent.click(screen.getByText("Show 1 more listing"));
     expect(disclosure.open).toBe(true);
     expect(screen.getAllByRole("link", { name: /View listing/ })).toHaveLength(2);
-    fireEvent.click(screen.getByText("Other 1 offer"));
+    fireEvent.click(screen.getByText("Show 1 more listing"));
     expect(disclosure.open).toBe(false);
   });
 

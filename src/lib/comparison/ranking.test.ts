@@ -272,6 +272,7 @@ describe("comparison ranking", () => {
 
   it("keeps the suspicious-price floor even when a Pokemon print is proven compatible", () => {
     const exactPokemonCard = {
+      marketMid: 100, marketAsOf: new Date().toISOString(),
       id: "swsh7-215",
       name: "Umbreon VMAX",
       setName: "Evolving Skies",

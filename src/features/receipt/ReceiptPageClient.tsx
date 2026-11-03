@@ -1,4 +1,6 @@
 "use client";
+
+import { usableMarketPrice } from "@/lib/comparison/market-reference";
 import { SearchCoverage } from "@/features/comparison/SearchCoverage";
 
 import Image from "next/image";
@@ -328,7 +330,7 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
                 primary
                 choice={model.primary.choice}
                 alternatives={model.alternative ? [model.alternative] : []}
-                marketPrice={model.card?.marketMid ?? null}
+                marketPrice={usableMarketPrice(model.card)}
                 lang={lang}
               />
               {model.alternative ? (
@@ -338,7 +340,7 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
                   primary={false}
                   choice={null}
                   alternatives={[]}
-                  marketPrice={model.card?.marketMid ?? null}
+                  marketPrice={usableMarketPrice(model.card)}
                   lang={lang}
                 />
               ) : (
@@ -346,7 +348,7 @@ function ReceiptPageContent({ snapshot }: { snapshot: ComparisonSnapshot }) {
               )}
             </div>
           ) : model.inspectListing ? (
-            <div className="mt-5 max-w-2xl"><ReceiptListingCard listing={model.inspectListing} label={text.inspect} primary choice={null} alternatives={[]} marketPrice={model.card?.marketMid ?? null} lang={lang} /></div>
+            <div className="mt-5 max-w-2xl"><ReceiptListingCard listing={model.inspectListing} label={text.inspect} primary choice={null} alternatives={[]} marketPrice={usableMarketPrice(model.card)} lang={lang} /></div>
           ) : (
             <div className="mt-5 rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-sm leading-6 text-[#6f5a22]">
               <strong>{text.noBuy}{lang === "zh" ? "。" : "."}</strong> {snapshot.report.abstention?.reason ?? snapshot.report.narrative.summary}

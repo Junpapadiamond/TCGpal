@@ -1,3 +1,4 @@
+import { highValueReviewReasons, requiresHighValueReview } from "@/lib/comparison/recommendation-policy";
 import type { ConditionClaim, NormalizedListing, RankedChoice } from "@/lib/schemas";
 
 export type VerdictAction = {
@@ -290,6 +291,15 @@ export function buildListingAction(
   lang: VerdictCopyInput["lang"],
   alternatives: NormalizedListing[] = [],
 ): VerdictAction {
+  if (requiresHighValueReview(listing)) {
+    const reasons = highValueReviewReasons(listing);
+    const needs = reasons.map(reason => reason === "seller_record"
+      ? lang === "zh" ? "更多卖家交易记录" : "more seller history"
+      : lang === "zh" ? "更完整的实物照片资料" : "more item-specific photo evidence").join(lang === "zh" ? "、" : " and ");
+    return { kind: "wait", label: lang === "zh" ? "先核对再决定" : "Review before deciding",
+      note: lang === "zh" ? `这笔高金额购买还需要${needs}。${listing.seller.returnsAccepted === false ? "卖家不接受退货。" : ""}目前不足以给出购买建议，不代表卖家不可信。`
+        : `This high-value purchase needs ${needs}.${listing.seller.returnsAccepted === false ? " The seller does not accept returns." : ""} We cannot recommend it on the current evidence; this is not a finding about the seller.` };
+  }
   if (listing.riskLabel === "higher_risk") {
     const record = sellerRecordDetail(listing, lang);
     return {

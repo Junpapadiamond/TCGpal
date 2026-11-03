@@ -155,6 +155,7 @@ describe("Bubble Mew production-shaped regression", () => {
       printMatchReasons: ["listing_names_different_collector_number"],
       eligible: false,
     });
-    expect(report.outcome).toBe("best_buy");
+    expect(report.outcome).toBe("inspect_first");
+    expect(report.rankedChoices).toEqual([]); // high-value rows lack seller/photo evidence in this source fixture
   });
 });

@@ -1,6 +1,7 @@
 import type { EligibilityIssue, Marketplace, NormalizedListing } from "@/lib/schemas";
 import { incompleteCostOpportunity } from "./incomplete-cost";
-import { rankListings } from "./ranking";
+import { isExcludedProduct, rankListings } from "./ranking";
+import { requiresHighValueReview } from "./recommendation-policy";
 
 export type OfferVerdictKind = "consider" | "conditional" | "inspect" | "pass";
 export type MissingOfferCharge = "shipping" | "buyer_fee";
@@ -45,9 +46,13 @@ export function buildOfferVerdict(listing: NormalizedListing, candidates: Normal
   // Keep the assessment conservative even for old/partial cached payloads.
   if (!listing.active) add("listing_inactive", "availability", "Listing is not active.");
   if (!listing.raw) add("not_raw_single", "product", "Listing is not a raw single card.");
+  if (isExcludedProduct(listing)) add("excluded_product_type", "product", "Listing is merchandise or another excluded product, not a raw single card.");
+  if (requiresHighValueReview(listing) && !issues.some(issue => issue.code === "high_value_evidence_review")) {
+    issues.push({ code: "high_value_evidence_review", category: "evidence", disposition: "review", message: "More seller history or seller photos are needed for a high-value recommendation." });
+  }
   if (listing.printMatch === "mismatch") add("identity_sibling_mismatch", "identity", "Listing evidence identifies another print.");
   const printConfirmed = listing.printMatch === "exact" || listing.printMatch === "compatible";
-  const identityConfirmed = printConfirmed && listing.matchConfidence !== "low";
+  const identityConfirmed = printConfirmed && listing.matchConfidence !== "low" && !issues.some(issue => issue.code === "catalog_edition_unresolved");
   if (!printConfirmed) add("identity_unverified", "identity", "Listing evidence does not prove the confirmed print.");
   if (listing.matchConfidence === "low") add("identity_low_confidence", "identity", "Card/version match is low confidence.");
   if (listing.claimedCondition === "Unknown" && listing.conditionCompatibilityScore === 0) {
@@ -71,7 +76,7 @@ export function buildOfferVerdict(listing: NormalizedListing, candidates: Normal
     && !issues.some((issue) => issue.category === "condition" && issue.disposition === "exclude");
   const priceNeedsReview = issues.some((issue) => issue.category === "price");
   const hardFailure = issues.some((issue) => hardDisqualifiers.has(issue.code));
-  const unresolved = priceNeedsReview || !identityConfirmed
+  const unresolved = requiresHighValueReview(listing) || priceNeedsReview || !identityConfirmed
     || issues.some((issue) => issue.disposition === "exclude" && !costCodes.has(issue.code));
   const kind: OfferVerdictKind = hardFailure ? "pass"
     : unresolved ? "inspect"

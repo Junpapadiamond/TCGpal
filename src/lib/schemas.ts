@@ -1,4 +1,6 @@
+import { isExcludedProduct } from "@/lib/comparison/product-type";
 import { z } from "zod";
+import { requiresHighValueReview } from "@/lib/comparison/recommendation-policy";
 
 export const marketplaceSchema = z.enum([
   "eBay",
@@ -153,7 +155,7 @@ export const agentCapabilitiesSchema = z.object({
   maxDiscoveryResults: z.literal(5),
   identityContractVersion: z.literal(1),
   discoveryContractVersion: z.literal(1),
-  comparisonContractVersion: z.literal(5),
+  comparisonContractVersion: z.literal(6),
   handoffContractVersion: z.literal(1),
   sourceAccess: z.object({
     live: z.array(z.object({
@@ -356,7 +358,7 @@ export const cardDiscoveryRequestSchema = z.object({
 export const printMatchSchema = z.enum(["exact", "compatible", "unknown", "mismatch"]);
 export const printPriceGuardSchema = z.enum(["none", "inspect", "exclude"]);
 export const eligibilityIssueCategorySchema = z.enum([
-  "product", "condition", "cost", "price", "language", "identity", "availability",
+  "product", "condition", "cost", "price", "language", "identity", "availability", "evidence",
 ]);
 export const eligibilityIssueDispositionSchema = z.enum(["exclude", "review"]);
 export const eligibilityIssueSchema = z.object({
@@ -564,7 +566,7 @@ export const comparisonReportSchema = z.object({
   outcome: z.enum(["best_buy", "inspect_first", "next_moves"]).optional(),
   inspectListingId: z.string().nullable().optional(),
   identityContractVersion: z.literal(4).optional(),
-  comparisonContractVersion: z.literal(5).optional(),
+  comparisonContractVersion: z.literal(6).optional(),
   demoMode: z.boolean(),
   generatedAt: z.string(),
 }).superRefine((report, ctx) => {
@@ -606,7 +608,7 @@ export const comparisonReportSchema = z.object({
   }
   for (const [index, choice] of report.rankedChoices.entries()) {
     const listing = report.candidates.find((candidate) => candidate.id === choice.listingId);
-    if (!listing || !listing.eligible || requiresMarketPriceReview(listing) || (listing.printMatch !== "exact" && listing.printMatch !== "compatible")) {
+    if (!listing || !listing.eligible || isExcludedProduct(listing) || requiresRecommendationReview(listing) || (listing.printMatch !== "exact" && listing.printMatch !== "compatible")) {
       ctx.addIssue({
         code: "custom",
         path: ["rankedChoices", index, "listingId"],
@@ -627,7 +629,7 @@ export const comparisonReportSchema = z.object({
     const inspect = report.inspectListingId
       ? report.candidates.find((candidate) => candidate.id === report.inspectListingId)
       : null;
-    const priceReview = inspect && inspect.eligible && requiresMarketPriceReview(inspect)
+    const priceReview = inspect && inspect.eligible && requiresRecommendationReview(inspect)
       && (inspect.printMatch === "exact" || inspect.printMatch === "compatible");
     if (!inspect || (inspect.printMatch !== "unknown" && !priceReview)) {
       ctx.addIssue({
@@ -846,6 +848,10 @@ export type EligibilityIssue = z.infer<typeof eligibilityIssueSchema>;
 export type NormalizedListing = z.infer<typeof normalizedListingSchema>;
 export function requiresMarketPriceReview(listing: Pick<NormalizedListing, "eligibilityIssues">): boolean {
   return listing.eligibilityIssues.some((issue) => issue.code === "price_far_above_exact_market" && issue.disposition === "review");
+}
+export function requiresRecommendationReview(listing: NormalizedListing): boolean {
+  return requiresMarketPriceReview(listing) || requiresHighValueReview(listing)
+    || listing.eligibilityIssues.some(issue => issue.code === "catalog_edition_unresolved");
 }
 export type RankedChoice = z.infer<typeof rankedChoiceSchema>;
 export type ComparisonReference = z.infer<typeof comparisonReferenceSchema>;

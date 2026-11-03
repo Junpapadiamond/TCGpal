@@ -777,37 +777,20 @@ button:disabled {
 /* The card rail is a working entrance. The second half is an inert duplicate
    that makes the -50% translation loop seamlessly. */
 .card-marquee {
-  position: relative;
-  overflow: hidden;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
   padding: 1rem 0 1.5rem;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 
 .card-marquee-track {
   display: flex;
   width: max-content;
   align-items: flex-start;
-  /* No inline padding: it counts as track width, so -50% overshoots the clone by
-     half the padding and the rail hitches once per lap. The edge mask already
-     fades cards in and out, which is what the inset was buying. */
-  animation: card-marquee var(--card-marquee-duration, 46s) linear infinite;
-  will-change: transform;
-}
-
-/* Pause in CSS, not React state: the style recalculation that stops the track
-   is the same one that applies :hover to the card under the pointer, so the
-   check button appears in the frame the rail freezes. A state round-trip let
-   the card slide away first, freezing the rail with nothing hovered.
-   `:active` is the touch equivalent — a finger down pauses the rail and reveals
-   the same affordance a cursor would. */
-.card-marquee:hover .card-marquee-track,
-.card-marquee:focus-within .card-marquee-track,
-.card-marquee:active .card-marquee-track {
-  animation-play-state: paused;
 }
 
 .card-marquee-card {
+  scroll-snap-align: start;
   position: relative;
   display: flex;
   width: 9.25rem;

@@ -60,7 +60,7 @@ export const en = {
   },
   hero: {
     title: "Find the best listing for your exact card.",
-    subtitle: "Live raw singles—or a clear pass.",
+    subtitle: "We check versions, seller records and total costs across listings.",
     scope: "Pokémon & One Piece · raw singles · U.S. listings",
   },
   rail: {
@@ -71,7 +71,7 @@ export const en = {
   },
   form: {
     heroSearchLabel: "Search for a card",
-    heroSearchPlaceholder: "Charizard 4/102 · Luffy OP01-003 · SWSH144",
+    heroSearchPlaceholder: "Card name — number optional",
     // Typed one at a time into the empty search box. Card names are the same in
     // both locales. Deliberately mixed: a bare name is enough to start, and a
     // collector number just narrows it — leading with numbers every time makes
@@ -381,7 +381,7 @@ export const en = {
     moveFoil: "Move to catch the foil",
     marketApprox: "TCGplayer market ≈",
     marketAsOf: (date: string) => `prices as of ${date}`,
-    marketStale: "over 48h old. Treat with care",
+    marketStale: "over 48h old. Historical · not used in comparison",
     marketCatalogApprox: "catalog price (approximate freshness)",
     view: "view",
     eligibleSummary: (n: number) => `Compared ${n} eligible listing${n === 1 ? "" : "s"} across marketplaces`,
@@ -596,7 +596,7 @@ export const zh: Dict = {
   },
   form: {
     heroSearchLabel: "想收哪张卡？",
-    heroSearchPlaceholder: "Charizard 4/102 · Luffy OP01-003 · SWSH144",
+    heroSearchPlaceholder: "输入卡名，卡号选填",
     heroSearchExamples: ["Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-003", "Umbreon VMAX"],
     heroSearchRequired: "输入英文卡名，卡号可以不填。",
     searchExamples: "搜索示例",
@@ -893,7 +893,7 @@ export const zh: Dict = {
     moveFoil: "移动鼠标看闪面效果",
     marketApprox: "TCGplayer 市价 ≈",
     marketAsOf: (date: string) => `价格截至 ${date}`,
-    marketStale: "已超过 48 小时，可能跟不上现在的价格",
+    marketStale: "历史记录 · 不参与比较",
     marketCatalogApprox: "卡牌目录参考价（更新时间不详）",
     view: "查看",
     eligibleSummary: (n: number) => `这次比较了 ${n} 条符合条件的商品`,

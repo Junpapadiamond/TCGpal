@@ -31,7 +31,8 @@ export async function generateMetadata({ params }: ReceiptPageProps): Promise<Me
   const verdict = model.primary?.choice.label ?? (model.outcome === "inspect_first" ? "Inspect first" : "No trustworthy buy");
   const cost = model.primary ? formatReceiptMoney(receiptListingCost(model.primary.listing)) : null;
   const checked = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(snapshot.savedAt));
-  const description = [verdict, cost, `Checked ${checked}`].filter(Boolean).join(" · ");
+  const excluded = model.report.candidates.filter(listing => !listing.eligible).length;
+  const description = [`${model.report.candidates.length} listings checked · ${excluded} excluded`, verdict, cost, `Checked ${checked}`].filter(Boolean).join(" · ");
   const title = `${cardName} — ${verdict} receipt`;
 
   return {

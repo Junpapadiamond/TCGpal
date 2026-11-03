@@ -26,14 +26,14 @@ function stubProvider(data: unknown): AiProvider {
 
 describe("verdict note fact sheet", () => {
   it("numbers the pick's decision facts from one, without duplicates", () => {
-    const facts = buildVerdictFactSheet({ report: comparisonReport(), role: "best_value", lang: "en", decision });
+    const facts = buildVerdictFactSheet({ report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision });
 
     expect(facts.length).toBeGreaterThan(4);
     expect(facts.map((fact) => fact.id)).toEqual(facts.map((_, index) => index + 1));
   });
 
   it("states the complete cost, photo count, return policy, and cheapest rival", () => {
-    const facts = buildVerdictFactSheet({ report: comparisonReport(), role: "best_value", lang: "en", decision });
+    const facts = buildVerdictFactSheet({ report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision });
     const text = factText(facts);
 
     expect(text).toContain("$834.24");
@@ -43,7 +43,7 @@ describe("verdict note fact sheet", () => {
   });
 
   it("labels the market reference as an item-price, Near Mint comparison", () => {
-    const facts = buildVerdictFactSheet({ report: comparisonReport(), role: "best_value", lang: "en", decision });
+    const facts = buildVerdictFactSheet({ report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision });
     const text = factText(facts);
 
     expect(text).toMatch(/item price/i);
@@ -52,6 +52,7 @@ describe("verdict note fact sheet", () => {
 
   it("says outright when there is no usable market reference instead of implying one", () => {
     const report = comparisonReport({ marketMid: null });
+    if (report.confirmedCard) report.confirmedCard.marketAsOf = new Date().toISOString();
     const text = factText(buildVerdictFactSheet({ report, role: "best_value", lang: "en", decision }));
 
     expect(text).toMatch(/no usable market reference/i);
@@ -60,6 +61,7 @@ describe("verdict note fact sheet", () => {
 
   it("does not compare a non-Near-Mint request to the condition-blind reference", () => {
     const report = comparisonReport({ desiredCondition: "Lightly Played", claimedCondition: "Lightly Played" });
+    if (report.confirmedCard) report.confirmedCard.marketAsOf = new Date().toISOString();
     const text = factText(buildVerdictFactSheet({ report, role: "best_value", lang: "en", decision }));
 
     expect(text).toMatch(/not a like-for-like/i);
@@ -68,6 +70,7 @@ describe("verdict note fact sheet", () => {
 
   it("reports an unstated condition as unstated", () => {
     const report = comparisonReport({ claimedCondition: "Unknown" });
+    if (report.confirmedCard) report.confirmedCard.marketAsOf = new Date().toISOString();
     const text = factText(buildVerdictFactSheet({ report, role: "best_value", lang: "en", decision }));
 
     expect(text).toMatch(/did not state a condition/i);
@@ -75,6 +78,7 @@ describe("verdict note fact sheet", () => {
 
   it("marks buyer-entered listings so the note cannot present them as source-verified", () => {
     const report = comparisonReport({ userSupplied: true });
+    if (report.confirmedCard) report.confirmedCard.marketAsOf = new Date().toISOString();
     const text = factText(buildVerdictFactSheet({ report, role: "best_value", lang: "en", decision }));
 
     expect(text).toMatch(/buyer-entered/i);
@@ -82,6 +86,7 @@ describe("verdict note fact sheet", () => {
 
   it("still produces a fact sheet when the pick has no rivals", () => {
     const report = comparisonReport({ rivals: [] });
+    if (report.confirmedCard) report.confirmedCard.marketAsOf = new Date().toISOString();
     const facts = buildVerdictFactSheet({ report, role: "best_value", lang: "en", decision });
 
     expect(facts.length).toBeGreaterThan(3);
@@ -100,7 +105,7 @@ describe("verdict note fact sheet", () => {
   });
 
   it("never leaks listing ids or urls into the facts", () => {
-    const facts = buildVerdictFactSheet({ report: comparisonReport(), role: "best_value", lang: "en", decision });
+    const facts = buildVerdictFactSheet({ report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision });
     const text = factText(facts);
 
     expect(text).not.toContain("http");
@@ -113,7 +118,7 @@ describe("verdict note fact sheet", () => {
 });
 
 describe("verdict note checker", () => {
-  const facts = buildVerdictFactSheet({ report: comparisonReport(), role: "best_value", lang: "en", decision });
+  const facts = buildVerdictFactSheet({ report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision });
 
   it("accepts a note whose every number appears in the fact sheet", () => {
     const result = checkVerdictNote(
@@ -251,7 +256,7 @@ describe("generating the verdict note", () => {
     const completeJson = vi.fn();
 
     const result = await generateVerdictNote(
-      { report: comparisonReport(), role: "best_value", lang: "en", decision },
+      { report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision },
       { provider: { completeJson } as unknown as AiProvider },
     );
 
@@ -265,7 +270,7 @@ describe("generating the verdict note", () => {
     const completeJson = vi.fn(async () => ({ data: { note: "At $834.24 this copy documents itself best.", citedFactIds: [1] }, model: "m", provider: "p" }));
 
     await generateVerdictNote(
-      { report: comparisonReport(), role: "best_value", lang: "en", decision },
+      { report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision },
       { provider: { completeJson } as unknown as AiProvider },
     );
 
@@ -283,7 +288,7 @@ describe("generating the verdict note", () => {
     vi.stubEnv("AI_VERDICT_NOTE", "1");
 
     const result = await generateVerdictNote(
-      { report: comparisonReport(), role: "best_value", lang: "en", decision },
+      { report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision },
       {
         provider: stubProvider({
           note: "At $834.24 with 10 item-specific photos, this copy documents itself better than the cheaper rivals here.",
@@ -301,7 +306,7 @@ describe("generating the verdict note", () => {
     vi.stubEnv("AI_VERDICT_NOTE", "1");
 
     const result = await generateVerdictNote(
-      { report: comparisonReport(), role: "best_value", lang: "en", decision },
+      { report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision },
       { provider: stubProvider({ note: "At $712.10 this is the strongest copy here.", citedFactIds: [1] }) },
     );
 
@@ -314,7 +319,7 @@ describe("generating the verdict note", () => {
     vi.stubEnv("AI_VERDICT_NOTE", "1");
 
     const result = await generateVerdictNote(
-      { report: comparisonReport(), role: "best_value", lang: "en", decision },
+      { report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision },
       {
         provider: {
           async completeJson() {
@@ -333,7 +338,7 @@ describe("generating the verdict note", () => {
     vi.stubEnv("AI_VERDICT_NOTE", "1");
 
     const result = await generateVerdictNote(
-      { report: comparisonReport(), role: "best_value", lang: "en", decision },
+      { report: { ...comparisonReport(), confirmedCard: { ...comparisonReport().confirmedCard!, marketAsOf: new Date().toISOString() } }, role: "best_value", lang: "en", decision },
       { provider: stubProvider({ note: "", citedFactIds: [] }) },
     );
 

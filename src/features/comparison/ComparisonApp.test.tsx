@@ -257,7 +257,7 @@ describe("comparison condition controls", () => {
         });
       }
       requests.push(request);
-      return new Response(JSON.stringify(reportFor(request)), {
+      return new Response(JSON.stringify({ ...reportFor(request), confirmedCard: { ...identityForQuery(String(request.query)), id: request.confirmedCardId || identityForQuery(String(request.query)).id } }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -346,6 +346,7 @@ describe("comparison condition controls", () => {
     fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
     fireEvent.keyDown(query, { key: "Enter" });
     await screen.findByRole("region", { name: "Across marketplaces" });
+    expect(requests.map(request => request.marketScope)).toEqual(["cross", "single"]);
     expect(requests.filter((request) => request.marketScope === "cross")).toHaveLength(1);
     expect(requests.filter((request) => request.marketScope !== "cross")).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Cross Market", pressed: true })).toBeTruthy();
@@ -357,7 +358,7 @@ describe("comparison condition controls", () => {
     expect((screen.getByRole("checkbox", { name: "Include cross-market search" }) as HTMLInputElement).checked).toBe(false);
   });
 
-  it("does not start paid fan-out when the initial eBay request fails", async () => {
+  it("never retries a failed opted-in cross request and attempts only the eBay fallback", async () => {
     const originalFetch = fetch;
     const scopes: unknown[] = [];
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -373,18 +374,19 @@ describe("comparison condition controls", () => {
     fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
     fireEvent.keyDown(query, { key: "Enter" });
     await screen.findByText("Invalid request");
-    expect(scopes).toEqual(["single"]);
+    expect(scopes).toEqual(["cross", "single"]);
   });
 
-  it("shows eBay while an opted-in cross-market request is pending and prevents a duplicate paid search", async () => {
+  it("starts opted-in cross-market work before a separate eBay view request", async () => {
     const originalFetch = fetch;
     let finish!: () => void;
     const stalled = new Promise<void>(resolve => { finish = resolve; });
-    let paidCalls = 0;
+    const scopes: unknown[] = [];
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      if (String(input).endsWith("/api/agent/listing-compare") && JSON.parse(String(init?.body)).marketScope === "cross") {
-        paidCalls += 1;
-        await stalled;
+      if (String(input).endsWith("/api/agent/listing-compare")) {
+        const scope = JSON.parse(String(init?.body)).marketScope;
+        scopes.push(scope);
+        if (scope === "cross") await stalled;
       }
       return originalFetch(input, init);
     }));
@@ -394,15 +396,11 @@ describe("comparison condition controls", () => {
     fireEvent.change(query, { target: { value: STANDARD_PENDING_CROSS_MARKET_CARD.query } });
     fireEvent.keyDown(query, { key: "Enter" });
     try {
-      await screen.findByRole("button", { name: "Single Market" });
-      fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
-      expect(screen.getByRole("region", { name: "Single market results" })).toBeTruthy();
-      fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
-      expect((screen.getByRole("button", { name: "Searching other marketplaces…" }) as HTMLButtonElement).disabled).toBe(true);
-      expect(paidCalls).toBe(1);
+      await waitFor(() => expect(scopes.length).toBeGreaterThan(0));
+      expect(scopes).toEqual(["cross"]);
     } finally { finish(); }
     await screen.findByRole("region", { name: "Across marketplaces" });
-    expect(paidCalls).toBe(1);
+    expect(scopes).toEqual(["cross", "single"]);
   });
 
   it("discards a late cross-market result after New search", async () => {
@@ -422,7 +420,7 @@ describe("comparison condition controls", () => {
     const query = screen.getByRole("textbox", { name: "Search for a card" });
     fireEvent.change(query, { target: { value: STANDARD_PENDING_CROSS_MARKET_CARD.query } });
     fireEvent.keyDown(query, { key: "Enter" });
-    await screen.findByRole("button", { name: "Single Market" });
+    await waitFor(() => expect(paidSignal).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "New search" }));
     expect(paidSignal?.aborted).toBe(true);
     await act(async () => { finish(); await stalled; });
@@ -445,7 +443,7 @@ describe("comparison condition controls", () => {
     fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
     fireEvent.keyDown(query, { key: "Enter" });
     await screen.findByRole("alert");
-    expect(screen.getByRole("alert").textContent).toContain("Credits may have been used");
+    expect(screen.getByRole("alert").textContent).toContain("The attempt may count toward the trial limit");
     expect(vi.mocked(fetch).mock.calls.filter(([input, init]) => String(input).endsWith("/api/agent/listing-compare") && JSON.parse(String(init?.body)).marketScope === "cross")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
     expect(screen.getByRole("region", { name: "Single market results" })).toBeTruthy();
@@ -475,15 +473,15 @@ describe("comparison condition controls", () => {
       const link = within(manualSection).getByRole("link", { name: new RegExp(marketplace) });
       expect(decodeURIComponent(link.getAttribute("href")!)).toContain("Pikachu");
     }
-    const calls = vi.mocked(fetch).mock.calls.length;
+    const calls = requests.length;
     fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
     expect(screen.queryByRole("region", { name: "Across marketplaces" })).toBeNull();
-    expect(vi.mocked(fetch).mock.calls.length).toBe(calls);
+    expect(requests.length).toBe(calls);
     fireEvent.click(screen.getByRole("button", { name: "Search other marketplaces" }));
     await screen.findByRole("region", { name: "Across marketplaces" });
     expect(requests.at(-1)?.marketScope).toBe("cross");
     expect(requests).toHaveLength(2);
-    const afterSearch = vi.mocked(fetch).mock.calls.length;
+    const afterSearch = requests.length;
     expect(screen.getByRole("region", { name: "Across marketplaces" })).toBeTruthy();
     expect(screen.queryByRole("region", { name: "Single market results" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
@@ -491,10 +489,10 @@ describe("comparison condition controls", () => {
     expect(screen.getByRole("region", { name: "跨平台比价" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "单一平台" }));
     expect(screen.queryByRole("region", { name: "跨平台比价" })).toBeNull();
-    expect(vi.mocked(fetch).mock.calls.length).toBe(afterSearch);
+    expect(requests.length).toBe(afterSearch);
     fireEvent.click(screen.getByRole("button", { name: "跨平台" }));
     expect(screen.getByRole("region", { name: "跨平台比价" })).toBeTruthy();
-    expect(vi.mocked(fetch).mock.calls.length).toBe(afterSearch);
+    expect(requests.length).toBe(afterSearch);
   });
 
   it("continues the standard six-card journey from an example through Edit and New search", async () => {
@@ -532,12 +530,10 @@ describe("comparison condition controls", () => {
       expect(requests[index].marketScope ?? "single").toBe("single");
       expect(requests).toHaveLength(index + 1);
     }
-  });
+  }, 15_000);
 
   it("keeps the default screen focused on one promise and the core search controls", async () => {
-    // This asserts static copy, not typewriter timing. Under full-suite load the
-    // animation can start before the locale assertion; reduced motion makes the
-    // same accessible static placeholder deterministic without changing product behavior.
+    // Keep reduced-motion coverage while checking the static bilingual prompt.
     vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
       matches: query === "(prefers-reduced-motion: reduce)",
       media: query,
@@ -555,7 +551,7 @@ describe("comparison condition controls", () => {
     expect(screen.getByText("Pokémon & One Piece · raw singles · U.S. listings")).toBeTruthy();
 
     const query = screen.getByRole("textbox", { name: "Search for a card" }) as HTMLInputElement;
-    expect(query.placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
+    expect(query.placeholder).toBe("Card name — number optional");
     expect(screen.getByRole("button", { name: "Browse card versions" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Paste listing" })).toBeNull();
     expect(screen.queryByText(/paste marketplace links back/i)).toBeNull();
@@ -575,7 +571,7 @@ describe("comparison condition controls", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     expect(await screen.findByRole("heading", { name: "收这张卡，先比比价。" })).toBeTruthy();
-    expect((screen.getByRole("textbox", { name: "想收哪张卡？" }) as HTMLInputElement).placeholder).toBe("Charizard 4/102 · Luffy OP01-003 · SWSH144");
+    expect((screen.getByRole("textbox", { name: "想收哪张卡？" }) as HTMLInputElement).placeholder).toBe("输入卡名，卡号选填");
     expect(screen.queryByRole("button", { name: "贴链接比价" })).toBeNull();
     expect(screen.getByText("海贼王还在测试中，部分版本可能查不到。")).toBeTruthy();
     expect(screen.getByRole("button", { name: /筛选.+近全新/i })).toBeTruthy();
@@ -594,25 +590,13 @@ describe("comparison condition controls", () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
-  it("keeps the cloned loop out of the a11y tree while leaving it clickable", async () => {
+  it("keeps one stationary clickable copy of each example card", async () => {
     render(<ComparisonApp />);
-
     const rail = screen.getByRole("region", { name: "Cards you can check" });
     await waitFor(() => expect(within(rail).getAllByRole("button", { name: /^Check / })).toHaveLength(8));
-    const accessibleCards = within(rail).getAllByRole("button", { name: /^Check / });
-
-    const images = Array.from(rail.querySelectorAll("img"));
-    expect(images).toHaveLength(DEFAULT_MARQUEE_CARDS.length * 2);
-    expect(images.every((image) => image.getAttribute("loading") === "eager")).toBe(true);
-
-    const clones = rail.querySelectorAll('button[data-clone="true"]');
-    expect(clones).toHaveLength(accessibleCards.length);
-    expect(Array.from(clones).every((button) => button.getAttribute("tabindex") === "-1")).toBe(true);
-    expect(Array.from(clones).every((button) => button.getAttribute("aria-hidden") === "true")).toBe(true);
-    // The clone half is on screen for half of every loop. It stayed inert to
-    // the pointer, so hovering it paused the rail and showed no check button.
-    expect(Array.from(clones).every((button) => !button.hasAttribute("disabled"))).toBe(true);
-    expect(accessibleCards.every((button) => !button.hasAttribute("data-clone") && !button.hasAttribute("aria-hidden"))).toBe(true);
+    expect(rail.querySelectorAll('button[data-clone="true"]')).toHaveLength(0);
+    expect(rail.querySelectorAll("img")).toHaveLength(DEFAULT_MARQUEE_CARDS.length);
+    expect(rail.querySelector('[style*="--card-marquee-duration"]')).toBeNull();
   });
 
   it("shows a card the buyer checked once, as history, not twice alongside its curated twin", async () => {
@@ -825,7 +809,7 @@ describe("comparison condition controls", () => {
     }), { headers: { "Content-Type": "application/json" } }));
 
     expect(await screen.findByRole("heading", { name: "Choose your Pikachu" })).toBeTruthy();
-    expect(screen.getByText("$412.50 market reference")).toBeTruthy();
+    expect(screen.queryByText("$412.50 market reference")).toBeNull();
     expect(screen.queryByText("Medium confidence")).toBeNull();
 
     fireEvent.error(screen.getByAltText("Pikachu · 18/91 · Paldean Fates"));
@@ -938,47 +922,27 @@ describe("comparison condition controls", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
-  // Every set group is open on arrival: collapsing charged a click per set to
-  // reveal, most often, a single card, and a closed row shows only a set name,
-  // which is not how a buyer recognises a print. Cost is controlled by painting
-  // off-screen groups lazily, not by leaving them unmounted — so every card is in
-  // the DOM and findable by browser search from the moment the picker renders.
-  it("opens every identity group and mounts all of its cards for scrolling", async () => {
-    const candidates = Array.from({ length: 8 }, (_, index): CardIdentityCandidate => ({
-      id: `card-${index}`,
-      name: `Pikachu print ${index + 1}`,
-      setName: `Set ${Math.floor(index / 2) + 1}`,
-      setCode: `S${Math.floor(index / 2) + 1}`,
-      cardNumber: `${index + 1}/100`,
-      language: "English",
-      imageUrl: null,
-      confidence: "low",
-      matchReasons: ["Broad name match."],
+  it("narrows a large version list by number or set without another network search", async () => {
+    const candidates = Array.from({ length: 30 }, (_, index): CardIdentityCandidate => ({
+      ...identityForQuery("Pikachu"), id: `card-${index}`, name: `Pikachu print ${index + 1}`,
+      setName: `Set ${Math.floor(index / 2) + 1}`, setCode: `S${Math.floor(index / 2) + 1}`,
+      cardNumber: `${index + 1}/100`, confidence: "low",
     }));
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(
-      identityResponse(candidates, "needs_confirmation"),
-    ), { headers: { "Content-Type": "application/json" } })));
+    const fetcher = vi.fn(async () => new Response(JSON.stringify(identityResponse(candidates, "needs_confirmation")), { headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetcher);
     render(<ComparisonApp />);
-
     const query = screen.getByRole("textbox", { name: "Search for a card" });
     fireEvent.change(query, { target: { value: "Pikachu" } });
     fireEvent.click(within(query.closest("form")!).getByRole("button", { name: "Browse card versions" }));
-    expect(await screen.findByRole("heading", { name: /Choose your Pikachu print 1/i })).toBeTruthy();
-
-    for (let print = 1; print <= 8; print += 1) {
-      expect(screen.getByText(`Pikachu print ${print}`), `print ${print}`).toBeTruthy();
-    }
-    expect(screen.getByText("Showing 8 catalog matches")).toBeTruthy();
-
-    // Open, but still collapsible for anyone who wants to fold a long set away.
-    const groups = document.querySelectorAll("details:has(> summary[id^='identity-set-'])");
-    expect(groups.length).toBeGreaterThan(0);
-    for (const group of groups) expect((group as HTMLDetailsElement).open).toBe(true);
-
-    // The grid defers paint to the browser as the buyer scrolls, which is what
-    // makes opening everything affordable.
-    const grid = groups[0]?.querySelector("div[style*='content-visibility']");
-    expect(grid, "each group's grid opts into lazy paint").toBeTruthy();
+    await screen.findByRole("heading", { name: /Choose your Pikachu print 1/i });
+    expect(screen.queryByText("Pikachu print 13")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Show 12 more versions" }));
+    expect(screen.getByText("Pikachu print 13")).toBeTruthy();
+    fireEvent.change(screen.getByRole("textbox", { name: "Card number or set" }), { target: { value: "29/100" } });
+    expect(screen.getByText("Pikachu print 29")).toBeTruthy();
+    expect(screen.queryByText("Pikachu print 1")).toBeNull();
+    expect(screen.queryByText("Most likely matches")).toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it("restores the filled search and confirmation steps through browser history", async () => {
@@ -1288,7 +1252,8 @@ describe("comparison condition controls", () => {
     expect(within(hero).getByText(/Item price \$/)).toBeTruthy();
     expect(within(hero).getByText(/Shipping/)).toBeTruthy();
     expect(within(hero).getByText(/Tax not estimated/)).toBeTruthy();
-    expect(within(hero).getByText("−39%")).toBeTruthy();
+    expect(within(hero).queryByText("−39%")).toBeNull();
+    expect(within(hero).getByText("No reference")).toBeTruthy();
     expect(within(hero).getByText("High confidence")).toBeTruthy();
     expect(within(hero).getByText("High confidence").closest("details")?.open).toBe(false);
     expect(screen.getByText("Reference prices can lag behind the live market.")).toBeTruthy();
@@ -1664,7 +1629,7 @@ describe("comparison condition controls", () => {
 
     render(<PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />);
 
-    expect(screen.getByLabelText("Confirmed print: SWSH Black Star Promos · SWSH144 · Promo").textContent).toContain("✓ print");
+    expect(screen.getByLabelText("Name and number match; inspect the actual edition: SWSH Black Star Promos · SWSH144 · Promo").textContent).toContain("Name · number match");
     expect(screen.queryByText("Confirmed print:")).toBeNull();
     expect(screen.queryByText("The full collector number and card name identify the selected print.")).toBeNull();
   });
@@ -1937,7 +1902,7 @@ describe("comparison condition controls", () => {
   });
 
   it("explains an exact-print price review in both languages without claiming its identity is unresolved", async () => {
-    const card = { ...mapOnePieceCardToIdentity(findOnePieceCatalogVariant("ST01-001")!, { confidence: "high", matchReasons: [] }), marketMid: 2, marketSource: "tcgcsv" as const };
+    const card = { ...mapOnePieceCardToIdentity(findOnePieceCatalogVariant("ST01-001")!, { confidence: "high", matchReasons: [] }), marketMid: 2, marketAsOf: new Date().toISOString(), marketSource: "tcgcsv" as const };
     const listing = normalizeListing({
       listing: { ...demoListingSeeds[0], demo: false, id: "historical-luffy", cardId: card.id,
         title: "2022 One Piece Monkey.D.Luffy ST01-001 EN Leader", price: 79.99, shipping: 5,

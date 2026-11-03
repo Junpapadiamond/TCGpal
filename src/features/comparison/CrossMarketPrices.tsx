@@ -1,7 +1,10 @@
 "use client";
 
+import { usableMarketPrice } from "@/lib/comparison/market-reference";
+
 import { collectorNumberConflict } from "@/lib/comparison/collector-number";
-import { selectMarketOffer } from "@/lib/comparison/offer-verdict";
+import { buildOfferVerdict, selectMarketOffer } from "@/lib/comparison/offer-verdict";
+import { isExcludedProduct } from "@/lib/comparison/ranking";
 import { whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
 import { trackEvent } from "@/lib/analytics";
 import type { CardIdentityCandidate, ComparisonPlatformResult, NormalizedListing, TcgGame } from "@/lib/schemas";
@@ -10,6 +13,7 @@ import { IconChevronDown } from "./icons";
 import { sourceStatusLabel } from "./source-status";
 import { MarketplaceBrand } from "./MarketplaceBrand";
 import { buildOfferVerdictCopy } from "./offer-verdict-copy";
+import { SearchSummary } from "./SearchSummary";
 import { OfferVerdictCard } from "./OfferVerdictCard";
 
 const defaultMarkets = ["eBay", "Whatnot", "Mercari"] as const;
@@ -42,17 +46,21 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
     <div className="sr-only">
       <h3>{zh ? "跨平台比价" : "Across marketplaces"}</h3>
     </div>
+    <SearchSummary candidates={candidates} />
     <div className="space-y-3">
       {markets.map((marketplace) => {
         const source = platforms.find((platform) => platform.marketplace === marketplace);
         const rows = source?.status === "complete" ? candidates.filter((listing) => listing.marketplace === marketplace
-          && listing.active && listing.raw && listing.price > 0 && listing.currency === "USD" && !listing.userSupplied
+          && listing.active && listing.raw && !isExcludedProduct(listing) && listing.price > 0 && listing.currency === "USD" && !listing.userSupplied
           && listing.printMatch !== "mismatch" && listing.matchConfidence !== "low"
           && !listing.eligibilityIssues.some((issue) => incompatible.has(issue.code))
           && !(card && collectorNumberConflict(`${listing.title} ${listing.matchAspectText}`, card.cardNumber))) : [];
-        const lead = selectMarketOffer(rows, marketplace) ?? rows.sort((a, b) => a.price - b.price || a.id.localeCompare(b.id))[0];
-        const others = rows.filter((listing) => listing.id !== lead?.id).sort((a, b) => a.price - b.price || a.id.localeCompare(b.id)).slice(0, 2);
-        const status = rows.length === 0 && source?.status === "complete"
+        const mismatches = rows.filter(listing => buildOfferVerdict(listing, candidates).issues.some(issue => issue.category === "condition" && issue.disposition === "exclude" && issue.code !== "condition_unstated"));
+        const matchingRows = rows.filter(listing => !mismatches.includes(listing));
+        const lead = selectMarketOffer(matchingRows, marketplace);
+        const others = matchingRows.filter((listing) => listing.id !== lead?.id && buildOfferVerdict(listing, candidates).kind !== "pass").sort((a, b) => a.price - b.price || a.id.localeCompare(b.id)).slice(0, 2);
+        const status = !lead && mismatches.length ? zh ? "没有符合品相要求的商品" : "No offers match your condition"
+          : rows.length === 0 && source?.status === "complete"
           ? zh ? "这次没找到对应的在售单卡" : "No matching active listings"
           : sourceStatusLabel(source, lang);
         const manualUrl = query && rows.length === 0
@@ -60,7 +68,7 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
             : marketplace === "Mercari" ? `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}` : null
           : null;
         const attribution = sourceAttribution(marketplace, source, zh);
-        const assessment = lead ? buildOfferVerdictCopy(lead, candidates, lang, card?.marketMid ?? null).assessment : null;
+        const assessment = lead ? buildOfferVerdictCopy(lead, candidates, lang, usableMarketPrice(card)).assessment : null;
         const warnings = assessment ? [
           !assessment.identityConfirmed || assessment.issues.some(issue => issue.code === "identity_unverified") ? zh ? "版本待核对" : "Check version" : null,
           assessment.issues.some(issue => issue.category === "condition" && issue.code !== "condition_unstated") ? zh ? "品相不符" : "Condition mismatch" : null,
@@ -71,7 +79,7 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
           marketplace === "Stomping Grounds" ? zh ? "库存待确认" : "Stock unconfirmed" : null,
         ].filter(Boolean).join(" · ") : "";
         const offer = lead ? <>
-            <OfferVerdictCard listing={lead} candidates={candidates} attribution={attribution} marketPrice={card?.marketMid ?? null} sourceStatus={marketplace === "eBay" ? status : undefined} embedded={marketplace !== "eBay"} />
+            <OfferVerdictCard listing={lead} candidates={candidates} attribution={attribution} marketPrice={usableMarketPrice(card)} sourceStatus={marketplace === "eBay" ? status : undefined} embedded={marketplace !== "eBay"} />
             {marketplace === "Stomping Grounds" && <p className="pb-3 text-xs leading-5 text-[#806521]">{zh
               ? "商店显示有货，但提醒维护期间库存可能不准确。请到商店确认是否有货。"
               : "Store reports stock, but warns inventory may be inaccurate during maintenance. Confirm availability at the store."}</p>}
@@ -80,11 +88,11 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
               : "Soldgraph reports these listings as active. Confirm availability on the marketplace."}</p>}
             {others.length > 0 && <details className="group/source border-t border-[#e0e5dc]">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-3 text-xs font-bold text-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">
-                {zh ? `其他 ${others.length} 条商品` : `Other ${others.length} ${others.length === 1 ? "offer" : "offers"}`}
+                {zh ? `再看 ${others.length} 条商品` : `Show ${others.length} more ${others.length === 1 ? "listing" : "listings"}`}
                 <IconChevronDown className="h-4 w-4 shrink-0 group-open/source:rotate-180" />
               </summary>
               <ul className="space-y-3 border-t border-[#e0e5dc] py-3">
-                {others.map((listing) => <li key={listing.id}><OfferVerdictCard listing={listing} candidates={candidates} attribution={attribution} marketPrice={card?.marketMid ?? null} /></li>)}
+                {others.map((listing) => <li key={listing.id}><OfferVerdictCard listing={listing} candidates={candidates} attribution={attribution} marketPrice={usableMarketPrice(card)} /></li>)}
               </ul>
             </details>}
         </> : null;
@@ -113,6 +121,13 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
             </div>}
             {offer}
           </>}
+          {mismatches.length > 0 && <details className="group/mismatches border-t border-[#e0e5dc] text-[#64716a]">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 text-xs font-medium focus-visible:outline-2 focus-visible:outline-[#2f6f73] [&::-webkit-details-marker]:hidden">
+              {zh ? `${mismatches.length} 条品相不符` : `${mismatches.length} condition ${mismatches.length === 1 ? "mismatch" : "mismatches"}`}
+              <IconChevronDown className="h-4 w-4 group-open/mismatches:rotate-180" />
+            </summary>
+            <ul className="space-y-3 pb-3">{mismatches.map(listing => <li key={listing.id}><OfferVerdictCard listing={listing} candidates={candidates} attribution={attribution} marketPrice={null} /></li>)}</ul>
+          </details>}
           </section>
         </div>;
       })}

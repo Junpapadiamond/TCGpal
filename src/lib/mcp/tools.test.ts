@@ -98,7 +98,7 @@ describe("TCGlens MCP tool mappings", () => {
       buyer: expect.objectContaining({ postalCode: "10001", desiredCondition: "Near Mint" }),
     }), expect.any(Object));
     expect(result.structuredContent).toMatchObject({
-      comparisonContractVersion: 5,
+      comparisonContractVersion: 6,
       outcome: "best_buy",
       identityConfirmation: {
         confirmed: true,

@@ -15,7 +15,7 @@ import { clearCrosswalkCache } from "./crosswalk";
 // for this test. It is not a new product mapping or a claim about today's price.
 const card: CardIdentityCandidate = {
   ...mapOnePieceCardToIdentity(findOnePieceCatalogVariant("ST01-001")!, { confidence: "high", matchReasons: [] }),
-  marketMid: 2, marketSource: "tcgcsv",
+  marketMid: 2, marketAsOf: new Date().toISOString(), marketSource: "tcgcsv",
 };
 function candidate(price = 79.99, shipping = 5, anchor: number | null = 2, condition: ConditionClaim = "Near Mint", confirmedCard: CardIdentityCandidate | null = card) {
   return normalizeListing({
@@ -48,7 +48,7 @@ describe("exact-anchor market ceiling", () => {
       cardHint: { game: "onePiece", name: "Nami", cardNumber: "OP01-016", language: "English" },
       sourceListing: { marketplace: "eBay", title: productName, price: 100, shipping: 0, claimedCondition: "Near Mint" },
       buyer: { country: "US", postalCode: "10001", taxRate: null, desiredCondition: "Near Mint" },
-    }), { fetcher });
+    }), { fetcher, now: () => new Date("2026-09-05T12:00:00Z") });
     expect(result.confirmedCard?.marketMid).toBe(5.46);
     expect(result.outcome).toBe("inspect_first");
     expect(result.inspectListingId).toBe(result.candidates[0].id);

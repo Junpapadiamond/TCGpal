@@ -45,12 +45,12 @@ export function CrossMarketSearch({ report, initialResult, initialFailed = false
   if (result) return <CrossMarketPrices candidates={result.candidates} platforms={result.platforms} card={result.confirmedCard} game={result.request.cardHint.game} />;
   return <section aria-label={zh ? "按需跨平台查询" : "On-demand cross-market search"} className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5 sm:p-6">
     {!failed && <p className="max-w-prose text-sm leading-6 text-[#64736c]">{zh
-      ? "Whatnot · Mercari 等已连接来源 · 使用额外查询额度"
-      : "Whatnot · Mercari and other connected sources · Uses extra search credits"}</p>}
+      ? "Whatnot · Mercari 等已连接来源 · 试用查询次数有限"
+      : "Whatnot · Mercari and other connected sources · Limited trial searches"}</p>}
     <button type="button" disabled={loading} onClick={() => void search()} className="primary-button mt-4">
       {loading ? <IconSpinner className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <IconCardSearch className="h-4 w-4" />}
       {loading ? zh ? "正在查询其他平台…" : "Searching other marketplaces…" : zh ? "查询其他平台" : "Search other marketplaces"}
     </button>
-    {failed && <p role="alert" className="mt-3 text-sm text-[#9a4a2c]">{zh ? "这次跨平台查询未完成，可能已使用额度。eBay 结果仍可查看；再次查询需主动点击，也可以使用下方链接自行搜索。" : "The additional search could not finish. Credits may have been used. Your eBay results are still available. Retry only when ready, or use the links below to search manually."}</p>}
+    {failed && <p role="alert" className="mt-3 text-sm text-[#9a4a2c]">{zh ? "这次跨平台查询未完成，可能已计入试用次数。eBay 结果仍可查看；再次查询需主动点击，也可以使用下方链接自行搜索。" : "The additional search could not finish. The attempt may count toward the trial limit. Your eBay results are still available. Retry only when ready, or use the links below to search manually."}</p>}
   </section>;
 }

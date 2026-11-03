@@ -210,10 +210,10 @@ describe("eBay active-listing search", () => {
       { itemId: "4", title: "Umbreon VMAX 215/203 Japanese", price: { value: "800", currency: "USD" } },
       { itemId: "9", title: "Umbreon VMAX 215/203", condition: "Ungraded", price: { value: "800", currency: "USD" } },
     ];
-    const selected = selectEbayDetailTargets(rows, { ...card, marketMid: 1000 }, 1, { ...buyer, desiredCondition: "Near Mint" });
+    const selected = selectEbayDetailTargets(rows, { ...card, marketMid: 1000, marketAsOf: new Date().toISOString() }, 1, { ...buyer, desiredCondition: "Near Mint" });
     expect(selected.map((item) => item.itemId)).toEqual(["9"]);
     expect(selected[0]?.condition).toBe("Ungraded");
-    expect(selectEbayDetailTargets(rows, { ...card, marketMid: 1000 }, 50, { ...buyer, desiredCondition: "Near Mint" })).toHaveLength(5);
+    expect(selectEbayDetailTargets(rows, { ...card, marketMid: 1000, marketAsOf: new Date().toISOString() }, 50, { ...buyer, desiredCondition: "Near Mint" })).toHaveLength(5);
   });
 
   // `searchUrl` is the FIRST search this fetcher served. The rows it returns name a

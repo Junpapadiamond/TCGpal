@@ -20,7 +20,7 @@ function report(): ComparisonReport {
     trace: [],
     platforms: [],
     webDiscoveries: [],
-    identityContractVersion: 4,
+    identityContractVersion: 4, comparisonContractVersion: 6,
     outcome: "next_moves",
     inspectListingId: null,
     demoMode: false,

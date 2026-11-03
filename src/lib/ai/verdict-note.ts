@@ -1,3 +1,4 @@
+import { usableMarketPrice } from "@/lib/comparison/market-reference";
 // The AI-written Action note.
 //
 // Boundary: deterministic code in verdict-copy.ts decides buy/wait/pass, owns the
@@ -91,7 +92,7 @@ export function resolveVerdictNoteTarget(
     choice,
     listing,
     alternatives: report.candidates.filter((candidate) => candidate.eligible && candidate.id !== listing.id),
-    marketPrice: report.demoMode ? null : report.confirmedCard?.marketMid ?? null,
+    marketPrice: report.demoMode ? null : usableMarketPrice(report.confirmedCard),
   };
 }
 

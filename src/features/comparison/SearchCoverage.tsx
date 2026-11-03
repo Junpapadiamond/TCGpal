@@ -1,3 +1,4 @@
+import { formatObservationTime } from "./observation-time";
 import type { RecallCoverage } from "@/lib/schemas";
 
 export function recallHeadline(status: RecallCoverage["status"], lang: "en" | "zh") {
@@ -27,7 +28,7 @@ export function SearchCoverage({ coverage, lang }: { coverage?: RecallCoverage[]
   return coverage?.map((check, index) => (
     <section key={`${check.marketplace}-${index}`} aria-label={zh ? "搜索覆盖抽查" : "Search coverage check"} className="mt-4 rounded-lg border border-[#d6ded5] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
       <h3 className="font-bold text-[#24312f]">{recallHeadline(check.status, lang)}</h3>
-      <p className="mt-1 text-xs">{check.marketplace} · {new Date(check.observedAt).toLocaleString(zh ? "zh-CN" : "en-US", { timeZone: "UTC" })} UTC</p>
+      <p className="mt-1 text-xs">{check.marketplace} · {formatObservationTime(check.observedAt, lang)}</p>
       <p className="mt-2">{zh ? "最多抽查 10 条低价搜索摘要；这不能证明搜索已覆盖全部商品。缺少费用、品相或版本证据的结果不会被当作合格低价。" : "Up to 10 low-price search summaries checked; this does not prove that the search is complete. Missing cost, condition or print evidence cannot establish a cheaper match."}</p>
       {check.listing && (
         <div className="mt-3 border-l-2 border-[#2f6f73] pl-3">

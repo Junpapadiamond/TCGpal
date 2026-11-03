@@ -1,3 +1,4 @@
+import { requiresHighValueReview } from "@/lib/comparison/recommendation-policy";
 import { buildOfferVerdict } from "@/lib/comparison/offer-verdict";
 import { rankListings } from "@/lib/comparison/ranking";
 import type { NormalizedListing } from "@/lib/schemas";
@@ -29,6 +30,10 @@ export function buildOfferVerdictCopy(listing: NormalizedListing, candidates: No
       nextStep: zh ? "先看符合要求的其他商品。" : "Review the offers that match your request first.", catch: null };
   }
   if (assessment.kind === "inspect") {
+    if (requiresHighValueReview(listing)) {
+      const action = buildListingAction(listing, marketPrice, lang);
+      return { assessment, label: action.label, tone: "review" as const, why: action.note, nextStep: zh ? "先核实卖家记录，并查看正反面和细节实拍。" : "Check the seller history and front, back and detail photos first.", catch: null };
+    }
     const why = assessment.priceNeedsReview
       ? zh ? "价格触发异常核对；先确认是不是正确版本和真实单卡。" : "The price triggered a review check; verify the print and actual raw card before treating it as a deal."
       : !assessment.identityConfirmed || assessment.issues.some((issue) => issue.category === "identity")

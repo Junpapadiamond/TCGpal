@@ -86,7 +86,7 @@ export async function getComparisonSnapshot(idInput: string, now: Date = new Dat
     now,
     validate(value) {
       const parsed = comparisonSnapshotSchema.safeParse(value);
-      return parsed.success ? parsed.data : null;
+      return parsed.success && parsed.data.report.comparisonContractVersion === 6 ? parsed.data : null;
     },
   });
 }

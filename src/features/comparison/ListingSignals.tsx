@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { deriveMarketRead } from "@/lib/comparison/ranking";
+import { highValueReviewReasons } from "@/lib/comparison/recommendation-policy";
 import type { NormalizedListing } from "@/lib/schemas";
 import { useLang } from "./i18n";
 
@@ -51,8 +52,10 @@ export function ListingSignals({ listing, marketPrice }: { listing: NormalizedLi
   const { feedbackPercentage: percent, feedbackCount: count } = listing.seller;
   const sellerKnown = count !== 0 && percent !== null && count !== null;
   const market = deriveMarketRead(listing, marketPrice);
-  const conditionTone: Tone = evidence === null || listing.claimedCondition === "Unknown" ? "neutral" : evidence >= 50 ? "positive" : "review";
-  const sellerTone: Tone = !sellerKnown ? "neutral" : listing.sellerTrustScore >= 60 ? "positive" : "review";
+  const conditionDiffers = listing.conditionCompatibilityScore === 0 && listing.claimedCondition !== "Unknown";
+  const conditionTone: Tone = conditionDiffers ? "review" : evidence === null || listing.claimedCondition === "Unknown" ? "neutral" : evidence >= 50 ? "positive" : "review";
+  const recordNeedsReview = highValueReviewReasons(listing).includes("seller_record");
+  const sellerTone: Tone = !sellerKnown ? "neutral" : recordNeedsReview ? "review" : listing.sellerTrustScore >= 60 ? "positive" : "review";
   const priceTone: Tone = !market || !market.conditionMatched || Math.abs(market.delta) < 0.05 ? "neutral" : market.delta < 0 ? "positive" : "review";
   const delta = market ? Math.round(Math.abs(market.delta) * 100) : 0;
   const priceValue = market ? delta === 0 ? zh ? "接近参考价" : "Near reference" : `${market.delta < 0 ? "−" : "+"}${delta}%`
@@ -61,12 +64,12 @@ export function ListingSignals({ listing, marketPrice }: { listing: NormalizedLi
     : !listing.costComplete ? zh ? "总费用未确认" : "Total unconfirmed" : zh ? "市场数据不足" : "Market data unavailable";
   return <dl aria-label={zh ? "商品概览" : "Listing signals"} className="mt-3 grid grid-cols-3 divide-x divide-[#dde3dc] border-y border-[#dde3dc] py-3 sm:py-2">
     <SignalTile label={zh ? "品相" : "Condition"} value={listing.claimedCondition === "Unknown" ? zh ? "未知" : "Unknown" : conditionShort[listing.claimedCondition]}
-      note={zh ? "卖家标注" : "Seller claim"} foot={evidenceKnown ? `${photos} ${zh ? "张照片" : photos === 1 ? "photo" : "photos"} · ${evidenceLabel}` : evidenceLabel} tone={conditionTone}>
+      note={conditionDiffers ? zh ? "品相不符" : "Condition mismatch" : zh ? "卖家标注" : "Seller claim"} foot={evidenceKnown ? `${photos} ${zh ? "张照片" : photos === 1 ? "photo" : "photos"} · ${evidenceLabel}` : evidenceLabel} tone={conditionTone}>
       <EvidenceBar value={evidence} label={zh ? "品相资料完整度" : "Condition evidence completeness"} />
     </SignalTile>
     <SignalTile label={zh ? "卖家记录" : "Seller record"} value={sellerKnown ? `${percent}%` : zh ? "未核实" : "Unverified"}
       note={sellerKnown ? zh ? "好评" : "Positive feedback" : count === 0 ? zh ? "暂无评价" : "No ratings yet" : ""}
-      foot={count === null || count === 0 ? "" : zh ? `${count.toLocaleString()} 条评价` : `${count.toLocaleString()} ratings`} tone={sellerTone}>
+      foot={count === null || count === 0 ? "" : `${zh ? `${count.toLocaleString()} 条评价` : `${count.toLocaleString()} ratings`}${recordNeedsReview ? zh ? " · 记录待核对" : " · Review record" : ""}`} tone={sellerTone}>
       <EvidenceBar value={sellerKnown ? listing.sellerTrustScore : null} label={zh ? "卖家记录评分" : "Seller record score"} />
     </SignalTile>
     <SignalTile label={zh ? "价格对比" : "Price vs market"} value={priceValue} note={priceNote}

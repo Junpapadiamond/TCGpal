@@ -80,7 +80,7 @@ export async function GET(request: Request) {
     ? await getComparisonSnapshot(id)
     : latestLookup.success ? await getLatestComparisonSnapshot(latestLookup.data) : null;
   if (!snapshot) {
-    return NextResponse.json({ error: "This saved comparison is unavailable or has expired." }, { status: 404, headers });
+    return NextResponse.json({ error: "This saved comparison is unavailable, expired, or uses older comparison rules. Run a new search." }, { status: 404, headers });
   }
   return NextResponse.json({ snapshot }, { headers });
 }

@@ -3,7 +3,7 @@ import { buildRecallCoverage } from "./recall-probe";
 import { normalizeListing } from "./ranking";
 import { buyerContextSchema, cardIdentityCandidateSchema, listingSeedSchema } from "@/lib/schemas";
 
-const card = cardIdentityCandidateSchema.parse({ id: "sv4pt5-232", name: "Mew ex", setName: "Paldean Fates", setCode: "sv4pt5", cardNumber: "232/91", language: "English", confidence: "high", matchReasons: [], marketMid: 100 });
+const card = cardIdentityCandidateSchema.parse({ id: "sv4pt5-232", name: "Mew ex", setName: "Paldean Fates", setCode: "sv4pt5", cardNumber: "232/91", language: "English", confidence: "high", matchReasons: [], marketAsOf: new Date().toISOString(), marketMid: 100 });
 const buyer = buyerContextSchema.parse({ desiredCondition: "Near Mint" });
 const seed = (id: string, price: number, extra = {}) => listingSeedSchema.parse({
   id, marketplace: "eBay", url: `https://www.ebay.com/itm/${id}`, title: "Mew ex 232/091 Near Mint", cardId: card.id,

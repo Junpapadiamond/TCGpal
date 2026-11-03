@@ -1,9 +1,13 @@
 "use client";
+
+import { hasUnresolvedCatalogEdition, marketReferenceState, usableMarketPrice } from "@/lib/comparison/market-reference";
+import { requiresRecommendationReview } from "@/lib/schemas";
+import { requiresHighValueReview } from "@/lib/comparison/recommendation-policy";
 import { SearchCoverage, recallHeadline } from "./SearchCoverage";
 import type { RecallCoverage } from "@/lib/schemas";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useFieldArray, useForm, useWatch, type UseFormRegisterReturn, type UseFormReturn } from "react-hook-form";
 import {
   IconArrowUpRight,
@@ -22,7 +26,6 @@ import {
   IconX,
 } from "./icons";
 import { initializeAnalytics, markResultShown, timeToOpenBucket, trackEvent } from "@/lib/analytics";
-import { typewriterFrame } from "./onboarding";
 import { SearchExamples, useSearchExamples } from "./SearchExamples";
 import { applySearchExample, type SearchExample } from "./search-examples";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
@@ -37,21 +40,22 @@ import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketpla
 import { buildJapanSearchQuery } from "@/lib/comparison/japan-references";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
 import { buildReceiptSummaryLine } from "./receipt-summary";
-import { expandGroupsWithinBudget, groupIdentitiesBySet, IDENTITY_GROUP_THRESHOLD, setReleaseYear } from "./identity-grouping";
+
 import {
   applyIdentityFilterChange,
   clearIdentityFilters,
   computeIdentityFacets,
   type IdentityFilters,
 } from "./identity-filters";
-import { buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
+import { buildListingAction, buildVerdictCopy, type VerdictCopy } from "./verdict-copy";
 import { ListingPhoto } from "./SellerPhotoGallery";
 import { SellerFeedback } from "./SellerFeedback";
 import { CrossMarketSearch } from "./CrossMarketSearch";
 import { MarketModeSwitch, type MarketMode } from "./MarketModeSwitch";
 import { AI_VERDICT_NOTE_UI_ENABLED, PASTE_LISTING_UI_ENABLED } from "./ui-feature-flags";
 import { submitsOnEnter } from "@/features/comparison/search-submit";
-import { summarizeExclusions } from "@/features/comparison/exclusion-summary";
+import { SearchSummary } from "./SearchSummary";
+import { formatObservationTime } from "./observation-time";
 import { useCondensedHeader } from "@/features/comparison/header-condense";
 import { NATIVE_FORM_FIELDS, parseNativeFormSubmit } from "@/lib/native-form-recovery";
 import { useAiVerdictNote } from "./use-ai-verdict-note";
@@ -448,8 +452,6 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   const cardNumber = useWatch({ control: form.control, name: "cardNumber" });
   const game = useWatch({ control: form.control, name: "game" });
   const { examples, refreshExamples } = useSearchExamples(game);
-  const exampleQueries = useMemo(() => examples.length > 0 ? examples.map((item) => item.query) : t.form.heroSearchExamples, [examples, t.form.heroSearchExamples]);
-  const typedPlaceholder = useTypedPlaceholder(exampleQueries, !heroQuery?.trim());
   const desiredCondition = useWatch({ control: form.control, name: "desiredCondition" });
   const preferredRole = useWatch({ control: form.control, name: "preferredRole" });
   const ph = game === "onePiece" ? t.form.phOnePiece : t.form.ph;
@@ -774,41 +776,32 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     setJourneyState("comparing");
     trackEvent("comparison_started", { marketplace: request.sourceListing.marketplace });
     trackEvent("source_detected", { marketplace: request.sourceListing.marketplace });
-    // Resolve eBay first. An eBay transport failure must not discard a paid
-    // result or trigger another paid run through the ordinary retry path.
-    const parsed = await requestComparisonReport({ ...request, marketScope: "single" }, t.error.temporary, operation.controller.signal);
-    if (!requestIsCurrent(operation)) return;
-    const wantsAdditional = request.marketScope === "cross" && parsed.status !== "needs_confirmation";
-    // Publish the completed primary report before waiting on optional providers.
-    // The paid request still starts once, only after the eBay transport succeeds.
-    setReport(parsed);
-    setCrossReport(null);
-    setCrossFailed(false);
-    setCrossPending(wantsAdditional);
-    setPendingRequest(parsed.request);
-    setJourneyState("result");
-    writeJourney("result", "push", currentSnapshot({ report: parsed, crossReport: null, crossFailed: wantsAdditional,
-      selectedIdentity: parsed.confirmedCard ?? identity, pendingRequest: parsed.request, journeyState: "result" }));
-    focusComparisonTarget();
-    const primaryDuration = readTimestamp() - startedAt;
-    if (parsed.confirmedCard) rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
-    trackEvent("comparison_completed", {
-      marketplace: request.sourceListing.marketplace,
-      status: parsed.status,
-      result_state: parsed.outcome,
-      demo_mode: parsed.demoMode,
-      candidate_count: parsed.candidates.length,
-      duration_bucket: primaryDuration < 5000 ? "under_5s" : primaryDuration < 15000 ? "5_to_15s" : "over_15s",
-    });
+    // A cross request already fans out all providers concurrently. Starting it
+    // after a separate eBay report made the two acquisition waits additive.
+    // Run it once, then build the single-market view from the eBay source cache
+    // populated by that request. A lost paid response is never retried.
     let additional: ComparisonReport | null = null;
     let additionalFailed = false;
-    if (wantsAdditional) {
+    if (request.marketScope === "cross") {
       try {
         additional = await requestComparisonReport(request, t.error.temporary, operation.controller.signal);
-        if (additional.status === "needs_confirmation" || (parsed.confirmedCard && additional.confirmedCard?.id !== parsed.confirmedCard.id)) throw new Error("Card identity changed");
+        if (additional.status === "needs_confirmation" || (identity && additional.confirmedCard?.id !== identity.id)) throw new Error("Card identity changed");
       } catch {
         additional = null;
         additionalFailed = true;
+      }
+      if (!requestIsCurrent(operation)) return;
+    }
+    const ebayFailed = additional?.platforms.some(source => source.marketplace === "eBay" && source.status === "fallback");
+    let parsed: ComparisonReport;
+    if (additional && ebayFailed) {
+      parsed = additional; // do not automatically reacquire a failed provider
+    } else {
+      try {
+        parsed = await requestComparisonReport({ ...request, marketScope: "single" }, t.error.temporary, operation.controller.signal);
+      } catch (error) {
+        if (!additional) throw error;
+        parsed = additional; // retain completed cross-market evidence
       }
     }
     if (!requestIsCurrent(operation)) return;
@@ -816,16 +809,23 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     setReport(parsed);
     setCrossReport(additional);
     setCrossFailed(additionalFailed);
+    setMarketMode(additional || additionalFailed ? "cross" : "single");
     setPendingRequest(parsed.request);
     setJourneyState("result");
-    writeJourney("result", "replace", currentSnapshot({
-      report: parsed,
-      crossReport: additional,
-      crossFailed: additionalFailed,
+    writeJourney("result", "push", currentSnapshot({
+      report: parsed, crossReport: additional, crossFailed: additionalFailed,
       selectedIdentity: parsed.confirmedCard ?? identity,
-      pendingRequest: parsed.request,
-      journeyState: "result",
+      pendingRequest: parsed.request, journeyState: "result",
     }));
+    focusComparisonTarget();
+    if (parsed.confirmedCard) rememberConfirmedCard(parsed.confirmedCard, request.cardHint.game);
+    const duration = readTimestamp() - startedAt;
+    trackEvent("comparison_completed", {
+      marketplace: request.sourceListing.marketplace, status: parsed.status,
+      result_state: parsed.outcome, demo_mode: parsed.demoMode,
+      candidate_count: parsed.candidates.length,
+      duration_bucket: duration < 5000 ? "under_5s" : duration < 15000 ? "5_to_15s" : "over_15s",
+    });
   }
 
   // ChatGPT/Codex and other trusted interfaces can hand the buyer directly into
@@ -1158,6 +1158,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
           <h1 className="display-soft mx-auto max-w-[800px] font-serif text-[32px] font-semibold leading-[1.12] tracking-normal text-[#24312f] sm:text-[40px] lg:text-[44px]">
             {t.hero.title}
           </h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#64736c]">{t.hero.subtitle}</p>
 
           <form className="mt-5 text-left sm:mt-6" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
             <label className="block">
@@ -1167,7 +1168,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                 <input
                   {...form.register("heroQuery")}
                   aria-label={t.form.heroSearchLabel}
-                  placeholder={typedPlaceholder ?? t.form.heroSearchPlaceholder}
+                  placeholder={t.form.heroSearchPlaceholder}
                   onKeyDown={(event) => {
                     if (!submitsOnEnter(event.nativeEvent)) return;
                     event.preventDefault();
@@ -1558,33 +1559,6 @@ type ShareFeedback =
  * end into a checkable one — the difference between an empty state and an
  * explanation.
  */
-function SearchAccounting({ candidates }: { candidates: NormalizedListing[] }) {
-  const t = useT();
-  const summary = summarizeExclusions(candidates);
-
-  return (
-    <div className="mt-4 border-t border-current/15 pt-3 text-sm">
-      <p className="font-black">{t.result.sawTitle}</p>
-      {summary.found === 0 ? (
-        <p className="mt-1 leading-6">{t.result.sawNothing}</p>
-      ) : (
-        <>
-          <p className="mt-1 leading-6">{t.result.sawSummary(summary.found, summary.excluded)}</p>
-          {summary.groups.length > 0 && (
-            <ul className="mt-2 space-y-1 leading-6">
-              {summary.groups.map((group) => (
-                <li key={group.code} className="flex gap-2">
-                  <span aria-hidden="true">·</span>
-                  <span>{(t.result.exclusionGroups[group.code] ?? t.result.exclusionGroups.other)(group.count)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
 
 function ResultsHeader({
   query,
@@ -1693,21 +1667,6 @@ function Footer() {
   );
 }
 
-type MarqueeItem = RailItem & { clone: boolean };
-
-/** The loop is the rail twice over; the second pass is the seam-free clone. */
-function buildMarqueeItems(items: RailItem[]): MarqueeItem[] {
-  return [
-    ...items.map((item) => ({ ...item, clone: false })),
-    ...items.map((item) => ({ ...item, clone: true })),
-  ];
-}
-
-// The static placeholder shows every example format at once, so it stays the
-// first impression; typing starts after it has been readable for a beat. The
-// card marquee is already moving, so the delay also keeps the two apart.
-const TYPED_PLACEHOLDER_START_MS = 1600;
-
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 // Motion is an external store, so useSyncExternalStore is the right primitive —
 // it also keeps the subscription out of an effect, which the lint rules forbid.
@@ -1725,34 +1684,6 @@ function usePrefersReducedMotion() {
   );
 }
 
-/**
- * Types the example queries into the empty search box so a first-time buyer can
- * see the "name + number" shape without reading instructions. Returns null when
- * it should not run, and the caller falls back to the static placeholder — the
- * input keeps its own aria-label, so the accessible name never animates.
- */
-function useTypedPlaceholder(examples: string[], active: boolean) {
-  const reducedMotion = usePrefersReducedMotion();
-  const [tick, setTick] = useState<number | null>(null);
-  const enabled = active && !reducedMotion;
-
-  useEffect(() => {
-    if (!enabled) return;
-    const start = window.setTimeout(() => setTick(0), TYPED_PLACEHOLDER_START_MS);
-    const id = window.setInterval(
-      () => setTick((current) => (current == null ? null : current + 1)),
-      90,
-    );
-    return () => {
-      window.clearTimeout(start);
-      window.clearInterval(id);
-    };
-  }, [enabled]);
-
-  if (!enabled || tick == null) return null;
-  return typewriterFrame(examples, tick);
-}
-
 function CardMarquee({
   items,
   onCheck,
@@ -1761,37 +1692,24 @@ function CardMarquee({
   onCheck: (card: RecentCarouselCard, source: "chase" | "recent") => void;
 }) {
   const t = useT();
-  const marqueeItems = buildMarqueeItems(items);
-  if (marqueeItems.length === 0) return null;
-  // Keep the card pitch stable as history grows: the track gets longer and the
-  // duration scales with it, so cards do not accelerate into a blur after a
-  // buyer has checked many unique prints.
-  const durationSeconds = Math.max(46, items.length * 5.75);
-  return (
-    <section className="card-marquee-wrap mt-4 sm:mt-5" aria-label={t.rail.ariaLabel}>
-      {/*
-        Pausing is CSS-only (`.card-marquee:hover`). Driving it from React state
-        put a re-render between "pointer entered" and "motion stopped", and in
-        those frames the card slid out from under a stationary cursor — the rail
-        froze with no card hovered, so the check button never appeared.
-      */}
-      <div className="card-marquee">
-        <div
-          className="card-marquee-track"
-          style={{ "--card-marquee-duration": `${durationSeconds}s` } as CSSProperties}
-        >
-          {marqueeItems.map((item, index) => (
-            <CardMarqueeItem
-              key={`${item.card.id}-${item.clone ? "clone" : "real"}-${index}`}
-              item={item}
-              source={item.source}
-              onCheck={onCheck}
-            />
-          ))}
-        </div>
+  const { lang } = useLang();
+  const rail = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
+  if (!items.length) return null;
+  return <section className="card-marquee-wrap mt-4 sm:mt-5" aria-label={t.rail.ariaLabel}>
+    <div className="flex justify-end gap-1">
+      {([-1, 1] as const).map(direction => <button key={direction} type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-md text-[#2f6f73] hover:bg-[#e9eee6] focus-visible:outline-2 focus-visible:outline-[#2f6f73]"
+        aria-label={direction < 0 ? lang === "zh" ? "上一组卡片" : "Previous cards" : lang === "zh" ? "下一组卡片" : "Next cards"}
+        onClick={() => rail.current?.scrollBy({ left: direction * 444, behavior: reducedMotion ? "auto" : "smooth" })}>
+        <IconChevronDown className={`h-4 w-4 ${direction < 0 ? "rotate-90" : "-rotate-90"}`} />
+      </button>)}
+    </div>
+    <div className="card-marquee" ref={rail}>
+      <div className="card-marquee-track">
+        {items.map(item => <CardMarqueeItem key={item.card.id} item={item} source={item.source} onCheck={onCheck} />)}
       </div>
-    </section>
-  );
+    </div>
+  </section>;
 }
 
 function CardMarqueeItem({
@@ -1799,20 +1717,17 @@ function CardMarqueeItem({
   source,
   onCheck,
 }: {
-  item: MarqueeItem;
+  item: RailItem;
   source: "chase" | "recent";
   onCheck: (card: RecentCarouselCard, source: "chase" | "recent") => void;
 }) {
   const t = useT();
-  const { card, clone } = item;
+  const { card } = item;
   return (
     <button
       type="button"
       className="card-marquee-card"
-      data-clone={clone ? "true" : undefined}
       data-rail-source={source}
-      tabIndex={clone ? -1 : undefined}
-      aria-hidden={clone ? true : undefined}
       aria-label={t.rail.checkCard(card.name, card.setName, card.cardNumber)}
       onClick={() => onCheck(card, source)}
     >
@@ -2120,7 +2035,7 @@ function CrossMarketOption({ form }: { form: UseFormReturn<ComparisonForm> }) {
     <input {...form.register("includeCrossMarket")} type="checkbox" aria-label={lang === "zh" ? "同时查询跨平台" : "Include cross-market search"}
       aria-describedby="cross-market-option-hint" className="h-4 w-4 shrink-0 accent-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2f6f73]" />
     <span className="font-semibold">{lang === "zh" ? "同时查询跨平台" : "Include cross-market search"}</span>
-    <span id="cross-market-option-hint" className="text-xs text-[#64736c]">Whatnot · Mercari · {lang === "zh" ? "使用额外查询额度" : "uses extra search credits"}</span>
+    <span id="cross-market-option-hint" className="text-xs text-[#64736c]">Whatnot · Mercari · {lang === "zh" ? "试用查询次数有限" : "limited trial searches"}</span>
   </label>;
 }
 
@@ -2160,6 +2075,13 @@ function IdentityConfirmation({
   onRefine: () => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
+  const [textFilter, setTextFilter] = useState("");
+  const [visibleCount, setVisibleCount] = useState(12);
+  const searchedIdentities = useMemo(() => {
+    const tokens = textFilter.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    return identities.filter(card => tokens.every(token => `${card.name} ${card.cardNumber} ${card.setName} ${card.setCode} ${card.setReleaseDate ?? ""}`.toLowerCase().includes(token)));
+  }, [identities, textFilter]);
   const [filters, setFilters] = useState<IdentityFilters>({ setFilter: "", rarityFilter: "", printTypeFilter: "" });
   // A print's rarity and its print-type bucket are not independent (SP CARD
   // rarity is always Special Art, SEC never coexists with Special Art, ...), so
@@ -2167,8 +2089,8 @@ function IdentityConfirmation({
   // picking one narrows the others instead of leaving a combination on screen
   // that can only ever show "0 versions".
   const facets = useMemo(
-    () => computeIdentityFacets(identities, filters, t.identity.basePrint),
-    [identities, filters, t.identity.basePrint],
+    () => computeIdentityFacets(searchedIdentities, filters, t.identity.basePrint),
+    [searchedIdentities, filters, t.identity.basePrint],
   );
   // "Should the filter bar show at all" is a static question about the full,
   // unfiltered list — unrelated to how the active filters narrow each other.
@@ -2178,22 +2100,9 @@ function IdentityConfirmation({
   })();
   const { setOptions, setOptionDetails, rarityOptions, printTypeOptions, filteredIdentities } = facets;
   function updateFilter(key: keyof IdentityFilters, value: string) {
+    setVisibleCount(12);
     setFilters((current) => applyIdentityFilterChange(current, key, value, identities, t.identity.basePrint));
   }
-  const grouped = filteredIdentities.length > IDENTITY_GROUP_THRESHOLD;
-  const groups = useMemo(() => (grouped ? groupIdentitiesBySet(filteredIdentities) : []), [grouped, filteredIdentities]);
-  const likelyMatches = useMemo(
-    () => (grouped ? filteredIdentities.filter((identity) => identity.confidence !== "low").slice(0, 4) : []),
-    [grouped, filteredIdentities],
-  );
-  const likelyMatchIds = useMemo(() => new Set(likelyMatches.map((identity) => identity.id)), [likelyMatches]);
-  const remainingGroups = useMemo(
-    () => groups
-      .map((group) => ({ ...group, items: group.items.filter((identity) => !likelyMatchIds.has(identity.id)) }))
-      .filter((group) => group.items.length > 0),
-    [groups, likelyMatchIds],
-  );
-  const expandedGroups = useMemo(() => expandGroupsWithinBudget(remainingGroups), [remainingGroups]);
   // A failed catalog lookup must not read as "no such card" — distinguish it so the
   // empty state says "temporarily unavailable, try again" instead of "no match".
   const lookupUnavailable = identities.length === 0 && warnings.some((warning) => /catalog lookup unavailable/i.test(warning));
@@ -2211,6 +2120,11 @@ function IdentityConfirmation({
           {lookupUnavailable ? t.identity.lookupUnavailable : t.identity.noMatch}
         </p>}
       </div>
+      {identities.length > 4 && <label className="field mt-5 max-w-lg">
+        <span>{lang === "zh" ? "卡号或系列" : "Card number or set"}</span>
+        <input value={textFilter} onChange={event => { setTextFilter(event.target.value); setVisibleCount(12); }} placeholder={lang === "zh" ? "例如 4/102、Base、1999" : "e.g. 4/102, Base, 1999"} />
+      </label>}
+      {identities.length > 0 && <button type="button" className="mt-2 min-h-11 text-sm font-medium text-[#2f6f73] underline underline-offset-4" onClick={onRefine}>{t.identity.editSearch}</button>}
       {showFilters && (
         <div className="mt-5 flex flex-wrap items-end gap-3 rounded-lg border border-[#d6ded5] bg-[#f7f9f5] p-3">
           {setOptions.length > 1 && (
@@ -2277,86 +2191,16 @@ function IdentityConfirmation({
         <div className="mt-6 rounded-md border border-[#e5c69e] bg-[#fff8e9] p-5 text-sm leading-6 text-[#765633]">
           {t.identity.filterNoMatches}
         </div>
-      ) : grouped ? (
-        <div className="mt-6 space-y-7">
-          {likelyMatches.length > 0 && (
-            <section aria-labelledby="identity-likely-matches">
-              <h3 id="identity-likely-matches" className="text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
-                {t.identity.bestMatches}
-              </h3>
-              <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {likelyMatches.map((identity) => (
-                  <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" compact />
-                ))}
-              </div>
-            </section>
-          )}
-          <div aria-label={t.identity.otherVersions} className="space-y-3">
-          {remainingGroups.map((group, index) => (
-            <LazyIdentityGroup
-              key={group.setName}
-              group={group}
-              defaultOpen={expandedGroups[index] ?? false}
-              headingId={`identity-set-${index}`}
-              onConfirm={onConfirm}
-            />
-          ))}
-          </div>
+      ) : <>
+        <div className={identities.length === 1 ? "mx-auto mt-6 max-w-sm" : "mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4"}>
+          {filteredIdentities.slice(0, visibleCount).map(identity => <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h3" compact={identities.length > 1} />)}
         </div>
-      ) : (
-        <div className={identities.length === 1 ? "mx-auto mt-6 max-w-sm" : "mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
-          {filteredIdentities.map((identity) => (
-            <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h3" />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
+        {filteredIdentities.length > visibleCount && <button type="button" className="secondary-button mx-auto mt-5 flex" onClick={() => setVisibleCount(count => count + 12)}>
+          {lang === "zh" ? `再看 ${Math.min(12, filteredIdentities.length - visibleCount)} 个版本` : `Show ${Math.min(12, filteredIdentities.length - visibleCount)} more versions`}
+        </button>}
+      </>}
 
-// Every set is open. Collapsing was costing a click per set to reveal, most
-// often, a single card — and a closed row shows only a set name, which is not how
-// a buyer recognises a card. They stay collapsible for anyone who wants to fold a
-// long set away.
-//
-// Opening everything at once is affordable because the grid is painted lazily by
-// the browser rather than by us: `content-visibility: auto` skips layout and paint
-// for off-screen groups and does the work as they scroll into view, and
-// `contain-intrinsic-size` reserves a plausible box so the scrollbar does not
-// jump while that happens. No observer, no virtualisation, no dependency — and if
-// a browser lacks support it simply renders everything, which is correct, just
-// less efficient. Card art is `loading="lazy"`, so images follow the same rule.
-function LazyIdentityGroup({
-  group,
-  defaultOpen,
-  headingId,
-  onConfirm,
-}: {
-  group: ReturnType<typeof groupIdentitiesBySet>[number];
-  defaultOpen: boolean;
-  headingId: string;
-  onConfirm: (identity: CardIdentityCandidate) => void;
-}) {
-  const t = useT();
-  const year = setReleaseYear(group.releaseDate);
-  // Roughly one card row per three items, at the card's own height.
-  const reservedHeight = `${Math.ceil(group.items.length / 3) * 320}px`;
-  return (
-    <details className="rounded-lg border border-[#d6ded5] bg-[#fffef9] p-3" open={defaultOpen}>
-      <summary id={headingId} className="cursor-pointer text-sm font-black uppercase tracking-[0.12em] text-[#52635c]">
-        {group.setName}
-        {year && <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">({year})</span>}
-        <span className="ml-2 font-bold normal-case tracking-normal text-[#8a978f]">{t.identity.versions(group.items.length)}</span>
-      </summary>
-      <div
-        className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-        style={{ contentVisibility: "auto", containIntrinsicSize: `auto ${reservedHeight}` }}
-      >
-        {group.items.map((identity) => (
-          <IdentityCard key={identity.id} identity={identity} onConfirm={onConfirm} titleAs="h4" />
-        ))}
-      </div>
-    </details>
+    </section>
   );
 }
 
@@ -2364,13 +2208,13 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
   const t = useT();
   const { lang } = useLang();
   const variantLabel = onePiecePrintDisplayLabel(identity, lang) ?? identity.variant;
-  const titleClass = "font-serif text-xl font-bold text-[#2f6f73]";
+  const titleClass = `font-serif ${compact ? "text-base" : "text-xl"} font-bold text-[#2f6f73]`;
   const titleDetails = [
     identity.cardNumber ? `#${identity.cardNumber}` : null,
     variantLabel,
   ].filter(Boolean).join(" / ");
   return (
-    <article className="rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-4">
+    <article className="min-w-0 rounded-md border border-[#d6ded5] bg-[#f7f9f5] p-3 sm:p-4">
       {identity.imageUrl ? (
         <HoloCardArt
           key={identity.imageUrl}
@@ -2384,8 +2228,8 @@ function IdentityCard({ identity, onConfirm, titleAs, compact = false }: { ident
       )}
       {titleAs === "h4" ? <h4 className={`${titleClass} mt-4`}>{identity.name}</h4> : <h3 className={`${titleClass} mt-4`}>{identity.name}</h3>}
       {titleDetails && <p className="mt-1 text-sm font-black text-[#24312f]">{titleDetails}</p>}
-      {typeof identity.marketMid === "number" && (
-        <p className="mt-2 font-mono text-sm font-black text-[#2f6f73]">{t.identity.marketReference(formatMoney(identity.marketMid))}</p>
+      {usableMarketPrice(identity) !== null && (
+        <p className="mt-2 font-mono text-sm font-black text-[#2f6f73]">{t.identity.marketReference(formatMoney(usableMarketPrice(identity)!))}</p>
       )}
       <CardIdentityRail identity={identity} className="mt-3" showPrintDetails={!onePiecePrintDisplayLabel(identity, lang)} />
       <button
@@ -2443,7 +2287,6 @@ function ComparisonResult({
   const { lang } = useLang();
   const listingMap = useMemo(() => new Map(report.candidates.map((candidate) => [candidate.id, candidate])), [report.candidates]);
   const eligibleListings = useMemo(() => report.candidates.filter((candidate) => candidate.eligible), [report.candidates]);
-  const excluded = report.candidates.filter((candidate) => !candidate.eligible);
 
   // Default to Best Value — the flagship "which one do I buy" recommendation,
   // a composite of price-vs-market, seller trust, and evidence — but keep every
@@ -2486,17 +2329,15 @@ function ComparisonResult({
   const alternativeListings = selectedListing
     ? prioritizedEligibleListings.filter((listing) => listing.id !== selectedListing.id)
     : prioritizedEligibleListings;
+  const excluded = report.candidates.filter(candidate => !candidate.eligible);
   const livePlatforms = report.platforms.filter((platform) => platform.configured && platform.status === "complete");
   const connectedSourceLabels = livePlatforms.map((platform) => platform.marketplace).join(" + ");
-  const marketReferenceAvailable = typeof report.confirmedCard?.marketMid === "number";
-  const listingTotals = eligibleListings.map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
+  const marketReferenceAvailable = usableMarketPrice(report.confirmedCard) !== null;
+  const listingTotals = eligibleListings.filter(listing => !requiresRecommendationReview(listing)).map((listing) => listing.estimatedLandedCost ?? listing.preTaxTotal);
   const listedRange = listingTotals.length > 0
     ? `${formatMoney(Math.min(...listingTotals))} to ${formatMoney(Math.max(...listingTotals))}`
     : t.result.unavailableRange;
-  const observedTime = new Date(report.generatedAt).toLocaleTimeString(lang === "zh" ? "zh-CN" : "en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const observedTime = formatObservationTime(report.generatedAt, lang);
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<ComparisonQuestionResponse | null>(null);
   const [qaLoading, setQaLoading] = useState(false);
@@ -2558,7 +2399,7 @@ function ComparisonResult({
       listing: selectedListing,
       choice: selectedChoice,
       alternatives: alternativeListings,
-      marketPrice: report.demoMode ? null : report.confirmedCard?.marketMid ?? null,
+      marketPrice: report.demoMode ? null : usableMarketPrice(report.confirmedCard),
       lang,
     })
     : null;
@@ -2586,7 +2427,7 @@ function ComparisonResult({
       selectedChoiceReason ?? selectedChoice.reason,
       selectedVerdictCopy ? `${t.result.actionLabel}: ${selectedVerdictCopy.action.label} — ${selectedVerdictCopy.action.note}` : "",
       selectedListing.url ? `Listing: ${selectedListing.url}` : "",
-      `Generated ${new Date(report.generatedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}`,
+      `Generated ${formatObservationTime(report.generatedAt, lang)}`,
     ].filter(Boolean).join("\n");
     try {
       const shareUrl = snapshot?.id && snapshot.durable
@@ -2662,7 +2503,7 @@ function ComparisonResult({
         <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2c879] bg-[#fff8dc] px-4 py-3 text-sm text-[#6f5a22]">
           <p>
             <strong>{t.result.savedSnapshot}{lang === "zh" ? "。" : "."}</strong>{" "}
-            {t.result.savedSnapshotBody(new Date(snapshot.savedAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US"))}
+            {t.result.savedSnapshotBody(formatObservationTime(snapshot.savedAt, lang))}
           </p>
           <button className="secondary-button" type="button" onClick={onRetrySources}>{t.result.refreshLive}</button>
         </div>
@@ -2681,11 +2522,11 @@ function ComparisonResult({
         <button type="button" className="primary-button mt-3" onClick={onRetrySources}>{lang === "zh" ? "查询 eBay" : "Search eBay"}</button>
       </div>}
       <div role="region" aria-label={lang === "zh" ? "单一平台结果" : "Single market results"} hidden={(marketMode !== "single" && !crossPending) || isCrossMarketReport(report)} className="space-y-4">
+      <SearchSummary candidates={report.candidates} />
       {outcome === "next_moves" && (
         <div className="rounded-xl border border-[#e2c879] bg-[#fff8dc] p-5 text-[#6f5a22]">
           <h3 className="font-serif text-xl font-black">{t.result.nextMovesTitle}</h3>
           <p className="mt-2 text-sm leading-6">{t.result.nextMovesBody}</p>
-          <SearchAccounting candidates={report.candidates} />
           {report.abstention?.suggestedCardId && (
             <button
               className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-[#2f6f73] px-4 text-sm font-black text-[#fcfbf6] transition hover:bg-[#24585c] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
@@ -2705,12 +2546,7 @@ function ComparisonResult({
       )}
 
       {outcome === "inspect_first" && inspectListing && (
-        <>
-          <InspectFirstHero listing={inspectListing} confirmedCard={report.confirmedCard} />
-          <div className="mx-auto max-w-[1320px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-4 text-[#4a5a54]">
-            <SearchAccounting candidates={report.candidates} />
-          </div>
-        </>
+        <InspectFirstHero listing={inspectListing} confirmedCard={report.confirmedCard} />
       )}
 
       <div className="mx-auto max-w-[1320px] space-y-3">
@@ -2722,11 +2558,11 @@ function ComparisonResult({
                 listing: selectedListing,
                 choice: selectedChoice,
                 alternatives: alternativeListings,
-                marketPrice: report.demoMode ? null : report.confirmedCard?.marketMid ?? null,
+                marketPrice: report.demoMode ? null : usableMarketPrice(report.confirmedCard),
                 lang,
               })}
               confirmedCard={report.confirmedCard}
-              marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
+              marketPrice={report.demoMode ? null : usableMarketPrice(report.confirmedCard)}
               demoMode={report.demoMode}
               onAsk={askAboutListing}
               shareFeedback={shareFeedback}
@@ -2765,7 +2601,7 @@ function ComparisonResult({
                     key={listing.id}
                     listing={listing}
                     confirmedCard={report.confirmedCard}
-                    marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null}
+                    marketPrice={report.demoMode ? null : usableMarketPrice(report.confirmedCard)}
                     demoMode={report.demoMode}
                     onAsk={askAboutListing}
                   />
@@ -2774,22 +2610,6 @@ function ComparisonResult({
             </details>
           )}
 
-          {outcome === "best_buy" && excluded.length > 0 && (
-            <details
-              className="rounded-xl border border-[#d6ded5] bg-[#fcfbf6]"
-              onToggle={(event) => {
-                if ((event.target as HTMLDetailsElement).open) trackFoldOpened("exclusions_expanded");
-              }}
-            >
-              <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-black text-[#2f6f73] transition hover:text-[#24585c]">
-                {t.result.sawSummary(report.candidates.length, excluded.length)}
-                <IconChevronDown className="h-4 w-4 shrink-0" />
-              </summary>
-              <div className="border-t border-[#d6ded5] px-4 pb-4 text-[#4a5a54]">
-                <SearchAccounting candidates={report.candidates} />
-              </div>
-            </details>
-          )}
 
           {qaOpen ? (
             <div id="comparison-qa" tabIndex={-1} className="scroll-mt-24 outline-none">
@@ -2862,6 +2682,7 @@ function ComparisonResult({
 
 function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListing; confirmedCard: CardIdentityCandidate | null }) {
   const t = useT();
+  const { lang } = useLang();
   return (
     <article className="listing-card mx-auto max-w-[1320px] border-[#ddcfad] p-4 sm:px-5">
       <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center">
@@ -2871,7 +2692,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
         <div>
           <h2 className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8d6032]">{t.result.inspectFirstTitle}</h2>
           <h3 className="mt-2 font-serif text-xl font-black text-[#24312f]">{listing.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-[#64736c]">{requiresMarketPriceReview(listing) ? t.result.inspectPriceBody : t.result.inspectFirstBody}</p>
+          <p className="mt-2 text-sm leading-6 text-[#64736c]">{confirmedCard && hasUnresolvedCatalogEdition(confirmedCard) ? lang === "zh" ? "当前目录未区分 Unlimited、Shadowless 和 1st Edition。先确认印刷版本；不据此给出购买推荐或市场价差。" : "The catalog does not distinguish Unlimited, Shadowless and 1st Edition here. Verify the edition before comparing prices or choosing a buy." : requiresHighValueReview(listing) ? buildListingAction(listing, null, lang).note : requiresMarketPriceReview(listing) ? t.result.inspectPriceBody : t.result.inspectFirstBody}</p>
           <PrintIdentitySummary listing={listing} confirmedCard={confirmedCard} compact />
         </div>
         <div className="col-span-2 sm:col-span-1 sm:text-right">
@@ -2884,7 +2705,7 @@ function InspectFirstHero({ listing, confirmedCard }: { listing: NormalizedListi
           )}
         </div>
       </div>
-      <ListingSignals listing={listing} marketPrice={confirmedCard?.marketMid ?? null} />
+      <ListingSignals listing={listing} marketPrice={usableMarketPrice(confirmedCard)} />
       <SellerFeedback listing={listing} />
     </article>
   );
@@ -2954,7 +2775,7 @@ export function ComparisonQuestionBox({
       {answer && (
         <div aria-live="polite" className="mt-4 rounded-md border border-[#c9d7ce] bg-[#f7f9f5] p-4 text-sm leading-6 text-[#52635c]">
           <p className="mb-2 text-xs font-bold text-[#64736c]">{answer.usedAi
-            ? `${zh ? "AI 解读" : "AI explanation"}${answer.model ? ` · ${answer.model}` : ""}`
+            ? (zh ? "AI 解读" : "AI explanation")
             : zh ? "按比价数据整理" : "Rule-based explanation"}</p>
           {answer.webContextChecked && (
             <p className="mb-2 inline-flex items-center gap-2 rounded-md border border-[#d9c27b] bg-[#fff8dc] px-2.5 py-1 text-xs font-black uppercase tracking-[0.08em] text-[#6f5a22]">
@@ -3048,24 +2869,13 @@ function localizedCaution(caution: string, t: Dict) {
   return caution;
 }
 
-// R3: the market anchor states where it came from and how fresh it is.
-// Staleness is measured against the report's own timestamp so render stays pure.
+// Use the same freshness explanation for the daily feed and catalog fallback.
 function MarketFreshness({ card, generatedAt }: { card: CardIdentityCandidate; generatedAt: string }) {
   const t = useT();
   const { lang } = useLang();
-  if (card.marketSource === "tcgcsv" && card.marketAsOf) {
-    const asOf = new Date(card.marketAsOf);
-    const stale = new Date(generatedAt).getTime() - asOf.getTime() > 48 * 60 * 60 * 1000;
-    return (
-      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${stale ? "bg-[#fff0d5] text-[#8d6032]" : "bg-[#ecefeb] text-[#64736c]"}`}>
-        {t.result.marketAsOf(asOf.toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US"))}
-        {stale ? ` · ${t.result.marketStale}` : ""}
-      </span>
-    );
-  }
   return (
     <span className="rounded bg-[#ecefeb] px-1.5 py-0.5 text-[10px] font-bold text-[#64736c]">
-      {t.result.marketCatalogApprox}
+      {marketFreshnessText(card, generatedAt, t, lang)}
     </span>
   );
 }
@@ -3261,16 +3071,6 @@ function ListingMetaLine({ listing }: { listing: NormalizedListing }) {
   );
 }
 
-function formatObservedAt(value: string, lang: Lang) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString(lang === "zh" ? "zh-CN" : "en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 function GameBetaNotice() {
   const t = useT();
@@ -3315,7 +3115,7 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       marketplace,
       label: lang === "zh" ? "自行搜索" : "Manual search",
       detail: null,
-      note: lang === "zh" ? "带上这张卡的搜索词，直接到平台查看。不会使用 TCGlens 查询额度。" : "Open a prefilled search on the marketplace. No TCGlens search credits used.",
+      note: lang === "zh" ? "到平台搜索这张卡。" : "Search for this card on the marketplace.",
       url: marketplace === "Whatnot" ? whatnotSearchUrl(query)
         : marketplace === "Mercari" ? `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`
         : `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`,
@@ -3339,8 +3139,8 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-[#d6ded5] bg-[#f9faf6] px-4 py-2">
         <MarketplaceBrand marketplace="TCGplayer" />
         <span className="text-xs text-[#64736c]">{lang === "zh" ? "NM 单卡参考价" : "NM item reference"}</span>
-        <span className="text-sm font-semibold tabular-nums text-[#24312f]">{typeof card.marketMid === "number" ? formatMoney(card.marketMid) : t.result.marketReferenceUnavailable}</span>
-        <span className="text-xs text-[#64736c]">{marketFreshnessText(card, report.generatedAt, t)}</span>
+        <span className="text-sm font-semibold tabular-nums text-[#24312f]">{hasUnresolvedCatalogEdition(card) ? lang === "zh" ? "版本待核对" : "Verify edition" : typeof card.marketMid === "number" ? formatMoney(card.marketMid) : t.result.marketReferenceUnavailable}</span>
+        <span className="text-xs text-[#64736c]">{marketFreshnessText(card, report.generatedAt, t, lang)}</span>
         <a className="ml-auto inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-[#2f6f73] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73]"
           href={tcgplayerUrl ?? tcgplayerSearchUrl(report.request.cardHint.game, query)} target="_blank" rel="noopener noreferrer"
           aria-label={t.result.openMarketplace("TCGplayer")}
@@ -3385,13 +3185,14 @@ function OtherMarketplaces({ report }: { report: ComparisonReport }) {
   );
 }
 
-function marketFreshnessText(card: CardIdentityCandidate, generatedAt: string, t: Dict) {
-  if (!card.marketAsOf) return t.result.marketCatalogApprox;
+function marketFreshnessText(card: CardIdentityCandidate, generatedAt: string, t: Dict, lang: Lang) {
+  if (!card.marketAsOf) return lang === "zh" ? "日期未核实 · 不参与比价" : "Date unverified · not used for comparison";
   const asOf = new Date(card.marketAsOf);
-  if (Number.isNaN(asOf.getTime())) return t.result.marketCatalogApprox;
-  const label = asOf.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  const stale = new Date(generatedAt).getTime() - asOf.getTime() > 48 * 60 * 60 * 1000;
-  return `${t.result.marketAsOf(label)}${stale ? ` · ${t.result.marketStale}` : ""}`;
+  if (Number.isNaN(asOf.getTime())) return lang === "zh" ? "日期未核实 · 不参与比价" : "Date unverified · not used for comparison";
+  const label = asOf.toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const stale = marketReferenceState(card) !== "fresh";
+  void generatedAt;
+  return `${t.result.marketAsOf(label)}${stale ? lang === "zh" ? " · 不参与比价" : " · not used for comparison" : ""}`;
 }
 
 function LensControls({
@@ -3484,7 +3285,7 @@ function RecommendedBuyHero({
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-[#64736c]">
             <MarketplaceBrand marketplace={listing.marketplace} />
             {listing.marketplace === "eBay" && !listing.userSupplied && !listing.demo && <span>{t.result.liveEbayListing}</span>}
-            <span>{t.candidate.observed(formatObservedAt(listing.observedAt, lang))}</span>
+            <span>{t.candidate.observed(formatObservationTime(listing.observedAt, lang))}</span>
           </div>
           <h2 className="mt-1.5 text-base font-semibold leading-snug tracking-[-0.025em] text-[#24312f] sm:text-[22px]">
             {listing.title}
@@ -3614,7 +3415,7 @@ export function PrintIdentitySummary({
     && reasons.every((reason) => reason === "pokemon_full_number_and_name_match" || reason === "pokemon_full_number_and_set_match");
 
   if (genericCompactEvidence) {
-    const accessibleLabel = `${t.result.exactPrintDetails}: ${metadata}`;
+    const accessibleLabel = `${lang === "zh" ? "卡名与编号匹配，仍需查看实物版本" : "Name and number match; inspect the actual edition"}: ${metadata}`;
     return (
       <span
         className="mt-1.5 inline-flex items-center rounded border border-[#c9d7ce] bg-[#f7f9f5] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#2f6f73] focus:outline-none focus:ring-2 focus:ring-[#2f6f73]/25"
@@ -3622,7 +3423,7 @@ export function PrintIdentitySummary({
         title={accessibleLabel}
         tabIndex={0}
       >
-        ✓ {t.result.printConfirmedShort}
+        {lang === "zh" ? "卡名 · 编号匹配" : "Name · number match"}
       </span>
     );
   }
@@ -3679,7 +3480,7 @@ function DecisionReceipt({
   // (sources · market + freshness · exclusions · observed time) in one line.
   const summaryLine = buildReceiptSummaryLine({
     liveSources,
-    marketMid: card?.marketMid ?? null,
+    marketMid: usableMarketPrice(card),
     marketAsOf: card?.marketAsOf ?? null,
     observedTime,
     lang,
@@ -3780,7 +3581,7 @@ function MarketReferenceLine({
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d6ded5] bg-[#f7f9f5] px-4 py-3 text-sm text-[#64736c]">
       <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[#64736c]">{t.result.marketReferenceShort}</span>
       <strong className="font-mono text-[#24312f]">
-        {typeof card?.marketMid === "number" ? formatMoney(card.marketMid) : t.result.unavailableRange}
+        {card && !hasUnresolvedCatalogEdition(card) && typeof card.marketMid === "number" ? formatMoney(card.marketMid) : t.result.unavailableRange}
       </strong>
       {card && <MarketFreshness card={card} generatedAt={generatedAt} />}
       <span className="text-[#7a8982]">· {t.result.listedRange}: {listedRange}</span>
@@ -3934,7 +3735,7 @@ function DevelopmentInspector({
         <div className="mt-5">
           <p className="text-sm font-black text-[#24312f]">Ranking breakdown</p>
           <p className="mt-1 text-xs text-[#64736c]"><ListingMetaLine listing={selectedListing} /></p>
-          <VerdictMath listing={selectedListing} marketPrice={report.demoMode ? null : report.confirmedCard?.marketMid ?? null} />
+          <VerdictMath listing={selectedListing} marketPrice={report.demoMode ? null : usableMarketPrice(report.confirmedCard)} />
         </div>
       )}
 

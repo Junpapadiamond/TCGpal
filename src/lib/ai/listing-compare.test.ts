@@ -39,7 +39,7 @@ const catalogResponse = {
         images: { symbol: "https://images.pokemontcg.io/swsh7/symbol.png" },
       },
       images: { small: "https://images.pokemontcg.io/swsh7/215.png", large: "https://images.pokemontcg.io/swsh7/215_hires.png" },
-      tcgplayer: { url: "https://prices.pokemontcg.io/tcgplayer/swsh7-215", prices: { holofoil: { low: 300, mid: 350, high: 600, market: 420 } } },
+      tcgplayer: { updatedAt: new Date().toISOString(), url: "https://prices.pokemontcg.io/tcgplayer/swsh7-215", prices: { holofoil: { low: 300, mid: 350, high: 600, market: 420 } } },
     },
   ],
   page: 1,
@@ -73,11 +73,11 @@ const request: ComparisonRequest = {
     claimedCondition: "Near Mint",
     active: true,
     seller: {
-      feedbackPercentage: null,
-      feedbackCount: null,
+      feedbackPercentage: 100,
+      feedbackCount: 500,
       returnsAccepted: false,
       topRated: false,
-      buyerProtection: false,
+      buyerProtection: true,
       subRatings: null,
     },
     evidence: {
