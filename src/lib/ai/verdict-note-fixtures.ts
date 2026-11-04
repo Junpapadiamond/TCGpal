@@ -66,6 +66,7 @@ export function listingFixture(overrides: ListingOverrides = {}): NormalizedList
     conditionCompatibilityScore: 100,
     marketComparable: true,
     priceScore: 65,
+    costScore: null,
     safetyScore: 74,
     valueScore: 86,
     riskLabel: "low_risk",

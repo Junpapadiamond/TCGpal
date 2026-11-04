@@ -47,6 +47,7 @@ function listing(overrides: Partial<NormalizedListing>): NormalizedListing {
     conditionCompatibilityScore: 25,
     marketComparable: false,
     priceScore: 50,
+    costScore: null,
     safetyScore: 30,
     valueScore: 40,
     riskLabel: "unverified",

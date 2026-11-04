@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { listingFixture } from "@/lib/ai/verdict-note-fixtures";
 import type { EligibilityIssue, NormalizedListing } from "@/lib/schemas";
 import { buildOfferVerdict, selectMarketOffer } from "./offer-verdict";
+import { rankListings } from "./ranking";
 
 const issue = (code: string, category: EligibilityIssue["category"], disposition: EligibilityIssue["disposition"] = "exclude"): EligibilityIssue => ({
   code, category, disposition, message: code,
@@ -99,9 +100,12 @@ describe("deterministic offer verdict", () => {
 
 describe("per-market offer selection", () => {
   it("reuses Best Value ranking for complete eligible market offers", () => {
-    const cheap = listingFixture({ id: "cheap", price: 90, shipping: 0, valueScore: 50 });
-    const best = listingFixture({ id: "best", price: 100, shipping: 0, valueScore: 90 });
+    const cheap = listingFixture({ id: "cheap", price: 90, shipping: 0, sellerTrustScore: 45, evidenceCompletenessScore: 16 });
+    const best = listingFixture({ id: "best", price: 100, shipping: 0, sellerTrustScore: 90, evidenceCompletenessScore: 55 });
     expect(selectMarketOffer([cheap, best, incomplete()], "eBay")?.id).toBe("best");
+    expect(selectMarketOffer([cheap, best, incomplete()], "eBay")?.id).toBe(
+      rankListings([cheap, best]).find(choice => choice.role === "best_value")?.listingId,
+    );
   });
 
   it("prefers conditional known-condition offers over normal unknown-condition and suspicious prices", () => {

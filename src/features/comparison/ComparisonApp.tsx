@@ -31,7 +31,7 @@ import { SearchExamples, useSearchExamples } from "./SearchExamples";
 import { applySearchExample, type SearchExample } from "./search-examples";
 import { parseAgentSearchParams, parseJourneySearchParams } from "@/lib/agent-search-link";
 import { estimateSalesTaxRateFromZip } from "@/lib/comparison/us-sales-tax";
-import { SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
+import { compareListingsForRole, SAFETY_WEIGHTS, VALUE_WEIGHTS } from "@/lib/comparison/ranking";
 import { MarketplaceBrand } from "./MarketplaceBrand";
 import { ListingSignals } from "./ListingSignals";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
@@ -2304,7 +2304,7 @@ function ComparisonResult({
   const eligibleListings = useMemo(() => report.candidates.filter((candidate) => candidate.eligible), [report.candidates]);
 
   // Default to Best Value — the flagship "which one do I buy" recommendation,
-  // a composite of price-vs-market, seller trust, and evidence — but keep every
+  // a composite of complete cost, condition, seller trust, and evidence — keep every
   // lens (Cheapest / Safest / Best-documented) one tap away.
   const defaultRole = useMemo<RankedChoice["role"] | null>(() => {
     const roles = report.rankedChoices.map((choice) => choice.role);
@@ -2856,20 +2856,7 @@ function roleToggleHint(role: RankedChoice["role"], t: Dict) {
 }
 
 function sortListingsForRole(listings: NormalizedListing[], role: RankedChoice["role"] | null) {
-  return [...listings].sort((a, b) => {
-    switch (role) {
-      case "lowest_landed_cost":
-        return listingCost(a) - listingCost(b) || b.safetyScore - a.safetyScore;
-      case "safest_listing":
-        return b.safetyScore - a.safetyScore || listingCost(a) - listingCost(b);
-      case "best_condition_evidence":
-        return b.evidenceCompletenessScore - a.evidenceCompletenessScore
-          || b.sellerTrustScore - a.sellerTrustScore
-          || listingCost(a) - listingCost(b);
-      default:
-        return b.valueScore - a.valueScore || listingCost(a) - listingCost(b);
-    }
-  });
+  return [...listings].sort((a, b) => compareListingsForRole(a, b, role ?? "best_value"));
 }
 
 function listingCost(listing: NormalizedListing) {
@@ -2979,6 +2966,11 @@ function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; mar
           : listing.costComplete ? t.card.mathNoMarket : t.card.estBeforeShipping,
       score: priceComponent,
     },
+    ...(listing.costScore != null ? [{
+      label: t.card.mathCost,
+      inputs: t.card.mathCostRelative(formatMoney(listingCost(listing))),
+      score: listing.costScore,
+    }] : []),
     {
       label: t.form.desiredCondition,
       inputs: conditionInputsLine(listing, t),
@@ -2987,7 +2979,7 @@ function VerdictMath({ listing, marketPrice }: { listing: NormalizedListing; mar
     { label: t.card.mathSeller, inputs: sellerInputsLine(listing, t), score: listing.sellerTrustScore, note: t.card.thTrusted },
     { label: t.card.mathEvidence, inputs: evidenceInputsLine(listing, t), score: listing.evidenceCompletenessScore, note: t.card.thDocumented },
     { label: t.card.mathRisk, inputs: riskFormula(t), score: listing.safetyScore, note: t.card.thRisk },
-    { label: t.card.mathValue, inputs: valueFormula(t), score: listing.valueScore },
+    { label: t.card.mathValue, inputs: listing.costScore == null ? t.card.mathCostUnavailable : valueFormula(t), score: listing.valueScore },
   ];
 
   return (
@@ -3853,6 +3845,7 @@ function sanitizeDiagnosticReport(report: ComparisonReport) {
       evidenceCompletenessScore: candidate.evidenceCompletenessScore,
       conditionCompatibilityScore: candidate.conditionCompatibilityScore,
       priceScore: candidate.priceScore,
+      costScore: candidate.costScore,
       safetyScore: candidate.safetyScore,
       valueScore: candidate.valueScore,
       eligibilityIssues: candidate.eligibilityIssues,

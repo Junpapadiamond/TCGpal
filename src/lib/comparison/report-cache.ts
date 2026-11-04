@@ -12,7 +12,7 @@ import { getConfiguredPlatformAgents } from "./platforms";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
-const COMPARISON_CACHE_REVISION = "ranking-v15-trust-freshness";
+const COMPARISON_CACHE_REVISION = "ranking-v16-complete-cost-photo-ties";
 const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {

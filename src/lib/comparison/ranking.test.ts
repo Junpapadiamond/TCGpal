@@ -5,6 +5,7 @@ import {
   calculatePriceComponent,
   calculateSellerTrustScore,
   calculateValueScore,
+  compareListingsForRole,
   deriveMarketRead,
   deriveVariantIntent,
   finalizeListingScores,
@@ -19,6 +20,60 @@ const buyer = {
   taxRate: 0.08,
   desiredCondition: "Unknown" as const,
 };
+
+describe("lens decision regressions", () => {
+  const seller = { feedbackPercentage: 100, feedbackCount: 2000, returnsAccepted: true, topRated: true, buyerProtection: true, subRatings: null };
+  const evidence = { photoCount: 8, frontBackExplicit: false, closeupsExplicit: false, surfaceExplicit: false, identityExplicit: false, substantiveConditionNotes: false, missing: [] };
+  const row = (id: string, overrides: Partial<(typeof demoListingSeeds)[number]> = {}, marketPrice: number | null = null) => normalizeListing({
+    listing: { ...demoListingSeeds[0], id, price: 100, shipping: 0, buyerFee: 0, demo: false, claimedCondition: "Near Mint", seller, evidence, ...overrides },
+    buyer: { ...buyer, desiredCondition: "Near Mint", taxRate: null },
+    marketPrice,
+  });
+  const valueWinner = (rows: ReturnType<typeof normalizeListing>[]) => rankListings(rows).find(choice => choice.role === "best_value")?.listingId;
+
+  it("chooses the lower complete cost when an item discount is offset by shipping or mandatory fees", () => {
+    for (const charges of [{ shipping: 50 }, { buyerFee: 50 }]) {
+      const expensive = row("item-discount", { price: 70, ...charges }, 100);
+      const better = row("lower-total", { price: 90 }, 100);
+      expect(expensive.priceScore).toBeGreaterThan(better.priceScore);
+      expect(valueWinner([expensive, better])).toBe("lower-total");
+      const finalized = finalizeListingScores([expensive, better]);
+      expect(finalized[0].priceScore).toBe(expensive.priceScore);
+      expect(finalized[1].priceScore).toBe(better.priceScore);
+      expect(finalized[0].costScore).toBeLessThan(finalized[1].costScore!);
+    }
+  });
+
+  it("does not let a one-dollar saving overwhelm a much stronger seller or flip when a costly offer is added", () => {
+    const cheap = row("thin-record", { seller: { ...seller, feedbackCount: 20, returnsAccepted: false, topRated: false } });
+    const established = row("established", { price: 101 });
+    const costly = row("costly", { price: 400, seller: cheap.seller });
+    expect(valueWinner([cheap, established])).toBe("established");
+    expect(valueWinner([cheap, established, costly])).toBe("established");
+    expect(finalizeListingScores([cheap, established, costly]).slice(0, 2)).toEqual(finalizeListingScores([cheap, established]));
+  });
+
+  it("keeps incomplete, excluded, and review-only offers out of the complete-cost comparison", () => {
+    const normal = row("normal", { price: 800 });
+    const ignored = [
+      row("missing-shipping", { price: 1, shipping: null }),
+      row("wrong-product", { price: 1, title: "Umbreon VMAX rug" }),
+      row("needs-review", { price: 500, evidence: { ...evidence, photoCount: 1 } }),
+    ];
+    const finalized = finalizeListingScores([normal, ...ignored]);
+    expect(finalized[0].costScore).toBe(100);
+    expect(finalized.slice(1).map(listing => listing.costScore)).toEqual([null, null, null]);
+    expect(rankListings(finalized).every(choice => choice.listingId === "normal")).toBe(true);
+  });
+
+  it("uses additional photos before seller strength when documentation scores tie", () => {
+    const fewer = row("fewer", { evidence: { ...evidence, photoCount: 8 } });
+    const more = row("more", { price: 110, evidence: { ...evidence, photoCount: 13 }, seller: { ...seller, topRated: false } });
+    expect(more.evidenceCompletenessScore).toBe(fewer.evidenceCompletenessScore);
+    expect(rankListings([fewer, more]).find(choice => choice.role === "best_condition_evidence")?.listingId).toBe("more");
+    expect([fewer, more].sort((a, b) => compareListingsForRole(a, b, "best_condition_evidence"))[0].id).toBe("more");
+  });
+});
 
 describe("comparison ranking", () => {
   it("calculates deterministic landed cost and optional tax", () => {
@@ -155,7 +210,7 @@ describe("comparison ranking", () => {
       missing: [],
     };
     // An auto-fetched eBay listing carries no content flags: photo count alone drives it,
-    // and a photo-rich listing still earns a solid evidence read ("best documented" = most photos).
+    // and a photo-rich listing earns evidence points without inferred photo content.
     expect(calculateEvidenceCompletenessScore({ ...base, photoCount: 0 })).toBe(0);
     expect(calculateEvidenceCompletenessScore({ ...base, photoCount: 8 })).toBe(55);
     expect(

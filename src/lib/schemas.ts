@@ -416,9 +416,12 @@ export const normalizedListingSchema = z.object({
   conditionCompatibilityScore: z.number().int().min(0).max(100),
   marketComparable: z.boolean(),
   priceScore: z.number().int().min(0).max(100),
+  // Relative complete-cost efficiency within the recommendable field. Separate
+  // from the item-only market read; null on older receipts or unrankable rows.
+  costScore: z.number().int().min(0).max(100).nullable().default(null),
   safetyScore: z.number().int().min(0).max(100),
-  // Composite "best value" score: price-vs-market + safety + evidence. Deterministic —
-  // computed alongside the other scores in normalizeListing(), never AI-assigned.
+  // Best Value combines complete cost, condition fit, seller and evidence.
+  // Finalized over the comparable field by deterministic rules, never AI-assigned.
   valueScore: z.number().int().min(0).max(100),
   // Seller-track-record risk, kept separate from evidence volume (search-API rows
   // legitimately carry thin evidence). Missing seller data → "unverified", neutral.
@@ -784,6 +787,7 @@ export type ListingSeed = Omit<
   | "conditionCompatibilityScore"
   | "marketComparable"
   | "priceScore"
+  | "costScore"
   | "safetyScore"
   | "valueScore"
   | "riskLabel"
@@ -806,7 +810,7 @@ export type ListingSeed = Omit<
 export const listingSeedSchema = normalizedListingSchema.omit({
   estimatedTax: true, preTaxTotal: true, estimatedLandedCost: true, costComplete: true,
   sellerTrustScore: true, evidenceCompletenessScore: true, conditionCompatibilityScore: true,
-  marketComparable: true, priceScore: true, safetyScore: true, valueScore: true,
+  marketComparable: true, priceScore: true, costScore: true, safetyScore: true, valueScore: true,
   riskLabel: true, trustNotes: true, eligible: true, eligibilityIssues: true, exclusionReasons: true,
   printMatch: true, printMatchConfidence: true, printMatchReasons: true, printPriceGuard: true,
 });

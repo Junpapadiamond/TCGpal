@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { comparisonReportSchema, comparisonRequestSchema } from "@/lib/schemas";
+import { comparisonReportSchema, comparisonRequestSchema, normalizedListingSchema } from "@/lib/schemas";
 import { normalizeListing } from "@/lib/comparison/ranking";
 
 const card = {
@@ -93,6 +93,15 @@ function report(overrides: Record<string, unknown>) {
 }
 
 describe("exact-print report contract", () => {
+  it("preserves historical scores while validating the new complete-cost component", () => {
+    const historical = { ...listing };
+    delete (historical as Record<string, unknown>).costScore;
+    expect(normalizedListingSchema.parse(historical).costScore).toBeNull();
+    expect(normalizedListingSchema.parse({ ...historical, costScore: 91 }).costScore).toBe(91);
+    expect(normalizedListingSchema.safeParse({ ...historical, costScore: 101 }).success).toBe(false);
+    expect(normalizedListingSchema.safeParse({ ...historical, costScore: -1 }).success).toBe(false);
+  });
+
   it("rejects an eligible v4 listing whose print identity is unresolved", () => {
     const unresolved = { ...listing, eligible: true, printMatch: "unknown" as const };
     expect(comparisonReportSchema.safeParse(report({ candidates: [unresolved], outcome: "best_buy" })).success).toBe(false);

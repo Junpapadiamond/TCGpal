@@ -94,6 +94,16 @@ function snapshot(): ComparisonSnapshot {
 }
 
 describe("receipt model", () => {
+  it("orders documented alternatives by returned photos before seller when evidence ties", () => {
+    const saved = snapshot();
+    const primary = saved.report.candidates[1];
+    const fewer = { ...listing("fewer", 165, 10), sellerTrustScore: 95 };
+    const more = { ...listing("more", 165, 21), sellerTrustScore: 70 };
+    saved.report.candidates = [primary, fewer, more];
+    saved.report.rankedChoices = [{ ...saved.report.rankedChoices[0], role: "best_condition_evidence" }];
+    expect(buildReceiptModel(saved).alternative?.id).toBe("more");
+  });
+
   it("turns a completed report into one pick and one distinct second look", () => {
     const model = buildReceiptModel(snapshot());
 

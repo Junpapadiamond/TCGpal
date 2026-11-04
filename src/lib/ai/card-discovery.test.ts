@@ -171,6 +171,7 @@ function listingFor(card: CardIdentityCandidate, cost: number): NormalizedListin
     conditionCompatibilityScore: 100,
     marketComparable: true,
     priceScore: 80,
+    costScore: null,
     safetyScore: 85,
     valueScore: 85,
     riskLabel: "low_risk",

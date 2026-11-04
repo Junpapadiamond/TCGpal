@@ -1,4 +1,5 @@
 import type { ComparisonSnapshot } from "@/lib/comparison/report-snapshot";
+import { compareListingsForRole } from "@/lib/comparison/ranking";
 import type { NormalizedListing, RankedChoice } from "@/lib/schemas";
 
 function listingCost(listing: NormalizedListing) {
@@ -6,20 +7,7 @@ function listingCost(listing: NormalizedListing) {
 }
 
 function sortListingsForRole(listings: NormalizedListing[], role: RankedChoice["role"] | null) {
-  return [...listings].sort((a, b) => {
-    switch (role) {
-      case "lowest_landed_cost":
-        return listingCost(a) - listingCost(b) || b.safetyScore - a.safetyScore;
-      case "safest_listing":
-        return b.safetyScore - a.safetyScore || listingCost(a) - listingCost(b);
-      case "best_condition_evidence":
-        return b.evidenceCompletenessScore - a.evidenceCompletenessScore
-          || b.sellerTrustScore - a.sellerTrustScore
-          || listingCost(a) - listingCost(b);
-      default:
-        return b.valueScore - a.valueScore || listingCost(a) - listingCost(b);
-    }
-  });
+  return [...listings].sort((a, b) => compareListingsForRole(a, b, role ?? "best_value"));
 }
 
 export function buildReceiptModel(snapshot: ComparisonSnapshot) {

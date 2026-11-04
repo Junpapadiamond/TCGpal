@@ -126,6 +126,46 @@ describe("eBay URL boundary", () => {
     }
   });
 
+  it.each(["additionalImages", "thumbnailImages"] as const)(
+    "counts size variants of one seller photo once in %s and retains the largest returned image",
+    async (galleryField) => {
+      process.env.EBAY_CLIENT_ID = "test-id";
+      process.env.EBAY_CLIENT_SECRET = "test-secret";
+      resetEbayTokenCacheForTests();
+      const small = "https://i.ebayimg.com/images/g/same-front/s-l225.jpg";
+      const large = "https://i.ebayimg.com/images/g/same-front/s-l1600.jpg";
+      const back = "https://i.ebayimg.com/images/g/distinct-back/s-l1200.jpg";
+      const fetcher = vi.fn<typeof fetch>(async (input) => {
+        if (String(input).includes("/identity/v1/oauth2/token")) {
+          return new Response(JSON.stringify({ access_token: "t" }), { status: 200 });
+        }
+        return new Response(JSON.stringify({
+          itemId: "123456789012",
+          title: "Umbreon VMAX 215/203",
+          price: { value: "420.00", currency: "USD" },
+          image: { imageUrl: small },
+          [galleryField]: [{ imageUrl: back }, { imageUrl: large }, { imageUrl: small }],
+        }), { status: 200 });
+      });
+      try {
+        const listing = await getEbayListingByUrl(
+          "https://www.ebay.com/itm/Umbreon/123456789012",
+          { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
+          fetcher,
+        );
+        expect(listing.imageUrl).toBe(large);
+        expect(listing.imageUrls).toEqual([large, back]);
+        expect(listing.evidence.photoCount).toBe(2);
+        expect(listing.evidence.frontBackExplicit).toBe(false);
+        expect(fetcher).toHaveBeenCalledTimes(2);
+      } finally {
+        delete process.env.EBAY_CLIENT_ID;
+        delete process.env.EBAY_CLIENT_SECRET;
+        resetEbayTokenCacheForTests();
+      }
+    },
+  );
+
   it("treats a negative eBay feedback sentinel as unknown", async () => {
     process.env.EBAY_CLIENT_ID = "test-id";
     process.env.EBAY_CLIENT_SECRET = "test-secret";

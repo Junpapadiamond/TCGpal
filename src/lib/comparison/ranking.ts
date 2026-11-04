@@ -182,11 +182,9 @@ function sellerSubRatingToScore(value: number) {
   return Math.max(0, Math.min(100, ((value - 1) / 4) * 100));
 }
 
-// Maps a listing's price relative to the market anchor onto a 0-100 component: at
-// or below 70% of market scores 100 (clearly below market — a strong "best value"
-// signal), at market (100%) scores 50, 30%+ above market scores 0. When no market
-// price is known, returns a neutral midpoint so the composite still ranks on
-// safety/evidence alone rather than collapsing to zero.
+// Item-only market position, separate from Best Value's complete-cost input:
+// at/below 70% of market scores 100, at market 50, 30%+ above market 0.
+// Without an applicable reference, retain a neutral midpoint.
 export function calculatePriceComponent(itemPrice: number, marketPrice: number | null) {
   if (marketPrice === null || marketPrice <= 0) return 50;
   const ratio = itemPrice / marketPrice;
@@ -344,7 +342,10 @@ export function normalizeListing(input: {
     ? calculatePriceComponent(listing.price, marketComparable ? marketPrice : null)
     : 0;
   const valueScore = calculateValueScore({
-    priceComponent: priceScore,
+    // Complete-cost value needs the comparable field. Keep this provisional
+    // input neutral until finalizeListingScores; the item-only market read is
+    // separate and must not reward a discount offset by checkout charges.
+    priceComponent: costComplete ? 50 : 0,
     conditionCompatibilityScore,
     sellerTrustScore,
     evidenceCompletenessScore,
@@ -421,6 +422,7 @@ export function normalizeListing(input: {
     conditionCompatibilityScore,
     marketComparable,
     priceScore,
+    costScore: null,
     safetyScore,
     valueScore,
     riskLabel,
@@ -450,50 +452,66 @@ function formatRating(value: number | null) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-// When a condition-level market anchor is unavailable, price still matters — but
-// only relative to the compatible listings in this report. This prevents a played
-// copy from borrowing an NM aggregate reference while keeping Best Value honest.
+// Value compares complete checkout costs within the recommendable field; the
+// separate item-only priceScore remains a market-reference read. A cost ratio
+// avoids stretching a one-dollar spread into the whole scale, and adding a
+// costlier offer cannot change the existing offers' scores. This is relative
+// cost efficiency, not a claim that the cheapest available offer is a bargain.
 export function finalizeListingScores(listings: NormalizedListing[]) {
-  const field = listings.filter((listing) =>
-    listing.eligible && listing.costComplete && !listing.marketComparable && !requiresRecommendationReview(listing)
-  );
+  const canRecommend = (listing: NormalizedListing) => listing.eligible && listing.costComplete
+    && !requiresRecommendationReview(listing) && !isExcludedProduct(listing);
+  const field = listings.filter(canRecommend);
   const costs = field.map(comparableCost);
   const min = costs.length > 0 ? Math.min(...costs) : null;
-  const max = costs.length > 0 ? Math.max(...costs) : null;
 
   return listings.map((listing) => {
-    if (!listing.eligible || !listing.costComplete || listing.marketComparable || requiresRecommendationReview(listing) || min === null || max === null) {
-      return listing;
-    }
-    const priceScore = max === min
-      ? 50
-      : Math.round(100 - ((comparableCost(listing) - min) / (max - min)) * 100);
+    const cost = comparableCost(listing);
+    const costScore = !canRecommend(listing) || min === null
+      ? null
+      : cost === 0 ? 100 : Math.round((min / cost) * 100);
     const valueScore = calculateValueScore({
-      priceComponent: priceScore,
+      priceComponent: costScore ?? (listing.costComplete ? 50 : 0),
       conditionCompatibilityScore: listing.conditionCompatibilityScore,
       sellerTrustScore: listing.sellerTrustScore,
       evidenceCompletenessScore: listing.evidenceCompletenessScore,
     });
-    return normalizedListingSchema.parse({ ...listing, priceScore, valueScore });
+    return normalizedListingSchema.parse({ ...listing, costScore, valueScore });
   });
+}
+
+// One ordering contract for both the selected lens and its displayed alternatives.
+// Callers retain their eligibility/review gates before using this comparator.
+export function compareListingsForRole(a: NormalizedListing, b: NormalizedListing, role: RankedChoice["role"]) {
+  const costOrder = comparableCost(a) - comparableCost(b);
+  const stableOrder = a.id.localeCompare(b.id);
+  switch (role) {
+    case "best_value":
+      return b.valueScore - a.valueScore || costOrder || stableOrder;
+    case "lowest_landed_cost":
+      return costOrder || b.safetyScore - a.safetyScore || stableOrder;
+    case "safest_listing":
+      return b.safetyScore - a.safetyScore || costOrder || stableOrder;
+    case "best_condition_evidence":
+      return b.evidenceCompletenessScore - a.evidenceCompletenessScore
+        || b.evidence.photoCount - a.evidence.photoCount
+        || b.sellerTrustScore - a.sellerTrustScore || costOrder || stableOrder;
+  }
 }
 
 export function rankListings(
   listings: NormalizedListing[],
   context: { marketPrice?: number | null } = {},
 ): RankedChoice[] {
-  const eligible = finalizeListingScores(listings).filter((listing) => listing.eligible && !requiresRecommendationReview(listing) && !isExcludedProduct(listing));
+  const eligible = finalizeListingScores(listings).filter((listing) => listing.eligible && listing.costComplete && !requiresRecommendationReview(listing) && !isExcludedProduct(listing));
   if (!eligible.length) return [];
 
   const marketPrice = context.marketPrice ?? null;
   const choices: RankedChoice[] = [];
 
   // Best Value leads: the flagship recommendation — a deterministic composite of
-  // price-vs-market, seller trust, and evidence, not just "cheapest." This is the
+  // complete cost, condition fit, seller trust, and evidence. This is the
   // product's default answer to "which one do I buy."
-  const bestValue = [...eligible].sort((a, b) => b.valueScore - a.valueScore
-    || comparableCost(a) - comparableCost(b)
-    || a.id.localeCompare(b.id))[0];
+  const bestValue = [...eligible].sort((a, b) => compareListingsForRole(a, b, "best_value"))[0];
   choices.push(makeChoice(
     "best_value",
     bestValue,
@@ -502,11 +520,7 @@ export function rankListings(
       + aboveMarketContext(bestValue, marketPrice),
   ));
 
-  const cheapest = [...eligible].sort((a, b) =>
-    comparableCost(a) - comparableCost(b)
-    || b.safetyScore - a.safetyScore
-    || a.id.localeCompare(b.id)
-  )[0];
+  const cheapest = [...eligible].sort((a, b) => compareListingsForRole(a, b, "lowest_landed_cost"))[0];
   if (cheapest) {
     choices.push(makeChoice(
       "lowest_landed_cost",
@@ -519,11 +533,7 @@ export function rankListings(
     ));
   }
 
-  const safest = [...eligible].sort((a, b) =>
-    b.safetyScore - a.safetyScore
-    || comparableCost(a) - comparableCost(b)
-    || a.id.localeCompare(b.id)
-  )[0];
+  const safest = [...eligible].sort((a, b) => compareListingsForRole(a, b, "safest_listing"))[0];
   if (safest) {
     choices.push(makeChoice(
       "safest_listing",
@@ -534,12 +544,7 @@ export function rankListings(
     ));
   }
 
-  const bestEvidence = [...eligible].sort((a, b) =>
-    b.evidenceCompletenessScore - a.evidenceCompletenessScore
-    || b.sellerTrustScore - a.sellerTrustScore
-    || comparableCost(a) - comparableCost(b)
-    || a.id.localeCompare(b.id)
-  )[0];
+  const bestEvidence = [...eligible].sort((a, b) => compareListingsForRole(a, b, "best_condition_evidence"))[0];
   if (bestEvidence) {
     choices.push(makeChoice(
       "best_condition_evidence",

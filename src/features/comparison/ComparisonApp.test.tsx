@@ -1209,6 +1209,30 @@ describe("comparison condition controls", () => {
     expect(screen.queryByText("raw provider warning")).toBeNull();
   });
 
+  it.each([null, 91])("only explains complete-cost math when that score was recorded (%s)", async (costScore) => {
+    const request = buildStandardComparisonRequest(STANDARD_COMPARISON_FLOW_CARDS[0]);
+    const listing = { ...normalizeListing({ listing: demoListingSeeds[0], buyer: request.buyer }), costScore };
+    const savedReport: ComparisonReport = {
+      ...reportFor(request), confirmedCard: identityForQuery("Umbreon VMAX 215/203"),
+      candidates: [listing], outcome: "best_buy",
+      rankedChoices: [{ role: "best_value", listingId: listing.id, label: "Best value", reason: "Saved result", confidence: "medium" }],
+    };
+    const receiptId = "0123456789abcdef0123456789abcdef";
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ snapshot: {
+      id: receiptId, report: savedReport, savedAt: new Date().toISOString(), expiresAt: "2027-01-01T00:00:00.000Z",
+    } })));
+    window.history.replaceState(null, "", `/?receipt=${receiptId}&inspect=1`);
+    render(<ComparisonApp runtimeEnvironment="development" />);
+    const inspector = await screen.findByRole("region", { name: "Development inspector" });
+    if (costScore === null) {
+      expect(within(inspector).queryByText(/40% complete cost/)).toBeNull();
+      expect(within(inspector).getByText("No complete-cost score recorded")).toBeTruthy();
+    } else {
+      expect(within(inspector).getByText(/40% complete cost/)).toBeTruthy();
+      expect(within(inspector).getByText("Complete-cost score")).toBeTruthy();
+    }
+  });
+
   it("creates a durable receipt link for a pure card result and shares that URL", async () => {
     const exactCard = {
       ...identityForQuery("Umbreon VMAX 215/203"),

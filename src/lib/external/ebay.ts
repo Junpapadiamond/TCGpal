@@ -555,10 +555,25 @@ function sellerImageUrls(item: z.infer<typeof ebayItemSchema>) {
   const additional = item.additionalImages?.length
     ? item.additionalImages
     : item.thumbnailImages;
-  return [...new Set([
+  const images = [
     ...(primary ? [primary] : []),
     ...(additional ?? []).map((image) => image.imageUrl),
-  ])].slice(0, 24);
+  ];
+  const unique = new Map<string, { url: string; size: number }>();
+  for (const imageUrl of images) {
+    const url = new URL(imageUrl);
+    // Browse can return the same image ID as a thumbnail and a full-size image.
+    // Count the photo once, preserving gallery order and the largest URL actually
+    // returned by eBay. Do not infer image identity for other hosts/path formats.
+    const image = url.protocol === "https:" && url.hostname === "i.ebayimg.com"
+      ? /^\/images\/g\/([^/]+)\/s-l(\d+)\.(?:jpe?g|png|webp|avif)$/i.exec(url.pathname)
+      : null;
+    const key = image ? `${url.origin}/images/g/${image[1]}` : imageUrl;
+    const size = image ? Number(image[2]) : 0;
+    const existing = unique.get(key);
+    if (!existing || size > existing.size) unique.set(key, { url: imageUrl, size });
+  }
+  return [...unique.values()].slice(0, 24).map((image) => image.url);
 }
 
 function toSourceListing(item: z.infer<typeof ebayItemSchema>, fallbackUrl: string): EbaySourceListing {
@@ -929,7 +944,7 @@ function evidenceFromText(text: string, photoCount: number, substantiveCondition
   // longer infer front/back, corner, or surface coverage from the seller's prose:
   // that guesswork was routinely wrong (every holo listing says "holo", etc.). Those
   // read as not-verified; the buyer reviews the photos via the listing link. Photo
-  // count is the honest evidence signal, so "best documented" means "most photos".
+  // count is a source signal, not proof of photo content or gallery completeness.
   const identityExplicit = /\b\d{1,3}\/\d{1,3}\b/.test(text.toLowerCase());
   return {
     photoCount,

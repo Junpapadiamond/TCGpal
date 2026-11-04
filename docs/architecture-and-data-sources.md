@@ -13,6 +13,8 @@
 
 Every AI failure falls back to deterministic behavior.
 
+Best Value combines complete-cost efficiency (40%), condition fit (25%), seller record (20%), and evidence completeness (15%). `finalizeListingScores` computes `costScore = round(100 × minimum recommendable total / listing total)`, using optional estimated tax consistently when supplied. Unknown charges and review/excluded offers cannot set the baseline. Equal/singleton totals score 100 relatively; this is neither a market discount nor confidence. `priceScore` remains the separate item-only market read. Best-documented keeps evidence coverage first and breaks ties with distinct returned photos before seller/cost. Server, result alternatives and receipt alternatives reuse `compareListingsForRole`. See [ranking audit](ranking-lenses-2026-11-03.md).
+
 ## Interface architecture
 
 ```text
