@@ -677,6 +677,9 @@ async function getEbayItemDetail(
   if (!response.ok) throw new Error(`eBay item detail failed with ${response.status}.`);
   const item = ebayItemSchema.parse(await response.json());
   if (item.itemId !== itemId) throw new Error("eBay item detail returned another item.");
+  if (item.price.currency !== "USD") throw new Error("eBay item detail returned a non-USD price.");
+  const price = Number(item.price.value);
+  if (!item.price.value.trim() || !Number.isFinite(price) || price < 0) throw new Error("eBay item detail returned an invalid price.");
   return item;
 }
 

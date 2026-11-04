@@ -342,7 +342,7 @@ export async function runPlatformFanout({
       const sourceCacheKey = agent.id === "ebay" ? ebayCacheKey : undefined;
       try {
         if (sourceCacheKey) {
-          const cached = await getJsonCache("ebay-search-v3-detail-recovery", sourceCacheKey, {
+          const cached = await getJsonCache("ebay-search-v4-detail-money", sourceCacheKey, {
             validate(value) {
               const parsed = ebaySearchSnapshotSchema.safeParse(value);
               if (!parsed.success) return null;
@@ -368,7 +368,7 @@ export async function runPlatformFanout({
         if (sourceCacheKey && !signal?.aborted) {
           const snapshot = ebaySearchSnapshotSchema.safeParse({ seeds, recallObservation, capturedAt: new Date(startedAt).toISOString() });
           const ttlSeconds = Math.floor((startedAt + 15 * 60_000 - Date.now()) / 1000);
-          if (snapshot.success && ttlSeconds > 0) await setJsonCache("ebay-search-v3-detail-recovery", sourceCacheKey, snapshot.data, { ttlSeconds });
+          if (snapshot.success && ttlSeconds > 0) await setJsonCache("ebay-search-v4-detail-money", sourceCacheKey, snapshot.data, { ttlSeconds });
         }
         return { agent, seeds, recallObservation, durationMs: Date.now() - startedAt };
       } catch (error) {

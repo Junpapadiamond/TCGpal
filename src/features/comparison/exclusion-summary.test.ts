@@ -102,7 +102,7 @@ describe("summarizeExclusions", () => {
 
   it("does not guess missing evidence for unknown issues or excluded rows without an explanation", () => {
     const summary = summarizeExclusions([
-      listing("unknown", false, [{ code: "future_gate", category: "other" }]),
+      listing("unknown", false, [{ code: "future_gate", category: "identity" }]),
       listing("no-reason", false),
       listing("incomplete-with-conflict", false, [{ code: "shipping_unknown", category: "cost" }, { code: "language_conflict", category: "language" }]),
     ]);

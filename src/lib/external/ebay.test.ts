@@ -480,6 +480,34 @@ describe("eBay active-listing search", () => {
       expect(listings.map((listing) => listing.price)).toEqual([800, 900]);
       expect(fetcher.mock.calls.filter(([input]) => String(input).includes("/item/1"))).toHaveLength(2);
     });
+
+    it.each([
+      { label: "non-USD", price: { value: "790.00", currency: "EUR" } },
+      { label: "empty", price: { value: "", currency: "USD" } },
+      { label: "whitespace", price: { value: "  ", currency: "USD" } },
+      { label: "malformed", price: { value: "not-a-price", currency: "USD" } },
+      { label: "nonfinite", price: { value: "Infinity", currency: "USD" } },
+      { label: "negative", price: { value: "-1", currency: "USD" } },
+    ])("rejects a $label detail price without replacing valid summary facts", async ({ price }) => {
+      const fetcher = fetcherFor({ ...detail, price });
+      const [listing] = await searchEbayAlternatives(card, buyer, fetcher, undefined, null, 1);
+      expect(listing.price).toBe(800);
+      expect(listing.currency).toBe("USD");
+      expect(listing.shipping).toBe(0);
+      expect(listing.seller.feedbackCount).toBe(2000);
+      expect(listing.sourceDetailStatus).toBe("failed");
+      expect(fetcher.mock.calls.filter(([input]) => String(input).includes("/item/1"))).toHaveLength(2);
+      expect(fetcher).toHaveBeenCalledTimes(4);
+    });
+
+    it("preserves an explicit zero-dollar USD detail price", async () => {
+      const fetcher = fetcherFor({ ...detail, price: { value: "0.00", currency: "USD" } });
+      const [listing] = await searchEbayAlternatives(card, buyer, fetcher, undefined, null, 1);
+      expect(listing.price).toBe(0);
+      expect(listing.currency).toBe("USD");
+      expect(listing.sourceDetailStatus).toBe("received");
+      expect(fetcher).toHaveBeenCalledTimes(3);
+    });
   });
 
   // One Piece special prints share their card number with the (far cheaper) base
