@@ -27,6 +27,9 @@ const exclusionPatterns = [
   // and the phrase is never a real print class in either game.
   /\bfan[\s-]?art\b/i,
   /\baltered\b/i,
+  // Explicit sun bleaching is a physical alteration, not a print treatment.
+  // Keep "Ghost Rare", "Sun & Moon" and the Bleach franchise out of this rule.
+  /\bsun[\s-]*bleached\b/i,
   /\bmagnet\b/i,
   /\bkeychain\b/i,
   /\bplush\b/i,
@@ -58,7 +61,10 @@ const exclusionPatterns = [
 ];
 
 export function isExcludedProduct(listing: { title: string; matchAspectText?: string }) {
-  if (isGradedListing(listing.title) || exclusionPatterns.some(pattern => pattern.test(listing.title))) return true;
+  // Remove only an explicit local denial. Other alteration/product claims in
+  // the same title still count, including a contradictory bleaching claim.
+  const productTitle = listing.title.replace(/\b(?:not|never)\s+(?:been\s+)?sun[\s-]*bleached\b/gi, "");
+  if (isGradedListing(listing.title) || exclusionPatterns.some(pattern => pattern.test(productTitle))) return true;
   // Structured product type is independent of the card name printed on merch.
   // Do not scan every aspect for broad words such as "sealed" or "custom".
   const type = listing.matchAspectText?.match(/(?:^|[.;])\s*(?:type|product type)\s*:\s*([^.;]+)/i)?.[1];

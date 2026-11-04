@@ -253,7 +253,7 @@ describe("eBay active-listing search", () => {
     const selected = selectEbayDetailTargets(rows, { ...card, marketMid: 1000, marketAsOf: new Date().toISOString() }, 1, { ...buyer, desiredCondition: "Near Mint" });
     expect(selected.map((item) => item.itemId)).toEqual(["9"]);
     expect(selected[0]?.condition).toBe("Ungraded");
-    expect(selectEbayDetailTargets(rows, { ...card, marketMid: 1000, marketAsOf: new Date().toISOString() }, 50, { ...buyer, desiredCondition: "Near Mint" })).toHaveLength(5);
+    expect(selectEbayDetailTargets(rows, { ...card, marketMid: 1000, marketAsOf: new Date().toISOString() }, 50, { ...buyer, desiredCondition: "Near Mint" })).toHaveLength(1);
   });
 
   // `searchUrl` is the FIRST search this fetcher served. The rows it returns name a
@@ -400,6 +400,86 @@ describe("eBay active-listing search", () => {
     expect(results[0]?.imageUrls).toEqual([primary, back, closeup]);
     expect(results[0]?.imageKind).toBe("seller_photos");
     expect(results[0]?.evidence.photoCount).toBe(3);
+  });
+
+  describe("sparse detail enrichment", () => {
+    const primary = "https://i.ebayimg.com/images/g/merge-front/s-l1600.jpg";
+    const back = "https://i.ebayimg.com/images/g/merge-back/s-l1600.jpg";
+    const summary = {
+      itemId: "1", title: "Umbreon VMAX 215/203 Near Mint",
+      price: { value: "800.00", currency: "USD" },
+      shippingOptions: [{ shippingCost: { value: "0.00", currency: "USD" } }],
+      seller: { username: "same-seller", feedbackPercentage: "100", feedbackScore: 2000 },
+      topRatedBuyingExperience: true,
+      returnTerms: { returnsAccepted: true },
+      image: { imageUrl: primary },
+      additionalImages: [{ imageUrl: back }],
+      localizedAspects: [{ name: "Language", value: "English" }, { name: "Rarity", value: "Alternate Art" }],
+    };
+    const detail = {
+      itemId: "1", title: summary.title, price: { value: "790.00", currency: "USD" },
+      seller: { username: "same-seller", feedbackScore: 2010 },
+    };
+    function fetcherFor(detailFields: Record<string, unknown>, summaries: unknown[] = [summary]) {
+      return vi.fn<typeof fetch>(async (input) => {
+        const url = String(input);
+        return new Response(JSON.stringify(url.includes("/identity/v1/oauth2/token")
+          ? { access_token: "t", expires_in: 7200 }
+          : url.includes("/item_summary/search") ? { itemSummaries: summaries } : detailFields), { status: 200 });
+      });
+    }
+
+    it("retains observed summary fields omitted by a matching sparse detail", async () => {
+      const fetcher = fetcherFor(detail);
+      const [listing] = await searchEbayAlternatives(card, buyer, fetcher, undefined, null, 1);
+      expect(listing.price).toBe(790);
+      expect(listing.shipping).toBe(0);
+      expect(listing.seller.feedbackPercentage).toBe(100);
+      expect(listing.seller.feedbackCount).toBe(2010);
+      expect(listing.seller.topRated).toBe(true);
+      expect(listing.seller.returnsAccepted).toBe(true);
+      expect(listing.imageUrls).toEqual([primary, back]);
+      expect(listing.evidence.photoCount).toBe(2);
+      expect(listing.listingLanguage).toBe("English");
+      expect(listing.matchAspectText).toContain("Rarity: Alternate Art");
+      expect(fetcher).toHaveBeenCalledTimes(3);
+    });
+
+    it("keeps explicit zero, false and empty detail fields authoritative", async () => {
+      const [listing] = await searchEbayAlternatives(card, buyer, fetcherFor({
+        ...detail, seller: { username: "same-seller", feedbackPercentage: "0", feedbackScore: 0 },
+        topRatedBuyingExperience: false, returnTerms: { returnsAccepted: false },
+        shippingOptions: [], additionalImages: [], thumbnailImages: [], localizedAspects: [],
+      }), undefined, null, 1);
+      expect(listing.seller.feedbackPercentage).toBe(0);
+      expect(listing.seller.feedbackCount).toBe(0);
+      expect(listing.seller.topRated).toBe(false);
+      expect(listing.seller.returnsAccepted).toBe(false);
+      expect(listing.shipping).toBeNull();
+      expect(listing.imageUrls).toEqual([primary]);
+      expect(listing.evidence.photoCount).toBe(1);
+      expect(listing.listingLanguage).toBeNull();
+      expect(listing.matchAspectText).toBe("");
+    });
+
+    it("does not carry seller history or seller terms across conflicting seller identities", async () => {
+      const [listing] = await searchEbayAlternatives(card, buyer, fetcherFor({
+        ...detail, seller: { username: "different-seller", feedbackScore: 5 },
+      }), undefined, null, 1);
+      expect(listing.seller.feedbackPercentage).toBeNull();
+      expect(listing.seller.feedbackCount).toBe(5);
+      expect(listing.seller.topRated).toBeNull();
+      expect(listing.seller.returnsAccepted).toBeNull();
+      expect(listing.shipping).toBe(0);
+    });
+
+    it("does not apply a detail returned for a different item to another summary", async () => {
+      const second = { ...summary, itemId: "2", price: { value: "900.00", currency: "USD" } };
+      const fetcher = fetcherFor({ ...detail, itemId: "2", price: { value: "1.00", currency: "USD" } }, [summary, second]);
+      const listings = await searchEbayAlternatives(card, buyer, fetcher, undefined, null, 1);
+      expect(listings.map((listing) => listing.price)).toEqual([800, 900]);
+      expect(fetcher.mock.calls.filter(([input]) => String(input).includes("/item/1"))).toHaveLength(2);
+    });
   });
 
   // One Piece special prints share their card number with the (far cheaper) base
@@ -1200,6 +1280,20 @@ describe("eBay item-detail budget", () => {
     expect(detailIds).toHaveLength(12);
     expect(seeds.filter((seed) => seed.claimedCondition === "Near Mint")).toHaveLength(12);
     expect(seeds.filter((seed) => seed.claimedCondition === "Unknown")).toHaveLength(18);
+    expect(seeds.filter((seed) => seed.sourceDetailStatus === "received")).toHaveLength(12);
+    expect(seeds.filter((seed) => seed.sourceDetailStatus === "not_requested")).toHaveLength(18);
+  });
+
+  it("distinguishes failed details from unrequested rows without filling unknown facts", async () => {
+    const base = budgetFetcher([]);
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).includes("/buy/browse/v1/item/")
+        ? { ok: false, status: 503, json: async () => ({}) } as Response
+        : base(input, init)) as typeof fetch;
+    const seeds = await searchEbayAlternatives(card, buyer, fetcher);
+    expect(seeds.filter(seed => seed.sourceDetailStatus === "failed")).toHaveLength(12);
+    expect(seeds.filter(seed => seed.sourceDetailStatus === "not_requested")).toHaveLength(18);
+    expect(seeds.every(seed => seed.claimedCondition === "Unknown" && seed.shipping === null)).toBe(true);
   });
 
   // The whole premise of raising the budget: the condition is knowable for those

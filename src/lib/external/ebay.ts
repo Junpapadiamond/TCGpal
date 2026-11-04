@@ -1,6 +1,8 @@
 import { printClassQueryToken, sellerVocabularyPrintQueryToken } from "@/lib/external/one-piece-taxonomy";
 import { z } from "zod";
-import { isOnePieceCardKey, normalizeListing, titleConditionFloor } from "@/lib/comparison/ranking";
+import { calculateValueScore, isOnePieceCardKey, normalizeListing, titleConditionFloor } from "@/lib/comparison/ranking";
+import { HIGH_VALUE_REVIEW_USD } from "@/lib/comparison/recommendation-policy";
+import { hasSelectedEbayVariationIdentity } from "@/lib/external/ebay-selected-variation-identity";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
 import {
   collectorNumberConflict,
@@ -193,29 +195,47 @@ export function selectEbayDetailTargets(
   buyer: BuyerContext = { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
 ) {
   const confidenceRank = { high: 0, medium: 1, low: 2 } as const;
-  // Spend scarce detail calls on rows that can still qualify. Missing condition,
-  // shipping or print proof is exactly why we fetch details; explicit conflicts,
-  // excluded products and implausible prices should not consume the window first.
-  // This changes lookup priority only: every summary still enters final ranking.
+  const limit = Number.isFinite(detailBudget) ? Math.min(MAX_DETAIL_BUDGET, Math.max(0, Math.trunc(detailBudget))) : 0;
+  if (!limit) return [];
+  // This is a lookup policy, never ranking evidence. Missing condition/shipping
+  // may be resolved by getItem; explicit contradictions do not earn detail calls.
   const recoverable = new Set(["condition_unstated", "shipping_unknown", "buyer_fee_unknown", "identity_unverified"]);
-  const blocked = new Map(summaries.map((item) => {
+  const candidates = [...new Map(summaries.map(item => [item.itemId, item])).values()].flatMap((item) => {
+    if (item.price.currency !== "USD" || isGradedListing(item.title)) return [];
+    const match = assessTitleMatch(item.title, card);
+    // A selected child may have a generic parent title. Inspect at most one,
+    // using its full ID; never infer its identity from the parent or the query.
+    const exploration = match.confidence === "low" && /^v1\|\d+\|[1-9]\d*$/.test(item.itemId);
+    if (match.confidence === "low" && !exploration) return [];
     const listing = normalizeListing({ listing: toNormalizedSeed(item, card), buyer,
       confirmedCard: card, cardLanguage: card.language, marketPrice: card.marketMid ?? null });
-    return [item.itemId, Number(listing.eligibilityIssues.some((issue) => issue.disposition === "exclude" && !recoverable.has(issue.code)))];
-  }));
-  return [...summaries]
-    .filter((item) => {
-      const match = assessTitleMatch(item.title, card);
-      return match.confidence !== "low" && !isGradedListing(item.title);
-    })
-    .sort((left, right) => {
-      const leftConfidence = assessTitleMatch(left.title, card).confidence;
-      const rightConfidence = assessTitleMatch(right.title, card).confidence;
-      return (blocked.get(left.itemId) ?? 0) - (blocked.get(right.itemId) ?? 0)
-        || confidenceRank[leftConfidence] - confidenceRank[rightConfidence]
-        || left.itemId.localeCompare(right.itemId);
-    })
-    .slice(0, Math.max(0, Math.trunc(detailBudget)));
+    const blocked = listing.eligibilityIssues.some(issue => issue.disposition === "exclude"
+      && !recoverable.has(issue.code) && !(exploration && issue.code === "identity_low_confidence"));
+    if (blocked) return [];
+    const knownSubtotal = listing.price + (listing.shipping ?? 0) + (listing.buyerFee ?? 0);
+    const sellerCannotYetQualify = knownSubtotal >= HIGH_VALUE_REVIEW_USD
+      && ((listing.seller.feedbackCount !== null && listing.seller.feedbackCount < 100)
+        || (listing.seller.feedbackPercentage !== null && listing.seller.feedbackPercentage < 99));
+    return [{ item, listing, match, exploration, knownSubtotal, sellerCannotYetQualify }];
+  });
+  const primary = candidates.filter(candidate => !candidate.exploration);
+  const baseline = primary.length ? primary : candidates;
+  const minimum = baseline.length ? Math.min(...baseline.map(candidate => candidate.knownSubtotal)) : 0;
+  const priority = (candidate: typeof candidates[number]) => calculateValueScore({
+    // Known subtotal is only an optimistic lower bound for choosing a request.
+    // Do not write it into costs, claims, confidence or any recommendation score.
+    priceComponent: candidate.knownSubtotal === 0 ? 100 : Math.min(100, Math.round(100 * minimum / candidate.knownSubtotal)),
+    conditionCompatibilityScore: candidate.listing.claimedCondition === "Unknown" ? 100 : candidate.listing.conditionCompatibilityScore,
+    sellerTrustScore: candidate.listing.sellerTrustScore,
+    evidenceCompletenessScore: candidate.listing.evidenceCompletenessScore,
+  });
+  const compare = (a: typeof candidates[number], b: typeof candidates[number]) =>
+    Number(a.sellerCannotYetQualify) - Number(b.sellerCannotYetQualify)
+    || priority(b) - priority(a)
+    || confidenceRank[a.match.confidence] - confidenceRank[b.match.confidence]
+    || a.knownSubtotal - b.knownSubtotal || a.item.itemId.localeCompare(b.item.itemId);
+  const exploratory = candidates.filter(candidate => candidate.exploration).sort(compare).slice(0, limit > 1 || !primary.length ? 1 : 0);
+  return [...primary.sort(compare).slice(0, limit - exploratory.length), ...exploratory].map(candidate => candidate.item);
 }
 
 export async function getEbayListingByUrl(
@@ -394,7 +414,37 @@ export async function searchEbayAlternatives(
     details.filter((item): item is z.infer<typeof ebayItemSchema> => item !== null)
       .map((item) => [item.itemId, item]),
   );
-  return summaries.map((item) => toNormalizedSeed(detailById.get(item.itemId) ?? item, card, searchNote));
+  const requestedDetailIds = new Set(detailTargets.map(item => item.itemId));
+  return summaries.map((item) => {
+    const detail = detailById.get(item.itemId);
+    const seed = toNormalizedSeed(detail ? mergeEbayItemDetail(item, detail) : item, card, searchNote);
+    const childIdentity = seed.matchConfidence === "low"
+      && hasSelectedEbayVariationIdentity({ requestedItemId: item.itemId, detail: detail ?? null, card });
+    return {
+      ...seed,
+      matchConfidence: childIdentity ? "high" as const : seed.matchConfidence,
+      matchReasons: childIdentity ? [...seed.matchReasons, "Selected item detail supplies the matching card name, collector number and set."] : seed.matchReasons,
+      sourceDetailStatus: detail ? "received" as const : requestedDetailIds.has(item.itemId) ? "failed" as const : "not_requested" as const,
+    };
+  });
+}
+
+function mergeEbayItemDetail(summary: z.infer<typeof ebayItemSchema>, detail: z.infer<typeof ebayItemSchema>) {
+  const summarySeller = typeof summary.seller?.username === "string" ? summary.seller.username.trim().toLowerCase() : "";
+  const detailSeller = typeof detail.seller?.username === "string" ? detail.seller.username.trim().toLowerCase() : "";
+  const sellerChanged = Boolean(summarySeller && detailSeller && summarySeller !== detailSeller);
+  // Detail is an enrichment of the same observed item, not a replacement for
+  // fields that endpoint omitted. Explicit zero/false/empty arrays still win.
+  // Never attach another seller's track record or terms to a changed identity.
+  return {
+    ...summary,
+    ...detail,
+    seller: sellerChanged ? detail.seller : summary.seller || detail.seller
+      ? { ...summary.seller, ...detail.seller } : undefined,
+    topRatedBuyingExperience: sellerChanged ? detail.topRatedBuyingExperience
+      : detail.topRatedBuyingExperience ?? summary.topRatedBuyingExperience,
+    returnTerms: sellerChanged ? detail.returnTerms : detail.returnTerms ?? summary.returnTerms,
+  };
 }
 
 function buildEbaySearchEndpoint(attempt:
@@ -625,7 +675,9 @@ async function getEbayItemDetail(
   const endpoint = new URL(`${EBAY_API}/buy/browse/v1/item/${encodeURIComponent(itemId)}`);
   const response = await fetchEbayAuthed(endpoint, buyer, fetcher);
   if (!response.ok) throw new Error(`eBay item detail failed with ${response.status}.`);
-  return ebayItemSchema.parse(await response.json());
+  const item = ebayItemSchema.parse(await response.json());
+  if (item.itemId !== itemId) throw new Error("eBay item detail returned another item.");
+  return item;
 }
 
 async function getEbayItemDetailWithRetry(

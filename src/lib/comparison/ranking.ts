@@ -627,7 +627,7 @@ function getEligibilityIssues(
   }
   if (buyer.desiredCondition !== "Unknown") {
     if (listing.claimedCondition === "Unknown") {
-      add({ code: "condition_unstated", category: "condition", disposition: "exclude", message: `Seller condition is not stated; the buyer requested ${buyer.desiredCondition} or better.` });
+      add({ code: "condition_unstated", category: "condition", disposition: "exclude", message: `Condition was not confirmed in the retrieved data; the buyer requested ${buyer.desiredCondition} or better.` });
     } else if (CONDITION_RANK[listing.claimedCondition] < CONDITION_RANK[buyer.desiredCondition]) {
       add({ code: "condition_below_requested", category: "condition", disposition: "exclude", message: `Seller claims ${listing.claimedCondition}; the buyer requested ${buyer.desiredCondition} or better.` });
     }

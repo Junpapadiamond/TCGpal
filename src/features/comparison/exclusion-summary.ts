@@ -26,7 +26,10 @@ export type ExclusionGroupCode =
 export type ExclusionSummary = {
   /** Live rows the sources returned, before any gate ran. */
   found: number;
+  /** All rows withheld by an exclusion gate, including incomplete evidence. */
   excluded: number;
+  /** Subset of excluded rows with only missing-fact gates, not a contradiction. */
+  incomplete: number;
   groups: { code: ExclusionGroupCode; count: number }[];
 };
 
@@ -52,6 +55,16 @@ const CODE_GROUPS: Record<string, ExclusionGroupCode> = {
   identity_price_guard: "price_floor",
 };
 
+// These gates establish a limit on what was acquired, not an observed mismatch.
+// A mixed row with even one other exclusion remains in the screened-out count.
+const INCOMPLETE_CODES = new Set([
+  "condition_unstated",
+  "shipping_unknown",
+  "buyer_fee_unknown",
+  "identity_unverified",
+  "identity_low_confidence",
+]);
+
 function groupFor(issue: EligibilityIssue): ExclusionGroupCode {
   return CODE_GROUPS[issue.code] ?? issue.category;
 }
@@ -59,17 +72,16 @@ function groupFor(issue: EligibilityIssue): ExclusionGroupCode {
 export function summarizeExclusions(candidates: NormalizedListing[]): ExclusionSummary {
   const counts = new Map<ExclusionGroupCode, number>();
   let excluded = 0;
+  let incomplete = 0;
 
   for (const candidate of candidates) {
     if (candidate.eligible) continue;
     excluded += 1;
     // `review` issues never excluded anything; counting them would overstate the
     // gates and understate the inventory.
-    const groups = new Set(
-      (candidate.eligibilityIssues ?? [])
-        .filter((issue) => issue.disposition === "exclude")
-        .map(groupFor),
-    );
+    const issues = (candidate.eligibilityIssues ?? []).filter((issue) => issue.disposition === "exclude");
+    if (issues.length > 0 && issues.every(issue => INCOMPLETE_CODES.has(issue.code))) incomplete += 1;
+    const groups = new Set(issues.map(groupFor));
     const primary = GROUP_PRIORITY.find((code) => groups.has(code)) ?? "other";
     counts.set(primary, (counts.get(primary) ?? 0) + 1);
   }
@@ -80,5 +92,5 @@ export function summarizeExclusions(candidates: NormalizedListing[]): ExclusionS
     // ties so the same report never renders two different sentences.
     .sort((a, b) => b.count - a.count || GROUP_PRIORITY.indexOf(a.code) - GROUP_PRIORITY.indexOf(b.code));
 
-  return { found: candidates.length, excluded, groups };
+  return { found: candidates.length, excluded, incomplete, groups };
 }

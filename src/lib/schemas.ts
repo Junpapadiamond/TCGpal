@@ -433,6 +433,9 @@ export const normalizedListingSchema = z.object({
   eligibilityIssues: z.array(eligibilityIssueSchema).default([]),
   exclusionReasons: z.array(z.string()),
   observedAt: z.string(),
+  // Acquisition provenance only: receiving a detail response does not prove
+  // that condition, identity, shipping or photos were supplied or verified.
+  sourceDetailStatus: z.enum(["not_requested", "received", "failed"]).optional(),
   demo: z.boolean().default(false),
   // True for listings the buyer supplied (pasted URL, manual entry) rather than a
   // live platform search — labeled "user-added" in the ledger.
