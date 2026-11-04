@@ -4,6 +4,7 @@ import { hasUnresolvedCatalogEdition, marketReferenceState, usableMarketPrice } 
 import { requiresRecommendationReview } from "@/lib/schemas";
 import { requiresHighValueReview } from "@/lib/comparison/recommendation-policy";
 import { SearchCoverage, recallHeadline } from "./SearchCoverage";
+import { AnimatedSearchInput } from "./AnimatedSearchInput";
 import type { RecallCoverage } from "@/lib/schemas";
 
 import Image from "next/image";
@@ -659,7 +660,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
 
   async function submitComparison(values: ComparisonForm, confirmedCardId?: string) {
     if (!values.heroQuery.trim() && !values.cardName.trim()) {
-      form.setError("heroQuery", { type: "required", message: t.form.heroSearchRequired });
+      form.setFocus("heroQuery");
       return;
     }
 
@@ -1119,6 +1120,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                   <IconCardSearch className="h-4 w-4" />
                   <input
                     {...form.register("heroQuery")}
+                    required
                     onKeyDown={(event) => {
                       if (!submitsOnEnter(event.nativeEvent)) return;
                       event.preventDefault();
@@ -1158,15 +1160,17 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
           <h1 className="display-soft mx-auto max-w-[800px] font-serif text-[32px] font-semibold leading-[1.12] tracking-normal text-[#24312f] sm:text-[40px] lg:text-[44px]">
             {t.hero.title}
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#64736c]">{t.hero.subtitle}</p>
 
           <form className="mt-5 text-left sm:mt-6" onSubmit={form.handleSubmit((values) => submitComparison(values))}>
             <label className="block">
               <span className="sr-only">{t.form.heroSearchLabel}</span>
               <span className="landing-search-row">
                 <IconCardSearch className="landing-search-icon h-[22px] w-[22px]" />
-                <input
+                <AnimatedSearchInput
                   {...form.register("heroQuery")}
+                  active={!heroQuery?.trim() && !loading}
+                  examples={t.form.heroSearchExamples}
+                  required={!cardName?.trim()}
                   aria-label={t.form.heroSearchLabel}
                   placeholder={t.form.heroSearchPlaceholder}
                   onKeyDown={(event) => {
@@ -1182,9 +1186,6 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
                 </button>
               </span>
             </label>
-            {form.formState.errors.heroQuery && (
-              <p className="mt-2 text-sm font-bold text-[#9a4a2c]">{form.formState.errors.heroQuery.message}</p>
-            )}
 
             <CrossMarketOption form={form} />
             <SearchExamples examples={examples} onSelect={chooseSearchExample} onRefresh={refreshExamples} active={!heroQuery?.trim() && !loading} />

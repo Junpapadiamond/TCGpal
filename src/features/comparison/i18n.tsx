@@ -60,7 +60,6 @@ export const en = {
   },
   hero: {
     title: "Find the best listing for your exact card.",
-    subtitle: "We check versions, seller records and total costs across listings.",
     scope: "Pokémon & One Piece · raw singles · U.S. listings",
   },
   rail: {
@@ -76,10 +75,8 @@ export const en = {
     // both locales. Deliberately mixed: a bare name is enough to start, and a
     // collector number just narrows it — leading with numbers every time makes
     // the search look like it demands one.
-    heroSearchExamples: ["Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-003", "Umbreon VMAX"],
-    heroSearchRequired: "Type a card to search, or fill in the details below.",
+    heroSearchExamples: ["Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-024", "Umbreon VMAX"],
     searchExamples: "Search examples",
-    trySearch: "Try a search",
     moreExamples: "More examples",
     pauseExamples: "Pause examples",
     resumeExamples: "Resume examples",
@@ -585,7 +582,6 @@ export const zh: Dict = {
   },
   hero: {
     title: "收这张卡，先比比价。",
-    subtitle: "同一版本，把价格、运费和卖家信息放一起看。",
     scope: "宝可梦 / 海贼王 · 美国市场 · 美元裸卡",
   },
   rail: {
@@ -597,10 +593,8 @@ export const zh: Dict = {
   form: {
     heroSearchLabel: "想收哪张卡？",
     heroSearchPlaceholder: "输入卡名，卡号选填",
-    heroSearchExamples: ["Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-003", "Umbreon VMAX"],
-    heroSearchRequired: "输入英文卡名，卡号可以不填。",
+    heroSearchExamples: ["Charizard", "Pikachu 58/102", "Mew", "Luffy OP01-024", "Umbreon VMAX"],
     searchExamples: "搜索示例",
-    trySearch: "试试这几张",
     moreExamples: "换一组",
     pauseExamples: "暂停轮换",
     resumeExamples: "继续轮换",

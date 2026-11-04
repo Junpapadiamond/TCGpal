@@ -597,9 +597,15 @@ button:disabled {
 
 .search-examples {
   margin: 0.25rem 0 0.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .search-examples-heading {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -626,6 +632,8 @@ button:disabled {
 .search-examples-pause:hover { background: #e1ebe4; }
 
 .search-example-list {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   /* One stable row keeps rotating examples from moving the card rail. */
   flex-wrap: nowrap;

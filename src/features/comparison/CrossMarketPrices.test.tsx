@@ -185,11 +185,11 @@ describe("three-marketplace asking prices", () => {
     expect(within(source).queryByText(/Store reports stock/)).toBeNull();
   });
 
-  it("shows unavailable sources once with a manual search, without exposing internal allowance messages", () => {
+  it("shows paused sources once with a manual search, without exposing internal allowance messages", () => {
     renderPrices([], platforms.map((p) => p.id === "whatnot" ? { ...p, status: "fallback", count: 0, detail: "Cross-market pilot budget reached; this source is paused." } : p),
       { id: "swsh11-186", name: "Giratina V", setName: "Lost Origin", setCode: "SWSH11", cardNumber: "186/196", language: "English", imageUrl: null, confidence: "high", matchReasons: [] });
     const source = screen.getByRole("region", { name: "Whatnot prices" });
-    expect(within(source).getByText("Temporarily unavailable")).toBeTruthy();
+    expect(within(source).getByText("Search paused")).toBeTruthy();
     expect(within(source).getByRole("link", { name: "Search Whatnot manually" }).getAttribute("href")).toContain("186%2F196");
     expect(screen.queryByText(/pilot|allowance|quota/i)).toBeNull();
     expect(screen.getAllByRole("region", { name: "Across marketplaces" })).toHaveLength(1);

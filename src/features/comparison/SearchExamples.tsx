@@ -84,7 +84,6 @@ export function SearchExamples({ examples, onSelect, onRefresh, active = true }:
       }}
     >
       <div className="search-examples-heading">
-        <span>{t.form.trySearch}</span>
         <div className="flex items-center gap-2">
           <button
             type="button"

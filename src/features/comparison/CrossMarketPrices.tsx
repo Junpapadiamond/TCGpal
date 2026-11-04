@@ -44,7 +44,7 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
   const query = card ? [card.name, card.cardNumber, card.variant, card.setName].filter(Boolean).join(" ") : "";
   return <section aria-label={zh ? "跨平台比价" : "Across marketplaces"} className="pt-2">
     <div className="sr-only">
-      <h3>{zh ? "跨平台比价" : "Across marketplaces"}</h3>
+      <h3 className="sr-only">{zh ? "跨平台比价" : "Across marketplaces"}</h3>
     </div>
     <SearchSummary candidates={candidates} />
     <div className="space-y-3">

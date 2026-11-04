@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getJsonCache, setJsonCache } from "@/lib/ops/cache";
 import { logOpsEvent, type OperationalEvent } from "@/lib/ops/events";
-import { reserveApifyPilotRun } from "./apify-budget";
+import { checkApifyPilotAllowance, reserveApifyPilotRun } from "./apify-budget";
 import { checkApifyPricing } from "./apify-pricing";
 import { selectApifyAccountToken } from "./apify-accounts";
 import { listingSeedSchema, type ListingSeed } from "@/lib/schemas";
@@ -52,6 +52,8 @@ async function load(search: Search, key: string): Promise<ListingSeed[]> {
     } catch { return null; }
   } }));
   if (cached) return cached;
+  search.signal?.throwIfAborted();
+  await measureProviderStage(search, "pilot_precheck", () => checkApifyPilotAllowance(search.provider));
   search.signal?.throwIfAborted();
   await measureProviderStage(search, "pricing", () => checkApifyPricing({ actor: search.actor, provider: search.provider,
     memoryMbytes: search.memoryMbytes ?? 256, maxResults: APIFY_MAX_RESULTS,

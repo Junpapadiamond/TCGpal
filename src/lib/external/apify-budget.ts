@@ -31,6 +31,7 @@ for i = 1, 2 do
   if not counts[i] or counts[i] >= 9007199254740991 then return -1 end
 end
 if counts[2] >= limit then return 0 end
+if tonumber(ARGV[3]) == 1 then return 1 end
 redis.call('INCR', KEYS[1])
 return redis.call('INCR', KEYS[2])
 `;
@@ -54,6 +55,7 @@ if raw then
   if not count or count > 9007199254740991 then return -1 end
 end
 if count >= limit then return 0 end
+if tonumber(ARGV[3]) == 1 then return 1 end
 return redis.call('INCR', KEYS[1])
 `;
 
@@ -79,6 +81,16 @@ function approvedBudget(provider?: "whatnot" | "mercari") {
 }
 
 export async function reserveApifyPilotRun(provider?: "whatnot" | "mercari"): Promise<void> {
+  return applyPilotAllowance(provider, true);
+}
+
+// This read-only check avoids reserving account funds for a known-exhausted
+// pilot. It grants no start: the atomic reservation still runs before the Actor.
+export async function checkApifyPilotAllowance(provider?: "whatnot" | "mercari"): Promise<void> {
+  return applyPilotAllowance(provider, false);
+}
+
+async function applyPilotAllowance(provider: "whatnot" | "mercari" | undefined, reserve: boolean): Promise<void> {
   const mercariApproval = provider === "mercari" ? process.env.MERCARI_APIFY_APPROVED_RUNS?.trim() : undefined;
   if (mercariApproval && !/^[1-9]$/.test(mercariApproval)) throw new Error(approvalError);
   const { limit, expiresAt } = mercariApproval
@@ -90,7 +102,7 @@ export async function reserveApifyPilotRun(provider?: "whatnot" | "mercari"): Pr
   let count: unknown;
   try {
     count = await redis.eval(mercariApproval ? reserveMercariScript : reserveScript,
-      mercariApproval ? [budgetKey, mercariRenewalKey] : [budgetKey], [limit, expiresAt]);
+      mercariApproval ? [budgetKey, mercariRenewalKey] : [budgetKey], reserve ? [limit, expiresAt] : [limit, expiresAt, 1]);
   } catch {
     // A lost response may still have incremented the counter. Do not retry or
     // refund the reservation: over-counting is preferable to overspending.

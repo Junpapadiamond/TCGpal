@@ -5,7 +5,11 @@ import type { ComparisonPlatformResult } from "@/lib/schemas";
 const source: ComparisonPlatformResult = { id: "whatnot", marketplace: "Whatnot", label: "Whatnot", sourceMode: "third_party_provider", configured: true, status: "fallback", count: 0, detail: "" };
 
 describe("buyer-facing source status", () => {
-  it.each(["Cross-market pilot budget reached; this source is paused.", "Paid source paused: configuration review", "HTTP 503"])("keeps internal source details out of the buyer message: %s", (detail) => {
+  it.each(["Cross-market pilot budget reached; this source is paused.", "Paid source paused: pilot budget approval has expired."])("distinguishes a paused source from a temporary outage: %s", (detail) => {
+    expect(sourceStatusLabel({ ...source, detail }, "en")).toBe("Search paused");
+    expect(sourceStatusLabel({ ...source, detail }, "zh")).toBe("查询已暂停");
+  });
+  it.each(["HTTP 503", "Paid source paused: shared pilot counter is unavailable."])("keeps internal source details out of the buyer message: %s", (detail) => {
     expect(sourceStatusLabel({ ...source, detail }, "en")).toBe("Temporarily unavailable");
     expect(sourceStatusLabel({ ...source, detail }, "zh")).toBe("暂时无法读取");
   });

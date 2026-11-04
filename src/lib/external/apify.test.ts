@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runApifySearch } from "./apify";
 import { clearLocalCache } from "@/lib/ops/cache";
-import { reserveApifyPilotRun } from "./apify-budget";
+import { checkApifyPilotAllowance, reserveApifyPilotRun } from "./apify-budget";
 import { checkApifyPricing } from "./apify-pricing";
 import { demoListingSeeds } from "@/lib/comparison/fixtures";
 import { getRedisClient } from "@/lib/ops/redis";
 import { logOpsEvent } from "@/lib/ops/events";
 
-vi.mock("./apify-budget", () => ({ reserveApifyPilotRun: vi.fn() }));
+vi.mock("./apify-budget", () => ({ checkApifyPilotAllowance: vi.fn(), reserveApifyPilotRun: vi.fn() }));
 vi.mock("./apify-pricing", () => ({ checkApifyPricing: vi.fn() }));
 vi.mock("@/lib/ops/events", async importOriginal => ({ ...await importOriginal<typeof import("@/lib/ops/events")>(), logOpsEvent: vi.fn() }));
 vi.mock("@/lib/ops/redis", () => ({ isRedisConfigured: () => true, getRedisClient: vi.fn(() => null) }));
@@ -17,6 +17,32 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-14T16:
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.restoreAllMocks(); vi.clearAllMocks(); });
 
 describe("paid source safeguards", () => {
+  it("stops exhausted Mercari before pricing, account reservations or a paid start", async () => {
+    vi.stubEnv("APIFY_ACCOUNT_POOL_ENABLED", "1");
+    vi.stubEnv("APIFY_AUTHORIZED_TOKEN_POOL", JSON.stringify(["apify_api_funded"]));
+    vi.mocked(checkApifyPilotAllowance).mockRejectedValueOnce(new Error("Cross-market pilot budget reached; this source is paused."));
+    const evaluate = vi.fn();
+    vi.mocked(getRedisClient).mockReturnValue({ get: vi.fn(async () => null), eval: evaluate } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
+    const fetcher = vi.fn();
+    try {
+      await expect(runApifySearch({ ...base, provider: "mercari", fetcher })).rejects.toThrow(/budget reached/);
+      expect(checkApifyPilotAllowance).toHaveBeenCalledExactlyOnceWith("mercari");
+      expect(checkApifyPricing).not.toHaveBeenCalled();
+      expect(evaluate).not.toHaveBeenCalled();
+      expect(reserveApifyPilotRun).not.toHaveBeenCalled();
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally { vi.mocked(getRedisClient).mockReturnValue(null); }
+  });
+
+  it("still requires the final atomic reservation after a successful precheck", async () => {
+    vi.mocked(reserveApifyPilotRun).mockRejectedValueOnce(new Error("Cross-market pilot budget reached; this source is paused."));
+    const fetcher = vi.fn();
+    await expect(runApifySearch({ ...base, fetcher })).rejects.toThrow(/budget reached/);
+    expect(checkApifyPilotAllowance).toHaveBeenCalledExactlyOnceWith("whatnot");
+    expect(reserveApifyPilotRun).toHaveBeenCalledExactlyOnceWith("whatnot");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("records pricing and Actor wait separately without logging credentials, queries or upstream errors", async () => {
     vi.mocked(checkApifyPricing).mockImplementationOnce(async () => { await new Promise(resolve => setTimeout(resolve, 250)); return 0.01; });
     const fetcher = vi.fn(async () => { await new Promise(resolve => setTimeout(resolve, 1200)); return new Response("private upstream details", { status: 403 }); });

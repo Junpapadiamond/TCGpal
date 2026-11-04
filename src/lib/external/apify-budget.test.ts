@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getRedisClient } from "@/lib/ops/redis";
-import { reserveApifyPilotRun } from "./apify-budget";
+import { checkApifyPilotAllowance, reserveApifyPilotRun } from "./apify-budget";
 
 vi.mock("@/lib/ops/redis", () => ({ getRedisClient: vi.fn() }));
 const originalKey = "tcglens:apify-pilot:2026-09-14:reserved-runs";
@@ -26,7 +26,7 @@ function sharedCounter(initialCount = 0) {
     if (expiresAt && Date.now() >= expiresAt) return -2;
     if (!Number.isSafeInteger(count) || count < 0) return -1;
     if (count >= limit) return 0;
-    return ++count;
+    return args[2] === 1 ? 1 : ++count;
   });
   vi.mocked(getRedisClient).mockReturnValue({ eval: evaluate } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
   return { evaluate, count: () => count };
@@ -38,6 +38,36 @@ function approve(maxRuns = "25", expiresAt = "2026-10-04T00:00:00Z") {
 }
 
 describe("shared Apify pilot spending ceiling", () => {
+  it("checks capacity without consuming it, while exhausted counters fail closed", async () => {
+    const counter = sharedCounter(19);
+    await expect(checkApifyPilotAllowance("whatnot")).resolves.toBeUndefined();
+    await expect(checkApifyPilotAllowance("whatnot")).resolves.toBeUndefined();
+    expect(counter.count()).toBe(19);
+    expect(counter.evaluate).toHaveBeenCalledWith(expect.any(String), [originalKey], [20, 0, 1]);
+    await reserveApifyPilotRun("whatnot");
+    await expect(checkApifyPilotAllowance("whatnot")).rejects.toThrow(/budget reached/);
+    expect(counter.count()).toBe(20);
+  });
+
+  it("prechecks the permanent Mercari ledger without borrowing Whatnot allowance", async () => {
+    approve("1846", "2026-10-22T00:00:00Z");
+    vi.stubEnv("MERCARI_APIFY_APPROVED_RUNS", "9");
+    vi.stubEnv("APIFY_PILOT_APPROVAL_NO_EXPIRY", "1");
+    const evaluate = vi.fn(async (_script: string, keys: string[], args: number[]) => {
+      expect(keys).toEqual([originalKey, "tcglens:apify-pilot:2026-10-19:mercari-reserved-runs"]);
+      expect(args).toEqual([9, 0, 1]);
+      return 0;
+    });
+    vi.mocked(getRedisClient).mockReturnValue({ eval: evaluate } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
+    await expect(checkApifyPilotAllowance("mercari")).rejects.toThrow(/budget reached/);
+    expect(evaluate).toHaveBeenCalledOnce();
+  });
+
+  it("never treats an unavailable precheck as permission to spend", async () => {
+    vi.mocked(getRedisClient).mockReturnValue(null);
+    await expect(checkApifyPilotAllowance("mercari")).rejects.toThrow(/counter/);
+  });
+
   it("removes only the approved Whatnot deadline while preserving the cumulative ceiling", async () => {
     approve("1846", "2026-10-22T00:00:00Z");
     vi.stubEnv("APIFY_PILOT_APPROVAL_NO_EXPIRY", "1");
