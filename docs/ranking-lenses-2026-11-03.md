@@ -29,4 +29,10 @@ TDD: new ranking, independent invariant, photo identity, receipt ordering, schem
 
 Release gate passes lint, TypeScript, metadata validation, 2,019 tests (five optional live checks skipped), and the webpack production build. Built-in browser QA used the real development UI with frozen source facts and current ranking, visibly labeled as local QA. Documented selected the 21-photo LP offer; English/Chinese desktop and 390px mobile views were checked, with no broken images or horizontal overflow. The photo dialog opened and advanced from 1/21 to 2/21. Search/confirmation/Edit/New Search behavior did not change; the automated sequential multi-card contract passed. A React review found no new fetching, effects, component remounts or accessibility changes.
 
-Graphify and the plugin validator are absent at the documented Windows/legacy paths; no regeneration or validator success is claimed. No provider permissions, paid starts, acquisition budgets or automated schedules were changed. Production READY status and a fresh eBay-only search remain to be verified after push.
+Graphify and the plugin validator are absent at the documented Windows/legacy paths; no regeneration or validator success is claimed. No provider permissions, paid starts, acquisition budgets or automated schedules were changed.
+
+## Production verification
+
+Product commit `77dbec4` is READY in deployment `dpl_D1Ym9FaAew7UvkQ4jgSMxEh899Mm`, aliased to `lenstcg.com`. One fresh Giratina V 186/196 Any-condition search at `2026-11-04T03:24:31Z` used only eBay: 50 listings, 28 excluded, 20 eligible-but-review-only and two recommendable. The persisted report contains the new complete-cost scores: $900 LP / 21 photos scores cost 100 and value 82; $1,106 NM / 10 photos scores cost 81 and value 80. Best Value, Cheapest and Documented select the former; Safest selects the latter. These are a later live field, distinct from the frozen replay above.
+
+Built-in browser lens switching matches those report choices. English/Chinese desktop and 390px mobile screens pass, with zero broken images, no horizontal overflow and no console errors observed. Receipt `7cecdbaf31314dcaa29f0c40e2f0268b` restores the saved result without acquisition. No cross-market provider was started. Local screenshots and the private live report are under `output/qa/ranking-audit-2026-11-03/` (ignored).

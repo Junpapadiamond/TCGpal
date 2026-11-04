@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-11-03
 canonical_branch: origin/main
-last_verified_product_commit: e842af6
+last_verified_product_commit: 77dbec4
 working_branch: codex/ranking-lens-audit (isolated Windows worktree)
 max_lines: 300
 ---
@@ -29,7 +29,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-LAUNCH | Launch instrumentation, funnel, and channel attribution | Medium | Events + privacy fix shipped `75a2b4c..f939db2`; funnel defined in `docs/launch-metrics.md`; no post confirmed sent | Post the tagged links, then read Insight 1 with `channel != internal` |
 | WS-METADATA | One Piece special-print research and publication | Large research stream | Review-gated | Choose and review a first publication cohort |
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
-| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | November 3 ranking audit: complete-cost ratio/photo tie fixes; three-agent review, 150 frozen rows, 2019 tests/build and bilingual/mobile QA pass | See ranking-lenses-2026-11-03.md; verify deployment and review buyer preferences November 10 |
+| WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | 77dbec4 READY: complete-cost ratio/photo tie fixes; three-agent review, 150 frozen rows, 2019 tests/build and live bilingual/mobile QA pass | See ranking-lenses-2026-11-03.md; buyer-preference review November 10, no broad quality claim |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
 | WS-SOURCES | Marketplace compatibility and acquisition | Medium | November 3: real cross 4,935ms; single view 110ms using eBay source cache, no duplicate acquisition | Whatnot 4,751ms is current wait; Mercari pilot allowance blocks starts; caps unchanged |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
@@ -131,7 +131,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-UX" state="released-needs-observation" tags="best-buy,inspect-first,next-moves,empty-state,localization" -->
 ## WS-UX - Decision experience
-- November 3 ranking audit: Best Value uses smooth complete-cost efficiency; item-only reference remains separate. Documented breaks evidence ties by distinct returned photos; duplicate eBay image sizes count once. Shared comparator, additive nullable score, old-receipt diagnostic guard. Three-agent review; Giratina documented changes 10 to 21 photos, Best Value unchanged; Charizard/Umbreon remain without buy lenses. [Decision, tests and release evidence](docs/ranking-lenses-2026-11-03.md).
+- November 3 ranking audit 77dbec4 READY: smooth complete-cost efficiency, distinct-photo tie break/dedup, shared ordering and old-receipt guard. Frozen Giratina keeps Best Value and changes documented 10→21 photos; Charizard/Umbreon still abstain. Fresh eBay-only Giratina: 50 rows/28 excluded/20 review/two buyable; value+documented $900 LP/21 photos, safest $1106 NM/10 photos. [Decision and verification](docs/ranking-lenses-2026-11-03.md).
 - November 3 trust repair: rugs/type evidence excluded at every condition; $500 known-cost offers require stronger seller/photo evidence before any buy lens. All market sources use a 48h freshness gate; unresolved Base editions are inspect-only with no price delta. Contract v6 retires unsafe old receipts. Condition mismatches collapse, counts move up, model names hide, cards stop moving, and the version picker gains 12-card batches/filtering. Cross opt-in starts parallel cross acquisition directly, then reuses eBay source evidence for the single view. [Decision and verification](docs/listing-trust-repair-2026-11-03.md). Prior [compact A 99ce07c READY](docs/compact-results-a-2026-11-03.md) styling retained.
 - October 30 UI cleanup verified on latest production: AGENTS.md now requires UI-led, concise bilingual copy. Removed redundant labels across search, confirmation, results, cross-market, receipts and method; eBay seller feedback preserved. Cloud lint/types/build and 1,935 tests pass (5 skipped); English/中文 desktop and 390px mobile checked. [Release evidence and visual scope](docs/ui-simplicity-2026-10-29/review.md).
 - October 19 follow-up: founder rejected Haiku. Intenext Opus 4.8 is production-verified: `usedAi=true` in 17.9s and browser badge “AI 解读 · claude-opus-4-8”. Old production credential was invalid and securely replaced using the verified existing local credential. Q&A hides incomplete totals and permits 30 seconds (45-second route); optional GPT search allocator remains separate. [Recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md).
