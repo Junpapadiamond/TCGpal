@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-11-03
 canonical_branch: origin/main
-last_verified_product_commit: c260abc
+last_verified_product_commit: e842af6
 working_branch: codex/listing-trust-repair (isolated Windows worktree)
 max_lines: 300
 ---
@@ -15,7 +15,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 - Product: TCGlens, an evidence-backed listing comparison tool for U.S. raw-single buyers. Internal package/module names may still say TCGpal.
 - Primary user: Pokemon and One Piece collectors or players buying considered cards, probably often above $50; the actual useful spend band is not validated.
 - Core promise: confirm the exact print, compare concrete active listings, return one defensible recommendation or abstain with useful next moves.
-- Current source work (November 3): Mercari remains allowance-blocked; previous successful acquisition took 18–56s. Prepared read-only allowance precheck prevents unnecessary account reservations, plus explicit paused status. TCGplayer seller-offer Actors and CardTrader official API shortlisted; no new paid start or quota change. [Investigation, bounded test proposal and UI follow-up](docs/north-america-card-sources-2026-11-03.md).
+- Current source work (November 3): Mercari remains allowance-blocked; previous successful acquisition took 18–56s. `e842af6` READY: read-only allowance precheck prevents unnecessary account reservations, plus explicit paused status. TCGplayer seller-offer Actors and CardTrader official API shortlisted; no new paid start or quota change. [Investigation, bounded test proposal and UI follow-up](docs/north-america-card-sources-2026-11-03.md).
 - Product state: launch-instrumented and deployed with a live PostHog key; the Reddit/RedNote posts themselves are a founder action and are not confirmed sent. Paid acquisition, subscriptions, and ads remain out of scope.
 - Source of truth: current origin/main, AGENTS.md, Zod contracts in src/lib/schemas.ts, deterministic decisions in src/lib/comparison/ranking.ts, and observable behavior tests.
 - Non-negotiable: a same-name, same-number, cheaper sibling print must never replace the selected artwork, and research output never changes runtime identity, anchors, or ranking without explicit human-reviewed curation.
@@ -165,7 +165,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 <!-- progress:end -->
 <!-- progress:workstream id="WS-SOURCES" state="free-capacity-recovery-pending" tags="soldgraph,crawlora,apify,stomping-grounds,whatnot,mercari,provider-cost,unknown-shipping,marketplace" -->
 ## WS-SOURCES - Cross-market comparison
-- November 3: public Actor/pricing research plus pilot precheck and paused-source status repair; no live Mercari recovery claimed. Prior Law cross 56,748ms was Actor navigation/403/fallback waits; the latest requests stop at the existing nine-start allowance. Typed placeholder restored, duplicate captions removed; five-card synthetic UI flow verified. All counters/caps unchanged. [Current review](docs/north-america-card-sources-2026-11-03.md); [timings](docs/cross-market-latency-2026-11-02.md).
+- November 3: public Actor/pricing research plus pilot precheck and paused-source status repair; no live Mercari recovery claimed. Prior Law cross 56,748ms was Actor navigation/403/fallback waits; the latest requests stop at the existing nine-start allowance. Typed placeholder restored, duplicate captions removed; 2,001 tests, five-card synthetic flow and live EN/中文/390px verified. All counters/caps unchanged. [Current review](docs/north-america-card-sources-2026-11-03.md); [timings](docs/cross-market-latency-2026-11-02.md).
 - October 28 eBay update `eaffc27`: pushed to main, Vercel `dpl_HLrmQauKGXDQDj1NH57Ns7MpXNts` READY. October 29 17:40 UTC lenstcg.com feedback POST returned 200/complete with both seller-role periods (2,880ms). Independent read-only OAuth, strict Zod, bounded acquisition, cache/rate limit and kill switch; no scoring or receipt changes. Detailed rating coverage failed 0/10; overall counts complete 10/10. Full gate 1,935 tests/five skips + lint/typecheck/build; EN/中文 desktop and 390px mobile, keyboard and console pass. Catalog grant still denied. [Audit and rollout](docs/ebay-api-update-2026-10-28.md).
 - October 19: founder approved 10 Mercari starts/$0.50 until October 22 UTC. Console run succeeded (33 seconds, 3 rows, ~$0.04835); build 0.3.3 production browser verification also returned three. Custom card excluded, LP not promoted to NM, unknown costs preserved. Permanent application ledger ceiling is nine (Console consumed one); one application reservation used. [Evidence](docs/gateway-mercari-recovery-2026-10-19.md).
 - October 15 account pool: all 10 supplied tokens passed official read-only limits checks; Production sensitive pool + explicit flag saved. Atomic conservative reservations retain uncertain run costs and advance only for insufficient allowance. Explicit ten-$5-account authorization extends cumulative ceiling to 1,846, original counter/October 22 expiry retained; prior count 181. Mercari Secret updated, but exhausted Soldgraph and prior Apify 403 remain blockers. No blocked transport or proxy enabled. [Decision](docs/market-views-account-pool-2026-10-15.md).
