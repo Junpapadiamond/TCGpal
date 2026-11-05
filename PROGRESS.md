@@ -3,7 +3,7 @@ document: tcglens-progress
 schema_version: 1
 updated_at: 2026-11-05
 canonical_branch: origin/main
-last_verified_product_commit: 96c2827
+last_verified_product_commit: 43e16ae
 working_branch: codex/one-piece-search-fidelity (isolated Windows worktree)
 max_lines: 300
 ---
@@ -31,7 +31,7 @@ This is the compact handoff for new threads. It is an index, not a history log. 
 | WS-PILOT | Demand, usability, and trust validation | Large product stream | No buyer session recorded; accuracy is below its own gate | Human-adjudicate the fresh 13-link queue; provisional agent review is 8/13, below the target |
 | WS-UX | Best Buy / Inspect First / Next Moves experience | Medium refactor | 9f00681 READY; 2104 tests/build, bilingual/mobile live QA; Giratina buyable 2→4 at unchanged 12 details, Pikachu recovers two missing-data rows | See eligibility-recall-audit-2026-11-03.md; bounded recall and finish ambiguity remain; review November 10 |
 | WS-DISTRIBUTION | Agent interfaces, plugins, and business model | Mixed | MCP released; retrieval-agent Phase 0 done, Phase 1 not started | Do not build the agent: Phase 0 measured its premise as unfounded (see WS-DISTRIBUTION) |
-| WS-SOURCES | Marketplace compatibility and acquisition | Medium | CardTrader real adapter verified privately, public approval pending; Fanatics tests empty; Cardmarket applications closed | Deploy gated adapter; retain original Apify caps and ledgers |
+| WS-SOURCES | Marketplace compatibility and acquisition | Medium | CardTrader real adapter verified privately, public approval pending; Fanatics tests empty; Cardmarket applications closed | 43e16ae READY; wait for CardTrader staff response, retain original Apify caps and ledgers |
 | DAILY-HEALTH | Scheduled production health checks | Small | All 5 checks pass locally on `fix/daily-health-signal`; market-anchor went from killed-at-600s to 57s and produced its first true reading | Confirm a green scheduled run, then decide D-ANCHOR-GAPS (no separate WS section; see VERIFICATION) |
 | LOCAL-STATE | Local artifacts and tools | Mixed | Windows codex/cross-market-recovery; product e95ccfa pushed to main and deployed | See LOCAL-STATE and VERIFICATION; historical branch dirt is not current state |
 <!-- progress:end -->
@@ -253,7 +253,7 @@ Use Graphify before broad cross-file exploration. Verify ambiguous graph edges i
 <!-- progress:end -->
 <!-- progress:section id="VERIFICATION" -->
 ## VERIFICATION
-- November 5 CardTrader follow-up: 2,187 tests pass / five optional skips; lint, typecheck, catalog audit and webpack build pass. The full suite exposed a passive-effect timing race in an analytics assertion; it now waits for the effect. Recorded-response UI verifies EN/中文/390px, null costs, account currency and seller-table links. Graphify CLI unavailable. Deployment verification follows the gated release.
+- November 5 CardTrader follow-up: 2,187 tests pass / five optional skips; lint, typecheck, catalog audit and webpack build pass. The full suite exposed a passive-effect timing race in an analytics assertion; it now waits for the effect. Recorded-response UI verifies EN/中文/390px, null costs, account currency and seller-table links. Graphify CLI unavailable. `43e16ae` READY as `dpl_4XWRPXM8YviKnusQgr9owSqzEWCH`, aliased to lenstcg.com. Production capabilities correctly omit CardTrader; live Chopper receipt and EN/中文 All-first controls verified. View/language changes preserve selection and do not acquire listings.
 - November 3 trust repair + OG fix `3b5cfc9` READY (`dpl_GaZX7t3D4MyJWiKMT5dxbYQqc5bx`): full gate 1,991 tests/five skips; real Giratina rug excluded, Charizard NM 50/47/3 review-only and zero buy lenses; stale price disabled. Cross 4,935ms + cached single 110ms; Mercari still allowance-blocked. Five sequential synthetic UI searches, real EN/中文/390px, photos and 149ms rule explanation verified. Live share PNG renders counts and Inspect first after regression-tested flex fix. [Trust repair](docs/listing-trust-repair-2026-11-03.md); [prior latency evidence](docs/cross-market-latency-2026-11-02.md).
 - October 19 recovery: `e740a0f` READY (`dpl_H5UavZTCq3WY4KTXKubAfukLkSin`); Opus 4.8 explanation and Mercari Apify verified live. One invalid model output still degraded visibly. Offline Opus triage succeeded after bounded deadline/conciseness fixes; final local lint/typecheck/metadata/build and 1,878 tests pass (five skipped). See [recovery evidence](docs/gateway-mercari-recovery-2026-10-19.md). No source quota was reset; no chat-pasted credentials were retained.
 - October 19: lint/typecheck/metadata, 1,868 tests (five skipped) and production webpack build pass. Offline seed: 31/32 with one preserved classification discrepancy, no unsafe eligibility; 55 real observations pending human labels. Live Whatnot via Apify returns two; Mercari quota-paused. Application d76c209 is READY (dpl_ExX7LACgb853TDGadmVudGwY7rog); deployed Q&A returns usedAi=false / provider_unavailable. Browser top-pick click returns its labeled rule fallback. Graphify CLI unavailable; no UI/ranking changes. [Evidence](docs/card-accuracy-evaluation-2026-10-19.md).
