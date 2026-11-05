@@ -34,4 +34,12 @@ The full catalog audit covers 4,742 prints and retains its existing unknowns. It
 
 Behavior regressions were observed failing before implementation. The full release suite passed 2,147 tests with five optional live checks skipped; lint, typecheck, catalog check and production build passed. Two receipt test fixtures were subsequently updated for the new revision field; their focused suite passed and the build/typecheck passed again. Final UI and deployment evidence is recorded in PROGRESS.
 
-Local synthetic browser checks must not be reported as live acquisition. The new market selection and account-pool tests make no paid provider calls. No ledger, ceiling, token pool or production credential was reset or expanded. Graphify CLI is unavailable in this Windows workspace; the existing AST graph was used for navigation, and no regenerated graph is claimed.
+Local synthetic browser checks must not be reported as live acquisition. The new market selection and account-pool tests make no paid provider calls. No ledger, ceiling or token pool was reset. Graphify CLI is unavailable in this Windows workspace; the existing AST graph was used for navigation, and no regenerated graph is claimed.
+
+### Production verification
+
+`96c2827` reached READY as deployment `dpl_ByZkiH6jU4X1zyJghQ8ddzKCKkCV`, with lenstcg.com verified on that deployment. A fresh browser search for Chopper Gift Collection 2023 resolved to ST01-006_p3, returned 22 listings and retained three eligible offers ($240, $305.49 and $363.78 pre-tax). The winning listing's photo was opened and visually matched to the official Santa Chopper artwork; this does not verify condition or authenticity. [Saved production result](https://lenstcg.com/?query=Chopper+Gift+Collection+2023&game=onePiece&step=result&condition=Near+Mint&card=ST01-006_p3&receipt=d95daddbd180486098bca92eb5152930).
+
+Fresh bounded eBay-only comparisons also checked Nami OP01-016, Ace OP07-053_p1 and Pikachu base1-58. The old Ace four-copy lot was excluded; Pikachu retained its edition-review abstention. The three pending-market-only selection acquired no eBay candidates. Production English, 中文 and 390px market-selection views were captured; changing views/language did not acquire listings. The separate Ace OP07-119_p1 photo contradiction remains unresolved, so this is not universal One Piece accuracy.
+
+Follow-up: the [CardTrader official adapter](cardtrader-integration-2026-11-05.md) now replaces its placeholder; authenticated offers work, public activation remains gated. Two separately approved [Fanatics tests](fanatics-collect-bounded-test-2026-11-05.md) returned no raw offers.

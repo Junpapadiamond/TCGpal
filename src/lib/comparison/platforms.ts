@@ -13,6 +13,7 @@ import { isMercariDirectEnabled, searchMercariDirect } from "@/lib/external/merc
 import { hasWhatnotCredentials, searchWhatnotListings } from "@/lib/external/whatnot";
 import { hasMercariCredentials, searchMercariListings } from "@/lib/external/mercari";
 import { isStompingGroundsEnabled, searchStompingGrounds } from "@/lib/external/stomping-grounds";
+import { isCardTraderEnabled, searchCardTrader } from "@/lib/external/cardtrader";
 import { hasSoldgraphCredentials, searchSoldgraphListings } from "@/lib/external/soldgraph";
 import type {
   BuyerContext,
@@ -41,6 +42,7 @@ export type PlatformSeed = ListingSeed;
 export type PlatformSearchPlan = {
   query?: string;
   ebayProduct?: EbayProductResolution | null;
+  tcgplayerProductId?: number | null;
 };
 
 export type PlatformSearchInput = {
@@ -139,6 +141,13 @@ export const stompingGroundsPlatformAgent: PlatformAgent = {
   search: searchStompingGrounds,
 };
 
+export const cardTraderPlatformAgent: PlatformAgent = {
+  id: "cardtrader", marketplace: "CardTrader", label: "CardTrader official marketplace API",
+  sourceMode: "official_api", requiredEnv: ["CARDTRADER_ENABLED", "CARDTRADER_MARKET_DATA_APPROVED", "CARDTRADER_API_TOKEN"],
+  isConfigured: isCardTraderEnabled, searchTimeoutMs: 13_000, search: searchCardTrader,
+  resultCautions: ["CardTrader reports English raw offers from U.S. sellers in the account's USD currency. Original seller currency, shipping, fees and delivery availability require confirmation. Links open the selected print's seller table."],
+};
+
 // Roadmap marketplaces: each already implements the PlatformAgent interface —
 // proving the fanout, ranking, and "sources checked" UI are fully provider-agnostic
 // today — but stays permanently unconfigured (search() is unreachable) until a real
@@ -161,7 +170,6 @@ function stubPlatformAgent(config: {
 
 const ROADMAP_AGENTS: PlatformAgent[] = [
   stubPlatformAgent({ id: "fanatics-collect", marketplace: "Fanatics Collect", label: "Fanatics Collect automatic access pending", sourceMode: "manual_fallback", requiredEnv: [] }),
-  stubPlatformAgent({ id: "cardtrader", marketplace: "CardTrader", label: "CardTrader marketplace API access pending", sourceMode: "manual_fallback", requiredEnv: [] }),
   stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket automatic access pending", sourceMode: "manual_fallback", requiredEnv: [] }),
   stubPlatformAgent({ id: "snkrdunk", marketplace: "SNKRDUNK", label: "SNKRDUNK adapter", sourceMode: "licensed_provider", requiredEnv: ["SNKRDUNK_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "xianyu", marketplace: "Xianyu", label: "Xianyu adapter", sourceMode: "licensed_provider", requiredEnv: ["XIANYU_PROVIDER_KEY"] }),
@@ -172,7 +180,7 @@ const ROADMAP_AGENTS: PlatformAgent[] = [
 
 // TCGCSV is intentionally absent: it is an aggregate market reference, not
 // seller-specific inventory. Only concrete active listings belong in this registry.
-const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, mercariPlatformAgent, stompingGroundsPlatformAgent, ...ROADMAP_AGENTS];
+const DEFAULT_AGENTS: PlatformAgent[] = [ebayPlatformAgent, whatnotPlatformAgent, mercariPlatformAgent, stompingGroundsPlatformAgent, cardTraderPlatformAgent, ...ROADMAP_AGENTS];
 
 // The registry is the single source of truth for which marketplaces participate.
 export function getPlatformAgents(): PlatformAgent[] {
@@ -218,6 +226,7 @@ export type RunPlatformFanoutInput = {
   // Only eBay needs catalog/ePID resolution before acquisition. Review-only
   // marketplaces can start immediately from the confirmed card's query.
   ebayPlan?: Promise<PlatformSearchPlan>;
+  platformPlans?: Partial<Record<Marketplace, Promise<PlatformSearchPlan>>>;
   agents?: PlatformAgent[];
   signal?: AbortSignal;
   // Only the orchestrator's pure-card path supplies this buyer/print-scoped key.
@@ -326,6 +335,7 @@ export async function runPlatformFanout({
   fetcher,
   plan,
   ebayPlan,
+  platformPlans,
   agents = getPlatformAgents(),
   signal,
   ebayCacheKey,
@@ -356,7 +366,8 @@ export async function runPlatformFanout({
             cachedAt: cached.capturedAt, durationMs: Date.now() - startedAt };
         }
         const attempts: SearchAttempt[] = [];
-        const resolvedPlan = agent.id === "ebay" && ebayPlan ? await ebayPlan : plan;
+        const specificPlan = platformPlans?.[agent.marketplace];
+        const resolvedPlan = specificPlan ? await specificPlan : agent.id === "ebay" && ebayPlan ? await ebayPlan : plan;
         const input = { card, buyer, fetcher, plan: resolvedPlan, signal, onSearchAttempt: (attempt: SearchAttempt) => attempts.push(attempt) };
         const seeds = await searchPlatformWithTimeout(agent, input);
         let recallObservation: RecallObservation | undefined;

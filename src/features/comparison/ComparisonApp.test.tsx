@@ -1396,7 +1396,8 @@ describe("comparison condition controls", () => {
     // Without the verdict on completion, an abstention and a recommendation are
     // indistinguishable in the funnel, so the abstention rate is unmeasurable.
     expect(trackEvent).toHaveBeenCalledWith("comparison_completed", expect.objectContaining({ result_state: "best_buy" }));
-    expect(markResultShown).toHaveBeenCalled();
+    // The result is rendered before its passive analytics effect is flushed.
+    await waitFor(() => expect(markResultShown).toHaveBeenCalled());
 
     fireEvent.click(within(hero).getByRole("link", { name: /Review listing/ }));
     expect(trackEvent).toHaveBeenCalledWith("choice_opened", expect.objectContaining({

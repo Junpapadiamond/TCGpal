@@ -50,5 +50,6 @@ next-env.d.ts
 
 # Minimal local observations from founder-triggered acquisition experiments.
 /output/frontier-research/direct-metadata/
+/output/frontier-research/fanatics-collect/
 /output/recall-probe/
 /output/accuracy-eval/

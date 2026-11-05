@@ -350,7 +350,7 @@ describe("default registry (roadmap adapters)", () => {
 
   it("registers roadmap marketplaces behind the same interface, all self-gated off until wired", async () => {
     const agents = getPlatformAgents();
-    const roadmap = agents.filter((agent) => !["ebay", "tcgplayer", "whatnot", "mercari", "stomping-grounds"].includes(agent.id));
+    const roadmap = agents.filter((agent) => !["ebay", "tcgplayer", "whatnot", "mercari", "stomping-grounds", "cardtrader"].includes(agent.id));
 
     // Proves the fanout/UI are provider-agnostic today: every roadmap agent implements
     // search() and is registered, but none is configured, so none joins a real fan-out.
@@ -369,5 +369,26 @@ describe("default registry (roadmap adapters)", () => {
   it("keeps TCGCSV out of the listing-agent registry because it is aggregate reference data", () => {
     const tcgplayer = getPlatformAgents().find((agent) => agent.id === "tcgplayer");
     expect(tcgplayer).toBeUndefined();
+  });
+  it("registers the real CardTrader adapter but requires approval independently of its working token", async () => {
+    vi.stubEnv("CARDTRADER_ENABLED", "1"); vi.stubEnv("CARDTRADER_API_TOKEN", "test-token");
+    vi.stubEnv("CARDTRADER_MARKET_DATA_APPROVED", "0");
+    const agent = getPlatformAgents().find(agent => agent.id === "cardtrader")!;
+    expect(agent.sourceMode).toBe("official_api"); expect(agent.isConfigured()).toBe(false);
+    vi.stubEnv("CARDTRADER_MARKET_DATA_APPROVED", "1"); expect(agent.isConfigured()).toBe(true);
+  });
+  it("passes per-market catalog mapping without holding unrelated sources behind that mapping", async () => {
+    let resolve!: (value: { tcgplayerProductId: number }) => void;
+    const mapping = new Promise<{ tcgplayerProductId: number }>(done => { resolve = done; });
+    const received: number[] = [];
+    const independent = vi.fn(async () => []);
+    const agents: PlatformAgent[] = [
+      { ...ebayPlatformAgent, id: "store", marketplace: "Stomping Grounds", isConfigured: () => true, search: independent, recallProbe: undefined },
+      { ...ebayPlatformAgent, id: "cardtrader", marketplace: "CardTrader", isConfigured: () => true,
+        search: async input => { received.push(input.plan!.tcgplayerProductId!); return []; }, recallProbe: undefined },
+    ];
+    const result = runPlatformFanout({ card, buyer, fetcher, agents, platformPlans: { CardTrader: mapping } });
+    expect(independent).toHaveBeenCalledOnce(); expect(received).toEqual([]);
+    resolve({ tcgplayerProductId: 246723 }); await result; expect(received).toEqual([246723]);
   });
 });

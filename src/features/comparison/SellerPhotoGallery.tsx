@@ -66,7 +66,8 @@ export function ListingPhoto({ listing, size = "compact" }: ListingPhotoProps) {
         </div>
       )}
       <figcaption className="mt-1 text-center text-[9px] font-black uppercase leading-3 tracking-[0.04em] text-[#64736c]">
-        {failedUrl !== null && failedUrl === photos[0] ? zh ? "图片暂不可用" : "Image unavailable" : caption}
+        {photos.length === 0 ? zh ? "无卖家实拍" : "No seller photos"
+          : failedUrl !== null && failedUrl === photos[0] ? zh ? "图片暂不可用" : "Image unavailable" : caption}
       </figcaption>
       {galleryOpen && photos.length > 0 && (
         <SellerPhotoDialog

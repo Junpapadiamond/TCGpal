@@ -21,6 +21,18 @@ const storeSource: ComparisonPlatformResult = {
 const openOffers = () => document.querySelectorAll("summary").forEach((summary) => fireEvent.click(summary));
 
 describe("three-marketplace asking prices", () => {
+  it.each(["en", "zh"] as const)("labels CardTrader account quotes, seller-table links and absent photos in %s", lang => {
+    setLanguage(lang);
+    const source = { ...storeSource, id: "cardtrader", marketplace: "CardTrader" as const, label: "CardTrader" };
+    renderPrices([listingFixture({ marketplace: "CardTrader", imageUrl: null, imageUrls: [], shipping: null, buyerFee: null,
+      costComplete: false, eligible: false, matchReasons: ["CardTrader offer 123, seller Test Seller. The link opens this print's seller table."] })], [source]);
+    const region = screen.getByRole("region", { name: lang === "zh" ? "CardTrader 标价" : "CardTrader prices" });
+    fireEvent.click(region.querySelector("summary")!);
+    expect(within(region).getByText(lang === "zh" ? "账户币种报价：USD" : "USD account quote")).toBeTruthy();
+    expect(within(region).getByRole("link", { name: lang === "zh" ? /查看卖家报价/ : /View offers/ })).toBeTruthy();
+    expect(within(region).getByText(lang === "zh" ? "无卖家实拍" : "No seller photos")).toBeTruthy();
+    expect(within(region).getByText(/seller Test Seller/)).toBeTruthy();
+  });
   it("keeps condition mismatches in a separate closed group, never a marketplace lead", () => {
     renderPrices([listingFixture({ id: "damaged", title: "Damaged copy", marketplace: "Whatnot", price: 200,
       claimedCondition: "Damaged", conditionCompatibilityScore: 0, eligible: false,

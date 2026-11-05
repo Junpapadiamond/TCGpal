@@ -21,7 +21,7 @@ function SignalTile({ label, value, note, foot, tone, children }: {
   return <div role="group" aria-label={label} data-tone={tone} className={`flex min-w-0 flex-col px-2.5 first:pl-0 last:pr-0 sm:px-5 ${tones[tone]}`}>
     <dt className="text-[11px] font-medium leading-4 text-[#59645f] sm:text-xs">{label}</dt>
     <dd className="mb-2 mt-1 flex flex-col gap-x-2 gap-y-0.5 sm:flex-row sm:flex-wrap sm:items-baseline">
-      <span className="break-words text-lg font-semibold leading-tight tracking-[-0.03em] sm:text-2xl">{value}</span>
+      <span className={`break-words font-semibold leading-tight tracking-[-0.03em] sm:text-2xl ${value.length > 8 ? "text-xs" : "text-lg"}`}>{value}</span>
       {note && <span className="text-[11px] leading-4 text-[#64716a] sm:text-xs">{note}</span>}
     </dd>
     {children}

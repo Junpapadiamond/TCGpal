@@ -285,6 +285,7 @@ export async function runListingComparison(
       query: [confirmedCard.name, confirmedCard.cardNumber || confirmedCard.setName].filter(Boolean).join(" ").trim(),
     },
     ebayPlan: crosswalkPromise.then(crosswalk => ({ query: crosswalk?.ebayQueryTemplate, ebayProduct: crosswalk?.ebayProduct ?? null })),
+    platformPlans: { CardTrader: crosswalkPromise.then(crosswalk => ({ tcgplayerProductId: crosswalk?.tcgplayerProductId ?? null })) },
     opsContext,
     ebayCacheKey: cacheable ? comparisonCacheKey({ ...request, marketScope: "single" }, confirmedCard.id) : undefined,
   });
