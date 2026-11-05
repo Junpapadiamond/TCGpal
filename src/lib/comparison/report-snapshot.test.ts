@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { clearLocalCache } from "@/lib/ops/cache";
+import { setJsonCache } from "@/lib/ops/cache";
 import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
 import type { ComparisonReport } from "@/lib/schemas";
 import {
@@ -70,6 +71,14 @@ describe("comparison report snapshots", () => {
     await expect(getComparisonSnapshot("../../secret")).resolves.toBeNull();
   });
 
+  it("does not restore receipts created before the current matching rules", async () => {
+    const saved = await saveComparisonSnapshot(report());
+    const legacy: Record<string, unknown> = { ...saved };
+    delete legacy.rulesRevision;
+    await setJsonCache("comparison-snapshot-v1", saved.id, legacy, { ttlSeconds: 60 });
+    expect(await getComparisonSnapshot(saved.id)).toBeNull();
+  });
+
   it("isolates cross-market snapshots from the default latest eBay lookup", async () => {
     const confirmedCardId = STANDARD_COMPARISON_FLOW_CARDS[0].expectedCardId;
     const single = await saveComparisonSnapshot(report(), { confirmedCardId });
@@ -78,6 +87,10 @@ describe("comparison report snapshots", () => {
     const cross = await saveComparisonSnapshot(crossReport, { confirmedCardId });
     const lookup = { confirmedCardId, game: "pokemon" as const, desiredCondition: "Near Mint" as const };
     expect((await getLatestComparisonSnapshot(lookup))?.id).toBe(single.id);
+    expect((await getLatestComparisonSnapshot({ ...lookup, marketScope: "cross" }))?.id).toBe(cross.id);
+    crossReport.request.marketplaces = ["Whatnot"];
+    const subset = await saveComparisonSnapshot(crossReport, { confirmedCardId });
+    expect((await getLatestComparisonSnapshot({ ...lookup, marketScope: "cross", marketplaces: ["Whatnot"] }))?.id).toBe(subset.id);
     expect((await getLatestComparisonSnapshot({ ...lookup, marketScope: "cross" }))?.id).toBe(cross.id);
   });
 

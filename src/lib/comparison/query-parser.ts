@@ -130,6 +130,8 @@ const RARITY_CODE_KEYWORDS: Array<{ pattern: RegExp; variant: string }> = [
 ];
 
 const ONE_PIECE_RELEASE_PHRASES: Array<{ pattern: RegExp; variant: string }> = [
+  // Preserve an explicitly supplied year rather than substituting another gift release.
+  { pattern: /\bgift\s+collection(?:\s+20\d{2})?\b/i, variant: "" },
   { pattern: /\b(?:\d+(?:st|nd|rd|th)\s+)?anniversary\s+winner\b/i, variant: "Tournament Winner" },
   { pattern: /\bregional\s+champion\b/i, variant: "Regional Champion" },
   { pattern: /\bregional\s+finalist\b/i, variant: "Regional Finalist" },
@@ -208,7 +210,7 @@ export function parseCardQuery(query: string): ParsedCardQuery {
   for (const { pattern, variant: candidate } of ONE_PIECE_RELEASE_PHRASES) {
     const match = remaining.match(pattern);
     if (match) {
-      variant = candidate;
+      variant = candidate || normalizeWhitespace(match[0]);
       remaining = removeMatch(remaining, match);
       break;
     }
@@ -263,7 +265,7 @@ export function parseCardQuery(query: string): ParsedCardQuery {
     "Stamped",
     "Textured",
   ]);
-  if (game === null && onePieceSpecialVariants.has(variant) && ONE_PIECE_CHARACTER_HINT_PATTERN.test(query)) {
+  if (game === null && (onePieceSpecialVariants.has(variant) || /^gift collection\b/i.test(variant)) && ONE_PIECE_CHARACTER_HINT_PATTERN.test(query)) {
     game = "onePiece";
   }
 

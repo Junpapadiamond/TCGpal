@@ -1,6 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { isExcludedProduct } from "./product-type";
 
+describe("explicit multiple-copy offers", () => {
+  it.each([
+    "4x Portgas D. Ace OP07-053 Promo Tournament Pack 2024 - One Piece TCG English NM",
+    "x4 Nami OP01-016 Near Mint",
+    "Pikachu 58/102 4 x Near Mint",
+    "10× Tony Tony.Chopper ST01-006 NM",
+  ])("excludes a bundle from the single-card comparison: %s", title => {
+    expect(isExcludedProduct({ title })).toBe(true);
+  });
+  it.each([
+    "1x Nami OP01-016 Near Mint", "Nami OP01-016 NM",
+    "Charizard LV.X 143/147", "Mewtwo EX 163/162",
+    "Tony Tony.Chopper ST01-006 Gift Collection 2023",
+  ])("preserves ordinary single-card names and numbers: %s", title => {
+    expect(isExcludedProduct({ title })).toBe(false);
+  });
+});
+
 describe("explicit product alterations", () => {
   it.each([
     '"GHOST" Pikachu 25/165 Reverse Holo - NM - Sun Bleached 1.5 Years',

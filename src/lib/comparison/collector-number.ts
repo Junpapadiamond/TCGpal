@@ -128,6 +128,10 @@ function stripLeadingZeros(value: string): string {
 
 function sameScheme(candidate: ParsedCollectorNumber, expected: ParsedCollectorNumber): boolean {
   if (candidate.kind !== expected.kind) return false;
+  // OP/ST/EB/PRB/P identify sets within One Piece, not unrelated numbering
+  // schemes. A Chopper EB01-006 is an explicit conflict with ST01-006.
+  const onePieceCode = /^(?:(?:OP|ST|EB|PRB)\d{1,2}|P)-\d{1,3}$/;
+  if (candidate.kind === "code" && onePieceCode.test(candidate.canonical) && onePieceCode.test(expected.canonical)) return true;
   const candidateAlpha = alphaSignature(candidate);
   const expectedAlpha = alphaSignature(expected);
   return candidateAlpha === expectedAlpha;

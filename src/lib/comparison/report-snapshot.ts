@@ -5,9 +5,11 @@ import {
   comparisonReportSchema,
   conditionClaimSchema,
   tcgGameSchema,
+  selectedMarketplacesSchema,
   type ComparisonReport,
 } from "@/lib/schemas";
-import { isCacheableRequest } from "./report-cache";
+import { COMPARISON_CACHE_REVISION, isCacheableRequest } from "./report-cache";
+import { marketSelectionKey } from "./market-selection";
 
 const SNAPSHOT_SCOPE = "comparison-snapshot-v1";
 const SNAPSHOT_LATEST_SCOPE = "comparison-snapshot-latest-v2";
@@ -16,6 +18,7 @@ const SNAPSHOT_TTL_SECONDS = 30 * 24 * 60 * 60;
 export const comparisonSnapshotIdSchema = z.string().regex(/^[a-f0-9]{32}$/);
 export const comparisonSnapshotSchema = z.object({
   id: comparisonSnapshotIdSchema,
+  rulesRevision: z.literal(COMPARISON_CACHE_REVISION),
   report: comparisonReportSchema,
   savedAt: z.string().datetime(),
   expiresAt: z.string().datetime(),
@@ -28,6 +31,7 @@ export const comparisonSnapshotLookupSchema = z.object({
   game: tcgGameSchema,
   desiredCondition: conditionClaimSchema,
   marketScope: z.enum(["single", "cross"]).optional(),
+  marketplaces: selectedMarketplacesSchema.optional(),
 });
 
 const comparisonSnapshotPointerSchema = z.object({
@@ -49,6 +53,7 @@ export async function saveComparisonSnapshot(
   const now = options.now ?? new Date();
   const snapshot = comparisonSnapshotSchema.parse({
     id,
+    rulesRevision: COMPARISON_CACHE_REVISION,
     report: {
       ...report,
       request: {
@@ -70,6 +75,7 @@ export async function saveComparisonSnapshot(
       game: report.request.cardHint.game,
       desiredCondition: report.request.buyer.desiredCondition,
       marketScope: report.request.marketScope ?? "single",
+      marketplaces: report.request.marketplaces,
     });
     await setJsonCache(SNAPSHOT_LATEST_SCOPE, comparisonSnapshotLookupKey(lookup), { id }, {
       ttlSeconds: SNAPSHOT_TTL_SECONDS,
@@ -109,5 +115,5 @@ export async function getLatestComparisonSnapshot(
 }
 
 function comparisonSnapshotLookupKey(input: ComparisonSnapshotLookup) {
-  return JSON.stringify([input.confirmedCardId, input.game, input.desiredCondition, input.marketScope ?? "single"]);
+  return JSON.stringify([input.confirmedCardId, input.game, input.desiredCondition, input.marketScope ?? "single", marketSelectionKey(input)]);
 }

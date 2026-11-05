@@ -7,7 +7,7 @@ import { buildOfferVerdict, selectMarketOffer } from "@/lib/comparison/offer-ver
 import { isExcludedProduct } from "@/lib/comparison/ranking";
 import { whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
 import { trackEvent } from "@/lib/analytics";
-import type { CardIdentityCandidate, ComparisonPlatformResult, NormalizedListing, TcgGame } from "@/lib/schemas";
+import type { CardIdentityCandidate, ComparisonPlatformResult, NormalizedListing, TcgGame, SearchableMarketplace } from "@/lib/schemas";
 import { useLang, useT } from "./i18n";
 import { IconChevronDown } from "./icons";
 import { sourceStatusLabel } from "./source-status";
@@ -29,16 +29,17 @@ function sourceAttribution(marketplace: NormalizedListing["marketplace"], source
   return marketplace;
 }
 
-export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon" }: {
+export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon", selectedMarkets }: {
   candidates: NormalizedListing[];
   platforms: ComparisonPlatformResult[];
   card?: CardIdentityCandidate | null;
   game?: TcgGame;
+  selectedMarkets?: readonly SearchableMarketplace[];
 }) {
   const { lang } = useLang();
   const t = useT();
   const zh = lang === "zh";
-  const markets = [...new Set([...defaultMarkets, ...platforms
+  const markets = selectedMarkets ?? [...new Set([...defaultMarkets, ...platforms
     .filter((source) => source.configured && source.status !== "skipped")
     .map((source) => source.marketplace)])];
   const query = card ? [card.name, card.cardNumber, card.variant, card.setName].filter(Boolean).join(" ") : "";
@@ -65,7 +66,10 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
           : sourceStatusLabel(source, lang);
         const manualUrl = query && rows.length === 0
           ? marketplace === "Whatnot" ? whatnotSearchUrl(query)
-            : marketplace === "Mercari" ? `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}` : null
+            : marketplace === "Mercari" ? `https://www.mercari.com/search/?keyword=${encodeURIComponent(query)}`
+            : marketplace === "CardTrader" ? `https://www.cardtrader.com/en-US/${game === "onePiece" ? "one-piece" : "pokemon"}`
+            : marketplace === "Cardmarket" ? `https://www.cardmarket.com/en/${game === "onePiece" ? "OnePiece" : "Pokemon"}`
+            : marketplace === "Fanatics Collect" ? "https://www.fanaticscollect.com/" : null
           : null;
         const attribution = sourceAttribution(marketplace, source, zh);
         const assessment = lead ? buildOfferVerdictCopy(lead, candidates, lang, usableMarketPrice(card)).assessment : null;
@@ -116,7 +120,9 @@ export function CrossMarketPrices({ candidates, platforms, card, game = "pokemon
               {!lead && manualUrl && <a href={manualUrl} target="_blank" rel="noopener noreferrer"
                 onClick={() => trackEvent("other_marketplace_clicked", { marketplace, game })}
                 className="inline-flex min-h-11 items-center text-xs font-medium text-[#20676a] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f6f73]">
-                {zh ? `手动搜索 ${marketplace}` : `Search ${marketplace} manually`}<span aria-hidden="true"> ↗</span>
+                {marketplace === "Whatnot" || marketplace === "Mercari"
+                  ? zh ? `手动搜索 ${marketplace}` : `Search ${marketplace} manually`
+                  : zh ? `打开 ${marketplace}` : `Open ${marketplace}`}<span aria-hidden="true"> ↗</span>
               </a>}
             </div>}
             {offer}

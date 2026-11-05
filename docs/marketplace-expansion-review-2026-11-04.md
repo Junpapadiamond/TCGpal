@@ -1,0 +1,49 @@
+# Marketplace expansion and account-pool review
+
+Reviewed November 4, 2026 (New York; public metadata collected November 5 UTC). Scope: Fanatics **Collect**, Cardmarket, CardTrader and the existing authorized Apify pool. No new Actor was run, no subscription was started, and no spending allowance or counter was changed.
+
+## Decision
+
+The useful instinct is broader exact-card supply with buyer-controlled acquisition. The strongest case for official APIs is structured identifiers, explicit access rules and fewer transport failures. The proposed fallback, choosing a highly rated scraper, has two serious limitations: ratings do not establish collection/output rights, and a successful run can still return the wrong print, converted currency, an auction bid or an incomplete checkout cost.
+
+Prefer CardTrader's official marketplace API after staff approval. Show all three requested markets as pending/manual destinations until acquisition and output-use gates pass. The selector may control existing sources now; a selectable name must not imply a live integration or marketplace affiliation. Do not enable an Apify candidate just because it has the highest rating.
+
+Engineering/research owner: Codex. Access and any new spending authorization: founder. Review date: November 11, 2026, or when CardTrader responds. This is a review date, not a scheduled job.
+
+## Official access
+
+| Market | Verified evidence | Current state and remaining dependency |
+| --- | --- | --- |
+| CardTrader | [Official API](https://www.cardtrader.com/en-US/docs/api/full/reference) documents bearer authentication, blueprint identifiers and marketplace product offers. [Terms](https://static.cardtrader.com/en/pages/terms-of-service.html) distinguish inventory management from market-data applications, which staff evaluates on request. | TCGlens account registration completed through the founder's selected Google account, with United States approved by the founder. The official API/support request was submitted and the UI confirmed submission. Marketplace permission, public display/cache terms and any access fee remain unanswered. No token is installed in TCGlens and no authenticated CardTrader API request was made. |
+| Cardmarket | [Official API help](https://help.cardmarket.com/en/cardmarket-api) currently says new access applications are closed. | Account registration alone cannot deliver API access. Existing credentials must not be borrowed from another user. Daily aggregate price data is not seller inventory or US checkout pricing. |
+| Fanatics Collect | [Fanatics ID documentation](https://api.docs.fan/) is an authentication integration, not an established Collect inventory feed. [Collect terms](https://support.fanaticscollect.com/en_us/terms-of-use-r11C70QTge), sections 3.5 and 11.3.8–11.3.9, restrict scraping, bypasses and unauthorized connections. | No self-service Collect offer API or permission to republish marketplace data was established. A buyer account or Fanatics ID OAuth client would not establish that permission. Keep access pending; no automated marketplace collection was attempted. |
+
+CardTrader's current reference states 200 requests per 10 seconds; the older September review's rate-limit description is stale. The proposed evaluation remains deliberately smaller: two exact prints, at most ten GET requests at one request per second, a 30-second deadline, no cart or inventory mutations. Blueprint/TCGplayer associations need exact-print review. Seller-native currency, account currency conversion, US delivery and mandatory charges must be distinguished. Unknown shipping/fees stay unknown.
+
+**Success:** approved use, both mappings correct, and at least one active raw single with supported condition, currency, availability and a usable outbound link. Record count, latency, freshness and cost. **Kill:** access denial, unclear fees, required cart mutation, print conflict, converted USD represented as native USD, or no usable US offers. A successful two-card test advances to repeatability and the AGENTS production-promotion gates; it does not automatically activate a source.
+
+## Apify shortlist
+
+Ratings and tariffs below come from public Actor metadata at the observation time, not old search snippets. A zero review count means **unrated**, not a zero-quality verdict. “Free tier” is a tariff for an Apify account tier, not free execution. Startup charges are additional and may depend on memory. No candidate has passed a live exact-print evaluation or source-rights review.
+
+| Candidate | Rating / reviews; total users | Current free-tier tariff | Fit and decision |
+| --- | --- | --- | --- |
+| [Phantom Coder Cardmarket listings](https://apify.com/phantom_coder/cardmarket-listings-scraper) | 5.0 / 3; 98 | $0.005 per offer + $0.00005 per GB startup; optional valuation $0.07 per card | Best-rated relevant Cardmarket offer candidate found. Individual seller rows are useful, but native EUR and converted USD are explicitly different. Keep valuation, grade predictions and deal scores off. Product links, exact-print mapping, delivery and collection/output rights remain unverified. Research shortlist only. |
+| [ecomscrape Cardmarket details](https://apify.com/ecomscrape/cardmarket-card-page-details-scraper) | Unrated / 0; 145 | Metadata says `FREE` after migration to pay-per-usage; compute/proxy charges are not established by that field | Offers a One Piece details/seller structure. More users do not establish precision or transport permission. Not selected over the official-access path. |
+| [Jungle Synthesizer Fanatics Collect](https://apify.com/jungle_synthesizer/fanaticscollect-weekly-auction-scraper) | 5.0 / 1; 90 | $0.10 per GB startup, at least one event; $0.002 live record / $0.004 premium record | Highest-rated Fanatics candidate found, with only one review. Startup alone exceeds the existing $0.03/$0.05 provider caps, which do not authorize this new Actor anyway. Rights unresolved; not activated. |
+| [Crawloop Fanatics Collect](https://apify.com/crawloop/fanatics-collect-scraper) | Unrated / 0; 18 | $0.00119 per lot + $0.00005 per GB startup | Buy Now filtering is relevant, but the README describes Chrome TLS impersonation. Reject that transport under the current no-bypass boundary. Bids/sold results must never become active fixed-price offers. |
+| [ParseBird Fanatics Collect](https://apify.com/parsebird/fanatics-collect-scraper) | Unrated / 0; 2 | $0.00199 live / $0.00399 sold record + $0.00005 per GB startup | README says an unsuccessful exact query can broaden to a different `matched_keyword`. That directly conflicts with exact-card expectations unless every returned row is independently rejected/verified. Not a stable default; rights unresolved. |
+| [Hipersoft Fanatics Collect](https://apify.com/hipersoft/fanaticscollect-scraper) | Unrated / 0; 2 | $0.002 per item + $0.00005 per GB startup | Small evidence base and auction-heavy output. No demonstrated collection permission or exact raw-single coverage; no preference justified. |
+| [Lulzasaur CardTrader](https://apify.com/lulzasaur/cardtrader-scraper) | Unrated / 0; 3 | $0.01 per result + $0.00005 per GB startup | Lowest price and seller count per print are not concrete seller offers with complete costs. The official marketplace API is a better fit; do not substitute this scraper. |
+
+Public tariff/rating sources: Apify's `GET /v2/acts/{owner}~{name}` metadata for each linked Actor. The ignored local evidence is `output/accuracy-eval/one-piece-search/apify-shortlist.json`; the later Jungle Synthesizer check was observed separately. Ratings are selection hints, not an accuracy measurement. All proposed paid tests remain unstarted. Any later test needs a source review and an explicit new bounded allowance; existing Whatnot/Mercari caps do not cover these Actors.
+
+## Existing Apify account switching
+
+Read-only Vercel metadata confirms the production account-pool flag is `1`, the authorized token pool is a production Sensitive variable, and durable Redis credentials are present. Allowlisted plain settings remain: no-expiry `1`, cumulative Whatnot ceiling `1846`, Mercari application ceiling `9`, Mercari proxy flag `1`. No secret values were requested or printed. Presence/enabled configuration is not a live balance check or proof that a provider can acquire inventory.
+
+The selector checks the [official account-limits endpoint](https://docs.apify.com/api/v2/users-me-limits-get), uses the lesser of the reported ceiling and $5, and atomically reserves the maximum run charge. It advances only on insufficient allowance. Auth, access, rate, malformed-accounting and storage failures stop. Existing reservations remain conservative and are not refunded. One stable token per distinct authorized account remains an operator requirement; replacing a token would split the token-keyed ledger.
+
+This audit reproduced one cancellation defect with a failing regression: a pending Redis reservation could outlive the caller cancellation/combined selection deadline. Selection now races that signal and stops without changing accounts or authorizing an Actor afterward. A late Redis reservation is retained as uncertain spend. Invalid Redis return values also fail closed.
+
+Validation: 17 account-selection cases; 66 focused account/Actor/budget tests passed. Focused ESLint and TypeScript checks passed. Full release checks belong to the parent change. No real account was drained to demonstrate switching, and no fresh authenticated account balance was available in this workspace; live per-account balances and an actual exhausted-account transition remain unverified. Mercari's separate application ledger cannot be bypassed by switching accounts.

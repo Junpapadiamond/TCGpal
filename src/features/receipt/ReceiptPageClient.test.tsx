@@ -24,6 +24,7 @@ vi.mock("@/lib/analytics", async (importOriginal) => ({
 
 function snapshot(): ComparisonSnapshot {
   return {
+    rulesRevision: "ranking-v19-one-piece-release",
     id: "0123456789abcdef0123456789abcdef",
     report: {
       status: "complete",

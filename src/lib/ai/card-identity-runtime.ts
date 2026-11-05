@@ -10,7 +10,7 @@ import {
   type CardIdentitySearchResponse,
 } from "@/lib/schemas";
 
-const CACHE_SCOPE = `card-identity-v1-${ONE_PIECE_CATALOG_REVISION}`;
+const CACHE_SCOPE = `card-identity-v2-release-query-${ONE_PIECE_CATALOG_REVISION}`;
 const FRESH_TTL_MS = 15 * 60 * 1000;
 const STALE_TTL_SECONDS = 6 * 60 * 60;
 // A Pokémon identity lookup permits one 8s provider attempt, a 400ms backoff,

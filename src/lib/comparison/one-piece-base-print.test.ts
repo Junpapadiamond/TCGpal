@@ -1,9 +1,49 @@
 import { describe, expect, it } from "vitest";
 import { assessPrintFidelity } from "@/lib/comparison/print-fidelity";
-import { findOnePieceCatalogVariant } from "@/lib/external/one-piece-catalog";
+import { findOnePieceCatalogVariant, findOnePieceCatalogVariants, onePieceCatalog } from "@/lib/external/one-piece-catalog";
 import { mapOnePieceCardToIdentity } from "@/lib/external/one-piece-tcg";
+import { observedEvidenceFor } from "@/lib/testing/one-piece-alignment";
 
 const ACCEPTED = new Set(["exact", "compatible"]);
+
+describe("promotional category versus exact release", () => {
+  it("preserves exact-print decisions across every catalogued promotional family", () => {
+    const promotional = onePieceCatalog.map(print => mapOnePieceCardToIdentity(print, { confidence: "high", matchReasons: [] }))
+      .filter(card => ["premium_collection", "anniversary", "tournament", "event", "promo"].includes(card.releaseChannel ?? ""));
+    expect(promotional.length).toBeGreaterThan(100);
+    for (const card of promotional) {
+      const own = observedEvidenceFor(card);
+      const baseline = classify(card.id, own).match;
+      expect(classify(card.id, `${own}. Set: Promo Cards`).match, card.id).toBe(baseline);
+      for (const sibling of findOnePieceCatalogVariants(card.cardNumber)) {
+        if (sibling.card_image_id === card.id) continue;
+        const other = mapOnePieceCardToIdentity(sibling, { confidence: "high", matchReasons: [] });
+        expect(classify(card.id, `${observedEvidenceFor(other)}. Set: Promo Cards`).match, `${card.id} vs ${other.id}`).not.toBe("compatible");
+      }
+    }
+  });
+  // Frozen from the founder-reported Gift Collection search on November 4.
+  const title = "One Piece Gift Collection 2023 Tony Tony Chopper ST01-006 Alternate Alt Art NM";
+  it("does not reject the named Gift Collection print because eBay categorizes it as Promo Cards", () => {
+    expect(classify("ST01-006_p3", `${title}. Set: Promo Cards. Convention/Event: Anime Expo.`).match).toBe("compatible");
+  });
+  it("does not let the broad promo category identify an artwork", () => {
+    expect(classify("ST01-006_p3", "Tony Tony Chopper ST01-006 Alt Art. Set: Promo Cards.").match).not.toBe("compatible");
+    expect(classify("ST01-006", "Tony Tony Chopper ST01-006 Promo Cards").match).not.toBe("compatible");
+  });
+  it.each([
+    "Set: Premium Card Collection -film Red Edition",
+    "Set: Demo Deck",
+    "Set: Learn Together Deck Set",
+    "Card Number: ST01-006. Card Cost: 3",
+    "Manga Rare",
+  ])("retains affirmative conflicts even alongside Promo Cards: %s", (conflict) => {
+    expect(classify("ST01-006_p3", `${title}. Set: Promo Cards. ${conflict}`).match).toBe("mismatch");
+  });
+  it("does not show other Chopper collector numbers as merely missing evidence", () => {
+    expect(classify("ST01-006_p3", "Tony Tony Chopper EB01-006 Memorial Collection Alt Art").match).toBe("mismatch");
+  });
+});
 
 function classify(printId: string, title: string) {
   const print = findOnePieceCatalogVariant(printId);

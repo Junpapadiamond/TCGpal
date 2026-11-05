@@ -4,6 +4,7 @@ import { ONE_PIECE_PRINT_METADATA_REVISION } from "@/lib/external/one-piece-prin
 import { ONE_PIECE_CATALOG_REVISION } from "@/lib/external/one-piece-catalog-revision";
 import { POKEMON_CATALOG_SNAPSHOT_REVISION } from "@/lib/external/pokemon-catalog-snapshot";
 import { getConfiguredPlatformAgents } from "./platforms";
+import { marketSelectionKey } from "./market-selection";
 
 // R7: pure card searches (no user-supplied listing facts) are cacheable — the
 // fan-out result only depends on the confirmed card, desired condition, and
@@ -12,7 +13,7 @@ import { getConfiguredPlatformAgents } from "./platforms";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_TTL_SECONDS = CACHE_TTL_MS / 1000;
 const CACHE_SCOPE = "comparison-report";
-const COMPARISON_CACHE_REVISION = "ranking-v18-detail-money";
+export const COMPARISON_CACHE_REVISION = "ranking-v19-one-piece-release";
 const comparisonFlights = new Map<string, Promise<ComparisonReport>>();
 
 export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: string) {
@@ -29,6 +30,7 @@ export function comparisonCacheKey(request: ComparisonRequest, confirmedCardId: 
     POKEMON_CATALOG_SNAPSHOT_REVISION,
     "image-urls-v2",
     `scope:${request.marketScope ?? "single"}`,
+    `markets:${marketSelectionKey(request)}`,
     `recall:${process.env.EBAY_RECALL_PROBE_ENABLED !== "false"}`,
     ONE_PIECE_PRINT_METADATA_REVISION,
     ONE_PIECE_CATALOG_REVISION,

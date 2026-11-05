@@ -29,6 +29,18 @@ const pikachuCards = [
 ];
 
 describe("resolveCardIdentity", () => {
+  it("never substitutes a different Gift Collection year", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => { throw new Error("offline"); });
+    const result = await resolveCardIdentity({ query: "Chopper ST01-006 Gift Collection 2024", cardHint: { game: "onePiece" } }, { fetcher });
+    expect(result.candidates).toEqual([]);
+    expect(result.confirmedCard).toBeNull();
+  });
+  it.each(["Gift Collection Chopper", "Chopper Gift Collection 2023", "Chopper ST01-006 Gift Collection 2023"])("preserves the requested Gift Collection artwork: %s", async (query) => {
+    const fetcher = vi.fn<typeof fetch>(async () => { throw new Error("offline"); });
+    const result = await resolveCardIdentity({ query, cardHint: { game: "onePiece" } }, { fetcher });
+    expect(result.candidates.map(card => card.id)).toEqual(["ST01-006_p3"]);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
   it.each([{ cards: pikachuCards }, { cards: [] }])("recovers Pikachu 58/102 from the real snapshot when live search misses the number", async ({ cards }) => {
     const result = await resolveCardIdentity(
       { query: "Pikachu 58/102", cardHint: { game: "pokemon" } },

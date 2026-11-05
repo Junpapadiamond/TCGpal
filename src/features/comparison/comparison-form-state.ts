@@ -1,4 +1,4 @@
-import type { ConditionClaim, Marketplace, RankedChoice, TcgGame } from "@/lib/schemas";
+import type { ConditionClaim, Marketplace, RankedChoice, TcgGame, SearchableMarketplace } from "@/lib/schemas";
 
 export type LensRole = RankedChoice["role"];
 
@@ -18,6 +18,7 @@ export type ComparisonForm = {
   // progressive disclosure for a buyer who wants to fill them in separately.
   heroQuery: string;
   includeCrossMarket?: boolean;
+  selectedMarketplaces?: SearchableMarketplace[];
   game: TcgGame;
   url: string;
   marketplace: Marketplace;

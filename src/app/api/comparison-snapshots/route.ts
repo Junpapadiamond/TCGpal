@@ -75,6 +75,8 @@ export async function GET(request: Request) {
     confirmedCardId: searchParams.get("card") ?? "",
     game: searchParams.get("game") ?? "",
     desiredCondition: searchParams.get("condition") ?? "",
+    marketScope: searchParams.get("marketScope") ?? undefined,
+    marketplaces: searchParams.has("marketplaces") ? searchParams.get("marketplaces")!.split(",") : undefined,
   });
   const snapshot = id
     ? await getComparisonSnapshot(id)

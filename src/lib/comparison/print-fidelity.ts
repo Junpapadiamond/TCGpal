@@ -360,6 +360,14 @@ function namesReleaseNoSiblingOwns(card: CardIdentityCandidate, siblings: PrintW
     const match = text.match(pattern);
     if (!match) return false;
     if (kind === "starter_deck" && ownsStarterDeckNumber(card, match[0])) return false;
+    // "Promo Cards" is also a broad marketplace category for Gift Collection,
+    // anniversary and event releases. It cannot contradict an explicitly named
+    // promotional release, and it cannot supply positive print proof itself.
+    // All sibling, treatment and specific-release vetoes still run normally.
+    if (kind === "promotion_category"
+      && ["premium_collection", "anniversary", "tournament", "event", "promo"].includes(card.releaseChannel ?? "unknown")
+      && card.setName.trim()
+      && normalizePhrase(text).includes(normalizePhrase(card.setName))) return false;
     const normalizedClaim = normalizePhrase(match[0]);
     return !owned.some((marker) =>
       marker.includes(normalizedClaim)

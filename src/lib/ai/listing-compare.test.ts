@@ -189,6 +189,12 @@ describe("listing comparison agent", () => {
     await runListingComparison({ ...pure, marketScope: "cross" }, { fetcher, agents });
     expect(searches[1]).toHaveBeenCalledTimes(1);
     expect(searches[2]).toHaveBeenCalledTimes(1);
+    searches.forEach(search => search.mockClear());
+    const selected = await runListingComparison({ ...pure, marketScope: "cross", marketplaces: ["Whatnot"] }, { fetcher, agents });
+    expect(searches[0]).not.toHaveBeenCalled();
+    expect(searches[1]).toHaveBeenCalledOnce();
+    expect(searches[2]).not.toHaveBeenCalled();
+    expect(selected.platforms.map(platform => platform.marketplace)).toEqual(["Whatnot"]);
   });
   it("runs injected marketplace fixtures through real normalization without publishing them to the report cache", async () => {
     const agents: PlatformAgent[] = (["eBay", "Whatnot", "Mercari"] as const).map((marketplace) => ({

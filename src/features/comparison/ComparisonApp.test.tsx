@@ -477,9 +477,13 @@ describe("comparison condition controls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
     expect(screen.queryByRole("region", { name: "Across marketplaces" })).toBeNull();
     expect(requests.length).toBe(calls);
+    const selector = screen.getByRole("group", { name: "Markets to search" });
+    expect(within(selector).getAllByRole("button")[0].textContent).toBe("All");
+    fireEvent.click(within(selector).getByRole("button", { name: "Whatnot" }));
     fireEvent.click(screen.getByRole("button", { name: "Search other marketplaces" }));
     await screen.findByRole("region", { name: "Across marketplaces" });
     expect(requests.at(-1)?.marketScope).toBe("cross");
+    expect(requests.at(-1)?.marketplaces).toEqual(["Whatnot"]);
     expect(requests).toHaveLength(2);
     const afterSearch = requests.length;
     expect(screen.getByRole("region", { name: "Across marketplaces" })).toBeTruthy();
@@ -495,7 +499,25 @@ describe("comparison condition controls", () => {
     expect(requests.length).toBe(afterSearch);
   });
 
-  it("continues the standard six-card journey from an example through Edit and New search", async () => {
+  it("searches only the selected market and keeps Edit and view changes free of extra acquisition", async () => {
+    render(<ComparisonApp />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include cross-market search" }));
+    fireEvent.click(within(screen.getByRole("group", { name: "Markets to search" })).getByRole("button", { name: "Whatnot" }));
+    const query = screen.getByRole("textbox", { name: "Search for a card" });
+    fireEvent.change(query, { target: { value: "Pikachu 58/102" } });
+    fireEvent.keyDown(query, { key: "Enter" });
+    await screen.findByRole("region", { name: "Across marketplaces" });
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({ marketScope: "cross", marketplaces: ["Whatnot"] });
+    fireEvent.click(screen.getByRole("button", { name: "Single Market" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cross Market" }));
+    expect(requests).toHaveLength(1);
+    fireEvent.click(document.querySelector<HTMLButtonElement>('button[aria-controls="results-edit-panel"]')!);
+    expect(within(screen.getByRole("group", { name: "Markets to search" })).getByRole("button", { name: "Whatnot", pressed: true })).toBeTruthy();
+    expect(requests).toHaveLength(1);
+  });
+
+  it("continues the standard seven-card journey from an example through Edit and New search", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0.999);
     render(<ComparisonApp />);
     let previousExamples: string[] = [];

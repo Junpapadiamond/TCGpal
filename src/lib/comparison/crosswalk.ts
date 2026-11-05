@@ -38,8 +38,9 @@ export async function resolveCardCrosswalk(
   fetcher: typeof fetch = fetch,
   now: () => Date = () => new Date(),
   buyer: BuyerContext = { country: "US", postalCode: "", taxRate: null, desiredCondition: "Unknown" },
+  options: { includeEbay?: boolean } = {},
 ): Promise<CardCrosswalkEntry> {
-  const cacheKey = `${ONE_PIECE_PRINT_METADATA_REVISION}|${card.id}`;
+  const cacheKey = `${ONE_PIECE_PRINT_METADATA_REVISION}|${card.id}|ebay:${options.includeEbay !== false}`;
   const cached = crosswalkCache.get(cacheKey);
   if (cached && now().getTime() - cached.at < CROSSWALK_TTL_MS) {
     return cached.entry;
@@ -64,7 +65,7 @@ export async function resolveCardCrosswalk(
   // These providers use the same confirmed identity but do not depend on each
   // other. A slow or failed Catalog call must not delay the TCGplayer lookup.
   const [ebay, tcgplayer] = await Promise.allSettled([
-    resolveEbayProductForCard(card, buyer, fetcher),
+    options.includeEbay === false ? Promise.resolve(null) : resolveEbayProductForCard(card, buyer, fetcher),
     resolveTcgplayerProductVariants(card, fetcher),
   ]);
   if (ebay.status === "fulfilled") entry.ebayProduct = ebay.value;

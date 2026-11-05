@@ -8,6 +8,16 @@ import {
 } from "@/lib/comparison/collector-number";
 
 describe("collector-number identity", () => {
+  it("recognizes different One Piece set prefixes as conflicting numbers in the same game", () => {
+    const numbers = ["ST01-006", "EB01-006", "OP01-006", "PRB02-006", "P-006"];
+    for (const expected of numbers) {
+      for (const observed of numbers) {
+        expect(collectorNumberConflict(`Chopper ${observed} English`, expected), `${expected} vs ${observed}`).toBe(expected !== observed);
+      }
+    }
+    expect(collectorNumberConflict("PSA 10, 2023, 1000 power", "ST01-006")).toBe(false);
+    expect(collectorNumberConflict("SVP 006", "ST01-006")).toBe(false);
+  });
   it.each([
     ["1/91", "001/091"],
     ["232/91", "232/091"],

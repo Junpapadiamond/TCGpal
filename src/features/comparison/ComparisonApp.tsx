@@ -37,6 +37,7 @@ import { ListingSignals } from "./ListingSignals";
 import { parseCardQuery } from "@/lib/comparison/query-parser";
 import { onePiecePrintDisplayLabel } from "@/lib/external/one-piece-taxonomy";
 import { detectMarketplaceFromUrl } from "@/lib/comparison/marketplace-url";
+import { MarketSelector } from "./MarketSelector";
 import { tcgplayerSearchUrl, whatnotSearchUrl } from "@/lib/comparison/marketplace-search";
 import { buildJapanSearchQuery } from "@/lib/comparison/japan-references";
 import { LanguageProvider, localizeVariantLabel, useLang, useT, type Dict, type Lang } from "./i18n";
@@ -795,7 +796,9 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
     }
     const ebayFailed = additional?.platforms.some(source => source.marketplace === "eBay" && source.status === "fallback");
     let parsed: ComparisonReport;
-    if (additional && ebayFailed) {
+    const ebayRequested = request.marketScope !== "cross" || !request.marketplaces || request.marketplaces.includes("eBay");
+    if (!ebayRequested && !additional) throw new Error(t.error.temporary);
+    if (additional && (ebayFailed || !ebayRequested)) {
       parsed = additional; // do not automatically reacquire a failed provider
     } else {
       try {
@@ -854,6 +857,8 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
       form.setValue("heroQuery", restoredReport.request.query ?? restoredReport.request.cardHint.name);
       form.setValue("game", restoredReport.request.cardHint.game);
       form.setValue("desiredCondition", restoredReport.request.buyer.desiredCondition);
+      form.setValue("includeCrossMarket", restoredReport.request.marketScope === "cross");
+      form.setValue("selectedMarketplaces", restoredReport.request.marketplaces);
       setResultSnapshot({
         id: snapshot.id,
         durable: true,
@@ -1076,7 +1081,7 @@ function ComparisonExperience({ runtimeEnvironment }: { runtimeEnvironment: "dev
   }
 
   function checkCardFromRail(card: RecentCarouselCard, source: "chase" | "recent") {
-    const values = { ...resetForNewCardSearch(form.getValues()), includeCrossMarket: form.getValues("includeCrossMarket") };
+    const values = { ...resetForNewCardSearch(form.getValues()), includeCrossMarket: form.getValues("includeCrossMarket"), selectedMarketplaces: form.getValues("selectedMarketplaces") };
     form.reset({
       ...values,
       game: card.game,
@@ -2046,12 +2051,14 @@ function ErrorNotice({ message, onRetry }: { message: string; onRetry?: () => vo
 
 function CrossMarketOption({ form }: { form: UseFormReturn<ComparisonForm> }) {
   const { lang } = useLang();
-  return <label className="mt-2 inline-flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-md text-sm text-[#52635c]">
+  const enabled = useWatch({ control: form.control, name: "includeCrossMarket" });
+  const markets = useWatch({ control: form.control, name: "selectedMarketplaces" });
+  return <div><label className="mt-2 inline-flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-md text-sm text-[#52635c]">
     <input {...form.register("includeCrossMarket")} type="checkbox" aria-label={lang === "zh" ? "同时查询跨平台" : "Include cross-market search"}
       aria-describedby="cross-market-option-hint" className="h-4 w-4 shrink-0 accent-[#2f6f73] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2f6f73]" />
     <span className="font-semibold">{lang === "zh" ? "同时查询跨平台" : "Include cross-market search"}</span>
     <span id="cross-market-option-hint" className="text-xs text-[#64736c]">Whatnot · Mercari · {lang === "zh" ? "试用查询次数有限" : "limited trial searches"}</span>
-  </label>;
+  </label>{enabled && <MarketSelector value={markets} onChange={value => form.setValue("selectedMarketplaces", value, { shouldDirty: true })} />}</div>;
 }
 
 function DesiredConditionField({ form }: { form: UseFormReturn<ComparisonForm> }) {
@@ -2533,7 +2540,7 @@ function ComparisonResult({
       {report.request.cardHint.game === "onePiece" && <GameBetaNotice />}
 
       {isCrossMarketReport(report) && marketMode === "single" && <div className="mx-auto max-w-[1320px] rounded-xl border border-[#d6ded5] bg-[#fcfbf6] p-5">
-        <p className="text-sm text-[#52635c]">{lang === "zh" ? "这份保存的结果包含多个平台。可单独查询当前 eBay 商品。" : "This saved report includes multiple marketplaces. Search eBay for a separate current comparison."}</p>
+        <p className="text-sm text-[#52635c]">{lang === "zh" ? "还没有单独的 eBay 比价结果。可查询当前 eBay 商品。" : "No separate eBay comparison is available yet. Search current eBay listings."}</p>
         <button type="button" className="primary-button mt-3" onClick={onRetrySources}>{lang === "zh" ? "查询 eBay" : "Search eBay"}</button>
       </div>}
       <div role="region" aria-label={lang === "zh" ? "单一平台结果" : "Single market results"} hidden={(marketMode !== "single" && !crossPending) || isCrossMarketReport(report)} className="space-y-4">
@@ -3929,6 +3936,7 @@ function buildRequest(values: ComparisonForm, confirmedCardId?: string): Compari
       })),
     webDiscoveryMode: "off",
     marketScope: values.includeCrossMarket ? "cross" : "single",
+    marketplaces: values.includeCrossMarket ? values.selectedMarketplaces : undefined,
     confirmedCardId,
   };
 }

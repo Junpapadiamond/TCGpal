@@ -6,6 +6,8 @@ export const marketplaceSchema = z.enum([
   "eBay",
   "TCGplayer",
   "Cardmarket",
+  "CardTrader",
+  "Fanatics Collect",
   "Facebook",
   "Reddit",
   "Mercari",
@@ -19,6 +21,13 @@ export const marketplaceSchema = z.enum([
   "Local shop",
   "Other",
 ]);
+
+export const searchableMarketplaceSchema = z.enum([
+  "eBay", "Whatnot", "Mercari", "Stomping Grounds", "Fanatics Collect", "Cardmarket", "CardTrader",
+]);
+export const selectedMarketplacesSchema = z.array(searchableMarketplaceSchema).min(1).max(7)
+  .transform(values => [...new Set(values)].sort());
+export type SearchableMarketplace = z.infer<typeof searchableMarketplaceSchema>;
 
 // How a marketplace agent actually sources its listings — surfaced in the "sources
 // checked" panel so the operator (and eventually the buyer) can see whether a
@@ -201,6 +210,7 @@ export const manualCandidateSchema = z.object({
 export const comparisonRequestSchema = z.object({
   // Omission means eBay only. Paid/additional sources require explicit intent.
   marketScope: z.enum(["single", "cross"]).optional(),
+  marketplaces: selectedMarketplacesSchema.optional(),
   sourceListing: sourceListingSchema,
   buyer: buyerContextSchema,
   // The hero search box: one free-text string ("P-096 One Piece Japanese Promo").

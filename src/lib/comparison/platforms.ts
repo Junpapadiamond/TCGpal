@@ -160,7 +160,9 @@ function stubPlatformAgent(config: {
 }
 
 const ROADMAP_AGENTS: PlatformAgent[] = [
-  stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket adapter", sourceMode: "licensed_provider", requiredEnv: ["CARDMARKET_API_KEY"] }),
+  stubPlatformAgent({ id: "fanatics-collect", marketplace: "Fanatics Collect", label: "Fanatics Collect automatic access pending", sourceMode: "manual_fallback", requiredEnv: [] }),
+  stubPlatformAgent({ id: "cardtrader", marketplace: "CardTrader", label: "CardTrader marketplace API access pending", sourceMode: "manual_fallback", requiredEnv: [] }),
+  stubPlatformAgent({ id: "cardmarket", marketplace: "Cardmarket", label: "Cardmarket automatic access pending", sourceMode: "manual_fallback", requiredEnv: [] }),
   stubPlatformAgent({ id: "snkrdunk", marketplace: "SNKRDUNK", label: "SNKRDUNK adapter", sourceMode: "licensed_provider", requiredEnv: ["SNKRDUNK_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "xianyu", marketplace: "Xianyu", label: "Xianyu adapter", sourceMode: "licensed_provider", requiredEnv: ["XIANYU_PROVIDER_KEY"] }),
   stubPlatformAgent({ id: "jihuanshe", marketplace: "集换社", label: "集换社 adapter", sourceMode: "licensed_provider", requiredEnv: ["JIHUANSHE_PROVIDER_KEY"] }),

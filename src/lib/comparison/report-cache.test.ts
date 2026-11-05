@@ -63,6 +63,8 @@ function platformStub(overrides: Partial<ComparisonReport["platforms"][number]> 
 describe("comparison report cache", () => {
   it("keeps default eBay-only reports separate from explicitly requested cross-market reports", () => {
     expect(comparisonCacheKey(pureSearch, "swsh7-215")).not.toBe(comparisonCacheKey({ ...pureSearch, marketScope: "cross" }, "swsh7-215"));
+    expect(comparisonCacheKey({ ...pureSearch, marketScope: "cross", marketplaces: ["Whatnot"] }, "swsh7-215"))
+      .not.toBe(comparisonCacheKey({ ...pureSearch, marketScope: "cross", marketplaces: ["Mercari"] }, "swsh7-215"));
   });
   beforeEach(() => {
     clearComparisonCache();

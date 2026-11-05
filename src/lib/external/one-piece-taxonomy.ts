@@ -207,7 +207,7 @@ export function witnessClass(sibling: { rarity?: string | null; variant?: string
   return derived;
 }
 
-export const releaseClaimPatterns: { pattern: RegExp; aliases: string[]; kind?: "starter_deck" }[] = [
+export const releaseClaimPatterns: { pattern: RegExp; aliases: string[]; kind?: "starter_deck" | "promotion_category" }[] = [
   // Real October 19 Nami winner named LD-01 while the buyer selected Romance
   // Dawn. A shared printed number does not prove release/finish equivalence.
   { pattern: /\blearn\s+together(?:\s+deck(?:\s+set)?)?\b/i, aliases: ["learntogether"] },
@@ -215,7 +215,7 @@ export const releaseClaimPatterns: { pattern: RegExp; aliases: string[]; kind?: 
   { pattern: /\bdemo\s+deck(?:\s+cards?)?\b/i, aliases: ["demodeck"] },
   { pattern: /\b\d+(?:st|nd|rd|th)\s+anniversary\b/i, aliases: ["anniversary"] },
   { pattern: /\bmagazine\s+promo(?:tion)?\b/i, aliases: ["magazine"] },
-  { pattern: /\bpromo(?:tion)?\s+cards?\b/i, aliases: ["promo", "promotion"] },
+  { pattern: /\bpromo(?:tion)?\s+cards?\b/i, aliases: ["promo", "promotion"], kind: "promotion_category" },
   { pattern: /\bstarter\s+deck\s*\d+\b/i, aliases: ["starterdeck"], kind: "starter_deck" },
   { pattern: /\btournament\s+pack\b/i, aliases: ["tournamentpack"] },
   { pattern: /\btreasure\s+cup\b/i, aliases: ["treasurecup"] },

@@ -86,6 +86,7 @@ function snapshot(): ComparisonSnapshot {
     generatedAt: "2026-08-09T08:30:00.000Z",
   };
   return {
+    rulesRevision: "ranking-v19-one-piece-release",
     id: "0123456789abcdef0123456789abcdef",
     report,
     savedAt: "2026-08-09T08:31:00.000Z",

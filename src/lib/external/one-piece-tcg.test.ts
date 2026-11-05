@@ -22,6 +22,11 @@ const luffyCard = {
 };
 
 describe("OPTCG (One Piece) adapter", () => {
+  it("ranks the exact character token ahead of a different name with that prefix", async () => {
+    const result = await searchOnePieceCards({ query: "Chopper", pageSize: 200 });
+    expect(result.cards[0].card_name).toBe("Tony Tony.Chopper");
+    expect(result.cards.some(card => card.card_name === "Chopperman")).toBe(true);
+  });
   it("GUARANTEE: resolves common name queries with zero network", async () => {
     // A fetcher that always throws simulates the live OPTCG API being down or
     // blocked. The bundled catalog must still return a real card.

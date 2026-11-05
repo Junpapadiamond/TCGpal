@@ -90,4 +90,34 @@ describe("authorized Apify account selection", () => {
     vi.mocked(getRedisClient).mockReturnValue(null);
     await expect(selectApifyAccountToken("fixed", 0.03, vi.fn(async () => limits(0)))).rejects.toThrow(/storage is unavailable/);
   });
+
+  it.each(["caller", "deadline"])("stops waiting on %s cancellation during a reservation without advancing accounts", async (cause) => {
+    enable();
+    const controller = new AbortController();
+    const deadlineSpy = cause === "deadline" ? vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal) : null;
+    let finish!: (value: number) => void;
+    const reserve = vi.fn(() => new Promise<number>(resolve => { finish = resolve; }));
+    vi.mocked(getRedisClient).mockReturnValue({ eval: reserve } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
+    const fetcher = vi.fn(async () => limits(0));
+    const selected = selectApifyAccountToken("fixed", 0.03, fetcher, cause === "caller" ? controller.signal : undefined);
+    const outcome = selected.then(() => "selected", () => "stopped");
+    await vi.waitFor(() => expect(reserve).toHaveBeenCalledTimes(1));
+    controller.abort();
+    // The server may still finish the reservation; selection must stop promptly,
+    // without refunding that uncertain charge or using the next credential.
+    try {
+      await expect(Promise.race([outcome, new Promise(resolve => setTimeout(() => resolve("still waiting"), 50))])).resolves.toBe("stopped");
+    } finally { finish(1); deadlineSpy?.mockRestore(); }
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(reserve).toHaveBeenCalledTimes(1);
+    await expect(outcome).resolves.toBe("stopped");
+  });
+
+  it("rejects an invalid reservation result without trying another account", async () => {
+    enable();
+    vi.mocked(getRedisClient).mockReturnValue({ eval: vi.fn(async () => "1") } as unknown as NonNullable<ReturnType<typeof getRedisClient>>);
+    const fetcher = vi.fn(async () => limits(0));
+    await expect(selectApifyAccountToken("fixed", 0.03, fetcher)).rejects.toThrow(/storage is invalid/);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
 });

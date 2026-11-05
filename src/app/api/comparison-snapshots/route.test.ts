@@ -5,6 +5,7 @@ import { comparisonCacheKey, getCachedComparison, setCachedComparison } from "@/
 import { buildStandardComparisonRequest, STANDARD_COMPARISON_FLOW_CARDS } from "@/lib/testing/standard-comparison-flow";
 import { comparisonReportSchema, type ComparisonReport } from "@/lib/schemas";
 import { GET, POST } from "./route";
+import { saveComparisonSnapshot } from "@/lib/comparison/report-snapshot";
 
 function report(): ComparisonReport {
   return comparisonReportSchema.parse({
@@ -33,6 +34,21 @@ describe("/api/comparison-snapshots", () => {
     clearLocalCache();
     clearLocalRateLimitStore();
     vi.stubEnv("RATE_LIMIT_COMPARE_MAX", "10");
+  });
+
+  it("looks up only the selected cross-market scope", async () => {
+    const input = report();
+    input.request.marketScope = "cross";
+    input.request.marketplaces = ["Whatnot"];
+    const confirmedCardId = STANDARD_COMPARISON_FLOW_CARDS[0].expectedCardId;
+    const saved = await saveComparisonSnapshot(input, { confirmedCardId });
+    const params = new URLSearchParams({ card: confirmedCardId, game: input.request.cardHint.game,
+      condition: input.request.buyer.desiredCondition, marketScope: "cross", marketplaces: "Whatnot" });
+    const response = await GET(new Request(`https://tcglens.test/api/comparison-snapshots?${params}`));
+    expect(response.status).toBe(200);
+    expect((await response.json()).snapshot.id).toBe(saved.id);
+    params.set("marketplaces", "Mercari");
+    expect((await GET(new Request(`https://tcglens.test/api/comparison-snapshots?${params}`))).status).toBe(404);
   });
 
   it("creates and reads an opaque result snapshot", async () => {

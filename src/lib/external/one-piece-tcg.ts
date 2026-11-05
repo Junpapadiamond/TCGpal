@@ -339,8 +339,8 @@ export function scoreOnePieceCard(card: OnePieceTcgCard, query: string): number 
 
   const normalizedQuery = normalizeOnePieceName(query);
   if (fullName === normalizedQuery) return 1000;
+  if (queryTokens.every((queryToken) => cardTokens.includes(queryToken))) return 700;
   if (fullName.startsWith(normalizedQuery)) return 500;
-  if (queryTokens.every((queryToken) => cardTokens.includes(queryToken))) return 300;
   if (queryTokens.every((queryToken) => cardTokens.some((cardToken) => cardToken.startsWith(queryToken)))) return 150;
   return 50;
 }

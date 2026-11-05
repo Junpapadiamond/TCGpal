@@ -129,7 +129,9 @@ export async function runListingComparison(
   }
   const request = await applyQueryParserWithAi(parsedInput, trace);
   const scopedAgents = (dependencies.agents ?? getPlatformAgents())
-    .filter((agent) => request.marketScope === "cross" || agent.marketplace === "eBay");
+    .filter((agent) => request.marketScope === "cross"
+      ? !request.marketplaces || request.marketplaces.some(marketplace => marketplace === agent.marketplace)
+      : agent.marketplace === "eBay");
 
   const { source: sourceResult, universal } = await ingestSourceListing(request, fetcher, warnings, trace);
   const identities = (await identifyCards(request, sourceResult, fetcher, warnings, trace, dependencies.signal))
@@ -218,7 +220,7 @@ export async function runListingComparison(
   // alongside it, retaining the same confirmed-card query and final gates.
   const searchCard = confirmedCard;
   const crosswalkStarted = Date.now();
-  const crosswalkPromise = resolveCardCrosswalk(searchCard, fetcher, now, request.buyer)
+  const crosswalkPromise = resolveCardCrosswalk(searchCard, fetcher, now, request.buyer, { includeEbay: scopedAgents.some(agent => agent.marketplace === "eBay") })
     .catch(() => null)
     .then(crosswalk => {
       logOpsEvent({
@@ -1737,7 +1739,7 @@ function filterByRequestedVariant(
     "textured",
   ]);
   if (
-    strictOnePieceFacets.has(needle)
+    (strictOnePieceFacets.has(needle) || /^gift collection\b/.test(needle))
     && identities.some((identity) => isOnePieceCardKey(identity.cardNumber, identity.id))
   ) {
     trace.push({

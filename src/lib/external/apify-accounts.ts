@@ -73,10 +73,22 @@ export async function selectApifyAccountToken(fixedToken: string, maxChargeUsd: 
     const digest = createHash("sha256").update(token).digest("hex");
     const key = `tcglens:apify-account-v2:${digest}:${start}`;
     let reserved: unknown;
+    let stopWaiting = () => {};
     try {
       boundedSignal.throwIfAborted();
-      reserved = await redis.eval(reserveAccountScript, [key], [used, charge, maximum, Math.ceil(end / 1000) + 86400]);
+      const aborted = new Promise<never>((_resolve, reject) => {
+        stopWaiting = () => reject(new Error("Account selection stopped."));
+        boundedSignal.addEventListener("abort", stopWaiting, { once: true });
+      });
+      // Redis may finish after the request/deadline ends. Retain that uncertain
+      // reservation, but never authorize an Actor or another account afterward.
+      reserved = await Promise.race([
+        redis.eval(reserveAccountScript, [key], [used, charge, maximum, Math.ceil(end / 1000) + 86400]),
+        aborted,
+      ]);
+      boundedSignal.throwIfAborted();
     } catch { throw new Error("Apify account allowance storage is unavailable; no Actor started."); }
+    finally { boundedSignal.removeEventListener("abort", stopWaiting); }
     if (reserved === 1) return token;
     if (reserved !== 0) throw new Error("Apify account allowance storage is invalid.");
   }

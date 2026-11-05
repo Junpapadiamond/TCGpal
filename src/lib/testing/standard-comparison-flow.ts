@@ -117,6 +117,16 @@ export const STANDARD_COMPARISON_FLOW_CARDS: StandardComparisonFlowCard[] = [
     expectedCardId: "OP01-016_p4",
     entryMode: "new_search",
   },
+  {
+    label: "One Piece promotional release: Gift Collection Chopper",
+    game: "onePiece",
+    query: "Chopper ST01-006 Gift Collection 2023",
+    name: "Chopper",
+    setCode: "",
+    cardNumber: "ST01-006",
+    expectedCardId: "ST01-006_p3",
+    entryMode: "edit_search",
+  },
 ];
 
 // Companion to the sequential journey: the UI must publish the primary result

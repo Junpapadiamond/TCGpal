@@ -56,6 +56,9 @@ const exclusionPatterns = [
   // price-per-card and then gets compared against a single-card anchor. Both
   // spellings and both count orders appear on eBay.
   /\bplay\s?sets?\b/i,
+  // Explicit copy counts can precede the name or sit mid-title without "lot".
+  /(?:^|\s)(?:[2-9]|\d{2,})\s*[x×](?=\s|$)/i,
+  /(?:^|\s)[x×]\s*(?:[2-9]|\d{2,})(?=\s|$)/i,
   /\(\s*x\s*\d+\s*\)/i,
   /\bx\s?\d+\s*$/i,
 ];
